@@ -1,0 +1,207 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  username     String        @unique
+  passwordHash String
+  role         String        // "admin" | "institute" | "student"
+  name         String
+  phone        String?
+  batch        String?       // "Morning", "Day", "Evening" for students
+  status       String        @default("Active") // "Active" | "Blocked"
+  instituteId  String?
+  institute    Institute?    @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sessions     ExamSession[]
+  results      ExamResult[]
+}
+
+model Institute {
+  id            String             @id @default(uuid())
+  name          String
+  username      String             @unique
+  subscription  String             @default("1 Month")
+  entryDate     String
+  expireDate    String
+  examPackage   String             @default("Full Set UBT")
+  status        String             @default("Active") // "Active" | "Expired"
+  logoUrl       String?
+  watermarkText String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  users         User[]
+  examSets      InstituteExamSet[]
+}
+
+model ExamPackage {
+  id          String    @id @default(uuid())
+  name        String    @unique // e.g. "Full Set UBT", "10 Set UBT"
+  description String?
+  sets        ExamSet[]
+  createdAt   DateTime  @default(now())
+}
+
+model ExamSet {
+  id              String             @id @default(uuid())
+  name            String             // e.g. "Chapterwise 01", "Set 01"
+  packageName     String?
+  packageId       String?
+  package         ExamPackage?       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  duration        Int                @default(3000) // 50 minutes in seconds
+  questions       Question[]
+  sessions        ExamSession[]
+  results         ExamResult[]
+  instituteAccess InstituteExamSet[]
+  createdAt       DateTime           @default(now())
+}
+
+model InstituteExamSet {
+  id          String    @id @default(uuid())
+  instituteId String
+  institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
+  examSetId   String
+  examSet     ExamSet   @relation(fields: [examSetId], references: [id], onDelete: Cascade)
+
+  @@unique([instituteId, examSetId])
+}
+
+model Question {
+  id              String   @id @default(uuid())
+  examSetId       String
+  examSet         ExamSet  @relation(fields: [examSetId], references: [id], onDelete: Cascade)
+  qIndex          Int      // 1 to 40
+  type            String   // "Reading" or "Listening"
+  mainHeading     String?
+  questionHeading String?
+  description     String?
+  image           String?
+  audio           String?
+  optionsJson     String   // JSON string array of options: [{"text":"", "audio":"", "image":"", "video":""}]
+  answer          Int      // 0 to 3 index (strictly hidden during active exam)
+  createdAt       DateTime @default(now())
+}
+
+model ExamSession {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examSetId   String
+  examSet     ExamSet     @relation(fields: [examSetId], references: [id], onDelete: Cascade)
+  startedAt   DateTime    @default(now())
+  expiresAt   DateTime
+  completedAt DateTime?
+  status      String      @default("IN_PROGRESS") // "IN_PROGRESS" | "SUBMITTED" | "EXPIRED"
+  result      ExamResult?
+}
+
+model ExamResult {
+  id             String      @id @default(uuid())
+  sessionId      String      @unique
+  session        ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examSetId      String
+  examSet        ExamSet     @relation(fields: [examSetId], references: [id], onDelete: Cascade)
+  studentName    String
+  examName       String
+  readingScore   Int         @default(0)
+  listeningScore Int         @default(0)
+  totalScore     Int         @default(0)
+  totalQuestions Int         @default(40)
+  correctAnswers Int         @default(0)
+  wrongAnswers   Int         @default(0)
+  unanswered     Int         @default(0)
+  passed         Boolean     @default(false)
+  answersJson    String      // JSON map: { "1": 2, "2": 0, ... }
+  createdAt      DateTime    @default(now())
+}
+
+model News {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  author    String   @default("Admin")
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  target    String   @default("all") // "all" | "institutes" | "students"
+  createdAt DateTime @default(now())
+}
+
+model SystemSetting {
+  key   String @id
+  value String
+}
+
+model BillingProfile {
+  id             String    @id @default(uuid())
+  instituteId    String    @unique
+  companyName    String
+  companyAddress String
+  contactNumber  String
+  email          String
+  panVatNumber   String
+  logoUrl        String?
+  stampUrl       String?
+  googleSheetUrl String?
+  ownerEmail     String?
+  editCount      Int       @default(0) // 0: initial setup, 1: edited once (max allowed), >=1: locked permanently
+  isLocked       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model BillRecord {
+  id                String    @id @default(uuid())
+  billNumber        String    @unique
+  instituteId       String
+  date              String
+  studentName       String
+  address           String
+  contactNumber     String    // WhatsApp Number (Unique identifier per student)
+  parentName        String?
+  parentNumber      String?
+  classTime         String?
+  courseDetail      String
+  coursePackage     String
+  paymentSystem     String    // "Full Payment" | "1st Installment" | "2nd Installment" | "3rd Installment"
+  grossFee          Float?    // Course fee before discount
+  discountPercent   Float     @default(0)
+  discountAmount    Float     @default(0)
+  totalFee          Float     // Immutable once entered (includes 13% VAT/PAN)
+  vatPercent        Float     @default(13)
+  vatAmount         Float     @default(0)
+  paidAmount        Float
+  dueAmount         Float     @default(0)
+  amountInWords     String
+  firstInstallment  Float?
+  firstBillNo       String?
+  admittedDate      String?   // Locked: first bill date = student admitted date (never changed by next pay)
+  firstPaymentDate  String?
+  secondInstallment Float?
+  secondBillNo      String?
+  secondPaymentDate String?
+  thirdInstallment  Float?
+  thirdBillNo       String?
+  thirdPaymentDate  String?
+  paymentsJson      String?   // JSON array of payment entries with dates
+  materialsJson     String    // JSON array of [{ name, amount }]
+  preparedBy        String
+  parentBillNumber  String?   // References parent bill if applicable
+  isSyncedToSheet   Boolean   @default(false)
+  syncedAt          DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now()) @updatedAt
+}

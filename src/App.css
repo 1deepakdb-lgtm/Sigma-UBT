@@ -15,6 +15,10 @@ body,
   min-height: 100%;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
   background: #f4f7fb;
@@ -1758,4 +1762,125 @@ button {
   .edit-modal {
     max-height: 95vh;
   }
+}
+
+/* =========================================
+   GLOBAL HD 3D NEUMORPHIC OVERRIDES (ALL PAGES)
+========================================= */
+
+body {
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%) !important;
+  color: #1e293b;
+}
+
+.dashboard-card, 
+.form-card, 
+.student-form-card, 
+.student-list-card, 
+.students-table-card,
+.login-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 6px 6px 14px rgba(0,0,0,0.08), -6px -6px 14px rgba(255,255,255,0.9) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(145deg, #ffffff, #f4f7fb) !important;
+  border: 1px solid rgba(255,255,255,0.6) !important;
+}
+
+.dashboard-card:hover,
+.form-card:hover,
+.student-form-card:hover,
+.student-list-card:hover,
+.login-card:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: 10px 10px 22px rgba(0,0,0,0.12), -10px -10px 22px rgba(255,255,255,0.95) !important;
+}
+
+.primary-btn, 
+.primary-button, 
+.save-button {
+  background: linear-gradient(145deg, #1e40af, #2563eb) !important;
+  box-shadow: 4px 4px 10px rgba(37, 99, 235, 0.3), -4px -4px 10px rgba(255,255,255,0.5) !important;
+  border: 1px solid #1d4ed8 !important;
+  transition: all 0.2s ease !important;
+  color: #ffffff !important;
+}
+
+.primary-btn:hover, 
+.primary-button:hover, 
+.save-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 6px 6px 14px rgba(37, 99, 235, 0.4), -4px -4px 12px rgba(255,255,255,0.6) !important;
+  filter: brightness(1.1) !important;
+}
+
+.primary-btn:active, 
+.primary-button:active, 
+.save-button:active {
+  transform: translateY(2px) !important;
+  box-shadow: inset 4px 4px 8px rgba(0,0,0,0.3), inset -4px -4px 8px rgba(255,255,255,0.1) !important;
+}
+
+.danger-btn,
+.delete-button {
+  background: linear-gradient(145deg, #b91c1c, #ef4444) !important;
+  box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.3), -4px -4px 10px rgba(255,255,255,0.5) !important;
+  border: 1px solid #b91c1c !important;
+  transition: all 0.2s ease !important;
+  color: #ffffff !important;
+}
+
+.danger-btn:hover,
+.delete-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 6px 6px 14px rgba(239, 68, 68, 0.4), -4px -4px 12px rgba(255,255,255,0.6) !important;
+  filter: brightness(1.1) !important;
+}
+
+.danger-btn:active,
+.delete-button:active {
+  transform: translateY(2px) !important;
+  box-shadow: inset 4px 4px 8px rgba(0,0,0,0.3), inset -4px -4px 8px rgba(255,255,255,0.1) !important;
+}
+
+.secondary-btn,
+.edit-button,
+.cancel-button {
+  background: linear-gradient(145deg, #f8fafc, #e2e8f0) !important;
+  color: #334155 !important;
+  box-shadow: 4px 4px 10px rgba(0,0,0,0.06), -4px -4px 10px rgba(255,255,255,0.8) !important;
+  border: 1px solid #cbd5e1 !important;
+  transition: all 0.2s ease !important;
+}
+
+.secondary-btn:hover,
+.edit-button:hover,
+.cancel-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 6px 6px 14px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9) !important;
+  background: linear-gradient(145deg, #ffffff, #f1f5f9) !important;
+}
+
+.secondary-btn:active,
+.edit-button:active,
+.cancel-button:active {
+  transform: translateY(2px) !important;
+  box-shadow: inset 4px 4px 8px rgba(0,0,0,0.1), inset -4px -4px 8px rgba(255,255,255,0.5) !important;
+}
+
+input, select, textarea {
+  box-shadow: inset 3px 3px 6px rgba(0,0,0,0.05), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  transition: all 0.2s ease !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  box-shadow: inset 4px 4px 8px rgba(0,0,0,0.08), inset -4px -4px 8px rgba(255,255,255,0.9), 0 0 0 3px rgba(37,99,235,0.2) !important;
+  border-color: #3b82f6 !important;
+}
+
+table th, .students-table-card th {
+  background: linear-gradient(145deg, #1e3a8a, #2563eb) !important;
+  color: #ffffff !important;
+  border-bottom: 2px solid #1d4ed8 !important;
 }

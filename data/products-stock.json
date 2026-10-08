@@ -1,0 +1,55 @@
+[
+  {
+    "id": "PROD-3",
+    "name": "Advance Book",
+    "price": 600,
+    "stock": 39,
+    "totalSold": 11,
+    "unit": "copies",
+    "updatedAt": "2026-10-08T05:56:13.288Z"
+  },
+  {
+    "id": "PROD-4",
+    "name": "Basic Book",
+    "price": 400,
+    "stock": 18,
+    "totalSold": 32,
+    "unit": "copies",
+    "updatedAt": "2026-10-08T05:56:13.288Z"
+  },
+  {
+    "id": "PROD-5",
+    "name": "Grammar Book",
+    "price": 550,
+    "stock": 34,
+    "totalSold": 6,
+    "unit": "copies",
+    "updatedAt": "2026-10-08T05:56:13.288Z"
+  },
+  {
+    "id": "PROD-6",
+    "name": "Question Bank",
+    "price": 700,
+    "stock": 31,
+    "totalSold": 4,
+    "unit": "copies",
+    "updatedAt": "2026-10-08T05:56:13.288Z"
+  },
+  {
+    "id": "PROD-7",
+    "name": "Institute Bag",
+    "price": 800,
+    "stock": 29,
+    "totalSold": 1,
+    "unit": "pcs",
+    "updatedAt": "2026-10-08T05:44:06.672Z"
+  },
+  {
+    "id": "PROD-8",
+    "name": "Student ID Card",
+    "price": 150,
+    "stock": 100,
+    "totalSold": 0,
+    "unit": "pcs"
+  }
+]

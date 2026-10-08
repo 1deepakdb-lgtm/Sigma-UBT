@@ -1,4 +1,4 @@
-const PACKAGE_NAME = "30 Set Chapter UBT";
+const PACKAGE_NAME = "30 SET CHAPTER UBT";
 const SET_NAME = "SET 1";
 
 const opt = (a, b, c, d) => [
@@ -69,38 +69,119 @@ export const SET1_QUESTIONS = [
   q(40, "Listening", "[36~40] 다음을 듣고 알맞은 것을 고르십시오.", "가방 안에 없는 물건은 무엇입니까?", opt("지갑", "열쇠", "사진", "여권"), 0)
 ];
 
+const UBT_PACKAGE_NAME = "Full Set UBT";
+const UBT_SET_NAME = "UBT SET 01";
+
+const safeParse = (raw, fallback) => {
+  try {
+    if (!raw || raw === "undefined" || raw === "null") return fallback;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(fallback) ? (Array.isArray(parsed) ? parsed : fallback) : (parsed || fallback);
+  } catch (e) {
+    return fallback;
+  }
+};
+
 export function seedSet1Questions() {
   try {
-    const seedKey = "set1QuestionsSeededV2";
-    const packages = JSON.parse(localStorage.getItem("examPackages") || "[]");
-    const sets = JSON.parse(localStorage.getItem("examSets") || "[]");
-    const questions = JSON.parse(localStorage.getItem("questionBank") || "[]");
+    if (typeof window === "undefined" && typeof globalThis === "undefined") return;
 
-    let nextPackages = packages;
+    const seedKey = "set1QuestionsSeededV4";
+    const packages = safeParse(localStorage.getItem("examPackages"), []);
+    const sets = safeParse(localStorage.getItem("examSets"), []);
+    const questions = safeParse(localStorage.getItem("questionBank"), []);
+
+    let nextPackages = [...packages];
     if (!nextPackages.some((p) => p.name === PACKAGE_NAME)) {
-      nextPackages = [
-        ...nextPackages,
-        { id: Date.now(), name: PACKAGE_NAME, price: "Rs. 1,000", desc: "Complete chapterwise practice sets with audio." }
-      ];
-      localStorage.setItem("examPackages", JSON.stringify(nextPackages));
+      nextPackages.push({
+        id: "pkg-chapter-30",
+        name: PACKAGE_NAME,
+        price: "Rs. 1,000",
+        desc: "Complete chapterwise practice sets with audio."
+      });
+    }
+    if (!nextPackages.some((p) => p.name === UBT_PACKAGE_NAME)) {
+      nextPackages.push({
+        id: "pkg-ubt-full",
+        name: UBT_PACKAGE_NAME,
+        price: "Rs. 2,000",
+        desc: "Standard official EPS-TOPIK UBT practice sets (20 Reading + 20 Listening)."
+      });
+    }
+    if (!nextPackages.some((p) => p.name === "100 UBT set")) {
+      nextPackages.push({
+        id: "pkg-ubt-100",
+        name: "100 UBT set",
+        price: "Rs. 3,500",
+        desc: "100 Full length UBT practice sets with high score simulation."
+      });
+    }
+    localStorage.setItem("examPackages", JSON.stringify(nextPackages));
+
+    // Normalize sets to uppercase set names
+    let nextSets = sets.map((s) => {
+      const upperName = (s.name || "").trim().toUpperCase();
+      const sType = s.setType || (upperName.includes("CHAPTER") ? "Chapterwise" : "UBT");
+      return {
+        ...s,
+        name: upperName,
+        setType: sType
+      };
+    });
+
+    // Seed Chapter-wise set
+    const hasChapterSet = nextSets.some((s) => (s.name || "").toUpperCase() === SET_NAME);
+    if (!hasChapterSet) {
+      nextSets.push({
+        id: "set-chapter-01",
+        name: SET_NAME,
+        packageName: PACKAGE_NAME,
+        setType: "Chapterwise",
+        duration: 3000
+      });
     }
 
-    let nextSets = sets;
-    if (!nextSets.some((s) => s.name === SET_NAME && s.packageName === PACKAGE_NAME)) {
-      nextSets = [...nextSets, { id: Date.now() + 1, name: SET_NAME, packageName: PACKAGE_NAME }];
-      localStorage.setItem("examSets", JSON.stringify(nextSets));
+    // Seed UBT set
+    const hasUbtSet = nextSets.some((s) => (s.name || "").toUpperCase() === UBT_SET_NAME);
+    if (!hasUbtSet) {
+      nextSets.push({
+        id: "set-ubt-01",
+        name: UBT_SET_NAME,
+        packageName: UBT_PACKAGE_NAME,
+        setType: "UBT",
+        duration: 3000
+      });
+    }
+    localStorage.setItem("examSets", JSON.stringify(nextSets));
+
+    // Normalize questions to uppercase set references
+    let nextQuestions = questions.map((q) => ({
+      ...q,
+      set: (q.set || "").trim().toUpperCase()
+    }));
+
+    // Also seed questions for UBT SET 01 if needed
+    const ubtQuestions = SET1_QUESTIONS.map((item) => ({
+      ...item,
+      id: 950000 + (Number(item.questionHeading) || 1),
+      package: UBT_PACKAGE_NAME,
+      set: UBT_SET_NAME
+    }));
+
+    const hasSet1 = nextQuestions.some((item) => (item.set || "").toUpperCase() === SET_NAME);
+    const hasUbt1 = nextQuestions.some((item) => (item.set || "").toUpperCase() === UBT_SET_NAME);
+
+    if (!hasSet1) {
+      nextQuestions = [...nextQuestions, ...SET1_QUESTIONS];
+    }
+    if (!hasUbt1) {
+      nextQuestions = [...nextQuestions, ...ubtQuestions];
     }
 
-    const alreadySeeded = localStorage.getItem(seedKey) === "1";
-    const hasSet1 = questions.some((item) => item.package === PACKAGE_NAME && item.set === SET_NAME);
-    if (alreadySeeded && hasSet1 && questions.filter((item) => item.package === PACKAGE_NAME && item.set === SET_NAME).length >= 40) {
-      return;
-    }
-
-    const others = questions.filter((item) => !(item.package === PACKAGE_NAME && item.set === SET_NAME));
-    localStorage.setItem("questionBank", JSON.stringify([...others, ...SET1_QUESTIONS]));
+    localStorage.setItem("questionBank", JSON.stringify(nextQuestions));
     localStorage.setItem(seedKey, "1");
   } catch (err) {
-    console.error("Failed to seed SET 1 questions", err);
+    console.error("Failed to seed SET 1 and UBT questions", err);
   }
 }
+

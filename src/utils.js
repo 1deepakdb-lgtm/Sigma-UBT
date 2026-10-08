@@ -42,7 +42,6 @@ export function instituteStatus(expireDate) {
   return new Date(expireDate + "T23:59:59") >= new Date() ? "Active" : "Expired";
 }
 
-// Use consistent localStorage keys
 const KEYS = {
   INSTITUTES: "sigmaInstitutes",
   STUDENTS: "sigmaStudents",
@@ -52,105 +51,62 @@ const KEYS = {
 };
 
 export function getInstitutes() {
+  if (typeof window === "undefined") return [];
   return JSON.parse(localStorage.getItem(KEYS.INSTITUTES) || "[]");
 }
 
 export function saveInstitutes(data) {
+  if (typeof window === "undefined") return;
   localStorage.setItem(KEYS.INSTITUTES, JSON.stringify(data));
 }
 
 export function getStudents() {
+  if (typeof window === "undefined") return [];
   return JSON.parse(localStorage.getItem(KEYS.STUDENTS) || "[]");
 }
 
 export function saveStudents(data) {
+  if (typeof window === "undefined") return;
   localStorage.setItem(KEYS.STUDENTS, JSON.stringify(data));
 }
 
 export function getResults() {
+  if (typeof window === "undefined") return [];
   return JSON.parse(localStorage.getItem(KEYS.RESULTS) || "[]");
 }
 
 export function saveResults(data) {
+  if (typeof window === "undefined") return;
   localStorage.setItem(KEYS.RESULTS, JSON.stringify(data));
 }
 
 export function getQuestions() {
+  if (typeof window === "undefined") return [];
   return JSON.parse(localStorage.getItem(KEYS.QUESTIONS) || "[]");
 }
 
 export function saveQuestions(data) {
+  if (typeof window === "undefined") return;
   localStorage.setItem(KEYS.QUESTIONS, JSON.stringify(data));
 }
 
 export function currentUser() {
+  if (typeof window === "undefined") return null;
   return JSON.parse(localStorage.getItem(KEYS.CURRENT_USER) || "null");
 }
 
-export function logout() {
-  localStorage.removeItem(KEYS.CURRENT_USER);
-}
+export async function logout() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST" });
+  } catch (e) {}
 
-export function seedDemoData() {
-  if (!localStorage.getItem(KEYS.INSTITUTES)) {
-    saveInstitutes([
-      {
-        id: crypto.randomUUID(),
-        instituteName: "Sigma Demo Institute",
-        name: "Sigma Demo Institute",
-        username: "sigma",
-        password: "1234",
-        subscription: "1 Month",
-        package: "1 Month",
-        entryDate: today(),
-        expireDate: addMonths(today(), 1),
-        examPackage: "Full Set UBT",
-        status: "Active"
-      }
-    ]);
-  }
-  if (!localStorage.getItem(KEYS.STUDENTS)) {
-    saveStudents([
-      {
-        id: crypto.randomUUID(),
-        name: "Demo Student",
-        username: "student",
-        password: "1234",
-        phone: "9800000000",
-        batch: "Morning",
-        status: "Active"
-      }
-    ]);
-  }
-  if (!localStorage.getItem(KEYS.RESULTS)) saveResults([]);
-  if (!localStorage.getItem(KEYS.QUESTIONS)) {
-    saveQuestions([
-      {
-        id: crypto.randomUUID(),
-        type: "reading",
-        question: "다음 단어의 뜻으로 맞는 것을 고르십시오.",
-        image: "",
-        options: ["학교", "책", "사과", "기차"],
-        answer: 1
-      },
-      {
-        id: crypto.randomUUID(),
-        type: "reading",
-        question: "빈칸에 들어갈 가장 알맞은 것을 고르십시오. 저는 ___에 갑니다.",
-        image: "",
-        options: ["학교", "사과", "책", "물"],
-        answer: 0
-      },
-      {
-        id: crypto.randomUUID(),
-        type: "listening",
-        question: "이것은 ______ 입니다.",
-        image: "",
-        audio: "",
-        options: ["기차", "과자", "기자", "사과"],
-        answer: 3
-      }
-    ]);
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      document.cookie = "sigma_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0;";
+    } catch (e) {}
+    window.location.replace("/");
   }
 }
 

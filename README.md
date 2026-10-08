@@ -1,86 +1,56 @@
-# Sigma UBT - Complete Starter
+# Sigma UBT - Fullstack Next.js Examination Platform
 
-## 1. Open the project
-Open this `sigma-ubt` folder in VS Code.
+A production-grade, fullstack **Ubiquitous-Based Test (UBT)** system for EPS-TOPIK Korean Language examination preparation, featuring multi-institute tenancy, anti-cheat question delivery, persistent Prisma database, and automated scoring.
 
-## 2. Install
-Open **Terminal > New Terminal** and run ONLY:
+---
 
+## 1. Quick Start
+
+### Installation & Database Setup
 ```bash
 npm install
+npx prisma db push
+npm run prisma:seed
 ```
 
-Do not paste JavaScript/React code into the terminal.
-
-## 3. Run
+### Run Development Server
 ```bash
 npm run dev
 ```
 
-Then open:
-http://localhost:5173
+Open: **[http://localhost:3000](http://localhost:3000)**
 
-## Demo accounts
+---
 
-Admin:
-- Username: `admin`
-- Password: `admin123`
+## 2. Default Accounts
 
-Institute:
-- Username: `sigma`
-- Password: `1234`
+| Role | Username | Password | Dashboard URL | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Super Admin** | `admin` | `admin123` | `/admin` | Manages institutes, packages, questions, global notices |
+| **Institute** | `sigma` | `1234` | `/institute` | Manages student enrollments, batches, exam preview |
+| **Student** | `student` | `1234` | `/student` | Takes 40-question UBT exam with listening audio & timer |
 
-Student:
-Create a student from Institute > Students, then use the created username/password.
+---
 
-## Logo
-Put your Sigma logo at:
-`public/sigma-logo.png`
+## 3. Architecture & Backend Features
 
-React path:
-`/sigma-logo.png`
+- **Fullstack Next.js App Router:** Unified frontend and backend in a single repository.
+- **Prisma ORM with SQLite/PostgreSQL:** Relational data models for Institutes, Students, Packages, Sets, Questions, Sessions, and Results.
+- **Anti-Cheat Exam Engine (`/api/student/exams/[examId]/start`):** Answer keys are strictly omitted from client payloads during active exam sessions.
+- **Server-Side Scoring (`/api/student/exams/[examId]/submit`):**
+  - Reading questions 1–20 (up to 100 points, 5 points each).
+  - Listening questions 21–40 (up to 100 points, 5 points each).
+  - Total 200 points + automated pass/fail computation.
+- **Audio & Image Uploads (`/api/upload`):** Question diagrams and MP3 listening tracks uploaded directly to storage with public CDN URLs.
+- **JWT & HTTP-Only Cookies:** Secure session authentication with password hashing using bcrypt.
+- **Subscription Expiry Middleware:** Automatic validation of institute subscription periods (1M / 3M / 6M / 1Y).
 
-## Included features
+---
 
-- Admin / Institute / Student login
-- Sigma logo
-- Admin dashboard
-- Institute creation
-- 1/3/6 month and 1 year subscriptions
-- Automatic expire date
-- Automatic Active / Expired status
-- Exam package selection:
-  - 10 Set UBT
-  - 20 Set UBT
-  - 30 Set UBT
-  - 50 Set UBT
-  - 80 Set UBT
-  - 100 Set UBT
-  - 150 Set UBT
-  - 200 Set UBT
-  - 30 Set Chapter UBT
-  - 60 Set Chapter Final Set UBT
-  - Full Set UBT
-- Student management
-- Question management
-- Reading/listening question type
-- Student exam screen
-- Question navigation
-- Timer
-- Answer selection
-- Submit confirmation
-- Automatic result calculation
-- Responsive mobile/tablet/desktop UI
+## 4. Production Build & Deployment
 
-## Important future upgrade
-
-This version is a working front-end/demo using browser localStorage. For real multi-institute use over the internet, replace localStorage with a backend database/API and authentication. Recommended next backend modules:
-- Node.js + Express API
-- PostgreSQL/MySQL
-- Secure password hashing
-- JWT/session authentication
-- Institute/package expiry validation on server
-- Image/audio upload
-- Question bank and exam-set database
-- Result database
-- Admin audit logs
+```bash
+npm run build
+npm run start
+```
+To switch from SQLite to PostgreSQL in production, update `prisma/schema.prisma` datasource provider to `postgresql` and provide your production `DATABASE_URL` in `.env`.
