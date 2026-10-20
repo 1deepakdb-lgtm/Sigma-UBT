@@ -102,5 +102,5 @@ export async function requireInstituteAdmin(req) {
  * Check if the request is from a Student
  */
 export async function requireStudent(req) {
-  return requireRole(req, [ROLES.STUDENT]);
+  return requireRole(req, [ROLES.STUDENT, ROLES.ADMIN, ROLES.INSTITUTE]);
 }

@@ -42,6 +42,7 @@ export default function LoginPage() {
       // Store in localStorage for legacy/component local state reading
       localStorage.setItem("currentUser", data.user.name || data.user.username);
       localStorage.setItem("role", data.user.role);
+      localStorage.setItem("currentRole", data.user.role);
       localStorage.setItem("sigma_current_user", JSON.stringify(data.user));
 
       let redirectUrl = "/";
@@ -57,7 +58,19 @@ export default function LoginPage() {
         localStorage.setItem("billingRole", "user");
         redirectUrl = "/institute?tab=billing";
       } else {
-        localStorage.setItem("currentStudentPhone", data.user.phone || identifier);
+        const studentPhone = data.user.phone || identifier.trim();
+        localStorage.setItem("currentStudentPhone", studentPhone);
+        localStorage.setItem("studentPhone", studentPhone);
+        localStorage.setItem("currentStudentName", data.user.name || data.user.username);
+        if (data.user.studentPackage) {
+          localStorage.setItem("currentStudentPackage", data.user.studentPackage);
+        }
+        if (data.user.expiryDate) {
+          localStorage.setItem("currentStudentExpiryDate", data.user.expiryDate);
+        }
+        if (data.user.instituteName) {
+          localStorage.setItem("currentInstitute", data.user.instituteName);
+        }
         redirectUrl = "/student";
       }
 
@@ -142,19 +155,29 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleLogin} autoComplete="off">
+          <div style={{ textAlign: "left", marginBottom: "6px" }}>
+            <label style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
+              Student Phone Number / Username:
+            </label>
+          </div>
           <input
             type="text"
-            placeholder="Enter ID / Phone / Username"
+            placeholder="Enter Phone Number or Username"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             style={inputStyle}
-            autoComplete="off"
+            autoComplete="username"
             required
           />
 
+          <div style={{ textAlign: "left", marginBottom: "6px" }}>
+            <label style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
+              Password:
+            </label>
+          </div>
           <input
             type="password"
-            placeholder="Enter Password"
+            placeholder="Enter Password (default: 1234)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={inputStyle}
@@ -167,11 +190,15 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ marginTop: "24px", textAlign: "left", fontSize: "12px", color: "#64748b", background: "#f8fafc", padding: "12px", borderRadius: "6px", border: "1px dashed #cbd5e1" }}>
-          <strong>Default Accounts:</strong><br />
-          • Admin: <code>admin</code> / <code>admin123</code><br />
-          • Institute: <code>sigma</code> / <code>1234</code><br />
-          • Student: <code>student</code> / <code>1234</code>
+        <div style={{ marginTop: "24px", textAlign: "left", fontSize: "12px", color: "#64748b", background: "#f8fafc", padding: "12px", borderRadius: "6px", border: "1px dashed #cbd5e1", lineHeight: "1.6" }}>
+          <strong style={{ color: "#0f172a" }}>Student Access:</strong><br />
+          • Log in using your registered <strong>Phone Number</strong>.<br />
+          • Default password: <code>1234</code><br />
+          <hr style={{ border: "none", borderTop: "1px dashed #e2e8f0", margin: "8px 0" }} />
+          <strong style={{ color: "#0f172a" }}>Demo / Management Accounts:</strong><br />
+          • Student Demo: Phone <code>9800000000</code> / Pass: <code>1234</code><br />
+          • Institute: <code>sigma</code> / Pass: <code>1234</code> (or <code>123456</code>)<br />
+          • Super Admin: <code>admin</code> / Pass: <code>admin123</code>
         </div>
       </div>
     </div>

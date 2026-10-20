@@ -27,28 +27,70 @@ async function saveNotices(notices) {
   }
 }
 
-// GET: Return all notices & news
+// GET: Return notices, with optional institute-level filtering
 export async function GET(req) {
   try {
-    const notices = await getStoredNotices();
-    return NextResponse.json({ success: true, notices }, { status: 200 });
+    const { searchParams } = new URL(req.url);
+    const instituteParam = searchParams.get('institute');
+    const roleParam = searchParams.get('role'); // 'student', 'institute', 'admin'
+
+    const allNotices = await getStoredNotices();
+
+    let filtered = allNotices;
+
+    // Strict isolation for students and institutes
+    if (roleParam === 'student' || roleParam === 'institute') {
+      if (instituteParam) {
+        const cleanInst = instituteParam.trim().toLowerCase();
+        filtered = allNotices.filter((n) => {
+          // Global notices (for all students across all institutes)
+          if (!n.instituteName || n.targetAudience === 'all') return true;
+          // Target institute matches
+          const target = (n.targetAudience || n.instituteName || '').trim().toLowerCase();
+          const inst = (n.instituteName || '').trim().toLowerCase();
+          return target === cleanInst || inst === cleanInst;
+        });
+      } else {
+        // Without institute assigned, student only receives global notices
+        filtered = allNotices.filter((n) => !n.instituteName || n.targetAudience === 'all');
+      }
+    }
+
+    return NextResponse.json({ success: true, notices: filtered, total: filtered.length }, { status: 200 });
   } catch (err) {
     console.error('GET /api/news error:', err);
     return NextResponse.json({ success: false, notices: [] }, { status: 500 });
   }
 }
 
-// POST: Publish a new notice or official news
+// POST: Publish a new notice (Superadmin for all or specific institute; Institute for own students)
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { title, content, category = 'notice', isPopup = false, fileUrl = null, fileName = '', fileType = '', fileSize = 0 } = body;
+    const {
+      title,
+      content,
+      category = 'notice',
+      isPopup = false,
+      fileUrl = null,
+      fileName = '',
+      fileType = '',
+      fileSize = 0,
+      instituteName = null,
+      instituteId = null,
+      targetAudience = 'all',
+      publishedBy = 'institute'
+    } = body;
 
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
     }
 
     const currentNotices = await getStoredNotices();
+
+    const isGlobal = targetAudience === 'all' && (!instituteName || publishedBy === 'admin');
+    const chosenTarget = isGlobal ? 'all' : (targetAudience || instituteName || 'all');
+    const assignedInst = isGlobal ? null : (instituteName || (targetAudience !== 'all' ? targetAudience : null));
 
     const newItem = {
       id: Date.now(),
@@ -60,6 +102,10 @@ export async function POST(req) {
       fileName: fileName || '',
       fileType: fileType || '',
       fileSize: Number(fileSize) || 0,
+      targetAudience: chosenTarget,
+      instituteName: assignedInst,
+      instituteId: instituteId || null,
+      publishedBy: publishedBy || (assignedInst ? 'institute' : 'admin'),
       date: new Date().toISOString().split('T')[0],
       createdAt: new Date().toISOString()
     };

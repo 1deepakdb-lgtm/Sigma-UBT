@@ -113,10 +113,11 @@
 }
 
 .students-table-card th {
-  background: #3fa4d8;
-  color: white;
+  background: #f8fafc;
+  color: #475569;
   padding: 13px 10px;
-  text-align: left;
+  text-align: center;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .students-table-card td {

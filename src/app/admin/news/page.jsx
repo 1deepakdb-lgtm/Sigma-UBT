@@ -15,11 +15,14 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import { performLogout } from "@/lib/clientAuth";
 
 const AdminNews = () => {
   const router = useRouter();
   const [newsList, setNewsList] = useState([]);
+  const [institutesList, setInstitutesList] = useState([]);
+  const [targetAudience, setTargetAudience] = useState("all"); // "all" | "<instituteName>"
   const [category, setCategory] = useState("notice"); // "notice" | "news"
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -35,9 +38,6 @@ const AdminNews = () => {
 
   // Filter state for announcements
   const [activeFilter, setActiveFilter] = useState("all"); // "all" | "notice" | "news"
-
-  const institutes = typeof window !== 'undefined' ? (JSON.parse(localStorage.getItem("institutes")) || []) : [];
-  const logoWatermark = institutes[0]?.logoUrl || "";
 
   const fetchNotices = async () => {
     try {
@@ -61,8 +61,30 @@ const AdminNews = () => {
     }
   };
 
+  const fetchInstitutes = async () => {
+    try {
+      const res = await fetch('/api/admin/institutes');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.institutes)) {
+          setInstitutesList(data.institutes);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch institutes from /api/admin/institutes, trying localStorage fallback:", e);
+    }
+    try {
+      const localInsts = JSON.parse(localStorage.getItem("institutes")) || [];
+      setInstitutesList(localInsts);
+    } catch (e) {
+      console.error("Failed to load institutes:", e);
+    }
+  };
+
   useEffect(() => {
     fetchNotices();
+    fetchInstitutes();
   }, []);
 
   const handleLogout = () => {
@@ -162,6 +184,13 @@ const AdminNews = () => {
       return;
     }
 
+    const isGlobal = targetAudience === "all";
+    const selectedInstObj = !isGlobal 
+      ? institutesList.find(i => i.name === targetAudience || i.id === targetAudience)
+      : null;
+    const assignedInstName = isGlobal ? null : (selectedInstObj?.name || targetAudience);
+    const assignedInstId = isGlobal ? null : (selectedInstObj?.id || null);
+
     const newItem = {
       id: Date.now(),
       category: targetCategory, // "notice" | "news"
@@ -172,6 +201,10 @@ const AdminNews = () => {
       fileName: fileName || (mediaFile ? "Attached_Media" : ""),
       fileType: fileType,
       fileSize: fileSize,
+      targetAudience: isGlobal ? "all" : assignedInstName,
+      instituteName: assignedInstName,
+      instituteId: assignedInstId,
+      publishedBy: "admin",
       date: new Date().toISOString().split("T")[0]
     };
 
@@ -209,7 +242,11 @@ const AdminNews = () => {
     handleRemoveFile();
 
     const categoryTitle = targetCategory === "news" ? "Official News" : "Official Notice";
-    alert(`✅ ${categoryTitle} successfully published and delivered to Student and Institute portals!`);
+    if (isGlobal) {
+      alert(`✅ ${categoryTitle} successfully published for ALL Students (Global across all institutes)!`);
+    } else {
+      alert(`✅ ${categoryTitle} successfully published specifically for "${assignedInstName}" students!`);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -231,7 +268,7 @@ const AdminNews = () => {
       setNewsList(updated);
       try {
         localStorage.setItem("epsNewsList", JSON.stringify(updated));
-      } catch (err) {
+      } catch (e) {
         console.error("Storage error:", err);
       }
     }
@@ -258,11 +295,6 @@ const AdminNews = () => {
     backgroundColor: "rgba(241, 245, 249, 0.94)", 
     fontFamily: "Arial, sans-serif",
     position: "relative",
-    backgroundImage: logoWatermark ? `url(${logoWatermark})` : "none",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "center",
-    backgroundSize: "350px",
-    backgroundBlendMode: "overlay",
     ...protectedStyle
   };
 
@@ -286,35 +318,6 @@ const AdminNews = () => {
     fontSize: "14px"
   };
 
-  const graphicCardStyle = (gradient) => ({
-    background: gradient,
-    borderRadius: "14px",
-    padding: "22px 14px",
-    color: "white",
-    textAlign: "center",
-    textDecoration: "none",
-    boxShadow: "0 6px 14px rgba(0,0,0,0.1)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer"
-  });
-
-  const iconCircleStyle = {
-    width: "54px",
-    height: "54px",
-    backgroundColor: "white",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "24px",
-    marginBottom: "10px",
-    boxShadow: "0 3px 8px rgba(0,0,0,0.12)"
-  };
-
   return (
     <div style={containerStyle} onContextMenu={(e) => e.preventDefault()}>
       
@@ -327,46 +330,13 @@ const AdminNews = () => {
             Official Notice & News Portal
           </h2>
           <p style={{ color: "#64748b", margin: 0, fontSize: "14px" }}>
-            Publish official notices, government news, and attach rich media (Video, Audio, Images, PDF, Documents)
+            Publish official notices for all students or choose a specific institute, and attach rich media (Video, Audio, Images, PDF, Documents)
           </p>
         </div>
 
-        {/* OFFICIAL PORTALS GRAPHIC CARDS SECTION */}
+        {/* OFFICIAL PORTALS GRAPHIC CARDS SECTION (SIMPLE, ATTRACTIVE, LARGER ICONS) */}
         <div style={{ marginBottom: "35px" }}>
-          <h3 style={{ color: "#1e293b", marginBottom: "15px", fontSize: "17px", fontWeight: 700 }}>
-            🌐 Official EPS & Government Portals
-          </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "14px" }}>
-            <a href="https://epsnepal.gov.np/notices" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)")}>
-              <div style={iconCircleStyle}>📄</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Official Notices</h4>
-            </a>
-
-            <a href="https://epsnepal.gov.np/news" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #0284c7 0%, #0369a1 100%)")}>
-              <div style={iconCircleStyle}>📰</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Official News</h4>
-            </a>
-
-            <a href="https://eoers.epsnepal.gov.np/" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #10b981 0%, #047857 100%)")}>
-              <div style={iconCircleStyle}>📝</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Application Portal</h4>
-            </a>
-
-            <a href="https://epstopik.hrdkorea.or.kr/epstopik/pass/candidate/sucessReportList.do?lang=en" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #f59e0b 0%, #b45309 100%)")}>
-              <div style={iconCircleStyle}>🔍</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>EPS Result Checker</h4>
-            </a>
-
-            <a href="https://epsnepal.gov.np/jobappform/" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #9333ea 0%, #6b21a8 100%)")}>
-              <div style={iconCircleStyle}>📋</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Job Application</h4>
-            </a>
-
-            <a href="https://epstopik.hrdkorea.or.kr/epstopik/cust/aid/NoticeList.do?lang=en" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #0f766e 0%, #115e59 100%)")}>
-              <div style={iconCircleStyle}>🏛️</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>HRD Korea Notices</h4>
-            </a>
-          </div>
+          <OfficialPortalButtons />
         </div>
 
         {/* PUBLISH FORM CARD */}
@@ -416,6 +386,107 @@ const AdminNews = () => {
           </div>
 
           <form onSubmit={(e) => { e.preventDefault(); handlePublish(category); }}>
+            
+            {/* SUPER ADMIN TARGET AUDIENCE SELECTOR */}
+            <div style={{ marginBottom: "20px", padding: "16px", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1.5px solid #cbd5e1" }}>
+              <label style={{ fontWeight: "bold", fontSize: "13.5px", color: "#1e3a8a", display: "flex", alignItems: "center", gap: "7px", marginBottom: "10px" }}>
+                <span>🎯</span> Choose Target Audience (Who should receive this notice?)
+              </label>
+
+              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center", marginBottom: targetAudience !== "all" ? "12px" : "0px" }}>
+                <label 
+                  style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "8px", 
+                    cursor: "pointer", 
+                    fontSize: "13.5px", 
+                    fontWeight: targetAudience === "all" ? 700 : 500, 
+                    color: targetAudience === "all" ? "#1e40af" : "#475569",
+                    backgroundColor: targetAudience === "all" ? "#dbeafe" : "#ffffff",
+                    padding: "8px 14px",
+                    borderRadius: "6px",
+                    border: targetAudience === "all" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  <input 
+                    type="radio" 
+                    name="superAdminTargetAudience" 
+                    checked={targetAudience === "all"} 
+                    onChange={() => setTargetAudience("all")} 
+                    style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                  />
+                  🌐 All Students (All Institutes / Global)
+                </label>
+
+                <label 
+                  style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "8px", 
+                    cursor: "pointer", 
+                    fontSize: "13.5px", 
+                    fontWeight: targetAudience !== "all" ? 700 : 500, 
+                    color: targetAudience !== "all" ? "#1e40af" : "#475569",
+                    backgroundColor: targetAudience !== "all" ? "#dbeafe" : "#ffffff",
+                    padding: "8px 14px",
+                    borderRadius: "6px",
+                    border: targetAudience !== "all" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  <input 
+                    type="radio" 
+                    name="superAdminTargetAudience" 
+                    checked={targetAudience !== "all"} 
+                    onChange={() => setTargetAudience(institutesList[0]?.name || "selected_institute")} 
+                    style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                  />
+                  🏢 Selected / Specific Institute Only
+                </label>
+              </div>
+
+              {/* Specific Institute Dropdown */}
+              {targetAudience !== "all" && (
+                <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px dashed #cbd5e1" }}>
+                  <label style={{ fontWeight: 600, fontSize: "12.5px", color: "#334155", display: "block", marginBottom: "6px" }}>
+                    Select Institute to Deliver Notice:
+                  </label>
+                  <select 
+                    value={targetAudience} 
+                    onChange={(e) => setTargetAudience(e.target.value)}
+                    style={{ 
+                      width: "100%", 
+                      padding: "10px 14px", 
+                      borderRadius: "6px", 
+                      border: "1.5px solid #2563eb", 
+                      backgroundColor: "#ffffff", 
+                      fontSize: "14px", 
+                      fontWeight: 600, 
+                      color: "#1e293b",
+                      cursor: "pointer"
+                    }}
+                    required
+                  >
+                    <option value="" disabled>-- Choose an Institute --</option>
+                    {institutesList.length === 0 ? (
+                      <option value="Language Institute">Language Institute</option>
+                    ) : (
+                      institutesList.map((inst, idx) => (
+                        <option key={inst.id || idx} value={inst.name}>
+                          🏢 {inst.name} {inst.username ? `(@${inst.username})` : ''} {inst.studentCount ? `— ${inst.studentCount} Students` : ''}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <span style={{ fontSize: "12px", color: "#64748b", marginTop: "6px", display: "block" }}>
+                    ℹ️ Only students belonging to this selected institute will see this notice on their student portal.
+                  </span>
+                </div>
+              )}
+            </div>
+
             <label style={{ fontWeight: "bold", fontSize: "13px", color: "#334155", display: "block", marginBottom: "6px" }}>
               {category === "news" ? "Official News Title" : "Notice Title"}
             </label>
@@ -573,7 +644,7 @@ const AdminNews = () => {
               </label>
             </div>
 
-            {/* Two Action Buttons: Publish Notice & Publish Official News */}
+            {/* Action Buttons: Publish Notice & Publish Official News */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
               <button 
                 type="button" 
@@ -689,6 +760,8 @@ const AdminNews = () => {
             <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
               {filteredNewsList.map((item) => {
                 const isNews = item.category === "news";
+                const isGlobal = !item.instituteName || item.targetAudience === "all";
+
                 return (
                   <div 
                     key={item.id} 
@@ -702,6 +775,8 @@ const AdminNews = () => {
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        
+                        {/* Notice / News Category Badge */}
                         {isNews ? (
                           <span style={{ backgroundColor: "#e0f2fe", color: "#0369a1", fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "10px" }}>
                             📰 Official News
@@ -711,6 +786,22 @@ const AdminNews = () => {
                             📢 Official Notice
                           </span>
                         )}
+
+                        {/* Target Audience Badge */}
+                        {isGlobal ? (
+                          <span style={{ backgroundColor: "#ecfdf5", color: "#065f46", fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "10px", border: "1px solid #a7f3d0" }}>
+                            🌐 All Students (Global)
+                          </span>
+                        ) : (
+                          <span style={{ backgroundColor: "#e0e7ff", color: "#4338ca", fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "10px", border: "1px solid #c7d2fe" }}>
+                            🏢 Target: {item.instituteName}
+                          </span>
+                        )}
+
+                        {/* Published By Badge */}
+                        <span style={{ backgroundColor: "#f1f5f9", color: "#475569", fontSize: "11px", fontWeight: 600, padding: "3px 8px", borderRadius: "10px" }}>
+                          Published by: {item.publishedBy === "admin" ? "Super Admin" : (item.instituteName || "Institute")}
+                        </span>
 
                         {item.isPopup && (
                           <span style={{ backgroundColor: "#dcfce7", color: "#166534", fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "10px" }}>

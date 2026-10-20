@@ -26,7 +26,9 @@ export async function POST(req) {
     const { session, errorResponse } = await requireInstituteOrAdmin(req);
     if (errorResponse) return errorResponse;
 
-    const instituteId = session.instituteId || 'default-institute';
+    const { searchParams: __sp } = new URL(req.url);
+    const instIdQuery = __sp.get('instId');
+    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
     const body = await req.json();
 
     const profile = await prisma.billingProfile.findUnique({
@@ -114,6 +116,85 @@ export async function POST(req) {
       }
     }
 
+    // Helper: English-only Date Time for Last Updated column
+    const nowEnglish = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kathmandu',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(new Date());
+
+    // Handle Single Expense Sync (Create, Edit, Delete)
+    if (body.action === 'sync_expense' || body.action === 'append_or_update_expense') {
+      const exp = body.expense;
+      if (!exp) {
+        return NextResponse.json({ error: 'No expense payload provided' }, { status: 400 });
+      }
+
+      const expPayload = {
+        action: 'append_or_update_expense',
+        ownerEmail: ownerEmail || '',
+        expense: {
+          id: exp.id,
+          date: exp.date,
+          title: exp.title,
+          category: exp.category,
+          amount: Number(exp.amount) || 0,
+          paymentMethod: exp.paymentMethod || 'Cash',
+          remarks: exp.remarks || '',
+          recordedBy: exp.recordedBy || '',
+          lastUpdated: exp.lastUpdated || nowEnglish,
+          isDeleted: Boolean(exp.isDeleted)
+        }
+      };
+
+      try {
+        const res = await fetch(googleSheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(expPayload),
+          redirect: 'follow'
+        });
+
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          return NextResponse.json({
+            error: formatGoogleError(res.status, errText, googleSheetUrl)
+          }, { status: 502 });
+        }
+
+        let expResult = null;
+        try {
+          const text = await res.text();
+          try { expResult = JSON.parse(text); } catch { expResult = { message: text }; }
+        } catch {
+          expResult = { success: true };
+        }
+
+        if (expResult?.message === "Sheet ready." || (expResult?.status === "success" && !expResult?.action && !expResult?.message?.includes("expense"))) {
+          return NextResponse.json({
+            success: false,
+            error: "Your Google Sheet is still running an older version of the Apps Script code. To enable automatic expense storage: Open your Google Sheet, click Extensions > Apps Script, paste the updated script from Tab 2, and deploy as a New version.",
+            needsScriptUpdate: true
+          }, { status: 400 });
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: expResult?.message || 'Expense successfully synced to Google Sheet!',
+          result: expResult
+        });
+      } catch (expErr) {
+        return NextResponse.json({
+          error: `Failed to sync expense to Google Apps Script URL: ${expErr.message}`
+        }, { status: 502 });
+      }
+    }
+
     // Bulk Sync Bills - Accept from body or query DB
     let bills = [];
     if (Array.isArray(body.bills) && body.bills.length > 0) {
@@ -130,17 +211,49 @@ export async function POST(req) {
       }
     }
 
+    // Ensure exactly 1 entry per student (by 10-digit contactNumber or billNumber)
+    const uniqueBillsMap = new Map();
+    for (const b of bills) {
+      const cleanPhone = (b.contactNumber || '').replace(/\D/g, '').slice(-10);
+      const key = cleanPhone || String(b.billNumber || '').trim().toLowerCase() || b.id;
+      uniqueBillsMap.set(key, b);
+    }
+    const deduplicatedBills = Array.from(uniqueBillsMap.values());
+
+    // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
+    const formatNepalPhone = (val) => {
+      if (!val) return '';
+      const digits = String(val).replace(/\D/g, '');
+      const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+      return last10 ? `'+977-${last10}` : '';
+    };
+
+    let formattedExpenses = [];
+    if (Array.isArray(body.expenses) && body.expenses.length > 0) {
+      formattedExpenses = body.expenses.map((exp) => ({
+        id: exp.id,
+        date: exp.date,
+        title: exp.title,
+        category: exp.category,
+        amount: Number(exp.amount) || 0,
+        paymentMethod: exp.paymentMethod || 'Cash',
+        remarks: exp.remarks || '',
+        recordedBy: exp.recordedBy || '',
+        lastUpdated: exp.lastUpdated || nowEnglish
+      }));
+    }
+
     const payload = {
       action: 'bulk_sync',
       instituteName: profile?.companyName || session.name || 'Institute',
       ownerEmail: ownerEmail || '',
-      bills: bills.map((b) => ({
+      bills: deduplicatedBills.map((b) => ({
         billNumber: b.billNumber,
         date: b.date,
         studentName: b.studentName,
         address: b.address,
-        contactNumber: b.contactNumber,
-        parentNumber: b.parentNumber || '',
+        contactNumber: formatNepalPhone(b.contactNumber),
+        parentNumber: formatNepalPhone(b.parentNumber),
         courseDetail: b.courseDetail,
         coursePackage: b.coursePackage,
         paymentSystem: b.paymentSystem,
@@ -155,8 +268,10 @@ export async function POST(req) {
         dueAmount: b.dueAmount,
         amountInWords: b.amountInWords,
         preparedBy: b.preparedBy,
-        createdAt: b.createdAt
-      }))
+        createdAt: b.createdAt,
+        lastUpdated: nowEnglish
+      })),
+      expenses: formattedExpenses
     };
 
     const res = await fetch(googleSheetUrl, {
@@ -199,10 +314,24 @@ export async function POST(req) {
       }
     }
 
+    if (formattedExpenses.length > 0 && result && result.syncedExpenses === undefined) {
+      return NextResponse.json({
+        success: false,
+        error: "Your Google Sheet is still running an older version of the Apps Script code. To enable automatic expense storage: Open your Google Sheet, click Extensions > Apps Script, paste the updated script from Tab 2, and deploy as a New version.",
+        needsScriptUpdate: true,
+        result
+      }, { status: 400 });
+    }
+
+    const successMsg = formattedExpenses.length > 0
+      ? `Successfully synchronized ${bills.length} bills and ${formattedExpenses.length} expenses to Google Sheet!`
+      : `Successfully synchronized ${bills.length} bills to Google Sheet!`;
+
     return NextResponse.json({
       success: true,
-      message: `Successfully synchronized ${bills.length} bills to Google Sheet!`,
+      message: successMsg,
       totalBills: bills.length,
+      totalExpenses: formattedExpenses.length,
       result
     });
   } catch (err) {

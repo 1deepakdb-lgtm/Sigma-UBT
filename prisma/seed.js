@@ -98,7 +98,7 @@ async function main() {
       role: 'student',
       name: 'Demo Student',
       phone: '9800000000',
-      batch: 'Morning',
+      batch: 'Full Set UBT',
       status: 'Active',
       instituteId: institute.id
     }

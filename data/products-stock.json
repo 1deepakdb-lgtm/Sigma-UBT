@@ -1,55 +1,42 @@
 [
   {
-    "id": "PROD-3",
+    "id": "PROD-1791548243307",
     "name": "Advance Book",
-    "price": 600,
-    "stock": 39,
-    "totalSold": 11,
-    "unit": "copies",
-    "updatedAt": "2026-10-08T05:56:13.288Z"
+    "price": 900,
+    "stock": 45,
+    "totalSold": 5,
+    "unit": "pcs",
+    "createdAt": "2026-10-09T12:17:23.308Z",
+    "updatedAt": "2026-10-17T20:41:00.833Z"
   },
   {
-    "id": "PROD-4",
-    "name": "Basic Book",
-    "price": 400,
-    "stock": 18,
-    "totalSold": 32,
-    "unit": "copies",
-    "updatedAt": "2026-10-08T05:56:13.288Z"
+    "id": "PROD-1791548270650",
+    "name": "Grammer Book",
+    "price": 500,
+    "stock": 47,
+    "totalSold": 3,
+    "unit": "pcs",
+    "createdAt": "2026-10-09T12:17:50.650Z",
+    "updatedAt": "2026-10-17T20:41:00.833Z"
   },
   {
-    "id": "PROD-5",
-    "name": "Grammar Book",
-    "price": 550,
-    "stock": 34,
-    "totalSold": 6,
-    "unit": "copies",
-    "updatedAt": "2026-10-08T05:56:13.288Z"
-  },
-  {
-    "id": "PROD-6",
-    "name": "Question Bank",
-    "price": 700,
-    "stock": 31,
-    "totalSold": 4,
-    "unit": "copies",
-    "updatedAt": "2026-10-08T05:56:13.288Z"
-  },
-  {
-    "id": "PROD-7",
-    "name": "Institute Bag",
-    "price": 800,
-    "stock": 29,
+    "id": "PROD-1791548289330",
+    "name": "Meaning Book",
+    "price": 500,
+    "stock": 449,
     "totalSold": 1,
     "unit": "pcs",
-    "updatedAt": "2026-10-08T05:44:06.672Z"
+    "createdAt": "2026-10-09T12:18:09.330Z",
+    "updatedAt": "2026-10-17T19:20:25.006Z"
   },
   {
-    "id": "PROD-8",
-    "name": "Student ID Card",
-    "price": 150,
-    "stock": 100,
+    "id": "PROD-MODEL-UBT-BANK",
+    "name": "Model Question Bank",
+    "price": 2500,
+    "stock": 999,
     "totalSold": 0,
-    "unit": "pcs"
+    "unit": "package",
+    "createdAt": "2026-10-15T00:00:00.000Z",
+    "updatedAt": "2026-10-15T00:00:00.000Z"
   }
 ]

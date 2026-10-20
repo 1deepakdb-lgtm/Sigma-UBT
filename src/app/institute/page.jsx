@@ -17,16 +17,14 @@ import { useRouter, useParams, usePathname } from "next/navigation";
 import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
 import InstituteBillingSection from "@/components/InstituteBillingSection";
+import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import { performLogout } from "@/lib/clientAuth";
 
 const InstituteDashboard = () => {
   const router = useRouter();
-  const [instituteName, setInstituteName] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("currentInstitute") || "Language Institute";
-    }
-    return "Language Institute";
-  });
+  const [instituteName, setInstituteName] = useState("Language Institute");
+
+  const [instId, setInstId] = useState(null);
 
   const [userRole, setUserRole] = useState(() => {
     if (typeof window !== "undefined") {
@@ -35,15 +33,23 @@ const InstituteDashboard = () => {
     return "institute";
   });
 
-  const [activeTab, setActiveTab] = useState(() => {
+  const [activeTab, setActiveTab] = useState("billing"); 
+  const [students, setStudents] = useState([]);
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("tab")) return params.get("tab");
-      if (localStorage.getItem("role") === "staff") return "billing";
+      if (params.get("institute")) setInstituteName(decodeURIComponent(params.get("institute")));
+      else setInstituteName(localStorage.getItem("currentInstitute") || "Language Institute");
+      
+      if (params.get("instId")) setInstId(params.get("instId"));
+      
+      if (params.get("tab")) setActiveTab(params.get("tab"));
+      else if (localStorage.getItem("role") === "staff" || params.get("superadmin") === "true") setActiveTab("billing");
+      
+      if (params.get("superadmin") === "true") setIsStudentsUnlocked(true);
+      else setIsStudentsUnlocked(sessionStorage.getItem("instituteStudentsUnlocked") === "true");
     }
-    return "billing";
-  }); 
-  const [students, setStudents] = useState([]);
+  }, []);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null); 
   const [formData, setFormData] = useState({ 
@@ -56,13 +62,20 @@ const InstituteDashboard = () => {
   const [copiedStudentId, setCopiedStudentId] = useState(null);
   const [copiedAllStudents, setCopiedAllStudents] = useState(false);
 
+  // Notice Publish State for Institute
+  const [noticeTitle, setNoticeTitle] = useState("");
+  const [noticeContent, setNoticeContent] = useState("");
+  const [noticeFileUrl, setNoticeFileUrl] = useState(null);
+  const [noticeFileName, setNoticeFileName] = useState("");
+  const [noticeFileType, setNoticeFileType] = useState("");
+  const [noticeFileSize, setNoticeFileSize] = useState(0);
+  const [isNoticePopup, setIsNoticePopup] = useState(false);
+  const [isNoticeUploading, setIsNoticeUploading] = useState(false);
+  const [noticeUploadError, setNoticeUploadError] = useState("");
+  const [showPublishNoticeForm, setShowPublishNoticeForm] = useState(false);
+
   // Lock state for Manage Students protected by Billing User ID & PW (with 20s auto-lock)
-  const [isStudentsUnlocked, setIsStudentsUnlocked] = useState(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("instituteStudentsUnlocked") === "true";
-    }
-    return false;
-  });
+  const [isStudentsUnlocked, setIsStudentsUnlocked] = useState(false);
   const [billingLoginUserId, setBillingLoginUserId] = useState("");
   const [billingLoginPassword, setBillingLoginPassword] = useState("");
   const [unlockError, setUnlockError] = useState("");
@@ -354,7 +367,16 @@ const InstituteDashboard = () => {
       savedPackages = savedPackages.map(p => instPrices[p.name] ? { ...p, price: instPrices[p.name] } : p);
     }
 
-    const savedSets = JSON.parse(localStorage.getItem("examSets")) || [];
+    const rawSets = JSON.parse(localStorage.getItem("examSets")) || [];
+    // Enforce Institute Isolation: only show global published sets OR sets created by this institute
+    const savedSets = rawSets.filter(s =>
+      s && (
+        s.isPublished === true ||
+        (!s.creatorInstituteName && s.isPrivate !== true) ||
+        (s.creatorInstituteName && s.creatorInstituteName.toLowerCase() === instituteName.toLowerCase()) ||
+        (instId && s.creatorInstituteId === instId)
+      )
+    );
     const allFoldersData = JSON.parse(localStorage.getItem("epsFoldersContent")) || {};
     const savedNews = JSON.parse(localStorage.getItem("epsNewsList")) || [];
 
@@ -372,16 +394,23 @@ const InstituteDashboard = () => {
       }
     }
 
-    // Always fetch latest notices and news from server API
-    fetch('/api/news')
+    // Fetch notices for this institute and its students only
+    const currentInst = instituteName || (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : "") || "";
+    const noticeQuery = currentInst ? `?role=institute&institute=${encodeURIComponent(currentInst)}` : "?role=institute";
+    fetch(`/api/news${noticeQuery}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.notices)) {
-          setNewsList(data.notices);
+          const myNotices = data.notices.filter(n => {
+            if (!n.instituteName) return true; // Global admin notice
+            if (!currentInst) return false;
+            return n.instituteName.trim().toLowerCase() === currentInst.trim().toLowerCase();
+          });
+          setNewsList(myNotices);
           try {
-            localStorage.setItem("epsNewsList", JSON.stringify(data.notices));
+            localStorage.setItem("epsNewsList", JSON.stringify(myNotices));
           } catch (e) {}
-          const livePopup = data.notices.find(n => n.isPopup);
+          const livePopup = myNotices.find(n => n.isPopup);
           if (livePopup) {
             const lastShownId = localStorage.getItem("lastShownInstitutePopupId");
             if (lastShownId !== livePopup.id.toString()) {
@@ -416,6 +445,117 @@ const InstituteDashboard = () => {
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleNoticeFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    let detectedType = "document";
+    const mime = (file.type || "").toLowerCase();
+    const name = (file.name || "").toLowerCase();
+
+    if (mime.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(name)) detectedType = "image";
+    else if (mime.startsWith("video/") || /\.(mp4|webm|mov|mkv)$/i.test(name)) detectedType = "video";
+    else if (mime.startsWith("audio/") || /\.(mp3|wav|ogg|m4a)$/i.test(name)) detectedType = "audio";
+    else if (name.endsWith(".pdf") || mime === "application/pdf") detectedType = "pdf";
+
+    setNoticeFileType(detectedType);
+    setNoticeFileName(file.name);
+    setNoticeFileSize(file.size);
+    setIsNoticeUploading(true);
+    setNoticeUploadError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        headers: { "x-user-role": "institute" }
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setNoticeFileUrl(data.url);
+        setIsNoticeUploading(false);
+      } else {
+        throw new Error(data.message || data.error || "Upload failed");
+      }
+    } catch (err) {
+      if (file.size <= 4 * 1024 * 1024) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setNoticeFileUrl(reader.result);
+          setIsNoticeUploading(false);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setIsNoticeUploading(false);
+        setNoticeUploadError(err.message || "Upload failed");
+      }
+    }
+  };
+
+  const handlePublishNotice = async (e) => {
+    e.preventDefault();
+    if (!noticeTitle.trim() || !noticeContent.trim()) {
+      alert("Please provide both Title and Details for the notice.");
+      return;
+    }
+
+    const payload = {
+      title: noticeTitle.trim(),
+      content: noticeContent.trim(),
+      category: "notice",
+      isPopup: isNoticePopup,
+      fileUrl: noticeFileUrl,
+      fileName: noticeFileName || (noticeFileUrl ? "Attached_Media" : ""),
+      fileType: noticeFileType,
+      fileSize: noticeFileSize,
+      instituteName: instituteName || "Language Institute",
+      instituteId: instId || null,
+      publishedBy: "institute"
+    };
+
+    try {
+      const res = await fetch("/api/news", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Notice published successfully! Delivered to your institute students only.");
+        setNoticeTitle("");
+        setNoticeContent("");
+        setNoticeFileUrl(null);
+        setNoticeFileName("");
+        setNoticeFileType("");
+        setNoticeFileSize(0);
+        setIsNoticePopup(false);
+        setShowPublishNoticeForm(false);
+        loadData();
+      } else {
+        alert("Failed to publish: " + (data.error || "Error"));
+      }
+    } catch (err) {
+      alert("Publish failed: " + err.message);
+    }
+  };
+
+  const handleDeleteNotice = async (id) => {
+    if (!confirm("Are you sure you want to delete this notice?")) return;
+    try {
+      const res = await fetch(`/api/news?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        loadData();
+      } else {
+        alert("Delete failed: " + (data.error || "Error"));
+      }
+    } catch (err) {
+      alert("Delete error: " + err.message);
+    }
   };
 
   // Fixed translation handler using script-range verification for Nepali (Devanagari) input
@@ -658,7 +798,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
   const contentAreaStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto", userSelect: "text" };
   const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "20px", border: "1px solid #e2e8f0" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", backgroundColor: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", borderRadius: "8px", overflow: "hidden" };
-  const thStyle = { backgroundColor: "#f8fafc", padding: "15px", textAlign: "left", borderBottom: "2px solid #e2e8f0", color: "#475569" };
+  const thStyle = { backgroundColor: "#f8fafc", padding: "14px 16px", textAlign: "left", color: "#475569", fontWeight: "700", fontSize: "13px", borderBottom: "2px solid #e2e8f0" };
   const tdStyle = { padding: "15px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", verticalAlign: "middle" };
   const inputStyle = { width: "100%", padding: "10px", marginBottom: "15px", border: "1px solid #cbd5e1", borderRadius: "5px", boxSizing: "border-box", backgroundColor: "white" };
 
@@ -781,7 +921,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
           
           <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>EPS Book</button>
           <button onClick={() => handleTabChange("dictionary")} style={getNavBtnStyle("dictionary")}>Dictionary</button>
-          <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>EPS Notices</button>
+          <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>Notice</button>
           {userRole !== "staff" && (
             <button onClick={() => handleTabChange("students")} style={getNavBtnStyle("students")}>
               Manage Students
@@ -797,7 +937,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
       <div style={contentAreaStyle}>
         
         {activeTab === "billing" && (
-          <InstituteBillingSection instituteName={instituteName} userRole={userRole} />
+          <InstituteBillingSection instituteName={instituteName} userRole={userRole} instId={instId} />
         )}
 
         {(activeTab === "students" || activeTab === "exams") && (
@@ -951,47 +1091,42 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
             <div>
               {/* Top Metrics Cards */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px", marginBottom: "24px" }}>
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #3b82f6, #2563eb)", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "12px 14px" }}>
-                <span style={{ fontSize: "11px", color: "#f1f5f9", fontWeight: "700", textTransform: "uppercase" }}>Available Packages</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Available Packages</span>
+                <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {examPackages.length}
                 </p>
-                <span style={{ fontSize: "11px", color: "#e2e8f0" }}>UBT & Chapterwise Packages</span>
               </div>
 
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #10b981, #059669)", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "12px 14px" }}>
-                <span style={{ fontSize: "11px", color: "#f1f5f9", fontWeight: "700", textTransform: "uppercase" }}>Institute Choice Packages</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Created by {instituteName}</span>
+                <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {examPackages.filter(p => p.isCustom || p.createdBy === instituteName).length}
                 </p>
-                <span style={{ fontSize: "11px", color: "#e2e8f0" }}>Created by {instituteName}</span>
               </div>
 
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0ea5e9, #0284c7)", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "12px 14px" }}>
-                <span style={{ fontSize: "11px", color: "#f1f5f9", fontWeight: "700", textTransform: "uppercase" }}>Accessible Exam Sets</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Accessible Exam Sets</span>
+                <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {examSets.length}
                 </p>
-                <span style={{ fontSize: "11px", color: "#e2e8f0" }}>Sets for bundling & testing</span>
               </div>
 
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #f59e0b, #d97706)", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "12px 14px" }}>
-                <span style={{ fontSize: "11px", color: "#f1f5f9", fontWeight: "700", textTransform: "uppercase" }}>Package Pricing Range</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "16px", letterSpacing: "-0.5px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Package Pricing Range</span>
+                <p style={{ margin: "6px 0 0 0", fontSize: "17px", letterSpacing: "-0.5px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {examPackages.length > 0 ? (
                     `${examPackages[0]?.price || 'Rs. 1,000'} - ${examPackages[examPackages.length - 1]?.price || 'Rs. 4,500'}`
                   ) : "Configurable"}
                 </p>
-                <span style={{ fontSize: "11px", color: "#e2e8f0" }}>Customizable per package</span>
-              </div>
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #8b5cf6, #6d28d9)", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "12px 14px" }}>
-                <span style={{ fontSize: "11px", color: "#f1f5f9", fontWeight: "700", textTransform: "uppercase" }}>Total Students</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "20px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {students.length}
-                </p>
-                <span style={{ fontSize: "11px", color: "#e2e8f0" }}>Enrolled in {instituteName}</span>
               </div>
 
+              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Students</span>
+                <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {students.length}
+                </p>
+              </div>
             </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
@@ -1030,36 +1165,76 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
                   }}>
                     ⏱️ Auto-lock in: <strong style={{ color: studentsAutoLockCountdown <= 5 ? "#ef4444" : "#0284c7" }}>{studentsAutoLockCountdown}s</strong>
                   </span>
+                  <Link
+                    href={`/institute/questions?institute=${encodeURIComponent(instituteName)}${instId ? `&instId=${instId}` : ""}`}
+                    className="dynamic-btn"
+                    style={{
+                      textDecoration: "none",
+                      background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "0 20px",
+                      minHeight: "42px",
+                      borderRadius: "6px",
+                      fontWeight: "700",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
+                    }}
+                    title="Create and manage your private UBT sets & question bucket"
+                  >
+                    <span style={{ color: "#ffffff" }}>Create UBT Set</span>
+                  </Link>
+
                   <button
-                  className="dynamic-btn"
-                  onClick={() => setShowCreatePkgForm(!showCreatePkgForm)}
-                  style={{
-                    backgroundColor: showCreatePkgForm ? "#ef4444" : "#15803d",
-                    color: showCreatePkgForm ? "#ffffff" : "#facc15",
-                    border: "none",
-                    padding: "0 20px",
-                    minHeight: "42px",
-                    borderRadius: "6px",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}
-                >
-                  {showCreatePkgForm ? (
-                    "✕ Cancel Creation"
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: "1.2" }}>
-                      <span>+ Create UBT Exam Package</span>
-                      <span style={{ fontSize: "11px", fontWeight: "normal", opacity: 0.9, marginTop: "2px" }}>(By Your Own Choice)</span>
-                    </div>
-                  )}
-                </button>
-                  <button onClick={() => showForm ? resetForm() : setShowForm(true)} className="hover-student-btn" style={{ backgroundColor: showForm ? "#ef4444" : "#15803d", color: showForm ? "#ffffff" : "#facc15", border: "none", padding: "0 20px", minHeight: "42px", borderRadius: "5px", cursor: "pointer", fontWeight: "bold", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                    {showForm ? "Cancel" : "+ Add New Student"}
+                    className="dynamic-btn"
+                    onClick={() => setShowCreatePkgForm(!showCreatePkgForm)}
+                    style={{
+                      background: showCreatePkgForm ? "#ef4444" : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "0 20px",
+                      minHeight: "42px",
+                      borderRadius: "6px",
+                      fontWeight: "700",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
+                    }}
+                  >
+                    {showCreatePkgForm ? (
+                      <span style={{ color: "#ffffff" }}>✕ Cancel Creation</span>
+                    ) : (
+                      <span style={{ color: "#ffffff" }}>Create UBT Exam Package</span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => showForm ? resetForm() : setShowForm(true)}
+                    className="dynamic-btn"
+                    style={{
+                      background: showForm ? "#ef4444" : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "0 20px",
+                      minHeight: "42px",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: "700",
+                      fontSize: "14px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
+                    }}
+                  >
+                    <span style={{ color: "#ffffff" }}>{showForm ? "Cancel" : "Add New Student"}</span>
                   </button>
                 </div>
               </div>
@@ -1118,12 +1293,12 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
 
               <table style={tableStyle}>
                 <thead>
-                  <tr>
-                    <th style={thStyle}>Student Name</th>
+                  <tr style={{ backgroundColor: "#f8fafc" }}>
+                    <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
                     <th style={thStyle}>Phone Number</th>
                     <th style={thStyle}>Package & Expiry</th>
                     <th style={thStyle}>Status</th>
-                    <th style={thStyle}>Actions</th>
+                    <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1353,6 +1528,27 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
                     Click <strong>"✏️ Set / Edit Price"</strong> on any package to customize its fee for your students.
                   </p>
                 </div>
+
+                <Link
+                  href={`/institute/questions?institute=${encodeURIComponent(instituteName)}${instId ? `&instId=${instId}` : ""}`}
+                  style={{
+                    textDecoration: "none",
+                    background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    fontWeight: "700",
+                    fontSize: "13px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
+                  }}
+                  title="Create your own private UBT sets & question bucket"
+                >
+                  <span style={{ color: "#ffffff" }}>Create UBT Set</span>
+                </Link>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
@@ -1587,112 +1783,249 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
 
         {/* DICTIONARY TAB */}
         {activeTab === "dictionary" && (
-          <DictionarySection title="📖 Multi-Language Dictionary" />
+          <DictionarySection />
         )}
 
         {activeTab === "news" && (
           <div>
-            <div style={{ marginBottom: "35px" }}>
-             <h1 style={{ color: "#1e293b", marginBottom: "20px", textAlign: "center" }}>Notice Board & Official Portals</h1>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "15px" }}>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📄</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Official Notices</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(2,132,199,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📰</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Official News</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(5,150,105,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📝</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>New Application Portal</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(217,119,6,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>🔍</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>EPS Result Checker</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(124,58,237,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📋</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Job Application Form</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(15,118,110,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>🏛️</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>HRD Korea Notice Board</h4>
-                </a>
-              </div>
+            {/* 6 official portal buttons with simple, attractive, larger icons */}
+            <div style={{ marginBottom: "32px" }}>
+              <OfficialPortalButtons />
             </div>
 
-            <div style={cardStyle}>
-              <h1 style={{ marginTop: 0, color: "#1e293b", marginBottom: "20px" }}>Institute Notice</h1>
-              {newsList.length === 0 ? (
-                <p style={{ color: "#64748b" }}>No notices available.</p>
-              ) : (
+            {/* INSTITUTE NOTICE SECTION — publish & full poster view */}
+            <div style={{ maxWidth: "860px", margin: "0 auto" }}>
+              {/* Publish Notice Action Bar */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
                 <div>
-                  {newsList.map(item => (
-                    <div key={item.id} style={{ marginBottom: "20px", padding: "16px", backgroundColor: item.isPopup ? "#eff6ff" : "#f8fafc", border: item.isPopup ? "2px solid #2563eb" : "1px solid #cbd5e1", borderRadius: "8px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          {item.category === "news" ? (
-                            <span style={{ backgroundColor: "#e0f2fe", color: "#0369a1", fontSize: "11px", fontWeight: "bold", padding: "3px 9px", borderRadius: "10px" }}>
-                              📰 Official News
-                            </span>
-                          ) : (
-                            <span style={{ backgroundColor: "#dbeafe", color: "#1e40af", fontSize: "11px", fontWeight: "bold", padding: "3px 9px", borderRadius: "10px" }}>
-                              📢 Notice
-                            </span>
-                          )}
-                          <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "16px" }}>{item.title}</h4>
-                        </div>
-                        <span style={{ fontSize: "12px", color: "#64748b" }}>{item.date}</span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: "14px", color: "#334155", lineHeight: "1.5", whiteSpace: "pre-line" }}>{item.content}</p>
+                  <h3 style={{ margin: 0, color: "#0f172a", fontSize: "20px", fontWeight: "800" }}>
+                    Institute Notices ({newsList.length})
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPublishNoticeForm(!showPublishNoticeForm)}
+                  style={{
+                    background: showPublishNoticeForm ? "#64748b" : "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "10px",
+                    fontWeight: "700",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 14px rgba(99,102,241,0.30)",
+                    transition: "0.2s"
+                  }}
+                >
+                  {showPublishNoticeForm ? "✕ Close Form" : "+ Publish Notice for Students"}
+                </button>
+              </div>
 
-                      {item.fileUrl && item.fileType === "audio" && (
-                        <div style={{ marginTop: "12px" }}>
-                          <audio controls src={item.fileUrl} style={{ width: "100%", height: "36px" }} />
-                        </div>
-                      )}
-                      {item.fileUrl && item.fileType === "video" && (
-                        <div style={{ marginTop: "12px" }}>
-                          <video controls src={item.fileUrl} style={{ width: "100%", maxHeight: "260px", borderRadius: "6px", backgroundColor: "#000" }} />
-                        </div>
-                      )}
-                      {item.fileUrl && item.fileType === "image" && (
-                        <div style={{ marginTop: "12px" }}>
-                          <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <img src={item.fileUrl} alt="Notice" style={{ maxWidth: "250px", maxHeight: "180px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
-                          </a>
-                        </div>
-                      )}
-                      {item.fileUrl && (item.fileType === "document" || item.fileType === "pdf") && (
-                        <div style={{ marginTop: "12px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                          <a 
-                            href={item.fileUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "bold", backgroundColor: "#2563eb", color: "#ffffff", padding: "6px 14px", borderRadius: "6px", textDecoration: "none" }}
+              {/* Publish Form */}
+              {showPublishNoticeForm && (
+                <div style={{ background: "white", borderRadius: "16px", padding: "26px", marginBottom: "28px", boxShadow: "0 6px 24px rgba(0,0,0,0.08)", border: "2px solid #6366f1" }}>
+                  <h4 style={{ margin: "0 0 16px 0", color: "#1e1b4b", fontSize: "17px", fontWeight: "800" }}>
+                    Publish New Notice for {instituteName} Students
+                  </h4>
+                  <form onSubmit={handlePublishNotice}>
+                    <div style={{ marginBottom: "14px" }}>
+                      <label style={{ display: "block", fontSize: "13px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>Notice Title *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Special Weekend Model Exam Notice"
+                        value={noticeTitle}
+                        onChange={(e) => setNoticeTitle(e.target.value)}
+                        required
+                        style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", boxSizing: "border-box" }}
+                      />
+                    </div>
+
+                    <div style={{ marginBottom: "14px" }}>
+                      <label style={{ display: "block", fontSize: "13px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>Notice Details / Description *</label>
+                      <textarea
+                        placeholder="Enter notice details, instructions, schedules..."
+                        value={noticeContent}
+                        onChange={(e) => setNoticeContent(e.target.value)}
+                        required
+                        style={{ width: "100%", height: "100px", padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px", boxSizing: "border-box", resize: "vertical" }}
+                      />
+                    </div>
+
+                    {/* Media upload */}
+                    <div style={{ marginBottom: "16px", padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                        <label style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b" }}>📎 Attach Media (Poster Image, Video, Audio, PDF, Document)</label>
+                        {noticeFileUrl && (
+                          <button
+                            type="button"
+                            onClick={() => { setNoticeFileUrl(null); setNoticeFileName(""); setNoticeFileType(""); setNoticeFileSize(0); }}
+                            style={{ background: "#fee2e2", color: "#dc2626", border: "none", padding: "3px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
                           >
-                            <span>{item.fileType === "pdf" ? "📕" : "📄"}</span> View {item.fileType === "pdf" ? "PDF" : "Document"}
-                          </a>
-                          <a 
-                            href={item.fileUrl} 
-                            download={item.fileName || "Notice_Document"} 
-                            style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "bold", backgroundColor: "#0284c7", color: "#ffffff", padding: "6px 14px", borderRadius: "6px", textDecoration: "none" }}
-                          >
-                            <span>📥</span> Download
-                          </a>
+                            ✕ Remove
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept="audio/*,video/*,image/*,application/pdf,.doc,.docx,.txt"
+                        onChange={handleNoticeFileUpload}
+                        disabled={isNoticeUploading}
+                        style={{ width: "100%", fontSize: "13px" }}
+                      />
+                      {isNoticeUploading && (
+                        <p style={{ margin: "8px 0 0 0", color: "#4f46e5", fontSize: "12px", fontWeight: "600" }}>⏳ Uploading media file... please wait</p>
+                      )}
+                      {noticeFileUrl && !isNoticeUploading && (
+                        <div style={{ marginTop: "10px", padding: "8px 12px", background: "#f0fdf4", borderRadius: "6px", border: "1px solid #86efac", fontSize: "12px", color: "#15803d", fontWeight: "600" }}>
+                          ✓ Attached: {noticeFileName || "File"} ({noticeFileType.toUpperCase()})
                         </div>
                       )}
+                    </div>
+
+                    {/* Popup checkbox */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "18px" }}>
+                      <input
+                        type="checkbox"
+                        id="instNoticePopup"
+                        checked={isNoticePopup}
+                        onChange={(e) => setIsNoticePopup(e.target.checked)}
+                        style={{ width: "17px", height: "17px", cursor: "pointer" }}
+                      />
+                      <label htmlFor="instNoticePopup" style={{ fontSize: "13px", fontWeight: "700", color: "#4f46e5", cursor: "pointer" }}>
+                        Show as Pop-up Flex Banner on Student Dashboard
+                      </label>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button
+                        type="submit"
+                        disabled={isNoticeUploading}
+                        style={{
+                          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                          color: "white",
+                          border: "none",
+                          padding: "11px 24px",
+                          borderRadius: "8px",
+                          fontWeight: "700",
+                          fontSize: "14px",
+                          cursor: "pointer",
+                          boxShadow: "0 4px 12px rgba(16,185,129,0.3)"
+                        }}
+                      >
+                        Publish Notice to Students
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPublishNoticeForm(false)}
+                        style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "11px 18px", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Published Notices Container */}
+              <div style={{ background: "white", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0" }}>
+                {newsList.length === 0 ? (
+                  <p style={{ color: "#64748b", textAlign: "center", padding: "40px 0", margin: 0 }}>No notices available.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                    {newsList.map(item => (
+                      <div key={item.id} style={{
+                        borderRadius: "14px",
+                        overflow: "hidden",
+                        border: item.isPopup ? "2px solid #6366f1" : "1px solid #e2e8f0",
+                        boxShadow: item.isPopup ? "0 4px 20px rgba(99,102,241,0.12)" : "0 2px 8px rgba(0,0,0,0.05)",
+                        background: item.isPopup ? "linear-gradient(135deg, #fafaff 0%, #f0f0ff 100%)" : "#fff",
+                      }}>
+                        {/* Header bar — centered with delete action */}
+                        <div style={{ background: item.isPopup ? "linear-gradient(90deg, #6366f1, #4f46e5)" : "linear-gradient(90deg, #475569, #334155)", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                          <div style={{ flex: 1, textAlign: "center" }}>
+                            <h4 style={{ margin: 0, color: "white", fontSize: "17px", fontWeight: "700" }}>{item.title}</h4>
+                            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}>📅 {item.date}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteNotice(item.id)}
+                            style={{ background: "#ef4444", color: "white", border: "none", padding: "5px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+
+                      {/* Body — centered */}
+                      <div style={{ padding: "22px 24px", textAlign: "center" }}>
+                        {item.content && (
+                          <p style={{ margin: 0, fontSize: "14px", color: "#334155", lineHeight: "1.8", whiteSpace: "pre-line", marginBottom: (item.fileUrl ? "18px" : "0"), textAlign: "center" }}>{item.content}</p>
+                        )}
+
+                        {/* Image poster — full view, adjusting width & height according to notice poster, centered */}
+                        {item.fileUrl && item.fileType === "image" && (
+                          <div style={{ display: "flex", justifyContent: "center", width: "100%", margin: "0 auto" }}>
+                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", maxWidth: "100%" }}>
+                              <img
+                                src={item.fileUrl}
+                                alt="Notice Poster"
+                                style={{
+                                  maxWidth: "100%",
+                                  width: "auto",
+                                  height: "auto",
+                                  maxHeight: "85vh",
+                                  display: "block",
+                                  margin: "0 auto",
+                                  borderRadius: "10px",
+                                  border: "1px solid #e2e8f0",
+                                  objectFit: "contain",
+                                  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                                  cursor: "pointer"
+                                }}
+                              />
+                            </a>
+                          </div>
+                        )}
+
+                        {/* Audio */}
+                        {item.fileUrl && item.fileType === "audio" && (
+                          <div style={{ maxWidth: "500px", margin: "14px auto 0 auto" }}>
+                            <audio controls src={item.fileUrl} style={{ width: "100%", height: "40px" }} />
+                          </div>
+                        )}
+
+                        {/* Video — full width */}
+                        {item.fileUrl && item.fileType === "video" && (
+                          <div style={{ maxWidth: "700px", margin: "14px auto 0 auto" }}>
+                            <video controls src={item.fileUrl} style={{ width: "100%", height: "auto", borderRadius: "10px", backgroundColor: "#000", display: "block" }} />
+                          </div>
+                        )}
+
+                        {/* PDF / Document */}
+                        {item.fileUrl && (item.fileType === "document" || item.fileType === "pdf") && (
+                          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center", marginTop: "16px" }}>
+                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer"
+                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "bold", background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "#fff", padding: "8px 18px", borderRadius: "8px", textDecoration: "none" }}>
+                              <span>{item.fileType === "pdf" ? "📕" : "📄"}</span> View {item.fileType === "pdf" ? "PDF" : "Document"}
+                            </a>
+                            <a href={item.fileUrl} download={item.fileName || "Notice_Document"}
+                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "bold", background: "linear-gradient(135deg, #0284c7, #0369a1)", color: "#fff", padding: "8px 18px", borderRadius: "8px", textDecoration: "none" }}>
+                              <span>📥</span> Download
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+
+
 
       </div>
     </div>

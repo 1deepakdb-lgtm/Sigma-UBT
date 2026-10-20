@@ -42,25 +42,34 @@ model Institute {
 }
 
 model ExamPackage {
-  id          String    @id @default(uuid())
-  name        String    @unique // e.g. "Full Set UBT", "10 Set UBT"
-  description String?
-  sets        ExamSet[]
-  createdAt   DateTime  @default(now())
+  id                   String    @id @default(uuid())
+  name                 String    @unique // e.g. "Full Set UBT", "10 Set UBT"
+  description          String?
+  creatorInstituteId   String?
+  creatorInstituteName String?
+  isPrivate            Boolean   @default(false)
+  isPublished          Boolean   @default(true)
+  sets                 ExamSet[]
+  createdAt            DateTime  @default(now())
 }
 
 model ExamSet {
-  id              String             @id @default(uuid())
-  name            String             // e.g. "Chapterwise 01", "Set 01"
-  packageName     String?
-  packageId       String?
-  package         ExamPackage?       @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  duration        Int                @default(3000) // 50 minutes in seconds
-  questions       Question[]
-  sessions        ExamSession[]
-  results         ExamResult[]
-  instituteAccess InstituteExamSet[]
-  createdAt       DateTime           @default(now())
+  id                   String             @id @default(uuid())
+  name                 String             // e.g. "Chapterwise 01", "Set 01"
+  packageName          String?
+  packageId            String?
+  package              ExamPackage?       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  creatorInstituteId   String?
+  creatorInstituteName String?
+  isPrivate            Boolean            @default(false)
+  isPublished          Boolean            @default(true)
+  setType              String?            @default("UBT")
+  duration             Int                @default(3000) // 50 minutes in seconds
+  questions            Question[]
+  sessions             ExamSession[]
+  results              ExamResult[]
+  instituteAccess      InstituteExamSet[]
+  createdAt            DateTime           @default(now())
 }
 
 model InstituteExamSet {

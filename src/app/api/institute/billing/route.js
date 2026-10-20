@@ -8,7 +8,9 @@ export async function GET(req) {
     const { session, errorResponse } = await requireInstituteOrAdmin(req);
     if (errorResponse) return errorResponse;
 
-    const instituteId = session.instituteId || 'default-institute';
+    const { searchParams: __sp } = new URL(req.url);
+    const instIdQuery = __sp.get('instId');
+    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
     const { searchParams } = new URL(req.url);
     const billNumber = searchParams.get('billNumber');
     const phone = searchParams.get('phone');
@@ -99,7 +101,9 @@ export async function POST(req) {
     const { session, errorResponse } = await requireInstituteOrAdmin(req);
     if (errorResponse) return errorResponse;
 
-    const instituteId = session.instituteId || 'default-institute';
+    const { searchParams: __sp } = new URL(req.url);
+    const instIdQuery = __sp.get('instId');
+    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
     const data = await req.json();
 
     const {
@@ -123,7 +127,9 @@ export async function POST(req) {
       preparedBy
     } = data;
 
-    const cleanPhone = (contactNumber || '').trim();
+    const cleanPhoneDigits = (contactNumber || '').replace(/\D/g, '');
+    const cleanPhoneLast10 = cleanPhoneDigits.length >= 10 ? cleanPhoneDigits.slice(-10) : cleanPhoneDigits;
+    const cleanPhone = cleanPhoneLast10 ? `+977-${cleanPhoneLast10}` : (contactNumber || '').trim();
     if (!cleanPhone) {
       return NextResponse.json({ error: 'WhatsApp Contact Number is required.' }, { status: 400 });
     }
@@ -132,7 +138,14 @@ export async function POST(req) {
     const existingBill = await prisma.billRecord.findFirst({
       where: {
         instituteId,
-        contactNumber: cleanPhone
+        OR: [
+          { contactNumber: cleanPhone },
+          ...(cleanPhoneLast10.length >= 6 ? [
+            { contactNumber: cleanPhoneLast10 },
+            { contactNumber: `+977${cleanPhoneLast10}` },
+            { contactNumber: { contains: cleanPhoneLast10 } }
+          ] : [])
+        ]
       }
     });
 
@@ -298,7 +311,11 @@ export async function POST(req) {
         address: address || '',
         contactNumber: cleanPhone,
         parentName: (parentName || '').trim(),
-        parentNumber: parentNumber || '',
+        parentNumber: (() => {
+          const pDigits = (parentNumber || '').replace(/\D/g, '');
+          const pLast10 = pDigits.length >= 10 ? pDigits.slice(-10) : pDigits;
+          return pLast10 ? `+977-${pLast10}` : (parentNumber || '').trim();
+        })(),
         classTime: (classTime || '').trim(),
         courseDetail: courseDetail.trim(),
         coursePackage: coursePackage || 'Full packages',
@@ -342,21 +359,48 @@ async function triggerSheetSync(instituteId, bill, materials) {
   try {
     const profile = await prisma.billingProfile.findUnique({ where: { instituteId } });
     if (profile?.googleSheetUrl) {
+      // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
+      const formatNepalPhone = (val) => {
+        if (!val) return '';
+        const digits = String(val).replace(/\D/g, '');
+        const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+        return last10 ? `'+977-${last10}` : '';
+      };
+
+      // English-only Date Time for Last Updated column
+      const nowEnglish = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Kathmandu',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }).format(new Date());
+
+      const formattedBill = {
+        ...bill,
+        ...(bill.contactNumber !== undefined ? { contactNumber: formatNepalPhone(bill.contactNumber) } : {}),
+        ...(bill.parentNumber !== undefined ? { parentNumber: formatNepalPhone(bill.parentNumber) } : {}),
+        lastUpdated: nowEnglish
+      };
+
       fetch(profile.googleSheetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'append_or_update_bill',
-          bill,
+          bill: formattedBill,
           materials: materials || [],
           ownerEmail: profile.ownerEmail || ''
         })
       }).then(async (res) => {
-        if (res.ok) {
+        if (res.ok && !bill.isDeleted) {
           await prisma.billRecord.update({
             where: { id: bill.id },
             data: { isSyncedToSheet: true, syncedAt: new Date() }
-          });
+          }).catch(() => {});
         }
       }).catch((e) => {
         console.warn('Background Google Sheet sync notice:', e.message);
@@ -372,7 +416,9 @@ export async function PUT(req) {
     const { session, errorResponse } = await requireInstituteAdmin(req);
     if (errorResponse) return errorResponse;
 
-    const instituteId = session.instituteId || 'default-institute';
+    const { searchParams: __sp } = new URL(req.url);
+    const instIdQuery = __sp.get('instId');
+    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
     const body = await req.json();
 
     // 1. LIFETIME GOOGLE SETUP PIN OPEN COUNTER (Database Persistence for Lifetime Lock)
@@ -425,15 +471,23 @@ export async function PUT(req) {
 
       const due = Math.max(0, total - paid);
 
+      const editContactDigits = body.contactNumber ? body.contactNumber.replace(/\D/g, '') : '';
+      const editContactLast10 = editContactDigits.length >= 10 ? editContactDigits.slice(-10) : editContactDigits;
+      const editContactNumber = editContactLast10 ? `+977-${editContactLast10}` : (body.contactNumber ? body.contactNumber.trim() : existing.contactNumber);
+
+      const editParentDigits = body.parentNumber ? body.parentNumber.replace(/\D/g, '') : '';
+      const editParentLast10 = editParentDigits.length >= 10 ? editParentDigits.slice(-10) : editParentDigits;
+      const editParentNumber = editParentLast10 ? `+977-${editParentLast10}` : (body.parentNumber !== undefined ? (body.parentNumber || '').trim() : existing.parentNumber);
+
       const updatedBill = await prisma.billRecord.update({
         where: { id: body.billId },
         data: {
           date: body.date || existing.date,
           studentName: body.studentName ? body.studentName.trim() : existing.studentName,
           address: body.address !== undefined ? body.address : existing.address,
-          contactNumber: body.contactNumber ? body.contactNumber.trim() : existing.contactNumber,
+          contactNumber: editContactNumber,
           parentName: body.parentName !== undefined ? (body.parentName || '').trim() : existing.parentName,
-          parentNumber: body.parentNumber !== undefined ? body.parentNumber : existing.parentNumber,
+          parentNumber: editParentNumber,
           classTime: body.classTime !== undefined ? (body.classTime || '').trim() : existing.classTime,
           courseDetail: body.courseDetail ? body.courseDetail.trim() : existing.courseDetail,
           coursePackage: body.coursePackage || existing.coursePackage,
@@ -518,7 +572,9 @@ export async function DELETE(req) {
     const { session, errorResponse } = await requireInstituteAdmin(req);
     if (errorResponse) return errorResponse;
 
-    const instituteId = session.instituteId || 'default-institute';
+    const { searchParams: __sp } = new URL(req.url);
+    const instIdQuery = __sp.get('instId');
+    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 

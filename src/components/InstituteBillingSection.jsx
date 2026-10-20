@@ -93,9 +93,107 @@ export const PAYMENT_METHODS = [
   "Other"
 ];
 
-export default function InstituteBillingSection({ instituteName, userRole }) {
+// Predefined Course Package Options
+export const COURSE_PACKAGES = [
+  "Full course",
+  "30 days",
+  "45 days",
+  "2 months",
+  "3 months",
+  "6 months"
+];
+
+export const DEFAULT_PACKAGE_FEES = {
+  "Full course": { grossFee: 15000, discountPercent: 0 },
+  "30 days": { grossFee: 5000, discountPercent: 0 },
+  "45 days": { grossFee: 7500, discountPercent: 0 },
+  "2 months": { grossFee: 9000, discountPercent: 0 },
+  "3 months": { grossFee: 12000, discountPercent: 0 },
+  "6 months": { grossFee: 18000, discountPercent: 0 }
+};
+
+// Payment Method Clean SVG Icons
+export function CashIcon({ size = 15, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle", flexShrink: 0 }}>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M6 12h.01M18 12h.01" />
+    </svg>
+  );
+}
+
+export function EsewaIcon({ size = 18 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="17 13.8 130 130"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ verticalAlign: "middle", flexShrink: 0, display: "inline-block" }}
+    >
+      <path
+        d="M17 78.7978C17 42.8985 46.1683 13.7974 82.1512 13.7974C116.016 13.7974 143.848 39.5813 147 72.5427H122.22V85.0503H147C143.848 118.018 116.016 143.797 82.1512 143.797C46.1683 143.797 17 114.698 17 78.7978Z"
+        fill="#60bb46"
+      />
+      <path
+        d="M103.68 64.9646C105.058 64.7497 106.237 64.3843 107.043 63.9066C107.852 63.4271 108.26 62.6534 108.069 61.4531C107.687 59.0477 106.478 55.8933 104.328 52.3545C102.322 48.619 99.1641 45.4175 94.8575 42.7533C90.7496 40.2297 85.3095 39.3245 78.736 40.1875C74.4301 40.8719 70.2071 42.0648 66.2617 43.9205C62.3187 45.7796 58.7668 48.9827 55.5505 53.1919C51.8055 58.5377 49.6704 63.9818 49.0838 69.1895C48.3232 74.4129 48.3158 78.8204 49.0341 82.2303C49.9629 88.0753 51.2711 92.9747 52.929 96.7647C54.6175 100.728 57.3426 104.524 60.9235 108.189C64.9335 112.304 69.56 114.748 74.6787 115.878C79.7791 116.832 84.9077 116.905 89.9045 116.117C95.0439 115.125 99.1873 113.416 102.651 110.754C105.913 107.951 108.633 105.051 110.579 101.753C112.354 98.4758 113.669 95.6281 114.322 93.0565C114.528 92.1423 114.592 91.4281 114.534 91.0842C114.48 90.737 114.255 90.4254 113.913 90.4758L111.48 89.631C111.134 89.6822 110.965 89.7112 110.644 89.9368C110.33 90.1642 110.184 90.3609 110.068 90.7337C108.981 93.9021 107.005 97.0342 103.742 99.8373C100.507 102.813 96.3911 104.696 91.0794 105.711C83.9897 106.657 77.6953 104.829 72.3431 100.041C66.9933 95.2479 63.4612 88.582 61.926 80.0182C61.2963 76.0653 61.0361 73.2862 61.1364 71.6875L103.68 64.9646ZM61.0038 66.4211C61.7164 59.7908 63.4182 54.9443 66.2575 51.6734C69.0969 48.4116 72.4955 46.4591 76.2827 45.8631C79.9266 45.463 83.017 46.0301 85.2117 47.623C87.4082 49.2125 89.1414 51.2312 90.2103 53.5292C91.1109 55.8511 91.7555 57.6887 91.9742 59.065C92.1092 59.9231 91.8441 60.4934 91.2103 60.9456C90.4315 61.5961 89.2541 61.959 87.704 62.2045L61.0038 66.4211Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+export function KhaltiIcon({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ verticalAlign: "middle", flexShrink: 0 }}>
+      <rect width="24" height="24" rx="5" fill="#7e22ce" />
+      <path d="M7 6v12M7 12l6-6M7 12l6 6" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function BankIcon({ size = 15, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle", flexShrink: 0 }}>
+      <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3" />
+    </svg>
+  );
+}
+
+export function CardIcon({ size = 15, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle", flexShrink: 0 }}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <line x1="2" y1="10" x2="22" y2="10" />
+      <line x1="6" y1="15" x2="10" y2="15" />
+    </svg>
+  );
+}
+
+export function getPaymentMethodIcon(method, size = 15) {
+  const m = String(method || "").trim().toLowerCase();
+  if (m.includes("esewa")) return <EsewaIcon size={size} />;
+  if (m.includes("khalti")) return <KhaltiIcon size={size} />;
+  if (m.includes("bank")) return <BankIcon size={size} color="#1e40af" />;
+  if (m === "cash") return <CashIcon size={size} color="#16a34a" />;
+  return <CardIcon size={size} color="#d97706" />;
+}
+
+export default function InstituteBillingSection({ instituteName, userRole, instId }) {
+  const apiWithInst = (url) => {
+    if (!instId) return url;
+    return url.includes('?') ? url + '&instId=' + instId : url + '?instId=' + instId;
+  };
   // Compulsory Authentication & Auto-Logout (30 seconds of inactivity)
   const [isBillingAuthenticated, setIsBillingAuthenticated] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("superadmin") === "true") setIsBillingAuthenticated(true);
+    }
+  }, []);
   const [billingRole, setBillingRole] = useState(() => {
     return userRole === "staff" ? "user" : "admin";
   });
@@ -103,6 +201,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
   const [inactivityCountdown, setInactivityCountdown] = useState(30);
   const [autoLogoutNotice, setAutoLogoutNotice] = useState("");
   const lastActivityRef = useRef(Date.now());
+  const customPaymentInputRef = useRef(null);
 
   // Gate Form States
   const [loginUserId, setLoginUserId] = useState("");
@@ -116,6 +215,48 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     if (typeof window === "undefined") return "9999";
     return localStorage.getItem(`billingAdminPin_${instKey}`) || "9999";
   });
+
+  // Course Package Default Fees & Discounts Configuration (Persisted per institute)
+  const [feeConfig, setFeeConfig] = useState(() => {
+    if (typeof window === "undefined") {
+      return { defaultPackage: "Full course", packages: { ...DEFAULT_PACKAGE_FEES }, courseFees: {}, updatedAt: "" };
+    }
+    try {
+      const saved = localStorage.getItem(`instituteFeeConfig_${instKey}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          defaultPackage: parsed.defaultPackage || "Full course",
+          packages: { ...DEFAULT_PACKAGE_FEES, ...(parsed.packages || parsed) },
+          courseFees: parsed.courseFees || {},
+          updatedAt: parsed.updatedAt || parsed.lastUpdated || parsed.updatedDate || ""
+        };
+      }
+    } catch (e) {
+      console.error("Failed to parse feeConfig:", e);
+    }
+    return { defaultPackage: "Full course", packages: { ...DEFAULT_PACKAGE_FEES }, courseFees: {}, updatedAt: "" };
+  });
+
+  const [showFeeConfigModal, setShowFeeConfigModal] = useState(false);
+  const [selectedCourseForFees, setSelectedCourseForFees] = useState("EPS Topik Full course");
+  const [editingCourseFees, setEditingCourseFees] = useState({});
+  const [editingPackageFees, setEditingPackageFees] = useState(() => ({ ...DEFAULT_PACKAGE_FEES }));
+  const [selectedDefaultPkg, setSelectedDefaultPkg] = useState("Full course");
+  const [feeUpdateDate, setFeeUpdateDate] = useState("");
+  const [feeSavedToast, setFeeSavedToast] = useState("");
+
+  const getPackageFee = (pkgName, courseName = "") => {
+    const pkg = pkgName || (feeConfig && feeConfig.defaultPackage) || "Full course";
+    const course = courseName || "";
+    if (course && feeConfig && feeConfig.courseFees && feeConfig.courseFees[course]?.packages?.[pkg]) {
+      return feeConfig.courseFees[course].packages[pkg];
+    }
+    if (feeConfig && feeConfig.packages && feeConfig.packages[pkg]) {
+      return feeConfig.packages[pkg];
+    }
+    return DEFAULT_PACKAGE_FEES[pkg] || { grossFee: 15000, discountPercent: 0 };
+  };
 
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -203,6 +344,13 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
   const initialRandomTime = getRandomClassTime();
 
+  const defaultPackageName = (feeConfig && feeConfig.defaultPackage) || "Full course";
+  const defaultPkgInfo = getPackageFee(defaultPackageName, "EPS Topik Full course");
+  const defaultGross = Number(defaultPkgInfo.grossFee) || 15000;
+  const defaultDisc = Number(defaultPkgInfo.discountPercent) || 0;
+  const defaultDiscAmt = defaultGross * (defaultDisc / 100);
+  const defaultNet = Math.max(0, defaultGross - defaultDiscAmt);
+
   const defaultForm = {
     date: new Date().toISOString().split('T')[0],
     studentName: "",
@@ -213,15 +361,15 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     classTime: initialRandomTime.time,
     classTimePeriod: initialRandomTime.period,
     courseDetail: "EPS Topik Full course",
-    coursePackage: "Full course",
+    coursePackage: defaultPackageName,
     paymentSystem: "Full Payment",
     paymentMethod: "Cash",
     customPaymentMethod: "",
-    grossFee: "",
-    discountPercent: 0,
-    discountAmount: 0,
-    totalFee: "", // Final Total Fee (Includes 13% VAT/PAN)
-    paidAmount: "",
+    grossFee: defaultGross,
+    discountPercent: defaultDisc,
+    discountAmount: defaultDiscAmt,
+    totalFee: defaultNet, // Final Total Fee (Includes 13% VAT/PAN)
+    paidAmount: defaultNet,
     materials: [...defaultMaterials],
     preparedBy: "", // Blank typing input as requested!
     isExistingStudent: false,
@@ -259,16 +407,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     }
   });
 
-  const DEFAULT_PRODUCTS_LIST = [
-    { id: 'PROD-1', name: 'UBT Exam Access', price: 1000, stock: 100, totalSold: 0, unit: 'pcs' },
-    { id: 'PROD-2', name: 'Meaning Book', price: 500, stock: 50, totalSold: 0, unit: 'copies' },
-    { id: 'PROD-3', name: 'Advance Book', price: 600, stock: 50, totalSold: 0, unit: 'copies' },
-    { id: 'PROD-4', name: 'Basic Book', price: 400, stock: 50, totalSold: 0, unit: 'copies' },
-    { id: 'PROD-5', name: 'Grammar Book', price: 550, stock: 40, totalSold: 0, unit: 'copies' },
-    { id: 'PROD-6', name: 'Question Bank', price: 700, stock: 35, totalSold: 0, unit: 'copies' },
-    { id: 'PROD-7', name: 'Institute Bag', price: 800, stock: 30, totalSold: 0, unit: 'pcs' },
-    { id: 'PROD-8', name: 'Student ID Card', price: 150, stock: 100, totalSold: 0, unit: 'pcs' }
-  ];
+  const DEFAULT_PRODUCTS_LIST = [];
 
   const [products, setProducts] = useState(() => {
     if (typeof window === "undefined") return DEFAULT_PRODUCTS_LIST;
@@ -293,6 +432,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
   const [selectedItemToAdd, setSelectedItemToAdd] = useState("");
   const [customItemToAdd, setCustomItemToAdd] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
+  const [isItemFree, setIsItemFree] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -341,20 +481,53 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     return (localStorage.getItem(`billingAdminPin_${instKey}`) || adminPin || "9999").trim();
   };
 
-  // Hidden millisecond background sync to Google Sheet (Zero UI delay)
+  // Hidden background sync fallback to Google Sheet (Zero UI delay)
   const autoSyncToGoogleSheetBackground = (bill, allBills) => {
-    const sheetUrl = (profile.googleSheetUrl || (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "").trim();
-    if (!sheetUrl) return;
+    // If backend profile has googleSheetUrl, the backend API (/api/institute/billing)
+    // already automatically triggers background sync (triggerSheetSync).
+    // Firing simultaneously from frontend causes duplicate entries in Google Sheet.
+    if (profile && profile.googleSheetUrl && profile.googleSheetUrl.trim()) {
+      return; // Handled reliably by backend triggerSheetSync (avoids double entry!)
+    }
+
+    const localWebhook = (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "";
+    if (!localWebhook.trim()) return;
+
+    // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
+    const formatNepalPhone = (val) => {
+      if (!val) return '';
+      const digits = String(val).replace(/\D/g, '');
+      const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+      return last10 ? `'+977-${last10}` : '';
+    };
+
+    // English-only Date Time for Last Updated column
+    const nowEnglish = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kathmandu',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(new Date());
+
+    const formattedBill = bill ? {
+      ...bill,
+      ...(bill.contactNumber !== undefined ? { contactNumber: formatNepalPhone(bill.contactNumber) } : {}),
+      ...(bill.parentNumber !== undefined ? { parentNumber: formatNepalPhone(bill.parentNumber) } : {}),
+      lastUpdated: nowEnglish
+    } : bill;
 
     try {
-      fetch(sheetUrl, {
+      fetch(localWebhook.trim(), {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "append_or_update_bill",
-          bill,
-          bills: allBills || bills,
+          bill: formattedBill,
           materials: (bill && bill.materials) || [],
           ownerEmail: profile.ownerEmail || "",
           timestamp: Date.now()
@@ -363,9 +536,75 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     } catch (e) {}
   };
 
+  // Hidden background sync for Expenses to Google Sheet (Zero UI delay)
+  const autoSyncExpenseToGoogleSheet = (expense) => {
+    if (!expense) return;
+    const webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+      (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "";
+    if (!webhookUrl || webhookUrl === "setup_done") return;
+
+    // English-only Date Time for Last Updated column
+    const nowEnglish = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kathmandu',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(new Date());
+
+    const formattedExpense = {
+      id: expense.id,
+      date: expense.date,
+      title: expense.title,
+      category: expense.category,
+      amount: Number(expense.amount) || 0,
+      paymentMethod: expense.paymentMethod || "Cash",
+      remarks: expense.remarks || "",
+      recordedBy: expense.recordedBy || "",
+      lastUpdated: nowEnglish,
+      isDeleted: Boolean(expense.isDeleted)
+    };
+
+    // 1. Primary: Server-side API (/api/institute/billing/sync) follows redirects cleanly
+    fetch(apiWithInst("/api/institute/billing/sync"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "sync_expense",
+        googleSheetUrl: webhookUrl,
+        ownerEmail: (profile && profile.ownerEmail) || "",
+        expense: formattedExpense
+      })
+    }).catch(() => {
+      // 2. Client fallback direct fetch
+      try {
+        fetch(webhookUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "append_or_update_expense",
+            expense: formattedExpense,
+            ownerEmail: (profile && profile.ownerEmail) || "",
+            timestamp: Date.now()
+          })
+        }).catch(() => {});
+      } catch (e) {}
+    });
+  };
+
   // Instant single invoice CSV download
   const handleDownloadSingleBillCSV = (bill = selectedInvoice) => {
     if (!bill) return;
+    const formatPhoneForCsv = (val) => {
+      if (!val) return '';
+      const digits = String(val).replace(/\D/g, '');
+      const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+      return last10 ? `+977-${last10}` : '';
+    };
     const headers = [
       "Bill No", "Date", "Student Name", "Address", "Contact (WhatsApp)",
       "Parent Contact", "Course Detail", "Course Package", "Payment Status",
@@ -377,8 +616,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       `"${bill.date || ''}"`,
       `"${(bill.studentName || '').replace(/"/g, '""')}"`,
       `"${(bill.address || '').replace(/"/g, '""')}"`,
-      `"${bill.contactNumber || ''}"`,
-      `"${bill.parentNumber || ''}"`,
+      `"${formatPhoneForCsv(bill.contactNumber)}"`,
+      `"${formatPhoneForCsv(bill.parentNumber)}"`,
       `"${(bill.courseDetail || '').replace(/"/g, '""')}"`,
       `"${bill.coursePackage || ''}"`,
       `"${bill.paymentSystem || ''}"`,
@@ -415,7 +654,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
 
 
-  // Authentication & Gate Handler (Unified 🛡️ Login for Admin & User)
+  // Authentication & Gate Handler (Unified  Login for Admin & User)
   const handleGateLogin = async (e) => {
     e.preventDefault();
     setLoginError("");
@@ -533,7 +772,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       return;
     }
     if (expAmount > 200 && !(newExpenseForm.remarks || "").trim()) {
-      alert("❌ Bill Number / Voucher Number is mandatory for expenses greater than Rs. 200. Please enter the Bill Number.");
+      alert("Bill Number / Voucher Number is mandatory for expenses greater than Rs. 200. Please enter the Bill Number.");
       return;
     }
     const currentStaffName = activeStaffName || (typeof window !== "undefined" && localStorage.getItem("currentUser")) || (billingRole === "admin" ? "Admin" : "Staff");
@@ -553,6 +792,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     if (typeof window !== "undefined") {
       localStorage.setItem(`instituteBillingExpenses_${instKey}`, JSON.stringify(updated));
     }
+    // Auto-sync expense to Google Sheet
+    autoSyncExpenseToGoogleSheet(newEntry);
     setNewExpenseForm({
       date: getLocalDateStr(),
       title: "",
@@ -582,13 +823,14 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       return;
     }
     if (expAmount > 200 && !(editingExpense.remarks || "").trim()) {
-      alert("❌ Bill Number / Voucher Number is mandatory for expenses greater than Rs. 200. Please enter the Bill Number.");
+      alert("Bill Number / Voucher Number is mandatory for expenses greater than Rs. 200. Please enter the Bill Number.");
       return;
     }
 
+    let updatedExpObj = null;
     const updated = expenses.map(exp => {
       if (exp.id === editingExpense.id) {
-        return {
+        updatedExpObj = {
           ...exp,
           date: editingExpense.date,
           title: editingExpense.title.trim(),
@@ -600,6 +842,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           lastModifiedBy: activeStaffName || "Admin",
           lastModifiedAt: new Date().toISOString()
         };
+        return updatedExpObj;
       }
       return exp;
     });
@@ -609,6 +852,10 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       localStorage.setItem(`instituteBillingExpenses_${instKey}`, JSON.stringify(updated));
     }
     setEditingExpense(null);
+    // Auto-sync updated expense to Google Sheet
+    if (updatedExpObj) {
+      autoSyncExpenseToGoogleSheet(updatedExpObj);
+    }
   };
 
   // Admin-Only: Delete Expense
@@ -625,6 +872,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     if (typeof window !== "undefined") {
       localStorage.setItem(`instituteBillingExpenses_${instKey}`, JSON.stringify(updated));
     }
+    // Auto-sync deletion to Google Sheet
+    autoSyncExpenseToGoogleSheet({ id, isDeleted: true });
   };
 
   // Filter expenses: Users/Staff can ONLY see today's expenses; Admin can see daily, weekly, monthly, and all
@@ -676,10 +925,59 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     setTimeout(cleanUp, 2500);
   };
 
+  // Expenses CSV Export Handler - Generates downloadable spreadsheet of expenses
+  const handleExportExpensesCSV = () => {
+    const list = getFilteredExpenses();
+    if (!list || list.length === 0) {
+      alert("No expenses recorded for this timeframe to export.");
+      return;
+    }
+    const headers = [
+      "S.N.",
+      "Date",
+      "Title / Details",
+      "Category",
+      "Amount (Rs.)",
+      "Payment Method",
+      "Recorded By",
+      "Bill No / Voucher / Remarks"
+    ];
+    const rows = list.map((exp, idx) => [
+      idx + 1,
+      `"${(exp.date || '').replace(/"/g, '""')}"`,
+      `"${(exp.title || '').replace(/"/g, '""')}"`,
+      `"${(exp.category || '').replace(/"/g, '""')}"`,
+      Number(exp.amount) || 0,
+      `"${(exp.paymentMethod || 'Cash').replace(/"/g, '""')}"`,
+      `"${(exp.recordedBy || '').replace(/"/g, '""')}"`,
+      `"${(exp.remarks || '').replace(/"/g, '""')}"`
+    ]);
+    const totalAmount = list.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+    rows.push([
+      "TOTAL",
+      "",
+      "",
+      "",
+      totalAmount,
+      "",
+      "",
+      ""
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    const today = typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10);
+    link.setAttribute("download", `Expenses_${expenseTimeframe}_${(instituteName || 'institute').replace(/[^a-zA-Z0-9]/g, '_')}_${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Immediate manual logout/lock
   const handleBillingLogout = () => {
     setIsBillingAuthenticated(false);
-    setAutoLogoutNotice("🔒 Billing system is locked. Please login to access records.");
+    setAutoLogoutNotice("Billing system is locked. Please login to access records.");
     setShowBillModal(false);
     setShowProfileModal(false);
     setShowScriptModal(false);
@@ -710,7 +1008,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
       if (false) {
         setIsBillingAuthenticated(false);
-        setAutoLogoutNotice("🔒 Billing system auto-locked after 20 seconds of inactivity.");
+        setAutoLogoutNotice("Billing system auto-locked after 20 seconds of inactivity.");
         setShowBillModal(false);
         setShowProfileModal(false);
         setShowScriptModal(false);
@@ -784,7 +1082,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     setStaffLoading(true);
     setStaffError("");
     try {
-      const res = await fetch('/api/institute/staff');
+      const res = await fetch(apiWithInst("/api/institute/staff"));
       if (res.ok) {
         const data = await res.json();
         setStaffList(data.staff || []);
@@ -808,7 +1106,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       return;
     }
     try {
-      const res = await fetch('/api/institute/staff', {
+      const res = await fetch(apiWithInst("/api/institute/staff"), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newStaffForm)
@@ -829,7 +1127,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
   const handleDeleteStaff = async (staffId, staffName) => {
     if (!confirm(`Are you sure you want to remove staff member "${staffName}"?`)) return;
     try {
-      const res = await fetch(`/api/institute/staff?id=${staffId}`, {
+      const res = await fetch(apiWithInst(`/api/institute/staff?id=${staffId}`), {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -852,7 +1150,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       return;
     }
     try {
-      const res = await fetch(`/api/institute/billing?id=${billId}`, {
+      const res = await fetch(apiWithInst(`/api/institute/billing?id=${billId}`), {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -877,7 +1175,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
   // Load backend profile & bills
   const loadBillingData = async () => {
     try {
-      const res = await fetch('/api/institute/billing');
+      const res = await fetch(apiWithInst("/api/institute/billing"));
       if (res.ok) {
         const data = await res.json();
         if (data.profile) {
@@ -905,7 +1203,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
   const loadProducts = async () => {
     try {
       setProductsLoading(true);
-      const res = await fetch('/api/institute/billing/products', {
+      const res = await fetch(apiWithInst("/api/institute/billing/products"), {
         credentials: 'include',
         headers: { 'x-user-role': billingRole || 'admin' }
       });
@@ -926,7 +1224,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
   // Admin-Only: Add stock to existing product
   const handleAdminRestock = async (productId, addQty) => {
     if (billingRole !== "admin") {
-      alert("❌ Permission Denied: Stock can only be added by Admin.");
+      alert("Permission Denied: Stock can only be added by Admin.");
       return;
     }
     const qtyNum = Number(addQty);
@@ -935,7 +1233,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       return;
     }
     try {
-      const res = await fetch('/api/institute/billing/products', {
+      const res = await fetch(apiWithInst("/api/institute/billing/products"), {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -955,7 +1253,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         localStorage.setItem(`instituteBillingProducts_${instKey}`, JSON.stringify(data.products));
         setRestockingProduct(null);
         setRestockAmount("");
-        alert(`✅ ${data.message || `Successfully added ${qtyNum} stock!`}`);
+        alert(` ${data.message || `Successfully added ${qtyNum} stock!`}`);
       } else {
         alert(data.error || "Failed to add stock.");
       }
@@ -969,7 +1267,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
   const handleAdminCreateProduct = async (e) => {
     e.preventDefault();
     if (billingRole !== "admin") {
-      alert("❌ Permission Denied: Only Admin can create products.");
+      alert("Permission Denied: Only Admin can create products.");
       return;
     }
     if (!newProductForm.name || !newProductForm.name.trim()) {
@@ -977,7 +1275,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       return;
     }
     try {
-      const res = await fetch('/api/institute/billing/products', {
+      const res = await fetch(apiWithInst("/api/institute/billing/products"), {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -999,7 +1297,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         localStorage.setItem(`instituteBillingProducts_${instKey}`, JSON.stringify(data.products));
         setNewProductForm({ name: "", price: "", stock: "", unit: "copies" });
         setShowAddProductForm(false);
-        alert(`✅ ${data.message || "Product created successfully!"}`);
+        alert(` ${data.message || "Product created successfully!"}`);
       } else {
         alert(data.error || "Failed to create product.");
       }
@@ -1012,14 +1310,14 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
   // Admin-Only: Delete product
   const handleAdminDeleteProduct = async (productId, productName) => {
     if (billingRole !== "admin") {
-      alert("❌ Permission Denied: Only Admin can delete products.");
+      alert("Permission Denied: Only Admin can delete products.");
       return;
     }
     if (!confirm(`Are you sure you want to remove "${productName}" from stock inventory?`)) {
       return;
     }
     try {
-      const res = await fetch(`/api/institute/billing/products?id=${productId}&role=admin`, {
+      const res = await fetch(apiWithInst(`/api/institute/billing/products?id=${productId}&role=admin`), {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'x-user-role': 'admin' }
@@ -1028,7 +1326,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       if (res.ok && data.success) {
         setProducts(data.products);
         localStorage.setItem(`instituteBillingProducts_${instKey}`, JSON.stringify(data.products));
-        alert(`✅ Product "${productName}" removed.`);
+        alert(`Product "${productName}" removed.`);
       } else {
         alert(data.error || "Failed to delete product.");
       }
@@ -1055,6 +1353,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           setSelectedInvoice(null);
         } else if (showProfileModal) {
           setShowProfileModal(false);
+        } else if (showFeeConfigModal) {
+          setShowFeeConfigModal(false);
         } else if (showScriptModal) {
           handleCloseGoogleSetupModal();
         } else if (showStaffModal) {
@@ -1073,7 +1373,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editingExpense, selectedInvoice, showProfileModal, showScriptModal, showStaffModal, showStockModal, showExpenseModal, showPinModal, showChangePinModal]);
+  }, [editingExpense, selectedInvoice, showProfileModal, showFeeConfigModal, showScriptModal, showStaffModal, showStockModal, showExpenseModal, showPinModal, showChangePinModal]);
 
   // Compute next bill number
   const getNextBillNumber = () => {
@@ -1146,7 +1446,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       }));
 
       if (remaining <= 0) {
-        alert(`ℹ️ Notice for Student "${existing.studentName}" (WhatsApp: +977-${cleanDigits}):\nThis student's bill (${existing.billNumber}) is already FULLY PAID. No further payments are required.`);
+        alert(`Notice for Student "${existing.studentName}" (WhatsApp: +977-${cleanDigits}):\nThis student's bill (${existing.billNumber}) is already FULLY PAID. No further payments are required.`);
       }
     } else {
       setForm(prev => ({
@@ -1186,12 +1486,150 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     });
   };
 
+  // Handle Course Package Change: auto-populates gross fee and discount % from feeConfig defaults for current course
+  const handleCoursePackageChange = (selectedPackage, currentCourse) => {
+    const course = currentCourse !== undefined ? currentCourse : form.courseDetail;
+    const pkgDefaults = getPackageFee(selectedPackage, course);
+    const gross = Number(pkgDefaults.grossFee) || 0;
+    const discPct = Number(pkgDefaults.discountPercent) || 0;
+    const materialsList = form.materials || [];
+    const materialsTotal = materialsList.reduce((acc, m) => acc + (Number(m.amount) || 0), 0);
+    const discAmt = gross * (discPct / 100);
+    const netCourseFee = Math.max(0, gross - discAmt);
+    const finalTotal = Math.max(0, netCourseFee + materialsTotal);
+
+    setForm(prev => ({
+      ...prev,
+      coursePackage: selectedPackage,
+      ...(currentCourse !== undefined ? { courseDetail: currentCourse } : {}),
+      grossFee: gross,
+      discountPercent: discPct,
+      discountAmount: discAmt,
+      totalFee: finalTotal,
+      paidAmount: prev.paymentSystem === "Full Payment" ? finalTotal : Math.min(Number(prev.paidAmount || 0), finalTotal)
+    }));
+  };
+
+  // Handle Course Detail Change: auto-populates standard child package and fee structure for the selected course
+  const handleCourseDetailChange = (selectedCourse) => {
+    const course = selectedCourse || "";
+    if (!form.isExistingStudent || form.isEditingExistingBill) {
+      const courseDefPkg = (course && feeConfig?.courseFees?.[course]?.defaultPackage) || form.coursePackage || "Full course";
+      handleCoursePackageChange(courseDefPkg, course);
+    } else {
+      setForm(prev => ({ ...prev, courseDetail: course }));
+    }
+  };
+
+  // One-time save current Gross Fee & Discount as default for this package & course
+  const handleSaveCurrentAsDefault = (pkg) => {
+    const targetPkg = pkg || form.coursePackage || "Full course";
+    const targetCourse = form.courseDetail || "EPS Topik Full course";
+    const gross = Number(form.grossFee) || 0;
+    const disc = Number(form.discountPercent) || 0;
+    const currentDate = typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10);
+    
+    const existingCourseData = feeConfig.courseFees?.[targetCourse] || {
+      defaultPackage: targetPkg,
+      packages: { ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) }
+    };
+    const updatedCoursePackages = {
+      ...(existingCourseData.packages || feeConfig.packages || DEFAULT_PACKAGE_FEES),
+      [targetPkg]: { grossFee: gross, discountPercent: disc }
+    };
+    const updatedCourseFees = {
+      ...(feeConfig.courseFees || {}),
+      [targetCourse]: {
+        ...existingCourseData,
+        packages: updatedCoursePackages
+      }
+    };
+
+    const newConfig = {
+      ...feeConfig,
+      courseFees: updatedCourseFees,
+      updatedAt: currentDate
+    };
+    setFeeConfig(newConfig);
+    try {
+      localStorage.setItem(`instituteFeeConfig_${instKey}`, JSON.stringify(newConfig));
+    } catch (e) {}
+    setFeeSavedToast(`Saved Rs. ${gross.toLocaleString()} (${disc}% off) as default for "${targetCourse}" (${targetPkg})!`);
+    setTimeout(() => setFeeSavedToast(""), 3500);
+  };
+
+  // Save all package default fees and discounts (for standard and each course)
+  const handleSaveAllPackageFees = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const saveDate = feeUpdateDate || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10));
+    
+    const mergedCourseFees = { ...(feeConfig.courseFees || {}), ...editingCourseFees };
+
+    const newConfig = {
+      defaultPackage: selectedCourseForFees === "STANDARD_DEFAULT" ? selectedDefaultPkg : (feeConfig.defaultPackage || "Full course"),
+      packages: { ...editingPackageFees },
+      courseFees: mergedCourseFees,
+      updatedAt: saveDate
+    };
+    setFeeConfig(newConfig);
+    try {
+      localStorage.setItem(`instituteFeeConfig_${instKey}`, JSON.stringify(newConfig));
+    } catch (err) {}
+    setShowFeeConfigModal(false);
+    setFeeSavedToast("Course package default fee structures updated successfully!");
+    setTimeout(() => setFeeSavedToast(""), 3500);
+
+    // If bill modal is currently open and not locked, refresh form to match new defaults
+    if (showBillModal && !form.isExistingStudent && !form.isEditingExistingBill) {
+      const curCourse = form.courseDetail;
+      const curPkg = form.coursePackage || selectedDefaultPkg;
+      const pkgInfo = (curCourse && newConfig.courseFees?.[curCourse]?.packages?.[curPkg]) || newConfig.packages[curPkg] || newConfig.packages[selectedDefaultPkg];
+      if (pkgInfo) {
+        updateFeeCalculations(pkgInfo.grossFee, pkgInfo.discountPercent);
+      }
+    }
+  };
+
+  // Reset bill form helper with package fee defaults
+  const resetBillForm = () => {
+    const currentStaffName = (typeof window !== "undefined" && localStorage.getItem("currentUser")) || "";
+    const rnd = getRandomClassTime();
+    const defCourse = "EPS Topik Full course";
+    const defPkg = (feeConfig && feeConfig.courseFees?.[defCourse]?.defaultPackage) || (feeConfig && feeConfig.defaultPackage) || "Full course";
+    const pkgDefaults = getPackageFee(defPkg, defCourse);
+    const gross = Number(pkgDefaults.grossFee) || 15000;
+    const discPct = Number(pkgDefaults.discountPercent) || 0;
+    const discAmt = gross * (discPct / 100);
+    const netTotal = Math.max(0, gross - discAmt);
+
+    return {
+      ...defaultForm,
+      courseDetail: defCourse,
+      coursePackage: defPkg,
+      grossFee: gross,
+      discountPercent: discPct,
+      discountAmount: discAmt,
+      totalFee: netTotal,
+      paidAmount: netTotal,
+      classTime: rnd.time,
+      classTimePeriod: rnd.period,
+      materials: [...defaultMaterials],
+      preparedBy: billingRole === "user" ? (currentStaffName || "") : ""
+    };
+  };
+
+  // Open Create New Bill Modal with fresh defaults
+  const handleOpenCreateBill = () => {
+    setForm(resetBillForm());
+    setShowBillModal(true);
+  };
+
   // Save profile header (Unrestricted for Admin)
   const handleSaveProfile = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await fetch('/api/institute/billing', {
+      const res = await fetch(apiWithInst("/api/institute/billing"), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile)
@@ -1202,15 +1640,15 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         setProfile(data.profile);
         localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify(data.profile));
         setShowProfileModal(false);
-        alert(`✅ ${data.message || "Company Header saved successfully!"}`);
+        alert(` ${data.message || "Company Header saved successfully!"}`);
       } else {
         const err = await res.json();
-        alert(`❌ ${err.error || "Failed to update header"}`);
+        alert(` ${err.error || "Failed to update header"}`);
       }
     } catch {
       localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify(profile));
       setShowProfileModal(false);
-      alert("✅ Company Header updated locally.");
+      alert("Company Header updated locally.");
     }
   };
 
@@ -1273,16 +1711,19 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     setShowBillModal(true);
   };
 
-  // Add item from Dropdown Arrow with Stock & Quantity Checking
-  const handleAddItemFromDropdown = () => {
-    const itemName = selectedItemToAdd === "Other" ? customItemToAdd.trim() : selectedItemToAdd.trim();
-    if (!itemName) {
-      alert("Please select or type an item / book name.");
-      return;
+  // Add item from Dropdown Arrow with Stock & Quantity Checking (Auto-Add or Manual)
+  const handleAddItemFromDropdown = (directItemName) => {
+    let itemName = "";
+    if (typeof directItemName === "string" && directItemName.trim()) {
+      itemName = directItemName.trim();
+    } else {
+      itemName = selectedItemToAdd === "Other" ? (customItemToAdd || "").trim() : (selectedItemToAdd || "").trim();
     }
+    if (!itemName || itemName === "Other") return;
 
     const matchedProd = products.find(p =>
       p.name.toLowerCase() === itemName.toLowerCase() ||
+      p.id === itemName ||
       (selectedItemToAdd && p.name.toLowerCase() === selectedItemToAdd.toLowerCase())
     );
 
@@ -1291,25 +1732,26 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     // If item is in inventory, check available stock
     if (matchedProd) {
       if (Number(matchedProd.stock) <= 0) {
-        alert(`❌ "${matchedProd.name}" is OUT OF STOCK (Available: 0). Stock must be added by Admin before selling.`);
+        alert(`"${matchedProd.name}" is OUT OF STOCK (Available: 0). Stock must be added by Admin before selling.`);
         return;
       }
       if (qtyNum > Number(matchedProd.stock)) {
-        alert(`⚠️ Requested quantity (${qtyNum}) exceeds current available stock (${matchedProd.stock} ${matchedProd.unit}) for "${matchedProd.name}". Please adjust quantity.`);
+        alert(`Requested quantity (${qtyNum}) exceeds current available stock (${matchedProd.stock} ${matchedProd.unit}) for "${matchedProd.name}". Please adjust quantity.`);
         return;
       }
     }
 
-    const unitPrice = Number(newItemPrice) || (matchedProd ? Number(matchedProd.price) : 0);
+    const unitPrice = isItemFree ? 0 : (newItemPrice !== "" ? Number(newItemPrice) : (matchedProd ? Number(matchedProd.price) : 0));
     const totalPrice = unitPrice * qtyNum;
 
     const newItem = {
       productId: matchedProd?.id || null,
-      name: itemName,
+      name: matchedProd ? matchedProd.name : itemName,
       unitPrice: unitPrice,
       qty: qtyNum,
       unit: matchedProd?.unit || 'pcs',
-      amount: totalPrice
+      amount: totalPrice,
+      isFree: isItemFree || totalPrice === 0
     };
 
     const updated = [...(form.materials || []), newItem];
@@ -1336,7 +1778,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
     setSelectedItemToAdd("");
     setCustomItemToAdd("");
-    setNewItemPrice("");
+    setNewItemPrice(isItemFree ? "0" : "");
     setSelectedItemQty(1);
   };
 
@@ -1406,13 +1848,120 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     });
   };
 
+  // Toggle Free / Paid status on an already added material item
+  const handleToggleMaterialFree = (index, isFree) => {
+    setForm(prev => {
+      const updated = [...prev.materials];
+      const mat = updated[index];
+      if (!mat) return prev;
+
+      let nextAmount = 0;
+      let nextUnitPrice = mat.unitPrice || 0;
+
+      if (!isFree) {
+        // Unchecked: restore price from product or unit price
+        const matchedProd = products.find(p =>
+          (mat.productId && p.id === mat.productId) ||
+          p.name.toLowerCase() === (mat.name || "").toLowerCase()
+        );
+        const basePrice = matchedProd ? Number(matchedProd.price) : (Number(mat.unitPrice) || 0);
+        nextUnitPrice = basePrice;
+        nextAmount = basePrice * (Number(mat.qty) || 1);
+      } else {
+        // Checked: free (Rs. 0)
+        nextAmount = 0;
+      }
+
+      updated[index] = {
+        ...mat,
+        isFree: isFree,
+        unitPrice: nextUnitPrice,
+        amount: nextAmount
+      };
+
+      const gross = Number(prev.grossFee || 0);
+      const discPct = Number(prev.discountPercent || 0);
+      const discAmt = gross * (discPct / 100);
+      const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+      const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
+      let nextPaid = prev.paidAmount;
+      if (prev.paymentSystem === "Full Payment") {
+        nextPaid = finalTotal;
+      } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
+        nextPaid = finalTotal;
+      }
+
+      return {
+        ...prev,
+        materials: updated,
+        totalFee: finalTotal,
+        paidAmount: nextPaid
+      };
+    });
+  };
+
+  // Toggle Free for ALL items (and set default for upcoming items)
+  const handleToggleAllFree = (makeAllFree) => {
+    setIsItemFree(makeAllFree);
+    if (makeAllFree) {
+      setNewItemPrice("0");
+    } else {
+      setNewItemPrice("");
+    }
+
+    setForm(prev => {
+      if (!prev.materials || prev.materials.length === 0) return prev;
+
+      const updated = prev.materials.map(mat => {
+        if (makeAllFree) {
+          return {
+            ...mat,
+            isFree: true,
+            amount: 0
+          };
+        } else {
+          const matchedProd = products.find(p =>
+            (mat.productId && p.id === mat.productId) ||
+            p.name.toLowerCase() === (mat.name || "").toLowerCase()
+          );
+          const basePrice = matchedProd ? Number(matchedProd.price) : (Number(mat.unitPrice) || 0);
+          return {
+            ...mat,
+            isFree: false,
+            unitPrice: basePrice,
+            amount: basePrice * (Number(mat.qty) || 1)
+          };
+        }
+      });
+
+      const gross = Number(prev.grossFee || 0);
+      const discPct = Number(prev.discountPercent || 0);
+      const discAmt = gross * (discPct / 100);
+      const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+      const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
+      let nextPaid = prev.paidAmount;
+      if (prev.paymentSystem === "Full Payment") {
+        nextPaid = finalTotal;
+      } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
+        nextPaid = finalTotal;
+      }
+
+      return {
+        ...prev,
+        materials: updated,
+        totalFee: finalTotal,
+        paidAmount: nextPaid
+      };
+    });
+  };
+
   // Submit Bill (New Bill or Installment Payment under SAME WhatsApp & Bill Number)
   const handleSubmitBill = async (e) => {
     e.preventDefault();
 
     const clean10 = normalizeNepaliMobile(form.contactNumber);
     if (clean10.length !== 10) {
-      alert("❌ WhatsApp number must be exactly 10 digits (e.g. 9812345678).");
+      alert("WhatsApp number must be exactly 10 digits (e.g. 9812345678).");
       return;
     }
 
@@ -1421,7 +1970,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     if (form.parentNumber && form.parentNumber.trim()) {
       cleanParent = normalizeNepaliMobile(form.parentNumber);
       if (cleanParent.length !== 10) {
-        alert("❌ Parent Number must be exactly 10 digits (e.g. 9812345678).");
+        alert("Parent Number must be exactly 10 digits (e.g. 9812345678).");
         return;
       }
       cleanParent = `+977-${cleanParent}`;
@@ -1446,11 +1995,11 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     if (form.isExistingStudent && !form.isEditingExistingBill) {
       const existing = bills.find(b => normalizeNepaliMobile(b.contactNumber || "") === clean10);
       if (existing && Number(existing.dueAmount) > 0 && paidAmt > Number(existing.dueAmount)) {
-        alert(`❌ Payment amount (${formatCurrency(paidAmt)}) cannot exceed remaining due balance of ${formatCurrency(existing.dueAmount)}.`);
+        alert(`Payment amount (${formatCurrency(paidAmt)}) cannot exceed remaining due balance of ${formatCurrency(existing.dueAmount)}.`);
         return;
       }
     } else if (maxFeeAllowed > 0 && paidAmt > maxFeeAllowed) {
-      alert(`❌ Payment amount (${formatCurrency(paidAmt)}) cannot accept more than course fee after discount (${formatCurrency(maxFeeAllowed)}).`);
+      alert(`Payment amount (${formatCurrency(paidAmt)}) cannot accept more than course fee after discount (${formatCurrency(maxFeeAllowed)}).`);
       return;
     }
 
@@ -1491,7 +2040,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     // SCENARIO 0: Admin is editing an existing bill record (Edit Bill)
     if (form.isEditingExistingBill && form.id) {
       try {
-        const res = await fetch('/api/institute/billing', {
+        const res = await fetch(apiWithInst("/api/institute/billing"), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1503,7 +2052,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
         const data = await res.json();
         if (!res.ok) {
-          alert(`❌ ${data.error || "Failed to update bill record"}`);
+          alert(` ${data.error || "Failed to update bill record"}`);
           return;
         }
 
@@ -1516,8 +2065,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           setSelectedInvoice(updatedBill);
         }
         setShowBillModal(false);
-        setForm({ ...defaultForm, materials: [...defaultMaterials], preparedBy: "" });
-        alert(`✅ Bill ${updatedBill.billNumber} has been successfully updated!`);
+        setForm(resetBillForm());
+        alert(`Bill ${updatedBill.billNumber} has been successfully updated!`);
         return;
       } catch (err) {
         console.error("Error updating bill record:", err);
@@ -1527,7 +2076,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     }
 
     try {
-      const res = await fetch('/api/institute/billing', {
+      const res = await fetch(apiWithInst("/api/institute/billing"), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -1536,7 +2085,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(`❌ ${data.error || "Failed to process bill payment"}`);
+        alert(` ${data.error || "Failed to process bill payment"}`);
         return;
       }
 
@@ -1564,7 +2113,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
       // Refresh product stock since backend automatically reduces it for sold items
       if (form.materials && form.materials.length > 0) {
-        fetch('/api/institute/billing/products', {
+        fetch(apiWithInst("/api/institute/billing/products"), {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -1583,9 +2132,9 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
       setSelectedInvoice(returnedBill);
       setShowBillModal(false);
-      setForm({ ...defaultForm, materials: [...defaultMaterials], preparedBy: "" });
+      setForm(resetBillForm());
 
-      alert(data.message || `✅ Bill ${returnedBill.billNumber} successfully generated!`);
+      alert(data.message || `Bill ${returnedBill.billNumber} successfully generated!`);
       setTimeout(() => window.print(), 200);
     } catch (err) {
       console.error("Error submitting bill:", err);
@@ -1602,7 +2151,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     }
 
     setIsSyncing(true);
-    const syncMsg = `Syncing all ${bills.length} bills to Google Sheet, please wait...`;
+    const syncMsg = `Syncing all ${bills.length} bills & ${expenses.length} expenses to Google Sheet, please wait...`;
     setSyncStatus(syncMsg);
     setTestStatus({
       state: "testing",
@@ -1610,24 +2159,25 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     });
 
     try {
-      const res = await fetch('/api/institute/billing/sync', {
+      const res = await fetch(apiWithInst("/api/institute/billing/sync"), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'bulk_sync',
           googleSheetUrl: profile.googleSheetUrl.trim(),
           ownerEmail: profile.ownerEmail ? profile.ownerEmail.trim() : "",
-          bills: bills
+          bills: bills,
+          expenses: expenses
         })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        const successMsg = data.message || `Successfully synchronized ${bills.length} bills to Google Sheet!`;
-        setSyncStatus(`✅ ${successMsg}`);
+        const successMsg = data.message || `Successfully synchronized ${bills.length} bills and ${expenses.length} expenses to Google Sheet!`;
+        setSyncStatus(` ${successMsg}`);
         setTestStatus({
           state: "success",
-          message: `✅ ${successMsg} Open your Google Sheet to view the 'StudentBills' tab.`
+          message: ` ${successMsg} Open your Google Sheet to view the 'StudentBills' and 'Expenses' tabs.`
         });
         const updated = bills.map(b => ({ ...b, isSyncedToSheet: true }));
         setBills(updated);
@@ -1636,22 +2186,22 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           setGoogleSheetViewUrl(data.result.sheetUrl);
           localStorage.setItem(`instituteGoogleSheetViewUrl_${instKey}`, data.result.sheetUrl);
         }
-        alert(`✅ ${successMsg}\n\nYour bills have been written to the 'StudentBills' tab in your Google Sheet.`);
+        alert(` ${successMsg}\n\nYour bills and expenses have been written to the 'StudentBills' and 'Expenses' tabs in your Google Sheet.`);
       } else {
         const errorMsg = data.error || "Sync failed. Please check your Google Apps Script URL.";
-        setSyncStatus(`❌ ${errorMsg}`);
+        setSyncStatus(` ${errorMsg}`);
         setTestStatus({
           state: "error",
-          message: `❌ ${errorMsg}`
+          message: ` ${errorMsg}`
         });
         alert(`Sync failed: ${errorMsg}`);
       }
     } catch (err) {
       const connErr = `Connection error: ${err.message}`;
-      setSyncStatus(`❌ ${connErr}`);
+      setSyncStatus(` ${connErr}`);
       setTestStatus({
         state: "error",
-        message: `❌ ${connErr}`
+        message: ` ${connErr}`
       });
       alert(`Sync Error: ${connErr}`);
     } finally {
@@ -1675,7 +2225,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       localStorage.setItem(`instituteGoogleDriveUrl_${instKey}`, driveUrl);
       webhookUrl = "";
       setProfile(prev => ({ ...prev, googleSheetUrl: "" }));
-      alert("💡 We noticed your Webhook URL was a Google Drive link! We've saved it as your 'Google Drive Folder Link'.\n\nTo enable automated background sync, please follow Tab 2 ('Apps Script Guide & Code') to deploy the Apps Script Web App (URL starts with https://script.google.com/macros/s/...).");
+      alert(" We noticed your Webhook URL was a Google Drive link! We've saved it as your 'Google Drive Folder Link'.\n\nTo enable automated background sync, please follow Tab 2 ('Apps Script Guide & Code') to deploy the Apps Script Web App (URL starts with https://script.google.com/macros/s/...).");
     }
     // Auto-detect if user mistakenly pasted a spreadsheet URL into webhook URL
     else if (webhookUrl.includes("docs.google.com/spreadsheets") || webhookUrl.includes("docs.google.com")) {
@@ -1684,9 +2234,9 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       localStorage.setItem(`instituteGoogleSheetViewUrl_${instKey}`, viewUrl);
       webhookUrl = "";
       setProfile(prev => ({ ...prev, googleSheetUrl: "" }));
-      alert("💡 We noticed your Webhook URL was a Google Spreadsheet link! We've saved it as your 'Direct Google Sheet Link'.\n\nFor automated sync, please deploy the Apps Script Web App (URL starts with https://script.google.com/macros/s/...) following the Step-by-Step Guide.");
+      alert(" We noticed your Webhook URL was a Google Spreadsheet link! We've saved it as your 'Direct Google Sheet Link'.\n\nFor automated sync, please deploy the Apps Script Web App (URL starts with https://script.google.com/macros/s/...) following the Step-by-Step Guide.");
     } else if (webhookUrl && webhookUrl.endsWith("/dev")) {
-      alert("⚠️ You entered a URL ending in '/dev'. Google blocks automated sync requests to test /dev URLs.\n\nPlease deploy a new Web App (Deploy > New deployment > Web app) with 'Who has access: Anyone' and copy the URL ending in '/exec'.");
+      alert(" You entered a URL ending in '/dev'. Google blocks automated sync requests to test /dev URLs.\n\nPlease deploy a new Web App (Deploy > New deployment > Web app) with 'Who has access: Anyone' and copy the URL ending in '/exec'.");
     }
 
     try {
@@ -1694,7 +2244,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       localStorage.setItem(`instituteGoogleDriveUrl_${instKey}`, driveUrl);
 
       const savedGoogleSheetUrl = webhookUrl || (driveUrl || viewUrl ? "setup_done" : "");
-      const res = await fetch('/api/institute/billing', {
+      const res = await fetch(apiWithInst("/api/institute/billing"), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1708,7 +2258,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         const data = await res.json();
         setProfile(data.profile);
         localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify(data.profile));
-        setSaveSetupStatus("✅ Configuration saved successfully!");
+        setSaveSetupStatus(" Configuration saved successfully!");
         if (webhookUrl || viewUrl || driveUrl) {
           localStorage.setItem("global_google_sheet_setup_done", "true");
           setIsPermanentlyLinked(true);
@@ -1719,7 +2269,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           ...profile,
           googleSheetUrl: webhookUrl || (driveUrl || viewUrl ? "setup_done" : "")
         }));
-        setSaveSetupStatus("✅ Configuration saved locally.");
+        setSaveSetupStatus(" Configuration saved locally.");
         if (webhookUrl || viewUrl || driveUrl) {
           localStorage.setItem("global_google_sheet_setup_done", "true");
           setIsPermanentlyLinked(true);
@@ -1731,7 +2281,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         ...profile,
         googleSheetUrl: webhookUrl || (driveUrl || viewUrl ? "setup_done" : "")
       }));
-      setSaveSetupStatus("✅ Configuration saved locally.");
+      setSaveSetupStatus(" Configuration saved locally.");
       if (webhookUrl || viewUrl || driveUrl) {
         localStorage.setItem("global_google_sheet_setup_done", "true");
         setIsPermanentlyLinked(true);
@@ -1754,7 +2304,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     if (webhook.includes("drive.google.com")) {
       setTestStatus({
         state: "error",
-        message: "❌ You entered a Google Drive link. Google Drive links cannot receive sync webhooks. Please deploy the Apps Script Web App (URL starts with https://script.google.com/macros/s/...) following Tab 2."
+        message: " You entered a Google Drive link. Google Drive links cannot receive sync webhooks. Please deploy the Apps Script Web App (URL starts with https://script.google.com/macros/s/...) following Tab 2."
       });
       return;
     }
@@ -1762,7 +2312,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     if (webhook.includes("docs.google.com")) {
       setTestStatus({
         state: "error",
-        message: "❌ You entered a Google Spreadsheet document link instead of an Apps Script Web App URL. Please deploy the Web App following Tab 2."
+        message: " You entered a Google Spreadsheet document link instead of an Apps Script Web App URL. Please deploy the Web App following Tab 2."
       });
       return;
     }
@@ -1770,7 +2320,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     if (webhook.endsWith("/dev")) {
       setTestStatus({
         state: "error",
-        message: "❌ You entered a URL ending in '/dev'. Google blocks external access to /dev URLs. In Apps Script, click Deploy > New deployment > Web app, choose 'Who has access: Anyone', and use the URL ending in '/exec'."
+        message: " You entered a URL ending in '/dev'. Google blocks external access to /dev URLs. In Apps Script, click Deploy > New deployment > Web app, choose 'Who has access: Anyone', and use the URL ending in '/exec'."
       });
       return;
     }
@@ -1778,7 +2328,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
     setTestStatus({ state: "testing", message: "Connecting to Google Sheet & testing Apps Script..." });
 
     try {
-      const res = await fetch('/api/institute/billing/sync', {
+      const res = await fetch(apiWithInst("/api/institute/billing/sync"), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1796,18 +2346,18 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         }
         setTestStatus({
           state: "success",
-          message: `${data.message || "✅ Successfully connected to Google Sheet!"} Click "Sync All Bills (${bills.length})" to write all bills into your sheet.`
+          message: `${data.message || "Successfully connected to Google Sheet!"} Click "Sync All Bills (${bills.length})" to write all bills into your sheet.`
         });
       } else {
         setTestStatus({
           state: "error",
-          message: `❌ ${data.error || "Connection failed. Please check your Apps Script deployment permissions."}`
+          message: ` ${data.error || "Connection failed. Please check your Apps Script deployment permissions."}`
         });
       }
     } catch (err) {
       setTestStatus({
         state: "error",
-        message: `❌ Connection error: ${err.message}`
+        message: ` Connection error: ${err.message}`
       });
     }
   };
@@ -1826,13 +2376,20 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       "Paid Amount", "Due Amount", "In Words", "Prepared By"
     ];
 
+    const formatPhoneForCsv = (val) => {
+      if (!val) return '';
+      const digits = String(val).replace(/\D/g, '');
+      const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+      return last10 ? `+977-${last10}` : '';
+    };
+
     const rows = bills.map(b => [
       `"${b.billNumber}"`,
       `"${b.date}"`,
       `"${(b.studentName || "").replace(/"/g, '""')}"`,
       `"${(b.address || "").replace(/"/g, '""')}"`,
-      `"${b.contactNumber || ""}"`,
-      `"${b.parentNumber || ""}"`,
+      `"${formatPhoneForCsv(b.contactNumber)}"`,
+      `"${formatPhoneForCsv(b.parentNumber)}"`,
       `"${(b.courseDetail || "").replace(/"/g, '""')}"`,
       `"${b.coursePackage || ""}"`,
       `"${b.paymentSystem || ""}"`,
@@ -2094,6 +2651,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           body:not(.printing-expense) #printable-bill-pad * {
             visibility: visible !important;
             box-sizing: border-box !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           
           body:not(.printing-expense) #printable-bill-pad {
@@ -2109,7 +2668,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
             width: 100% !important;
             max-width: 195mm !important;
             height: auto !important;
-            padding: 10px !important;
+            padding: 4px 8px !important;
             border: none !important;
             box-shadow: none !important;
             background: white !important;
@@ -2167,6 +2726,42 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         }
         input[type=number] {
           -moz-appearance: textfield !important;
+        }
+
+        /* Full Red Paid Amount Input Box */
+        input.paid-amount-red-input,
+        .paid-amount-red-input {
+          background: #dc2626 !important;
+          background-color: #dc2626 !important;
+          color: #ffffff !important;
+          border: 2px solid #b91c1c !important;
+          box-shadow: 0 3px 8px rgba(220, 38, 38, 0.35) !important;
+          text-align: center !important;
+        }
+        input.paid-amount-red-input:focus,
+        .paid-amount-red-input:focus,
+        input.paid-amount-red-input:active,
+        .paid-amount-red-input:active {
+          background: #dc2626 !important;
+          background-color: #dc2626 !important;
+          color: #ffffff !important;
+          border-color: #7f1d1d !important;
+          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.45) !important;
+          text-align: center !important;
+        }
+        .paid-amount-red-input::placeholder {
+          color: rgba(255, 255, 255, 0.85) !important;
+          font-weight: 800 !important;
+          font-size: 11.5px !important;
+          letter-spacing: 0.3px !important;
+          text-align: center !important;
+        }
+        .paid-amount-red-input:-webkit-autofill,
+        .paid-amount-red-input:-webkit-autofill:hover,
+        .paid-amount-red-input:-webkit-autofill:focus {
+          -webkit-text-fill-color: #ffffff !important;
+          -webkit-box-shadow: 0 0 0px 1000px #dc2626 inset !important;
+          transition: background-color 5000s ease-in-out 0s !important;
         }
 
       `}} />
@@ -2237,7 +2832,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   alignItems: "center",
                   gap: "8px"
                 }}>
-                  <span>❌</span> {loginError}
+                  <span></span> {loginError}
                 </div>
               )}
 
@@ -2364,11 +2959,11 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   boxShadow: "0 1px 3px rgba(185, 28, 28, 0.12)"
                 }}
               >
-                <span>🔒</span> Lock
+                Lock
               </button>
 
               <span style={{ display: "none" }}>
-                ⏱️ Auto-lock in: <strong style={{ color: inactivityCountdown <= 5 ? "#ef4444" : "#0284c7" }}>{inactivityCountdown}s</strong>
+                Auto-lock in: <strong style={{ color: inactivityCountdown <= 5 ? "#ef4444" : "#0284c7" }}>{inactivityCountdown}s</strong>
               </span>
 
               {/* EXPENSES BUTTON (AVAILABLE TO ALL USERS, RECORDS MONITORED BY ADMIN) */}
@@ -2376,9 +2971,9 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                 onClick={() => setShowExpenseModal(true)}
                 title="Record and view daily, weekly, and monthly expenses"
                 style={{
-                  backgroundColor: "#6366f1",
+                  backgroundColor: "#dc2626",
                   color: "white",
-                  border: "1px solid #4f46e5",
+                  border: "1px solid #b91c1c",
                   padding: "8px 18px",
                   borderRadius: "8px",
                   cursor: "pointer",
@@ -2387,10 +2982,10 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  boxShadow: "0 2px 6px rgba(99, 102, 241, 0.25)"
+                  boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)"
                 }}
               >
-                <span>💸</span> Expenses
+                Expenses
               </button>
 
               {/* PRODUCT STOCK / INVENTORY BUTTON (VISIBLE TO ALL USERS, RESTOCKING BY ADMIN ONLY) */}
@@ -2450,7 +3045,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                       boxShadow: "0 2px 6px rgba(99, 102, 241, 0.25)"
                     }}
                   >
-                    <span>👥</span> Staff Accounts
+                    Staff Accounts
                   </button>
 
                   <button
@@ -2475,10 +3070,11 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                       boxShadow: "0 2px 6px rgba(99, 102, 241, 0.25)"
                     }}
                   >
-                    <span>🔑</span> PIN Settings
+                    PIN Settings
                   </button>
 
-                  {canShowSetupMenu && !profile.googleSheetUrl && (
+                  {/* Automatically hide once successfully linked unless superadmin */}
+                  {canShowSetupMenu && (
                     <button
                       type="button"
                       onClick={handleOpenGoogleSetupModal}
@@ -2497,26 +3093,51 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                         gap: "6px"
                       }}
                     >
-                      <span>📊</span> Google Sheet & Drive Setup
+                      Google Sheet & Drive Setup
                     </button>
                   )}
                 </>
               )}
 
+              {billingRole === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const initialCourse = (form?.courseDetail && COURSE_OPTIONS.includes(form.courseDetail)) ? form.courseDetail : "EPS Topik Full course";
+                    setSelectedCourseForFees(initialCourse);
+                    setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
+                    setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
+                    const courseDefPkg = feeConfig.courseFees?.[initialCourse]?.defaultPackage || feeConfig.defaultPackage || "Full course";
+                    setSelectedDefaultPkg(courseDefPkg);
+                    setFeeUpdateDate(feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10)));
+                    setShowFeeConfigModal(true);
+                  }}
+                  title="Configure default course package gross fees and discounts"
+                  style={{
+                    backgroundColor: "#0284c7",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 6px rgba(2, 132, 199, 0.25)"
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                  Fee Defaults
+                </button>
+              )}
+
               {/* CREATE NEW BILL (SECOND LAST BUTTON) */}
               <button
-                onClick={() => {
-                  const currentStaffName = (typeof window !== "undefined" && localStorage.getItem("currentUser")) || "";
-                  const rnd = getRandomClassTime();
-                  setForm({
-                    ...defaultForm,
-                    classTime: rnd.time,
-                    classTimePeriod: rnd.period,
-                    materials: [...defaultMaterials],
-                    preparedBy: billingRole === "user" ? (currentStaffName || "") : ""
-                  });
-                  setShowBillModal(true);
-                }}
+                onClick={handleOpenCreateBill}
                 style={{
                   backgroundColor: "#16a34a",
                   color: "white",
@@ -2532,7 +3153,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
                 }}
               >
-                <span>➕</span> Create New Bill
+                Create New Bill
               </button>
 
               {/* PRINT BUTTON - DARK PURPLE (LAST BUTTON) */}
@@ -2562,7 +3183,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   boxShadow: "0 2px 6px rgba(88, 28, 135, 0.3)"
                 }}
               >
-                <span>🖨️</span> Print
+                Print
               </button>
             </div>
           </div>
@@ -2575,18 +3196,14 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           border: "2px solid #1e3a8a",
           padding: "16px 20px",
           marginBottom: "20px",
-          boxShadow: "0 3px 12px rgba(30, 58, 138, 0.08)"
+          boxShadow: "none"
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px", borderBottom: "1px solid #e2e8f0", paddingBottom: "10px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "20px" }}>📈</span>
               <div>
                 <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "16px", fontWeight: "900" }}>
                   Collections Ledger: Daily, Weekly & Monthly Records
                 </h4>
-                <div style={{ fontSize: "12px", color: "#64748b" }}>
-                  Real-time cash in drawer vs. online payment reconciliation
-                </div>
               </div>
             </div>
 
@@ -2594,10 +3211,10 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <div style={{ display: "flex", backgroundColor: "#f1f5f9", borderRadius: "8px", padding: "3px" }}>
                 {[
-                  { id: "daily", label: "☀️ Daily (Today)" },
-                  { id: "weekly", label: "📅 Weekly (7 Days)" },
-                  { id: "monthly", label: "🗓️ Monthly" },
-                  { id: "all", label: "🌐 All Time" }
+                  { id: "daily", label: "Daily (Today)" },
+                  { id: "weekly", label: "Weekly (7 Days)" },
+                  { id: "monthly", label: "Monthly" },
+                  { id: "all", label: "All Time" }
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -2626,7 +3243,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   style={{
                     padding: "6px 10px",
                     borderRadius: "6px",
-                    border: "2px solid #2563eb",
+                    border: "2px solid #1e3a8a",
                     fontSize: "12px",
                     fontWeight: "bold",
                     color: "#1e3a8a",
@@ -2643,65 +3260,55 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
             </div>
           </div>
 
-          {/* KPI Stat Cards */}
+          {/* KPI Stat Cards (All in Green, Centered) */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "14px" }}>
             {/* Total Period Collection */}
-            <div style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "8px", padding: "12px 14px" }}>
-              <div style={{ fontSize: "12px", fontWeight: "bold", color: "#1e40af", marginBottom: "4px" }}>
-                💰 Total {adminTimeframe === "daily" ? "Today" : adminTimeframe === "weekly" ? "This Week" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Collection
+            <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "4px" }}>
+                Total {adminTimeframe === "daily" ? "Today" : adminTimeframe === "weekly" ? "This Week" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Collection
               </div>
-              <div style={{ fontSize: "20px", fontWeight: "900", color: "#1e3a8a" }}>
+              <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
                 {formatCurrency(activeStats.total)}
-              </div>
-              <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                {activeStats.count} {activeStats.count === 1 ? "transaction" : "transactions"} recorded
               </div>
             </div>
 
             {/* Total Cash Collection */}
-            <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px" }}>
+            <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
               <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "4px" }}>
-                💵 Total Cash in Hand
+                Total Cash in Hand
               </div>
               <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
                 {formatCurrency(activeStats.cash)}
               </div>
-              <div style={{ fontSize: "11px", color: "#16a34a", marginTop: "2px" }}>
-                Physical counter cash
-              </div>
             </div>
 
             {/* Total Online Collection */}
-            <div style={{ backgroundColor: "#fdf4ff", border: "1px solid #f0abfc", borderRadius: "8px", padding: "12px 14px" }}>
-              <div style={{ fontSize: "12px", fontWeight: "bold", color: "#86198f", marginBottom: "4px" }}>
-                🌐 Total Online / Digital Payments
+            <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "4px" }}>
+                Total Online / Digital Payments
               </div>
-              <div style={{ fontSize: "20px", fontWeight: "900", color: "#a21caf" }}>
+              <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
                 {formatCurrency(activeStats.online)}
-              </div>
-              <div style={{ fontSize: "11px", color: "#c026d3", marginTop: "2px" }}>
-                Bank + Esewa + Khalti + Other
               </div>
             </div>
           </div>
 
-          {/* Detailed Method Breakdown Chips */}
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-            <span style={{ fontSize: "12px", fontWeight: "bold", color: "#64748b" }}>Payment Method Breakdown:</span>
-            <span style={{ backgroundColor: "#f8fafc", border: "1px solid #cbd5e1", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
-              💵 Cash: <strong style={{ color: "#16a34a" }}>{formatCurrency(activeStats.breakdown["Cash"])}</strong>
+          {/* Detailed Method Breakdown Chips (Dark Green Background, Centered) */}
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ backgroundColor: "#166534", border: "1px solid #14532d", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
+              Cash: <strong style={{ color: "#ffffff" }}>{formatCurrency(activeStats.breakdown["Cash"])}</strong>
             </span>
-            <span style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
-              🏦 Bank Acc: <strong style={{ color: "#2563eb" }}>{formatCurrency(activeStats.breakdown["Online Bank Acc"])}</strong>
+            <span style={{ backgroundColor: "#166534", border: "1px solid #14532d", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
+              Bank Acc: <strong style={{ color: "#ffffff" }}>{formatCurrency(activeStats.breakdown["Online Bank Acc"])}</strong>
             </span>
-            <span style={{ backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
-              📱 Esewa: <strong style={{ color: "#059669" }}>{formatCurrency(activeStats.breakdown["Online Esewa"])}</strong>
+            <span style={{ backgroundColor: "#166534", border: "1px solid #14532d", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
+              Esewa: <strong style={{ color: "#ffffff" }}>{formatCurrency(activeStats.breakdown["Online Esewa"])}</strong>
             </span>
-            <span style={{ backgroundColor: "#faf5ff", border: "1px solid #e9d5ff", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
-              🟣 Khalti: <strong style={{ color: "#9333ea" }}>{formatCurrency(activeStats.breakdown["Online Khalti"])}</strong>
+            <span style={{ backgroundColor: "#166534", border: "1px solid #14532d", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
+              Khalti: <strong style={{ color: "#ffffff" }}>{formatCurrency(activeStats.breakdown["Online Khalti"])}</strong>
             </span>
-            <span style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
-              💳 Other: <strong style={{ color: "#d97706" }}>{formatCurrency(activeStats.breakdown["Other"])}</strong>
+            <span style={{ backgroundColor: "#166534", border: "1px solid #14532d", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
+              Other: <strong style={{ color: "#ffffff" }}>{formatCurrency(activeStats.breakdown["Other"])}</strong>
             </span>
           </div>
         </div>
@@ -2747,11 +3354,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               <div style={{ fontSize: "15px", fontWeight: "bold", color: "#000000", marginBottom: "3px" }}>
                 {profile.companyAddress}
               </div>
-              <div style={{ fontSize: "14px", color: "#000000", marginBottom: "2px" }}>
-                Email: {profile.email}
-              </div>
               <div style={{ fontSize: "14px", fontWeight: "bold", color: "#000000" }}>
-                Contact No: {profile.contactNumber}
+                Email: {profile.email} &nbsp;|&nbsp; Contact No: {profile.contactNumber}
               </div>
             </div>
           </div>
@@ -2793,7 +3397,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         flexWrap: "wrap"
       }}>
         <div style={{ flex: 1, minWidth: "280px", display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "18px" }}>🔍</span>
+          
           <input
             type="text"
             placeholder="Search bill by WhatsApp Number (e.g. 9812345678 or +977) / Student Name / Bill No..."
@@ -2825,7 +3429,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               fontSize: "12px"
             }}
           >
-            {isSyncing ? "Syncing..." : "🔄 Sync to Google Sheet"}
+            {isSyncing ? "Syncing..." : "Sync to Google Sheet"}
           </button>
 
           <button
@@ -2841,7 +3445,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               fontSize: "12px"
             }}
           >
-            📥 Download Sheet CSV
+            Download Sheet CSV
           </button>
         </div>
       </div>
@@ -2887,7 +3491,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)"
                 }}
               >
-                <span>📄</span> Download PDF
+                Download PDF
               </button>
 
               <button
@@ -2908,7 +3512,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   boxShadow: "0 2px 6px rgba(2, 132, 199, 0.25)"
                 }}
               >
-                <span>📥</span> Download CSV
+                Download CSV
               </button>
 
 
@@ -2929,7 +3533,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   boxShadow: "0 2px 6px rgba(88, 28, 135, 0.3)"
                 }}
               >
-                <span>🖨️</span> Print
+                Print
               </button>
 
               {billingRole === "admin" && (
@@ -2949,23 +3553,12 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     gap: "6px"
                   }}
                 >
-                  <span>✏️</span> Edit This Bill
+                  Edit This Bill
                 </button>
               )}
 
               <button
-                onClick={() => {
-                  const currentStaffName = (typeof window !== "undefined" && localStorage.getItem("currentUser")) || "";
-                  const rnd = getRandomClassTime();
-                  setForm({
-                    ...defaultForm,
-                    classTime: rnd.time,
-                    classTimePeriod: rnd.period,
-                    materials: [...defaultMaterials],
-                    preparedBy: billingRole === "user" ? (currentStaffName || "") : ""
-                  });
-                  setShowBillModal(true);
-                }}
+                onClick={handleOpenCreateBill}
                 style={{
                   backgroundColor: "#16a34a",
                   color: "white",
@@ -2980,7 +3573,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   gap: "6px"
                 }}
               >
-                <span>➕</span> Create New Bill
+                Create New Bill
               </button>
             </div>
 
@@ -2996,33 +3589,45 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
           {/* PRINTABLE BILL PAD PAPER */}
           <div id="printable-bill-pad" style={{
-            padding: "15px 20px",
+            padding: "8px 14px",
             backgroundColor: "#ffffff",
             fontFamily: "Arial, sans-serif",
             color: "#000000",
             border: "2px solid #000000",
             borderRadius: "6px"
           }}>
-            {/* Top Header Matching User Image */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "2px", marginBottom: "2px" }}>
+            {/* Top Header Matching User Image - Unified, Never Separates */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "14px",
+              marginBottom: "2px",
+              pageBreakInside: "avoid",
+              breakInside: "avoid"
+            }}>
               <img
                 src={profile.logoUrl || "/sigma-logo.png"}
                 alt="Logo"
-                style={{ width: "95px", height: "95px", objectFit: "contain" }}
+                style={{ width: "60px", height: "60px", objectFit: "contain", flexShrink: 0 }}
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
               <div style={{ textAlign: "center" }}>
-                <h1 style={{ margin: "0 0 4px 0", fontSize: "40px", fontWeight: "900", fontFamily: "Georgia, serif", color: "#000000" }}>
-                  {profile.companyName}
+                <h1 style={{
+                  margin: "0 0 1px 0",
+                  fontSize: "24px",
+                  fontWeight: "900",
+                  fontFamily: "Georgia, serif",
+                  color: "#000000",
+                  lineHeight: "1.15"
+                }}>
+                  {profile.companyName || "SIGMA EDUCATION KOREAN BHASA CENTER"}
                 </h1>
-                <div style={{ fontSize: "13px", fontWeight: "bold", color: "#000000", marginBottom: "2px" }}>
-                  {profile.companyAddress}
+                <div style={{ fontSize: "13px", fontWeight: "bold", color: "#000000", marginBottom: "1px", lineHeight: "1.15" }}>
+                  {profile.companyAddress || "Samakhushi Chowk, Kathmandu"}
                 </div>
-                <div style={{ fontSize: "12px", color: "#000000", marginBottom: "2px" }}>
-                  Email: {profile.email}
-                </div>
-                <div style={{ fontSize: "12px", fontWeight: "bold", color: "#000000" }}>
-                  Contact No: {profile.contactNumber}
+                <div style={{ fontSize: "12px", fontWeight: "bold", color: "#000000", lineHeight: "1.15" }}>
+                  Email: {profile.email || "sigmaedu2023@gmail.com"} &nbsp;|&nbsp; Contact No: {profile.contactNumber || "9768444902, 9806100148"}
                 </div>
               </div>
             </div>
@@ -3032,10 +3637,10 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              paddingTop: "6px",
-              paddingBottom: "6px",
+              paddingTop: "2px",
+              paddingBottom: "2px",
               borderTop: "1px solid #000000",
-              borderBottom: "2px solid #000000",
+              borderBottom: "1.5px solid #000000",
               fontWeight: "bold",
               fontSize: "12px",
               marginBottom: "2px"
@@ -3049,20 +3654,29 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               display: "grid",
               gridTemplateColumns: "1.2fr 1fr",
               gap: "2px",
-              padding: "1px",
+              padding: "2px 4px",
               border: "1px solid #000000",
               borderRadius: "4px",
               marginBottom: "2px",
               fontSize: "12px",
-              lineHeight: "1.1"
+              lineHeight: "1.15"
             }}>
               <div>
                 <div><strong>BILL NO:</strong> <span style={{ fontWeight: "900", fontSize: "12px" }}>{selectedInvoice.billNumber}</span></div>
                 <div><strong>Student Name:</strong> <strong>{selectedInvoice.studentName}</strong></div>
                 <div><strong>Address:</strong> {selectedInvoice.address || "-"}</div>
-                <div><strong>WhatsApp Contact:</strong> {selectedInvoice.contactNumber}</div>
-                <div><strong>Parent Name:</strong> {selectedInvoice.parentName || "-"}</div>
-                <div><strong>Parent Number:</strong> {selectedInvoice.parentNumber || "-"}</div>
+                <div><strong>Contact Number:</strong> {(() => {
+                  const formatNum = (v) => {
+                    if (!v) return "";
+                    const d = String(v).replace(/\D/g, "");
+                    const l10 = d.length >= 10 ? d.slice(-10) : d;
+                    return l10 ? `+977-${l10}` : v;
+                  };
+                  return [formatNum(selectedInvoice.contactNumber), formatNum(selectedInvoice.parentNumber)].filter(Boolean).join(", ") || "-";
+                })()}</div>
+                {selectedInvoice.parentName && (
+                  <div><strong>Parent Name:</strong> {selectedInvoice.parentName}</div>
+                )}
               </div>
 
               <div>
@@ -3083,12 +3697,12 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               backgroundColor: "#ffffff"
             }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", margin: 0 }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#f1f5f9", borderBottom: "1.5px solid #000000" }}>
-                    <th style={{ padding: "1px 1px", width: "45px", textAlign: "center", verticalAlign: "middle", borderRight: "1px solid #000000", color: "#000000", fontWeight: "bold" }}>S.N.</th>
-                    <th style={{ padding: "1px 3px", textAlign: "center", verticalAlign: "middle", borderRight: "1px solid #000000", color: "#000000", fontWeight: "bold" }}>Particulars / Items</th>
-                    <th style={{ padding: "1px 2px", width: "140px", textAlign: "center", verticalAlign: "middle", borderRight: "1px solid #000000", color: "#000000", fontWeight: "bold" }}>Package Term</th>
-                    <th style={{ padding: "1px 2px", width: "130px", textAlign: "center", verticalAlign: "middle", color: "#000000", fontWeight: "bold" }}>Amount</th>
+                <thead style={{ backgroundColor: "#d1d5db" }}>
+                  <tr style={{ backgroundColor: "#d1d5db", borderBottom: "1.5px solid #000000" }}>
+                    <th style={{ backgroundColor: "#d1d5db", padding: "2px 2px", width: "45px", textAlign: "center", verticalAlign: "middle", borderRight: "1px solid #000000", color: "#000000", fontWeight: "bold" }}>S.N.</th>
+                    <th style={{ backgroundColor: "#d1d5db", padding: "2px 4px", textAlign: "center", verticalAlign: "middle", borderRight: "1px solid #000000", color: "#000000", fontWeight: "bold" }}>Particulars / Items</th>
+                    <th style={{ backgroundColor: "#d1d5db", padding: "2px 4px", width: "140px", textAlign: "center", verticalAlign: "middle", borderRight: "1px solid #000000", color: "#000000", fontWeight: "bold" }}>Package Term</th>
+                    <th style={{ backgroundColor: "#d1d5db", padding: "2px 4px", width: "130px", textAlign: "center", verticalAlign: "middle", color: "#000000", fontWeight: "bold" }}>Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3134,20 +3748,19 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               </table>
             </div>
 
-            {/* --- SHRINK WRAPPER FOR SUMMARY AND TRANSACTIONS --- */}
-            <div style={{ zoom: 0.85 }}>
             {/* 1. PAYMENT SUMMARY CARD (Full Width on Top) */}
             <div style={{
-              border: "2px solid #1e3a8a",
-              borderRadius: "6px",
+              border: "1.5px solid #000000",
+              borderRadius: "5px",
               overflow: "hidden",
               backgroundColor: "#ffffff",
-              marginBottom: "11px"
+              marginBottom: "2px"
             }}>
               <div style={{
-                backgroundColor: "#1e3a8a",
-                color: "#ffffff",
-                padding: "1px 3px",
+                backgroundColor: "#d1d5db",
+                color: "#000000",
+                borderBottom: "1px solid #000000",
+                padding: "2px 4px",
                 fontWeight: "900",
                 fontSize: "12px",
                 letterSpacing: "0.5px",
@@ -3159,16 +3772,16 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                 <tbody>
                   <tr style={{ backgroundColor: "#ffffff" }}>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", fontWeight: "bold", color: "#000000" }}>Course Fee (Gross):</td>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", textAlign: "right", fontWeight: "900", color: "#000000" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", fontWeight: "bold", color: "#000000" }}>Course Fee (Gross):</td>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", textAlign: "right", fontWeight: "900", color: "#000000" }}>
                       {formatCurrency(selectedInvoice.grossFee || selectedInvoice.totalFee)}
                     </td>
                   </tr>
                   <tr style={{ backgroundColor: "#ffffff" }}>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", color: "#16a34a", fontWeight: "bold" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", color: "#16a34a", fontWeight: "bold" }}>
                       Discount ({Number(selectedInvoice.discountPercent) || 0}%):
                     </td>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", textAlign: "right", color: "#16a34a", fontWeight: "900" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", textAlign: "right", color: "#16a34a", fontWeight: "900" }}>
                       - {formatCurrency(selectedInvoice.discountAmount || 0)}
                     </td>
                   </tr>
@@ -3183,10 +3796,10 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     if (matTotal > 0) {
                       return (
                         <tr style={{ backgroundColor: "#ffffff" }}>
-                          <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", color: "#2563eb", fontWeight: "bold" }}>
-                            📚 Study Materials / Extra Items:
+                          <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", color: "#2563eb", fontWeight: "bold" }}>
+                            Study Materials / Extra Items:
                           </td>
-                          <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", textAlign: "right", color: "#2563eb", fontWeight: "900" }}>
+                          <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", textAlign: "right", color: "#2563eb", fontWeight: "900" }}>
                             + {formatCurrency(matTotal)}
                           </td>
                         </tr>
@@ -3196,47 +3809,47 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   })()}
                   {/* Payment (Net Course Fee) */}
                   <tr style={{ backgroundColor: "#ffffff" }}>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", fontWeight: "bold", color: "#1e3a8a" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", fontWeight: "bold", color: "#1e3a8a" }}>
                       Payment (Net Course Fee):
                     </td>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", textAlign: "right", fontWeight: "900", color: "#1e3a8a" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", textAlign: "right", fontWeight: "900", color: "#1e3a8a" }}>
                       {formatCurrency(Number(selectedInvoice.totalFee || 0) / 1.13)}
                     </td>
                   </tr>
                   {/* 13% VAT / PAN Amount */}
                   <tr style={{ backgroundColor: "#fefce8" }}>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", fontWeight: "bold", color: "#854d0e" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", fontWeight: "bold", color: "#854d0e" }}>
                       13% VAT / PAN Amount:
                     </td>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", textAlign: "right", fontWeight: "900", color: "#854d0e" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", textAlign: "right", fontWeight: "900", color: "#854d0e" }}>
                       {formatCurrency(Number(selectedInvoice.totalFee || 0) - (Number(selectedInvoice.totalFee || 0) / 1.13))}
                     </td>
                   </tr>
                   {/* Total Payment (Inclusive of 13% VAT) */}
                   <tr style={{ backgroundColor: "#eff6ff", borderTop: "2px solid #1e3a8a", borderBottom: "2px solid #1e3a8a" }}>
-                    <td style={{ padding: "1px 14px", fontWeight: "900", fontSize: "14px", color: "#1e3a8a" }}>
+                    <td style={{ padding: "1px 12px", fontWeight: "900", fontSize: "13px", color: "#1e3a8a" }}>
                       Total Payment (Inclusive of 13% VAT):
                     </td>
-                    <td style={{ padding: "1px 14px", textAlign: "right", fontSize: "12px", fontWeight: "900", color: "#1e3a8a" }}>
+                    <td style={{ padding: "1px 12px", textAlign: "right", fontSize: "13px", fontWeight: "900", color: "#1e3a8a" }}>
                       {formatCurrency(selectedInvoice.totalFee)}
                     </td>
                   </tr>
                   {/* Total Paid Amount */}
                   <tr style={{ backgroundColor: "#f0fdf4" }}>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", color: "#166534", fontWeight: "bold" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", color: "#166534", fontWeight: "bold" }}>
                       Total Paid Amount:
                     </td>
-                    <td style={{ padding: "1px 14px", borderBottom: "1px solid #cbd5e1", textAlign: "right", fontWeight: "900", fontSize: "14px", color: "#166534" }}>
+                    <td style={{ padding: "1px 12px", borderBottom: "1px solid #cbd5e1", textAlign: "right", fontWeight: "900", fontSize: "13px", color: "#166534" }}>
                       {formatCurrency(selectedInvoice.paidAmount)}
                     </td>
                   </tr>
                   {/* Remaining Due Balance */}
                   <tr style={{ backgroundColor: "#ffffff" }}>
-                    <td style={{ padding: "1px 14px", fontWeight: "bold", color: Number(selectedInvoice.dueAmount) > 0 ? "#dc2626" : "#0d9488" }}>
+                    <td style={{ padding: "1px 12px", fontWeight: "bold", color: Number(selectedInvoice.dueAmount) > 0 ? "#dc2626" : "#0d9488" }}>
                       Remaining Due Balance:
                     </td>
-                    <td style={{ padding: "1px 14px", textAlign: "right", fontWeight: "900", fontSize: "14px", color: Number(selectedInvoice.dueAmount) > 0 ? "#dc2626" : "#0d9488" }}>
-                      {Number(selectedInvoice.dueAmount) > 0 ? formatCurrency(selectedInvoice.dueAmount) : "Paid in Full ✅"}
+                    <td style={{ padding: "1px 12px", textAlign: "right", fontWeight: "900", fontSize: "13px", color: Number(selectedInvoice.dueAmount) > 0 ? "#dc2626" : "#0d9488" }}>
+                      {Number(selectedInvoice.dueAmount) > 0 ? formatCurrency(selectedInvoice.dueAmount) : "Paid in Full "}
                     </td>
                   </tr>
                 </tbody>
@@ -3244,22 +3857,21 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
             </div>
 
             {/* 2. PAYMENT TRANSACTIONS RECORD (Placed Down / Below the Summary Box, Fully Functional) */}
-            {/* 2. PAYMENT TRANSACTIONS RECORD (Each transaction takes its OWN payment method) */}
             <div style={{
               border: "1.5px solid #000000",
-              borderRadius: "6px",
-              padding: "1px 11px",
+              borderRadius: "5px",
+              padding: "1px 8px",
               backgroundColor: "#ffffff",
               marginBottom: "2px"
             }}>
-              <div style={{ fontWeight: "900", fontSize: "12px", color: "#000000", marginBottom: "2px", borderBottom: "1px solid #000000", paddingBottom: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ backgroundColor: "#d1d5db", color: "#000000", fontWeight: "900", fontSize: "12px", margin: "-1px -8px 2px -8px", padding: "2px 8px", borderBottom: "1px solid #000000", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>Payment Transactions Record</span>
                 {Number(selectedInvoice.dueAmount) <= 0 ? (
-                  <span style={{ fontSize: "12px", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 2px", borderRadius: "10px", fontWeight: "bold" }}>
-                    ✅ All Payments Complete
+                  <span style={{ fontSize: "11px", color: "#166534", backgroundColor: "#dcfce7", padding: "1px 6px", borderRadius: "8px", fontWeight: "bold" }}>
+                    All Payments Complete
                   </span>
                 ) : (
-                  <span style={{ fontSize: "12px", color: "#b91c1c", backgroundColor: "#fee2e2", padding: "2px 2px", borderRadius: "10px", fontWeight: "bold" }}>
+                  <span style={{ fontSize: "11px", color: "#b91c1c", backgroundColor: "#fee2e2", padding: "1px 6px", borderRadius: "8px", fontWeight: "bold" }}>
                     Pending Balance: {formatCurrency(selectedInvoice.dueAmount)}
                   </span>
                 )}
@@ -3316,12 +3928,12 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
                 return (
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-                    <thead>
-                      <tr style={{ backgroundColor: "#f1f5f9", borderBottom: "1px solid #000000" }}>
-                        <th style={{ padding: "1px 2px", textAlign: "left", color: "#000000", fontWeight: "bold" }}>Payment Date</th>
-                        <th style={{ padding: "1px 2px", textAlign: "left", color: "#000000", fontWeight: "bold" }}>Transaction</th>
-                        <th style={{ padding: "1px 2px", textAlign: "center", color: "#000000", fontWeight: "bold" }}>Payment Method</th>
-                        <th style={{ padding: "1px 2px", textAlign: "right", color: "#000000", fontWeight: "bold" }}>Amount Paid</th>
+                    <thead style={{ backgroundColor: "#d1d5db" }}>
+                      <tr style={{ backgroundColor: "#d1d5db", borderBottom: "1.5px solid #000000" }}>
+                        <th style={{ backgroundColor: "#d1d5db", padding: "2px 4px", textAlign: "left", color: "#000000", fontWeight: "bold", borderRight: "1px solid #cbd5e1" }}>Payment Date</th>
+                        <th style={{ backgroundColor: "#d1d5db", padding: "2px 4px", textAlign: "left", color: "#000000", fontWeight: "bold", borderRight: "1px solid #cbd5e1" }}>Transaction</th>
+                        <th style={{ backgroundColor: "#d1d5db", padding: "2px 4px", textAlign: "center", color: "#000000", fontWeight: "bold", borderRight: "1px solid #cbd5e1" }}>Payment Method</th>
+                        <th style={{ backgroundColor: "#d1d5db", padding: "2px 4px", textAlign: "right", color: "#000000", fontWeight: "bold" }}>Amount Paid</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3339,7 +3951,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                                 : `Payment #${tx.installment || idx + 1}`}
                               {isFinalCompleted && (
                                 <span style={{ marginLeft: "6px", fontSize: "10.5px", color: "#166534", fontWeight: "bold" }}>
-                                  (Complete ✅)
+                                  (Complete)
                                 </span>
                               )}
                             </td>
@@ -3349,13 +3961,16 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                                 color: method === "Cash" ? "#15803d" : method === "Online Esewa" ? "#047857" : method === "Online Khalti" ? "#7e22ce" : "#1e40af",
                                 border: "1px solid",
                                 borderColor: method === "Cash" ? "#bbf7d0" : method === "Online Esewa" ? "#a7f3d0" : method === "Online Khalti" ? "#e9d5ff" : "#bfdbfe",
-                                padding: "2px 2px",
+                                padding: "1px 5px",
                                 borderRadius: "4px",
-                                fontSize: "12px",
+                                fontSize: "11px",
                                 fontWeight: "bold",
-                                display: "inline-block"
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px"
                               }}>
-                                {method === "Cash" ? "💵 Cash" : method === "Online Esewa" ? "📱 Online Esewa" : method === "Online Khalti" ? "🟣 Online Khalti" : method === "Online Bank Acc" ? "🏦 Bank Acc" : `💳 ${method}`}
+                                {getPaymentMethodIcon(method, 12)}
+                                <span>{method === "Cash" ? "Cash" : method === "Online Esewa" ? "Online Esewa" : method === "Online Khalti" ? "Online Khalti" : method === "Online Bank Acc" ? "Bank Acc" : `${method}`}</span>
                               </span>
                             </td>
                             <td style={{ padding: "1px 2px", textAlign: "right", fontWeight: "bold", color: "#000000" }}>
@@ -3386,17 +4001,17 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   fontWeight: "900",
                   color: Number(selectedInvoice.dueAmount) <= 0 ? "#166534" : "#b91c1c",
                   backgroundColor: Number(selectedInvoice.dueAmount) <= 0 ? "#eff6ff" : "#fef2f2",
-                  padding: "1px 2px",
+                  padding: "1px 4px",
                   borderRadius: "4px",
                   border: "1px solid",
                   borderColor: Number(selectedInvoice.dueAmount) <= 0 ? "#bfdbfe" : "#fecaca"
                 }}>
-                  {Number(selectedInvoice.dueAmount) <= 0 ? "✅ Payment Completed in Full" : `⚠️ Partial Payment (Due: ${formatCurrency(selectedInvoice.dueAmount)})`}
+                  {Number(selectedInvoice.dueAmount) <= 0 ? "Payment Completed in Full" : ` Partial Payment (Due: ${formatCurrency(selectedInvoice.dueAmount)})`}
                 </span>
               </div>
 
               {/* Rupees in Words */}
-              <div style={{ marginTop: "1px", borderTop: "1px dashed #cbd5e1", paddingTop: "8px", fontSize: "12px" }}>
+              <div style={{ marginTop: "1px", borderTop: "1px dashed #cbd5e1", paddingTop: "2px", fontSize: "12px" }}>
                 <span style={{ fontWeight: "bold", color: "#000000" }}>Amount in Words: </span>
                 <span style={{ fontWeight: "900", color: "#000000" }}>{selectedInvoice.amountInWords}</span>
               </div>
@@ -3413,21 +4028,21 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
             }}>
               {/* Prepared By (Shows typed name or blank space for manual typing/signature) */}
               <div style={{ textAlign: "center", width: "220px" }}>
-                <div style={{ height: "15px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                <div style={{ height: "14px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
                   {selectedInvoice.preparedBy ? (
-                    <span style={{ fontWeight: "900", fontSize: "14px", color: "#000000" }}>
+                    <span style={{ fontWeight: "900", fontSize: "13px", color: "#000000" }}>
                       {selectedInvoice.preparedBy}
                     </span>
                   ) : (
-                    <span style={{ color: "#94a3b8", fontSize: "12px", fontStyle: "italic" }}>
+                    <span style={{ color: "#94a3b8", fontSize: "11px", fontStyle: "italic" }}>
                       (Signature)
                     </span>
                   )}
                 </div>
-                <div style={{ borderTop: "1px solid #000000", paddingTop: "5px", fontWeight: "bold", fontSize: "12px" }}>
+                <div style={{ borderTop: "1px solid #000000", paddingTop: "2px", fontWeight: "bold", fontSize: "12px" }}>
                   Bill Prepared By
                 </div>
-                <div style={{ fontSize: "12px", color: "#475569" }}>
+                <div style={{ fontSize: "11px", color: "#475569" }}>
                   {selectedInvoice.preparedBy ? selectedInvoice.preparedBy : "Staff / Accountant"}
                 </div>
               </div>
@@ -3437,7 +4052,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                 {profile.stampUrl ? (
                   <div style={{
                     position: "absolute",
-                    bottom: "15px",
+                    bottom: "8px",
                     left: "50%",
                     transform: "translateX(-50%)",
                     display: "flex",
@@ -3450,8 +4065,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                       src={profile.stampUrl}
                       alt="Authorized Stamp"
                       style={{
-                        height: "1.25in",
-                        width: "1.25in",
+                        height: "55px",
+                        width: "55px",
                         objectFit: "contain",
                         display: "block"
                       }}
@@ -3460,10 +4075,10 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                 ) : (
                   <div style={{
                     position: "absolute",
-                    bottom: "15px",
+                    bottom: "8px",
                     left: "50%",
-                    width: "1.25in",
-                    height: "1.25in",
+                    width: "55px",
+                    height: "55px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -3476,22 +4091,20 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     <img
                       src={profile.logoUrl || "/sigma-logo.png"}
                       alt="Seal Logo"
-                      style={{ width: "1.25in", height: "1.25in", objectFit: "contain" }}
+                      style={{ width: "55px", height: "55px", objectFit: "contain" }}
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   </div>
                 )}
 
-                <div style={{ borderTop: "1px solid #000000", paddingTop: "5px", fontWeight: "bold", fontSize: "12px" }}>
+                <div style={{ borderTop: "1px solid #000000", paddingTop: "2px", fontWeight: "bold", fontSize: "12px" }}>
                   Authorized Stamp & Signature
                 </div>
-                <div style={{ fontSize: "12px", color: "#475569" }}>
+                <div style={{ fontSize: "11px", color: "#475569" }}>
                   {profile.companyName}
                 </div>
               </div>
             </div>
-            </div>
-            {/* --- END SHRINK WRAPPER --- */}
           </div>
 
           {/* Bottom Action Bar: Print on LEFT side, simple, without blur */}
@@ -3523,15 +4136,12 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                 boxShadow: "0 2px 6px rgba(88, 28, 135, 0.35)"
               }}
             >
-              <span>🖨️</span> Print
+              Print
             </button>
 
             {/* CREATE NEW BILL RIGHT BESIDE PRINT */}
             <button
-              onClick={() => {
-                setForm({ ...defaultForm, materials: [...defaultMaterials], preparedBy: "" });
-                setShowBillModal(true);
-              }}
+              onClick={handleOpenCreateBill}
               style={{
                 backgroundColor: "#16a34a",
                 color: "white",
@@ -3546,7 +4156,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                 gap: "6px"
               }}
             >
-              <span>➕</span> Create New Bill
+              Create New Bill
             </button>
 
             <button
@@ -3563,7 +4173,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                 marginLeft: "auto"
               }}
             >
-              ✕ Close
+              Close
             </button>
           </div>
         </div>
@@ -3573,7 +4183,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       <div style={{
         backgroundColor: "white",
         borderRadius: "10px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        boxShadow: "none",
         border: "1px solid #cbd5e1",
         padding: "20px"
       }}>
@@ -3645,11 +4255,11 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                 }}
               >
                 <option value="all">All Methods</option>
-                <option value="Cash">💵 Cash</option>
-                <option value="Online Bank Acc">🏦 Online Bank Acc</option>
-                <option value="Online Esewa">📱 Online Esewa</option>
-                <option value="Online Khalti">🟣 Online Khalti</option>
-                <option value="Other">💳 Other</option>
+                <option value="Cash">Cash</option>
+                <option value="Online Bank Acc">Online Bank Acc</option>
+                <option value="Online Esewa">Online Esewa</option>
+                <option value="Online Khalti">Online Khalti</option>
+                <option value="Other">Other</option>
               </select>
             )}
           </div>
@@ -3672,33 +4282,37 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           `}</style>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "auto" }}>
             <thead>
-              <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
-                <th style={{ padding: "8px 6px", textAlign: "left", whiteSpace: "nowrap" }}>Bill #</th>
-                <th style={{ padding: "8px 6px", textAlign: "left", whiteSpace: "nowrap" }}>Date</th>
-                <th style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>Days</th>
-                <th style={{ padding: "8px 6px", textAlign: "left" }}>Student / Address</th>
-                <th style={{ padding: "8px 6px", textAlign: "left", whiteSpace: "nowrap" }}>WhatsApp</th>
-                <th style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>Method</th>
-                <th style={{ padding: "8px 6px", textAlign: "left", whiteSpace: "nowrap" }}>Package</th>
-                <th style={{ padding: "8px 6px", textAlign: "right", whiteSpace: "nowrap" }}>Total Fee</th>
-                <th style={{ padding: "8px 6px", textAlign: "right", whiteSpace: "nowrap" }}>Paid</th>
-                <th style={{ padding: "8px 6px", textAlign: "right", whiteSpace: "nowrap" }}>Due</th>
-                <th style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>Actions</th>
+              <tr style={{
+                backgroundColor: "#1e3a8a",
+                color: "#ffffff",
+                borderBottom: "2px solid #172554"
+              }}>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", borderTopLeftRadius: "6px" }}>Bill #</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Date</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Days</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", color: "#ffffff", fontWeight: "700" }}>Student / Address</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>WhatsApp</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Method</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Package</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Total Fee</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Paid</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Due</th>
+                <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", borderTopRightRadius: "6px" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredBills.length === 0 ? (
                 <tr>
-                  <td colSpan="10" style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>
+                  <td colSpan="11" style={{ padding: "30px 20px", textAlign: "center", color: "#64748b", fontSize: "13px" }}>
                     No student bills match your query.
                   </td>
                 </tr>
               ) : (
                 filteredBills.map((b) => (
                   <tr key={b.id || b.billNumber} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                    <td style={{ padding: "7px 6px", fontWeight: "900", color: "#1e3a8a", whiteSpace: "nowrap" }}>{b.billNumber}</td>
-                    <td style={{ padding: "7px 6px", color: "#64748b", whiteSpace: "nowrap", fontSize: "11px" }}>{b.date}</td>
-                    <td style={{ padding: "7px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
+                    <td style={{ padding: "8px 6px", fontWeight: "900", color: "#1e3a8a", whiteSpace: "nowrap", textAlign: "center" }}>{b.billNumber}</td>
+                    <td style={{ padding: "8px 6px", color: "#64748b", whiteSpace: "nowrap", fontSize: "11px", textAlign: "center" }}>{b.date}</td>
+                    <td style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
                       {(() => {
                         const admitStr = b.admittedDate || b.firstPaymentDate || (b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : null);
                         if (!admitStr) return <span style={{ fontSize: "10px", color: "#94a3b8" }}>—</span>;
@@ -3707,22 +4321,24 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                         admit.setHours(0,0,0,0); today.setHours(0,0,0,0);
                         const diff = Math.floor((today - admit) / (1000 * 60 * 60 * 24));
                         return (
-                          <span style={{ fontSize: "11px", fontWeight: "bold", color: "#dc2626", backgroundColor: "#fee2e2", padding: "2px 6px", borderRadius: "10px", display: "inline-block" }}>
+                          <span style={{ fontSize: "12px", fontWeight: "bold", color: "#dc2626" }}>
                             {diff}d
                           </span>
                         );
                       })()}
                     </td>
-                    <td style={{ padding: "7px 6px" }}>
-                      <div style={{ fontWeight: "bold", color: "#0f172a" }}>{String(b.studentName || "-")}</div>
-                      {b.address && (
-                        <div style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "2px" }}>
-                          <span>📍</span> {String(b.address)}
-                        </div>
-                      )}
+                    <td style={{ padding: "8px 6px", textAlign: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ fontWeight: "bold", color: "#0f172a" }}>{String(b.studentName || "-")}</div>
+                        {b.address && (
+                          <div style={{ fontSize: "11px", color: "#64748b" }}>
+                            {String(b.address)}
+                          </div>
+                        )}
+                      </div>
                     </td>
-                    <td style={{ padding: "7px 6px", color: "#2563eb", fontWeight: "bold", whiteSpace: "nowrap", fontSize: "11px" }}>{b.contactNumber}</td>
-                    <td style={{ padding: "7px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
+                    <td style={{ padding: "8px 6px", color: "#2563eb", fontWeight: "bold", whiteSpace: "nowrap", fontSize: "11px", textAlign: "center" }}>{b.contactNumber}</td>
+                    <td style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
                       <span style={{
                         backgroundColor: b.paymentMethod === "Cash" ? "#f0fdf4" : b.paymentMethod === "Online Esewa" ? "#ecfdf5" : b.paymentMethod === "Online Khalti" ? "#faf5ff" : "#eff6ff",
                         color: b.paymentMethod === "Cash" ? "#15803d" : b.paymentMethod === "Online Esewa" ? "#047857" : b.paymentMethod === "Online Khalti" ? "#7e22ce" : "#1e40af",
@@ -3732,15 +4348,18 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                         borderRadius: "10px",
                         fontSize: "10.5px",
                         fontWeight: "bold",
-                        display: "inline-block"
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px"
                       }}>
-                        {b.paymentMethod === "Cash" ? "💵 Cash" : b.paymentMethod === "Online Esewa" ? "📱 eSewa" : b.paymentMethod === "Online Khalti" ? "🟣 Khalti" : b.paymentMethod === "Online Bank Acc" ? "🏦 Bank" : `💳 ${b.paymentMethod || "Cash"}`}
+                        {getPaymentMethodIcon(b.paymentMethod, 12)}
+                        <span>{b.paymentMethod === "Cash" ? "Cash" : b.paymentMethod === "Online Esewa" ? "eSewa" : b.paymentMethod === "Online Khalti" ? "Khalti" : b.paymentMethod === "Online Bank Acc" ? "Bank" : `${b.paymentMethod || "Cash"}`}</span>
                       </span>
                     </td>
-                    <td style={{ padding: "7px 6px", fontSize: "11px", whiteSpace: "nowrap" }}>{b.coursePackage}</td>
-                    <td style={{ padding: "7px 6px", textAlign: "right", fontWeight: "bold", whiteSpace: "nowrap" }}>{formatCurrency(b.totalFee)}</td>
-                    <td style={{ padding: "7px 6px", textAlign: "right", fontWeight: "bold", color: "#16a34a", whiteSpace: "nowrap" }}>{formatCurrency(b.paidAmount)}</td>
-                    <td style={{ padding: "7px 6px", textAlign: "right", fontWeight: "bold", color: Number(b.dueAmount) > 0 ? "#dc2626" : "#64748b", whiteSpace: "nowrap" }}>
+                    <td style={{ padding: "8px 6px", fontSize: "11px", whiteSpace: "nowrap", textAlign: "center" }}>{b.coursePackage}</td>
+                    <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", whiteSpace: "nowrap" }}>{formatCurrency(b.totalFee)}</td>
+                    <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", color: "#16a34a", whiteSpace: "nowrap" }}>{formatCurrency(b.paidAmount)}</td>
+                    <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", color: Number(b.dueAmount) > 0 ? "#dc2626" : "#64748b", whiteSpace: "nowrap" }}>
                       {Number(b.dueAmount) > 0 ? formatCurrency(b.dueAmount) : "Paid"}
                     </td>
                     <td style={{ padding: "7px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
@@ -3762,11 +4381,10 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                             fontWeight: "bold",
                             display: "flex",
                             alignItems: "center",
-                            gap: "3px",
-                            boxShadow: "0 1px 3px rgba(220, 38, 38, 0.25)"
+                            gap: "3px"
                           }}
                         >
-                          <span>🖨️</span> Print
+                          Print
                         </button>
 
                         {/* Payment complete nahunjel next pay garne, otherwise NO next pay */}
@@ -3786,7 +4404,6 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                               cursor: "pointer",
                               fontSize: "11px",
                               fontWeight: "bold",
-                              boxShadow: "0 1px 3px rgba(22, 163, 74, 0.25)",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "2px"
@@ -3796,7 +4413,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           </button>
                         ) : (
                           <span style={{ fontSize: "10.5px", color: "#16a34a", fontWeight: "bold", padding: "3px" }}>
-                            ✅
+                            
                           </span>
                         )}
 
@@ -3816,7 +4433,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                                 fontWeight: "bold"
                               }}
                             >
-                              ✏️
+                              Edit
                             </button>
 
                             <button
@@ -3833,7 +4450,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                                 fontWeight: "bold"
                               }}
                             >
-                              🗑️
+                              Delete
                             </button>
                           </>
                         )}
@@ -3878,7 +4495,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               <div>
                 <h3 style={{ margin: 0, color: "#1e3a8a", fontSize: "19px" }}>
                   {form.isEditingExistingBill 
-                    ? `✏️ Admin Edit Bill: ${form.billNumber} (${form.studentName})`
+                    ? `Admin Edit Bill: ${form.billNumber} (${form.studentName})`
                     : form.isExistingStudent 
                     ? `Update Installment Payment for ${form.studentName}` 
                     : "Create New Bill Receipt"}
@@ -3903,7 +4520,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     alignItems: "center",
                     gap: "4px"
                   }}>
-                    📅 Date: {form.date || new Date().toISOString().split('T')[0]} (Auto)
+                    Date: {form.date || new Date().toISOString().split('T')[0]} (Auto)
                   </span>
                 </div>
               </div>
@@ -3922,7 +4539,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   color: "#475569"
                 }}
               >
-                ✕ Close
+                Close
               </button>
             </div>
 
@@ -3930,7 +4547,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               {/* 1. Student Full Name */}
               <div>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "4px" }}>
-                  Student Full Name (Text Format) * {(form.isExistingStudent && !form.isEditingExistingBill) && "🔒"}
+                  Student Full Name (Text Format) * {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
                 </label>
                 <input
                   type="text"
@@ -3963,7 +4580,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               {/* 2. WhatsApp Contact Number */}
               <div>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "4px" }}>
-                  WhatsApp Contact Number (10 Digits Only) * {(form.isExistingStudent && !form.isEditingExistingBill) && "🔒 (Locked)"}
+                  WhatsApp Contact Number (10 Digits Only) * {(form.isExistingStudent && !form.isEditingExistingBill) && " (Locked)"}
                 </label>
                 <div style={{ display: "flex", alignItems: "center" }}>
                   <span style={{
@@ -4017,7 +4634,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               {/* 3. Parents Name */}
               <div>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "4px" }}>
-                  Parents Name (Text Format) {(form.isExistingStudent && !form.isEditingExistingBill) && "🔒"}
+                  Parents Name (Text Format) {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
                 </label>
                 <input
                   type="text"
@@ -4049,7 +4666,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               {/* 4. Parents WhatsApp Number */}
               <div>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "4px" }}>
-                  Parent Number (10 Digits Only) {(form.isExistingStudent && !form.isEditingExistingBill) && "🔒"}
+                  Parent Number (10 Digits Only) {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
                 </label>
                 <div style={{ display: "flex", alignItems: "center" }}>
                   <span style={{
@@ -4099,7 +4716,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               {/* 5. Student Address */}
               <div>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                  Student Address (Text Format) * {(form.isExistingStudent && !form.isEditingExistingBill) && "🔒"}
+                  Student Address (Text Format) * {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
                 </label>
                 <input
                   type="text"
@@ -4124,7 +4741,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               {/* 6. Class Time with AM / PM Dropdown */}
               <div>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "4px" }}>
-                  Class Time (with AM / PM) * {(form.isExistingStudent && !form.isEditingExistingBill) && "🔒"}
+                  Class Time (with AM / PM) * {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
                 </label>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input
@@ -4169,13 +4786,42 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
               {/* 7. Course Package */}
               <div style={{ gridColumn: "span 2" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                  Course Package * {(form.isExistingStudent && !form.isEditingExistingBill) && "🔒"}
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#475569" }}>
+                    Course Package * {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
+                  </label>
+                  {(!form.isExistingStudent || form.isEditingExistingBill) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const initialCourse = (form?.courseDetail && COURSE_OPTIONS.includes(form.courseDetail)) ? form.courseDetail : "EPS Topik Full course";
+                        setSelectedCourseForFees(initialCourse);
+                        setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
+                        setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
+                        const courseDefPkg = feeConfig.courseFees?.[initialCourse]?.defaultPackage || feeConfig.defaultPackage || "Full course";
+                        setSelectedDefaultPkg(courseDefPkg);
+                        setFeeUpdateDate(feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10)));
+                        setShowFeeConfigModal(true);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#0284c7",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                        padding: "0 4px"
+                      }}
+                    >
+                      Edit Package Defaults
+                    </button>
+                  )}
+                </div>
                 <select
                   value={form.coursePackage}
                   disabled={form.isExistingStudent && !form.isEditingExistingBill}
-                  onChange={(e) => setForm({ ...form, coursePackage: e.target.value })}
+                  onChange={(e) => handleCoursePackageChange(e.target.value)}
                   style={{
                     width: "100%",
                     padding: "9px 12px",
@@ -4186,12 +4832,11 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     boxSizing: "border-box"
                   }}
                 >
-                  <option value="30 days">30 days</option>
-                  <option value="45 days">45 days</option>
-                  <option value="2 months">2 months</option>
-                  <option value="3 months">3 months</option>
-                  <option value="6 months">6 months</option>
-                  <option value="Full course">Full course</option>
+                  {COURSE_PACKAGES.map((pkg) => (
+                    <option key={pkg} value={pkg}>
+                      {pkg}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -4207,9 +4852,9 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === "Other") {
-                        setForm(prev => ({ ...prev, courseDetail: "" }));
+                        handleCourseDetailChange("");
                       } else {
-                        setForm(prev => ({ ...prev, courseDetail: val }));
+                        handleCourseDetailChange(val);
                       }
                     }}
                     style={{
@@ -4254,7 +4899,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   />
                 </div>
 
-                {/* ⭐ COURSE FEE, DISCOUNT & EXTRA ITEMS KEPT DIRECTLY WITH COURSE DETAIL (GREEN THEME) */}
+                {/* COURSE FEE, DISCOUNT & EXTRA ITEMS KEPT DIRECTLY WITH COURSE DETAIL (GREEN THEME) */}
                 <div style={{
                   backgroundColor: "#f0fdf4",
                   border: "2px solid #16a34a",
@@ -4263,10 +4908,98 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   marginTop: "10px"
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
-                    <span style={{ display: "none" }}>
-                      
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "12px", fontWeight: "bold", color: "#166534" }}>
+                        Course Fee & Discount: <strong style={{ color: "#15803d" }}>{form.coursePackage || "Full course"}</strong>
+                      </span>
+                      {(() => {
+                        const curPkg = form.coursePackage || "Full course";
+                        const curDefault = getPackageFee(curPkg, form.courseDetail);
+                        if (!curDefault) return null;
+                        return (
+                          <span style={{ fontSize: "11px", color: "#047857", backgroundColor: "#d1fae5", padding: "1px 6px", borderRadius: "4px", border: "1px solid #a7f3d0", fontWeight: "bold" }}>
+                            Default: Rs. {Number(curDefault.grossFee).toLocaleString()} ({curDefault.discountPercent || 0}% off)
+                          </span>
+                        );
+                      })()}
+                    </div>
+
+                    {(!form.isExistingStudent || form.isEditingExistingBill) && (
+                      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveCurrentAsDefault(form.coursePackage)}
+                          title={`Save current Rs. ${Number(form.grossFee || 0).toLocaleString()} and ${Number(form.discountPercent || 0)}% discount as default for "${form.coursePackage}"`}
+                          style={{
+                            backgroundColor: "#16a34a",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "4px 8px",
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px"
+                          }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                          </svg>
+                          Set as Default
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const initialCourse = (form?.courseDetail && COURSE_OPTIONS.includes(form.courseDetail)) ? form.courseDetail : "EPS Topik Full course";
+                            setSelectedCourseForFees(initialCourse);
+                            setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
+                            setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
+                            const courseDefPkg = feeConfig.courseFees?.[initialCourse]?.defaultPackage || feeConfig.defaultPackage || "Full course";
+                            setSelectedDefaultPkg(courseDefPkg);
+                            setFeeUpdateDate(feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10)));
+                            setShowFeeConfigModal(true);
+                          }}
+                          title="View and edit default fees for all packages"
+                          style={{
+                            backgroundColor: "#ffffff",
+                            color: "#0369a1",
+                            border: "1px solid #7dd3fc",
+                            borderRadius: "4px",
+                            padding: "4px 8px",
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            cursor: "pointer"
+                          }}
+                        >
+                          All Defaults
+                        </button>
+                      </div>
+                    )}
                   </div>
+
+                  {feeSavedToast && (
+                    <div style={{
+                      backgroundColor: "#bbf7d0",
+                      color: "#14532d",
+                      border: "1px solid #86efac",
+                      borderRadius: "4px",
+                      padding: "5px 10px",
+                      fontSize: "11.5px",
+                      fontWeight: "bold",
+                      marginBottom: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between"
+                    }}>
+                      <span>{feeSavedToast}</span>
+                      <button type="button" onClick={() => setFeeSavedToast("")} style={{ background: "none", border: "none", color: "#14532d", cursor: "pointer", fontWeight: "bold" }}>x</button>
+                    </div>
+                  )}
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", alignItems: "flex-end" }}>
                     {/* Course Gross Fee */}
@@ -4333,23 +5066,66 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   {/* ADD ITEM WITH DROP DOWN ARROW ONLY */}
                   <div style={{ borderTop: "1px dashed #86efac", paddingTop: "10px", marginTop: "10px" }}>
                     <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      {/* Free Button: Blue before select, fully Red when checked (sets for all items) */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAllFree(!isItemFree)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          cursor: "pointer",
+                          userSelect: "none",
+                          padding: "8px 14px",
+                          borderRadius: "5px",
+                          backgroundColor: isItemFree ? "#dc2626" : "#2563eb",
+                          color: "#ffffff",
+                          border: isItemFree ? "1.5px solid #b91c1c" : "1.5px solid #1d4ed8",
+                          fontWeight: "bold",
+                          fontSize: "13px",
+                          height: "36px",
+                          boxSizing: "border-box",
+                          transition: "all 0.15s ease",
+                          boxShadow: "none"
+                        }}
+                        title={isItemFree ? "Currently FREE for all items (click to uncheck)" : "Click to set FREE for all items"}
+                      >
+                        <span style={{
+                          display: "inline-block",
+                          width: "14px",
+                          height: "14px",
+                          borderRadius: "3px",
+                          border: "1.5px solid #ffffff",
+                          backgroundColor: isItemFree ? "#ffffff" : "transparent",
+                          position: "relative",
+                          verticalAlign: "middle"
+                        }}>
+                          {isItemFree && (
+                            <span style={{
+                              position: "absolute",
+                              left: "2px",
+                              top: "-3px",
+                              color: "#dc2626",
+                              fontSize: "12px",
+                              fontWeight: "900"
+                            }}>✓</span>
+                          )}
+                        </span>
+                        <span>Free</span>
+                      </button>
+
                       {/* Drop down arrow select populated with products & available stock */}
-                      <div style={{ position: "relative", flex: 1, minWidth: "190px" }}>
+                      <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
                         <select
                           value={selectedItemToAdd}
                           onChange={(e) => {
                             const val = e.target.value;
-                            setSelectedItemToAdd(val);
-                            if (!val || val === "Other") {
-                              setNewItemPrice("");
-                              setSelectedItemQty(1);
+                            if (!val) return;
+                            if (val === "Other") {
+                              setSelectedItemToAdd("Other");
                               return;
                             }
-                            const matched = products.find(p => p.name === val || p.id === val);
-                            if (matched) {
-                              setNewItemPrice(String(matched.price || 0));
-                              setSelectedItemQty(1);
-                            }
+                            handleAddItemFromDropdown(val);
                           }}
                           style={{
                             width: "100%",
@@ -4363,7 +5139,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                             cursor: "pointer"
                           }}
                         >
-                          <option value="">select items ▼</option>
+                          <option value="">Choose item / book to add ▼</option>
                           {products.map((p) => {
                             const isOutOfStock = Number(p.stock) <= 0;
                             return (
@@ -4376,7 +5152,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                                   fontWeight: isOutOfStock ? "normal" : "bold"
                                 }}
                               >
-                                {p.name} — Stock: {p.stock} {p.unit || 'pcs'} {isOutOfStock ? '❌ [OUT OF STOCK]' : `(Rs. ${p.price})`}
+                                {p.name} — Stock: {p.stock} {p.unit || 'pcs'} {isOutOfStock ? '[OUT OF STOCK]' : `(Rs. ${p.price})`}
                               </option>
                             );
                           })}
@@ -4411,27 +5187,9 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                             textAlign: "center",
                             boxSizing: "border-box"
                           }}
-                          title="Quantity to sell (Available stock will auto-reduce)"
+                          title="Quantity to add (Available stock will auto-reduce)"
                         />
                       </div>
-
-                      {selectedItemToAdd === "Other" && (
-                        <input
-                          type="text"
-                          placeholder="Type Item / Book Name..."
-                          value={customItemToAdd}
-                          onChange={(e) => setCustomItemToAdd(e.target.value)}
-                          style={{
-                            flex: 1,
-                            minWidth: "140px",
-                            padding: "8px 10px",
-                            borderRadius: "5px",
-                            border: "1px solid #86efac",
-                            fontSize: "13px",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                      )}
 
                       {/* Exact Price Input (No Stepper Arrows - Direct Typing) */}
                       <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -4440,45 +5198,73 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          placeholder="Unit Price"
+                          placeholder={isItemFree ? "0" : "Unit Price"}
                           value={newItemPrice}
                           onChange={(e) => {
                             const val = e.target.value.replace(/[^0-9]/g, "");
                             setNewItemPrice(val);
+                            if (Number(val) > 0) {
+                              setIsItemFree(false);
+                            } else if (val === "0") {
+                              setIsItemFree(true);
+                            }
                           }}
                           style={{
                             width: "95px",
                             padding: "8px 8px 8px 30px",
                             borderRadius: "5px",
-                            border: "1px solid #86efac",
-                            backgroundColor: "#ffffff",
+                            border: isItemFree ? "1.5px solid #16a34a" : "1px solid #86efac",
+                            backgroundColor: isItemFree ? "#f0fdf4" : "#ffffff",
                             fontWeight: "bold",
                             fontSize: "13px",
-                            color: "#166534",
+                            color: isItemFree ? "#15803d" : "#166534",
                             boxSizing: "border-box"
                           }}
-                          title="Type exact unit price"
+                          title={isItemFree ? "Item is marked as FREE (Rs. 0)" : "Type exact unit price"}
                         />
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={handleAddItemFromDropdown}
-                        style={{
-                          backgroundColor: "#16a34a",
-                          color: "white",
-                          border: "none",
-                          padding: "8px 16px",
-                          borderRadius: "5px",
-                          cursor: "pointer",
-                          fontWeight: "bold",
-                          fontSize: "13px",
-                          whiteSpace: "nowrap",
-                          boxShadow: "0 2px 4px rgba(22, 163, 74, 0.25)"
-                        }}
-                      >
-                        ➕ Add
-                      </button>
+                      {selectedItemToAdd === "Other" && (
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flex: 1, minWidth: "200px" }}>
+                          <input
+                            type="text"
+                            placeholder="Type Custom Item / Book Name..."
+                            value={customItemToAdd}
+                            autoFocus
+                            onChange={(e) => setCustomItemToAdd(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && customItemToAdd.trim()) {
+                                e.preventDefault();
+                                handleAddItemFromDropdown(customItemToAdd);
+                              }
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "8px 10px",
+                              borderRadius: "5px",
+                              border: "1.5px solid #16a34a",
+                              fontSize: "13px",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleAddItemFromDropdown(customItemToAdd)}
+                            style={{
+                              backgroundColor: "#16a34a",
+                              color: "white",
+                              border: "none",
+                              padding: "8px 12px",
+                              borderRadius: "5px",
+                              cursor: "pointer",
+                              fontWeight: "bold",
+                              fontSize: "13px"
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* ONLY SHOW ADDED ITEMS IF ANY HAVE BEEN ADDED */}
@@ -4496,7 +5282,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                               <span style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a" }}>
-                                📚 {mat.name}
+                                {mat.name}
                               </span>
                               {mat.qty && Number(mat.qty) > 1 && (
                                 <span style={{
@@ -4510,11 +5296,32 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                                   Qty: {mat.qty} {mat.unit || ''}
                                 </span>
                               )}
-                              {mat.unitPrice && Number(mat.qty) > 1 && (
+                              {mat.unitPrice && Number(mat.qty) > 1 && !mat.isFree && Number(mat.amount) > 0 && (
                                 <span style={{ color: "#64748b", fontSize: "11px" }}>
                                   (@ Rs. {mat.unitPrice})
                                 </span>
                               )}
+                              {/* Interactive Free uncheck/check button for added item */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleMaterialFree(idx, !(mat.isFree || Number(mat.amount) === 0))}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  cursor: "pointer",
+                                  padding: "3px 8px",
+                                  borderRadius: "4px",
+                                  backgroundColor: (mat.isFree || Number(mat.amount) === 0) ? "#dc2626" : "#f1f5f9",
+                                  color: (mat.isFree || Number(mat.amount) === 0) ? "#ffffff" : "#475569",
+                                  border: (mat.isFree || Number(mat.amount) === 0) ? "1px solid #b91c1c" : "1px solid #cbd5e1",
+                                  fontSize: "11px",
+                                  fontWeight: "bold"
+                                }}
+                                title={(mat.isFree || Number(mat.amount) === 0) ? "Click to uncheck Free (restore item price)" : "Click to mark as Free"}
+                              >
+                                <span>{(mat.isFree || Number(mat.amount) === 0) ? "✓ Free" : "Set Free"}</span>
+                              </button>
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -4556,7 +5363,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                                   fontSize: "12px"
                                 }}
                               >
-                                ✕
+                                ×
                               </button>
                             </div>
                           </div>
@@ -4573,62 +5380,9 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   <span style={{ display: "none" }}></span>
                 </div>
 
-                {/* PAYMENT METHOD DROPDOWN ARROW & RECEIPT AMOUNT SIDE-BY-SIDE */}
-                <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "12px", marginTop: "10px", alignItems: "flex-end" }}>
-                  <div>
-                    <label style={{ display: "none" }}>
-                      
-                    </label>
-                    <select
-                      value={PAYMENT_METHODS.includes(form.paymentMethod) ? form.paymentMethod : "Other"}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === "Other") {
-                          setForm(prev => ({ ...prev, paymentMethod: "Other", customPaymentMethod: "" }));
-                        } else {
-                          setForm(prev => ({ ...prev, paymentMethod: val }));
-                        }
-                      }}
-                      style={{
-                        width: "100%",
-                        height: "36px",
-                        padding: "0 10px",
-                        borderRadius: "5px",
-                        border: "2px solid #2563eb",
-                        fontWeight: "bold",
-                        fontSize: "13px",
-                        backgroundColor: "#ffffff",
-                        cursor: "pointer",
-                        boxSizing: "border-box"
-                      }}
-                    >
-                      <option value="Online Bank Acc">🏦 Online Bank Acc</option>
-                      <option value="Online Esewa">📱 Online Esewa</option>
-                      <option value="Online Khalti">🟣 Online Khalti</option>
-                      <option value="Cash">💵 Cash</option>
-                      <option value="Other">💳 Other (Type Manually)</option>
-                    </select>
-
-                    {form.paymentMethod === "Other" && (
-                      <input
-                        type="text"
-                        placeholder="Type custom payment method..."
-                        value={form.customPaymentMethod}
-                        onChange={(e) => setForm(prev => ({ ...prev, customPaymentMethod: e.target.value }))}
-                        style={{
-                          width: "100%",
-                          marginTop: "6px",
-                          padding: "8px 10px",
-                          borderRadius: "5px",
-                          border: "2px solid #f59e0b",
-                          fontSize: "13px",
-                          fontWeight: "bold",
-                          boxSizing: "border-box"
-                        }}
-                      />
-                    )}
-                  </div>
-
+                {/* PAID AMOUNT IN FULL RED BOX (FIRST) & PAYMENT METHOD (SECOND) */}
+                <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "14px", marginTop: "10px", alignItems: "flex-start" }}>
+                  {/* 1. PAID AMOUNT - FULL RED COLOUR BOX MATCHING SIZE OF PAYMENT METHOD BOX */}
                   <div>
                     {(() => {
                       const maxAllowedPayment = (() => {
@@ -4650,52 +5404,157 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
                       return (
                         <>
-                            {maxAllowedPayment > 0 && (
-                              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "4px" }}>
-                                <span style={{ fontSize: "11px", color: "#166534", fontWeight: "bold", backgroundColor: "#f0fdf4", padding: "2px 6px", borderRadius: "4px", border: "1px solid #bbf7d0" }}>
-                                  Max: {formatCurrency(maxAllowedPayment)}
-                                </span>
-                              </div>
-                            )}
-                          <input
-                            type="number"
-                            required
-                            min="1"
-                            max={maxAllowedPayment > 0 ? maxAllowedPayment : undefined}
-                            placeholder="PAID AMOUNT"
-                            value={form.paidAmount}
-                            onWheel={(e) => e.target.blur()}
-                            onChange={(e) => {
-                              const rawVal = e.target.value;
-                              if (rawVal === "") {
-                                setForm(prev => ({ ...prev, paidAmount: "" }));
-                                return;
-                              }
-                              const num = Number(rawVal);
-                              if (maxAllowedPayment > 0 && num > maxAllowedPayment) {
-                                setForm(prev => ({ ...prev, paidAmount: maxAllowedPayment }));
-                              } else {
-                                setForm(prev => ({ ...prev, paidAmount: rawVal }));
-                              }
-                            }}
-                            style={{
-                              width: "100%",
-                              height: "36px",
-                              padding: "0 10px",
-                              borderRadius: "5px",
-                              border: "2px solid #16a34a",
-                              fontWeight: "bold",
-                              fontSize: "13px",
-                              boxSizing: "border-box",
-                              backgroundColor: "#ffffff"
-                            }}
-                          />
-                          {maxAllowedPayment > 0 && (
-                            <div style={{ display: "none" }}></div>
-                          )}
+                          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "26px", marginBottom: "6px", boxSizing: "border-box", width: "100%" }}>
+                            <label style={{ fontSize: "11.5px", fontWeight: "bold", color: "#b91c1c", letterSpacing: "0.2px", margin: 0, lineHeight: 1, whiteSpace: "nowrap", textAlign: "center" }}>
+                              ENTER PAID AMOUNT *
+                            </label>
+                          </div>
+
+                          <div style={{ position: "relative", width: "100%", height: "58px", backgroundColor: "#dc2626", borderRadius: "8px", boxSizing: "border-box", overflow: "hidden" }}>
+                            <input
+                              type="number"
+                              required
+                              min="1"
+                              max={maxAllowedPayment > 0 ? maxAllowedPayment : undefined}
+                              placeholder="Enter Paid Amount"
+                              value={form.paidAmount}
+                              className="paid-amount-red-input"
+                              onWheel={(e) => e.target.blur()}
+                              onChange={(e) => {
+                                const rawVal = e.target.value;
+                                if (rawVal === "") {
+                                  setForm(prev => ({ ...prev, paidAmount: "" }));
+                                  return;
+                                }
+                                const num = Number(rawVal);
+                                if (maxAllowedPayment > 0 && num > maxAllowedPayment) {
+                                  setForm(prev => ({ ...prev, paidAmount: maxAllowedPayment }));
+                                } else {
+                                  setForm(prev => ({ ...prev, paidAmount: rawVal }));
+                                }
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "58px",
+                                minHeight: "58px",
+                                maxHeight: "58px",
+                                backgroundColor: "#dc2626",
+                                color: "#ffffff",
+                                border: "2px solid #b91c1c",
+                                borderRadius: "8px",
+                                fontWeight: "900",
+                                fontSize: "22px",
+                                textAlign: "center",
+                                letterSpacing: "0.5px",
+                                padding: "0 8px",
+                                boxSizing: "border-box",
+                                outline: "none",
+                                boxShadow: "0 3px 8px rgba(220, 38, 38, 0.28)",
+                                transition: "all 0.15s ease"
+                              }}
+                            />
+                          </div>
                         </>
                       );
                     })()}
+                  </div>
+
+                  {/* 2. PAYMENT METHOD - WITH CLEAN SVG ICONS */}
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "26px", marginBottom: "6px", boxSizing: "border-box" }}>
+                      <label style={{ fontSize: "12.5px", fontWeight: "bold", color: "#334155", margin: 0, lineHeight: 1 }}>
+                        Payment Method *
+                      </label>
+                      <span style={{ fontSize: "11px", color: "#64748b", display: "inline-flex", alignItems: "center", height: "22px" }}>
+                        Active: <strong style={{ color: "#dc2626", marginLeft: "4px", backgroundColor: "#fee2e2", padding: "1px 8px", borderRadius: "4px", border: "1px solid #fca5a5" }}>{form.paymentMethod === "Other" && form.customPaymentMethod ? form.customPaymentMethod : form.paymentMethod}</strong>
+                      </span>
+                    </div>
+
+                    {/* Visual Payment Method Buttons with Clean SVG Icons */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "6px", height: "58px", boxSizing: "border-box" }}>
+                      {[
+                        { key: "Cash", label: "Cash", getIcon: (sel) => <CashIcon size={20} color={sel ? "#b91c1c" : "#16a34a"} /> },
+                        { key: "Online Bank Acc", label: "Bank", getIcon: (sel) => <BankIcon size={20} color={sel ? "#b91c1c" : "#2563eb"} /> },
+                        { key: "Online Esewa", label: "eSewa", getIcon: () => <EsewaIcon size={20} /> },
+                        { key: "Online Khalti", label: "Khalti", getIcon: () => <KhaltiIcon size={20} /> },
+                        { key: "Other", label: "Other", getIcon: (sel) => <CardIcon size={20} color={sel ? "#b91c1c" : "#d97706"} /> }
+                      ].map((m) => {
+                        const isSelected = form.paymentMethod === m.key;
+                        return (
+                          <button
+                            key={m.key}
+                            type="button"
+                            onClick={() => {
+                              if (m.key === "Other") {
+                                setForm(prev => ({ ...prev, paymentMethod: "Other", customPaymentMethod: prev.customPaymentMethod || "" }));
+                                setTimeout(() => {
+                                  if (customPaymentInputRef.current) {
+                                    customPaymentInputRef.current.focus();
+                                    customPaymentInputRef.current.select();
+                                  }
+                                }, 60);
+                              } else {
+                                setForm(prev => ({ ...prev, paymentMethod: m.key }));
+                              }
+                            }}
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "4px",
+                              padding: "4px",
+                              minHeight: "58px",
+                              height: "58px",
+                              maxHeight: "58px",
+                              boxSizing: "border-box",
+                              borderRadius: "8px",
+                              border: isSelected ? "2.5px solid #dc2626" : "1.5px solid #cbd5e1",
+                              backgroundColor: isSelected ? "#fee2e2" : "#ffffff",
+                              color: isSelected ? "#b91c1c" : "#475569",
+                              fontWeight: isSelected ? "900" : "600",
+                              fontSize: "12px",
+                              cursor: "pointer",
+                              boxShadow: isSelected ? "0 0 0 2px rgba(220, 38, 38, 0.25), 0 3px 8px rgba(220, 38, 38, 0.2)" : "none",
+                              transition: "all 0.15s ease"
+                            }}
+                          >
+                            {m.getIcon(isSelected)}
+                            <span>{m.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {form.paymentMethod === "Other" && (
+                      <div style={{ position: "relative", marginTop: "6px" }}>
+                        <input
+                          ref={customPaymentInputRef}
+                          autoFocus
+                          type="text"
+                          placeholder="Type custom payment method..."
+                          value={form.customPaymentMethod}
+                          onChange={(e) => setForm(prev => ({ ...prev, customPaymentMethod: e.target.value }))}
+                          style={{
+                            width: "100%",
+                            padding: "8px 10px 8px 32px",
+                            borderRadius: "6px",
+                            border: "2px solid #16a34a",
+                            backgroundColor: "#f0fdf4",
+                            color: "#15803d",
+                            fontSize: "13px",
+                            fontWeight: "bold",
+                            boxSizing: "border-box",
+                            outline: "none",
+                            boxShadow: "0 0 0 3px rgba(22, 163, 74, 0.3), 0 2px 6px rgba(22, 163, 74, 0.15)",
+                            transition: "all 0.2s ease"
+                          }}
+                        />
+                        <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }}>
+                          <CardIcon size={15} color="#16a34a" />
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -4748,7 +5607,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           return (
                             <tr style={{ backgroundColor: "#eff6ff" }}>
                               <td style={{ padding: "8px 14px", borderBottom: "1px solid #e2e8f0", color: "#1e40af", fontWeight: "bold" }}>
-                                📚 Study Materials / Extra Items Fee:
+                                Study Materials / Extra Items Fee:
                               </td>
                               <td style={{ padding: "8px 14px", borderBottom: "1px solid #e2e8f0", textAlign: "right", color: "#1e40af", fontWeight: "900" }}>
                                 + {formatCurrency(matTotal)}
@@ -4871,6 +5730,387 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
         </div>
       )}
 
+      {/* DEFAULT COURSE FEES & DISCOUNT SETTINGS MODAL */}
+      {showFeeConfigModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(15, 23, 42, 0.7)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 99999,
+          padding: "20px"
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "12px",
+            width: "95%",
+            maxWidth: "780px",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            padding: "26px",
+            boxShadow: "0 20px 50px rgba(0,0,0,0.3)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "2px solid #e2e8f0", paddingBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+              <div>
+                <h3 style={{ margin: 0, color: "#1e3a8a", fontSize: "19px" }}>
+                  Default Course Fee & Discount Settings
+                </h3>
+                <div style={{ margin: "6px 0 0 0", fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span>Updated Date:</span>
+                  <input
+                    type="date"
+                    value={feeUpdateDate || feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10))}
+                    onChange={(e) => setFeeUpdateDate(e.target.value)}
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      color: "#1e293b",
+                      backgroundColor: "#f8fafc",
+                      cursor: "pointer"
+                    }}
+                    title="Updated default fee date"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFeeConfigModal(false)}
+                style={{
+                  backgroundColor: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  padding: "5px 12px",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "12px"
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAllPackageFees}>
+              {/* Course & Child Package Control */}
+              <div style={{
+                backgroundColor: "#f8fafc",
+                border: "1.5px solid #cbd5e1",
+                borderRadius: "8px",
+                padding: "14px 16px",
+                marginBottom: "16px"
+              }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "14px", alignItems: "center" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "5px" }}>
+                      Standard Course
+                    </label>
+                    <select
+                      value={selectedCourseForFees}
+                      onChange={(e) => {
+                        const newCourse = e.target.value;
+                        setSelectedCourseForFees(newCourse);
+                        if (newCourse === "STANDARD_DEFAULT") {
+                          setSelectedDefaultPkg(feeConfig.defaultPackage || "Full course");
+                        } else {
+                          const defPkg = editingCourseFees[newCourse]?.defaultPackage || feeConfig.courseFees?.[newCourse]?.defaultPackage || feeConfig.defaultPackage || "Full course";
+                          setSelectedDefaultPkg(defPkg);
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        border: "1.5px solid #2563eb",
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                        backgroundColor: "#ffffff",
+                        boxSizing: "border-box"
+                      }}
+                    >
+                      <option value="STANDARD_DEFAULT">Standard Course Package (General Default for All)</option>
+                      <optgroup label="Configure For Specific Standard Course">
+                        {COURSE_OPTIONS.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "5px" }}>
+                      Default Child Package for {selectedCourseForFees === "STANDARD_DEFAULT" ? "All Courses" : selectedCourseForFees}
+                    </label>
+                    <select
+                      value={selectedDefaultPkg}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedDefaultPkg(val);
+                        if (selectedCourseForFees !== "STANDARD_DEFAULT") {
+                          setEditingCourseFees(prev => {
+                            const cur = prev[selectedCourseForFees] || feeConfig.courseFees?.[selectedCourseForFees] || {
+                              defaultPackage: val,
+                              packages: { ...(editingPackageFees || DEFAULT_PACKAGE_FEES) }
+                            };
+                            return { ...prev, [selectedCourseForFees]: { ...cur, defaultPackage: val } };
+                          });
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        border: "1.5px solid #3b82f6",
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                        backgroundColor: "#ffffff",
+                        boxSizing: "border-box"
+                      }}
+                    >
+                      {COURSE_PACKAGES.map((pkg) => (
+                        <option key={pkg} value={pkg}>
+                          {pkg} {pkg === "Full course" ? "(Standard Full Package)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Package Header & Copy Helper */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+                <div style={{ fontSize: "13px", fontWeight: "bold", color: "#334155" }}>
+                  Fee Structure for Child Packages of: <span style={{ color: "#2563eb" }}>{selectedCourseForFees === "STANDARD_DEFAULT" ? "Standard Course Package (Default)" : selectedCourseForFees}</span>
+                </div>
+                {selectedCourseForFees !== "STANDARD_DEFAULT" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Copy standard package fee defaults into "${selectedCourseForFees}"?`)) {
+                        setEditingCourseFees(prev => ({
+                          ...prev,
+                          [selectedCourseForFees]: {
+                            defaultPackage: selectedDefaultPkg,
+                            packages: { ...(editingPackageFees || DEFAULT_PACKAGE_FEES) }
+                          }
+                        }));
+                      }
+                    }}
+                    style={{
+                      backgroundColor: "#f1f5f9",
+                      color: "#0369a1",
+                      border: "1px solid #bae6fd",
+                      borderRadius: "5px",
+                      padding: "5px 12px",
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Copy Standard Fees to this Course
+                  </button>
+                )}
+              </div>
+
+              {/* Package Fees List */}
+              <div style={{ border: "1.5px solid #cbd5e1", borderRadius: "8px", overflowX: "auto", marginBottom: "16px", backgroundColor: "#ffffff" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1.5px solid #cbd5e1", textAlign: "left" }}>
+                      <th style={{ padding: "10px 14px", color: "#334155", fontWeight: "bold", width: "34%" }}>Course Child Package</th>
+                      <th style={{ padding: "10px 12px", color: "#334155", fontWeight: "bold", width: "25%" }}>Gross Fee (NPR)</th>
+                      <th style={{ padding: "10px 12px", color: "#334155", fontWeight: "bold", width: "18%" }}>Discount %</th>
+                      <th style={{ padding: "10px 14px", color: "#334155", fontWeight: "bold", textAlign: "right", width: "23%" }}>Net Payable</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {COURSE_PACKAGES.map((pkg) => {
+                      const pkgData = (() => {
+                        if (selectedCourseForFees === "STANDARD_DEFAULT") {
+                          return editingPackageFees[pkg] || DEFAULT_PACKAGE_FEES[pkg] || { grossFee: 15000, discountPercent: 0 };
+                        }
+                        if (editingCourseFees[selectedCourseForFees]?.packages?.[pkg]) {
+                          return editingCourseFees[selectedCourseForFees].packages[pkg];
+                        }
+                        if (feeConfig.courseFees?.[selectedCourseForFees]?.packages?.[pkg]) {
+                          return feeConfig.courseFees[selectedCourseForFees].packages[pkg];
+                        }
+                        return editingPackageFees[pkg] || DEFAULT_PACKAGE_FEES[pkg] || { grossFee: 15000, discountPercent: 0 };
+                      })();
+
+                      const gross = Number(pkgData.grossFee) || 0;
+                      const discPct = Number(pkgData.discountPercent) || 0;
+                      const net = Math.max(0, gross - (gross * (discPct / 100)));
+                      const isPrimaryDefault = selectedDefaultPkg === pkg;
+
+                      const updateFeeValue = (field, val) => {
+                        const num = Math.max(0, Number(val) || 0);
+                        if (selectedCourseForFees === "STANDARD_DEFAULT") {
+                          setEditingPackageFees(prev => ({
+                            ...prev,
+                            [pkg]: { ...(prev[pkg] || DEFAULT_PACKAGE_FEES[pkg]), [field]: num }
+                          }));
+                        } else {
+                          setEditingCourseFees(prev => {
+                            const curCourseObj = prev[selectedCourseForFees] || feeConfig.courseFees?.[selectedCourseForFees] || {
+                              defaultPackage: selectedDefaultPkg,
+                              packages: { ...(editingPackageFees || DEFAULT_PACKAGE_FEES) }
+                            };
+                            const curPkgs = curCourseObj.packages || { ...(editingPackageFees || DEFAULT_PACKAGE_FEES) };
+                            const curPkgData = curPkgs[pkg] || editingPackageFees[pkg] || DEFAULT_PACKAGE_FEES[pkg];
+                            return {
+                              ...prev,
+                              [selectedCourseForFees]: {
+                                ...curCourseObj,
+                                packages: {
+                                  ...curPkgs,
+                                  [pkg]: { ...curPkgData, [field]: num }
+                                }
+                              }
+                            };
+                          });
+                        }
+                      };
+
+                      return (
+                        <tr key={pkg} style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: isPrimaryDefault ? "#f0fdf4" : "#ffffff" }}>
+                          <td style={{ padding: "10px 14px", fontWeight: "bold", color: "#1e293b", whiteSpace: "nowrap" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span>{pkg}</span>
+                              {isPrimaryDefault && (
+                                <span style={{ fontSize: "10px", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 6px", borderRadius: "10px", fontWeight: "bold" }}>
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ padding: "8px 12px" }}>
+                            <input
+                              type="number"
+                              min="0"
+                              step="100"
+                              value={pkgData.grossFee}
+                              onChange={(e) => updateFeeValue("grossFee", e.target.value)}
+                              style={{
+                                width: "100%",
+                                padding: "7px 8px",
+                                borderRadius: "4px",
+                                border: "1.5px solid #16a34a",
+                                fontWeight: "bold",
+                                color: "#166534",
+                                boxSizing: "border-box",
+                                textAlign: "right"
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: "8px 12px" }}>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={pkgData.discountPercent}
+                              onChange={(e) => updateFeeValue("discountPercent", e.target.value)}
+                              style={{
+                                width: "100%",
+                                padding: "7px 8px",
+                                borderRadius: "4px",
+                                border: "1.5px solid #cbd5e1",
+                                fontWeight: "bold",
+                                boxSizing: "border-box",
+                                textAlign: "center"
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: "10px 14px", textAlign: "right", fontWeight: "bold", color: "#0f172a", whiteSpace: "nowrap" }}>
+                            {formatCurrency(net)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Reset course package fees and discounts to original standard defaults?")) {
+                      if (selectedCourseForFees === "STANDARD_DEFAULT") {
+                        setEditingPackageFees({ ...DEFAULT_PACKAGE_FEES });
+                        setSelectedDefaultPkg("Full course");
+                      } else {
+                        setEditingCourseFees(prev => {
+                          const updated = { ...prev };
+                          delete updated[selectedCourseForFees];
+                          return updated;
+                        });
+                        setSelectedDefaultPkg(feeConfig.defaultPackage || "Full course");
+                      }
+                    }
+                  }}
+                  style={{
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    border: "1px solid #cbd5e1",
+                    padding: "9px 16px",
+                    borderRadius: "6px",
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    cursor: "pointer"
+                  }}
+                >
+                  {selectedCourseForFees === "STANDARD_DEFAULT" ? "Reset Standard Defaults" : `Reset "${selectedCourseForFees}" to Standard`}
+                </button>
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowFeeConfigModal(false)}
+                    style={{
+                      backgroundColor: "#ffffff",
+                      color: "#64748b",
+                      border: "1px solid #cbd5e1",
+                      padding: "9px 16px",
+                      borderRadius: "6px",
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      backgroundColor: "#16a34a",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "9px 22px",
+                      borderRadius: "6px",
+                      fontWeight: "900",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)"
+                    }}
+                  >
+                    Save Default Fees
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* 6. EDIT BILL PAD HEADER MODAL */}
       {showProfileModal && (
         <div style={{
@@ -4898,19 +6138,19 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "2px solid #e2e8f0", paddingBottom: "10px" }}>
               <h3 style={{ margin: 0, color: "#1e3a8a", fontSize: "19px" }}>
-                🏢 Edit Company Bill Pad Header
+                Edit Company Bill Pad Header
               </h3>
               <button
                 onClick={() => setShowProfileModal(false)}
                 style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "5px 12px", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}
               >
-                ✕ Close
+                Close
               </button>
             </div>
 
             <form onSubmit={handleSaveProfile} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div style={{ gridColumn: "span 2", backgroundColor: "#fef3c7", padding: "10px", borderRadius: "6px", fontSize: "12px", color: "#92400e" }}>
-                ⚠️ <strong>One-time lifetime edit:</strong> After saving, this header will be permanently locked like pre-printed stationery.
+                 <strong>One-time lifetime edit:</strong> After saving, this header will be permanently locked like pre-printed stationery.
               </div>
 
               <div>
@@ -5027,7 +6267,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   type="submit"
                   style={{ width: "100%", backgroundColor: "#1e3a8a", color: "white", border: "none", padding: "12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}
                 >
-                  💾 Save Company Bill Pad Header
+                  Save Company Bill Pad Header
                 </button>
               </div>
             </form>
@@ -5036,7 +6276,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
       )}
 
       {/* 7. WORKABLE GOOGLE SHEET & DRIVE SETUP MODAL */}
-      {showScriptModal && canShowSetupMenu && (
+      {showScriptModal && (
         <div style={{
           position: "fixed",
           top: 0,
@@ -5073,7 +6313,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
             }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span>📊</span> Google Sheet & Drive Setup
+                  Google Sheet & Drive Setup
                 </h3>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -5091,7 +6331,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     fontSize: "14px"
                   }}
                 >
-                  ✕ Close
+                  Close
                 </button>
               </div>
             </div>
@@ -5117,7 +6357,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   color: setupTab === "connect" ? "white" : "#475569"
                 }}
               >
-                🔌 Cloud Links & Sync
+                Cloud Links & Sync
               </button>
               <button
                 onClick={() => setSetupTab("guide")}
@@ -5132,7 +6372,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   color: setupTab === "guide" ? "white" : "#475569"
                 }}
               >
-                📋 Apps Script Guide & Code
+                Apps Script Guide & Code
               </button>
               <button
                 onClick={() => setSetupTab("csv")}
@@ -5147,7 +6387,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   color: setupTab === "csv" ? "white" : "#475569"
                 }}
               >
-                📥 Offline CSV Backup
+                Offline CSV Backup
               </button>
             </div>
 
@@ -5171,7 +6411,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     gap: "10px"
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ fontSize: "22px" }}>{profile.googleSheetUrl ? "🟢" : "⚠️"}</span>
+                      <span style={{ fontSize: "22px" }}>{profile.googleSheetUrl ? "" : ""}</span>
                       <div>
                         <strong style={{ color: profile.googleSheetUrl ? "#065f46" : "#92400e", fontSize: "13px", display: "block" }}>
                           {profile.googleSheetUrl ? "Google Sheet Auto-Sync is Active" : "Google Sheet Sync Not Configured"}
@@ -5200,7 +6440,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           cursor: (testStatus.state === "testing" || !profile.googleSheetUrl) ? "not-allowed" : "pointer"
                         }}
                       >
-                        {testStatus.state === "testing" ? "Testing..." : "🧪 Test Connection"}
+                        {testStatus.state === "testing" ? "Testing..." : "Test Connection"}
                       </button>
 
                       <button
@@ -5218,7 +6458,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           cursor: (isSyncing || !profile.googleSheetUrl) ? "not-allowed" : "pointer"
                         }}
                       >
-                        {isSyncing ? "Syncing..." : `🔄 Sync All Bills (${bills.length})`}
+                        {isSyncing ? "Syncing..." : `Sync All Bills (${bills.length})`}
                       </button>
 
                       {googleSheetViewUrl && (
@@ -5240,7 +6480,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                             gap: "5px"
                           }}
                         >
-                          <span>📊</span>
+                          
                           <span>Open Google Sheet</span>
                         </button>
                       )}
@@ -5250,18 +6490,18 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                   {/* Status Banner Message */}
                   {(testStatus.state !== "idle" || syncStatus) && (
                     <div style={{
-                      backgroundColor: (testStatus.state === "error" || (syncStatus && syncStatus.startsWith("❌")))
+                      backgroundColor: (testStatus.state === "error" || (syncStatus && syncStatus.startsWith("")))
                         ? "#fee2e2"
                         : (testStatus.state === "testing" || isSyncing)
                         ? "#eff6ff"
                         : "#dcfce7",
-                      color: (testStatus.state === "error" || (syncStatus && syncStatus.startsWith("❌")))
+                      color: (testStatus.state === "error" || (syncStatus && syncStatus.startsWith("")))
                         ? "#991b1b"
                         : (testStatus.state === "testing" || isSyncing)
                         ? "#1d4ed8"
                         : "#166534",
                       border: `1px solid ${
-                        (testStatus.state === "error" || (syncStatus && syncStatus.startsWith("❌")))
+                        (testStatus.state === "error" || (syncStatus && syncStatus.startsWith("")))
                           ? "#fecaca"
                           : (testStatus.state === "testing" || isSyncing)
                           ? "#bfdbfe"
@@ -5312,7 +6552,6 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                         placeholder="https://script.google.com/macros/s/AKfycb.../exec"
                         value={(profile.googleSheetUrl === "setup_done" ? "" : profile.googleSheetUrl) || ""}
                         onChange={(e) => setProfile({ ...profile, googleSheetUrl: e.target.value })}
-                        disabled={isPermanentlyLinked}
                         style={{
                           width: "100%",
                           padding: "10px 12px",
@@ -5362,7 +6601,6 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           placeholder="https://docs.google.com/spreadsheets/d/your-sheet-id/edit"
                           value={googleSheetViewUrl}
                           onChange={(e) => setGoogleSheetViewUrl(e.target.value)}
-                          disabled={isPermanentlyLinked}
                           style={{
                             flex: 1,
                             padding: "10px 12px",
@@ -5432,7 +6670,6 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           placeholder="https://drive.google.com/drive/folders/your-folder-id"
                           value={googleDriveUrl}
                           onChange={(e) => setGoogleDriveUrl(e.target.value)}
-                          disabled={isPermanentlyLinked}
                           style={{
                             flex: 1,
                             padding: "10px 12px",
@@ -5480,7 +6717,6 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                         placeholder="e.g. director@gmail.com"
                         value={profile.ownerEmail || ""}
                         onChange={(e) => setProfile({ ...profile, ownerEmail: e.target.value })}
-                        disabled={isPermanentlyLinked}
                         style={{
                           width: "100%",
                           padding: "10px 12px",
@@ -5500,8 +6736,8 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
 
                     {saveSetupStatus && (
                       <div style={{
-                        backgroundColor: saveSetupStatus.startsWith("✅") ? "#dcfce7" : "#fee2e2",
-                        color: saveSetupStatus.startsWith("✅") ? "#166534" : "#991b1b",
+                        backgroundColor: saveSetupStatus.startsWith("") ? "#dcfce7" : "#fee2e2",
+                        color: saveSetupStatus.startsWith("") ? "#166534" : "#991b1b",
                         padding: "10px 14px",
                         borderRadius: "6px",
                         fontSize: "13px",
@@ -5527,7 +6763,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                           cursor: "pointer"
                         }}
                       >
-                        💾 Save Setup Configuration
+                        Save Setup Configuration
                       </button>
 
                       <button
@@ -5555,7 +6791,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
               {setupTab === "guide" && (
                 <div>
                   <h4 style={{ margin: "0 0 10px 0", color: "#1e3a8a", fontSize: "16px" }}>
-                    🚀 Simple 1-Minute Setup Guide:
+                    Simple 1-Minute Setup Guide:
                   </h4>
 
                   <div style={{
@@ -5584,7 +6820,7 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                     <div style={{ backgroundColor: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
                       <strong>4. Deploy Web App:</strong> Click the blue <strong>Deploy</strong> button &gt; <strong>New deployment</strong>:
                       <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
-                        <li>Click the gear icon ⚙️ &gt; choose <strong>Web app</strong></li>
+                        <li>Click the gear icon  &gt; choose <strong>Web app</strong></li>
                         <li><strong>Execute as:</strong> "Me" (your email)</li>
                         <li><strong>Who has access:</strong> "Anyone" <em>(Crucial!)</em></li>
                         <li>Click <strong>Deploy</strong> and authorize permissions if prompted.</li>
@@ -5604,86 +6840,149 @@ export default function InstituteBillingSection({ instituteName, userRole }) {
                       type="button"
                       onClick={() => {
                         const code = `/**
- * SIGMA BILLING - GOOGLE SHEET & DRIVE SYNC SCRIPT
+ * SIGMA BILLING & EXPENSES - GOOGLE SHEET & DRIVE SYNC SCRIPT
+ * Version: 2.1 (Student Bills & Expenses Dual Sync with Concurrency Lock & Deduplication)
  */
 function doGet(e) {
   return ContentService.createTextOutput(JSON.stringify({
     status: "online",
-    message: "Sigma Billing Webhook is Online and Ready!",
+    message: "Sigma Billing & Expense Webhook is Online and Ready! (Single-Entry Mode Active)",
     timestamp: new Date().toISOString()
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
+  var lock = LockService.getScriptLock();
+  var hasLock = false;
   try {
+    // Wait up to 30 seconds to acquire lock so concurrent requests never cause duplicate rows
+    hasLock = lock.tryLock(30000);
+
     var contents = e.postData ? e.postData.contents : "{}";
     var data = JSON.parse(contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheetName = "StudentBills";
-    var sheet = ss.getSheetByName(sheetName);
-    if (!sheet) {
-      var allSheets = ss.getSheets();
-      if (allSheets.length === 1 && allSheets[0].getLastRow() <= 1) {
-        sheet = allSheets[0];
-        try { sheet.setName(sheetName); } catch (e) {}
-      } else {
-        sheet = ss.insertSheet(sheetName, 0);
+
+    // Helper: Normalize 10-digit mobile number
+    function cleanPhone(val) {
+      if (!val) return "";
+      var digits = String(val).replace(/\\D/g, "");
+      return digits.length >= 10 ? digits.slice(-10) : digits;
+    }
+
+    // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
+    function toNepalPhone(val) {
+      if (!val) return "";
+      var digits = String(val).replace(/\\D/g, "");
+      var last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+      return last10 ? ("'+977-" + last10) : "";
+    }
+
+    // Helper: English-only Date Time for Last Updated column (strictly in English)
+    function getEnglishDateTime() {
+      try {
+        var tz = Session.getScriptTimeZone() || "GMT+5:45";
+        return Utilities.formatDate(new Date(), tz, "yyyy-MM-dd hh:mm:ss a");
+      } catch (e) {
+        var d = new Date();
+        return d.toISOString().replace("T", " ").substring(0, 19);
       }
     }
-    try { ss.setActiveSheet(sheet); } catch(e) {}
 
-    // 1. Ensure Table Headers Exist
-    if (sheet.getLastRow() === 0) {
+    // Helper: Get or Create 'StudentBills' Sheet
+    function getOrCreateStudentBillsSheet() {
+      var sheetName = "StudentBills";
+      var s = ss.getSheetByName(sheetName);
+      if (!s) {
+        var allSheets = ss.getSheets();
+        if (allSheets.length === 1 && allSheets[0].getLastRow() <= 1 && allSheets[0].getName() !== "Expenses") {
+          s = allSheets[0];
+          try { s.setName(sheetName); } catch (e) {}
+        } else {
+          s = ss.insertSheet(sheetName, 0);
+        }
+      }
       var headers = [
         "Bill No", "Date", "Student Name", "WhatsApp", "Address", "Parent Contact",
         "Course Detail", "Package", "Payment Method", "Gross Fee", "Discount %",
         "Total Fee (13% VAT Incl)", "Paid Amount", "Due Amount", "Amount In Words",
         "Prepared By", "Last Updated"
       ];
-      sheet.appendRow(headers);
-      var headerRange = sheet.getRange(1, 1, 1, headers.length);
-      headerRange.setBackground("#1e3a8a")
-                 .setFontColor("#ffffff")
-                 .setFontWeight("bold")
-                 .setFontSize(11);
-      sheet.setFrozenRows(1);
+      if (s.getLastRow() === 0) {
+        s.appendRow(headers);
+        var headerRange = s.getRange(1, 1, 1, headers.length);
+        headerRange.setBackground("#1e3a8a")
+                   .setFontColor("#ffffff")
+                   .setFontWeight("bold")
+                   .setFontSize(11);
+        s.setFrozenRows(1);
+        for (var col = 1; col <= headers.length; col++) {
+          s.setColumnWidth(col, 140);
+        }
+        s.setColumnWidth(1, 170);
+        s.setColumnWidth(3, 180);
+        s.setColumnWidth(7, 180);
 
-      for (var col = 1; col <= headers.length; col++) {
-        sheet.setColumnWidth(col, 140);
-      }
-      sheet.setColumnWidth(1, 170);
-      sheet.setColumnWidth(3, 180);
-      sheet.setColumnWidth(7, 180);
-
-      if (data.ownerEmail) {
-        try {
-          var protection = sheet.protect().setDescription("Sigma Billing Owner Protection");
-          protection.removeEditors(protection.getEditors());
-          protection.addEditor(data.ownerEmail);
-        } catch (protErr) {
-          Logger.log("Protection note: " + protErr.toString());
+        if (data.ownerEmail) {
+          try {
+            var prot = s.protect().setDescription("Sigma Billing Owner Protection");
+            prot.removeEditors(prot.getEditors());
+            prot.addEditor(data.ownerEmail);
+          } catch (pe) {}
         }
       }
+      return s;
     }
 
-    // 2. Handle Connection Ping / Test
-    if (data.action === "test") {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: "success",
-        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'!",
-        sheetUrl: ss.getUrl()
-      })).setMimeType(ContentService.MimeType.JSON);
+    // Helper: Get or Create 'Expenses' Sheet
+    function getOrCreateExpenseSheet() {
+      var expSheetName = "Expenses";
+      var es = ss.getSheetByName(expSheetName);
+      if (!es) {
+        es = ss.insertSheet(expSheetName);
+      }
+      var expHeaders = [
+        "Expense ID", "Date", "Title / Description", "Category",
+        "Amount (Rs)", "Payment Method", "Bill / Voucher No",
+        "Recorded By", "Last Updated"
+      ];
+      if (es.getLastRow() === 0) {
+        es.appendRow(expHeaders);
+        var expHdrRange = es.getRange(1, 1, 1, expHeaders.length);
+        expHdrRange.setBackground("#065f46")
+                   .setFontColor("#ffffff")
+                   .setFontWeight("bold")
+                   .setFontSize(11);
+        es.setFrozenRows(1);
+        es.setColumnWidth(1, 160);
+        es.setColumnWidth(2, 110);
+        es.setColumnWidth(3, 220);
+        es.setColumnWidth(4, 140);
+        es.setColumnWidth(5, 120);
+        es.setColumnWidth(6, 140);
+        es.setColumnWidth(7, 150);
+        es.setColumnWidth(8, 140);
+        es.setColumnWidth(9, 180);
+
+        if (data.ownerEmail) {
+          try {
+            var eProt = es.protect().setDescription("Sigma Expense Protection");
+            eProt.removeEditors(eProt.getEditors());
+            eProt.addEditor(data.ownerEmail);
+          } catch (epe) {}
+        }
+      }
+      return es;
     }
 
-    // 3. Helper to format a bill into row values
+    // Helper: Format a bill into row values
     function formatBillRow(b) {
       return [
         b.billNumber || "",
         b.date || "",
         b.studentName || "",
-        b.contactNumber || "",
+        toNepalPhone(b.contactNumber),
         b.address || "",
-        b.parentNumber || "",
+        toNepalPhone(b.parentNumber),
         b.courseDetail || "",
         b.coursePackage || "",
         b.paymentMethod || "Cash",
@@ -5694,73 +6993,263 @@ function doPost(e) {
         Number(b.dueAmount || 0),
         b.amountInWords || "",
         b.preparedBy || "",
-        new Date().toLocaleString()
+        b.lastUpdated || getEnglishDateTime()
       ];
     }
 
-    // 4. Handle Bulk Sync (Upsert to prevent duplicates)
-    if (data.action === "bulk_sync" && Array.isArray(data.bills)) {
+    // Helper: Format an expense into row values
+    function formatExpenseRow(exp) {
+      return [
+        String(exp.id || ""),
+        exp.date || "",
+        exp.title || "",
+        exp.category || "General",
+        Number(exp.amount || 0),
+        exp.paymentMethod || "Cash",
+        exp.remarks || "",
+        exp.recordedBy || "",
+        exp.lastUpdated || getEnglishDateTime()
+      ];
+    }
+
+    // Helper: Find matching rows in StudentBills sheet
+    function findMatchingBillRows(sheet, b) {
       var lastRow = sheet.getLastRow();
-      var billMap = {};
-      if (lastRow > 1) {
-        var existingBillNumbers = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-        for (var i = 0; i < existingBillNumbers.length; i++) {
-          var val = String(existingBillNumbers[i][0]).trim();
-          if (val) billMap[val] = i + 2;
+      if (lastRow <= 1) return [];
+      var dataRange = sheet.getRange(2, 1, lastRow - 1, Math.min(sheet.getLastColumn(), 5)).getValues();
+      var bNum = String(b.billNumber || "").trim().toLowerCase();
+      var bPh = cleanPhone(b.contactNumber);
+      var bNm = String(b.studentName || "").trim().toLowerCase();
+
+      var matchedIndices = [];
+      for (var i = 0; i < dataRange.length; i++) {
+        var rowBNum = String(dataRange[i][0] || "").trim().toLowerCase();
+        var rowNm = String(dataRange[i][2] || "").trim().toLowerCase();
+        var rowPh = cleanPhone(dataRange[i][3]);
+
+        var isMatch = false;
+        if (bNum && rowBNum && bNum === rowBNum) isMatch = true;
+        else if (bPh && rowPh && bPh === rowPh) isMatch = true;
+        else if (bNm && rowNm && bNm.length > 2 && bNm === rowNm) isMatch = true;
+
+        if (isMatch) {
+          matchedIndices.push(i + 2);
         }
       }
+      return matchedIndices;
+    }
 
-      data.bills.forEach(function(b) {
-        var rowData = formatBillRow(b);
-        var bNum = String(b.billNumber || "").trim();
-        if (bNum && billMap[bNum]) {
-          sheet.getRange(billMap[bNum], 1, 1, rowData.length).setValues([rowData]);
-        } else {
-          sheet.appendRow(rowData);
-          billMap[bNum] = sheet.getLastRow();
-        }
-      });
-
+    // 1. Handle Connection Ping / Test
+    if (data.action === "test") {
+      getOrCreateStudentBillsSheet();
+      getOrCreateExpenseSheet();
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Synchronized " + data.bills.length + " bills to Google Sheet.",
-        totalRows: sheet.getLastRow() - 1
+        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'! ('StudentBills' and 'Expenses' tabs ready)",
+        sheetUrl: ss.getUrl()
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 5. Handle Single Bill Append/Update
-    if (data.bill) {
-      var b = data.bill;
-      var rowData = formatBillRow(b);
-      var bNum = String(b.billNumber || "").trim();
-      var updated = false;
+    // 2. Handle Single Expense (Create, Edit, Delete)
+    if (data.expense || data.action === "append_or_update_expense") {
+      var exp = data.expense;
+      if (exp) {
+        var es = getOrCreateExpenseSheet();
+        var expId = String(exp.id || "").trim();
+        var lastExpRow = es.getLastRow();
+        var matchedExpRow = 0;
+        var extraExpDupes = [];
 
-      var lastRow = sheet.getLastRow();
-      if (lastRow > 1) {
-        var existing = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-        for (var i = 0; i < existing.length; i++) {
-          if (String(existing[i][0]).trim() === bNum) {
-            sheet.getRange(i + 2, 1, 1, rowData.length).setValues([rowData]);
-            updated = true;
-            break;
+        if (lastExpRow > 1 && expId) {
+          var idValues = es.getRange(2, 1, lastExpRow - 1, 1).getValues();
+          for (var ei = 0; ei < idValues.length; ei++) {
+            if (String(idValues[ei][0] || "").trim() === expId) {
+              if (matchedExpRow === 0) {
+                matchedExpRow = ei + 2;
+              } else {
+                extraExpDupes.push(ei + 2);
+              }
+            }
           }
         }
+
+        // Handle Expense Deletion
+        if (exp.isDeleted) {
+          for (var dx = extraExpDupes.length - 1; dx >= 0; dx--) {
+            es.deleteRow(extraExpDupes[dx]);
+          }
+          if (matchedExpRow > 0) {
+            es.deleteRow(matchedExpRow);
+          }
+          return ContentService.createTextOutput(JSON.stringify({
+            status: "success",
+            message: "Deleted expense " + expId + " from Google Sheet.",
+            action: "deleted"
+          })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var expRowData = formatExpenseRow(exp);
+        if (matchedExpRow > 0) {
+          es.getRange(matchedExpRow, 1, 1, expRowData.length).setValues([expRowData]);
+          for (var rmx = extraExpDupes.length - 1; rmx >= 0; rmx--) {
+            es.deleteRow(extraExpDupes[rmx]);
+          }
+          return ContentService.createTextOutput(JSON.stringify({
+            status: "success",
+            message: "Updated expense " + (exp.title || expId) + " in Google Sheet.",
+            action: "updated"
+          })).setMimeType(ContentService.MimeType.JSON);
+        } else {
+          es.appendRow(expRowData);
+          return ContentService.createTextOutput(JSON.stringify({
+            status: "success",
+            message: "Saved expense " + (exp.title || expId) + " to Google Sheet.",
+            action: "inserted"
+          })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+
+    // 3. Handle Single Bill (Create, Installment, Edit, Delete)
+    if (data.bill) {
+      var sheet = getOrCreateStudentBillsSheet();
+      var b = data.bill;
+      var matchingRows = findMatchingBillRows(sheet, b);
+
+      if (b.isDeleted) {
+        for (var d = matchingRows.length - 1; d >= 0; d--) {
+          sheet.deleteRow(matchingRows[d]);
+        }
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          message: "Deleted bill from Google Sheet.",
+          action: "deleted"
+        })).setMimeType(ContentService.MimeType.JSON);
       }
 
-      if (!updated) {
+      var rowData = formatBillRow(b);
+      if (matchingRows.length > 0) {
+        var targetRow = matchingRows[0];
+        sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+        for (var k = matchingRows.length - 1; k >= 1; k--) {
+          sheet.deleteRow(matchingRows[k]);
+        }
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          message: "Updated single entry for " + (b.studentName || b.billNumber) + " in Google Sheet.",
+          action: "updated",
+          cleanedDuplicates: matchingRows.length - 1
+        })).setMimeType(ContentService.MimeType.JSON);
+      } else {
         sheet.appendRow(rowData);
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          message: "Saved 1 entry for " + (b.studentName || b.billNumber) + " to Google Sheet.",
+          action: "inserted"
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    // 4. Handle Bulk Sync (Bills and/or Expenses)
+    if (data.action === "bulk_sync" || Array.isArray(data.bills) || Array.isArray(data.expenses)) {
+      var syncedBillsCount = 0;
+      var syncedExpensesCount = 0;
+
+      // Part A: Sync Bills to 'StudentBills'
+      if (Array.isArray(data.bills) && data.bills.length > 0) {
+        var sheet = getOrCreateStudentBillsSheet();
+        var uniqueIncoming = {};
+        data.bills.forEach(function(b) {
+          var key = cleanPhone(b.contactNumber) || String(b.billNumber || "").trim().toLowerCase();
+          if (key) uniqueIncoming[key] = b;
+        });
+
+        var lastRow = sheet.getLastRow();
+        var sheetMap = {};
+        var duplicateRowsToDelete = [];
+        if (lastRow > 1) {
+          var existingData = sheet.getRange(2, 1, lastRow - 1, Math.min(sheet.getLastColumn(), 5)).getValues();
+          for (var i = 0; i < existingData.length; i++) {
+            var rNum = String(existingData[i][0] || "").trim().toLowerCase();
+            var rPhone = cleanPhone(existingData[i][3]);
+            var rowKey = rPhone || rNum;
+            if (rowKey) {
+              if (sheetMap[rowKey]) {
+                duplicateRowsToDelete.push(i + 2);
+              } else {
+                sheetMap[rowKey] = i + 2;
+              }
+            }
+          }
+        }
+
+        Object.keys(uniqueIncoming).forEach(function(key) {
+          var b = uniqueIncoming[key];
+          var rowData = formatBillRow(b);
+          var existingRow = sheetMap[key];
+          if (existingRow) {
+            sheet.getRange(existingRow, 1, 1, rowData.length).setValues([rowData]);
+          } else {
+            sheet.appendRow(rowData);
+            sheetMap[key] = sheet.getLastRow();
+          }
+        });
+
+        for (var d = duplicateRowsToDelete.length - 1; d >= 0; d--) {
+          sheet.deleteRow(duplicateRowsToDelete[d]);
+        }
+        syncedBillsCount = Object.keys(uniqueIncoming).length;
+      }
+
+      // Part B: Sync Expenses to 'Expenses'
+      if (Array.isArray(data.expenses) && data.expenses.length > 0) {
+        var es = getOrCreateExpenseSheet();
+        var expLastRow = es.getLastRow();
+        var expMap = {};
+        var expDupesToDelete = [];
+
+        if (expLastRow > 1) {
+          var curExpIds = es.getRange(2, 1, expLastRow - 1, 1).getValues();
+          for (var cei = 0; cei < curExpIds.length; cei++) {
+            var cId = String(curExpIds[cei][0] || "").trim();
+            if (cId) {
+              if (expMap[cId]) {
+                expDupesToDelete.push(cei + 2);
+              } else {
+                expMap[cId] = cei + 2;
+              }
+            }
+          }
+        }
+
+        data.expenses.forEach(function(exp) {
+          var eId = String(exp.id || "").trim();
+          var expRowData = formatExpenseRow(exp);
+          if (eId && expMap[eId]) {
+            es.getRange(expMap[eId], 1, 1, expRowData.length).setValues([expRowData]);
+          } else {
+            es.appendRow(expRowData);
+            if (eId) expMap[eId] = es.getLastRow();
+          }
+        });
+
+        for (var exDel = expDupesToDelete.length - 1; exDel >= 0; exDel--) {
+          es.deleteRow(expDupesToDelete[exDel]);
+        }
+        syncedExpensesCount = data.expenses.length;
       }
 
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Bill " + bNum + " saved to Google Sheet.",
-        action: updated ? "updated" : "inserted"
+        message: "Synchronized " + syncedBillsCount + " student bills & " + syncedExpensesCount + " expenses to Google Sheet.",
+        syncedBills: syncedBillsCount,
+        syncedExpenses: syncedExpensesCount
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Sheet ready."
+      message: "Google Sheet webhook active."
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
@@ -5768,6 +7257,13 @@ function doPost(e) {
       status: "error",
       message: err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    try {
+      SpreadsheetApp.flush();
+    } catch(e) {}
+    if (hasLock) {
+      try { lock.releaseLock(); } catch(e) {}
+    }
   }
 }`;
                         navigator.clipboard.writeText(code);
@@ -5788,7 +7284,7 @@ function doPost(e) {
                         gap: "6px"
                       }}
                     >
-                      {copiedScript ? "✅ Code Copied!" : "📋 Copy Apps Script Code"}
+                      {copiedScript ? "Code Copied!" : "Copy Apps Script Code"}
                     </button>
                   </div>
 
@@ -5796,58 +7292,16 @@ function doPost(e) {
                     readOnly
                     rows={12}
                     value={`/**
- * SIGMA BILLING - GOOGLE SHEET & DRIVE SYNC SCRIPT
- */
-function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    status: "online",
-    message: "Sigma Billing Webhook is Online and Ready!",
-    timestamp: new Date().toISOString()
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  try {
-    var contents = e.postData ? e.postData.contents : "{}";
-    var data = JSON.parse(contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheetName = "StudentBills";
-    var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
-
-    if (sheet.getLastRow() === 0) {
-      var headers = [
-        "Bill No", "Date", "Student Name", "WhatsApp", "Address", "Parent Contact",
-        "Course Detail", "Package", "Payment Method", "Gross Fee", "Discount %",
-        "Total Fee (13% VAT Incl)", "Paid Amount", "Due Amount", "Amount In Words",
-        "Prepared By", "Last Updated"
-      ];
-      sheet.appendRow(headers);
-      var headerRange = sheet.getRange(1, 1, 1, headers.length);
-      headerRange.setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold").setFontSize(11);
-      sheet.setFrozenRows(1);
-
-      if (data.ownerEmail) {
-        try {
-          var protection = sheet.protect().setDescription("Sigma Billing Owner Protection");
-          protection.removeEditors(protection.getEditors());
-          protection.addEditor(data.ownerEmail);
-        } catch (protErr) {}
-      }
-    }
-
-    if (data.action === "test") {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: "success",
-        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'!"
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // Upsert bills
-    // ... (Click 'Copy Apps Script Code' above for full deployment code)
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
-  }
-}`}
+ * SIGMA BILLING & EXPENSES - GOOGLE SHEET & DRIVE SYNC SCRIPT
+ * Version: 2.1 (Bills & Expenses Dual Sync Active)
+ * - Auto-Sync Student Bills into 'StudentBills' tab
+ * - Auto-Sync Institute Expenses into 'Expenses' tab
+ * - Concurrency Lock: Prevents simultaneous duplicate entries
+ * - Multi-field Match: Matches by Bill No, WhatsApp / Phone, or Student Name
+ * - Auto-Deduplication: Automatically cleans up and removes duplicate rows!
+ *
+ * Click "Copy Apps Script Code" above to copy the complete code!
+ */`}
                     style={{
                       width: "100%",
                       fontFamily: "monospace",
@@ -5867,7 +7321,7 @@ function doPost(e) {
               {setupTab === "csv" && (
                 <div>
                   <h4 style={{ margin: "0 0 8px 0", color: "#1e3a8a", fontSize: "16px" }}>
-                    📥 Instant Offline CSV Backup (Google Sheets &amp; Excel Compatible)
+                    Instant Offline CSV Backup (Google Sheets &amp; Excel Compatible)
                   </h4>
                   <p style={{ color: "#475569", fontSize: "13px", lineHeight: "1.6", marginBottom: "16px" }}>
                     If you prefer manual backups without setting up Google Apps Script, you can download all billing records directly as a CSV spreadsheet.
@@ -5907,7 +7361,7 @@ function doPost(e) {
                           gap: "8px"
                         }}
                       >
-                        <span>📥</span> Download Full Billing CSV
+                        Download Full Billing CSV
                       </button>
                     </div>
                   </div>
@@ -5935,7 +7389,7 @@ function doPost(e) {
               alignItems: "center"
             }}>
               <span style={{ fontSize: "12px", color: "#64748b" }}>
-                🔒 High-security 256-bit SSL encrypted direct cloud transport
+                High-security 256-bit SSL encrypted direct cloud transport
               </span>
               <button
                 type="button"
@@ -5983,7 +7437,7 @@ function doPost(e) {
             border: "2px solid #2563eb"
           }}>
             <div style={{ textAlign: "center", marginBottom: "20px" }}>
-              <div style={{ fontSize: "40px", marginBottom: "10px" }}>🛡️</div>
+              
               <h3 style={{ margin: "0 0 6px 0", color: "#1e3a8a", fontSize: "20px" }}>
                 Admin Authentication
               </h3>
@@ -6016,14 +7470,14 @@ function doPost(e) {
                   }}
                 />
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontSize: "11px", color: "#64748b" }}>
-                  <span>{isCustomAdminPinSet() ? "🔒 Custom PIN is active" : <>Default PIN: <strong>9999</strong></>}</span>
+                  <span>{isCustomAdminPinSet() ? "Custom PIN is active" : <>Default PIN: <strong>9999</strong></>}</span>
                   <span>Can be changed in Admin mode</span>
                 </div>
               </div>
 
               {pinError && (
                 <div style={{ backgroundColor: "#fef2f2", color: "#b91c1c", padding: "10px", borderRadius: "6px", fontSize: "13px", marginBottom: "16px", textAlign: "center", border: "1px solid #fecaca" }}>
-                  ⚠️ {pinError}
+                   {pinError}
                 </div>
               )}
 
@@ -6096,7 +7550,7 @@ function doPost(e) {
             border: "1px solid #cbd5e1"
           }}>
             <h3 style={{ margin: "0 0 10px 0", color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>🔑</span> Change Admin PIN
+              Change Admin PIN
             </h3>
             <p style={{ margin: "0 0 18px 0", color: "#64748b", fontSize: "13px" }}>
               Update the passcode required to access Admin mode in the billing module.
@@ -6225,7 +7679,7 @@ function doPost(e) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px" }}>
               <div>
                 <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span>👥</span> Manage Billing Staff Accounts
+                  Manage Billing Staff Accounts
                 </h3>
                 <p style={{ margin: 0, color: "#64748b", fontSize: "13px" }}>
                   Staff can log in from the main website login page with User/Cashier permissions.
@@ -6235,7 +7689,7 @@ function doPost(e) {
                 onClick={() => setShowStaffModal(false)}
                 style={{ background: "transparent", border: "none", fontSize: "22px", cursor: "pointer", color: "#64748b" }}
               >
-                ✕
+                ×
               </button>
             </div>
 
@@ -6289,13 +7743,13 @@ function doPost(e) {
 
                 {staffError && (
                   <div style={{ backgroundColor: "#fef2f2", color: "#b91c1c", padding: "8px 12px", borderRadius: "5px", fontSize: "12px", marginBottom: "10px" }}>
-                    ⚠️ {staffError}
+                     {staffError}
                   </div>
                 )}
 
                 {staffSuccess && (
                   <div style={{ backgroundColor: "#dcfce7", color: "#166534", padding: "8px 12px", borderRadius: "5px", fontSize: "12px", marginBottom: "10px" }}>
-                    ✅ {staffSuccess}
+                     {staffSuccess}
                   </div>
                 )}
 
@@ -6426,8 +7880,8 @@ function doPost(e) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                  <h3 style={{ margin: 0, color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span>💸</span> Official Expenses Management
+                  <h3 style={{ margin: 0, color: "#dc2626", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    Official Expenses Management
                   </h3>
                   {billingRole === "admin" && (
                     <span style={{
@@ -6442,7 +7896,7 @@ function doPost(e) {
                       alignItems: "center",
                       gap: "4px"
                     }}>
-                      🛡️ Admin Authority (Full Edit, Delete & Historical Access)
+                      Admin Authority (Full Edit, Delete & Historical Access)
                     </span>
                   )}
                 </div>
@@ -6456,7 +7910,7 @@ function doPost(e) {
                 onClick={() => setShowExpenseModal(false)}
                 style={{ background: "transparent", border: "none", fontSize: "22px", cursor: "pointer", color: "#64748b" }}
               >
-                ✕
+                ×
               </button>
             </div>
 
@@ -6476,16 +7930,16 @@ function doPost(e) {
                 style={{
                   padding: "8px 24px",
                   borderRadius: "6px",
-                  border: expenseTimeframe === "daily" ? "2px solid #7c3aed" : "1px solid #cbd5e1",
-                  backgroundColor: expenseTimeframe === "daily" ? "#7c3aed" : "#ffffff",
+                  border: expenseTimeframe === "daily" ? "2px solid #b91c1c" : "1px solid #cbd5e1",
+                  backgroundColor: expenseTimeframe === "daily" ? "#dc2626" : "#ffffff",
                   color: expenseTimeframe === "daily" ? "#ffffff" : "#475569",
                   fontWeight: "bold",
                   fontSize: "14px",
                   cursor: "pointer",
-                  boxShadow: expenseTimeframe === "daily" ? "0 2px 6px rgba(124, 58, 237, 0.25)" : "none"
+                  boxShadow: expenseTimeframe === "daily" ? "0 2px 6px rgba(220, 38, 38, 0.25)" : "none"
                 }}
               >
-                📅 Today's Expenses
+                Today's Expenses
               </button>
 
               {/* Weekly, Monthly, and All Tabs are strictly reserved & visible ONLY for Admin */}
@@ -6497,16 +7951,17 @@ function doPost(e) {
                     style={{
                       padding: "8px 16px",
                       borderRadius: "6px",
-                      border: expenseTimeframe === "weekly" ? "2px solid #7c3aed" : "1px solid #cbd5e1",
-                      backgroundColor: expenseTimeframe === "weekly" ? "#7c3aed" : "#ffffff",
+                      border: expenseTimeframe === "weekly" ? "2px solid #b91c1c" : "1px solid #cbd5e1",
+                      backgroundColor: expenseTimeframe === "weekly" ? "#dc2626" : "#ffffff",
                       color: expenseTimeframe === "weekly" ? "#ffffff" : "#475569",
                       fontWeight: "bold",
                       fontSize: "13px",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      boxShadow: expenseTimeframe === "weekly" ? "0 2px 6px rgba(220, 38, 38, 0.25)" : "none"
                     }}
                     title="View past 7 days expenses"
                   >
-                    📆 This Week (7 Days)
+                    This Week (7 Days)
                   </button>
 
                   <button
@@ -6515,16 +7970,17 @@ function doPost(e) {
                     style={{
                       padding: "8px 16px",
                       borderRadius: "6px",
-                      border: expenseTimeframe === "monthly" ? "2px solid #7c3aed" : "1px solid #cbd5e1",
-                      backgroundColor: expenseTimeframe === "monthly" ? "#7c3aed" : "#ffffff",
+                      border: expenseTimeframe === "monthly" ? "2px solid #b91c1c" : "1px solid #cbd5e1",
+                      backgroundColor: expenseTimeframe === "monthly" ? "#dc2626" : "#ffffff",
                       color: expenseTimeframe === "monthly" ? "#ffffff" : "#475569",
                       fontWeight: "bold",
                       fontSize: "13px",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      boxShadow: expenseTimeframe === "monthly" ? "0 2px 6px rgba(220, 38, 38, 0.25)" : "none"
                     }}
                     title="View this month expenses"
                   >
-                    🗓️ This Month
+                    This Month
                   </button>
 
                   <button
@@ -6533,16 +7989,17 @@ function doPost(e) {
                     style={{
                       padding: "8px 16px",
                       borderRadius: "6px",
-                      border: expenseTimeframe === "all" ? "2px solid #7c3aed" : "1px solid #cbd5e1",
-                      backgroundColor: expenseTimeframe === "all" ? "#7c3aed" : "#ffffff",
+                      border: expenseTimeframe === "all" ? "2px solid #b91c1c" : "1px solid #cbd5e1",
+                      backgroundColor: expenseTimeframe === "all" ? "#dc2626" : "#ffffff",
                       color: expenseTimeframe === "all" ? "#ffffff" : "#475569",
                       fontWeight: "bold",
                       fontSize: "13px",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      boxShadow: expenseTimeframe === "all" ? "0 2px 6px rgba(220, 38, 38, 0.25)" : "none"
                     }}
                     title="View all expense records"
                   >
-                    📊 All Expenses
+                    All Expenses
                   </button>
                 </>
               )}
@@ -6561,11 +8018,11 @@ function doPost(e) {
                   gap: "12px",
                   marginBottom: "20px"
                 }}>
-                  <div style={{ backgroundColor: "#fdf4ff", border: "1.5px solid #f0abfc", padding: "12px 16px", borderRadius: "8px" }}>
-                    <div style={{ fontSize: "11px", fontWeight: "bold", color: "#a21caf", textTransform: "uppercase" }}>
+                  <div style={{ backgroundColor: "#fef2f2", border: "1.5px solid #fca5a5", padding: "12px 16px", borderRadius: "8px" }}>
+                    <div style={{ fontSize: "11px", fontWeight: "bold", color: "#dc2626", textTransform: "uppercase" }}>
                       Total {billingRole !== "admin" ? "Today's" : (expenseTimeframe === "daily" ? "Today's" : expenseTimeframe === "weekly" ? "Weekly" : expenseTimeframe === "monthly" ? "Monthly" : "All-Time")} Expenses
                     </div>
-                    <div style={{ fontSize: "22px", fontWeight: "900", color: "#86198f", marginTop: "4px" }}>
+                    <div style={{ fontSize: "22px", fontWeight: "900", color: "#b91c1c", marginTop: "4px" }}>
                       {formatCurrency(totalAmount)}
                     </div>
                   </div>
@@ -6582,8 +8039,8 @@ function doPost(e) {
                       Cash vs Online
                     </div>
                     <div style={{ fontSize: "13px", fontWeight: "bold", color: "#334155", marginTop: "6px" }}>
-                      💵 Cash: {formatCurrency(cashTotal)}<br />
-                      📱 Online: {formatCurrency(onlineTotal)}
+                      Cash: {formatCurrency(cashTotal)}<br />
+                      Online: {formatCurrency(onlineTotal)}
                     </div>
                   </div>
                 </div>
@@ -6592,13 +8049,13 @@ function doPost(e) {
 
             {/* Record New Expense Form */}
             <div style={{
-              backgroundColor: "#f8fafc",
-              border: "1.5px solid #e2e8f0",
+              backgroundColor: "#fff8f8",
+              border: "1.5px solid #fecaca",
               borderRadius: "8px",
               padding: "16px",
               marginBottom: "20px"
             }}>
-              <h4 style={{ margin: "0 0 12px 0", color: "#1e3a8a", fontSize: "16px", fontWeight: "bold" }}>
+              <h4 style={{ margin: "0 0 12px 0", color: "#dc2626", fontSize: "16px", fontWeight: "bold" }}>
                 Expense Record
               </h4>
               <form onSubmit={handleSaveExpense}>
@@ -6681,9 +8138,9 @@ function doPost(e) {
                       style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                     >
                       <option value="Cash">Cash</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
                       <option value="Online Esewa">Online Esewa</option>
                       <option value="Online Khalti">Online Khalti</option>
-                      <option value="Bank Transfer">Bank Transfer</option>
                       <option value="Other">Other</option>
                     </select>
                   </div>
@@ -6722,17 +8179,18 @@ function doPost(e) {
                     />
                     {Number(newExpenseForm.amount) > 200 && !(newExpenseForm.remarks || "").trim() && (
                       <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "bold", marginTop: "3px" }}>
-                        ⚠️ Bill Number / Voucher is required for expenses greater than Rs. 200
+                        Bill Number / Voucher is required for expenses greater than Rs. 200
                       </div>
                     )}
                   </div>
+
                   <button
                     type="submit"
                     style={{
-                      backgroundColor: "#7c3aed",
+                      backgroundColor: "#dc2626",
                       color: "white",
                       border: "none",
-                      padding: "9px 24px",
+                      padding: "9px 20px",
                       borderRadius: "6px",
                       fontWeight: "bold",
                       fontSize: "13px",
@@ -6740,7 +8198,7 @@ function doPost(e) {
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      boxShadow: "0 2px 5px rgba(124, 58, 237, 0.25)"
+                      boxShadow: "0 2px 5px rgba(220, 38, 38, 0.25)"
                     }}
                   >
                     Add Expense Entry
@@ -6751,32 +8209,105 @@ function doPost(e) {
 
             {/* Expenses Records Table */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
-                <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "15px" }}>
-                  📋 {billingRole !== "admin" ? "Today's" : (expenseTimeframe === "daily" ? "Today's" : expenseTimeframe === "weekly" ? "Weekly" : expenseTimeframe === "monthly" ? "Monthly" : "All")} Expenses Ledger ({getFilteredExpenses().length})
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+                <h4 style={{ margin: 0, color: "#dc2626", fontSize: "16px", fontWeight: "700" }}>
+                   {billingRole !== "admin" ? "Today's" : (expenseTimeframe === "daily" ? "Today's" : expenseTimeframe === "weekly" ? "Weekly" : expenseTimeframe === "monthly" ? "Monthly" : "All")} Expenses Ledger ({getFilteredExpenses().length})
                 </h4>
-                {/* DARK PURPLE PRINT EXPENSE SHEET BUTTON (RESOLVES PRINTING ISSUE VIA DEDICATED PRINTABLE SHEET) */}
-                <button
-                  type="button"
-                  onClick={handlePrintExpenses}
-                  style={{
-                    backgroundColor: "#dc2626",
-                    color: "white",
-                    border: "1px solid #3b0764",
-                    padding: "7px 16px",
-                    borderRadius: "6px",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 2px 4px rgba(88, 28, 135, 0.25)"
-                  }}
-                  title="Print official expenses statement for this period"
-                >
-                  <span>🖨️</span> Print Expense Sheet
-                </button>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const webhook = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+                        (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "";
+                      if (!webhook || webhook === "setup_done") {
+                        alert("Google Sheet is not connected yet. Please connect Google Sheet in Settings > Cloud Links & Sync.");
+                        setSetupTab("connect");
+                        handleOpenGoogleSetupModal();
+                        return;
+                      }
+                      try {
+                        const res = await fetch(apiWithInst("/api/institute/billing/sync"), {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'bulk_sync',
+                            googleSheetUrl: webhook,
+                            ownerEmail: profile.ownerEmail ? profile.ownerEmail.trim() : "",
+                            bills: [],
+                            expenses: expenses
+                          })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                          alert(` Google Sheet Sync Successful!\n\n${expenses.length} expenses are now stored in the 'Expenses' tab in Google Sheet.`);
+                        } else {
+                          alert(`Sync Error: ${data.error || 'Failed to sync expenses'}`);
+                        }
+                      } catch (err) {
+                        alert(`Sync Error: ${err.message}`);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: "#065f46",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      boxShadow: "0 2px 4px rgba(6, 95, 70, 0.25)"
+                    }}
+                    title="Synchronize all expenses directly to Google Sheet 'Expenses' tab"
+                  >
+                    <span>📊</span> Sync to Google Sheet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportExpensesCSV}
+                    style={{
+                      backgroundColor: "#b91c1c",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      boxShadow: "0 2px 4px rgba(185, 28, 28, 0.25)"
+                    }}
+                    title="Download expenses as a CSV file"
+                  >
+                    <span>📥</span> Download Expenses CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handlePrintExpenses}
+                    style={{
+                      backgroundColor: "#dc2626",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 14px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      boxShadow: "0 2px 4px rgba(220, 38, 38, 0.25)"
+                    }}
+                    title="Print official expenses statement for this period"
+                  >
+                    <span>🖨️</span> Print Expense Sheet
+                  </button>
+                </div>
               </div>
 
               {getFilteredExpenses().length === 0 ? (
@@ -6792,18 +8323,18 @@ function doPost(e) {
                 </div>
               ) : (
                 <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", borderRadius: "8px", overflow: "hidden" }}>
                     <thead>
-                      <tr style={{ backgroundColor: "#f1f5f9", textAlign: "left", color: "#334155" }}>
-                        <th style={{ padding: "8px 10px", borderBottom: "2px solid #cbd5e1" }}>#</th>
-                        <th style={{ padding: "8px 10px", borderBottom: "2px solid #cbd5e1" }}>Date</th>
-                        <th style={{ padding: "8px 10px", borderBottom: "2px solid #cbd5e1" }}>Title / Details</th>
-                        <th style={{ padding: "8px 10px", borderBottom: "2px solid #cbd5e1" }}>Category</th>
-                        <th style={{ padding: "8px 10px", borderBottom: "2px solid #cbd5e1", textAlign: "right" }}>Amount</th>
-                        <th style={{ padding: "8px 10px", borderBottom: "2px solid #cbd5e1" }}>Method</th>
-                        <th style={{ padding: "8px 10px", borderBottom: "2px solid #cbd5e1" }}>Recorded By</th>
+                      <tr style={{ backgroundColor: "#b91c1c", textAlign: "left", color: "#ffffff" }}>
+                        <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", borderTopLeftRadius: "6px" }}>#</th>
+                        <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Date</th>
+                        <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Title / Details</th>
+                        <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Category</th>
+                        <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", textAlign: "right" }}>Amount</th>
+                        <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Method</th>
+                        <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", borderTopRightRadius: billingRole === "admin" ? 0 : "6px" }}>Recorded By</th>
                         {billingRole === "admin" && (
-                          <th style={{ padding: "8px 10px", borderBottom: "2px solid #cbd5e1", textAlign: "center" }}>
+                          <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", textAlign: "center", borderTopRightRadius: "6px" }}>
                             Admin Actions
                           </th>
                         )}
@@ -6819,7 +8350,7 @@ function doPost(e) {
                             {exp.remarks && <div style={{ fontSize: "11px", color: "#64748b" }}>{exp.remarks}</div>}
                           </td>
                           <td style={{ padding: "8px 10px" }}>
-                            <span style={{ backgroundColor: "#ede9fe", color: "#6d28d9", padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: "bold" }}>
+                            <span style={{ backgroundColor: "#fee2e2", color: "#991b1b", padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: "bold" }}>
                               {exp.category}
                             </span>
                           </td>
@@ -6829,7 +8360,7 @@ function doPost(e) {
                           <td style={{ padding: "8px 10px", color: "#475569" }}>{exp.paymentMethod}</td>
                           <td style={{ padding: "8px 10px" }}>
                             <span style={{ backgroundColor: "#f1f5f9", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", color: "#334155" }}>
-                              👤 {exp.recordedBy || "Staff"}
+                               {exp.recordedBy || "Staff"}
                             </span>
                           </td>
                           {/* ACTION COLUMN: Admin has Edit & Delete authority */}
@@ -6854,7 +8385,7 @@ function doPost(e) {
                                     gap: "3px"
                                   }}
                                 >
-                                  ✏️ Edit
+                                  Edit
                                 </button>
                                 <button
                                   type="button"
@@ -6874,7 +8405,7 @@ function doPost(e) {
                                     gap: "3px"
                                   }}
                                 >
-                                  🗑️ Del
+                                  Delete
                                 </button>
                               </div>
                             </td>
@@ -6935,7 +8466,7 @@ function doPost(e) {
           }}>
             {/* Header */}
             <div style={{
-              backgroundColor: "#1e3a8a",
+              backgroundColor: "#dc2626",
               color: "white",
               padding: "16px 20px",
               display: "flex",
@@ -6944,9 +8475,9 @@ function doPost(e) {
             }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  ✏️ Edit Expense Entry
+                  Edit Expense Entry
                 </h3>
-                <div style={{ fontSize: "11px", color: "#bfdbfe", marginTop: "2px" }}>
+                <div style={{ fontSize: "11px", color: "#fecaca", marginTop: "2px" }}>
                   Admin Authority: Full editing of recorded details
                 </div>
               </div>
@@ -6955,7 +8486,7 @@ function doPost(e) {
                 onClick={() => setEditingExpense(null)}
                 style={{ background: "transparent", border: "none", color: "white", fontSize: "20px", cursor: "pointer" }}
               >
-                ✕
+                ×
               </button>
             </div>
 
@@ -7034,9 +8565,9 @@ function doPost(e) {
                     style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                   >
                     <option value="Cash">Cash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Online Esewa">Online Esewa</option>
                     <option value="Online Khalti">Online Khalti</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
@@ -7076,7 +8607,7 @@ function doPost(e) {
                   />
                   {Number(editingExpense.amount) > 200 && !(editingExpense.remarks || "").trim() && (
                     <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "bold", marginTop: "3px" }}>
-                      ⚠️ Bill number is required for expenses greater than Rs. 200
+                      Bill number is required for expenses greater than Rs. 200
                     </div>
                   )}
                 </div>
@@ -7105,7 +8636,7 @@ function doPost(e) {
                     padding: "8px 20px",
                     borderRadius: "6px",
                     border: "none",
-                    backgroundColor: "#2563eb",
+                    backgroundColor: "#dc2626",
                     color: "white",
                     fontWeight: "bold",
                     fontSize: "13px",
@@ -7115,7 +8646,7 @@ function doPost(e) {
                     gap: "5px"
                   }}
                 >
-                  💾 Save Changes
+                  Save Changes
                 </button>
               </div>
             </form>
@@ -7186,7 +8717,7 @@ function doPost(e) {
                     alignItems: "center",
                     gap: "4px"
                   }}>
-                    🛡️ Admin: Can Add Stock & Products
+                    Admin: Can Add Stock & Products
                   </span>
                 )}
 
@@ -7212,7 +8743,7 @@ function doPost(e) {
                   }}
                   title="Close (ESC)"
                 >
-                  ✕
+                  ×
                 </button>
               </div>
             </div>
@@ -7291,7 +8822,7 @@ function doPost(e) {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: "220px" }}>
                   <input
                     type="text"
-                    placeholder="🔍 Search product or book name..."
+                    placeholder="Search product or book name..."
                     value={stockSearchQuery}
                     onChange={(e) => setStockSearchQuery(e.target.value)}
                     style={{
@@ -7319,7 +8850,7 @@ function doPost(e) {
                     }}
                     title="Reload stock from server"
                   >
-                    {productsLoading ? "⏳ Loading..." : "🔄 Refresh"}
+                    {productsLoading ? "Loading..." : "Refresh"}
                   </button>
                 </div>
 
@@ -7344,11 +8875,11 @@ function doPost(e) {
                       gap: "6px"
                     }}
                   >
-                    <span>{showAddProductForm ? "✕ Cancel" : "➕ Add New Product"}</span>
+                    <span>{showAddProductForm ? "Cancel" : "Add New Product"}</span>
                   </button>
                 ) : (
                   <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
-                    🔒 Stock can only be added or modified by Admin.
+                    Stock can only be added or modified by Admin.
                   </div>
                 )}
               </div>
@@ -7363,7 +8894,7 @@ function doPost(e) {
                   marginBottom: "16px"
                 }}>
                   <div style={{ fontWeight: "bold", color: "#166534", fontSize: "14px", marginBottom: "10px" }}>
-                    ➕ Create New Product / Study Material
+                    Create New Product / Study Material
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "10px", alignItems: "end" }}>
                     <div>
@@ -7434,7 +8965,7 @@ function doPost(e) {
                       type="submit"
                       style={{ padding: "6px 16px", borderRadius: "5px", border: "none", backgroundColor: "#16a34a", color: "white", fontWeight: "bold", fontSize: "12px", cursor: "pointer" }}
                     >
-                      💾 Save Product
+                      Save Product
                     </button>
                   </div>
                 </form>
@@ -7512,7 +9043,7 @@ function doPost(e) {
                         cursor: "pointer"
                       }}
                     >
-                      ✕
+                      ×
                     </button>
                   </div>
                 </div>
@@ -7565,7 +9096,7 @@ function doPost(e) {
                             </td>
                             <td style={{ padding: "10px 12px" }}>
                               <div style={{ fontWeight: "bold", color: "#0f172a" }}>
-                                📚 {prod.name}
+                                {prod.name}
                               </div>
                               <div style={{ fontSize: "11px", color: "#64748b" }}>
                                 Unit: {prod.unit || 'pcs'} • Code: {prod.id}
@@ -7585,7 +9116,7 @@ function doPost(e) {
                                   fontWeight: "900",
                                   display: "inline-block"
                                 }}>
-                                  ❌ Out of Stock (0)
+                                  Out of Stock (0)
                                 </span>
                               ) : isLow ? (
                                 <span style={{
@@ -7597,7 +9128,7 @@ function doPost(e) {
                                   fontWeight: "bold",
                                   display: "inline-block"
                                 }}>
-                                  ⚠️ Low: {stockNum} {prod.unit || 'pcs'}
+                                  Low: {stockNum} {prod.unit || 'pcs'}
                                 </span>
                               ) : (
                                 <span style={{
@@ -7614,7 +9145,7 @@ function doPost(e) {
                               )}
                             </td>
                             <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: "600", color: "#334155" }}>
-                              🛒 {prod.totalSold || 0}
+                               {prod.totalSold || 0}
                             </td>
 
                             {billingRole === "admin" && (
@@ -7638,7 +9169,7 @@ function doPost(e) {
                                     }}
                                     title="Add more stock quantity"
                                   >
-                                    ➕ Restock
+                                    Restock
                                   </button>
                                   <button
                                     type="button"
@@ -7654,7 +9185,7 @@ function doPost(e) {
                                     }}
                                     title="Delete product"
                                   >
-                                    🗑️
+                                    Delete
                                   </button>
                                 </div>
                               </td>
@@ -7678,7 +9209,7 @@ function doPost(e) {
               alignItems: "center"
             }}>
               <div style={{ fontSize: "12px", color: "#64748b" }}>
-                💡 Stock automatically reduces when bills are generated. Only Admin can add stock.
+                Stock automatically reduces when bills are generated. Only Admin can add stock.
               </div>
               <button
                 type="button"
@@ -7735,9 +9266,9 @@ function doPost(e) {
                 {profile.instituteName || "INSTITUTE OF LANGUAGE & TECHNOLOGY"}
               </h2>
               <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.4" }}>
-                <span>📍 {profile.address || "Kathmandu, Nepal"}</span>
-                {profile.phone && <span> &nbsp;|&nbsp; 📞 {profile.phone}</span>}
-                {profile.ownerEmail && <span> &nbsp;|&nbsp; ✉️ {profile.ownerEmail}</span>}
+                <span>{profile.address || "Kathmandu, Nepal"}</span>
+                {profile.phone && <span> &nbsp;|&nbsp; Phone: {profile.phone}</span>}
+                {profile.ownerEmail && <span> &nbsp;|&nbsp; Email: {profile.ownerEmail}</span>}
               </div>
               {profile.panVatNumber && (
                 <div style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", marginTop: "2px" }}>
@@ -7749,7 +9280,7 @@ function doPost(e) {
           <div style={{ textAlign: "right" }}>
             <div style={{
               display: "inline-block",
-              backgroundColor: "#1e3a8a",
+              backgroundColor: "#dc2626",
               color: "#ffffff",
               padding: "6px 14px",
               borderRadius: "4px",
@@ -7817,14 +9348,14 @@ function doPost(e) {
         {/* Detailed Expenses Table */}
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", marginBottom: "20px" }}>
           <thead>
-            <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff", textAlign: "left" }}>
-              <th style={{ padding: "6px 8px", border: "1px solid #1e3a8a", width: "30px", textAlign: "center" }}>SN</th>
-              <th style={{ padding: "6px 8px", border: "1px solid #1e3a8a", width: "85px" }}>Date</th>
-              <th style={{ padding: "6px 8px", border: "1px solid #1e3a8a" }}>Particulars / Description</th>
-              <th style={{ padding: "6px 8px", border: "1px solid #1e3a8a", width: "110px" }}>Category</th>
-              <th style={{ padding: "6px 8px", border: "1px solid #1e3a8a", width: "95px", textAlign: "right" }}>Amount (Rs.)</th>
-              <th style={{ padding: "6px 8px", border: "1px solid #1e3a8a", width: "85px" }}>Payment Mode</th>
-              <th style={{ padding: "6px 8px", border: "1px solid #1e3a8a", width: "100px" }}>Recorded By</th>
+            <tr style={{ backgroundColor: "#b91c1c", color: "#ffffff", textAlign: "left" }}>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "30px", textAlign: "center" }}>SN</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "85px" }}>Date</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c" }}>Particulars / Description</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "110px" }}>Category</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "95px", textAlign: "right" }}>Amount (Rs.)</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "85px" }}>Payment Mode</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "100px" }}>Recorded By</th>
             </tr>
           </thead>
           <tbody>

@@ -44,6 +44,41 @@ const InstituteExamPreview = () => {
     const targetSetName = currentExam ? currentExam.name : `Chapterwise 0${examId}`;
     const targetPackageName = currentExam ? currentExam.packageName : "";
 
+    // Check if set is Model Question Bank - requires institute purchase
+    const isModelBank = 
+      targetPackageName?.toLowerCase().includes("model") || 
+      currentExam?.name?.toLowerCase().includes("model") ||
+      examId?.toString().includes("ubt-model-set");
+
+    if (isModelBank) {
+      let instAllowedList = [];
+      const currentInst = typeof window !== "undefined" ? (localStorage.getItem("currentInstitute") || "") : "";
+      const currentInstPkg = typeof window !== "undefined" ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage") || "") : "";
+      if (currentInstPkg) instAllowedList.push(currentInstPkg);
+
+      const institutes = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("institutes") || "[]") : [];
+      const foundInst = institutes.find(i => 
+        (i.name && currentInst && i.name.toLowerCase() === currentInst.toLowerCase()) ||
+        (i.username && currentInst && i.username.toLowerCase() === currentInst.toLowerCase())
+      );
+      if (foundInst) {
+        if (foundInst.examPackage) instAllowedList.push(foundInst.examPackage);
+        if (Array.isArray(foundInst.purchasedPackages)) instAllowedList.push(...foundInst.purchasedPackages);
+        if (Array.isArray(foundInst.assignedPackages)) instAllowedList.push(...foundInst.assignedPackages);
+      }
+      const instPurchased = typeof window !== "undefined" ? JSON.parse(localStorage.getItem(`institutePurchasedPackages_${currentInst}`) || "[]") : [];
+      if (Array.isArray(instPurchased)) instAllowedList.push(...instPurchased);
+
+      const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const hasModelBank = instAllowedList.map(norm).some(p => p.includes("modelquestion") || p.includes("modelbank"));
+
+      if (!hasModelBank) {
+        alert(`Access Restricted: This exam set belongs to "Model Question Bank". Institutes must buy this product to access.`);
+        router.push("/institute?tab=listening");
+        return;
+      }
+    }
+
     const allQuestions = JSON.parse(localStorage.getItem("questionBank")) || [];
     
     // Fetch questions mapped precisely to this exam set as updated by Admin
@@ -114,7 +149,7 @@ const InstituteExamPreview = () => {
   const containerStyle = { maxWidth: "1250px", margin: "30px auto", padding: "30px", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", ...protectedStyle };
   const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#1e3a8a", color: "white", padding: "20px", borderRadius: "6px", marginBottom: "25px" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", backgroundColor: "white", borderRadius: "8px", overflow: "hidden", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" };
-  const thStyle = { backgroundColor: "#f8fafc", padding: "15px 12px", textAlign: "left", borderBottom: "2px solid #e2e8f0", color: "#475569", fontSize: "14px", fontWeight: "bold" };
+  const thStyle = { backgroundColor: "#f8fafc", padding: "14px 12px", textAlign: "left", borderBottom: "2px solid #e2e8f0", color: "#475569", fontSize: "13px", fontWeight: "700" };
   const tdStyle = { padding: "15px 12px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", fontSize: "14px", verticalAlign: "middle" };
 
   const displayedQuestions = questions.filter(q => q.type === activeTab);
@@ -168,13 +203,13 @@ const InstituteExamPreview = () => {
       <div style={{ overflowX: "auto" }}>
         <table style={tableStyle}>
           <thead>
-            <tr>
-              <th style={{ ...thStyle, width: "60px" }}>Q.NO</th>
+            <tr style={{ backgroundColor: "#f8fafc" }}>
+              <th style={{ ...thStyle, width: "60px", borderTopLeftRadius: "8px" }}>Q.NO</th>
               <th style={{ ...thStyle, width: "230px" }}>Main Heading</th>
               <th style={{ ...thStyle, width: "180px" }}>Question Heading</th>
               <th style={{ ...thStyle, width: "240px" }}>Description & Media</th>
               <th style={{ ...thStyle, width: "220px" }}>Options</th>
-              <th style={{ ...thStyle, width: "80px", textAlign: "center" }}>Answer</th>
+              <th style={{ ...thStyle, width: "80px", textAlign: "center", borderTopRightRadius: "8px" }}>Answer</th>
             </tr>
           </thead>
           <tbody>

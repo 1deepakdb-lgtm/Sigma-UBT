@@ -159,8 +159,18 @@ const StudentResult = () => {
                         {optIdx + 1}
                       </div>
                       <span style={{ fontSize: "16px", flex: 1 }}>{optText}</span>
-                      {Number(optIdx) === Number(q.answer) && <span style={{ fontSize: "13px", fontWeight: "bold", color: "#16a34a", marginLeft: "10px" }}>✔ Correct Answer</span>}
-                      {Number(optIdx) === Number(studentAns) && Number(optIdx) !== Number(q.answer) && <span style={{ fontSize: "13px", fontWeight: "bold", color: "#ef4444", marginLeft: "10px" }}>❌ Your Answer</span>}
+                      {Number(optIdx) === Number(q.answer) && (
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#16a34a", marginLeft: "10px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          Correct Answer
+                        </span>
+                      )}
+                      {Number(optIdx) === Number(studentAns) && Number(optIdx) !== Number(q.answer) && (
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#ef4444", marginLeft: "10px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          Your Answer
+                        </span>
+                      )}
                     </div>
 
                     {optImg && (
@@ -328,7 +338,7 @@ const StudentResult = () => {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column" }}>
       <div style={{ backgroundColor: "#0284c7", color: "white", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "16px", fontWeight: "bold", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-        <span>📝 Exam Summary</span>
+        <span>Exam Summary</span>
       </div>
 
       <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", padding: "20px" }}>
@@ -344,10 +354,12 @@ const StudentResult = () => {
         }}>
           
           <div style={{ textAlign: "center", marginBottom: "20px" }}>
-            <div style={{ fontSize: "35px", marginBottom: "5px" }}>🏆</div>
+            <div style={{ width: "68px", height: "68px", borderRadius: "50%", backgroundColor: "#fef3c7", border: "1px solid #fde68a", margin: "0 auto 12px auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "36px" }}>
+              🏆
+            </div>
             <h2 style={{ color: "#0f172a", fontSize: "22px", margin: "0 0 10px 0", fontWeight: "800" }}>Congratulations, Exam Ended!</h2>
             <div style={{ display: "inline-block", backgroundColor: "#f1f5f9", padding: "6px 16px", borderRadius: "20px", color: "#475569", fontWeight: "600", fontSize: "14px" }}>
-              <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>📄 Exam:</span> {examName}
+              <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>Exam:</span> {examName}
             </div>
           </div>
 

@@ -31,7 +31,7 @@ export default function Navbar({
     { label: 'EPS Book', href: '/admin/listening' },
     { label: 'Manage Institutes', href: '/admin/institutes' },
     { label: 'Upload Questions', href: '/admin/questions' },
-    { label: 'EPS Notices', href: '/admin/news' },
+    { label: 'Notice', href: '/admin/news' },
     { 
       label: 'Notifications', 
       href: '/admin/notifications',
@@ -41,21 +41,21 @@ export default function Navbar({
   ];
 
   const instituteTabs = [
-    { id: 'listening', label: 'EPS Book' },
     { id: 'billing', label: 'Billing' },
+    { id: 'listening', label: 'EPS Book' },
     { id: 'dictionary', label: 'Dictionary' },
-    { id: 'news', label: 'EPS Notices' },
+    { id: 'news', label: 'Notice' },
     { id: 'students', label: 'Manage Students' },
   ];
 
   const studentTabs = [
     { id: 'home', label: 'Dashboard' },
-    { id: 'listening', label: 'EPS Book' },
     { id: 'exams', label: 'Start UBT Exam' },
-    { id: 'buyExam', label: 'Buy Exam' },
+    { id: 'buyExam', label: 'Packages' },
     { id: 'vocab', label: 'Dictionary' },
-    { id: 'news', label: 'EPS Notice' },
-    { id: 'notify', label: 'Notify Admin' },
+    { id: 'listening', label: 'EPS Book' },
+    { id: 'news', label: 'Notice' },
+    { id: 'notify', label: 'Messages' },
     { id: 'results', label: 'Performance' },
   ];
 
@@ -72,9 +72,9 @@ export default function Navbar({
     display: 'inline-flex',
     alignItems: 'center',
     gap: '6px',
-    padding: '8px 14px',
-    fontSize: '13.5px',
-    fontWeight: 600,
+    padding: '9px 16px',
+    fontSize: '15px',
+    fontWeight: 700,
     borderRadius: '7px',
     border: 'none',
     cursor: 'pointer',

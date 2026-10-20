@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { VOCABULARY_LIST, searchDictionary, romanizeKorean, romanizeNepali, getKoreanPronunciationWithBatchim, koreanToNepaliRomanized } from '@/lib/dictionaryData';
+import { JAPANESE_VOCABULARY, ALL_JAPANESE_DICTIONARY, JAPANESE_KANJI_LIST, searchJapaneseDictionary, romajiToNepaliPhonetic } from '@/lib/japaneseDictionaryData';
 
 function buildAudioLinks(item) {
   const koSlug = (item.koreanRomanized || 'korean').replace(/[^a-zA-Z0-9]/g, '_');
@@ -14,6 +15,49 @@ function buildAudioLinks(item) {
         femaleDownload: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=female&download=true&filename=${koSlug}_ko_female.mp3`,
         male: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=male`,
         maleDownload: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=male&download=true&filename=${koSlug}_ko_male.mp3`,
+      },
+      nepali: {
+        female: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=female`,
+        femaleDownload: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=female&download=true&filename=${neSlug}_ne_female.mp3`,
+        male: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=male`,
+        maleDownload: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=male&download=true&filename=${neSlug}_ne_male.mp3`,
+      },
+      english: {
+        female: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=female`,
+        femaleDownload: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=female&download=true&filename=${enSlug}_en_female.mp3`,
+        male: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=male`,
+        maleDownload: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=male&download=true&filename=${enSlug}_en_male.mp3`,
+      }
+    }
+  };
+}
+
+function buildJapaneseAudioLinks(item) {
+  const jaWord = item.japaneseSpoken || item.japanese || '';
+  const jaSlug = (item.japaneseRomanized || 'japanese').replace(/[^a-zA-Z0-9]/g, '_');
+  const neSlug = (item.nepaliRomanized || 'nepali').replace(/[^a-zA-Z0-9]/g, '_');
+  const enSlug = (item.english || 'english').replace(/[^a-zA-Z0-9]/g, '_');
+
+  return {
+    ...item,
+    // Add backward-compatible korean fields so generic renderers can work without error if needed
+    korean: item.japanese,
+    koreanWritten: item.japaneseWritten || item.japanese,
+    koreanSpoken: item.japaneseSpoken || item.japanese,
+    koreanRomanized: item.japaneseRomanized,
+    koreanNepaliRomanized: item.japaneseNepaliRomanized,
+    audio: {
+      japanese: {
+        female: `/api/tts?text=${encodeURIComponent(jaWord)}&lang=ja&gender=female&voice=ja-JP-NanamiNeural`,
+        femaleDownload: `/api/tts?text=${encodeURIComponent(jaWord)}&lang=ja&gender=female&voice=ja-JP-NanamiNeural&download=true&filename=${jaSlug}_ja_female.mp3`,
+        male: `/api/tts?text=${encodeURIComponent(jaWord)}&lang=ja&gender=male&voice=ja-JP-KeitaNeural`,
+        maleDownload: `/api/tts?text=${encodeURIComponent(jaWord)}&lang=ja&gender=male&voice=ja-JP-KeitaNeural&download=true&filename=${jaSlug}_ja_male.mp3`,
+      },
+      korean: {
+        female: `/api/tts?text=${encodeURIComponent(jaWord)}&lang=ja&gender=female&voice=ja-JP-NanamiNeural`,
+        femaleDownload: `/api/tts?text=${encodeURIComponent(jaWord)}&lang=ja&gender=female&voice=ja-JP-NanamiNeural&download=true&filename=${jaSlug}_ja_female.mp3`,
+        male: `/api/tts?text=${encodeURIComponent(jaWord)}&lang=ja&gender=male&voice=ja-JP-KeitaNeural`,
+        maleDownload: `/api/tts?text=${encodeURIComponent(jaWord)}&lang=ja&gender=male&voice=ja-JP-KeitaNeural&download=true&filename=${jaSlug}_ja_male.mp3`,
       },
       nepali: {
         female: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=female`,
@@ -118,16 +162,133 @@ async function fetchRomanizedNepali(text) {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q') || '';
+  const langParam = searchParams.get('lang') || '';
+  const filter = searchParams.get('filter') || 'all';
   const limit = parseInt(searchParams.get('limit') || '50', 10);
 
-  if (!query.trim()) {
+  const cleanQuery = query.trim();
+  const isJapaneseScript = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(cleanQuery);
+  const isJapaneseMode = langParam === 'ja' || (!langParam && isJapaneseScript);
+
+  // ----------------------------------------------------
+  // JAPANESE MODE (1,000+ Kanji & Vocabulary)
+  // ----------------------------------------------------
+  if (isJapaneseMode) {
+    if (!cleanQuery) {
+      const source = (filter === 'kanji' || /^n[1-5]$/i.test(filter) || filter.startsWith('jlpt-') || filter === 'vocab')
+        ? searchJapaneseDictionary('', filter)
+        : ALL_JAPANESE_DICTIONARY;
+      const samples = source.slice(0, limit).map(buildJapaneseAudioLinks);
+      return NextResponse.json({ success: true, count: samples.length, total: source.length, results: samples });
+    }
+
+    // 1. Search local Japanese dictionary (Vocabulary + 1,006 Kanji)
+    const jaMatches = searchJapaneseDictionary(cleanQuery, filter);
+    if (jaMatches.length > 0 && (jaMatches[0]._searchScore || 0) >= 90) {
+      const results = jaMatches.slice(0, limit).map(buildJapaneseAudioLinks);
+      return NextResponse.json({ success: true, count: results.length, results });
+    }
+
+    // 2. Dynamic Fetch / Translation for Japanese
+    try {
+      const lowerQuery = cleanQuery.toLowerCase();
+      let jaText = '';
+      let neText = '';
+      let enText = '';
+
+      if (isJapaneseScript) {
+        jaText = cleanQuery;
+        neText = await fetchGoogleTranslate(cleanQuery, 'ja', 'ne');
+        enText = await fetchGoogleTranslate(cleanQuery, 'ja', 'en') || cleanQuery;
+      } else if (/[\u0900-\u097F]/.test(cleanQuery)) {
+        neText = cleanQuery;
+        jaText = await fetchGoogleTranslate(cleanQuery, 'ne', 'ja');
+        enText = await fetchGoogleTranslate(cleanQuery, 'ne', 'en') || cleanQuery;
+      } else {
+        // English or Romaji
+        const nepaliCandidate = await fetchRomanizedNepali(cleanQuery);
+        const neFromEn = await fetchGoogleTranslate(cleanQuery, 'en', 'ne');
+        const jaFromEn = await fetchGoogleTranslate(cleanQuery, 'en', 'ja');
+
+        if (nepaliCandidate && (!neFromEn || neFromEn.toLowerCase() === lowerQuery || neFromEn === nepaliCandidate)) {
+          neText = nepaliCandidate;
+          jaText = await fetchGoogleTranslate(nepaliCandidate, 'ne', 'ja') || jaFromEn;
+          enText = await fetchGoogleTranslate(nepaliCandidate, 'ne', 'en') || cleanQuery;
+        } else {
+          enText = cleanQuery;
+          neText = neFromEn || nepaliCandidate;
+          jaText = jaFromEn || (neText ? await fetchGoogleTranslate(neText, 'ne', 'ja') : '');
+        }
+      }
+
+      const finalJa = jaText || cleanQuery;
+      const finalNe = neText || cleanQuery;
+      const finalEn = enText || cleanQuery;
+
+      const romajiGuess = lowerQuery.replace(/[^a-z0-9 ]/g, '');
+      const nepaliPhonetic = romajiToNepaliPhonetic(romajiGuess) || finalNe;
+
+      const dynamicJaEntry = {
+        japanese: finalJa,
+        japaneseWritten: finalJa,
+        japaneseSpoken: finalJa,
+        japaneseRomanized: romajiGuess,
+        japaneseNepaliRomanized: nepaliPhonetic,
+        pronunciationRule: "Standard Tokyo Accent",
+        hasRule: false,
+        nepali: finalNe,
+        nepaliRomanized: romanizeNepali(finalNe),
+        english: finalEn,
+        category: 'General'
+      };
+
+      const finalResults = [buildJapaneseAudioLinks(dynamicJaEntry)];
+      if (jaMatches.length > 0) {
+        for (const m of jaMatches) {
+          if (m.japanese !== dynamicJaEntry.japanese && finalResults.length < limit) {
+            finalResults.push(buildJapaneseAudioLinks(m));
+          }
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        count: finalResults.length,
+        results: finalResults
+      });
+    } catch (err) {
+      const fallbackEntry = {
+        japanese: cleanQuery,
+        japaneseWritten: cleanQuery,
+        japaneseSpoken: cleanQuery,
+        japaneseRomanized: cleanQuery,
+        japaneseNepaliRomanized: romajiToNepaliPhonetic(cleanQuery) || cleanQuery,
+        pronunciationRule: "Standard Tokyo Accent",
+        hasRule: false,
+        nepali: cleanQuery,
+        nepaliRomanized: romanizeNepali(cleanQuery),
+        english: cleanQuery,
+        category: 'General'
+      };
+      return NextResponse.json({
+        success: true,
+        count: 1,
+        results: [buildJapaneseAudioLinks(fallbackEntry)]
+      });
+    }
+  }
+
+  // ----------------------------------------------------
+  // KOREAN MODE
+  // ----------------------------------------------------
+  if (!cleanQuery) {
     // Return standard popular vocabulary list
     const samples = VOCABULARY_LIST.slice(0, limit).map(buildAudioLinks);
     return NextResponse.json({ success: true, count: samples.length, results: samples });
   }
 
   // 1. Search local dictionary
-  const matches = searchDictionary(query);
+  const matches = searchDictionary(cleanQuery);
 
   // If top match is high confidence (score >= 100), return local matches
   if (matches.length > 0 && (matches[0]._searchScore || 0) >= 100) {
@@ -137,7 +298,6 @@ export async function GET(request) {
 
   // 2. Google Translate Background Fetch (with Romanized Nepali support)
   try {
-    const cleanQuery = query.trim();
     const lowerQuery = cleanQuery.toLowerCase();
 
     let koText = '';

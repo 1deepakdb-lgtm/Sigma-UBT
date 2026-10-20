@@ -1,27 +1,100 @@
 'use client';
 
-
-
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useParams, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
+import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import { performLogout } from "@/lib/clientAuth";
+
+// Clean SVG Icons for zero-emoji compliance
+const LaptopExamIcon = ({ size = 28, color = "#1e3a8a" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
+    <circle cx="12" cy="10" r="3" />
+    <polyline points="12 8.5 12 10 13 10.5" />
+  </svg>
+);
+
+const BarChartIcon = ({ size = 28, color = "#2563eb" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const CartIcon = ({ size = 28, color = "#d97706" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="21" r="1" />
+    <circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+  </svg>
+);
+
+const BookStackIcon = ({ size = 28, color = "#0284c7" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+);
+
+const BookOpenIcon = ({ size = 28, color = "#475569" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
+const BellIcon = ({ size = 28, color = "#0284c7" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+
+const FileIcon = ({ size = 20, color = "#2563eb" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+  </svg>
+);
+
+const SearchIcon = ({ size = 20, color = "#d97706" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const BuildingIcon = ({ size = 20, color = "#0f766e" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+    <line x1="9" y1="22" x2="9" y2="22.01" />
+    <line x1="15" y1="22" x2="15" y2="22.01" />
+  </svg>
+);
+
+const SHIFT_NAMES = ['morning', 'day', 'evening', 'night', 'afternoon'];
+const isShift = (str) => SHIFT_NAMES.includes((str || '').toLowerCase().trim());
 
 const StudentDashboard = () => {
   const router = useRouter();
-  const pathname = usePathname(); const location = { pathname, state: {} };
+  const pathname = usePathname();
+  const location = { pathname, state: {} };
 
-  const [activeTab, setActiveTab] = useState("home"); 
+  const [activeTab, setActiveTab] = useState("home");
   const [examSets, setExamSets] = useState([]);
   const [examPackages, setExamPackages] = useState([]);
   const [selectedPackageFilter, setSelectedPackageFilter] = useState("All");
 
   const [activeBookFolder, setActiveBookFolder] = useState("EPS Book");
   const [folderMaterials, setFolderMaterials] = useState([]);
-  const [selectedAudioTracks, setSelectedAudioTracks] = useState({});
 
   const [searchWord, setSearchWord] = useState("");
   const [vocabResult, setVocabResult] = useState(null);
@@ -35,113 +108,177 @@ const StudentDashboard = () => {
   const [notifySubject, setNotifySubject] = useState("");
   const [notifyMessage, setNotifyMessage] = useState("");
 
-  // Deferred localStorage reads — avoids SSR/client hydration mismatch
+  // Student profile & institute info
   const [studentName, setStudentName] = useState("");
   const [currentStudentPhone, setCurrentStudentPhone] = useState(null);
+  const [studentInstitute, setStudentInstitute] = useState(null);
+  const [studentBatch, setStudentBatch] = useState(null);
+  const [studentPackage, setStudentPackage] = useState("Full Set UBT");
+  const [studentExpiryDate, setStudentExpiryDate] = useState("Active");
+  const [purchasedPackages, setPurchasedPackages] = useState([]);
   const [logoWatermark, setLogoWatermark] = useState("");
 
+  // 1. Authenticated Session Sync from /api/auth/me
   useEffect(() => {
-    const name = localStorage.getItem("currentUser") || "Student Portal";
-    const phone = localStorage.getItem("currentStudentPhone") || null;
-    const institutes = JSON.parse(localStorage.getItem("institutes")) || [];
+    // Initial read from localStorage
+    const localName = localStorage.getItem("currentUser") || localStorage.getItem("currentStudentName") || "Student Portal";
+    const localPhone = localStorage.getItem("currentStudentPhone") || null;
+    const localPkg = localStorage.getItem("currentStudentPackage") || null;
+    const localExp = localStorage.getItem("currentStudentExpiryDate") || null;
+    const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
     const logo = institutes[0]?.logoUrl || "";
-    setStudentName(name);
-    setCurrentStudentPhone(phone);
+
+    setStudentName(localName);
+    setCurrentStudentPhone(localPhone);
     setLogoWatermark(logo);
+    if (localPkg && !isShift(localPkg)) setStudentPackage(localPkg);
+    if (localExp && localExp !== "2027-09-30") setStudentExpiryDate(localExp);
+
+    // Fetch verified session from backend
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          const uName = data.user.name || data.user.username;
+          const uPhone = data.user.phone || data.user.username;
+          const instName = data.user.institute?.name || null;
+          const instLogo = data.user.institute?.logoUrl || logo;
+          const batchName = data.user.batch || null;
+          const userPkg = (!isShift(data.user.studentPackage) && data.user.studentPackage) ||
+                          (!isShift(data.user.batch) && data.user.batch) ||
+                          data.user.institute?.examPackage ||
+                          "Full Set UBT";
+          const userExp = (data.user.expiryDate && data.user.expiryDate !== "2027-09-30")
+            ? data.user.expiryDate
+            : "Active";
+
+          setStudentName(uName);
+          setCurrentStudentPhone(uPhone);
+          if (instName) setStudentInstitute(instName);
+          if (instLogo) setLogoWatermark(instLogo);
+          if (batchName) setStudentBatch(batchName);
+          if (userPkg && !isShift(userPkg)) {
+            setStudentPackage(userPkg);
+            localStorage.setItem("currentStudentPackage", userPkg);
+          }
+          if (userExp) {
+            setStudentExpiryDate(userExp);
+            localStorage.setItem("currentStudentExpiryDate", userExp);
+          }
+
+          localStorage.setItem("currentUser", uName);
+          localStorage.setItem("currentStudentPhone", uPhone);
+          if (instName) localStorage.setItem("currentInstitute", instName);
+        }
+      })
+      .catch((err) => console.warn("Session verify notice:", err));
   }, []);
 
+  // 2. Fetch Packages & Exam Sets (combining LocalStorage and Server DB)
   useEffect(() => {
-    if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab);
-    }
-  }, [location]);
-
-  useEffect(() => {
-    const savedPackages = JSON.parse(localStorage.getItem("examPackages")) || [
+    const defaultPackages = [
       { id: 1, name: "30 Set Chapter UBT", price: "Rs. 1,000", desc: "Complete chapterwise practice sets with audio." },
       { id: 2, name: "100 UBT set", price: "Rs. 2,500", desc: "Full-length simulated exam packages for real test experience." },
-      { id: 3, name: "Full Package", price: "Rs. 4,000", desc: "All chapters, listening tracks, and unlimited UBT sets." }
+      { id: 3, name: "Full Set UBT", price: "Rs. 4,000", desc: "Full EPS-TOPIK Korean 40-question UBT sets." },
+      { id: 4, name: "Model Question Bank", price: "Rs. 1,500", desc: "Exclusive Model Question Bank 40-question UBT sets with Korean Audio & Real-time Evaluation (Sold Separately)." }
     ];
-    
-    const allSets = JSON.parse(localStorage.getItem("examSets")) || [];
-    
-    // Retrieve students list and institute enrolled students to find active packages assigned by institute
-    const studentsList = JSON.parse(localStorage.getItem("studentsList")) || [];
-    const allInstituteStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-    
-    let currentStudent = studentsList.find(s => s.phone === currentStudentPhone);
-    let studentInstitute = null;
 
-    if (!currentStudent) {
-      for (const instName in allInstituteStudents) {
-        const found = (allInstituteStudents[instName] || []).find(s => s.phone === currentStudentPhone);
-        if (found) {
-          currentStudent = found;
-          studentInstitute = instName;
-          break;
-        }
-      }
+    const savedPackages = JSON.parse(localStorage.getItem("examPackages") || "[]");
+    let finalPackages = savedPackages.length > 0 ? [...savedPackages] : [...defaultPackages];
+    if (!finalPackages.some(p => (p.name || "").toLowerCase().includes("model question"))) {
+      finalPackages.push({
+        id: 4,
+        name: "Model Question Bank",
+        price: "Rs. 1,500",
+        desc: "Exclusive Model Question Bank 40-question UBT sets with Korean Audio & Real-time Evaluation (Sold Separately)."
+      });
     }
+    setExamPackages(finalPackages);
 
-    // Apply institute custom pricing if available
-    let finalizedPackages = savedPackages;
-    if (studentInstitute) {
-      const instPrices = JSON.parse(localStorage.getItem(`instPrices_${studentInstitute}`) || "{}");
-      if (Object.keys(instPrices).length > 0) {
-        finalizedPackages = savedPackages.map(p => instPrices[p.name] ? { ...p, price: instPrices[p.name] } : p);
-      }
-    }
+    const savedSets = JSON.parse(localStorage.getItem("examSets") || "[]");
 
-    // Filter exam sets based on what the institute has assigned to this student
-    const assignedPackage = currentStudent?.assignedPackage || currentStudent?.package;
-    const allowedPackageNames = currentStudent?.assignedPackages || currentStudent?.purchasedPackages || (assignedPackage ? [assignedPackage] : []);
-
-    const accessibleSets = allSets.filter(set => {
-      if (allowedPackageNames.length > 0) {
-        // Direct package name match
-        if (allowedPackageNames.includes(set.packageName)) return true;
-        // Check if any allowed package has includedSets
-        const matchingPkgs = finalizedPackages.filter(p => allowedPackageNames.includes(p.name));
-        for (const mp of matchingPkgs) {
-          if (mp.includedSets && mp.includedSets.includes(set.name)) return true;
+    // Fetch packages and sets from server API to guarantee data is never empty
+    fetch("/api/admin/packages")
+      .then((res) => res.json())
+      .then((data) => {
+        let mergedSets = [...savedSets];
+        if (data.sets && Array.isArray(data.sets) && data.sets.length > 0) {
+          data.sets.forEach((srvSet) => {
+            const exists = mergedSets.some(
+              (s) => s.id === srvSet.id || (s.name && srvSet.name && s.name.trim().toUpperCase() === srvSet.name.trim().toUpperCase())
+            );
+            if (!exists) {
+              mergedSets.push({
+                id: srvSet.id,
+                name: srvSet.name,
+                packageName: srvSet.packageName || srvSet.package?.name || "Full Set UBT",
+                creatorInstituteName: srvSet.creatorInstituteName || null,
+                isPublished: srvSet.isPublished !== false
+              });
+            }
+          });
         }
-        return false;
-      }
-      return true;
-    });
 
-    const allFoldersData = JSON.parse(localStorage.getItem("epsFoldersContent")) || {};
-    const savedNews = JSON.parse(localStorage.getItem("epsNewsList")) || [];
-    const savedResults = JSON.parse(localStorage.getItem("examResults")) || [];
+        // Apply student filtering
+        filterAndSetExamSets(mergedSets, finalPackages);
+      })
+      .catch(() => {
+        filterAndSetExamSets(savedSets, finalPackages);
+      });
 
-    setExamPackages(savedPackages);
-    setExamSets(accessibleSets);
+    // Load past results from API and LocalStorage
+    fetch("/api/student/exams")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.pastResults && Array.isArray(data.pastResults)) {
+          setResults(data.pastResults);
+        } else {
+          setResults(JSON.parse(localStorage.getItem("examResults") || "[]"));
+        }
+      })
+      .catch(() => {
+        setResults(JSON.parse(localStorage.getItem("examResults") || "[]"));
+      });
+
+    const allFoldersData = JSON.parse(localStorage.getItem("epsFoldersContent") || "{}");
+    const savedNews = JSON.parse(localStorage.getItem("epsNewsList") || "[]");
     setFolderMaterials(allFoldersData[activeBookFolder] || []);
     setNewsList(savedNews);
-    setResults(savedResults);
 
-    const allNotifications = JSON.parse(localStorage.getItem("studentNotifications")) || [];
-    setMyNotifications(allNotifications.filter((n) => n.studentName === studentName || (currentStudentPhone && n.studentPhone === currentStudentPhone)));
+    const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);
+    const targetCleanPhone = cleanDigits(currentStudentPhone);
+    const isMatchingPhone = (phone) => {
+      if (!phone || !currentStudentPhone) return false;
+      if (phone === currentStudentPhone) return true;
+      const c = cleanDigits(phone);
+      return Boolean(c && targetCleanPhone && c === targetCleanPhone);
+    };
 
-    const popup = savedNews.find(n => n.isPopup);
-    if (popup) {
-      const lastShownId = localStorage.getItem("lastShownStudentPopupId");
-      if (lastShownId !== popup.id.toString()) {
-        setPopupNotice(popup);
-        setShowBannerPopup(true);
-      }
-    }
+    const allNotifications = JSON.parse(localStorage.getItem("studentNotifications") || "[]");
+    setMyNotifications(
+      allNotifications.filter(
+        (n) => n.studentName === studentName || (currentStudentPhone && isMatchingPhone(n.studentPhone))
+      )
+    );
 
-    // Always fetch latest notices and news from server API
-    fetch('/api/news')
+    // Fetch latest notices for this student's institute only
+    const currentInst = studentInstitute || localStorage.getItem("currentInstitute") || "";
+    const noticeQuery = currentInst ? `?role=student&institute=${encodeURIComponent(currentInst)}` : "?role=student";
+    fetch(`/api/news${noticeQuery}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && Array.isArray(data.notices)) {
-          setNewsList(data.notices);
-          try {
-            localStorage.setItem("epsNewsList", JSON.stringify(data.notices));
-          } catch (e) {}
-          const livePopup = data.notices.find(n => n.isPopup);
+          // Deliver to particular institute students only (or global admin notice)
+          const instituteOnlyNotices = data.notices.filter((n) => {
+            if (!n.instituteName || n.targetAudience === 'all') return true; // Global notice for all students
+            if (!currentInst) return false;
+            const target = (n.targetAudience || n.instituteName || '').trim().toLowerCase();
+            const inst = (n.instituteName || '').trim().toLowerCase();
+            const cleanCurr = currentInst.trim().toLowerCase();
+            return target === cleanCurr || inst === cleanCurr;
+          });
+          setNewsList(instituteOnlyNotices);
+          const livePopup = instituteOnlyNotices.find((n) => n.isPopup);
           if (livePopup) {
             const lastShownId = localStorage.getItem("lastShownStudentPopupId");
             if (lastShownId !== livePopup.id.toString()) {
@@ -151,8 +288,99 @@ const StudentDashboard = () => {
           }
         }
       })
-      .catch((err) => console.warn("Failed to fetch notices in student portal:", err));
-  }, [activeTab, activeBookFolder, currentStudentPhone]);
+      .catch((err) => console.warn("Failed to fetch notices:", err));
+  }, [currentStudentPhone, studentInstitute, studentBatch, activeBookFolder]);
+
+  const filterAndSetExamSets = (allSets, packages) => {
+    const studentsList = JSON.parse(localStorage.getItem("studentsList") || "[]");
+    const allInstituteStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
+
+    const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);
+    const targetCleanPhone = cleanDigits(currentStudentPhone);
+    const isMatchingPhone = (phone) => {
+      if (!phone || !currentStudentPhone) return false;
+      if (phone === currentStudentPhone) return true;
+      const c = cleanDigits(phone);
+      return Boolean(c && targetCleanPhone && c === targetCleanPhone);
+    };
+
+    let currentStudent = studentsList.find((s) => isMatchingPhone(s.phone));
+    let myInstName = studentInstitute;
+
+    if (!currentStudent) {
+      for (const instName in allInstituteStudents) {
+        const found = (allInstituteStudents[instName] || []).find((s) => isMatchingPhone(s.phone));
+        if (found) {
+          currentStudent = found;
+          myInstName = instName;
+          break;
+        }
+      }
+    }
+
+    const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
+    const isShift = (str) => shiftNames.includes((str || '').toLowerCase().trim());
+
+    if (currentStudent?.expiryDate && currentStudent.expiryDate !== "2027-09-30") {
+      setStudentExpiryDate(currentStudent.expiryDate);
+      localStorage.setItem("currentStudentExpiryDate", currentStudent.expiryDate);
+    }
+    if (currentStudent?.assignedPackage || currentStudent?.package) {
+      const p = currentStudent.assignedPackage || currentStudent.package;
+      if (!isShift(p)) {
+        setStudentPackage(p);
+        localStorage.setItem("currentStudentPackage", p);
+      }
+    }
+
+    const rawAssigned = currentStudent?.assignedPackage || currentStudent?.package || studentBatch;
+    const assignedPackage = !isShift(rawAssigned) ? rawAssigned : null;
+    const allowedPackages = currentStudent?.assignedPackages || (assignedPackage ? [assignedPackage] : []);
+    setPurchasedPackages(allowedPackages);
+
+    const accessible = allSets.filter((set) => {
+      // 1. Strict Institute Isolation: if private to an institute, must belong to that institute
+      if (set.creatorInstituteName && set.isPublished === false) {
+        if (!myInstName || set.creatorInstituteName.toLowerCase() !== myInstName.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 2. Package Access Filter
+      if (allowedPackages.length > 0) {
+        const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const normAllowed = allowedPackages.map(norm);
+        const setPkgNorm = norm(set.packageName);
+
+        if (normAllowed.includes(setPkgNorm)) return true;
+        const isMatch = normAllowed.some(ap => {
+          if (ap === setPkgNorm) return true;
+          if (ap.includes('chapter') && setPkgNorm.includes('chapter')) return true;
+          if (ap.includes('full') && setPkgNorm.includes('full')) return true;
+          return false;
+        });
+        if (isMatch) return true;
+
+        const matchingPkgs = packages.filter((p) => normAllowed.includes(norm(p.name)));
+        for (const mp of matchingPkgs) {
+          if (mp.includedSets && mp.includedSets.includes(set.name)) return true;
+        }
+        return false;
+      }
+
+      return true;
+    });
+
+    const finalSets = accessible.length > 0
+      ? accessible
+      : allSets.filter((s) => !s.creatorInstituteName || !myInstName || s.creatorInstituteName.toLowerCase() === myInstName.toLowerCase() || s.isPublished !== false);
+
+    setExamSets(finalSets);
+    if (finalSets.length > 0 && (!studentPackage || isShift(studentPackage) || studentPackage === "Full Set UBT")) {
+      const bestPkg = finalSets.find((s) => s.packageName && !isShift(s.packageName))?.packageName || "Full Set UBT";
+      setStudentPackage(bestPkg);
+    }
+  };
 
   const handleCloseBanner = () => {
     if (popupNotice) {
@@ -165,48 +393,17 @@ const StudentDashboard = () => {
     performLogout();
   };
 
-  const findStudentInstitute = () => {
-    const allInstitutesStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-    for (const [instName, list] of Object.entries(allInstitutesStudents)) {
-      if (Array.isArray(list) && list.find((s) => s.phone === currentStudentPhone || s.name === studentName)) {
-        return instName;
-      }
-    }
-    return "";
-  };
-
-  const pushStudentNotification = (payload) => {
-    const requests = JSON.parse(localStorage.getItem("studentNotifications")) || [];
-    const newItem = {
-      id: Date.now(),
-      studentName,
-      studentPhone: currentStudentPhone || "",
-      instituteName: findStudentInstitute(),
-      read: false,
-      date: new Date().toLocaleString(),
-      ...payload
-    };
-    const updated = [newItem, ...requests];
-    localStorage.setItem("studentNotifications", JSON.stringify(updated));
-    setMyNotifications(updated.filter((n) => n.studentName === studentName || (currentStudentPhone && n.studentPhone === currentStudentPhone)));
-  };
-
   const handleBuyRequest = (packageName) => {
-    const requests = JSON.parse(localStorage.getItem("examPurchaseRequests")) || [];
+    const requests = JSON.parse(localStorage.getItem("examPurchaseRequests") || "[]");
     const newReq = {
       id: Date.now(),
-      studentName: localStorage.getItem("currentUser") || "Student",
+      studentName: studentName || "Student",
       packageName,
       date: new Date().toLocaleDateString(),
       status: "Pending"
     };
     localStorage.setItem("examPurchaseRequests", JSON.stringify([...requests, newReq]));
-    pushStudentNotification({
-      type: "purchase",
-      subject: `Purchase request: ${packageName}`,
-      message: `${studentName} requested to buy the "${packageName}" exam package.`
-    });
-    alert(`✅ Purchase request for "${packageName}" submitted successfully! Your institute/admin will review and activate it shortly.`);
+    alert(`Purchase request for "${packageName}" submitted successfully! Your institute will review and activate it shortly.`);
   };
 
   const handleSendNotification = (e) => {
@@ -215,17 +412,25 @@ const StudentDashboard = () => {
       alert("Please fill in both subject and message.");
       return;
     }
-    pushStudentNotification({
-      type: "message",
+    const requests = JSON.parse(localStorage.getItem("studentNotifications") || "[]");
+    const newItem = {
+      id: Date.now(),
+      studentName,
+      studentPhone: currentStudentPhone || "",
+      instituteName: studentInstitute || "",
       subject: notifySubject.trim(),
-      message: notifyMessage.trim()
-    });
+      message: notifyMessage.trim(),
+      read: false,
+      date: new Date().toLocaleString()
+    };
+    const updated = [newItem, ...requests];
+    localStorage.setItem("studentNotifications", JSON.stringify(updated));
+    setMyNotifications(updated.filter((n) => n.studentName === studentName || (currentStudentPhone && n.studentPhone === currentStudentPhone)));
     setNotifySubject("");
     setNotifyMessage("");
-    alert("✅ Your message was sent to the admin panel.");
+    alert("Your message was sent to the administration panel.");
   };
 
-  // Fixed multi-way translation handler supporting Nepali script recognition
   const handleSearchVocabulary = async (e) => {
     e.preventDefault();
     if (!searchWord.trim()) return;
@@ -233,7 +438,6 @@ const StudentDashboard = () => {
     setLoadingVocab(true);
     try {
       const isNepali = /[\u0900-\u097F]/.test(searchWord);
-
       let koText = "";
       let enText = "";
       let neText = "";
@@ -252,7 +456,7 @@ const StudentDashboard = () => {
         const detectData = await detectRes.json();
         const detectedLang = detectData[2];
 
-        if (detectedLang === 'ko') {
+        if (detectedLang === "ko") {
           koText = searchWord;
           const resEn = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=en&dt=t&q=${encodeURIComponent(searchWord)}`);
           const dataEn = await resEn.json();
@@ -273,286 +477,538 @@ const StudentDashboard = () => {
         }
       }
 
-      setVocabResult({
-        korean: koText,
-        english: enText,
-        nepali: neText
-      });
+      setVocabResult({ korean: koText, english: enText, nepali: neText });
     } catch (err) {
-      console.error("Translation error", err);
+      console.error("Translation error:", err);
       alert("Translation failed. Please check your network.");
     }
     setLoadingVocab(false);
   };
 
-  const filteredSets = selectedPackageFilter === "All" 
-    ? examSets 
-    : examSets.filter(s => s.packageName === selectedPackageFilter);
+  const filteredSets =
+    selectedPackageFilter === "All" || purchasedPackages.length <= 1
+      ? examSets
+      : examSets.filter((s) => s.packageName === selectedPackageFilter);
 
-  const protectedStyle = {
-    userSelect: "none",
-    WebkitUserSelect: "none",
-    MozUserSelect: "none",
-    msUserSelect: "none"
-  };
-
-  const containerStyle = { 
-    minHeight: "100vh", 
-    backgroundColor: "rgba(241, 245, 249, 0.92)", 
+  const containerStyle = {
+    minHeight: "100vh",
+    backgroundColor: "rgba(241, 245, 249, 0.94)",
     fontFamily: "Arial, sans-serif",
     position: "relative",
     backgroundImage: logoWatermark ? `url(${logoWatermark})` : "none",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
-    backgroundSize: "350px",
-    backgroundBlendMode: "overlay",
-    ...protectedStyle
+    backgroundSize: "320px",
+    backgroundBlendMode: "overlay"
   };
 
-  const topNavStyle = { 
-    backgroundColor: "#1e3a8a", 
-    color: "white", 
-    padding: "15px 30px", 
-    display: "flex", 
-    justifyContent: "space-between", 
-    alignItems: "center", 
+  const topNavStyle = {
+    backgroundColor: "#1e3a8a",
+    color: "#ffffff",
+    padding: "14px 28px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
     boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
     flexWrap: "wrap",
-    gap: "15px",
+    gap: "14px",
     position: "sticky",
     top: 0,
     zIndex: 1000
   };
 
-  const menuContainerStyle = { display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" };
-  
   const getNavBtnStyle = (tabName) => ({
     backgroundColor: activeTab === tabName ? "#2563eb" : "transparent",
     color: "#ffffff",
     border: "none",
-    padding: "8px 14px",
-    borderRadius: "6px",
-    fontWeight: "bold",
+    padding: "9px 16px",
+    borderRadius: "7px",
+    fontWeight: "700",
     cursor: "pointer",
-    fontSize: "14px",
+    fontSize: "15px",
+    letterSpacing: "0.2px",
     transition: "0.2s"
   });
 
-  const contentAreaStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto" };
-  const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "20px", border: "1px solid #e2e8f0" };
-  const tableStyle = { width: "100%", borderCollapse: "collapse", backgroundColor: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", borderRadius: "8px", overflow: "hidden" };
-  const thStyle = { backgroundColor: "#f8fafc", padding: "15px", textAlign: "left", borderBottom: "2px solid #e2e8f0", color: "#475569" };
-  const tdStyle = { padding: "15px", borderBottom: "1px solid #e2e8f0", color: "#1e293b" };
+  const contentAreaStyle = { padding: "28px", maxWidth: "1200px", margin: "0 auto" };
+  const cardStyle = {
+    backgroundColor: "#ffffff",
+    padding: "24px",
+    borderRadius: "10px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+    marginBottom: "20px",
+    border: "1px solid #e2e8f0"
+  };
 
   return (
-    <div style={containerStyle} onContextMenu={(e) => e.preventDefault()}>
-      
+    <div style={containerStyle}>
+      {/* Notice Banner Popup */}
       {showBannerPopup && popupNotice && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999999 }}>
-          <div style={{ backgroundColor: "white", padding: "30px", borderRadius: "12px", width: "90%", maxWidth: "500px", boxShadow: "0 10px 30px rgba(0,0,0,0.3)", border: "3px solid #2563eb", position: "relative" }}>
-            <span style={{ backgroundColor: "#dcfce7", color: "#166534", fontSize: "12px", padding: "3px 10px", borderRadius: "10px", fontWeight: "bold" }}>📢 EPS Notice Flex Banner</span>
-            <h2 style={{ color: "#1e3a8a", marginTop: "12px", marginBottom: "10px", fontSize: "22px" }}>{popupNotice.title}</h2>
-            <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "15px" }}>Date: {popupNotice.date}</p>
-            <p style={{ color: "#334155", fontSize: "15px", lineHeight: "1.6", marginBottom: "15px", whiteSpace: "pre-line" }}>{popupNotice.content}</p>
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.75)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999999, padding: "20px" }}>
+          <div style={{ backgroundColor: "#ffffff", padding: "28px", borderRadius: "16px", width: "100%", maxWidth: "620px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 10px 30px rgba(0,0,0,0.3)", border: "2px solid #6366f1", textAlign: "center" }}>
+            <h2 style={{ color: "#1e1b4b", margin: "0 0 8px 0", fontSize: "22px", fontWeight: "800", textAlign: "center" }}>{popupNotice.title}</h2>
+            <p style={{ fontSize: "12px", color: "#64748b", marginBottom: "14px", textAlign: "center" }}>📅 {popupNotice.date}</p>
+            {popupNotice.content && (
+              <p style={{ color: "#334155", fontSize: "14px", lineHeight: "1.7", marginBottom: "18px", whiteSpace: "pre-line", textAlign: "center" }}>{popupNotice.content}</p>
+            )}
 
-            {popupNotice.fileUrl && popupNotice.fileType === "audio" && (
-              <div style={{ marginBottom: "15px" }}>
-                <audio controls controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} autoPlay src={popupNotice.fileUrl} style={{ width: "100%", height: "35px" }} />
-              </div>
-            )}
-            {popupNotice.fileUrl && popupNotice.fileType === "video" && (
-              <div style={{ marginBottom: "15px" }}>
-                <video controls autoPlay src={popupNotice.fileUrl} style={{ width: "100%", maxHeight: "200px", borderRadius: "6px" }} />
-              </div>
-            )}
+            {/* Poster full view in popup banner */}
             {popupNotice.fileUrl && popupNotice.fileType === "image" && (
-              <div style={{ marginBottom: "15px", textAlign: "center" }}>
-                <img src={popupNotice.fileUrl} alt="Notice" style={{ maxWidth: "100%", maxHeight: "180px", borderRadius: "6px" }} />
-              </div>
-            )}
-            {popupNotice.fileUrl && (popupNotice.fileType === "document" || popupNotice.fileType === "pdf") && (
-              <div style={{ marginBottom: "15px", textAlign: "center" }}>
-                <a 
-                  href={popupNotice.fileUrl} 
-                  download={popupNotice.fileName || "Notice_Document"} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  style={{ display: "inline-block", backgroundColor: "#0284c7", color: "white", padding: "8px 16px", borderRadius: "6px", textDecoration: "none", fontWeight: "bold", fontSize: "13px" }}
-                >
-                  {popupNotice.fileType === "pdf" ? "📕 View / Download PDF" : "📥 Download Attached Document"}
+              <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center" }}>
+                <a href={popupNotice.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block" }}>
+                  <img
+                    src={popupNotice.fileUrl}
+                    alt="Notice Poster"
+                    style={{ maxWidth: "100%", height: "auto", maxHeight: "60vh", borderRadius: "10px", border: "1px solid #e2e8f0", objectFit: "contain", display: "block", margin: "0 auto" }}
+                  />
                 </a>
               </div>
             )}
 
-            <button 
+            {popupNotice.fileUrl && (popupNotice.fileType === "document" || popupNotice.fileType === "pdf") && (
+              <div style={{ marginBottom: "18px", display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
+                <a
+                  href={popupNotice.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#6366f1", color: "#ffffff", padding: "9px 18px", borderRadius: "8px", textDecoration: "none", fontWeight: "700", fontSize: "13px" }}
+                >
+                  <span>{popupNotice.fileType === "pdf" ? "📕" : "📄"}</span> View Document
+                </a>
+                <a
+                  href={popupNotice.fileUrl}
+                  download={popupNotice.fileName || "Notice_Document"}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#0284c7", color: "#ffffff", padding: "9px 18px", borderRadius: "8px", textDecoration: "none", fontWeight: "700", fontSize: "13px" }}
+                >
+                  <span>📥</span> Download
+                </a>
+              </div>
+            )}
+
+            <button
               onClick={handleCloseBanner}
-              style={{ width: "100%", backgroundColor: "#2563eb", color: "white", border: "none", padding: "12px", borderRadius: "6px", fontWeight: "bold", fontSize: "15px", cursor: "pointer" }}
+              style={{ width: "100%", backgroundColor: "#4f46e5", color: "#ffffff", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", transition: "0.2s" }}
             >
-              CLOSE & CONTINUE
+              CLOSE &amp; CONTINUE
             </button>
           </div>
         </div>
       )}
 
+      {/* Top Navbar */}
       <div style={topNavStyle}>
-        <div style={{ fontSize: "18px", fontWeight: "bold" }}>STUDENT PORTAL ({studentName})</div>
-        
-        <div style={menuContainerStyle}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {logoWatermark && (
+            <img src={logoWatermark} alt="Institute Logo" style={{ height: "32px", borderRadius: "4px", backgroundColor: "#ffffff", padding: "2px" }} />
+          )}
+          <div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#ffffff" }}>
+              STUDENT PORTAL
+            </div>
+            <div style={{ fontSize: "12px", color: "#93c5fd" }}>
+              {studentName} {studentInstitute ? `• ${studentInstitute}` : ""}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
           <button onClick={() => setActiveTab("home")} style={getNavBtnStyle("home")}>Dashboard</button>
           <button onClick={() => setActiveTab("exams")} style={getNavBtnStyle("exams")}>Start UBT Exam</button>
-          <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Buy Exam</button>
+          <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>Dictionary</button>
           <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>EPS Book</button>
-          <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>EPS Notice</button>
-          <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Notify Admin</button>
+          <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
+          <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
         </div>
 
-        <button onClick={handleLogout} style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>Logout</button>
+        <button
+          onClick={handleLogout}
+          style={{
+            backgroundColor: "#dc2626",
+            color: "#ffffff",
+            border: "none",
+            padding: "9px 18px",
+            borderRadius: "7px",
+            cursor: "pointer",
+            fontWeight: "700",
+            fontSize: "14px"
+          }}
+        >
+          Logout
+        </button>
       </div>
 
       <div style={contentAreaStyle}>
-        
+        {/* DASHBOARD TAB */}
         {activeTab === "home" && (
           <div>
-            <h2 style={{ textAlign: "center", color: "#1e293b", marginBottom: "35px", fontSize: "32px", fontWeight: "800", letterSpacing: "0.5px" }}>Our Services</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "25px", maxWidth: "1000px", margin: "0 auto" }}>
-              
-              <div onClick={() => setActiveTab("exams")} style={{ background: "linear-gradient(135deg, #fbcfe8 0%, #93c5fd 100%)", borderRadius: "20px", padding: "35px 20px", textAlign: "center", cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}>
-                <div style={{ width: "75px", height: "75px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 15px auto", fontSize: "32px" }}>👨‍💻⏱️</div>
-                <h3 style={{ margin: 0, color: "#1e293b", fontSize: "20px", fontWeight: "700" }}>Start UBT Exam</h3>
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h2 style={{ color: "#0f172a", margin: "0 0 8px 0", fontSize: "28px", fontWeight: "800" }}>
+                Welcome, {studentName}
+              </h2>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", backgroundColor: "#ffffff", padding: "6px 18px", borderRadius: "20px", border: "1px solid #cbd5e1", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Enrolled Package: <strong style={{ color: "#1e3a8a" }}>{(!isShift(studentPackage) && studentPackage) || "Full Set UBT"}</strong>
+                </span>
+                {studentBatch && isShift(studentBatch) && (
+                  <>
+                    <span style={{ color: "#cbd5e1" }}>•</span>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>
+                      Shift: <strong style={{ color: "#0284c7" }}>{studentBatch} Batch</strong>
+                    </span>
+                  </>
+                )}
+                <span style={{ color: "#cbd5e1" }}>•</span>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Expiry Date: <strong style={{ color: "#047857" }}>{studentExpiryDate || "Active"}</strong>
+                </span>
+              </div>
+              <p style={{ color: "#64748b", margin: "12px 0 0 0", fontSize: "14px" }}>
+                Select a service below to practice UBT exams, study books, or review test results.
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", maxWidth: "1050px", margin: "0 auto" }}>
+              <div onClick={() => setActiveTab("exams")} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
+                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                  <LaptopExamIcon size={28} color="#2563eb" />
+                </div>
+                <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>Start UBT Exam</h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Take full 40-question EPS-TOPIK Korean tests</p>
               </div>
 
-              <div onClick={() => setActiveTab("listening")} style={{ background: "linear-gradient(135deg, #5eead4 0%, #7dd3fc 100%)", borderRadius: "20px", padding: "35px 20px", textAlign: "center", cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}>
-                <div style={{ width: "75px", height: "75px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 15px auto", fontSize: "32px" }}>🟩QB</div>
-                <h3 style={{ margin: 0, color: "#1e293b", fontSize: "20px", fontWeight: "700" }}>Modal Bank</h3>
+              <div onClick={() => setActiveTab("results")} style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bbf7d0", boxShadow: "0 4px 12px rgba(22,163,74,0.08)" }}>
+                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                  <BarChartIcon size={28} color="#16a34a" />
+                </div>
+                <h3 style={{ margin: "0 0 4px 0", color: "#166534", fontSize: "18px", fontWeight: "700" }}>Your Performance</h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Inspect past scores, accuracy, and logs</p>
               </div>
 
-              <div onClick={() => setActiveTab("results")} style={{ background: "linear-gradient(135deg, #e9d5ff 0%, #fbcfe8 100%)", borderRadius: "20px", padding: "35px 20px", textAlign: "center", cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}>
-                <div style={{ width: "75px", height: "75px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 15px auto", fontSize: "32px" }}>📊</div>
-                <h3 style={{ margin: 0, color: "#1e293b", fontSize: "20px", fontWeight: "700" }}>Your Performance</h3>
+              <div onClick={() => setActiveTab("listening")} style={{ background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fcd34d", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
+                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                  <BookStackIcon size={28} color="#d97706" />
+                </div>
+                <h3 style={{ margin: "0 0 4px 0", color: "#92400e", fontSize: "18px", fontWeight: "700" }}>Study Materials</h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Korean &amp; Japanese Textbooks, Question Banks &amp; Grammar</p>
               </div>
 
-              <div onClick={() => setActiveTab("buyExam")} style={{ background: "linear-gradient(135deg, #fef08a 0%, #fed7aa 100%)", borderRadius: "20px", padding: "35px 20px", textAlign: "center", cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}>
-                <div style={{ width: "75px", height: "75px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 15px auto", fontSize: "32px" }}>🤝</div>
-                <h3 style={{ margin: 0, color: "#1e293b", fontSize: "20px", fontWeight: "700" }}>Buy Exam</h3>
+              <div onClick={() => setActiveTab("vocab")} style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #ddd6fe", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
+                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                  <BookOpenIcon size={28} color="#7c3aed" />
+                </div>
+                <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>Dictionary</h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Korean, Nepali, and English vocabulary lookup</p>
               </div>
 
-              <div onClick={() => setActiveTab("listening")} style={{ background: "linear-gradient(135deg, #fed7aa 0%, #93c5fd 100%)", borderRadius: "20px", padding: "35px 20px", textAlign: "center", cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}>
-                <div style={{ width: "75px", height: "75px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 15px auto", fontSize: "32px" }}>📚</div>
-                <h3 style={{ margin: 0, color: "#1e293b", fontSize: "20px", fontWeight: "700" }}>EPS Book</h3>
+              <div onClick={() => setActiveTab("buyExam")} style={{ background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fed7aa", boxShadow: "0 4px 12px rgba(234,88,12,0.08)" }}>
+                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                  <CartIcon size={28} color="#ea580c" />
+                </div>
+                <h3 style={{ margin: "0 0 4px 0", color: "#9a3412", fontSize: "18px", fontWeight: "700" }}>Packages</h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Explore and request custom exam sets</p>
               </div>
 
-              <div onClick={() => setActiveTab("vocab")} style={{ background: "linear-gradient(135deg, #cbd5e1 0%, #93c5fd 100%)", borderRadius: "20px", padding: "35px 20px", textAlign: "center", cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}>
-                <div style={{ width: "75px", height: "75px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 15px auto", fontSize: "32px" }}>📖</div>
-                <h3 style={{ margin: 0, color: "#1e293b", fontSize: "20px", fontWeight: "700" }}>Dictionary</h3>
-              </div>
-
-              <div onClick={() => setActiveTab("notify")} style={{ background: "linear-gradient(135deg, #bae6fd 0%, #c7d2fe 100%)", borderRadius: "20px", padding: "35px 20px", textAlign: "center", cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}>
-                <div style={{ width: "75px", height: "75px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 15px auto", fontSize: "32px" }}>🔔</div>
-                <h3 style={{ margin: 0, color: "#1e293b", fontSize: "20px", fontWeight: "700" }}>Notify Admin</h3>
+              <div onClick={() => setActiveTab("notify")} style={{ background: "linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #99f6e4", boxShadow: "0 4px 12px rgba(13,148,136,0.08)" }}>
+                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                  <BellIcon size={28} color="#0d9488" />
+                </div>
+                <h3 style={{ margin: "0 0 4px 0", color: "#115e59", fontSize: "18px", fontWeight: "700" }}>Notify Admin</h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Send inquiries directly to institute administration</p>
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === "vocab" && (
-          <DictionarySection title="📖 Multi-Language Dictionary" />
-        )}
-
-        {activeTab === "news" && (
+        {/* EXAMS TAB */}
+        {activeTab === "exams" && (
           <div>
-            <div style={{ marginBottom: "35px" }}>
-              <h1 style={{ color: "#1e293b", marginBottom: "20px", textAlign: "center" }}>Notice Board & Official Portals</h1>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📄</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Official Notices</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(2,132,199,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📰</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Official News</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(5,150,105,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📝</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>New Application Portal</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(217,119,6,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>🔍</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>EPS Result Checker</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(124,58,237,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📋</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Job Application Form</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(15,118,110,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>🏛️</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>HRD Korea Notice Board</h4>
-                </a>
+            {/* Student's Purchased Package Information Card */}
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "12px",
+                border: "1px solid #bfdbfe",
+                boxShadow: "0 2px 8px rgba(37,99,235,0.06)",
+                padding: "18px 24px",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "16px",
+                background: "linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                <div style={{
+                  width: "46px",
+                  height: "46px",
+                  borderRadius: "10px",
+                  backgroundColor: "#2563eb",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(37,99,235,0.25)"
+                }}>
+                  <LaptopExamIcon size={26} color="#ffffff" />
+                </div>
+                <div>
+                  <div style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.6px", color: "#64748b" }}>
+                    Your Purchased Package
+                  </div>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#1e3a8a", marginTop: "2px" }}>
+                    {(!isShift(studentPackage) && studentPackage) || "Full Set UBT"}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
+                <div style={{
+                  backgroundColor: "#ffffff",
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  textAlign: "right"
+                }}>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#64748b" }}>Package Expiry Date</div>
+                  <div style={{ fontSize: "14px", fontWeight: "800", color: "#047857", marginTop: "2px" }}>
+                    {studentExpiryDate || "Active"}
+                  </div>
+                </div>
+
+                <span style={{
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  color: "#166534",
+                  backgroundColor: "#dcfce7",
+                  padding: "6px 14px",
+                  borderRadius: "20px",
+                  border: "1px solid #bbf7d0"
+                }}>
+                  Active
+                </span>
               </div>
             </div>
 
-            <div style={cardStyle}>
-              <h1 style={{ color: "#1e293b", marginBottom: "20px", textAlign: "center" }}>Institute Notice</h1>
-              {newsList.length === 0 ? (
-                <p style={{ color: "#64748b", textAlign:"center" }}>No notices available.</p>
-              ) : (
-                <div>
-                  {newsList.map(item => (
-                    <div key={item.id} style={{ marginBottom: "20px", padding: "16px", backgroundColor: item.isPopup ? "#eff6ff" : "#f8fafc", border: item.isPopup ? "2px solid #2563eb" : "1px solid #cbd5e1", borderRadius: "8px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          {item.category === "news" ? (
-                            <span style={{ backgroundColor: "#e0f2fe", color: "#0369a1", fontSize: "11px", fontWeight: "bold", padding: "3px 9px", borderRadius: "10px" }}>
-                              📰 Official News
-                            </span>
-                          ) : (
-                            <span style={{ backgroundColor: "#dbeafe", color: "#1e40af", fontSize: "11px", fontWeight: "bold", padding: "3px 9px", borderRadius: "10px" }}>
-                              📢 Notice
-                            </span>
-                          )}
-                          <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "16px" }}>{item.title}</h4>
-                        </div>
-                        <span style={{ fontSize: "12px", color: "#64748b" }}>{item.date}</span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: "14px", color: "#334155", lineHeight: "1.5", whiteSpace: "pre-line" }}>{item.content}</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+              <h3 style={{ color: "#0f172a", margin: 0, fontSize: "20px", fontWeight: "800" }}>
+                Available UBT Exam Sets
+              </h3>
+              <span style={{ fontSize: "12px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "4px 10px", borderRadius: "6px" }}>
+                {filteredSets.length} Sets Ready
+              </span>
+            </div>
 
-                      {item.fileUrl && item.fileType === "audio" && (
-                        <div style={{ marginTop: "12px" }}>
-                          <audio controls controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} src={item.fileUrl} style={{ width: "100%", height: "36px" }} />
-                        </div>
-                      )}
-                      {item.fileUrl && item.fileType === "video" && (
-                        <div style={{ marginTop: "12px" }}>
-                          <video controls src={item.fileUrl} style={{ width: "100%", maxHeight: "260px", borderRadius: "6px", backgroundColor: "#000" }} />
-                        </div>
-                      )}
-                      {item.fileUrl && item.fileType === "image" && (
-                        <div style={{ marginTop: "12px" }}>
-                          <a href={item.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <img src={item.fileUrl} alt="Notice" style={{ maxWidth: "250px", maxHeight: "180px", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
-                          </a>
-                        </div>
-                      )}
-                      {item.fileUrl && (item.fileType === "document" || item.fileType === "pdf") && (
-                        <div style={{ marginTop: "12px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                          <a 
-                            href={item.fileUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "bold", backgroundColor: "#2563eb", color: "#ffffff", padding: "6px 14px", borderRadius: "6px", textDecoration: "none" }}
-                          >
-                            <span>{item.fileType === "pdf" ? "📕" : "📄"}</span> View {item.fileType === "pdf" ? "PDF" : "Document"}
-                          </a>
-                          <a 
-                            href={item.fileUrl} 
-                            download={item.fileName || "Notice_Document"} 
-                            style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: "bold", backgroundColor: "#0284c7", color: "#ffffff", padding: "6px 14px", borderRadius: "6px", textDecoration: "none" }}
-                          >
-                            <span>📥</span> Download
-                          </a>
-                        </div>
-                      )}
+            {/* If student has multiple purchased packages, only filter between their purchased packages */}
+            {purchasedPackages.length > 1 && (
+              <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPackageFilter("All")}
+                  style={{
+                    padding: "7px 14px",
+                    backgroundColor: selectedPackageFilter === "All" ? "#1e3a8a" : "#ffffff",
+                    color: selectedPackageFilter === "All" ? "#ffffff" : "#1e3a8a",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "700",
+                    fontSize: "12px"
+                  }}
+                >
+                  All My Sets ({examSets.length})
+                </button>
+                {purchasedPackages.map((pkgName, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedPackageFilter(pkgName)}
+                    style={{
+                      padding: "7px 14px",
+                      backgroundColor: selectedPackageFilter === pkgName ? "#1e3a8a" : "#ffffff",
+                      color: selectedPackageFilter === pkgName ? "#ffffff" : "#1e3a8a",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: "700",
+                      fontSize: "12px"
+                    }}
+                  >
+                    {pkgName}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Exam Sets Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "18px" }}>
+              {filteredSets.length === 0 ? (
+                <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", backgroundColor: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                  <p style={{ color: "#64748b", margin: "0 0 10px 0" }}>No exam sets currently available for this package.</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPackageFilter("All")}
+                    style={{ padding: "8px 16px", backgroundColor: "#2563eb", color: "#ffffff", border: "none", borderRadius: "6px", fontWeight: "700", cursor: "pointer", fontSize: "12px" }}
+                  >
+                    View All Sets
+                  </button>
+                </div>
+              ) : (
+                filteredSets.map((set, idx) => (
+                  <div
+                    key={set.id || idx}
+                    style={{
+                      backgroundColor: "#ffffff",
+                      borderRadius: "10px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                      border: "1px solid #e2e8f0",
+                      padding: "20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 8px", borderRadius: "4px" }}>
+                          {set.packageName || "UBT Set"}
+                        </span>
+                      </div>
+                      <h4 style={{ margin: "0 0 14px 0", fontSize: "16px", color: "#0f172a", fontWeight: "700" }}>
+                        {set.name}
+                      </h4>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`)}
+                      style={{
+                        width: "100%",
+                        backgroundColor: "#16a34a",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        fontSize: "13px"
+                      }}
+                    >
+                      START EXAM
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* DICTIONARY TAB */}
+        {activeTab === "vocab" && (
+          <DictionarySection />
+        )}
+
+        {/* EPS BOOK TAB */}
+        {activeTab === "listening" && (
+          <div style={{ marginTop: "10px", marginBottom: "30px" }}>
+            <EpsBookReader
+              mode="student"
+              studentPackage={studentPackage}
+              purchasedPackages={purchasedPackages}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+            />
+          </div>
+        )}
+
+        {/* NOTICE BOARD TAB */}
+        {activeTab === "news" && (
+          <div>
+            {/* 6 official portal buttons with simple, attractive, larger icons */}
+            <div style={{ marginBottom: "30px" }}>
+              <OfficialPortalButtons />
+            </div>
+
+            {/* Notice Section — poster style */}
+            <div style={{ background: "white", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", maxWidth: "860px", margin: "0 auto" }}>
+              {newsList.length === 0 ? (
+                <p style={{ color: "#64748b", margin: 0, textAlign: "center", padding: "40px 0" }}>No notices posted currently.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                  {newsList.map((item) => (
+                    <div key={item.id} style={{
+                      borderRadius: "14px",
+                      overflow: "hidden",
+                      border: item.isPopup ? "2px solid #6366f1" : "1px solid #e2e8f0",
+                      boxShadow: item.isPopup ? "0 4px 20px rgba(99,102,241,0.12)" : "0 2px 8px rgba(0,0,0,0.05)",
+                      background: item.isPopup ? "linear-gradient(135deg, #fafaff 0%, #f0f0ff 100%)" : "#fff",
+                    }}>
+                      {/* Header — centered */}
+                      <div style={{ background: item.isPopup ? "linear-gradient(90deg, #6366f1, #4f46e5)" : "linear-gradient(90deg, #475569, #334155)", padding: "14px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "4px" }}>
+                        <h4 style={{ margin: 0, color: "white", fontSize: "17px", fontWeight: "700", textAlign: "center" }}>{item.title}</h4>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}>📅 {item.date}</span>
+                      </div>
+
+                      {/* Body — centered */}
+                      <div style={{ padding: "22px 24px", textAlign: "center" }}>
+                        {item.content && (
+                          <p style={{ margin: 0, fontSize: "14px", color: "#334155", lineHeight: "1.8", whiteSpace: "pre-line", marginBottom: item.fileUrl ? "18px" : "0", textAlign: "center" }}>
+                            {item.content}
+                          </p>
+                        )}
+
+                        {/* Image poster — full view, adjusting width & height according to notice poster, centered */}
+                        {item.fileUrl && item.fileType === "image" && (
+                          <div style={{ display: "flex", justifyContent: "center", width: "100%", margin: "0 auto" }}>
+                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", maxWidth: "100%" }}>
+                              <img
+                                src={item.fileUrl}
+                                alt="Notice Poster"
+                                style={{
+                                  maxWidth: "100%",
+                                  width: "auto",
+                                  height: "auto",
+                                  maxHeight: "85vh",
+                                  display: "block",
+                                  margin: "0 auto",
+                                  borderRadius: "10px",
+                                  border: "1px solid #e2e8f0",
+                                  objectFit: "contain",
+                                  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                                  cursor: "pointer"
+                                }}
+                              />
+                            </a>
+                          </div>
+                        )}
+
+                        {item.fileUrl && item.fileType === "audio" && (
+                          <div style={{ maxWidth: "500px", margin: "14px auto 0 auto" }}>
+                            <audio controls src={item.fileUrl} style={{ width: "100%", height: "40px", display: "block" }} />
+                          </div>
+                        )}
+
+                        {item.fileUrl && item.fileType === "video" && (
+                          <div style={{ maxWidth: "700px", margin: "14px auto 0 auto" }}>
+                            <video controls src={item.fileUrl} style={{ width: "100%", height: "auto", borderRadius: "10px", backgroundColor: "#000", display: "block" }} />
+                          </div>
+                        )}
+
+                        {item.fileUrl && (item.fileType === "document" || item.fileType === "pdf") && (
+                          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center", marginTop: "16px" }}>
+                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer"
+                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "bold", background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "#fff", padding: "8px 18px", borderRadius: "8px", textDecoration: "none" }}>
+                              <span>{item.fileType === "pdf" ? "📕" : "📄"}</span> View {item.fileType === "pdf" ? "PDF" : "Document"}
+                            </a>
+                            <a href={item.fileUrl} download={item.fileName || "Notice_Document"}
+                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "bold", background: "linear-gradient(135deg, #0284c7, #0369a1)", color: "#fff", padding: "8px 18px", borderRadius: "8px", textDecoration: "none" }}>
+                              <span>📥</span> Download
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -561,21 +1017,30 @@ const StudentDashboard = () => {
           </div>
         )}
 
+        {/* PACKAGES TAB */}
         {activeTab === "buyExam" && (
           <div>
-            <h3 style={{ color: "#1e293b", marginTop: 0, marginBottom: "20px", fontSize: "22px" }}>Available Exam Packages for Purchase</h3>
+            <h3 style={{ color: "#0f172a", marginTop: 0, marginBottom: "20px", fontSize: "20px", fontWeight: "800" }}>
+              Available Exam Packages
+            </h3>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
               {examPackages.map((pkg, idx) => (
-                <div key={pkg.id || idx} style={{ backgroundColor: "white", borderRadius: "12px", boxShadow: "0 3px 10px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", padding: "25px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div key={pkg.id || idx} style={{ backgroundColor: "#ffffff", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                   <div>
-                    <span style={{ fontSize: "12px", fontWeight: "bold", color: "#2563eb", background: "#eff6ff", padding: "4px 10px", borderRadius: "20px" }}>PREMIUM PACKAGE</span>
-                    <h4 style={{ margin: "15px 0 10px 0", fontSize: "20px", color: "#1e293b" }}>{pkg.name}</h4>
-                    <p style={{ fontSize: "14px", color: "#64748b", lineHeight: "1.5", marginBottom: "20px" }}>{pkg.desc || "Access full UBT examination sets, listening audio files, and detailed performance metrics."}</p>
+                    <span style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", background: "#eff6ff", padding: "3px 8px", borderRadius: "4px" }}>
+                      UBT PACKAGE
+                    </span>
+                    <h4 style={{ margin: "14px 0 8px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>{pkg.name}</h4>
+                    <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: "18px" }}>{pkg.desc || "Full simulated exam practice sets with Korean audio and timer."}</p>
                   </div>
                   <div>
-                    <div style={{ fontSize: "18px", fontWeight: "bold", color: "#16a34a", marginBottom: "15px" }}>{pkg.price || "Rs. 1,500"}</div>
-                    <button onClick={() => handleBuyRequest(pkg.name)} style={{ width: "100%", backgroundColor: "#2563eb", color: "white", border: "none", padding: "12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
-                      REQUEST PURCHASE
+                    <div style={{ fontSize: "16px", fontWeight: "800", color: "#16a34a", marginBottom: "14px" }}>{pkg.price || "Contact Institute"}</div>
+                    <button
+                      type="button"
+                      onClick={() => handleBuyRequest(pkg.name)}
+                      style={{ width: "100%", backgroundColor: "#2563eb", color: "#ffffff", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "700", cursor: "pointer", fontSize: "13px" }}
+                    >
+                      REQUEST ENROLLMENT
                     </button>
                   </div>
                 </div>
@@ -584,82 +1049,46 @@ const StudentDashboard = () => {
           </div>
         )}
 
-        {activeTab === "exams" && (
-          <div>
-            <h3 style={{ color: "#475569", marginTop: 0, fontSize: "18px" }}>Available UBT Exam Sets (Institute Package Access)</h3>
-            <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap", marginTop: "15px" }}>
-              <button onClick={() => setSelectedPackageFilter("All")} style={{ padding: "8px 16px", backgroundColor: selectedPackageFilter === "All" ? "#1e3a8a" : "white", color: selectedPackageFilter === "All" ? "white" : "#1e3a8a", border: "1px solid #1e3a8a", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>All Sets</button>
-              {examPackages.map((pkg, idx) => (
-                <button key={idx} onClick={() => setSelectedPackageFilter(pkg.name)} style={{ padding: "8px 16px", backgroundColor: selectedPackageFilter === pkg.name ? "#1e3a8a" : "white", color: selectedPackageFilter === pkg.name ? "white" : "#1e3a8a", border: "1px solid #1e3a8a", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>{pkg.name}</button>
-              ))}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px" }}>
-              {filteredSets.length === 0 ? (
-                <p style={{ color: "#64748b", gridColumn: "1 / -1", textAlign: "center", padding: "30px", background: "white", borderRadius: "8px" }}>No exam sets currently assigned by your institute.</p>
-              ) : (
-                filteredSets.map((set) => (
-                  <div key={set.id} style={{ backgroundColor: "white", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "20px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", background: "#cbd5e1", padding: "2px 6px", borderRadius: "4px" }}>{set.packageName || "UBT-TEST"}</span>
-                    <h4 style={{ margin: "10px 0", fontSize: "16px", color: "#1e293b" }}>{set.name}</h4>
-                    <button onClick={() => router.push(`/student/exam/${set.id}`)} style={{ width: "100%", backgroundColor: "#16a34a", color: "white", border: "none", padding: "10px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>START EXAM</button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === "listening" && (
-          <div style={{ marginTop: "10px", marginBottom: "30px" }}>
-            <EpsBookReader mode="student" />
-          </div>
-        )}
-
+        {/* NOTIFY ADMIN TAB */}
         {activeTab === "notify" && (
           <div>
             <div style={cardStyle}>
-              <h3 style={{ marginTop: 0, color: "#1e293b", marginBottom: "15px" }}>Send a message to Admin</h3>
+              <h3 style={{ marginTop: 0, color: "#0f172a", marginBottom: "14px", fontSize: "18px" }}>Send a Message to Administration</h3>
               <form onSubmit={handleSendNotification}>
                 <input
                   type="text"
                   placeholder="Subject"
                   value={notifySubject}
                   onChange={(e) => setNotifySubject(e.target.value)}
-                  style={{ width: "100%", padding: "12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "15px", boxSizing: "border-box", marginBottom: "12px" }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", boxSizing: "border-box", marginBottom: "12px" }}
                   required
                 />
                 <textarea
-                  placeholder="Write your message, question, or request..."
+                  placeholder="Write your inquiry or question..."
                   value={notifyMessage}
                   onChange={(e) => setNotifyMessage(e.target.value)}
-                  rows={5}
-                  style={{ width: "100%", padding: "12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "15px", boxSizing: "border-box", fontFamily: "inherit", marginBottom: "12px" }}
+                  rows={4}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", boxSizing: "border-box", fontFamily: "inherit", marginBottom: "12px" }}
                   required
                 />
-                <button type="submit" style={{ backgroundColor: "#2563eb", color: "white", border: "none", padding: "12px 22px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
-                  Send to Admin
+                <button type="submit" style={{ backgroundColor: "#2563eb", color: "#ffffff", border: "none", padding: "10px 20px", borderRadius: "6px", fontWeight: "700", cursor: "pointer" }}>
+                  Send Message
                 </button>
               </form>
             </div>
 
             <div style={cardStyle}>
-              <h3 style={{ marginTop: 0, color: "#1e293b" }}>My sent notifications</h3>
+              <h3 style={{ marginTop: 0, color: "#0f172a", fontSize: "18px" }}>Message History</h3>
               {myNotifications.length === 0 ? (
                 <p style={{ color: "#64748b", margin: 0 }}>You have not sent any messages yet.</p>
               ) : (
                 myNotifications.map((item) => (
-                  <div key={item.id} style={{ marginBottom: "15px", padding: "15px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                  <div key={item.id} style={{ marginBottom: "12px", padding: "14px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
-                      <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "15px" }}>{item.subject}</h4>
+                      <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "14px", fontWeight: "700" }}>{item.subject}</h4>
                       <span style={{ fontSize: "12px", color: "#64748b" }}>{item.date}</span>
                     </div>
-                    <p style={{ margin: "8px 0 0 0", fontSize: "14px", color: "#334155", whiteSpace: "pre-line" }}>{item.message}</p>
-                    {item.adminReply && (
-                      <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "#ecfdf5", borderRadius: "6px", border: "1px solid #a7f3d0" }}>
-                        <div style={{ fontSize: "12px", fontWeight: "bold", color: "#047857", marginBottom: "4px" }}>Admin reply {item.repliedAt ? `· ${item.repliedAt}` : ""}</div>
-                        <p style={{ margin: 0, color: "#065f46", whiteSpace: "pre-line" }}>{item.adminReply}</p>
-                      </div>
-                    )}
+                    <p style={{ margin: "6px 0 0 0", fontSize: "13px", color: "#334155", whiteSpace: "pre-line" }}>{item.message}</p>
                   </div>
                 ))
               )}
@@ -667,28 +1096,37 @@ const StudentDashboard = () => {
           </div>
         )}
 
+        {/* PERFORMANCE / RESULTS TAB */}
         {activeTab === "results" && (
           <div style={cardStyle}>
-            <h3 style={{ marginTop: 0, color: "#1e293b" }}>My Exam Results & Performance Logs</h3>
-            <table style={tableStyle}>
+            <h3 style={{ marginTop: 0, color: "#0f172a", marginBottom: "16px", fontSize: "18px" }}>My Exam Results & Performance Logs</h3>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr>
-                  <th style={thStyle}>Exam Set</th>
-                  <th style={thStyle}>Score</th>
-                  <th style={thStyle}>Percentage</th>
-                  <th style={thStyle}>Status</th>
+                <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
+                  <th style={{ padding: "12px", textAlign: "left", color: "#475569", fontSize: "13px" }}>Exam Set</th>
+                  <th style={{ padding: "12px", textAlign: "left", color: "#475569", fontSize: "13px" }}>Score</th>
+                  <th style={{ padding: "12px", textAlign: "left", color: "#475569", fontSize: "13px" }}>Percentage</th>
+                  <th style={{ padding: "12px", textAlign: "left", color: "#475569", fontSize: "13px" }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {results.length === 0 ? (
-                  <tr><td colSpan="4" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>No exam results recorded.</td></tr>
+                  <tr>
+                    <td colSpan="4" style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}>
+                      No exam results recorded yet. Start a UBT exam to view your scores here.
+                    </td>
+                  </tr>
                 ) : (
                   results.map((res, idx) => (
-                    <tr key={idx}>
-                      <td style={{ ...tdStyle, fontWeight: "bold" }}>{res.examName || "UBT Set"}</td>
-                      <td style={{ ...tdStyle, fontWeight: "bold", color: "#2563eb" }}>{res.score} / {res.total || 40}</td>
-                      <td style={tdStyle}>{res.percentage || "0"}%</td>
-                      <td style={tdStyle}><span style={{ backgroundColor: res.passed ? "#dcfce7" : "#fee2e2", color: res.passed ? "#166534" : "#991b1b", padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold" }}>{res.passed ? "Passed" : "Failed"}</span></td>
+                    <tr key={idx} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "12px", fontWeight: "700", color: "#0f172a" }}>{res.examName || "UBT Set"}</td>
+                      <td style={{ padding: "12px", fontWeight: "700", color: "#2563eb" }}>{res.score} / {res.total || 40}</td>
+                      <td style={{ padding: "12px", color: "#334155" }}>{res.percentage || Math.round((Number(res.score) / (Number(res.total) || 40)) * 100)}%</td>
+                      <td style={{ padding: "12px" }}>
+                        <span style={{ backgroundColor: res.passed ? "#dcfce7" : "#fee2e2", color: res.passed ? "#166534" : "#991b1b", padding: "3px 9px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
+                          {res.passed ? "Passed" : "Failed"}
+                        </span>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -696,7 +1134,6 @@ const StudentDashboard = () => {
             </table>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -56,15 +56,56 @@ export async function POST(req) {
     }
 
     // Determine institute ID
-    const targetInstituteId = session.role === 'institute' ? session.instituteId : (reqInstId || null);
-
-    // Check unique username
-    const existing = await prisma.user.findUnique({ where: { username } });
-    if (existing) {
-      return NextResponse.json({ error: 'Username already taken' }, { status: 400 });
+    let targetInstituteId = session.role === 'institute' ? session.instituteId : (reqInstId || null);
+    if (targetInstituteId) {
+      const inst = await prisma.institute.findFirst({
+        where: {
+          OR: [
+            { id: targetInstituteId },
+            { name: targetInstituteId },
+            { username: targetInstituteId }
+          ]
+        }
+      });
+      if (inst) targetInstituteId = inst.id;
     }
 
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(password || '1234');
+
+    // Check if student with username or phone already exists
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username },
+          { username: username.toLowerCase() },
+          ...(phone ? [{ phone }] : [])
+        ]
+      }
+    });
+
+    if (existing) {
+      const updated = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          name,
+          passwordHash,
+          phone: phone || existing.phone,
+          batch: batch || existing.batch,
+          status: status || existing.status,
+          instituteId: targetInstituteId || existing.instituteId
+        },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          phone: true,
+          batch: true,
+          status: true,
+          createdAt: true
+        }
+      });
+      return NextResponse.json({ success: true, student: updated, updated: true });
+    }
 
     const student = await prisma.user.create({
       data: {

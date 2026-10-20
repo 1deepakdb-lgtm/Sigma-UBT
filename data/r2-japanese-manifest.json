@@ -1,0 +1,1455 @@
+{
+  "generatedAt": "2026-10-20T15:34:04.043Z",
+  "bucket": "sigma",
+  "minnaLessons": [
+    {
+      "chapter": 1,
+      "lesson": 1,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 1",
+      "pdf": {
+        "fileName": "Chapter 1.pdf",
+        "fileSize": "175.88 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 1/Chapter 1.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%201/Chapter%201.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%201/Chapter%201.pdf"
+    },
+    {
+      "chapter": 2,
+      "lesson": 2,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 2",
+      "pdf": {
+        "fileName": "Chapter 2.pdf",
+        "fileSize": "215.77 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 2/Chapter 2.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%202/Chapter%202.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%202/Chapter%202.pdf"
+    },
+    {
+      "chapter": 3,
+      "lesson": 3,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 3",
+      "pdf": {
+        "fileName": "Chapter 3.pdf",
+        "fileSize": "251.81 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 3/Chapter 3.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%203/Chapter%203.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%203/Chapter%203.pdf"
+    },
+    {
+      "chapter": 4,
+      "lesson": 4,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 4",
+      "pdf": {
+        "fileName": "Chapter 4.pdf",
+        "fileSize": "358.77 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 4/Chapter 4.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%204/Chapter%204.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%204/Chapter%204.pdf"
+    },
+    {
+      "chapter": 5,
+      "lesson": 5,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 5",
+      "pdf": {
+        "fileName": "Chapter 5.pdf",
+        "fileSize": "264.81 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 5/Chapter 5.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%205/Chapter%205.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%205/Chapter%205.pdf"
+    },
+    {
+      "chapter": 6,
+      "lesson": 6,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 6",
+      "pdf": {
+        "fileName": "Chapter 6.pdf",
+        "fileSize": "317.03 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 6/Chapter 6.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%206/Chapter%206.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%206/Chapter%206.pdf"
+    },
+    {
+      "chapter": 7,
+      "lesson": 7,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 7",
+      "pdf": {
+        "fileName": "Chapter 7.pdf",
+        "fileSize": "315.38 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 7/Chapter 7.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%207/Chapter%207.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%207/Chapter%207.pdf"
+    },
+    {
+      "chapter": 8,
+      "lesson": 8,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 8",
+      "pdf": {
+        "fileName": "Chapter 8.pdf",
+        "fileSize": "300.76 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 8/Chapter 8.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%208/Chapter%208.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%208/Chapter%208.pdf"
+    },
+    {
+      "chapter": 9,
+      "lesson": 9,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 9",
+      "pdf": {
+        "fileName": "Chapter 9.pdf",
+        "fileSize": "275.52 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 9/Chapter 9.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%209/Chapter%209.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%209/Chapter%209.pdf"
+    },
+    {
+      "chapter": 10,
+      "lesson": 10,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 10",
+      "pdf": {
+        "fileName": "Chapter 10.pdf",
+        "fileSize": "364.14 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 10/Chapter 10.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2010/Chapter%2010.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2010/Chapter%2010.pdf"
+    },
+    {
+      "chapter": 11,
+      "lesson": 11,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 11",
+      "pdf": {
+        "fileName": "Chapter 11.pdf",
+        "fileSize": "250.99 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 11/Chapter 11.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2011/Chapter%2011.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2011/Chapter%2011.pdf"
+    },
+    {
+      "chapter": 12,
+      "lesson": 12,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 12",
+      "pdf": {
+        "fileName": "Chapter 12.pdf",
+        "fileSize": "313.23 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 12/Chapter 12.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2012/Chapter%2012.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2012/Chapter%2012.pdf"
+    },
+    {
+      "chapter": 13,
+      "lesson": 13,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 13",
+      "pdf": {
+        "fileName": "Chapter 13.pdf",
+        "fileSize": "317.04 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 13/Chapter 13.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2013/Chapter%2013.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2013/Chapter%2013.pdf"
+    },
+    {
+      "chapter": 14,
+      "lesson": 14,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 14",
+      "pdf": {
+        "fileName": "Chapter 14.pdf",
+        "fileSize": "282.96 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 14/Chapter 14.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2014/Chapter%2014.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2014/Chapter%2014.pdf"
+    },
+    {
+      "chapter": 15,
+      "lesson": 15,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 15",
+      "pdf": {
+        "fileName": "Chapter 15.pdf",
+        "fileSize": "280.53 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 15/Chapter 15.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2015/Chapter%2015.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2015/Chapter%2015.pdf"
+    },
+    {
+      "chapter": 16,
+      "lesson": 16,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 16",
+      "pdf": {
+        "fileName": "Chapter 16.pdf",
+        "fileSize": "311.84 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 16/Chapter 16.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2016/Chapter%2016.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2016/Chapter%2016.pdf"
+    },
+    {
+      "chapter": 17,
+      "lesson": 17,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 17",
+      "pdf": {
+        "fileName": "Chapter 17.pdf",
+        "fileSize": "213.58 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 17/Chapter 17.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2017/Chapter%2017.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2017/Chapter%2017.pdf"
+    },
+    {
+      "chapter": 18,
+      "lesson": 18,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 18",
+      "pdf": {
+        "fileName": "Chapter 18.pdf",
+        "fileSize": "234.7 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 18/Chapter 18.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2018/Chapter%2018.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2018/Chapter%2018.pdf"
+    },
+    {
+      "chapter": 19,
+      "lesson": 19,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 19",
+      "pdf": {
+        "fileName": "Chapter 19.pdf",
+        "fileSize": "265.24 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 19/Chapter 19.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2019/Chapter%2019.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2019/Chapter%2019.pdf"
+    },
+    {
+      "chapter": 20,
+      "lesson": 20,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 20",
+      "pdf": {
+        "fileName": "Chapter 20.pdf",
+        "fileSize": "292.57 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 20/Chapter 20.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2020/Chapter%2020.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2020/Chapter%2020.pdf"
+    },
+    {
+      "chapter": 21,
+      "lesson": 21,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 21",
+      "pdf": {
+        "fileName": "Chapter 21.pdf",
+        "fileSize": "301.84 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 21/Chapter 21.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2021/Chapter%2021.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2021/Chapter%2021.pdf"
+    },
+    {
+      "chapter": 22,
+      "lesson": 22,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 22",
+      "pdf": {
+        "fileName": "Chapter 22.pdf",
+        "fileSize": "207.27 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 22/Chapter 22.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2022/Chapter%2022.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2022/Chapter%2022.pdf"
+    },
+    {
+      "chapter": 23,
+      "lesson": 23,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 23",
+      "pdf": {
+        "fileName": "Chapter 23.pdf",
+        "fileSize": "133.85 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 23/Chapter 23.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2023/Chapter%2023.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2023/Chapter%2023.pdf"
+    },
+    {
+      "chapter": 24,
+      "lesson": 24,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 24",
+      "pdf": {
+        "fileName": "Chapter 24.pdf",
+        "fileSize": "115.1 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 24/Chapter 24.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2024/Chapter%2024.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2024/Chapter%2024.pdf"
+    },
+    {
+      "chapter": 25,
+      "lesson": 25,
+      "level": "N5",
+      "bookPart": 1,
+      "folder": "Chapter 25",
+      "pdf": {
+        "fileName": "Chapter 25.pdf",
+        "fileSize": "176.76 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 25/Chapter 25.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2025/Chapter%2025.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2025/Chapter%2025.pdf"
+    },
+    {
+      "chapter": 26,
+      "lesson": 26,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 26",
+      "pdf": {
+        "fileName": "Chapter 26.pdf",
+        "fileSize": "262.54 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 26/Chapter 26.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2026/Chapter%2026.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2026/Chapter%2026.pdf"
+    },
+    {
+      "chapter": 27,
+      "lesson": 27,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 27",
+      "pdf": {
+        "fileName": "Chapter 27.pdf",
+        "fileSize": "250.36 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 27/Chapter 27.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2027/Chapter%2027.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2027/Chapter%2027.pdf"
+    },
+    {
+      "chapter": 28,
+      "lesson": 28,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 28",
+      "pdf": {
+        "fileName": "Chapter 28.pdf",
+        "fileSize": "314.41 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 28/Chapter 28.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2028/Chapter%2028.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2028/Chapter%2028.pdf"
+    },
+    {
+      "chapter": 29,
+      "lesson": 29,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 29",
+      "pdf": {
+        "fileName": "Chapter 29.pdf",
+        "fileSize": "277.43 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 29/Chapter 29.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2029/Chapter%2029.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2029/Chapter%2029.pdf"
+    },
+    {
+      "chapter": 30,
+      "lesson": 30,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 30",
+      "pdf": {
+        "fileName": "Chapter 30.pdf",
+        "fileSize": "364.74 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 30/Chapter 30.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2030/Chapter%2030.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2030/Chapter%2030.pdf"
+    },
+    {
+      "chapter": 31,
+      "lesson": 31,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 31",
+      "pdf": {
+        "fileName": "Chapter 31.pdf",
+        "fileSize": "291.81 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 31/Chapter 31.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2031/Chapter%2031.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2031/Chapter%2031.pdf"
+    },
+    {
+      "chapter": 32,
+      "lesson": 32,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 32",
+      "pdf": {
+        "fileName": "Chapter 32.pdf",
+        "fileSize": "483.28 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 32/Chapter 32.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2032/Chapter%2032.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2032/Chapter%2032.pdf"
+    },
+    {
+      "chapter": 33,
+      "lesson": 33,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 33",
+      "pdf": {
+        "fileName": "Chapter 33.pdf",
+        "fileSize": "304.58 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 33/Chapter 33.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2033/Chapter%2033.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2033/Chapter%2033.pdf"
+    },
+    {
+      "chapter": 34,
+      "lesson": 34,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 34",
+      "pdf": {
+        "fileName": "Chapter 34.pdf",
+        "fileSize": "330.04 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 34/Chapter 34.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2034/Chapter%2034.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2034/Chapter%2034.pdf"
+    },
+    {
+      "chapter": 35,
+      "lesson": 35,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 35",
+      "pdf": {
+        "fileName": "Chapter 35.pdf",
+        "fileSize": "284.69 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 35/Chapter 35.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2035/Chapter%2035.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2035/Chapter%2035.pdf"
+    },
+    {
+      "chapter": 36,
+      "lesson": 36,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 36",
+      "pdf": {
+        "fileName": "Chapter 36.pdf",
+        "fileSize": "329.9 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 36/Chapter 36.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2036/Chapter%2036.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2036/Chapter%2036.pdf"
+    },
+    {
+      "chapter": 37,
+      "lesson": 37,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 37",
+      "pdf": {
+        "fileName": "Chapter 37.pdf",
+        "fileSize": "288.37 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 37/Chapter 37.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2037/Chapter%2037.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2037/Chapter%2037.pdf"
+    },
+    {
+      "chapter": 38,
+      "lesson": 38,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 38",
+      "pdf": {
+        "fileName": "Chapter 38.pdf",
+        "fileSize": "313.43 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 38/Chapter 38.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2038/Chapter%2038.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2038/Chapter%2038.pdf"
+    },
+    {
+      "chapter": 39,
+      "lesson": 39,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 39",
+      "pdf": {
+        "fileName": "Chapter 39.pdf",
+        "fileSize": "290.93 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 39/Chapter 39.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2039/Chapter%2039.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2039/Chapter%2039.pdf"
+    },
+    {
+      "chapter": 40,
+      "lesson": 40,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 40",
+      "pdf": {
+        "fileName": "Chapter 40.pdf",
+        "fileSize": "292.48 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 40/Chapter 40.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2040/Chapter%2040.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2040/Chapter%2040.pdf"
+    },
+    {
+      "chapter": 41,
+      "lesson": 41,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 41",
+      "pdf": {
+        "fileName": "Chapter 41.pdf",
+        "fileSize": "320.56 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 41/Chapter 41.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2041/Chapter%2041.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2041/Chapter%2041.pdf"
+    },
+    {
+      "chapter": 42,
+      "lesson": 42,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 42",
+      "pdf": {
+        "fileName": "Chapter 42.pdf",
+        "fileSize": "300.65 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 42/Chapter 42.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2042/Chapter%2042.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2042/Chapter%2042.pdf"
+    },
+    {
+      "chapter": 43,
+      "lesson": 43,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 43",
+      "pdf": {
+        "fileName": "Chapter 43.pdf",
+        "fileSize": "281.32 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 43/Chapter 43.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2043/Chapter%2043.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2043/Chapter%2043.pdf"
+    },
+    {
+      "chapter": 44,
+      "lesson": 44,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 44",
+      "pdf": {
+        "fileName": "Chapter 44.pdf",
+        "fileSize": "343.77 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 44/Chapter 44.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2044/Chapter%2044.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2044/Chapter%2044.pdf"
+    },
+    {
+      "chapter": 45,
+      "lesson": 45,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 45",
+      "pdf": {
+        "fileName": "Chapter 45.pdf",
+        "fileSize": "285.21 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 45/Chapter 45.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2045/Chapter%2045.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2045/Chapter%2045.pdf"
+    },
+    {
+      "chapter": 46,
+      "lesson": 46,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 46",
+      "pdf": {
+        "fileName": "Chapter 46.pdf",
+        "fileSize": "248.39 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 46/Chapter 46.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2046/Chapter%2046.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2046/Chapter%2046.pdf"
+    },
+    {
+      "chapter": 47,
+      "lesson": 47,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 47",
+      "pdf": {
+        "fileName": "Chapter 47.pdf",
+        "fileSize": "258.44 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 47/Chapter 47.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2047/Chapter%2047.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2047/Chapter%2047.pdf"
+    },
+    {
+      "chapter": 48,
+      "lesson": 48,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 48",
+      "pdf": {
+        "fileName": "Chapter 48.pdf",
+        "fileSize": "284.51 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 48/Chapter 48.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2048/Chapter%2048.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2048/Chapter%2048.pdf"
+    },
+    {
+      "chapter": 49,
+      "lesson": 49,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 49",
+      "pdf": {
+        "fileName": "Chapter 49.pdf",
+        "fileSize": "357.29 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 49/Chapter 49.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2049/Chapter%2049.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2049/Chapter%2049.pdf"
+    },
+    {
+      "chapter": 50,
+      "lesson": 50,
+      "level": "N4",
+      "bookPart": 2,
+      "folder": "Chapter 50",
+      "pdf": {
+        "fileName": "Chapter 50.pdf",
+        "fileSize": "333.1 KB",
+        "r2Key": "books/japanese/minna-nihongo/Chapter 50/Chapter 50.pdf",
+        "url": "/api/r2/books/japanese/minna-nihongo/Chapter%2050/Chapter%2050.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/minna-nihongo/Chapter%2050/Chapter%2050.pdf"
+    }
+  ],
+  "n3Units": [
+    {
+      "level": "N3",
+      "week": "Week 1",
+      "unit": "Unit 1",
+      "title": "Soumatome N3 Week 1 Unit 1",
+      "pdf": {
+        "fileName": "Unit 1.pdf",
+        "fileSize": "1.79 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 1/Unit 1/Unit 1.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%201/Unit%201.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%201/Unit%201.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 1",
+      "unit": "Unit 2",
+      "title": "Soumatome N3 Week 1 Unit 2",
+      "pdf": {
+        "fileName": "Unit 2.pdf",
+        "fileSize": "1.4 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 1/Unit 2/Unit 2.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%202/Unit%202.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%202/Unit%202.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 1",
+      "unit": "Unit 3",
+      "title": "Soumatome N3 Week 1 Unit 3",
+      "pdf": {
+        "fileName": "Unit 3.pdf",
+        "fileSize": "1.59 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 1/Unit 3/Unit 3.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%203/Unit%203.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%203/Unit%203.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 1",
+      "unit": "Unit 4",
+      "title": "Soumatome N3 Week 1 Unit 4",
+      "pdf": {
+        "fileName": "Unit 4.pdf",
+        "fileSize": "1.05 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 1/Unit 4/Unit 4.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%204/Unit%204.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%204/Unit%204.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 1",
+      "unit": "Unit 5",
+      "title": "Soumatome N3 Week 1 Unit 5",
+      "pdf": {
+        "fileName": "Unit 5.pdf",
+        "fileSize": "837.72 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 1/Unit 5/Unit 5.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%205/Unit%205.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%205/Unit%205.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 1",
+      "unit": "Unit 6",
+      "title": "Soumatome N3 Week 1 Unit 6",
+      "pdf": {
+        "fileName": "Unit 6.pdf",
+        "fileSize": "619.26 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 1/Unit 6/Unit 6.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%206/Unit%206.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%201/Unit%206/Unit%206.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 2",
+      "unit": "Unit 10",
+      "title": "Soumatome N3 Week 2 Unit 10",
+      "pdf": {
+        "fileName": "Unit 10.pdf",
+        "fileSize": "1.09 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 2/Unit 10/Unit 10.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%2010/Unit%2010.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%2010/Unit%2010.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 2",
+      "unit": "Unit 11",
+      "title": "Soumatome N3 Week 2 Unit 11",
+      "pdf": {
+        "fileName": "Unit 11.pdf",
+        "fileSize": "830.48 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 2/Unit 11/Unit 11.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%2011/Unit%2011.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%2011/Unit%2011.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 2",
+      "unit": "Unit 12",
+      "title": "Soumatome N3 Week 2 Unit 12",
+      "pdf": {
+        "fileName": "Unit 12.pdf",
+        "fileSize": "635.79 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 2/Unit 12/Unit 12.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%2012/Unit%2012.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%2012/Unit%2012.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 2",
+      "unit": "Unit 7",
+      "title": "Soumatome N3 Week 2 Unit 7",
+      "pdf": {
+        "fileName": "Unit 7.pdf",
+        "fileSize": "1.61 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 2/Unit 7/Unit 7.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%207/Unit%207.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%207/Unit%207.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 2",
+      "unit": "Unit 8",
+      "title": "Soumatome N3 Week 2 Unit 8",
+      "pdf": {
+        "fileName": "Unit 8.pdf",
+        "fileSize": "1.52 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 2/Unit 8/Unit 8.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%208/Unit%208.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%208/Unit%208.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 2",
+      "unit": "Unit 9",
+      "title": "Soumatome N3 Week 2 Unit 9",
+      "pdf": {
+        "fileName": "Unit 9.pdf",
+        "fileSize": "1.61 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 2/Unit 9/Unit 9.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%209/Unit%209.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%202/Unit%209/Unit%209.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 3",
+      "unit": "Unit 13",
+      "title": "Soumatome N3 Week 3 Unit 13",
+      "pdf": {
+        "fileName": "Unit 13.pdf",
+        "fileSize": "1.6 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 3/Unit 13/Unit 13.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2013/Unit%2013.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2013/Unit%2013.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 3",
+      "unit": "Unit 14",
+      "title": "Soumatome N3 Week 3 Unit 14",
+      "pdf": {
+        "fileName": "Unit 14.pdf",
+        "fileSize": "1.47 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 3/Unit 14/Unit 14.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2014/Unit%2014.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2014/Unit%2014.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 3",
+      "unit": "Unit 15",
+      "title": "Soumatome N3 Week 3 Unit 15",
+      "pdf": {
+        "fileName": "Unit 15.pdf",
+        "fileSize": "1.66 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 3/Unit 15/Unit 15.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2015/Unit%2015.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2015/Unit%2015.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 3",
+      "unit": "Unit 16",
+      "title": "Soumatome N3 Week 3 Unit 16",
+      "pdf": {
+        "fileName": "Unit 16.pdf",
+        "fileSize": "1.38 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 3/Unit 16/Unit 16.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2016/Unit%2016.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2016/Unit%2016.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 3",
+      "unit": "Unit 17",
+      "title": "Soumatome N3 Week 3 Unit 17",
+      "pdf": {
+        "fileName": "Unit 17.pdf",
+        "fileSize": "681.17 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 3/Unit 17/Unit 17.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2017/Unit%2017.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2017/Unit%2017.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 3",
+      "unit": "Unit 18",
+      "title": "Soumatome N3 Week 3 Unit 18",
+      "pdf": {
+        "fileName": "Unit 18.pdf",
+        "fileSize": "521 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 3/Unit 18/Unit 18.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2018/Unit%2018.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%203/Unit%2018/Unit%2018.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 4",
+      "unit": "Unit 19",
+      "title": "Soumatome N3 Week 4 Unit 19",
+      "pdf": {
+        "fileName": "Unit 19.pdf",
+        "fileSize": "1.89 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 4/Unit 19/Unit 19.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2019/Unit%2019.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2019/Unit%2019.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 4",
+      "unit": "Unit 20",
+      "title": "Soumatome N3 Week 4 Unit 20",
+      "pdf": {
+        "fileName": "Unit 20.pdf",
+        "fileSize": "1.45 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 4/Unit 20/Unit 20.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2020/Unit%2020.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2020/Unit%2020.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 4",
+      "unit": "Unit 21",
+      "title": "Soumatome N3 Week 4 Unit 21",
+      "pdf": {
+        "fileName": "Unit 21.pdf",
+        "fileSize": "1.67 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 4/Unit 21/Unit 21.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2021/Unit%2021.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2021/Unit%2021.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 4",
+      "unit": "Unit 22",
+      "title": "Soumatome N3 Week 4 Unit 22",
+      "pdf": {
+        "fileName": "Unit 22.pdf",
+        "fileSize": "1.16 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 4/Unit 22/Unit 22.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2022/Unit%2022.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2022/Unit%2022.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 4",
+      "unit": "Unit 23",
+      "title": "Soumatome N3 Week 4 Unit 23",
+      "pdf": {
+        "fileName": "Unit 23.pdf",
+        "fileSize": "761.06 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 4/Unit 23/Unit 23.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2023/Unit%2023.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2023/Unit%2023.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 4",
+      "unit": "Unit 24",
+      "title": "Soumatome N3 Week 4 Unit 24",
+      "pdf": {
+        "fileName": "Unit 24.pdf",
+        "fileSize": "630.64 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 4/Unit 24/Unit 24.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2024/Unit%2024.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%204/Unit%2024/Unit%2024.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 5",
+      "unit": "Unit 25",
+      "title": "Soumatome N3 Week 5 Unit 25",
+      "pdf": {
+        "fileName": "Unit 25.pdf",
+        "fileSize": "1.7 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 5/Unit 25/Unit 25.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2025/Unit%2025.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2025/Unit%2025.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 5",
+      "unit": "Unit 26",
+      "title": "Soumatome N3 Week 5 Unit 26",
+      "pdf": {
+        "fileName": "Unit 26.pdf",
+        "fileSize": "1.63 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 5/Unit 26/Unit 26.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2026/Unit%2026.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2026/Unit%2026.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 5",
+      "unit": "Unit 27",
+      "title": "Soumatome N3 Week 5 Unit 27",
+      "pdf": {
+        "fileName": "Unit 27.pdf",
+        "fileSize": "1.67 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 5/Unit 27/Unit 27.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2027/Unit%2027.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2027/Unit%2027.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 5",
+      "unit": "Unit 28",
+      "title": "Soumatome N3 Week 5 Unit 28",
+      "pdf": {
+        "fileName": "Unit 28.pdf",
+        "fileSize": "977.11 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 5/Unit 28/Unit 28.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2028/Unit%2028.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2028/Unit%2028.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 5",
+      "unit": "Unit 29",
+      "title": "Soumatome N3 Week 5 Unit 29",
+      "pdf": {
+        "fileName": "Unit 29.pdf",
+        "fileSize": "799.69 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 5/Unit 29/Unit 29.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2029/Unit%2029.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2029/Unit%2029.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 5",
+      "unit": "Unit 30",
+      "title": "Soumatome N3 Week 5 Unit 30",
+      "pdf": {
+        "fileName": "Unit 30.pdf",
+        "fileSize": "661.66 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 5/Unit 30/Unit 30.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2030/Unit%2030.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%205/Unit%2030/Unit%2030.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 6",
+      "unit": "Unit 31",
+      "title": "Soumatome N3 Week 6 Unit 31",
+      "pdf": {
+        "fileName": "Unit 31.pdf",
+        "fileSize": "1.74 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 6/Unit 31/Unit 31.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2031/Unit%2031.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2031/Unit%2031.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 6",
+      "unit": "Unit 32",
+      "title": "Soumatome N3 Week 6 Unit 32",
+      "pdf": {
+        "fileName": "Unit 32.pdf",
+        "fileSize": "1.55 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 6/Unit 32/Unit 32.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2032/Unit%2032.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2032/Unit%2032.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 6",
+      "unit": "Unit 33",
+      "title": "Soumatome N3 Week 6 Unit 33",
+      "pdf": {
+        "fileName": "Unit 33.pdf",
+        "fileSize": "1.68 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 6/Unit 33/Unit 33.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2033/Unit%2033.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2033/Unit%2033.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 6",
+      "unit": "Unit 34",
+      "title": "Soumatome N3 Week 6 Unit 34",
+      "pdf": {
+        "fileName": "Unit 34.pdf",
+        "fileSize": "1.04 MB",
+        "r2Key": "books/japanese/soumatome-n3/Week 6/Unit 34/Unit 34.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2034/Unit%2034.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2034/Unit%2034.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 6",
+      "unit": "Unit 35",
+      "title": "Soumatome N3 Week 6 Unit 35",
+      "pdf": {
+        "fileName": "Unit 35.pdf",
+        "fileSize": "813.24 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 6/Unit 35/Unit 35.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2035/Unit%2035.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2035/Unit%2035.pdf"
+    },
+    {
+      "level": "N3",
+      "week": "Week 6",
+      "unit": "Unit 36",
+      "title": "Soumatome N3 Week 6 Unit 36",
+      "pdf": {
+        "fileName": "Unit 36.pdf",
+        "fileSize": "599.42 KB",
+        "r2Key": "books/japanese/soumatome-n3/Week 6/Unit 36/Unit 36.pdf",
+        "url": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2036/Unit%2036.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/soumatome-n3/Week%206/Unit%2036/Unit%2036.pdf"
+    }
+  ],
+  "fullBooks": [
+    {
+      "title": "Minna no Nihongo I (Beginner)",
+      "level": "N5",
+      "fileSize": "8.61 MB",
+      "r2Key": "books/japanese/full/Minna_no_Nihongo_I_Full.pdf",
+      "url": "/api/r2/books/japanese/full/Minna_no_Nihongo_I_Full.pdf"
+    },
+    {
+      "title": "Minna no Nihongo II (Elementary)",
+      "level": "N4",
+      "fileSize": "7.58 MB",
+      "r2Key": "books/japanese/full/Minna_no_Nihongo_II_Full.pdf",
+      "url": "/api/r2/books/japanese/full/Minna_no_Nihongo_II_Full.pdf"
+    },
+    {
+      "title": "Nihongo Soumatome N3 Goi (Vocabulary)",
+      "level": "N3",
+      "fileSize": "62.94 MB",
+      "r2Key": "books/japanese/full/Nihongo_Soumatome_N3_Goi.pdf",
+      "url": "/api/r2/books/japanese/full/Nihongo_Soumatome_N3_Goi.pdf"
+    },
+    {
+      "title": "Nihongo Soumatome N3 Choukai (Listening)",
+      "level": "N3",
+      "fileSize": "9.94 MB",
+      "r2Key": "books/japanese/full/Nihongo_Soumatome_N3_Choukai.pdf",
+      "url": "/api/r2/books/japanese/full/Nihongo_Soumatome_N3_Choukai.pdf"
+    },
+    {
+      "title": "JLPT N2 Complete Textbook",
+      "level": "N2",
+      "fileSize": "106.31 MB",
+      "r2Key": "books/japanese/full/JLPT_N2_Complete_Textbook.pdf",
+      "url": "/api/r2/books/japanese/full/JLPT_N2_Complete_Textbook.pdf"
+    }
+  ],
+  "n2Units": [
+    {
+      "level": "N2",
+      "chapter": "Front Matter",
+      "title": "JLPT N2 Front Matter",
+      "pdf": {
+        "fileName": "Front Matter.pdf",
+        "fileSize": "6.22 MB",
+        "r2Key": "books/japanese/n2/Front Matter/Front Matter.pdf",
+        "url": "/api/r2/books/japanese/n2/Front%20Matter/Front%20Matter.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Front%20Matter/Front%20Matter.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 1",
+      "title": "JLPT N2 Chapter 1",
+      "pdf": {
+        "fileName": "Chapter 1.pdf",
+        "fileSize": "4.09 MB",
+        "r2Key": "books/japanese/n2/Chapter 1/Chapter 1.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%201/Chapter%201.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%201/Chapter%201.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 2",
+      "title": "JLPT N2 Chapter 2",
+      "pdf": {
+        "fileName": "Chapter 2.pdf",
+        "fileSize": "5.46 MB",
+        "r2Key": "books/japanese/n2/Chapter 2/Chapter 2.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%202/Chapter%202.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%202/Chapter%202.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 3",
+      "title": "JLPT N2 Chapter 3",
+      "pdf": {
+        "fileName": "Chapter 3.pdf",
+        "fileSize": "6.81 MB",
+        "r2Key": "books/japanese/n2/Chapter 3/Chapter 3.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%203/Chapter%203.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%203/Chapter%203.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 4",
+      "title": "JLPT N2 Chapter 4",
+      "pdf": {
+        "fileName": "Chapter 4.pdf",
+        "fileSize": "7.16 MB",
+        "r2Key": "books/japanese/n2/Chapter 4/Chapter 4.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%204/Chapter%204.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%204/Chapter%204.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 5",
+      "title": "JLPT N2 Chapter 5",
+      "pdf": {
+        "fileName": "Chapter 5.pdf",
+        "fileSize": "10.74 MB",
+        "r2Key": "books/japanese/n2/Chapter 5/Chapter 5.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%205/Chapter%205.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%205/Chapter%205.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 6",
+      "title": "JLPT N2 Chapter 6",
+      "pdf": {
+        "fileName": "Chapter 6.pdf",
+        "fileSize": "11.54 MB",
+        "r2Key": "books/japanese/n2/Chapter 6/Chapter 6.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%206/Chapter%206.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%206/Chapter%206.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 7",
+      "title": "JLPT N2 Chapter 7",
+      "pdf": {
+        "fileName": "Chapter 7.pdf",
+        "fileSize": "7.09 MB",
+        "r2Key": "books/japanese/n2/Chapter 7/Chapter 7.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%207/Chapter%207.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%207/Chapter%207.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 8",
+      "title": "JLPT N2 Chapter 8",
+      "pdf": {
+        "fileName": "Chapter 8.pdf",
+        "fileSize": "7.98 MB",
+        "r2Key": "books/japanese/n2/Chapter 8/Chapter 8.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%208/Chapter%208.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%208/Chapter%208.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 9",
+      "title": "JLPT N2 Chapter 9",
+      "pdf": {
+        "fileName": "Chapter 9.pdf",
+        "fileSize": "9.3 MB",
+        "r2Key": "books/japanese/n2/Chapter 9/Chapter 9.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%209/Chapter%209.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%209/Chapter%209.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 10",
+      "title": "JLPT N2 Chapter 10",
+      "pdf": {
+        "fileName": "Chapter 10.pdf",
+        "fileSize": "9.22 MB",
+        "r2Key": "books/japanese/n2/Chapter 10/Chapter 10.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2010/Chapter%2010.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2010/Chapter%2010.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 11",
+      "title": "JLPT N2 Chapter 11",
+      "pdf": {
+        "fileName": "Chapter 11.pdf",
+        "fileSize": "5.26 MB",
+        "r2Key": "books/japanese/n2/Chapter 11/Chapter 11.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2011/Chapter%2011.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2011/Chapter%2011.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 12",
+      "title": "JLPT N2 Chapter 12",
+      "pdf": {
+        "fileName": "Chapter 12.pdf",
+        "fileSize": "5.16 MB",
+        "r2Key": "books/japanese/n2/Chapter 12/Chapter 12.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2012/Chapter%2012.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2012/Chapter%2012.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 13",
+      "title": "JLPT N2 Chapter 13",
+      "pdf": {
+        "fileName": "Chapter 13.pdf",
+        "fileSize": "6.1 MB",
+        "r2Key": "books/japanese/n2/Chapter 13/Chapter 13.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2013/Chapter%2013.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2013/Chapter%2013.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 14",
+      "title": "JLPT N2 Chapter 14",
+      "pdf": {
+        "fileName": "Chapter 14.pdf",
+        "fileSize": "12.6 MB",
+        "r2Key": "books/japanese/n2/Chapter 14/Chapter 14.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2014/Chapter%2014.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2014/Chapter%2014.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 15",
+      "title": "JLPT N2 Chapter 15",
+      "pdf": {
+        "fileName": "Chapter 15.pdf",
+        "fileSize": "6.7 MB",
+        "r2Key": "books/japanese/n2/Chapter 15/Chapter 15.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2015/Chapter%2015.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2015/Chapter%2015.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 16",
+      "title": "JLPT N2 Chapter 16",
+      "pdf": {
+        "fileName": "Chapter 16.pdf",
+        "fileSize": "9.6 MB",
+        "r2Key": "books/japanese/n2/Chapter 16/Chapter 16.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2016/Chapter%2016.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2016/Chapter%2016.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 17",
+      "title": "JLPT N2 Chapter 17",
+      "pdf": {
+        "fileName": "Chapter 17.pdf",
+        "fileSize": "3.7 MB",
+        "r2Key": "books/japanese/n2/Chapter 17/Chapter 17.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2017/Chapter%2017.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2017/Chapter%2017.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Chapter 18",
+      "title": "JLPT N2 Chapter 18",
+      "pdf": {
+        "fileName": "Chapter 18.pdf",
+        "fileSize": "4.9 MB",
+        "r2Key": "books/japanese/n2/Chapter 18/Chapter 18.pdf",
+        "url": "/api/r2/books/japanese/n2/Chapter%2018/Chapter%2018.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Chapter%2018/Chapter%2018.pdf"
+    },
+    {
+      "level": "N2",
+      "chapter": "Back Matter",
+      "title": "JLPT N2 Back Matter",
+      "pdf": {
+        "fileName": "Back Matter.pdf",
+        "fileSize": "1.18 MB",
+        "r2Key": "books/japanese/n2/Back Matter/Back Matter.pdf",
+        "url": "/api/r2/books/japanese/n2/Back%20Matter/Back%20Matter.pdf"
+      },
+      "pdfUrl": "/api/r2/books/japanese/n2/Back%20Matter/Back%20Matter.pdf"
+    }
+  ]
+}

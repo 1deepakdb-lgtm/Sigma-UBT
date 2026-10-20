@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireInstituteOrAdmin } from '@/lib/rbac';
+import { requireInstituteOrAdmin, ROLES } from '@/lib/rbac';
 
 export async function GET(req) {
   try {
@@ -8,6 +8,9 @@ export async function GET(req) {
     const setId = searchParams.get('setId');
     const setName = searchParams.get('setName');
     const type = searchParams.get('type');
+    const instituteId = searchParams.get('instituteId');
+    const creatorName = searchParams.get('creatorName');
+    const all = searchParams.get('all') === 'true';
 
     const where = {};
     if (setId) where.examSetId = setId;
@@ -16,11 +19,31 @@ export async function GET(req) {
     }
     if (type) where.type = type;
 
+    // Check institute isolation if specific institute requested
+    if (!all && (instituteId || creatorName)) {
+      where.examSet = {
+        ...(where.examSet || {}),
+        OR: [
+          { isPublished: true },
+          ...(instituteId ? [{ creatorInstituteId: instituteId }] : []),
+          ...(creatorName ? [{ creatorInstituteName: creatorName }] : [])
+        ]
+      };
+    }
+
     const questions = await prisma.question.findMany({
       where,
       include: {
         examSet: {
-          select: { id: true, name: true, packageName: true }
+          select: {
+            id: true,
+            name: true,
+            packageName: true,
+            creatorInstituteId: true,
+            creatorInstituteName: true,
+            isPrivate: true,
+            isPublished: true
+          }
         }
       },
       orderBy: { qIndex: 'asc' }
@@ -43,6 +66,48 @@ export async function POST(req) {
     const { session, errorResponse } = await requireInstituteOrAdmin(req);
     if (errorResponse) return errorResponse;
 
+    const body = await req.json();
+
+    // 1. Bulk creation support (e.g. 40 standard UBT questions template)
+    if (body.bulkQuestions && Array.isArray(body.bulkQuestions)) {
+      const { examSetId, bulkQuestions } = body;
+      if (!examSetId) return NextResponse.json({ error: 'examSetId is required' }, { status: 400 });
+
+      // Clean existing questions in this set if requested
+      if (body.overwrite) {
+        await prisma.question.deleteMany({ where: { examSetId } });
+      }
+
+      const createdList = [];
+      for (const q of bulkQuestions) {
+        const item = await prisma.question.create({
+          data: {
+            examSetId,
+            qIndex: Number(q.qIndex || q.index || 1),
+            type: q.type || (Number(q.qIndex || q.index || 1) <= 20 ? 'Reading' : 'Listening'),
+            mainHeading: q.mainHeading || '',
+            questionHeading: String(q.questionHeading || q.qIndex || ''),
+            description: q.description || '',
+            image: q.image || '',
+            audio: q.audio || '',
+            optionsJson: JSON.stringify(q.options || []),
+            answer: Number(q.answer !== undefined ? q.answer : 0)
+          }
+        });
+        createdList.push({
+          ...item,
+          options: JSON.parse(item.optionsJson)
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        count: createdList.length,
+        questions: createdList
+      });
+    }
+
+    // 2. Single Question Creation
     const {
       examSetId,
       qIndex = 1,
@@ -54,7 +119,7 @@ export async function POST(req) {
       audio = '',
       options = [],
       answer = 0
-    } = await req.json();
+    } = body;
 
     if (!examSetId) {
       return NextResponse.json({ error: 'examSetId is required' }, { status: 400 });

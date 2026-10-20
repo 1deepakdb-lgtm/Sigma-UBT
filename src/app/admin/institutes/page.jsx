@@ -248,10 +248,12 @@ export default function AdminInstitutesPage() {
   };
   const thStyle = {
     backgroundColor: "#f8fafc",
-    padding: "15px",
+    padding: "14px 16px",
     textAlign: "left",
     borderBottom: "2px solid #e2e8f0",
-    color: "#475569"
+    color: "#475569",
+    fontWeight: "700",
+    fontSize: "13px"
   };
   const tdStyle = { padding: "15px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", verticalAlign: "middle" };
   const inputStyle = {
@@ -345,6 +347,8 @@ export default function AdminInstitutesPage() {
                   <option value="100 Set UBT">100 Set UBT</option>
                   <option value="50 Set UBT">50 Set UBT</option>
                   <option value="30 Set Chapter UBT">30 Set Chapter UBT</option>
+                  <option value="Model Question Bank">Model Question Bank</option>
+                  <option value="Full Set UBT + Model Question Bank">Full Set UBT + Model Question Bank</option>
                 </select>
               </div>
               <div>
@@ -427,13 +431,13 @@ export default function AdminInstitutesPage() {
           <h3 style={{ marginTop: 0, color: "#1e293b", marginBottom: "15px" }}>Registered Institutes</h3>
           <table style={tableStyle}>
             <thead>
-              <tr>
-                <th style={thStyle}>Institute Name</th>
+              <tr style={{ backgroundColor: "#f8fafc" }}>
+                <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Institute Name</th>
                 <th style={thStyle}>Username</th>
                 <th style={thStyle}>Total Students</th>
                 <th style={thStyle}>Package & Expiry</th>
                 <th style={thStyle}>Status</th>
-                <th style={thStyle}>Actions</th>
+                <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -488,7 +492,7 @@ export default function AdminInstitutesPage() {
                       </button>
                       <button
                         onClick={() => {
-                          window.open(`/institute?tab=billing&superadmin=true&institute=${encodeURIComponent(inst.name)}`, '_blank');
+                          window.open(`/institute?tab=billing&superadmin=true&institute=${encodeURIComponent(inst.name)}&instId=${inst.id}`, '_blank');
                         }}
                         style={{
                           backgroundColor: "#0d9488",

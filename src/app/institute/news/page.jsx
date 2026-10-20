@@ -15,6 +15,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import { performLogout } from "@/lib/clientAuth";
 
 const InstituteNews = () => {
@@ -24,6 +25,7 @@ const InstituteNews = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isPopupBanner, setIsPopupBanner] = useState(false);
+  const [myInstituteName, setMyInstituteName] = useState("");
   
   // Media upload states
   const [mediaFile, setMediaFile] = useState(null); 
@@ -39,9 +41,11 @@ const InstituteNews = () => {
   const institutes = typeof window !== 'undefined' ? (JSON.parse(localStorage.getItem("institutes")) || []) : [];
   const logoWatermark = institutes[0]?.logoUrl || "";
 
-  const fetchNotices = async () => {
+  const fetchNotices = async (instName) => {
+    const currentInst = instName || (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : "") || "";
     try {
-      const res = await fetch('/api/news');
+      const query = currentInst ? `?role=institute&institute=${encodeURIComponent(currentInst)}` : "?role=institute";
+      const res = await fetch(`/api/news${query}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.notices)) {
         setNewsList(data.notices);
@@ -62,7 +66,9 @@ const InstituteNews = () => {
   };
 
   useEffect(() => {
-    fetchNotices();
+    const instName = (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : "") || "Language Institute";
+    setMyInstituteName(instName);
+    fetchNotices(instName);
   }, []);
 
   const handleLogout = () => {
@@ -162,6 +168,8 @@ const InstituteNews = () => {
       return;
     }
 
+    const currentInst = myInstituteName || (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : "") || "Language Institute";
+
     const newItem = {
       id: Date.now(),
       category: targetCategory,
@@ -172,6 +180,9 @@ const InstituteNews = () => {
       fileName: fileName || (mediaFile ? "Attached_Media" : ""),
       fileType: fileType,
       fileSize: fileSize,
+      targetAudience: currentInst,
+      instituteName: currentInst,
+      publishedBy: "institute",
       date: new Date().toISOString().split("T")[0]
     };
 
@@ -183,9 +194,11 @@ const InstituteNews = () => {
       });
       const data = await res.json();
       if (data.success && Array.isArray(data.notices)) {
-        setNewsList(data.notices);
+        // Filter to only my institute + global notices
+        const filtered = data.notices.filter(n => !n.instituteName || n.targetAudience === 'all' || n.instituteName === currentInst);
+        setNewsList(filtered);
         try {
-          localStorage.setItem("epsNewsList", JSON.stringify(data.notices));
+          localStorage.setItem("epsNewsList", JSON.stringify(filtered));
         } catch (e) {}
       } else {
         const updated = [newItem, ...newsList];
@@ -209,7 +222,7 @@ const InstituteNews = () => {
     handleRemoveFile();
 
     const categoryTitle = targetCategory === "news" ? "Official News" : "Official Notice";
-    alert(`✅ ${categoryTitle} successfully published!`);
+    alert(`✅ ${categoryTitle} successfully published for ${currentInst} students!`);
   };
 
   const handleDelete = async (id) => {
@@ -218,9 +231,11 @@ const InstituteNews = () => {
         const res = await fetch(`/api/news?id=${id}`, { method: "DELETE" });
         const data = await res.json();
         if (data.success && Array.isArray(data.notices)) {
-          setNewsList(data.notices);
+          const currentInst = myInstituteName || (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : "") || "";
+          const filtered = data.notices.filter(n => !n.instituteName || n.targetAudience === 'all' || n.instituteName === currentInst);
+          setNewsList(filtered);
           try {
-            localStorage.setItem("epsNewsList", JSON.stringify(data.notices));
+            localStorage.setItem("epsNewsList", JSON.stringify(filtered));
           } catch (e) {}
           return;
         }
@@ -231,7 +246,7 @@ const InstituteNews = () => {
       setNewsList(updated);
       try {
         localStorage.setItem("epsNewsList", JSON.stringify(updated));
-      } catch (err) {
+      } catch (e) {
         console.error("Storage error:", err);
       }
     }
@@ -286,35 +301,6 @@ const InstituteNews = () => {
     fontSize: "14px"
   };
 
-  const graphicCardStyle = (gradient) => ({
-    background: gradient,
-    borderRadius: "14px",
-    padding: "22px 14px",
-    color: "white",
-    textAlign: "center",
-    textDecoration: "none",
-    boxShadow: "0 6px 14px rgba(0,0,0,0.1)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer"
-  });
-
-  const iconCircleStyle = {
-    width: "54px",
-    height: "54px",
-    backgroundColor: "white",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "24px",
-    marginBottom: "10px",
-    boxShadow: "0 3px 8px rgba(0,0,0,0.12)"
-  };
-
   return (
     <div style={containerStyle} onContextMenu={(e) => e.preventDefault()}>
       
@@ -327,53 +313,21 @@ const InstituteNews = () => {
             Institute Notice & News Portal
           </h2>
           <p style={{ color: "#64748b", margin: 0, fontSize: "14px" }}>
-            Publish official notices, student news, and attach rich media (Video, Audio, Images, PDF, Documents)
+            Publish official notices specifically for your institute&apos;s students ({myInstituteName}), and attach rich media (Video, Audio, Images, PDF, Documents)
           </p>
         </div>
 
         {/* OFFICIAL PORTALS GRAPHIC CARDS SECTION */}
+        {/* OFFICIAL PORTALS GRAPHIC CARDS SECTION (SIMPLE, ATTRACTIVE, LARGER ICONS) */}
         <div style={{ marginBottom: "35px" }}>
-          <h3 style={{ color: "#1e293b", marginBottom: "15px", fontSize: "17px", fontWeight: 700 }}>
-            🌐 Official EPS & Government Portals
-          </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "14px" }}>
-            <a href="https://epsnepal.gov.np/notices" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)")}>
-              <div style={iconCircleStyle}>📄</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Official Notices</h4>
-            </a>
-
-            <a href="https://epsnepal.gov.np/news" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #0284c7 0%, #0369a1 100%)")}>
-              <div style={iconCircleStyle}>📰</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Official News</h4>
-            </a>
-
-            <a href="https://eoers.epsnepal.gov.np/" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #10b981 0%, #047857 100%)")}>
-              <div style={iconCircleStyle}>📝</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Application Portal</h4>
-            </a>
-
-            <a href="https://epstopik.hrdkorea.or.kr/epstopik/pass/candidate/sucessReportList.do?lang=en" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #f59e0b 0%, #b45309 100%)")}>
-              <div style={iconCircleStyle}>🔍</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>EPS Result Checker</h4>
-            </a>
-
-            <a href="https://epsnepal.gov.np/jobappform/" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #9333ea 0%, #6b21a8 100%)")}>
-              <div style={iconCircleStyle}>📋</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Job Application</h4>
-            </a>
-
-            <a href="https://epstopik.hrdkorea.or.kr/epstopik/cust/aid/NoticeList.do?lang=en" target="_blank" rel="noopener noreferrer" style={graphicCardStyle("linear-gradient(135deg, #0f766e 0%, #115e59 100%)")}>
-              <div style={iconCircleStyle}>🏛️</div>
-              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>HRD Korea Notices</h4>
-            </a>
-          </div>
+          <OfficialPortalButtons />
         </div>
 
         {/* PUBLISH FORM CARD */}
         <div style={cardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "10px" }}>
             <h3 style={{ margin: 0, color: "#1e293b", fontSize: "20px", fontWeight: 700 }}>
-              Publish Official Notice / News
+              Publish Notice for {myInstituteName} Students
             </h3>
 
             {/* Category Toggle Pills */}
@@ -421,7 +375,7 @@ const InstituteNews = () => {
             </label>
             <input 
               type="text" 
-              placeholder={category === "news" ? "e.g. HRD Korea Official Employment Quota Update 2026" : "e.g. TOPIK Exam Application Notice"} 
+              placeholder={category === "news" ? "e.g. Class Schedule Update / Weekly Mock Test" : "e.g. TOPIK Exam Application Notice"} 
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
               style={inputStyle} 
@@ -432,7 +386,7 @@ const InstituteNews = () => {
               {category === "news" ? "Official News Content / Details" : "Notice Content / Details"}
             </label>
             <textarea 
-              placeholder={category === "news" ? "Enter official news description, announcements, details..." : "Enter notice description, instructions, guidelines..."} 
+              placeholder={category === "news" ? "Enter news description, announcements, details..." : "Enter notice description, instructions, guidelines..."} 
               value={content} 
               onChange={(e) => setContent(e.target.value)} 
               style={{ ...inputStyle, height: "110px", resize: "vertical" }} 
@@ -573,7 +527,7 @@ const InstituteNews = () => {
               </label>
             </div>
 
-            {/* Two Action Buttons: Publish Notice & Publish Official News */}
+            {/* Action Buttons: Publish Notice & Publish Official News */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
               <button 
                 type="button" 
@@ -689,6 +643,8 @@ const InstituteNews = () => {
             <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
               {filteredNewsList.map((item) => {
                 const isNews = item.category === "news";
+                const isGlobal = !item.instituteName || item.targetAudience === "all";
+
                 return (
                   <div 
                     key={item.id} 
@@ -712,6 +668,20 @@ const InstituteNews = () => {
                           </span>
                         )}
 
+                        {isGlobal ? (
+                          <span style={{ backgroundColor: "#ecfdf5", color: "#065f46", fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "10px", border: "1px solid #a7f3d0" }}>
+                            🌐 Global Notice
+                          </span>
+                        ) : (
+                          <span style={{ backgroundColor: "#e0e7ff", color: "#4338ca", fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "10px", border: "1px solid #c7d2fe" }}>
+                            🏢 {item.instituteName}
+                          </span>
+                        )}
+
+                        <span style={{ backgroundColor: "#f1f5f9", color: "#475569", fontSize: "11px", fontWeight: 600, padding: "3px 8px", borderRadius: "10px" }}>
+                          Published by: {item.publishedBy === "admin" ? "Super Admin" : (item.instituteName || "Institute")}
+                        </span>
+
                         {item.isPopup && (
                           <span style={{ backgroundColor: "#dcfce7", color: "#166534", fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "10px" }}>
                             📢 Pop-up Banner Active
@@ -723,21 +693,24 @@ const InstituteNews = () => {
                         </span>
                       </div>
 
-                      <button 
-                        onClick={() => handleDelete(item.id)} 
-                        style={{ 
-                          backgroundColor: "#ef4444", 
-                          color: "white", 
-                          border: "none", 
-                          padding: "5px 12px", 
-                          borderRadius: "5px", 
-                          cursor: "pointer", 
-                          fontSize: "12px",
-                          fontWeight: 600
-                        }}
-                      >
-                        Delete
-                      </button>
+                      {/* Institutes can only delete their own notices */}
+                      {(item.publishedBy === "institute" || item.instituteName === myInstituteName) && (
+                        <button 
+                          onClick={() => handleDelete(item.id)} 
+                          style={{ 
+                            backgroundColor: "#ef4444", 
+                            color: "white", 
+                            border: "none", 
+                            padding: "5px 12px", 
+                            borderRadius: "5px", 
+                            cursor: "pointer", 
+                            fontSize: "12px",
+                            fontWeight: 600
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
 
                     <h4 style={{ margin: "4px 0 10px 0", color: "#1e293b", fontSize: "17px", fontWeight: 700 }}>

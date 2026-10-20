@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import BatchimRulesGuide from '@/components/BatchimRulesGuide';
+import JapanesePronunciationGuide from '@/components/JapanesePronunciationGuide';
+import AiStudio from '@/components/AiStudio';
+import { VOICE_PROFILES } from '@/lib/elevenlabsConfig';
 
 /**
  * Dynamic Avatar Icons for Female and Male voices
@@ -75,35 +79,86 @@ export function MaleIcon({ size = 32, isPlaying = false, title = "Male Voice" })
 export const Female3DIcon = FemaleIcon;
 export const Male3DIcon = MaleIcon;
 
-// 9 Smooth & Natural Human Female Voice Models
-export const FEMALE_VOICE_MODELS = [
-  { id: 'fem-sunhi-std', name: 'SunHi Standard', persona: 'Seoul Native Standard · Warm & Polite', voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '-4%', tag: 'Seoul Standard' },
-  { id: 'fem-sunhi-cheerful', name: 'SunHi Cheerful', persona: 'Friendly, Upbeat & Warm Delivery', voice: 'ko-KR-SunHiNeural', pitch: '+5Hz', rate: '+4%', tag: 'Bright / Upbeat' },
-  { id: 'fem-sunhi-anchor', name: 'SunHi News Anchor', persona: 'Crisp & Articulate Formal Speech', voice: 'ko-KR-SunHiNeural', pitch: '-3Hz', rate: '+0%', tag: 'Formal News' },
-  { id: 'fem-sunhi-soft', name: 'SunHi Gentle Melody', persona: 'Soft, Calm & Soothing Cadence', voice: 'ko-KR-SunHiNeural', pitch: '+3Hz', rate: '-10%', tag: 'Gentle / Relaxed' },
-  { id: 'fem-sunhi-deep', name: 'SunHi Deep Calm', persona: 'Comforting Low Resonance · Grounded Mature Female', voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '-6%', tag: 'Deep Calm' },
-  { id: 'fem-sunhi-guide', name: 'SunHi Study Guide', persona: 'Steady Syllable Pronunciation Guide', voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '-12%', tag: 'Study Guide' },
-  { id: 'fem-sunhi-drill', name: 'SunHi Exam Speed', persona: 'EPS-TOPIK Rapid Exam Listening Pace', voice: 'ko-KR-SunHiNeural', pitch: '+2Hz', rate: '+14%', tag: 'Exam Speed' },
-  { id: 'fem-ava-ai', name: 'Ava Conversational', persona: 'Smooth Modern Conversational AI Female', voice: 'en-US-AvaMultilingualNeural', pitch: '+0Hz', rate: '-5%', tag: 'Natural Female' },
-  { id: 'fem-emma-ai', name: 'Emma Expressive', persona: 'Sweet & Expressive Natural Female Voice', voice: 'en-US-EmmaMultilingualNeural', pitch: '+4Hz', rate: '+2%', tag: 'Expressive' },
-];
+// AI Studio Ultra-Realistic Human Voice Models (Korean Female)
+export const KOREAN_FEMALE_VOICE_MODELS = VOICE_PROFILES
+  .filter(v => v.language === 'ko' && v.gender === 'female')
+  .map(v => ({
+    id: v.id,
+    voiceProfileId: v.id,
+    name: v.name,
+    title: v.title,
+    persona: v.title || v.persona,
+    tag: v.tag,
+    gender: 'female',
+    lang: 'ko',
+    isAiStudio: true,
+    pitch: v.pitch || '+0Hz',
+    rate: v.rate || '+0%',
+    voice: v.voice,
+    sampleSentence: v.sampleSentence
+  }));
 
-// 11 Smooth & Natural Human Male Voice Models
-export const MALE_VOICE_MODELS = [
-  { id: 'male-injoon-std', name: 'InJoon Standard', persona: 'Seoul Native Standard · Polite & Smooth Baritone', voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '-4%', tag: 'Seoul Standard' },
-  { id: 'male-injoon-deep', name: 'InJoon Deep Bass', persona: 'Warm Resonant Baritone · Deep Authoritative Tone', voice: 'ko-KR-InJoonNeural', pitch: '-7Hz', rate: '-7%', tag: 'Deep Baritone' },
-  { id: 'male-injoon-cheerful', name: 'InJoon Cheerful', persona: 'Friendly, Warm & Upbeat Conversational Male', voice: 'ko-KR-InJoonNeural', pitch: '+4Hz', rate: '+4%', tag: 'Bright / Upbeat' },
-  { id: 'male-injoon-guide', name: 'InJoon Study Guide', persona: 'Steady Step-by-Step Pronunciation Guide', voice: 'ko-KR-InJoonNeural', pitch: '-2Hz', rate: '-12%', tag: 'Study Guide' },
-  { id: 'male-injoon-drill', name: 'InJoon Exam Speed', persona: 'EPS-TOPIK Rapid Exam Listening Pace', voice: 'ko-KR-InJoonNeural', pitch: '+2Hz', rate: '+14%', tag: 'Exam Speed' },
-  { id: 'male-hyunsu-std', name: 'Hyunsu Instructor', persona: 'Modern Seoul Native Male Instructor', voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+0Hz', rate: '-5%', tag: 'Korean Native' },
-  { id: 'male-hyunsu-anchor', name: 'Hyunsu News Anchor', persona: 'Official KBS-Style Broadcast Formal Speech', voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '-4Hz', rate: '+2%', tag: 'Formal News' },
-  { id: 'male-hyunsu-relaxed', name: 'Hyunsu Calm Tutor', persona: 'Relaxed Everyday Dialogue & Clear Articulation', voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+2Hz', rate: '-8%', tag: 'Calm Tutor' },
-  { id: 'male-andrew-ai', name: 'Andrew Casual Male', persona: 'Natural Conversational & Friendly AI Male', voice: 'en-US-AndrewMultilingualNeural', pitch: '+0Hz', rate: '-5%', tag: 'Natural Male' },
-  { id: 'male-brian-ai', name: 'Brian Rich Baritone', persona: 'Rich Warm Timber & Fluent Pronunciation', voice: 'en-US-BrianMultilingualNeural', pitch: '-5Hz', rate: '-6%', tag: 'Warm Baritone' },
-  { id: 'male-william-ai', name: 'William Articulate', persona: 'Smooth Resonant Modern Clear Male', voice: 'en-AU-WilliamMultilingualNeural', pitch: '+2Hz', rate: '-2%', tag: 'Articulate' },
-];
+// AI Studio Ultra-Realistic Human Voice Models (Korean Male)
+export const KOREAN_MALE_VOICE_MODELS = VOICE_PROFILES
+  .filter(v => v.language === 'ko' && v.gender === 'male')
+  .map(v => ({
+    id: v.id,
+    voiceProfileId: v.id,
+    name: v.name,
+    title: v.title,
+    persona: v.title || v.persona,
+    tag: v.tag,
+    gender: 'male',
+    lang: 'ko',
+    isAiStudio: true,
+    pitch: v.pitch || '+0Hz',
+    rate: v.rate || '+0%',
+    voice: v.voice,
+    sampleSentence: v.sampleSentence
+  }));
 
-export default function DictionarySection({ title = "📖 Multi-Language Dictionary" }) {
+// AI Studio Ultra-Realistic Human Voice Models (Japanese Female)
+export const JAPANESE_FEMALE_VOICE_MODELS = VOICE_PROFILES
+  .filter(v => v.language === 'ja' && v.gender === 'female')
+  .map(v => ({
+    id: v.id,
+    voiceProfileId: v.id,
+    name: v.name,
+    title: v.title,
+    persona: v.title || v.persona,
+    tag: v.tag,
+    gender: 'female',
+    lang: 'ja',
+    isAiStudio: true,
+    pitch: v.pitch || '+0Hz',
+    rate: v.rate || '+0%',
+    voice: v.voice,
+    sampleSentence: v.sampleSentence
+  }));
+
+// AI Studio Ultra-Realistic Human Voice Models (Japanese Male)
+export const JAPANESE_MALE_VOICE_MODELS = VOICE_PROFILES
+  .filter(v => v.language === 'ja' && v.gender === 'male')
+  .map(v => ({
+    id: v.id,
+    voiceProfileId: v.id,
+    name: v.name,
+    title: v.title,
+    persona: v.title || v.persona,
+    tag: v.tag,
+    gender: 'male',
+    lang: 'ja',
+    isAiStudio: true,
+    pitch: v.pitch || '+0Hz',
+    rate: v.rate || '+0%',
+    voice: v.voice,
+    sampleSentence: v.sampleSentence
+  }));
+
+export const FEMALE_VOICE_MODELS = KOREAN_FEMALE_VOICE_MODELS;
+export const MALE_VOICE_MODELS = KOREAN_MALE_VOICE_MODELS;
+
+export default function DictionarySection({ title = "" }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -113,9 +168,13 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
   const [displayLimit, setDisplayLimit] = useState(24);
   const [copiedId, setCopiedId] = useState(null);
 
+  // Active Language State ('ko' | 'ja')
+  const [activeLang, setActiveLang] = useState('ko');
+  const [japaneseFilter, setJapaneseFilter] = useState('all'); // 'all' | 'kanji' | 'n5'..'n1' | 'vocab'
+
   // Selected Voice Models (State)
-  const [selectedFemaleModel, setSelectedFemaleModel] = useState(FEMALE_VOICE_MODELS[0]);
-  const [selectedMaleModel, setSelectedMaleModel] = useState(MALE_VOICE_MODELS[0]);
+  const [selectedFemaleModel, setSelectedFemaleModel] = useState(KOREAN_FEMALE_VOICE_MODELS[0]);
+  const [selectedMaleModel, setSelectedMaleModel] = useState(KOREAN_MALE_VOICE_MODELS[0]);
   const [isFemaleDropdownOpen, setIsFemaleDropdownOpen] = useState(false);
   const [isMaleDropdownOpen, setIsMaleDropdownOpen] = useState(false);
 
@@ -128,6 +187,8 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
 
   // User Voice Studio Modal & Upload States
   const [showVoiceStudio, setShowVoiceStudio] = useState(false);
+  const [showAiStudio, setShowAiStudio] = useState(false);
+  const aiStudioRef = useRef(null);
   const [voiceStudioTab, setVoiceStudioTab] = useState('upload'); // 'upload' | 'record' | 'library'
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState(null);
@@ -137,9 +198,43 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
   // Upload Form State
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadVoiceName, setUploadVoiceName] = useState('');
-  const [uploadWordScope, setUploadWordScope] = useState('current'); // 'current' | 'all'
+  const [uploadWordScope, setUploadWordScope] = useState('particular'); // 'particular' | 'all'
+  const [uploadTargetWord, setUploadTargetWord] = useState('');
   const [uploadGender, setUploadGender] = useState('female');
   const [isUploading, setIsUploading] = useState(false);
+  const [editingVoiceId, setEditingVoiceId] = useState(null);
+  const [editingWordValue, setEditingWordValue] = useState('');
+
+  // Role Detection for Audio Downloads (Institute & Admin only; NOT Student)
+  const [userRole, setUserRole] = useState(() => {
+    if (typeof window === 'undefined') return 'student';
+    try {
+      const r = localStorage.getItem('currentRole') || localStorage.getItem('role');
+      if (r) return r.toLowerCase();
+      const u = localStorage.getItem('user') || localStorage.getItem('currentUser');
+      if (u) {
+        const parsed = JSON.parse(u);
+        if (parsed?.role) return parsed.role.toLowerCase();
+      }
+      if (window.location.pathname.includes('/student')) return 'student';
+      if (window.location.pathname.includes('/institute')) return 'institute';
+      if (window.location.pathname.includes('/admin')) return 'admin';
+    } catch (e) {}
+    return 'student';
+  });
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.user?.role) {
+          setUserRole(data.user.role.toLowerCase());
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const isInstituteOrAdmin = userRole === 'institute' || userRole === 'admin';
 
   const audioRef = useRef(null);
   const femaleDropdownRef = useRef(null);
@@ -259,13 +354,44 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
 
   // Initial load
   useEffect(() => {
-    fetchDictionary('');
+    fetchDictionary('', activeLang);
   }, []);
 
-  async function fetchDictionary(q) {
+  function handleSwitchLanguage(newLang) {
+    if (activeLang === newLang) return;
+    setActiveLang(newLang);
+    setSearchQuery('');
+    setSelectedWord(null);
+    setJapaneseFilter('all');
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPlayingAudioId(null);
+    setLoadingAudioId(null);
+
+    if (newLang === 'ja') {
+      setSelectedFemaleModel(JAPANESE_FEMALE_VOICE_MODELS[0]); // Japanese Female 1: Natural Japanese Teacher
+      setSelectedMaleModel(JAPANESE_MALE_VOICE_MODELS[0]); // Japanese Male 1: Natural Japanese Male Teacher
+      fetchDictionary('', 'ja', 'all');
+    } else {
+      setSelectedFemaleModel(KOREAN_FEMALE_VOICE_MODELS[0]); // Korean Female 1: Natural Female Teacher
+      setSelectedMaleModel(KOREAN_MALE_VOICE_MODELS[0]); // Korean Male 1: Natural Korean Male Teacher
+      fetchDictionary('', 'ko', 'all');
+    }
+  }
+
+  function handleFilterChange(newFilter) {
+    setJapaneseFilter(newFilter);
+    fetchDictionary(searchQuery.trim(), activeLang, newFilter);
+  }
+
+  async function fetchDictionary(q, langOverride, filterOverride) {
+    const targetLang = langOverride !== undefined ? langOverride : activeLang;
+    const targetFilter = filterOverride !== undefined ? filterOverride : japaneseFilter;
     setLoading(true);
     try {
-      const res = await fetch(`/api/dictionary?q=${encodeURIComponent(q)}&limit=100`);
+      const res = await fetch(`/api/dictionary?q=${encodeURIComponent(q)}&lang=${targetLang}&filter=${encodeURIComponent(targetFilter)}&limit=120`);
       const data = await res.json();
       if (data.results && data.results.length > 0) {
         setResults(data.results);
@@ -283,7 +409,7 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
 
   function handleSearch(e) {
     e?.preventDefault();
-    fetchDictionary(searchQuery.trim());
+    fetchDictionary(searchQuery.trim(), activeLang, japaneseFilter);
   }
 
   function handlePlayAudio(url, id) {
@@ -361,41 +487,81 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
 
     // 2. Determine text to speak
     const queryText = searchQuery?.trim();
-    let textToSpeak = queryText || selectedWord?.korean || (results.length > 0 ? results[0]?.korean : '');
-    let lang = 'ko';
+    let textToSpeak = '';
+    let lang = activeLang === 'ja' ? 'ja' : 'ko';
+
+    if (customModel?.sampleSentence && !queryText) {
+      // Play the model's authentic benchmark sample sentence when previewing from the dropdown
+      textToSpeak = customModel.sampleSentence;
+    } else {
+      const primarySelected = activeLang === 'ja'
+        ? (selectedWord?.japanese || selectedWord?.korean)
+        : (selectedWord?.korean || selectedWord?.japanese);
+      const primaryFallback = activeLang === 'ja'
+        ? (results[0]?.japanese || results[0]?.korean)
+        : (results[0]?.korean || results[0]?.japanese);
+
+      textToSpeak = queryText || primarySelected || (results.length > 0 ? primaryFallback : '');
+    }
 
     if (!textToSpeak) {
-      // Natural sample preview phrase when no word is searched yet
-      textToSpeak = customModel
-        ? `안녕하세요! ${customModel.name} 한국어 발음 모델입니다.`
-        : '안녕하세요! 한국어를 공부합시다.';
-      lang = 'ko';
+      textToSpeak = customModel?.sampleSentence || (activeLang === 'ja'
+        ? 'こんにちは！日本語を勉強しましょう。'
+        : '안녕하세요! 한국어를 공부합시다.');
     } else {
-      if (/[\u0900-\u097F]/.test(textToSpeak)) {
+      if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(textToSpeak)) {
+        lang = 'ja';
+      } else if (/[\uAC00-\uD7AF]/.test(textToSpeak)) {
+        lang = 'ko';
+      } else if (/[\u0900-\u097F]/.test(textToSpeak)) {
         lang = 'ne';
       } else if (/^[a-zA-Z\s]+$/.test(textToSpeak)) {
-        lang = selectedWord?.korean && selectedWord.korean !== textToSpeak ? 'ko' : 'en';
+        lang = activeLang === 'ja' ? 'ja' : (selectedWord?.korean && selectedWord.korean !== textToSpeak ? 'ko' : 'en');
       }
 
       if (lang === 'ko' && selectedWord?.korean && !/[\uAC00-\uD7AF]/.test(textToSpeak)) {
         textToSpeak = selectedWord.korean;
+      } else if (lang === 'ja' && selectedWord?.japanese && !/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(textToSpeak)) {
+        textToSpeak = selectedWord.japaneseSpoken || selectedWord.japanese;
       }
     }
 
-    // 3. Check if a custom voice in library is set as default for this specific word
+    // 3. Check if an uploaded custom voice in library is assigned to this specific word or is default
     if (queryText && !customModel) {
-      const matchingCustom = voiceLibrary.find(v => (v.word === 'all' || v.word?.toLowerCase() === queryText.toLowerCase()) && v.isDefault);
+      const qLower = queryText.toLowerCase();
+      const matchingCustom = voiceLibrary.find(v => {
+        if (!v.word || v.word === 'all') return false;
+        const wLower = v.word.trim().toLowerCase();
+        if (wLower === qLower) return true;
+        if (selectedWord?.korean && wLower === selectedWord.korean.toLowerCase()) return true;
+        if (selectedWord?.japanese && wLower === selectedWord.japanese.toLowerCase()) return true;
+        if (selectedWord?.english && wLower === selectedWord.english.toLowerCase()) return true;
+        return false;
+      }) || voiceLibrary.find(v => v.word === 'all' && v.isDefault);
+
       if (matchingCustom) {
         handlePlayAudio(matchingCustom.url, audioId);
         return;
       }
     }
 
-    const voiceName = activeModel?.voice || (gender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural');
-    const pitchVal = activeModel?.pitch || '+0Hz';
-    const rateVal = activeModel?.rate || '-5%';
+    const voiceProfId = activeModel?.voiceProfileId || activeModel?.id;
+    const isAi = activeModel?.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
 
-    const url = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${lang}&gender=${gender}&voice=${encodeURIComponent(voiceName)}&pitch=${encodeURIComponent(pitchVal)}&rate=${encodeURIComponent(rateVal)}`;
+    let url;
+    if (isAi) {
+      url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`;
+    } else {
+      const defaultVoice = activeLang === 'ja'
+        ? (gender === 'female' ? 'ja-JP-NanamiNeural' : 'ja-JP-KeitaNeural')
+        : (gender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural');
+
+      const voiceName = activeModel?.voice || defaultVoice;
+      const pitchVal = activeModel?.pitch || '+0Hz';
+      const rateVal = activeModel?.rate || '-5%';
+
+      url = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${lang}&gender=${gender}&voice=${encodeURIComponent(voiceName)}&pitch=${encodeURIComponent(pitchVal)}&rate=${encodeURIComponent(rateVal)}&model=${encodeURIComponent(activeModel?.id || activeModel?.name || '')}`;
+    }
     handlePlayAudio(url, audioId);
   }
 
@@ -407,22 +573,69 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
       return;
     }
 
-    const wordToDownload = searchQuery.trim() || selectedWord?.korean || (results.length > 0 ? results[0].korean : '') || '안녕하세요';
+    const queryText = searchQuery.trim();
+    if (queryText && !customModel) {
+      const qLower = queryText.toLowerCase();
+      const matchingCustom = voiceLibrary.find(v => {
+        if (!v.word || v.word === 'all') return false;
+        const wLower = v.word.trim().toLowerCase();
+        if (wLower === qLower) return true;
+        if (selectedWord?.korean && wLower === selectedWord.korean.toLowerCase()) return true;
+        if (selectedWord?.japanese && wLower === selectedWord.japanese.toLowerCase()) return true;
+        return false;
+      });
+      if (matchingCustom?.url) {
+        handleDownloadAudio(matchingCustom.url, `${matchingCustom.word || queryText}_custom_voice.mp3`);
+        return;
+      }
+    }
+
+    const wordToDownload = searchQuery.trim() || (activeLang === 'ja' ? (selectedWord?.japanese || results[0]?.japanese) : (selectedWord?.korean || results[0]?.korean)) || (activeLang === 'ja' ? 'こんにちは' : '안녕하세요');
     if (!wordToDownload) return;
 
-    let lang = 'ko';
-    if (/[\u0900-\u097F]/.test(wordToDownload)) {
+    let lang = activeLang === 'ja' ? 'ja' : 'ko';
+    if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(wordToDownload)) {
+      lang = 'ja';
+    } else if (/[\uAC00-\uD7AF]/.test(wordToDownload)) {
+      lang = 'ko';
+    } else if (/[\u0900-\u097F]/.test(wordToDownload)) {
       lang = 'ne';
     } else if (/^[a-zA-Z\s]+$/.test(wordToDownload)) {
-      lang = selectedWord?.korean && selectedWord.korean !== wordToDownload ? 'ko' : 'en';
+      lang = activeLang === 'ja' ? 'ja' : 'en';
     }
 
     const textToSpeak = (lang === 'ko' && selectedWord?.korean && !/[\uAC00-\uD7AF]/.test(wordToDownload))
       ? selectedWord.korean
-      : wordToDownload;
+      : (lang === 'ja' && selectedWord?.japanese && !/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(wordToDownload))
+        ? (selectedWord.japaneseSpoken || selectedWord.reading || selectedWord.japanese)
+        : wordToDownload;
 
-    const url = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${lang}&gender=${gender}&voice=${encodeURIComponent(activeModel.voice || 'ko-KR-SunHiNeural')}&pitch=${encodeURIComponent(activeModel.pitch || '+0Hz')}&rate=${encodeURIComponent(activeModel.rate || '-5%')}&download=true`;
-    handleDownloadAudio(url, `${textToSpeak}_${gender}_${activeModel.name.replace(/\s+/g, '_')}.mp3`);
+    const voiceProfId = activeModel?.voiceProfileId || activeModel?.id;
+    const isAi = activeModel?.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
+    const filename = `${textToSpeak}_${gender}_${(activeModel?.name || 'voice').replace(/\s+/g, '_')}.mp3`;
+
+    let url;
+    if (isAi) {
+      url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`;
+    } else {
+      const defaultVoice = activeLang === 'ja'
+        ? (gender === 'female' ? 'ja-JP-NanamiNeural' : 'ja-JP-KeitaNeural')
+        : (gender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural');
+
+      url = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${lang}&gender=${gender}&voice=${encodeURIComponent(activeModel.voice || defaultVoice)}&pitch=${encodeURIComponent(activeModel.pitch || '+0Hz')}&rate=${encodeURIComponent(activeModel.rate || '-5%')}&model=${encodeURIComponent(activeModel.id || activeModel.name || '')}&download=true`;
+    }
+    handleDownloadAudio(url, filename);
+  }
+
+  function handleOpenVoiceStudioForWord(targetWord = '') {
+    const defaultWord = activeLang === 'ja'
+      ? (selectedWord?.japanese || results[0]?.japanese || '')
+      : (selectedWord?.korean || results[0]?.korean || '');
+    const wordToUse = (typeof targetWord === 'string' && targetWord.trim()) || searchQuery.trim() || defaultWord;
+    setUploadTargetWord(wordToUse);
+    setUploadWordScope(wordToUse ? 'particular' : 'all');
+    setVoiceStudioTab('upload');
+    setShowVoiceStudio(true);
   }
 
   function handleDownloadAudio(url, filename) {
@@ -453,7 +666,7 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
     try {
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
-      recognition.lang = 'ko-KR';
+      recognition.lang = activeLang === 'ja' ? 'ja-JP' : 'ko-KR';
       recognition.continuous = false;
       recognition.interimResults = false;
 
@@ -465,7 +678,7 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
         const transcript = event.results[0][0].transcript;
         if (transcript) {
           setSearchQuery(transcript);
-          fetchDictionary(transcript.trim());
+          fetchDictionary(transcript.trim(), activeLang);
         }
         setIsListening(false);
       };
@@ -541,8 +754,15 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
     if (!recordedBlob) return;
     setIsUploading(true);
 
-    const wordTarget = uploadWordScope === 'current' ? (currentActiveWord?.korean || searchQuery || 'speech') : 'all';
-    const voiceName = uploadVoiceName.trim() || `My Recording (${wordTarget})`;
+    const activeWordStr = activeLang === 'ja'
+      ? (selectedWord?.japanese || results[0]?.japanese || '')
+      : (selectedWord?.korean || results[0]?.korean || '');
+
+    const wordTarget = uploadWordScope === 'particular'
+      ? (uploadTargetWord.trim() || searchQuery.trim() || activeWordStr || 'custom')
+      : 'all';
+
+    const voiceName = uploadVoiceName.trim() || `My Recording (${wordTarget !== 'all' ? wordTarget : 'Voice'})`;
 
     try {
       const formData = new FormData();
@@ -567,14 +787,14 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
         word: wordTarget,
         gender: uploadGender,
         createdAt: new Date().toLocaleDateString(),
-        isDefault: true
+        isDefault: wordTarget === 'all'
       };
 
-      const updated = [newVoiceItem, ...voiceLibrary.map(v => ({ ...v, isDefault: false }))];
+      const updated = [newVoiceItem, ...voiceLibrary.filter(v => v.id !== newVoiceItem.id)];
       saveVoiceLibrary(updated);
       handleSetVoiceActive(newVoiceItem, uploadGender);
       setVoiceStudioTab('library');
-      alert(`Voice "${voiceName}" successfully saved and set as Active Voice!`);
+      alert(`Voice "${voiceName}" successfully saved and set for "${wordTarget === 'all' ? 'All Words' : wordTarget}"!`);
     } catch (err) {
       console.error('Error saving recording:', err);
       const newVoiceItem = {
@@ -584,9 +804,9 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
         word: wordTarget,
         gender: uploadGender,
         createdAt: new Date().toLocaleDateString(),
-        isDefault: true
+        isDefault: wordTarget === 'all'
       };
-      const updated = [newVoiceItem, ...voiceLibrary.map(v => ({ ...v, isDefault: false }))];
+      const updated = [newVoiceItem, ...voiceLibrary.filter(v => v.id !== newVoiceItem.id)];
       saveVoiceLibrary(updated);
       handleSetVoiceActive(newVoiceItem, uploadGender);
       setVoiceStudioTab('library');
@@ -604,8 +824,16 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
     }
 
     setIsUploading(true);
-    const wordTarget = uploadWordScope === 'current' ? (currentActiveWord?.korean || searchQuery || 'all') : 'all';
-    const voiceName = uploadVoiceName.trim() || uploadFile.name.replace(/\.[^/.]+$/, "");
+
+    const activeWordStr = activeLang === 'ja'
+      ? (selectedWord?.japanese || results[0]?.japanese || '')
+      : (selectedWord?.korean || results[0]?.korean || '');
+
+    const wordTarget = uploadWordScope === 'particular'
+      ? (uploadTargetWord.trim() || searchQuery.trim() || activeWordStr || 'custom')
+      : 'all';
+
+    const voiceName = uploadVoiceName.trim() || `${uploadFile.name.replace(/\.[^/.]+$/, "")} (${wordTarget !== 'all' ? wordTarget : 'Global'})`;
 
     try {
       const formData = new FormData();
@@ -638,18 +866,19 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
         word: wordTarget,
         gender: uploadGender,
         createdAt: new Date().toLocaleDateString(),
-        isDefault: true
+        isDefault: wordTarget === 'all'
       };
 
-      const updated = [newVoiceItem, ...voiceLibrary.map(v => ({ ...v, isDefault: false }))];
+      const updated = [newVoiceItem, ...voiceLibrary.filter(v => v.id !== newVoiceItem.id)];
       saveVoiceLibrary(updated);
       handleSetVoiceActive(newVoiceItem, uploadGender);
 
       setUploadFile(null);
       setUploadVoiceName('');
+      setUploadTargetWord('');
       if (fileInputRef.current) fileInputRef.current.value = '';
       setVoiceStudioTab('library');
-      alert(`Voice "${voiceName}" uploaded successfully and set in your Voice Library!`);
+      alert(`Voice "${voiceName}" uploaded successfully and set for "${wordTarget === 'all' ? 'All Words' : wordTarget}"!`);
     } catch (err) {
       console.error('Upload error:', err);
       alert('Failed to upload audio file. Please ensure it is a valid MP3, WAV, or M4A file under 15MB.');
@@ -660,6 +889,29 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
 
   const filteredWords = results;
   const currentActiveWord = selectedWord || (results.length > 0 ? results[0] : null);
+  const currentFemaleVoices = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
+  const currentMaleVoices = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
+
+  const activeWordString = activeLang === 'ja'
+    ? (currentActiveWord?.japanese || currentActiveWord?.kanji || searchQuery.trim() || '')
+    : (currentActiveWord?.korean || searchQuery.trim() || '');
+
+  const searchedTerm = searchQuery.trim().toLowerCase();
+  const matchingSearchedCustomVoice = searchedTerm
+    ? voiceLibrary.find(v => {
+        if (!v.word || v.word === 'all') return false;
+        const target = v.word.trim().toLowerCase();
+        if (target === searchedTerm) return true;
+        if (results && results.length > 0) {
+          const top = results[0];
+          if (top.korean && top.korean.toLowerCase() === target) return true;
+          if (top.japanese && top.japanese.toLowerCase() === target) return true;
+          if (top.english && top.english.toLowerCase() === target) return true;
+          if (top.nepali && top.nepali.toLowerCase() === target) return true;
+        }
+        return false;
+      })
+    : null;
 
   return (
     <div
@@ -667,7 +919,7 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
       style={{
         backgroundColor: "#ffffff",
         borderRadius: "14px",
-        border: "1px solid #e2e8f0",
+        border: "1.5px solid #e2e8f0",
         padding: "26px",
         boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
         maxWidth: "1200px",
@@ -703,25 +955,201 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "12px" }}>
-        <h2 style={{ margin: 0, color: "#0f172a", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
+          {title && <h2 style={{ margin: 0, color: "#0f172a", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
+
+          {/* 🇰🇷 Korean vs 🇯🇵 Japanese Language Switcher Toggle Buttons */}
+          <div
+            style={{
+              display: "inline-flex",
+              backgroundColor: "#f1f5f9",
+              padding: "4px",
+              borderRadius: "10px",
+              border: "1.5px solid #cbd5e1",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
+              gap: "4px"
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => handleSwitchLanguage('ko')}
+              title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
+              style={{
+                backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
+                color: activeLang === 'ko' ? "#ffffff" : "#475569",
+                border: "none",
+                borderRadius: "7px",
+                padding: "6px 14px",
+                fontSize: "13px",
+                fontWeight: "800",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: activeLang === 'ko' ? "0 2px 8px rgba(37,99,235,0.32)" : "none",
+                transition: "all 0.18s ease"
+              }}
+            >
+              <span style={{ fontSize: "16px" }}>🇰🇷</span>
+              <span>Korean (한국어)</span>
+              {activeLang === 'ko' && (
+                <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "10px", fontWeight: "700" }}>
+                  Active
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSwitchLanguage('ja')}
+              title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
+              style={{
+                backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
+                color: activeLang === 'ja' ? "#ffffff" : "#475569",
+                border: "none",
+                borderRadius: "7px",
+                padding: "6px 14px",
+                fontSize: "13px",
+                fontWeight: "800",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: activeLang === 'ja' ? "0 2px 8px rgba(147,51,234,0.35)" : "none",
+                transition: "all 0.18s ease"
+              }}
+            >
+              <span style={{ fontSize: "16px" }}>🇯🇵</span>
+              <span>Japanese (日本語)</span>
+              {activeLang === 'ja' && (
+                <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "10px", fontWeight: "700" }}>
+                  Active
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          {/* Active Model Badges */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "#fff1f2", border: "1.5px solid #fecdd3", padding: "4px 12px 4px 6px", borderRadius: "24px" }}>
+          {/* Active Model Badges & AI Studio Button - All Same Size (Height 42px, radius 24px, 30px icon, 2-line text) */}
+          <div
+            onClick={() => setIsFemaleDropdownOpen(prev => !prev)}
+            title="Active Female Voice Model (Click to select model)"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "#fff1f2",
+              border: "1.5px solid #fecdd3",
+              padding: "4px 14px 4px 6px",
+              borderRadius: "24px",
+              height: "42px",
+              minWidth: "160px",
+              boxSizing: "border-box",
+              cursor: "pointer",
+              transition: "all 0.15s ease"
+            }}
+          >
             <FemaleIcon size={30} isPlaying={playingAudioId === 'search-female'} />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
               <span style={{ fontSize: "12px", fontWeight: "800", color: "#be185d" }}>{selectedFemaleModel.name}</span>
-              <span style={{ fontSize: "10px", color: "#9d174d", fontWeight: "600" }}>{selectedFemaleModel.isCustom ? "⭐ Custom Library" : "Female Model"}</span>
+              <span style={{ fontSize: "10px", color: "#9d174d", fontWeight: "600" }}>{selectedFemaleModel.isCustom ? "⭐ Custom Library" : (selectedFemaleModel.tag || "Female Voice")}</span>
             </div>
           </div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", background: "#f0f9ff", border: "1.5px solid #bae6fd", padding: "4px 12px 4px 6px", borderRadius: "24px" }}>
+
+          <div
+            onClick={() => setIsMaleDropdownOpen(prev => !prev)}
+            title="Active Male Voice Model (Click to select model)"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "#f0f9ff",
+              border: "1.5px solid #bae6fd",
+              padding: "4px 14px 4px 6px",
+              borderRadius: "24px",
+              height: "42px",
+              minWidth: "160px",
+              boxSizing: "border-box",
+              cursor: "pointer",
+              transition: "all 0.15s ease"
+            }}
+          >
             <MaleIcon size={30} isPlaying={playingAudioId === 'search-male'} />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
               <span style={{ fontSize: "12px", fontWeight: "800", color: "#0369a1" }}>{selectedMaleModel.name}</span>
-              <span style={{ fontSize: "10px", color: "#0284c7", fontWeight: "600" }}>{selectedMaleModel.isCustom ? "⭐ Custom Library" : "Male Model"}</span>
+              <span style={{ fontSize: "10px", color: "#0284c7", fontWeight: "600" }}>{selectedMaleModel.isCustom ? "⭐ Custom Library" : (selectedMaleModel.tag || "Male Voice")}</span>
             </div>
           </div>
+
+          {/* AI Studio Toggle Button (Same exact size, height 42px, radius 24px, 30px icon, 2-line layout) */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowAiStudio(prev => {
+                const nextState = !prev;
+                if (nextState) {
+                  setTimeout(() => {
+                    aiStudioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 80);
+                }
+                return nextState;
+              });
+            }}
+            title={showAiStudio ? "Close AI Studio" : "Open AI Studio directly under Dictionary"}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              background: showAiStudio
+                ? "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)"
+                : "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+              color: "#ffffff",
+              padding: "4px 14px 4px 6px",
+              borderRadius: "24px",
+              border: showAiStudio ? "1.5px solid #c084fc" : "1.5px solid #6366f1",
+              height: "42px",
+              minWidth: "160px",
+              boxSizing: "border-box",
+              cursor: "pointer",
+              boxShadow: showAiStudio ? "0 0 14px rgba(168, 85, 247, 0.45)" : "0 2px 8px rgba(79, 70, 229, 0.28)",
+              transition: "all 0.18s ease"
+            }}
+          >
+            <div
+              style={{
+                width: "30px",
+                height: "30px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #c084fc 0%, #9333ea 50%, #4f46e5 100%)",
+                boxShadow: "0 2px 5px rgba(124, 58, 237, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.7)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "15px",
+                flexShrink: 0
+              }}
+            >
+              🎙️
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2, textAlign: "left" }}>
+              <span style={{ fontSize: "12px", fontWeight: "800", color: "#ffffff" }}>AI Studio</span>
+              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.85)", fontWeight: "600" }}>Voice Studio</span>
+            </div>
+          </button>
         </div>
       </div>
+
+      {/* EMBEDDED AI STUDIO (Opens directly under dictionary without leaving page or jumping navigation) */}
+      {showAiStudio && (
+        <div ref={aiStudioRef} style={{ marginBottom: "22px" }}>
+          <AiStudio
+            embedded={true}
+            initialLang={activeLang}
+            initialText={searchQuery || (activeLang === 'ja' ? selectedWord?.japanese : selectedWord?.korean) || ''}
+            onClose={() => setShowAiStudio(false)}
+          />
+        </div>
+      )}
 
       {/* Search Bar with Reordered Buttons: GO BUTTON FIRST, then Female Dropdown, Male Dropdown, and User Voice */}
       <form onSubmit={handleSearch} style={{ display: "flex", gap: "8px", marginBottom: "18px", flexWrap: "wrap", alignItems: "center" }}>
@@ -729,7 +1157,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
         <div style={{ position: "relative", flex: "1 1 260px", minWidth: "220px" }}>
           <input
             type="text"
-            placeholder="Type word (e.g. kukur, eat, boy, ghar, 안녕) and click Go or press Enter..."
+            placeholder={
+              activeLang === 'ja'
+                ? "Type Japanese (e.g. 食べる, taberu, arigatou, पानी, boy), Nepali, or English and press Go..."
+                : "Type Korean (e.g. kukur, eat, boy, ghar, 안녕), Nepali, or English and press Go..."
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -748,14 +1180,25 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
               backgroundColor: "#f8fafc",
               transition: "border 0.2s, background 0.2s"
             }}
-            onFocus={(e) => { e.target.style.borderColor = "#2563eb"; e.target.style.backgroundColor = "#fff"; }}
+            onFocus={(e) => { e.target.style.borderColor = activeLang === 'ja' ? "#9333ea" : "#2563eb"; e.target.style.backgroundColor = "#fff"; }}
             onBlur={(e) => { e.target.style.borderColor = "#cbd5e1"; e.target.style.backgroundColor = "#f8fafc"; }}
           />
           {searchQuery && (
             <button
               type="button"
-              onClick={() => { setSearchQuery(''); fetchDictionary(''); }}
-              style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#94a3b8", fontSize: "18px", cursor: "pointer" }}
+              onClick={() => { setSearchQuery(''); fetchDictionary('', activeLang); }}
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                color: "#94a3b8",
+                cursor: "pointer",
+                fontSize: "14px",
+                padding: 0
+              }}
             >
               ✕
             </button>
@@ -787,9 +1230,60 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
           onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
           onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
         >
-          <span>🔍</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <span>{loading ? "Searching..." : "Go"}</span>
         </button>
+
+        {/* ⭐ MY VOICE BUTTON FOR THIS SEARCHED WORD (If uploaded voice matches searched word) */}
+        {matchingSearchedCustomVoice && (
+          <div style={{ display: "inline-flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #86efac", background: "#f0fdf4", boxShadow: "0 2px 6px rgba(16, 185, 129, 0.18)" }}>
+            <button
+              type="button"
+              onClick={() => handlePlayAudio(matchingSearchedCustomVoice.url, 'search-custom-voice')}
+              title={`Play custom uploaded voice for "${matchingSearchedCustomVoice.word}" (${matchingSearchedCustomVoice.name})`}
+              style={{
+                backgroundColor: playingAudioId === 'search-custom-voice' ? "#15803d" : loadingAudioId === 'search-custom-voice' ? "#16a34a" : "transparent",
+                color: playingAudioId === 'search-custom-voice' || loadingAudioId === 'search-custom-voice' ? "#ffffff" : "#15803d",
+                border: "none",
+                padding: "0 12px",
+                height: "40px",
+                fontSize: "13px",
+                fontWeight: "800",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                whiteSpace: "nowrap",
+                transition: "all 0.15s ease"
+              }}
+            >
+              <span style={{ fontSize: "14px" }}>⭐</span>
+              <span>{playingAudioId === 'search-custom-voice' ? "⏹ Stop" : `▶ My Voice (${matchingSearchedCustomVoice.word})`}</span>
+            </button>
+            {!(typeof window !== 'undefined' && window.location.pathname.includes('/student')) && (
+              <button
+                type="button"
+                onClick={() => handleDownloadAudio(matchingSearchedCustomVoice.url, `${matchingSearchedCustomVoice.word}_my_voice.mp3`)}
+                title={`Download custom voice (${matchingSearchedCustomVoice.name})`}
+                style={{
+                  backgroundColor: "transparent",
+                  color: "#15803d",
+                  border: "none",
+                  borderLeft: "1.5px solid #86efac",
+                  padding: "0 10px",
+                  height: "40px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                📥
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 2. 👩 FEMALE VOICE GROUP WITH DROPDOWN ARROW (Minimum 10 Models + Uploaded Voice Library) */}
         <div ref={femaleDropdownRef} style={{ position: "relative", display: "inline-flex" }}>
@@ -876,10 +1370,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
               style={{
                 position: "absolute",
                 top: "calc(100% + 6px)",
-                left: 0,
+                right: 0,
                 zIndex: 1000,
                 width: "330px",
-                maxHeight: "380px",
+                maxWidth: "calc(100vw - 32px)",
+                maxHeight: "440px",
                 overflowY: "auto",
                 backgroundColor: "#ffffff",
                 border: "1.5px solid #fecdd3",
@@ -889,37 +1384,12 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                 animation: "dropdownMenuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)"
               }}
             >
-              {/* Uploaded Voice Library Section */}
-              <div style={{ padding: "6px 8px", background: "#fff1f2", borderRadius: "6px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "11px", fontWeight: "800", color: "#9d174d", textTransform: "uppercase" }}>
-                  ⭐ My Voice Library ({voiceLibrary.length})
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsFemaleDropdownOpen(false);
-                    setVoiceStudioTab('upload');
-                    setShowVoiceStudio(true);
-                  }}
-                  style={{
-                    backgroundColor: "#be185d",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    padding: "2px 8px",
-                    fontSize: "11px",
-                    fontWeight: "700",
-                    cursor: "pointer"
-                  }}
-                >
-                  ➕ Upload Audio
-                </button>
-              </div>
 
               {voiceLibrary.length > 0 && (
                 <div style={{ marginBottom: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
                   {voiceLibrary.map((voice) => {
                     const isSelected = selectedFemaleModel.id === voice.id;
+                    const isWordMatch = searchedTerm && voice.word && voice.word.toLowerCase() === searchedTerm;
                     return (
                       <div
                         key={voice.id}
@@ -931,8 +1401,8 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                           padding: "6px 10px",
                           borderRadius: "6px",
                           cursor: "pointer",
-                          backgroundColor: isSelected ? "#ffe4e6" : "#fdf2f8",
-                          border: isSelected ? "1.5px solid #e11d48" : "1px solid #fbcfe8",
+                          backgroundColor: isSelected ? "#ffe4e6" : isWordMatch ? "#f0fdf4" : "#fdf2f8",
+                          border: isSelected ? "1.5px solid #e11d48" : isWordMatch ? "1.5px solid #86efac" : "1px solid #fbcfe8",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between"
@@ -941,6 +1411,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                         <div style={{ display: "flex", flexDirection: "column" }}>
                           <span style={{ fontSize: "12px", fontWeight: "800", color: "#9d174d" }}>⭐ {voice.name}</span>
                           <span style={{ fontSize: "10px", color: "#be185d" }}>{voice.word === 'all' ? 'All Words' : `Word: ${voice.word}`}</span>
+                          {isWordMatch && (
+                            <span style={{ fontSize: "9px", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 5px", borderRadius: "3px", fontWeight: "800", marginTop: "2px", width: "fit-content" }}>
+                              🎯 Matches Searched Word
+                            </span>
+                          )}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                           <button
@@ -979,11 +1454,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
               {/* Standard AI Models */}
               <div style={{ padding: "4px 8px 6px 8px", borderBottom: "1px solid #ffe4e6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: "11px", fontWeight: "800", color: "#9d174d", textTransform: "uppercase" }}>
-                  👩 Female Models ({FEMALE_VOICE_MODELS.length})
+                  {activeLang === 'ja' ? 'Japanese Acoustic Voice Models' : 'Korean Acoustic Voice Models'}
                 </span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "6px" }}>
-                {FEMALE_VOICE_MODELS.map((model) => {
+                {currentFemaleVoices.map((model) => {
                   const isSelected = selectedFemaleModel.id === model.id;
                   return (
                     <div
@@ -1142,10 +1617,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
               style={{
                 position: "absolute",
                 top: "calc(100% + 6px)",
-                left: 0,
+                right: 0,
                 zIndex: 1000,
                 width: "330px",
-                maxHeight: "380px",
+                maxWidth: "calc(100vw - 32px)",
+                maxHeight: "440px",
                 overflowY: "auto",
                 backgroundColor: "#ffffff",
                 border: "1.5px solid #bae6fd",
@@ -1155,37 +1631,12 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                 animation: "dropdownMenuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)"
               }}
             >
-              {/* Uploaded Voice Library Section */}
-              <div style={{ padding: "6px 8px", background: "#f0f9ff", borderRadius: "6px", marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "11px", fontWeight: "800", color: "#0369a1", textTransform: "uppercase" }}>
-                  ⭐ My Voice Library ({voiceLibrary.length})
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMaleDropdownOpen(false);
-                    setVoiceStudioTab('upload');
-                    setShowVoiceStudio(true);
-                  }}
-                  style={{
-                    backgroundColor: "#0284c7",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    padding: "2px 8px",
-                    fontSize: "11px",
-                    fontWeight: "700",
-                    cursor: "pointer"
-                  }}
-                >
-                  ➕ Upload Audio
-                </button>
-              </div>
 
               {voiceLibrary.length > 0 && (
                 <div style={{ marginBottom: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
                   {voiceLibrary.map((voice) => {
                     const isSelected = selectedMaleModel.id === voice.id;
+                    const isWordMatch = searchedTerm && voice.word && voice.word.toLowerCase() === searchedTerm;
                     return (
                       <div
                         key={voice.id}
@@ -1197,8 +1648,8 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                           padding: "6px 10px",
                           borderRadius: "6px",
                           cursor: "pointer",
-                          backgroundColor: isSelected ? "#e0f2fe" : "#f0f9ff",
-                          border: isSelected ? "1.5px solid #0284c7" : "1px solid #bae6fd",
+                          backgroundColor: isSelected ? "#e0f2fe" : isWordMatch ? "#f0fdf4" : "#f0f9ff",
+                          border: isSelected ? "1.5px solid #0284c7" : isWordMatch ? "1.5px solid #86efac" : "1px solid #bae6fd",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between"
@@ -1207,6 +1658,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                         <div style={{ display: "flex", flexDirection: "column" }}>
                           <span style={{ fontSize: "12px", fontWeight: "800", color: "#0369a1" }}>⭐ {voice.name}</span>
                           <span style={{ fontSize: "10px", color: "#0284c7" }}>{voice.word === 'all' ? 'All Words' : `Word: ${voice.word}`}</span>
+                          {isWordMatch && (
+                            <span style={{ fontSize: "9px", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 5px", borderRadius: "3px", fontWeight: "800", marginTop: "2px", width: "fit-content" }}>
+                              🎯 Matches Searched Word
+                            </span>
+                          )}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                           <button
@@ -1245,11 +1701,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
               {/* Standard AI Models */}
               <div style={{ padding: "4px 8px 6px 8px", borderBottom: "1px solid #e0f2fe", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: "11px", fontWeight: "800", color: "#0369a1", textTransform: "uppercase" }}>
-                  👨 Male Models ({MALE_VOICE_MODELS.length})
+                  {activeLang === 'ja' ? 'Japanese Acoustic Voice Models' : 'Korean Acoustic Voice Models'}
                 </span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "6px" }}>
-                {MALE_VOICE_MODELS.map((model) => {
+                {currentMaleVoices.map((model) => {
                   const isSelected = selectedMaleModel.id === model.id;
                   return (
                     <div
@@ -1324,52 +1780,141 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
         </div>
 
 
+
       </form>
 
       {/* 📚 SEARCHABLE VOCABULARY WORDS GALLERY & AUDIO PLAYERS */}
       <div style={{ marginBottom: "28px" }}>
-        {/* Gallery Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "20px" }}>📚</span>
-            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
-              {searchQuery ? `Search Results for "${searchQuery}"` : "Searchable Vocabulary Words"}
-            </h3>
-            <span style={{ backgroundColor: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "2px 9px", borderRadius: "12px", fontSize: "14px", fontWeight: "800" }}>
-              {filteredWords.length} words
+        {/* Search Results indicator if searching */}
+        {searchQuery && (
+          <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
+              Results for &ldquo;<strong style={{ color: "#0f172a" }}>{searchQuery}</strong>&rdquo; ({filteredWords.length})
             </span>
           </div>
-        </div>
+        )}
+
+        {/* Japanese Kanji & JLPT Level Filter Pills (Centered & Green) */}
+        {activeLang === 'ja' && (
+          <div style={{
+            marginBottom: "18px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "8px",
+            flexWrap: "wrap",
+            width: "100%"
+          }}>
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'kanji', label: '1000 Kanji' },
+              { id: 'n5', label: 'N5 (81)' },
+              { id: 'n4', label: 'N4 (168)' },
+              { id: 'n3', label: 'N3 (321)' },
+              { id: 'n2', label: 'N2 (254)' },
+              { id: 'n1', label: 'N1 (182)' },
+              { id: 'vocab', label: 'Vocabulary' }
+            ].map((f) => {
+              const isActive = japaneseFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => handleFilterChange(f.id)}
+                  style={{
+                    backgroundColor: isActive ? "#16a34a" : "#f0fdf4",
+                    color: isActive ? "#ffffff" : "#15803d",
+                    border: isActive ? "1.5px solid #15803d" : "1.5px solid #bbf7d0",
+                    borderRadius: "18px",
+                    padding: "5px 14px",
+                    fontSize: "12px",
+                    fontWeight: isActive ? "800" : "700",
+                    cursor: "pointer",
+                    boxShadow: isActive ? "0 2px 8px rgba(22, 163, 74, 0.35)" : "none",
+                    transition: "all 0.15s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = "#dcfce7";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = "#f0fdf4";
+                  }}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Word Cards Grid */}
         {filteredWords.length === 0 ? (
           <div style={{ textAlign: "center", padding: "36px 20px", backgroundColor: "#f8fafc", borderRadius: "10px", border: "1px dashed #cbd5e1" }}>
-            <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔍</div>
-            <div style={{ fontWeight: "700", color: "#334155", fontSize: "14px" }}>No matching vocabulary words found</div>
-            <p style={{ color: "#64748b", fontSize: "14px", margin: "4px 0 0" }}>Try typing in Korean, Nepali, English or Romanized sound</p>
+            <div style={{ color: "#64748b", marginBottom: "8px", display: "flex", justifyContent: "center" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div style={{ fontWeight: "700", color: "#334155", fontSize: "14px" }}>No matching vocabulary or kanji found</div>
+            <p style={{ color: "#64748b", fontSize: "14px", margin: "4px 0 0" }}>Try typing in Kanji, Hiragana, Romaji, Nepali or English</p>
           </div>
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))", gap: "12px" }}>
               {filteredWords.slice(0, displayLimit).map((word, idx) => {
-                const isSelected = selectedWord?.korean === word.korean;
-                const isPlayingFem = playingAudioId === `card-fem-${word.korean}`;
-                const isPlayingMale = playingAudioId === `card-male-${word.korean}`;
+                const primaryWord = activeLang === 'ja'
+                  ? (word.japanese || word.korean)
+                  : (word.korean || word.japanese);
+                const writtenWord = activeLang === 'ja'
+                  ? (word.japaneseWritten || word.japanese || word.korean)
+                  : (word.koreanWritten || word.korean);
+                const spokenWord = activeLang === 'ja'
+                  ? (word.japaneseSpoken || word.japanese || word.korean)
+                  : (word.koreanSpoken || word.korean);
+                const romaji = activeLang === 'ja'
+                  ? (word.japaneseRomanized || word.koreanRomanized)
+                  : (word.koreanRomanized || word.japaneseRomanized);
+                const nepaliPhonetic = activeLang === 'ja'
+                  ? (word.japaneseNepaliRomanized || word.koreanNepaliRomanized)
+                  : (word.koreanNepaliRomanized || word.japaneseNepaliRomanized);
+
+                const isSelected = (selectedWord?.japanese && selectedWord.japanese === word.japanese) ||
+                  (selectedWord?.korean && selectedWord.korean === word.korean) ||
+                  selectedWord === word;
+
+                const isPlayingFem = playingAudioId === `card-fem-${primaryWord}` || playingAudioId === `popup-fem-${primaryWord}`;
+                const isPlayingMale = playingAudioId === `card-male-${primaryWord}` || playingAudioId === `popup-male-${primaryWord}`;
                 const isPlayingAny = isPlayingFem || isPlayingMale;
 
+                const hasRule = activeLang === 'ja' ? Boolean(word.hasRule || word.pronunciationRule) : Boolean(word.hasBatchimRule);
+                const ruleBadge = activeLang === 'ja' ? (word.isKanji ? "漢字" : "発音 / Rule") : "받침";
+
                 // Check if user has uploaded voice for this word
-                const customVoiceForWord = voiceLibrary.find(v => v.word?.toLowerCase() === word.korean?.toLowerCase());
+                const customVoiceForWord = voiceLibrary.find(v => {
+                  if (!v.word || v.word === 'all') return false;
+                  const target = v.word.trim().toLowerCase();
+                  return (
+                    target === primaryWord?.toLowerCase() ||
+                    target === spokenWord?.toLowerCase() ||
+                    (word.korean && target === word.korean.toLowerCase()) ||
+                    (word.japanese && target === word.japanese.toLowerCase()) ||
+                    (word.kanji && target === word.kanji.toLowerCase()) ||
+                    (word.english && target === word.english.toLowerCase())
+                  );
+                });
 
                 return (
                   <div
-                    key={`${word.korean}-${idx}`}
+                    key={`${primaryWord}-${idx}`}
                     onClick={() => setSelectedWord(word)}
                     style={{
-                      backgroundColor: isSelected ? "#f0f9ff" : "#ffffff",
-                      border: isSelected ? "2px solid #2563eb" : (isPlayingAny ? "1.5px solid #f43f5e" : "1px solid #e2e8f0"),
+                      backgroundColor: isSelected ? (activeLang === 'ja' ? "#faf5ff" : "#f0f9ff") : "#ffffff",
+                      border: isSelected
+                        ? (activeLang === 'ja' ? "2px solid #9333ea" : "2px solid #2563eb")
+                        : (isPlayingAny ? "1.5px solid #f43f5e" : "1px solid #e2e8f0"),
                       borderRadius: "10px",
                       padding: "12px 14px",
-                      boxShadow: isSelected ? "0 4px 12px rgba(37,99,235,0.12)" : "0 1px 4px rgba(0,0,0,0.04)",
+                      boxShadow: isSelected
+                        ? (activeLang === 'ja' ? "0 4px 12px rgba(147,51,234,0.15)" : "0 4px 12px rgba(37,99,235,0.12)")
+                        : "0 1px 4px rgba(0,0,0,0.04)",
                       cursor: "pointer",
                       transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
                       position: "relative",
@@ -1377,30 +1922,107 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                       WebkitUserSelect: "text"
                     }}
                   >
-                    {/* Top Row: Korean + Category & Copy Button */}
+                    {/* Top Row: Word + Category & Rule Badge */}
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px", marginBottom: "6px" }}>
                       <div>
-                        <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", display: "flex", alignItems: "center", gap: "6px", userSelect: "text" }}>
-                          {word.korean}
-                          {word.hasBatchimRule && (
-                            <span style={{ fontSize: "14px", backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "1px 6px", borderRadius: "4px", fontWeight: "700" }}>
-                              받침
-                            </span>
-                          )}
-                          {customVoiceForWord && (
-                            <span title="You uploaded a custom voice for this word!" style={{ fontSize: "11px", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 5px", borderRadius: "4px", fontWeight: "700" }}>
-                              ⭐ My Voice
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: "14px", color: "#2563eb", fontWeight: "600", marginTop: "2px", userSelect: "text" }}>
-                          [{word.koreanSpoken || word.korean}] · <span style={{ color: "#1e40af", fontWeight: "600" }}>[{word.koreanNepaliRomanized || word.koreanRomanized}]</span>
-                        </div>
+                        {word.isKanji ? (
+                          <div style={{ width: "100%" }}>
+                            {/* Medium Kanji Showcase Tile & Badges */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                              {/* 🈵 MEDIUM KANJI TILE */}
+                              <div
+                                style={{
+                                  width: "52px",
+                                  height: "52px",
+                                  minWidth: "52px",
+                                  background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)",
+                                  border: "1.5px solid #d8b4fe",
+                                  borderRadius: "10px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  boxShadow: "0 2px 8px rgba(147, 51, 234, 0.12)",
+                                  flexShrink: 0
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontSize: "34px",
+                                    fontWeight: "900",
+                                    color: "#581c87",
+                                    lineHeight: 1,
+                                    userSelect: "text",
+                                    fontFamily: "'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', 'Segoe UI Historic', sans-serif"
+                                  }}
+                                >
+                                  {word.kanji}
+                                </span>
+                              </div>
+
+                              {/* Badges & Pronunciation summary */}
+                              <div style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                                  <span style={{ fontSize: "11px", backgroundColor: "#ecfdf5", color: "#047857", border: "1.5px solid #a7f3d0", padding: "1px 7px", borderRadius: "4px", fontWeight: "800" }}>
+                                    JLPT N{word.jlpt}
+                                  </span>
+                                  {word.strokes && (
+                                    <span style={{ fontSize: "11px", backgroundColor: "#f8fafc", color: "#475569", border: "1px solid #cbd5e1", padding: "1px 6px", borderRadius: "4px", fontWeight: "700" }}>
+                                      {word.strokes} Strokes
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: "12px", color: "#9333ea", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  [{spokenWord}] · <span style={{ color: "#475569", fontWeight: "600" }}>[{nepaliPhonetic || romaji}]</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Onyomi & Kunyomi detailed block */}
+                            <div style={{ backgroundColor: "#faf5ff", border: "1px solid #f3e8ff", borderRadius: "7px", padding: "5px 8px", marginBottom: "4px" }}>
+                              <div style={{ fontSize: "12px", color: "#6b21a8", fontWeight: "700", lineHeight: "1.3" }}>
+                                音 (On): <span style={{ color: "#0f172a", fontWeight: "700" }}>{word.onyomi}</span>
+                              </div>
+                              <div style={{ fontSize: "12px", color: "#6b21a8", fontWeight: "700", marginTop: "2px", lineHeight: "1.3" }}>
+                                訓 (Kun): <span style={{ color: "#0f172a", fontWeight: "700" }}>{word.kunyomi}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div style={{ fontSize: activeLang === 'ja' ? "18px" : "16px", fontWeight: "800", color: "#0f172a", display: "flex", alignItems: "center", gap: "6px", userSelect: "text" }}>
+                              {primaryWord}
+                              {hasRule && (
+                                <span
+                                  title={activeLang === 'ja' ? (word.pronunciationRule || 'Japanese Pronunciation Rule') : (word.koreanBatchimRule || 'Batchim Rule')}
+                                  style={{
+                                    fontSize: "11px",
+                                    backgroundColor: activeLang === 'ja' ? "#f3e8ff" : "#fef3c7",
+                                    color: activeLang === 'ja' ? "#7e22ce" : "#92400e",
+                                    border: activeLang === 'ja' ? "1px solid #d8b4fe" : "1px solid #fde68a",
+                                    padding: "1px 6px",
+                                    borderRadius: "4px",
+                                    fontWeight: "700"
+                                  }}
+                                >
+                                  {ruleBadge}
+                                </span>
+                              )}
+                              {customVoiceForWord && (
+                                <span title="You uploaded a custom voice for this word!" style={{ fontSize: "11px", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 5px", borderRadius: "4px", fontWeight: "700" }}>
+                                  ⭐ My Voice
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: "13px", color: activeLang === 'ja' ? "#9333ea" : "#2563eb", fontWeight: "600", marginTop: "2px", userSelect: "text" }}>
+                              [{spokenWord}] · <span style={{ color: activeLang === 'ja' ? "#6b21a8" : "#1e40af", fontWeight: "600" }}>[{nepaliPhonetic || romaji}]</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                         {word.category && (
-                          <span style={{ fontSize: "14px", backgroundColor: "#f1f5f9", color: "#475569", padding: "3px 8px", borderRadius: "5px", fontWeight: "600", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: "11px", backgroundColor: word.isKanji ? "#faf5ff" : "#f1f5f9", color: word.isKanji ? "#7e22ce" : "#475569", border: word.isKanji ? "1px solid #e9d5ff" : "none", padding: "2px 7px", borderRadius: "5px", fontWeight: "700", whiteSpace: "nowrap" }}>
                             {word.category}
                           </span>
                         )}
@@ -1408,11 +2030,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                     </div>
 
                     {/* Translations */}
-                    <div style={{ margin: "10px 0 6px 0", display: "flex", flexDirection: "column", gap: "5px", userSelect: "text" }}>
-                      <div style={{ color: "#15803d", fontWeight: "600", fontSize: "14px", lineHeight: "1.4", userSelect: "text" }}>
+                    <div style={{ margin: "6px 0 4px 0", display: "flex", flexDirection: "column", gap: "3px", userSelect: "text" }}>
+                      <div style={{ color: "#15803d", fontWeight: "700", fontSize: "14px", lineHeight: "1.3", userSelect: "text" }}>
                         {word.nepali}
                       </div>
-                      <div style={{ color: "#334155", fontWeight: "600", fontSize: "14px", lineHeight: "1.4", userSelect: "text" }}>
+                      <div style={{ color: "#334155", fontWeight: "600", fontSize: "13px", lineHeight: "1.3", userSelect: "text" }}>
                         {word.english}
                       </div>
                     </div>
@@ -1423,7 +2045,7 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                         style={{
                           marginTop: "10px",
                           paddingTop: "9px",
-                          borderTop: "1.5px solid #bfdbfe",
+                          borderTop: activeLang === 'ja' ? "1.5px solid #e9d5ff" : "1.5px solid #bfdbfe",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
@@ -1437,11 +2059,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                         {customVoiceForWord && (
                           <button
                             type="button"
-                            onClick={() => handlePlayAudio(customVoiceForWord.url, `popup-custom-${word.korean}`)}
+                            onClick={() => handlePlayAudio(customVoiceForWord.url, `popup-custom-${primaryWord}`)}
                             title="Play your uploaded voice recording"
                             style={{
-                              backgroundColor: playingAudioId === `popup-custom-${word.korean}` ? "#15803d" : "#dcfce7",
-                              color: playingAudioId === `popup-custom-${word.korean}` ? "#ffffff" : "#15803d",
+                              backgroundColor: playingAudioId === `popup-custom-${primaryWord}` ? "#15803d" : "#dcfce7",
+                              color: playingAudioId === `popup-custom-${primaryWord}` ? "#ffffff" : "#15803d",
                               border: "1.5px solid #86efac",
                               borderRadius: "8px",
                               padding: "6px 10px",
@@ -1454,7 +2076,7 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                             }}
                           >
                             <span>⭐</span>
-                            <span>{playingAudioId === `popup-custom-${word.korean}` ? "⏹ Stop" : "▶ My Voice"}</span>
+                            <span>{playingAudioId === `popup-custom-${primaryWord}` ? "⏹ Stop" : "▶ My Voice"}</span>
                           </button>
                         )}
 
@@ -1464,16 +2086,22 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                             type="button"
                             onClick={() => {
                               if (selectedFemaleModel.isCustom && selectedFemaleModel.url) {
-                                handlePlayAudio(selectedFemaleModel.url, `popup-fem-${word.korean}`);
+                                handlePlayAudio(selectedFemaleModel.url, `popup-fem-${primaryWord}`);
                               } else {
-                                const url = `/api/tts?text=${encodeURIComponent(word.korean)}&lang=ko&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch)}&rate=${encodeURIComponent(selectedFemaleModel.rate)}`;
-                                handlePlayAudio(url, `popup-fem-${word.korean}`);
+                                const langCode = activeLang === 'ja' ? 'ja' : 'ko';
+                                const textToPlay = spokenWord || primaryWord;
+                                const voiceProfId = selectedFemaleModel.voiceProfileId || selectedFemaleModel.id;
+                                const isAi = selectedFemaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
+                                const url = isAi
+                                  ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`
+                                  : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedFemaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedFemaleModel.id || selectedFemaleModel.name || '')}`;
+                                handlePlayAudio(url, `popup-fem-${primaryWord}`);
                               }
                             }}
                             title={`Play in Female Voice (${selectedFemaleModel.name})`}
                             style={{
-                              backgroundColor: playingAudioId === `popup-fem-${word.korean}` ? "#be185d" : "transparent",
-                              color: playingAudioId === `popup-fem-${word.korean}` ? "#ffffff" : "#be185d",
+                              backgroundColor: playingAudioId === `popup-fem-${primaryWord}` ? "#be185d" : "transparent",
+                              color: playingAudioId === `popup-fem-${primaryWord}` ? "#ffffff" : "#be185d",
                               border: "none",
                               padding: "6px 10px",
                               fontSize: "13px",
@@ -1485,8 +2113,8 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                               whiteSpace: "nowrap"
                             }}
                           >
-                            <FemaleIcon size={22} isPlaying={playingAudioId === `popup-fem-${word.korean}`} />
-                            <span>{playingAudioId === `popup-fem-${word.korean}` ? "⏹ Stop" : "▶ Female"}</span>
+                            <FemaleIcon size={22} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
+                            <span>{playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ Female"}</span>
                           </button>
                           {!(typeof window !== 'undefined' && window.location.pathname.includes('/student')) && (
                             <button
@@ -1494,10 +2122,17 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (selectedFemaleModel.isCustom && selectedFemaleModel.url) {
-                                  handleDownloadAudio(selectedFemaleModel.url, `${word.korean}_custom_voice.mp3`);
+                                  handleDownloadAudio(selectedFemaleModel.url, `${primaryWord}_custom_voice.mp3`);
                                 } else {
-                                  const dlUrl = `/api/tts?text=${encodeURIComponent(word.korean)}&lang=ko&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch)}&rate=${encodeURIComponent(selectedFemaleModel.rate)}&download=true`;
-                                  handleDownloadAudio(dlUrl, `${word.koreanRomanized || word.korean}_female_${selectedFemaleModel.name}.mp3`);
+                                  const langCode = activeLang === 'ja' ? 'ja' : 'ko';
+                                  const textToPlay = spokenWord || primaryWord;
+                                  const voiceProfId = selectedFemaleModel.voiceProfileId || selectedFemaleModel.id;
+                                  const isAi = selectedFemaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
+                                  const filename = `${romaji || primaryWord}_female_${(selectedFemaleModel.name || 'voice').replace(/\s+/g, '_')}.mp3`;
+                                  const dlUrl = isAi
+                                    ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`
+                                    : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedFemaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedFemaleModel.id || selectedFemaleModel.name || '')}&download=true`;
+                                  handleDownloadAudio(dlUrl, filename);
                                 }
                               }}
                               title="Download Female Voice (MP3)"
@@ -1525,16 +2160,22 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                             type="button"
                             onClick={() => {
                               if (selectedMaleModel.isCustom && selectedMaleModel.url) {
-                                handlePlayAudio(selectedMaleModel.url, `popup-male-${word.korean}`);
+                                handlePlayAudio(selectedMaleModel.url, `popup-male-${primaryWord}`);
                               } else {
-                                const url = `/api/tts?text=${encodeURIComponent(word.korean)}&lang=ko&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch)}&rate=${encodeURIComponent(selectedMaleModel.rate)}`;
-                                handlePlayAudio(url, `popup-male-${word.korean}`);
+                                const langCode = activeLang === 'ja' ? 'ja' : 'ko';
+                                const textToPlay = spokenWord || primaryWord;
+                                const voiceProfId = selectedMaleModel.voiceProfileId || selectedMaleModel.id;
+                                const isAi = selectedMaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
+                                const url = isAi
+                                  ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`
+                                  : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedMaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedMaleModel.id || selectedMaleModel.name || '')}`;
+                                handlePlayAudio(url, `popup-male-${primaryWord}`);
                               }
                             }}
                             title={`Play in Male Voice (${selectedMaleModel.name})`}
                             style={{
-                              backgroundColor: playingAudioId === `popup-male-${word.korean}` ? "#0284c7" : "transparent",
-                              color: playingAudioId === `popup-male-${word.korean}` ? "#ffffff" : "#0369a1",
+                              backgroundColor: playingAudioId === `popup-male-${primaryWord}` ? "#0284c7" : "transparent",
+                              color: playingAudioId === `popup-male-${primaryWord}` ? "#ffffff" : "#0369a1",
                               border: "none",
                               padding: "6px 10px",
                               fontSize: "13px",
@@ -1546,8 +2187,8 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                               whiteSpace: "nowrap"
                             }}
                           >
-                            <MaleIcon size={22} isPlaying={playingAudioId === `popup-male-${word.korean}`} />
-                            <span>{playingAudioId === `popup-male-${word.korean}` ? "⏹ Stop" : "▶ Male"}</span>
+                            <MaleIcon size={22} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
+                            <span>{playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ Male"}</span>
                           </button>
                           {!(typeof window !== 'undefined' && window.location.pathname.includes('/student')) && (
                             <button
@@ -1555,10 +2196,17 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (selectedMaleModel.isCustom && selectedMaleModel.url) {
-                                  handleDownloadAudio(selectedMaleModel.url, `${word.korean}_custom_voice.mp3`);
+                                  handleDownloadAudio(selectedMaleModel.url, `${primaryWord}_custom_voice.mp3`);
                                 } else {
-                                  const dlUrl = `/api/tts?text=${encodeURIComponent(word.korean)}&lang=ko&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch)}&rate=${encodeURIComponent(selectedMaleModel.rate)}&download=true`;
-                                  handleDownloadAudio(dlUrl, `${word.koreanRomanized || word.korean}_male_${selectedMaleModel.name}.mp3`);
+                                  const langCode = activeLang === 'ja' ? 'ja' : 'ko';
+                                  const textToPlay = spokenWord || primaryWord;
+                                  const voiceProfId = selectedMaleModel.voiceProfileId || selectedMaleModel.id;
+                                  const isAi = selectedMaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
+                                  const filename = `${romaji || primaryWord}_male_${(selectedMaleModel.name || 'voice').replace(/\s+/g, '_')}.mp3`;
+                                  const dlUrl = isAi
+                                    ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`
+                                    : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedMaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedMaleModel.id || selectedMaleModel.name || '')}&download=true`;
+                                  handleDownloadAudio(dlUrl, filename);
                                 }
                               }}
                               title="Download Male Voice (MP3)"
@@ -1580,7 +2228,6 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                           )}
                         </div>
 
-
                       </div>
                     )}
                   </div>
@@ -1596,8 +2243,8 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                   onClick={() => setDisplayLimit(prev => prev + 24)}
                   style={{
                     backgroundColor: "#f8fafc",
-                    color: "#2563eb",
-                    border: "1.5px solid #bfdbfe",
+                    color: activeLang === 'ja' ? "#9333ea" : "#2563eb",
+                    border: activeLang === 'ja' ? "1.5px solid #d8b4fe" : "1.5px solid #bfdbfe",
                     padding: "8px 24px",
                     borderRadius: "8px",
                     fontSize: "14px",
@@ -1605,7 +2252,7 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                     cursor: "pointer"
                   }}
                 >
-                  ➕ Show More ({filteredWords.length - displayLimit} words remaining)
+                  Show More ({filteredWords.length - displayLimit} words remaining)
                 </button>
               </div>
             )}
@@ -1613,8 +2260,12 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
         )}
       </div>
 
-      {/* WHOLE BATCHIM (받침) RULES GUIDE & 11 DUAL BATCHIMS */}
-      <BatchimRulesGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
+      {/* PRONUNCIATION RULES GUIDE (DYNAMICALLY SWITCHES BETWEEN KOREAN BATCHIM AND JAPANESE KANA & PHONOLOGY) */}
+      {activeLang === 'ja' ? (
+        <JapanesePronunciationGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
+      ) : (
+        <BatchimRulesGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
+      )}
 
       {/* 🎙️ USER OWN VOICE RECORDING, AUDIO UPLOAD & VOICE LIBRARY STUDIO MODAL */}
       {showVoiceStudio && (
@@ -1652,8 +2303,10 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
           >
             {/* Modal Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "24px" }}>🎙️</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ width: "36px", height: "36px", borderRadius: "8px", backgroundColor: "#eff6ff", color: "#2563eb", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                </span>
                 <div>
                   <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#0f172a" }}>Voice Library & Speech Studio</h3>
                   <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>आफ्नो आवाज अडियो अपलोड गर्नुहोस् र भ्वाइस लाइब्रेरीमा सेट गर्नुहोस्</p>
@@ -1669,16 +2322,25 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
             </div>
 
             {/* Target Word Display */}
-            <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", border: "1.5px solid #e2e8f0", padding: "14px", textAlign: "center", marginBottom: "16px" }}>
-              <div style={{ fontSize: "26px", fontWeight: "900", color: "#1e3a8a", marginBottom: "2px" }}>
-                {currentActiveWord?.korean || searchQuery || "한국어"}
+            <div style={{ backgroundColor: activeLang === 'ja' ? "#faf5ff" : "#f8fafc", borderRadius: "12px", border: activeLang === 'ja' ? "1.5px solid #e9d5ff" : "1.5px solid #e2e8f0", padding: "14px", textAlign: "center", marginBottom: "16px" }}>
+              <div style={{ fontSize: (activeLang === 'ja' && currentActiveWord?.isKanji) ? "36px" : "24px", fontWeight: "900", color: activeLang === 'ja' ? "#7e22ce" : "#1e3a8a", marginBottom: "2px", lineHeight: 1.1 }}>
+                {uploadTargetWord.trim() || (activeLang === 'ja'
+                  ? (currentActiveWord?.kanji || currentActiveWord?.japanese || searchQuery || "日本語")
+                  : (currentActiveWord?.korean || searchQuery || "한국어"))}
               </div>
-              <div style={{ fontSize: "13px", color: "#2563eb", fontWeight: "700" }}>
-                [{currentActiveWord?.koreanSpoken || currentActiveWord?.korean || "korean"}] · [{currentActiveWord?.koreanNepaliRomanized || currentActiveWord?.koreanRomanized || "korean"}]
+              <div style={{ fontSize: "13px", color: activeLang === 'ja' ? "#9333ea" : "#2563eb", fontWeight: "700" }}>
+                {activeLang === 'ja'
+                  ? `[${currentActiveWord?.japaneseSpoken || currentActiveWord?.japanese || "japanese"}] · [${currentActiveWord?.japaneseNepaliRomanized || currentActiveWord?.japaneseRomanized || "japanese"}]`
+                  : `[${currentActiveWord?.koreanSpoken || currentActiveWord?.korean || "korean"}] · [${currentActiveWord?.koreanNepaliRomanized || currentActiveWord?.koreanRomanized || "korean"}]`}
               </div>
               <div style={{ marginTop: "4px", fontSize: "13px", color: "#15803d", fontWeight: "600" }}>
                 {currentActiveWord?.nepali || "नेपाली अर्थ"}
               </div>
+              {uploadWordScope === 'particular' && uploadTargetWord.trim() && (
+                <div style={{ marginTop: "6px", display: "inline-block", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: "20px", padding: "2px 10px", fontSize: "11px", fontWeight: "800" }}>
+                  🎯 Voice will speak for &ldquo;{uploadTargetWord.trim()}&rdquo; on search
+                </div>
+              )}
             </div>
 
             {/* Studio Navigation Tabs */}
@@ -1792,50 +2454,134 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                   />
                 </div>
 
-                {/* Scope: Current Word vs All Words */}
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
-                      Apply Voice To:
+                {/* Scope Selection: Particular Word vs All Words */}
+                <div style={{ backgroundColor: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: "10px", padding: "14px" }}>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#1e293b", marginBottom: "8px" }}>
+                    🎯 Speech Setting (यो आवाज कहाँ प्रयोग गर्ने?):
+                  </label>
+                  <div style={{ display: "flex", gap: "12px", marginBottom: "10px" }}>
+                    <label style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderRadius: "8px", border: uploadWordScope === 'particular' ? "1.5px solid #10b981" : "1px solid #cbd5e1", backgroundColor: uploadWordScope === 'particular' ? "#f0fdf4" : "#ffffff", cursor: "pointer", transition: "all 0.15s ease" }}>
+                      <input
+                        type="radio"
+                        name="uploadWordScope"
+                        value="particular"
+                        checked={uploadWordScope === 'particular'}
+                        onChange={() => setUploadWordScope('particular')}
+                        style={{ accentColor: "#10b981" }}
+                      />
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: "800", color: uploadWordScope === 'particular' ? "#166534" : "#334155" }}>
+                          🎯 Particular Word
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#64748b" }}>
+                          Use for a specific word speech
+                        </div>
+                      </div>
                     </label>
-                    <select
-                      value={uploadWordScope}
-                      onChange={(e) => setUploadWordScope(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "9px 12px",
-                        borderRadius: "8px",
-                        border: "1.5px solid #cbd5e1",
-                        fontSize: "13px",
-                        fontWeight: "600"
-                      }}
-                    >
-                      <option value="current">Current Word Only ({currentActiveWord?.korean || "This Word"})</option>
-                      <option value="all">Global (All Words / Default Speech)</option>
-                    </select>
+
+                    <label style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderRadius: "8px", border: uploadWordScope === 'all' ? "1.5px solid #2563eb" : "1px solid #cbd5e1", backgroundColor: uploadWordScope === 'all' ? "#eff6ff" : "#ffffff", cursor: "pointer", transition: "all 0.15s ease" }}>
+                      <input
+                        type="radio"
+                        name="uploadWordScope"
+                        value="all"
+                        checked={uploadWordScope === 'all'}
+                        onChange={() => setUploadWordScope('all')}
+                        style={{ accentColor: "#2563eb" }}
+                      />
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: "800", color: uploadWordScope === 'all' ? "#1e40af" : "#334155" }}>
+                          🌐 All Words (Global)
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#64748b" }}>
+                          Default voice for all words
+                        </div>
+                      </div>
+                    </label>
                   </div>
 
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
-                      Voice Category:
-                    </label>
-                    <select
-                      value={uploadGender}
-                      onChange={(e) => setUploadGender(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "9px 12px",
-                        borderRadius: "8px",
-                        border: "1.5px solid #cbd5e1",
-                        fontSize: "13px",
-                        fontWeight: "600"
-                      }}
-                    >
-                      <option value="female">👩 Female Library Slot</option>
-                      <option value="male">👨 Male Library Slot</option>
-                      <option value="user">🎙️ Personal Custom Slot</option>
-                    </select>
-                  </div>
+                  {/* If Particular Word is selected: Provide Word Input & Quick Fill */}
+                  {uploadWordScope === 'particular' && (
+                    <div style={{ backgroundColor: "#ffffff", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px", marginTop: "8px" }}>
+                      <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#166534", marginBottom: "4px" }}>
+                        Word to Speak for (कुन शब्द खोज्दा वा बोल्दा यो आवाज प्रयोग गर्ने?):
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 학교, 학생, 食べる, arigatou, school, ghar, पानी..."
+                        value={uploadTargetWord}
+                        onChange={(e) => setUploadTargetWord(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "9px 12px",
+                          borderRadius: "6px",
+                          border: "1.5px solid #86efac",
+                          fontSize: "14px",
+                          fontWeight: "700",
+                          color: "#0f172a",
+                          outline: "none"
+                        }}
+                      />
+
+                      {/* Quick-fill Pills */}
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px", alignItems: "center" }}>
+                        <span style={{ fontSize: "11px", color: "#15803d", fontWeight: "700" }}>Quick fill:</span>
+                        {searchQuery.trim() && (
+                          <button
+                            type="button"
+                            onClick={() => setUploadTargetWord(searchQuery.trim())}
+                            style={{ backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                          >
+                            🔍 Searched: &ldquo;{searchQuery.trim()}&rdquo;
+                          </button>
+                        )}
+                        {activeWordString && (
+                          <button
+                            type="button"
+                            onClick={() => setUploadTargetWord(activeWordString)}
+                            style={{ backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                          >
+                            📖 Active Word: &ldquo;{activeWordString}&rdquo;
+                          </button>
+                        )}
+                        {uploadTargetWord && (
+                          <button
+                            type="button"
+                            onClick={() => setUploadTargetWord('')}
+                            style={{ backgroundColor: "#f1f5f9", color: "#64748b", border: "1px solid #cbd5e1", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", cursor: "pointer" }}
+                          >
+                            ✕ Clear
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={{ fontSize: "11px", color: "#166534", marginTop: "7px" }}>
+                        💡 Searching for &ldquo;<strong>{uploadTargetWord.trim() || 'this word'}</strong>&rdquo; in the dictionary will automatically play this uploaded custom voice!
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Voice Category */}
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
+                    Voice Category Slot:
+                  </label>
+                  <select
+                    value={uploadGender}
+                    onChange={(e) => setUploadGender(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "9px 12px",
+                      borderRadius: "8px",
+                      border: "1.5px solid #cbd5e1",
+                      fontSize: "13px",
+                      fontWeight: "600"
+                    }}
+                  >
+                    <option value="female">👩 Female Library Slot</option>
+                    <option value="male">👨 Male Library Slot</option>
+                    <option value="user">🎙️ Personal Custom Slot</option>
+                  </select>
                 </div>
 
                 {/* Submit Button */}
@@ -1858,7 +2604,11 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                     gap: "8px"
                   }}
                 >
-                  <span>{isUploading ? "Uploading & Saving..." : "💾 Upload & Set in Voice Library"}</span>
+                  <span>
+                    {isUploading
+                      ? "Uploading & Saving..."
+                      : `💾 Upload & Set Voice for ${uploadWordScope === 'particular' ? `"${uploadTargetWord.trim() || 'Particular Word'}"` : 'All Words'}`}
+                  </span>
                 </button>
               </form>
             )}
@@ -1955,6 +2705,68 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                       </button>
                     </div>
 
+                    {/* Recording Target Word Scope */}
+                    <div style={{ backgroundColor: "#ffffff", border: "1px solid #a7f3d0", borderRadius: "8px", padding: "10px", marginBottom: "10px" }}>
+                      <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#065f46", marginBottom: "6px" }}>
+                        🎯 Apply Recording to Word:
+                      </label>
+                      <div style={{ display: "flex", gap: "10px", marginBottom: "6px" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "700", color: "#065f46", cursor: "pointer" }}>
+                          <input
+                            type="radio"
+                            name="recordWordScope"
+                            value="particular"
+                            checked={uploadWordScope === 'particular'}
+                            onChange={() => setUploadWordScope('particular')}
+                            style={{ accentColor: "#059669" }}
+                          />
+                          Particular Word
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "700", color: "#065f46", cursor: "pointer" }}>
+                          <input
+                            type="radio"
+                            name="recordWordScope"
+                            value="all"
+                            checked={uploadWordScope === 'all'}
+                            onChange={() => setUploadWordScope('all')}
+                            style={{ accentColor: "#059669" }}
+                          />
+                          All Words
+                        </label>
+                      </div>
+                      {uploadWordScope === 'particular' && (
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="Type word: e.g. 학교, 食べる, arigatou..."
+                            value={uploadTargetWord}
+                            onChange={(e) => setUploadTargetWord(e.target.value)}
+                            style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #6ee7b7", fontSize: "13px", fontWeight: "700", outline: "none" }}
+                          />
+                          <div style={{ display: "flex", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
+                            {searchQuery.trim() && (
+                              <button
+                                type="button"
+                                onClick={() => setUploadTargetWord(searchQuery.trim())}
+                                style={{ backgroundColor: "#dcfce7", color: "#065f46", border: "1px solid #86efac", padding: "1px 6px", borderRadius: "3px", fontSize: "10px", cursor: "pointer" }}
+                              >
+                                🔍 &ldquo;{searchQuery.trim()}&rdquo;
+                              </button>
+                            )}
+                            {activeWordString && (
+                              <button
+                                type="button"
+                                onClick={() => setUploadTargetWord(activeWordString)}
+                                style={{ backgroundColor: "#dcfce7", color: "#065f46", border: "1px solid #86efac", padding: "1px 6px", borderRadius: "3px", fontSize: "10px", cursor: "pointer" }}
+                              >
+                                📖 &ldquo;{activeWordString}&rdquo;
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <div style={{ marginBottom: "10px" }}>
                       <input
                         type="text"
@@ -1981,7 +2793,9 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                         cursor: "pointer"
                       }}
                     >
-                      {isUploading ? "Saving to Library..." : "💾 Save Recording & Set in Voice Library"}
+                      {isUploading
+                        ? "Saving to Library..."
+                        : `💾 Save Recording for ${uploadWordScope === 'particular' ? `"${uploadTargetWord.trim() || 'Particular Word'}"` : 'All Words'}`}
                     </button>
                   </div>
                 )}
@@ -2008,6 +2822,7 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {voiceLibrary.map((voice) => {
                       const isVoiceActive = activeCustomVoice?.id === voice.id || voice.isDefault;
+                      const isEditingThis = editingVoiceId === voice.id;
                       return (
                         <div
                           key={voice.id}
@@ -2023,18 +2838,84 @@ export default function DictionarySection({ title = "📖 Multi-Language Diction
                             gap: "8px"
                           }}
                         >
-                          <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ flex: "1 1 220px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                               <span style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>⭐ {voice.name}</span>
                               {isVoiceActive && (
                                 <span style={{ backgroundColor: "#10b981", color: "white", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "800" }}>
                                   ✓ ACTIVE
                                 </span>
                               )}
+                              {voice.word && voice.word !== 'all' ? (
+                                <span style={{ backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 7px", borderRadius: "4px", fontSize: "11px", fontWeight: "800" }}>
+                                  🎯 Word: &ldquo;{voice.word}&rdquo;
+                                </span>
+                              ) : (
+                                <span style={{ backgroundColor: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "1px 7px", borderRadius: "4px", fontSize: "11px", fontWeight: "800" }}>
+                                  🌐 All Words
+                                </span>
+                              )}
                             </div>
-                            <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                              Target: <strong style={{ color: "#2563eb" }}>{voice.word === 'all' ? 'All Words' : voice.word}</strong> · Added: {voice.createdAt || 'Recent'}
-                            </div>
+
+                            {/* Inline Edit Target Word */}
+                            {isEditingThis ? (
+                              <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "6px" }}>
+                                <input
+                                  type="text"
+                                  value={editingWordValue}
+                                  onChange={(e) => setEditingWordValue(e.target.value)}
+                                  placeholder="Word (e.g. 학교, 食べる, all)"
+                                  style={{ padding: "4px 8px", fontSize: "12px", borderRadius: "6px", border: "1.5px solid #2563eb", width: "150px" }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedWord = editingWordValue.trim() || 'all';
+                                    const updated = voiceLibrary.map(v => v.id === voice.id ? { ...v, word: updatedWord } : v);
+                                    saveVoiceLibrary(updated);
+                                    setEditingVoiceId(null);
+                                    alert(`Voice "${voice.name}" target word set to "${updatedWord}"!`);
+                                  }}
+                                  style={{ backgroundColor: "#10b981", color: "white", border: "none", borderRadius: "4px", padding: "4px 8px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                                >
+                                  ✓ Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingVoiceId(null)}
+                                  style={{ backgroundColor: "#f1f5f9", color: "#64748b", border: "none", borderRadius: "4px", padding: "4px 8px", fontSize: "11px", cursor: "pointer" }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: "11px", color: "#64748b", marginTop: "3px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                <span>Added: {voice.createdAt || 'Recent'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingVoiceId(voice.id);
+                                    setEditingWordValue(voice.word || '');
+                                  }}
+                                  style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", fontWeight: "700", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                                >
+                                  ✏️ Change Target Word
+                                </button>
+                                {searchQuery.trim() && voice.word?.toLowerCase() !== searchQuery.trim().toLowerCase() && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = voiceLibrary.map(v => v.id === voice.id ? { ...v, word: searchQuery.trim() } : v);
+                                      saveVoiceLibrary(updated);
+                                      alert(`Voice "${voice.name}" is now set to speak for searched word "${searchQuery.trim()}"!`);
+                                    }}
+                                    style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #93c5fd", borderRadius: "4px", padding: "1px 6px", fontSize: "10px", fontWeight: "700", cursor: "pointer" }}
+                                  >
+                                    🎯 Set for Searched &ldquo;{searchQuery.trim()}&rdquo;
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

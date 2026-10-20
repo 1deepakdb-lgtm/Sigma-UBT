@@ -95,11 +95,11 @@ export default function AdminStudentsPage() {
         stu.id === editId ? { ...stu, ...formData, instituteName: targetInst, expiryDate: calculatedExpiryDate } : stu
       );
       allStudents[targetInst] = updated;
-      alert("✅ Student updated successfully!");
+      alert("Student updated successfully!");
     } else {
       const exists = currentInstStudents.some((s) => s.phone === formData.phone);
       if (exists) {
-        alert("❌ This student phone number is already registered under this institute!");
+        alert("This student phone number is already registered under this institute!");
         return;
       }
       const newStudent = {
@@ -110,14 +110,30 @@ export default function AdminStudentsPage() {
         status: "Active"
       };
       allStudents[targetInst] = [...currentInstStudents, newStudent];
-      alert("✅ Student registered successfully!");
+
+      // Persist student to backend database for seamless student login
+      fetch("/api/institute/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          username: formData.phone,
+          password: formData.password || "1234",
+          phone: formData.phone,
+          batch: formData.assignedPackage || "Full Set UBT",
+          status: "Active",
+          instituteId: targetInst
+        })
+      }).catch(err => console.warn("Background student sync notice:", err));
+
+      alert("Student registered successfully! They can log in with Phone: " + formData.phone + " and Password: " + (formData.password || "1234"));
     }
 
     localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
 
     // Also sync user credentials for student login
     const globalUsers = JSON.parse(localStorage.getItem("users") || "{}");
-    globalUsers[formData.phone] = { name: formData.name, password: formData.password };
+    globalUsers[formData.phone] = { name: formData.name, password: formData.password || "1234" };
     localStorage.setItem("users", JSON.stringify(globalUsers));
 
     resetForm();
@@ -205,7 +221,7 @@ export default function AdminStudentsPage() {
   const contentStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto" };
   const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "25px", border: "1px solid #e2e8f0" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", marginTop: "15px", backgroundColor: "white", borderRadius: "8px", overflow: "hidden" };
-  const thStyle = { backgroundColor: "#1e3a8a", color: "white", padding: "12px 15px", textAlign: "left", fontSize: "14px", fontWeight: "bold" };
+  const thStyle = { backgroundColor: "#f8fafc", color: "#475569", padding: "14px 16px", textAlign: "left", fontSize: "13px", fontWeight: "700", borderBottom: "2px solid #e2e8f0" };
   const tdStyle = { padding: "12px 15px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", fontSize: "14px" };
   const inputStyle = { width: "100%", padding: "10px", marginBottom: "12px", borderRadius: "6px", border: "1px solid #cbd5e1", boxSizing: "border-box", backgroundColor: "white" };
 
@@ -382,13 +398,13 @@ export default function AdminStudentsPage() {
         <div style={cardStyle}>
           <table style={tableStyle}>
             <thead>
-              <tr>
-                <th style={thStyle}>Student Name</th>
+              <tr style={{ backgroundColor: "#f8fafc" }}>
+                <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
                 <th style={thStyle}>Institute</th>
                 <th style={thStyle}>Phone (Login ID)</th>
                 <th style={thStyle}>Package & Expiry</th>
                 <th style={thStyle}>Status</th>
-                <th style={thStyle}>Actions</th>
+                <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
               </tr>
             </thead>
             <tbody>

@@ -17,6 +17,7 @@ import { useRouter, useParams, usePathname } from "next/navigation";
 import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
 import InstituteBillingSection from "@/components/InstituteBillingSection";
+import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import { performLogout } from "@/lib/clientAuth";
 
 const InstituteDashboard = () => {
@@ -779,7 +780,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
             Billing
           </button>
           
-          <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>EPS Book</button>
+          <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>Books</button>
           <button onClick={() => handleTabChange("dictionary")} style={getNavBtnStyle("dictionary")}>Dictionary</button>
           <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>EPS Notices</button>
           {userRole !== "staff" && (
@@ -1620,42 +1621,14 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
 
         {/* DICTIONARY TAB */}
         {activeTab === "dictionary" && (
-          <DictionarySection title="📖 Multi-Language Dictionary" />
+          <DictionarySection />
         )}
 
         {activeTab === "news" && (
           <div>
             <div style={{ marginBottom: "35px" }}>
-             <h1 style={{ color: "#1e293b", marginBottom: "20px", textAlign: "center" }}>Notice Board & Official Portals</h1>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "15px" }}>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📄</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Official Notices</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(2,132,199,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📰</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Official News</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(5,150,105,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📝</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>New Application Portal</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(217,119,6,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>🔍</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>EPS Result Checker</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(124,58,237,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>📋</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Job Application Form</h4>
-                </a>
-                <a href="https://eps.hrdkorea.or.kr" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)", borderRadius: "12px", padding: "25px 20px", textAlign: "center", textDecoration: "none", color: "white", boxShadow: "0 4px 12px rgba(15,118,110,0.2)" }}>
-                  <div style={{ width: "55px", height: "55px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto", fontSize: "24px" }}>🏛️</div>
-                  <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>HRD Korea Notice Board</h4>
-                </a>
-              </div>
+              <h1 style={{ color: "#1e293b", marginBottom: "20px", textAlign: "center" }}>Notice Board & Official Portals</h1>
+              <OfficialPortalButtons />
             </div>
 
             <div style={cardStyle}>

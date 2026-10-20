@@ -14,8 +14,8 @@ const ROUTE_PERMISSIONS = [
   { prefix: '/institute', allowedRoles: ['institute', 'admin', 'staff'] },
   { prefix: '/api/institute', allowedRoles: ['institute', 'admin', 'staff'] },
   // Student-level routes
-  { prefix: '/student', allowedRoles: ['student'] },
-  { prefix: '/api/student', allowedRoles: ['student'] },
+  { prefix: '/student', allowedRoles: ['student', 'admin', 'institute'] },
+  { prefix: '/api/student', allowedRoles: ['student', 'admin', 'institute'] },
   // Upload: admin and institute only (not staff)
   { prefix: '/api/upload', allowedRoles: ['admin', 'institute'] },
 ];

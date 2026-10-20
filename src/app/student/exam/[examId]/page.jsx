@@ -81,7 +81,61 @@ const StudentExam = () => {
       const targetSetName = currentExamSet ? currentExamSet.name : `Chapterwise 0${examId}`;
       setExactExamName(targetSetName);
 
+      // Check Private Institute Bucket Access Authorization
+      if (currentExamSet && currentExamSet.creatorInstituteName && !currentExamSet.isPublished) {
+        const currentStudentPhone = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone")) : null;
+        const allInstituteStudents = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("instituteStudents") || "{}") : {};
+        const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);
+        const targetCleanPhone = cleanDigits(currentStudentPhone);
+        const isMatchingPhone = (phone) => {
+          if (!phone || !currentStudentPhone) return false;
+          if (phone === currentStudentPhone) return true;
+          const c = cleanDigits(phone);
+          return Boolean(c && targetCleanPhone && c === targetCleanPhone);
+        };
+
+        let studentInstitute = null;
+        for (const inst in allInstituteStudents) {
+          if ((allInstituteStudents[inst] || []).some(s => isMatchingPhone(s.phone))) {
+            studentInstitute = inst;
+            break;
+          }
+        }
+        if (!studentInstitute || studentInstitute.toLowerCase() !== currentExamSet.creatorInstituteName.toLowerCase()) {
+          alert(`Access Restricted: This exam set is in the private bucket of "${currentExamSet.creatorInstituteName}". Students from other institutes cannot access it.`);
+          router.push("/student");
+          return;
+        }
+      }
+
       const targetPackageName = currentExamSet ? currentExamSet.packageName : "";
+
+      // Check Model Question Bank Authorization
+      const isModelBank = 
+        targetPackageName?.toLowerCase().includes("model") || 
+        examId?.toString().includes("ubt-model-set") ||
+        currentExamSet?.name?.toLowerCase().includes("model");
+
+      if (isModelBank) {
+        let allowedPkgs = [];
+        const myPkg = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPackage") || "") : "";
+        if (myPkg) allowedPkgs.push(myPkg);
+        const currentStudentPhone = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone")) : null;
+        const studentsList = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("studentsList") || "[]") : [];
+        const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);
+        const foundStudent = studentsList.find(s => s.phone && cleanDigits(s.phone) === cleanDigits(currentStudentPhone));
+        if (foundStudent) {
+          if (foundStudent.assignedPackage || foundStudent.package) allowedPkgs.push(foundStudent.assignedPackage || foundStudent.package);
+          if (Array.isArray(foundStudent.assignedPackages)) allowedPkgs.push(...foundStudent.assignedPackages);
+        }
+        const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const hasModelBank = allowedPkgs.map(norm).some(p => p.includes("modelquestion") || p.includes("modelbank"));
+        if (!hasModelBank) {
+          alert(`Access Restricted: This exam set belongs to "Model Question Bank" which must be purchased separately. It is not included in "${myPkg || 'Full Set UBT'}".`);
+          router.push("/student");
+          return;
+        }
+      }
 
       let matchedQuestions = allQuestions.filter(q => 
         q && (
@@ -332,8 +386,11 @@ const StudentExam = () => {
     return (
       <div style={{ width: "100vw", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif", boxSizing: "border-box", ...protectedStyle }} onContextMenu={(e) => e.preventDefault()}>
         <div style={{ backgroundColor: "white", padding: "40px", borderRadius: "16px", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", textAlign: "center", border: "1px solid #e2e8f0", maxWidth: "500px", width: "100%" }}>
-          <div style={{ width: "80px", height: "80px", backgroundColor: "#0284c7", borderRadius: "50%", margin: "0 auto 20px auto", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "35px", boxShadow: "0 4px 10px rgba(2,132,199,0.3)" }}>
-            🎓
+          <div style={{ width: "80px", height: "80px", backgroundColor: "#0284c7", borderRadius: "50%", margin: "0 auto 20px auto", display: "flex", alignItems: "center", justifyContent: "center", color: "white", boxShadow: "0 4px 10px rgba(2,132,199,0.3)" }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
           </div>
           <h2 style={{ color: "#0f172a", fontSize: "28px", marginTop: 0, marginBottom: "8px", fontWeight: "800" }}>EPS-TOPIK UBT Exam</h2>
           <p style={{ color: "#64748b", margin: "0 0 25px 0", fontSize: "15px" }}>Please verify your details before starting</p>
@@ -712,7 +769,7 @@ const StudentExam = () => {
                       }}
                       style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "9px 18px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
                     >
-                      ☷ TOTAL QUESTION
+                      TOTAL QUESTIONS
                     </button>
                     <button 
                       type="button"

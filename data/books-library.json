@@ -1,0 +1,50 @@
+{
+  "folders": [
+    {
+      "id": "eps-book",
+      "name": "EPS Book",
+      "icon": "",
+      "coverImage": "/images/books/eps-book-cover.svg",
+      "description": "Official 60-Chapter Korean EPS-TOPIK Textbook with Audio & PDFs",
+      "isSystem": true
+    },
+    {
+      "id": "meaning-book",
+      "name": "Meaning Book",
+      "icon": "",
+      "coverImage": "/images/books/meaning-book-cover.svg",
+      "description": "Chapter-wise Korean Vocabulary & Word Meanings (Chapters 1 to 60)",
+      "isSystem": false
+    },
+    {
+      "id": "model-question-bank",
+      "name": "Model Question Bank",
+      "icon": "",
+      "coverImage": "/images/books/model-bank-cover.svg",
+      "description": "UBT Exam Practice Question Sets (Reading 20 + Listening 20) with Time and Audio",
+      "isSystem": false
+    },
+    {
+      "id": "grammar-book",
+      "name": "Grammar Book",
+      "icon": "",
+      "coverImage": "/images/books/grammar-book-cover.svg",
+      "description": "Comprehensive Korean Grammar Rules, Patterns & Examples",
+      "isSystem": false
+    }
+  ],
+  "materials": [
+    {
+      "id": "mat-1",
+      "folder": "Meaning Book",
+      "title": "EPS-TOPIK Essential Word Meaning Book",
+      "description": "Over 2,000 important Korean vocabulary items with Nepali & English meanings, organized by topic.",
+      "fileUrl": "/uploads/1789886599307_dep.pdf",
+      "fileName": "EPS_Essential_Word_Meaning.pdf",
+      "fileType": "pdf",
+      "fileSize": "2.4 MB",
+      "uploadedBy": "Super Admin",
+      "uploadedAt": "2026-10-10"
+    }
+  ]
+}
