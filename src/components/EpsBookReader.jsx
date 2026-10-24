@@ -20,6 +20,8 @@ import JapanesePronunciationGuide from "@/components/JapanesePronunciationGuide"
 import { KANJI_1000_LIST } from "@/lib/kanji1000Data";
 import JlptMockExamModal from "@/components/JlptMockExamModal";
 import { JLPT_MOCK_SETS_META, getMockExamSetById } from "@/data/jlptMockTestData";
+import KoreanMeaningBookView from "@/components/KoreanMeaningBookView";
+import KoreanGrammarBookView from "@/components/KoreanGrammarBookView";
 
 // In-memory thumbnail cache across renders
 const pdfCoverMemoryCache = new Map();
@@ -726,6 +728,8 @@ export default function EpsBookReader({
   // Primary Language Track State: "korean" | "japanese"
   const [studyLanguage, setStudyLanguage] = useState("korean");
   const [activeJapaneseFolder, setActiveJapaneseFolder] = useState("JLPT N5・N4");
+  const [isJapaneseFolderOpen, setIsJapaneseFolderOpen] = useState(false);
+  const [isKoreanFolderOpen, setIsKoreanFolderOpen] = useState(false);
   const [minnaLessonFilter, setMinnaLessonFilter] = useState("all"); // "all", "n5", "n4", "full"
   const [minnaSearchQuery, setMinnaSearchQuery] = useState("");
   const [viewingMinnaLesson, setViewingMinnaLesson] = useState(null);
@@ -928,20 +932,20 @@ export default function EpsBookReader({
 
   // Multi-Folder Books Library State
   const DEFAULT_FOLDERS = [
-    { id: "eps-book", name: "EPS Book", icon: "", coverImage: "/images/books/eps-book-cover.svg", description: "Official 60-Chapter Korean EPS-TOPIK Textbook with Audio & PDFs" },
-    { id: "meaning-book", name: "Meaning Book", icon: "", coverImage: "/images/books/meaning-book-cover.svg", description: "Chapter-wise Korean Vocabulary & Word Meanings (Chapters 1 to 60)" },
-    { id: "model-question-bank", name: "Model Question Bank", icon: "", coverImage: "/images/books/model-bank-cover.svg", description: "UBT Exam Practice Question Sets (Reading 20 + Listening 20) with Time and Audio" },
-    { id: "grammar-book", name: "Grammar Book", icon: "", coverImage: "/images/books/grammar-book-cover.svg", description: "Comprehensive Korean Grammar Rules, Patterns & Examples" }
+    { id: "eps-book", name: "EPS Book", icon: "", coverImage: "/images/books/eps-book-cover.jpg", description: "Official 60-Chapter Korean EPS-TOPIK Textbook with Audio & PDFs" },
+    { id: "meaning-book", name: "Meaning Book", icon: "", coverImage: "/images/books/meaning-book-cover.jpg", description: "Chapter-wise Korean Vocabulary & Word Meanings (Chapters 1 to 60)" },
+    { id: "model-question-bank", name: "Model Question Bank", icon: "", coverImage: "/images/books/model-bank-cover.png", description: "UBT Exam Practice Question Sets (Reading 20 + Listening 20) with Time and Audio" },
+    { id: "grammar-book", name: "Grammar Book", icon: "", coverImage: "/images/books/grammar-book-cover.jpg", description: "Comprehensive Korean Grammar Rules, Patterns & Examples" }
   ];
 
   const getFolderCover = (folder) => {
     if (folder?.coverImage) return folder.coverImage;
     const name = (folder?.name || "").toLowerCase();
-    if (name.includes("eps")) return "/images/books/eps-book-cover.svg";
-    if (name.includes("meaning")) return "/images/books/meaning-book-cover.svg";
-    if (name.includes("model") || name.includes("question") || name.includes("bank")) return "/images/books/model-bank-cover.svg";
-    if (name.includes("grammar")) return "/images/books/grammar-book-cover.svg";
-    return "/images/books/eps-book-cover.svg";
+    if (name.includes("eps")) return "/images/books/eps-book-cover.jpg";
+    if (name.includes("meaning")) return "/images/books/meaning-book-cover.jpg";
+    if (name.includes("model") || name.includes("question") || name.includes("bank")) return "/images/books/model-bank-cover.png";
+    if (name.includes("grammar")) return "/images/books/grammar-book-cover.jpg";
+    return "/images/books/eps-book-cover.jpg";
   };
 
   const [folders, setFolders] = useState(DEFAULT_FOLDERS);
@@ -1743,13 +1747,9 @@ export default function EpsBookReader({
     return list;
   }, [chapters, r2Folders]);
 
-  // Filter chapters for list view
+  // Filter chapters for list view (Chapters 1 to 60; Preliminary is placed 1st and Appendix last)
   const filteredChapters = allAvailableChapters.filter((c) => {
-    if (bookFilter === "prelim") return c.chapter === 0;
-    if (bookFilter === "appendix") return c.chapter === 61;
-    if (bookFilter === "book1" && (c.chapter > 30 || c.chapter === 0)) return false;
-    if (bookFilter === "book2" && (c.chapter <= 30 || c.chapter === 61)) return false;
-    if (bookFilter === "all" && (c.chapter === 0 || c.chapter === 61)) return false;
+    if (c.chapter === 0 || c.chapter === 61 || c.chapter === "Preliminary" || c.chapter === "Appendix") return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchNum = c.chapter.toString() === q || `ch ${c.chapter}` === q || `chapter ${c.chapter}` === q;
@@ -3461,555 +3461,407 @@ export default function EpsBookReader({
           outline: none !important;
         }
       `}</style>
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: "18px",
-        marginBottom: "32px",
-        backgroundColor: "#ffffff",
-        padding: "20px",
-        borderRadius: "18px",
-        border: "1.5px solid #e2e8f0",
-        boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
-      }}>
-        {folders.map(folder => {
-          let badgeText = "";
+      {/* Korean Folder Selection Tabs & Opened Header */}
+      {!isKoreanFolderOpen ? (
+        <div>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "18px",
+            marginBottom: "24px",
+            backgroundColor: "#ffffff",
+            padding: "20px",
+            borderRadius: "18px",
+            border: "1.5px solid #e2e8f0",
+            boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
+          }}>
+            {folders.map(folder => {
+              let badgeText = "";
 
-          if (folder.name === "EPS Book") {
-            badgeText = "60 Chapters";
-          } else if (folder.name === "Meaning Book") {
-            badgeText = "60 Chapters";
-          } else if (folder.name === "Model Question Bank") {
-            const countSets = (ubtSets && ubtSets.length) || 6;
-            badgeText = `${countSets} Sets`;
-          } else if (folder.name === "Grammar Book") {
-            badgeText = "Grammar Guide";
-          } else {
-            const count = materials.filter(m => m.folder === folder.name).length;
-            badgeText = `${count} ${count === 1 ? 'Material' : 'Materials'}`;
-          }
+              if (folder.name === "EPS Book") {
+                badgeText = "60 Chapters";
+              } else if (folder.name === "Meaning Book") {
+                badgeText = "60 Chapters";
+              } else if (folder.name === "Model Question Bank") {
+                const countSets = (ubtSets && ubtSets.length) || 6;
+                badgeText = `${countSets} Sets`;
+              } else if (folder.name === "Grammar Book") {
+                badgeText = "Grammar Guide";
+              } else {
+                const count = materials.filter(m => m.folder === folder.name).length;
+                badgeText = `${count} ${count === 1 ? 'Material' : 'Materials'}`;
+              }
 
-          const theme = {
-            primary: "#2563eb",
-            activeBorder: "#2563eb",
-            activeBg: "#ffffff",
-            activeShadow: "0 8px 22px rgba(37, 99, 235, 0.12)",
-            titleActive: "#0f172a",
-            badgeActiveBg: "#2563eb",
-            badgeActiveColor: "#ffffff",
-            badgeActiveBorder: "1px solid #2563eb",
-            badgeActiveShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
-            badgeInactiveBg: "#f1f5f9",
-            badgeInactiveColor: "#475569",
-            badgeInactiveBorder: "1px solid #e2e8f0",
-            hoverBorder: "#cbd5e1"
-          };
+              const theme = {
+                primary: "#2563eb",
+                activeBorder: "#2563eb",
+                activeBg: "#ffffff",
+                activeShadow: "0 8px 22px rgba(37, 99, 235, 0.12)",
+                titleActive: "#0f172a",
+                badgeActiveBg: "#2563eb",
+                badgeActiveColor: "#ffffff",
+                badgeActiveBorder: "1px solid #2563eb",
+                badgeActiveShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
+                badgeInactiveBg: "#f1f5f9",
+                badgeInactiveColor: "#475569",
+                badgeInactiveBorder: "1px solid #e2e8f0",
+                hoverBorder: "#cbd5e1"
+              };
 
-          const isActive = activeFolder === folder.name;
-          const coverImage = getFolderCover(folder);
+              const isActive = activeFolder === folder.name;
+              const coverImage = getFolderCover(folder);
+
+              return (
+                <button
+                  key={folder.id || folder.name}
+                  type="button"
+                  className="book-library-tab-card"
+                  onClick={() => {
+                    setActiveFolder(folder.name);
+                    setIsKoreanFolderOpen(true);
+                  }}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    padding: "14px 14px 18px 14px",
+                    borderRadius: "16px",
+                    border: "3px solid",
+                    borderColor: isActive ? theme.activeBorder : "#e2e8f0",
+                    background: isActive ? theme.activeBg : "#ffffff",
+                    cursor: "pointer",
+                    position: "relative",
+                    outline: "none",
+                    userSelect: "none",
+                    boxSizing: "border-box",
+                    width: "100%",
+                    boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
+                    flexShrink: 0
+                  }}
+                >
+                  {/* BOOK COVER PHOTO CONTAINER */}
+                  <div style={{
+                    width: "100%",
+                    height: "240px",
+                    borderRadius: "10px",
+                    overflow: "hidden",
+                    backgroundColor: "#f1f5f9",
+                    position: "relative",
+                    boxShadow: isActive ? theme.activeShadow : "0 6px 14px rgba(15, 23, 42, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>
+                    <img
+                      src={coverImage}
+                      alt={folder.name}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block"
+                      }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/images/books/eps-book-cover.svg";
+                      }}
+                    />
+                  </div>
+
+                  {/* TEXT BELOW COVERS */}
+                  <div style={{
+                    marginTop: "14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    gap: "6px"
+                  }}>
+                    <span style={{
+                      fontSize: "16px",
+                      fontWeight: "800",
+                      color: isActive ? theme.titleActive : "#0f172a",
+                      lineHeight: "1.3"
+                    }}>
+                      {folder.name}
+                    </span>
+
+                    <span style={{
+                      background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
+                      color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
+                      border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
+                      boxShadow: isActive ? theme.badgeActiveShadow : "none",
+                      fontSize: "12px",
+                      padding: "4px 14px",
+                      borderRadius: "16px",
+                      fontWeight: "800",
+                      letterSpacing: "0.2px",
+                      whiteSpace: "nowrap",
+                      display: "inline-block"
+                    }}>
+                      {badgeText}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Helper prompt banner when no folder is clicked yet */}
+          <div style={{
+            textAlign: "center",
+            padding: "32px 20px",
+            backgroundColor: "#f8fafc",
+            borderRadius: "16px",
+            border: "2px dashed #cbd5e1",
+            color: "#64748b",
+            marginBottom: "32px"
+          }}>
+            <div style={{ fontSize: "36px", marginBottom: "8px" }}>🇰🇷 📖</div>
+            <h3 style={{ margin: "0 0 6px 0", fontSize: "18px", fontWeight: "800", color: "#1e293b" }}>
+              Select a Korean Textbook Above
+            </h3>
+            <p style={{ margin: 0, fontSize: "14px", color: "#64748b" }}>
+              Click on any book (EPS Book 60 Chapters, Meaning Book, Question Bank, or Grammar Book) to open all chapters and materials.
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* When isKoreanFolderOpen is TRUE: All other buttons are HIDDEN! Only active folder bar with back button is shown */
+        (() => {
+          const currentFolder = folders.find(f => f.name === activeFolder) || folders[0];
+          const coverImage = getFolderCover(currentFolder);
 
           return (
-            <button
-              key={folder.id || folder.name}
-              type="button"
-              className="book-library-tab-card"
-              onClick={() => setActiveFolder(folder.name)}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                textAlign: "center",
-                padding: "14px 14px 18px 14px",
-                borderRadius: "16px",
-                border: "3px solid",
-                borderColor: isActive ? theme.activeBorder : "#e2e8f0",
-                background: isActive ? theme.activeBg : "#ffffff",
-                cursor: "pointer",
-                position: "relative",
-                outline: "none",
-                userSelect: "none",
-                boxSizing: "border-box",
-                width: "100%",
-                boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
-                flexShrink: 0
-              }}
-            >
-              {/* BOOK COVER PHOTO CONTAINER */}
-              <div style={{
-                width: "100%",
-                height: "240px",
-                borderRadius: "10px",
-                overflow: "hidden",
-                backgroundColor: "#f1f5f9",
-                position: "relative",
-                boxShadow: isActive ? theme.activeShadow : "0 6px 14px rgba(15, 23, 42, 0.1)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0
-              }}>
-                <img
-                  src={coverImage}
-                  alt={folder.name}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    display: "block"
-                  }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/books/eps-book-cover.svg";
-                  }}
-                />
-              </div>
-
-              {/* TEXT BELOW COVERS */}
-              <div style={{
-                marginTop: "14px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                gap: "6px"
-              }}>
-                <span style={{
-                  fontSize: "16px",
-                  fontWeight: "800",
-                  color: isActive ? theme.titleActive : "#0f172a",
-                  lineHeight: "1.3"
-                }}>
-                  {folder.name}
-                </span>
-
-                <span style={{
-                  background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
-                  color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
-                  border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
-                  boxShadow: isActive ? theme.badgeActiveShadow : "none",
-                  fontSize: "12px",
-                  padding: "4px 14px",
-                  borderRadius: "16px",
-                  fontWeight: "800",
-                  letterSpacing: "0.2px",
-                  whiteSpace: "nowrap",
-                  display: "inline-block"
-                }}>
-                  {badgeText}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* RENDER EPS BOOK SECTION IF ACTIVE */}
-      {activeFolder === "EPS Book" && (
-        <>
-          {/* CHAPTER FILTER TABS FOR EPS BOOK */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "10px",
-            marginBottom: "14px"
-          }}>
             <div style={{
+              backgroundColor: "#ffffff",
+              padding: "16px 22px",
+              borderRadius: "18px",
+              border: "2px solid #e2e8f0",
+              marginBottom: "26px",
+              boxShadow: "0 4px 16px rgba(15, 23, 42, 0.05)",
               display: "flex",
-              backgroundColor: "#f1f5f9",
-              padding: "4px",
-              borderRadius: "10px",
-              gap: "4px",
+              alignItems: "center",
+              justifyContent: "space-between",
               flexWrap: "wrap",
-              border: "1px solid #e2e8f0"
+              gap: "16px"
             }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div style={{
+                  width: "68px",
+                  height: "68px",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
+                  flexShrink: 0,
+                  backgroundColor: "#f8fafc",
+                  border: "2px solid #2563eb"
+                }}>
+                  <img
+                    src={coverImage}
+                    alt={currentFolder.name}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/images/books/eps-book-cover.svg";
+                    }}
+                  />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                    <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "#0f172a" }}>
+                      {currentFolder.name}
+                    </h2>
+                    <span style={{
+                      backgroundColor: "#dcfce7",
+                      color: "#15803d",
+                      border: "1px solid #86efac",
+                      fontSize: "11px",
+                      fontWeight: "800",
+                      padding: "3px 10px",
+                      borderRadius: "12px"
+                    }}>
+                      ● Active Folder (खुला छ)
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px", fontWeight: "600" }}>
+                    {currentFolder.description || "Korean Study Materials"}
+                  </div>
+                </div>
+              </div>
+
               <button
                 type="button"
-                onClick={() => setBookFilter("all")}
+                onClick={() => setIsKoreanFolderOpen(false)}
                 style={{
-                  padding: "7px 14px",
-                  backgroundColor: bookFilter === "all" ? "#2563eb" : "transparent",
-                  color: bookFilter === "all" ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 22px",
+                  borderRadius: "12px",
+                  backgroundColor: "#1e3a8a",
+                  backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)",
+                  color: "#ffffff",
+                  border: "1.5px solid #1e40af",
+                  fontWeight: "800",
+                  fontSize: "14px",
                   cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  transition: "all 0.15s"
+                  boxShadow: "0 4px 14px rgba(30, 58, 138, 0.35)",
+                  transition: "all 0.18s ease"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #172554 0%, #0f172a 100%)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 6px 18px rgba(30, 58, 138, 0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(30, 58, 138, 0.35)";
                 }}
               >
-                All 60 Ch
-              </button>
-              <button
-                type="button"
-                onClick={() => setBookFilter("book1")}
-                style={{
-                  padding: "7px 14px",
-                  backgroundColor: bookFilter === "book1" ? "#2563eb" : "transparent",
-                  color: bookFilter === "book1" ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  transition: "all 0.15s"
-                }}
-              >
-                Book 1 (1–30)
-              </button>
-              <button
-                type="button"
-                onClick={() => setBookFilter("book2")}
-                style={{
-                  padding: "7px 14px",
-                  backgroundColor: bookFilter === "book2" ? "#2563eb" : "transparent",
-                  color: bookFilter === "book2" ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  transition: "all 0.15s"
-                }}
-              >
-                Book 2 (31–60)
-              </button>
-              <button
-                type="button"
-                onClick={() => setBookFilter("prelim")}
-                style={{
-                  padding: "7px 14px",
-                  backgroundColor: bookFilter === "prelim" ? "#2563eb" : "transparent",
-                  color: bookFilter === "prelim" ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  transition: "all 0.15s"
-                }}
-              >
-                Preliminary (0)
-              </button>
-              <button
-                type="button"
-                onClick={() => setBookFilter("appendix")}
-                style={{
-                  padding: "7px 14px",
-                  backgroundColor: bookFilter === "appendix" ? "#2563eb" : "transparent",
-                  color: bookFilter === "appendix" ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  transition: "all 0.15s"
-                }}
-              >
-                Appendix
+                <span>GO Back</span>
               </button>
             </div>
+          );
+        })()
+      )}
 
-            <span style={{ fontSize: "13px", fontWeight: "bold", color: "#64748b" }}>
-              Showing {filteredChapters.length} of 60 Chapters
-            </span>
-          </div>
-
-      {/* SEARCH BAR */}
-      <div style={{
-        backgroundColor: "white",
-        padding: "16px 20px",
-        borderRadius: "12px",
-        border: "1px solid #e2e8f0",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        marginBottom: "24px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: "12px"
-      }}>
-        <div style={{ position: "relative", flex: 1, minWidth: "260px" }}>
-          <span style={{ position: "absolute", left: "12px", top: "11px", color: "#64748b" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </span>
-          <input
-            type="text"
-            placeholder="Search by chapter number or topic (e.g. 14, 비빔밥, खाना, नमस्ते)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "9px 12px 9px 38px",
-              borderRadius: "8px",
-              border: "1px solid #cbd5e1",
-              fontSize: "14px",
-              outline: "none",
-              backgroundColor: "#f8fafc"
-            }}
-          />
-        </div>
-
-        <span style={{ fontSize: "13px", fontWeight: "bold", color: "#64748b" }}>
-          Showing {filteredChapters.length} of 60 Chapters
-        </span>
-      </div>
-
-      {/* SPECIAL COMPLETE CURRICULUM SECTIONS (Preliminary, Full Books 1 & 2, Appendix) */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-        gap: "14px",
-        marginBottom: "24px"
-      }}>
-        {/* PRELIMINARY CARD */}
-        <div
-          onClick={() => {
-            const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
-              chapter: "Preliminary",
-              titleKo: "예비편 (한글과 인사말)",
-              titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
-              titleEn: "Preliminary - Hangeul and Greetings",
-              pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
-              audioTracks: []
-            };
-            openChapterFullScreen(prelim);
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 8px 20px rgba(16, 185, 129, 0.15)";
-            e.currentTarget.style.borderColor = "#10b981";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-            e.currentTarget.style.borderColor = "#d1fae5";
-          }}
-          style={{
-            backgroundColor: "#ffffff",
+      {/* RENDER EPS BOOK SECTION IF ACTIVE AND OPEN */}
+      {isKoreanFolderOpen && activeFolder === "EPS Book" && (
+        <>
+          {/* SEARCH BAR (CLEAN & SIMPLE) */}
+          <div style={{
+            backgroundColor: "white",
+            padding: "14px 18px",
             borderRadius: "12px",
-            border: "1.5px solid #d1fae5",
-            padding: "16px 18px",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+            marginBottom: "20px",
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              backgroundColor: "#ecfdf5",
-              color: "#059669",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px"
-            }}>
-              🔰
-            </div>
-            <div>
-              <div style={{ fontSize: "14px", fontWeight: "800", color: "#065f46" }}>Preliminary (예비편)</div>
-              <div style={{ fontSize: "12px", color: "#64748b" }}>Hangeul & Greetings (28 Tracks)</div>
-            </div>
-          </div>
-          <span style={{ fontSize: "11px", backgroundColor: "#d1fae5", color: "#065f46", padding: "4px 8px", borderRadius: "6px", fontWeight: "bold" }}>
-            ▶ Open
-          </span>
-        </div>
-
-        {/* FULL BOOK 1 */}
-        <div
-          onClick={() => {
-            openChapterFullScreen({
-              chapter: "1 (Full)",
-              titleKo: "한국어 표준교재 1 (1권 전편)",
-              titleNe: "EPS-TOPIK कोरियन पाठ्यपुस्तक १ (पूरा १९९ पेज)",
-              titleEn: "EPS-TOPIK Textbook Book 1 (Complete 199 Pages)",
-              pdfUrl: "/api/r2/books/full/EPS_TOPIK_Book_1_Full.pdf",
-              audioTracks: []
-            });
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 8px 20px rgba(37, 99, 235, 0.15)";
-            e.currentTarget.style.borderColor = "#3b82f6";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-            e.currentTarget.style.borderColor = "#dbeafe";
-          }}
-          style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "12px",
-            border: "1.5px solid #dbeafe",
-            padding: "16px 18px",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              backgroundColor: "#eff6ff",
-              color: "#1d4ed8",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px"
-            }}>
-              📖
-            </div>
-            <div>
-              <div style={{ fontSize: "14px", fontWeight: "800", color: "#1e40af" }}>Book 1 Complete</div>
-              <div style={{ fontSize: "12px", color: "#64748b" }}>Chapters 1–30 (Full 199 Pages)</div>
+            gap: "12px"
+          }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <span style={{ position: "absolute", left: "12px", top: "11px", color: "#64748b" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </span>
+              <input
+                type="text"
+                placeholder="Search by chapter number or topic (e.g. 14, 비빔밥, खाना, नमस्ते)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px 9px 38px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "14px",
+                  outline: "none",
+                  backgroundColor: "#f8fafc"
+                }}
+              />
             </div>
           </div>
-          <span style={{ fontSize: "11px", backgroundColor: "#dbeafe", color: "#1e40af", padding: "4px 8px", borderRadius: "6px", fontWeight: "bold" }}>
-            PDF
-          </span>
-        </div>
 
-        {/* FULL BOOK 2 */}
-        <div
-          onClick={() => {
-            openChapterFullScreen({
-              chapter: "2 (Full)",
-              titleKo: "한국어 표준교재 2 (2권 전편)",
-              titleNe: "EPS-TOPIK कोरियन पाठ्यपुस्तक २ (पूरा १८९ पेज)",
-              titleEn: "EPS-TOPIK Textbook Book 2 (Complete 189 Pages)",
-              pdfUrl: "/api/r2/books/full/EPS_TOPIK_Book_2_Full.pdf",
-              audioTracks: []
-            });
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 8px 20px rgba(245, 158, 11, 0.15)";
-            e.currentTarget.style.borderColor = "#f59e0b";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-            e.currentTarget.style.borderColor = "#fef3c7";
-          }}
-          style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "12px",
-            border: "1.5px solid #fef3c7",
-            padding: "16px 18px",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              backgroundColor: "#fffbeb",
-              color: "#b45309",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px"
-            }}>
-              📘
-            </div>
-            <div>
-              <div style={{ fontSize: "14px", fontWeight: "800", color: "#92400e" }}>Book 2 Complete</div>
-              <div style={{ fontSize: "12px", color: "#64748b" }}>Chapters 31–60 (Full 189 Pages)</div>
-            </div>
-          </div>
-          <span style={{ fontSize: "11px", backgroundColor: "#fef3c7", color: "#92400e", padding: "4px 8px", borderRadius: "6px", fontWeight: "bold" }}>
-            PDF
-          </span>
-        </div>
+          {/* 60 CHAPTERS CLEAN GRID WITH PRELIMINARY FIRST & APPENDIX LAST */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: "16px",
+            marginBottom: "40px"
+          }}>
+            {/* 🔰 PRELIMINARY (예비편) CARD - FIRST AS CHAPTER 1 */}
+            {(!searchQuery || "preliminary 예비편 한글 인사말 0".includes(searchQuery.toLowerCase())) && (
+              <div
+                onClick={() => {
+                  const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
+                    chapter: "Preliminary",
+                    titleKo: "예비편 (한글과 인사말)",
+                    titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
+                    titleEn: "Preliminary - Hangeul and Greetings",
+                    pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
+                    audioTracks: []
+                  };
+                  openChapterFullScreen(prelim);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-3px)";
+                  e.currentTarget.style.boxShadow = "0 10px 25px rgba(16, 185, 129, 0.18)";
+                  e.currentTarget.style.borderColor = "#10b981";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                  e.currentTarget.style.borderColor = "#e2e8f0";
+                }}
+                title="Click to open Preliminary (예비편) in Full Screen"
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: "12px",
+                  border: "1.5px solid #d1fae5",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                  padding: "18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  cursor: "pointer",
+                  userSelect: "none"
+                }}
+              >
+                <div>
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                    <span style={{
+                      backgroundColor: "#d1fae5",
+                      color: "#065f46",
+                      padding: "4px 14px",
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      fontWeight: "800",
+                      display: "inline-block"
+                    }}>
+                      🔰 Preliminary (예비편)
+                    </span>
+                  </div>
 
-        {/* APPENDIX */}
-        <div
-          onClick={() => {
-            const appendix = r2Folders.find(f => f.folder === "Appendix") || {
-              chapter: "Appendix",
-              titleKo: "부록 (정답 및 색인)",
-              titleNe: "परिशिष्ट (उत्तर तथा शब्दावली)",
-              titleEn: "Appendix - Answers and Index",
-              pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
-              audioTracks: []
-            };
-            openChapterFullScreen(appendix);
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 8px 20px rgba(139, 92, 246, 0.15)";
-            e.currentTarget.style.borderColor = "#8b5cf6";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-            e.currentTarget.style.borderColor = "#ede9fe";
-          }}
-          style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "12px",
-            border: "1.5px solid #ede9fe",
-            padding: "16px 18px",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "10px",
-              backgroundColor: "#f5f3ff",
-              color: "#7c3aed",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px"
-            }}>
-              📑
-            </div>
-            <div>
-              <div style={{ fontSize: "14px", fontWeight: "800", color: "#5b21b6" }}>Appendix (부록)</div>
-              <div style={{ fontSize: "12px", color: "#64748b" }}>Answers & Vocabulary Index</div>
-            </div>
-          </div>
-          <span style={{ fontSize: "11px", backgroundColor: "#ede9fe", color: "#5b21b6", padding: "4px 8px", borderRadius: "6px", fontWeight: "bold" }}>
-            PDF
-          </span>
-        </div>
-      </div>
+                  <ChapterCover
+                    chapter="0"
+                    titleKo="예비편 (한글과 인사말)"
+                    titleNe="प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)"
+                    coverImage="/uploads/eps-chapters/covers/cover_00.jpg"
+                    pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
+                    bookPart={1}
+                    height="195px"
+                    margin="10px 0 12px 0"
+                    onClick={(e) => {
+                      if (e && e.stopPropagation) e.stopPropagation();
+                      const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
+                        chapter: "Preliminary",
+                        titleKo: "예비편 (한글과 인사말)",
+                        titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
+                        titleEn: "Preliminary - Hangeul and Greetings",
+                        pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
+                        audioTracks: []
+                      };
+                      openChapterFullScreen(prelim);
+                    }}
+                  />
 
-      {/* 60 CHAPTERS CLEAN GRID */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-        gap: "16px",
-        marginBottom: "40px"
-      }}>
+                  <div style={{ textAlign: "center", marginTop: "6px" }}>
+                    <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
+                      예비편 (한글과 인사말)
+                    </h3>
+                    <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" }}>
+                      प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
         {filteredChapters.map((c) => {
           const hasPdf = Boolean(c.pdfUrl);
           const audioCount = c.audioTracks?.length || 0;
@@ -4122,6 +3974,95 @@ export default function EpsBookReader({
             </div>
           );
         })}
+
+        {/* 📑 APPENDIX (부록) CARD - LAST IN CHAPTER GRID */}
+        {(!searchQuery || "appendix 부록 answers vocabulary index 정답 색인 61".includes(searchQuery.toLowerCase())) && (
+          <div
+            onClick={() => {
+              const appendix = r2Folders.find(f => f.folder === "Appendix") || {
+                chapter: "Appendix",
+                titleKo: "부록",
+                titleNe: "परिशिष्ट",
+                titleEn: "Appendix",
+                pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
+                audioTracks: []
+              };
+              openChapterFullScreen(appendix);
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-3px)";
+              e.currentTarget.style.boxShadow = "0 10px 25px rgba(139, 92, 246, 0.18)";
+              e.currentTarget.style.borderColor = "#8b5cf6";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+              e.currentTarget.style.borderColor = "#e2e8f0";
+            }}
+            title="Click to open Appendix (부록) in Full Screen"
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              border: "1.5px solid #ede9fe",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              padding: "18px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              cursor: "pointer",
+              userSelect: "none"
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{
+                  backgroundColor: "#ede9fe",
+                  color: "#5b21b6",
+                  padding: "4px 14px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: "800",
+                  display: "inline-block"
+                }}>
+                  Appendix
+                </span>
+              </div>
+
+              <ChapterCover
+                chapter="App"
+                titleKo="부록"
+                titleNe="परिशिष्ट"
+                coverImage="/uploads/eps-chapters/covers/cover_61.jpg"
+                pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
+                bookPart={2}
+                height="195px"
+                margin="10px 0 12px 0"
+                onClick={(e) => {
+                  if (e && e.stopPropagation) e.stopPropagation();
+                  const appendix = r2Folders.find(f => f.folder === "Appendix") || {
+                    chapter: "Appendix",
+                    titleKo: "부록",
+                    titleNe: "परिशिष्ट",
+                    titleEn: "Appendix",
+                    pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
+                    audioTracks: []
+                  };
+                  openChapterFullScreen(appendix);
+                }}
+              />
+
+              <div style={{ textAlign: "center", marginTop: "6px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
+                  부록
+                </h3>
+                <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" }}>
+                  परिशिष्ट
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
         </>
       )}
@@ -4129,304 +4070,27 @@ export default function EpsBookReader({
       {/* ============================================================== */}
       {/* 2. RENDER MEANING BOOK SECTION (CHAPTER 1 TO 60 CHAPTERWISE)   */}
       {/* ============================================================== */}
-      {activeFolder === "Meaning Book" && (() => {
-        const filteredMeaningChapters = meaningChapters.filter((c) => {
-          if (meaningBookFilter === "book1" && c.chapter > 30) return false;
-          if (meaningBookFilter === "book2" && c.chapter <= 30) return false;
-          if (meaningSearchQuery.trim()) {
-            const q = meaningSearchQuery.toLowerCase().trim();
-            const matchChap = c.chapter.toString() === q;
-            const matchKo = (c.titleKo || "").toLowerCase().includes(q);
-            const matchNe = (c.titleNe || "").toLowerCase().includes(q);
-            const matchEn = (c.titleEn || "").toLowerCase().includes(q);
-            const matchNotes = (c.notes || "").toLowerCase().includes(q);
-            return matchChap || matchKo || matchNe || matchEn || matchNotes;
-          }
-          return true;
-        });
-
-        return (
-          <div style={{ marginBottom: "40px" }}>
-            {/* HEADER BANNER */}
-            <div style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "14px",
-              padding: "22px 26px",
-              marginBottom: "20px",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "14px"
-            }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ fontSize: "28px" }}>📕</span>
-                  <h3 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#0f172a" }}>
-                    Meaning Book (अध्याय अनुसार शब्दार्थ संग्रह)
-                  </h3>
-                  <span style={{
-                    backgroundColor: "#eff6ff",
-                    color: "#2563eb",
-                    border: "1px solid #dbeafe",
-                    fontSize: "12px",
-                    fontWeight: "800",
-                    padding: "3px 10px",
-                    borderRadius: "12px"
-                  }}>
-                    60 Chapters
-                  </span>
-                </div>
-                <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#881337" }}>
-                  EPS-TOPIK Korean 1 to 60 अध्याय अनुसारका सम्पूर्ण शब्दावली, अर्थ तथा अध्ययन सामग्रीहरू।
-                </p>
-              </div>
-
-              {/* Quick Book Filter Tabs */}
-              <div style={{ display: "flex", backgroundColor: "rgba(220, 38, 38, 0.12)", padding: "4px", borderRadius: "10px", gap: "4px" }}>
-                <button
-                  type="button"
-                  onClick={() => setMeaningBookFilter("all")}
-                  style={{
-                    padding: "7px 14px",
-                    backgroundColor: meaningBookFilter === "all" ? "#ffffff" : "transparent",
-                    color: meaningBookFilter === "all" ? "#991b1b" : "#4c0519",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    fontSize: "13px"
-                  }}
-                >
-                  All 60 Ch
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMeaningBookFilter("book1")}
-                  style={{
-                    padding: "7px 14px",
-                    backgroundColor: meaningBookFilter === "book1" ? "#ffffff" : "transparent",
-                    color: meaningBookFilter === "book1" ? "#991b1b" : "#4c0519",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    fontSize: "13px"
-                  }}
-                >
-                  Book 1 (1–30)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMeaningBookFilter("book2")}
-                  style={{
-                    padding: "7px 14px",
-                    backgroundColor: meaningBookFilter === "book2" ? "#ffffff" : "transparent",
-                    color: meaningBookFilter === "book2" ? "#991b1b" : "#4c0519",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    fontSize: "13px"
-                  }}
-                >
-                  Book 2 (31–60)
-                </button>
-              </div>
-            </div>
-
-            {/* SEARCH BAR */}
-            <div style={{
-              backgroundColor: "white",
-              padding: "16px 20px",
-              borderRadius: "12px",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              marginBottom: "24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "12px"
-            }}>
-              <div style={{ position: "relative", flex: 1, minWidth: "260px" }}>
-                <input
-                  type="text"
-                  placeholder="Search by chapter number or topic (e.g. 14, 자기소개, काम, परिचय)..."
-                  value={meaningSearchQuery}
-                  onChange={(e) => setMeaningSearchQuery(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px 9px 38px",
-                    borderRadius: "8px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "14px",
-                    outline: "none",
-                    backgroundColor: "#f8fafc"
-                  }}
-                />
-                <span style={{ position: "absolute", left: "12px", top: "10px", color: "#64748b" }}>🔍</span>
-              </div>
-
-              <span style={{ fontSize: "13px", fontWeight: "bold", color: "#64748b" }}>
-                Showing {filteredMeaningChapters.length} of 60 Chapters
-              </span>
-            </div>
-
-            {/* CHAPTERS GRID */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: "16px",
-              marginBottom: "30px"
-            }}>
-              {filteredMeaningChapters.map((c) => {
-                const hasPdf = Boolean(c.meaningPdfUrl);
-                const hasAudio = Boolean(c.meaningAudioUrl);
-
-                return (
-                  <div
-                    key={c.chapter}
-                    onClick={() => setViewingMeaningChapter(c)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-3px)";
-                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(220, 38, 38, 0.15)";
-                      e.currentTarget.style.borderColor = "#f87171";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "none";
-                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-                      e.currentTarget.style.borderColor = "#e2e8f0";
-                    }}
-                    style={{
-                      backgroundColor: "white",
-                      borderRadius: "14px",
-                      border: "1px solid #e2e8f0",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                      padding: "20px",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                      cursor: "pointer",
-                      userSelect: "none"
-                    }}
-                  >
-                    <div>
-                      {/* Chapter Badge & Indicator */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                        <span style={{
-                          backgroundColor: c.chapter <= 30 ? "#fee2e2" : "#fef3c7",
-                          color: c.chapter <= 30 ? "#b91c1c" : "#b45309",
-                          padding: "4px 12px",
-                          borderRadius: "12px",
-                          fontSize: "12px",
-                          fontWeight: "800"
-                        }}>
-                          Chapter {c.chapter}
-                        </span>
-
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                          {hasPdf ? (
-                            <span style={{ fontSize: "11px", backgroundColor: "#dcfce7", color: "#166534", padding: "2px 7px", borderRadius: "4px", fontWeight: "bold" }}>
-                              PDF Ready
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: "11px", backgroundColor: "#f1f5f9", color: "#64748b", padding: "2px 7px", borderRadius: "4px", fontWeight: "bold" }}>
-                              Vocab Guide
-                            </span>
-                          )}
-                          {hasAudio && (
-                            <span style={{ fontSize: "11px", backgroundColor: "#eff6ff", color: "#2563eb", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                              🎧 Audio
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Icon & Titles */}
-                      <div style={{ textAlign: "center", padding: "10px 0 14px 0" }}>
-                        <div style={{ fontSize: "36px", marginBottom: "8px" }}>📕</div>
-                        <h4 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "800", color: "#0f172a" }}>
-                          제{c.chapter}과 {c.titleKo}
-                        </h4>
-                        <p style={{ margin: "0 0 4px 0", fontSize: "13px", fontWeight: "600", color: "#dc2626" }}>
-                          {c.titleNe}
-                        </p>
-                        {c.titleEn && (
-                          <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>
-                            {c.titleEn}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bottom Buttons */}
-                    <div style={{ marginTop: "14px", borderTop: "1px solid #f1f5f9", paddingTop: "12px", display: "flex", gap: "8px" }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewingMeaningChapter(c);
-                        }}
-                        style={{
-                          flex: 1,
-                          backgroundColor: "#dc2626",
-                          backgroundImage: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)",
-                          color: "#ffffff",
-                          border: "none",
-                          padding: "9px 12px",
-                          borderRadius: "8px",
-                          fontWeight: "700",
-                          fontSize: "13px",
-                          cursor: "pointer",
-                          boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)"
-                        }}
-                      >
-                        📖 Read Meaning
-                      </button>
-
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditMeaningModalChapter(c);
-                            setEditMeaningPdf(c.meaningPdfUrl || "");
-                            setEditMeaningAudio(c.meaningAudioUrl || "");
-                            setEditMeaningNotes(c.notes || "");
-                            setEditMeaningTitleKo(c.titleKo || "");
-                            setEditMeaningTitleNe(c.titleNe || "");
-                          }}
-                          style={{
-                            backgroundColor: "#f8fafc",
-                            color: "#334155",
-                            border: "1px solid #cbd5e1",
-                            padding: "9px 12px",
-                            borderRadius: "8px",
-                            fontWeight: "700",
-                            fontSize: "12px",
-                            cursor: "pointer"
-                          }}
-                        >
-                          ⚙️ Edit
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
+      {isKoreanFolderOpen && activeFolder === "Meaning Book" && (
+        <KoreanMeaningBookView
+          meaningChapters={meaningChapters}
+          isAdmin={isAdmin}
+          onOpenEditModal={(c) => {
+            setEditMeaningModalChapter(c);
+            setEditMeaningPdf(c.meaningPdfUrl || "");
+            setEditMeaningAudio(c.meaningAudioUrl || "");
+            setEditMeaningNotes(c.notes || "");
+            setEditMeaningTitleKo(c.titleKo || "");
+            setEditMeaningTitleNe(c.titleNe || "");
+          }}
+          getCleanPdfUrl={getCleanPdfUrl}
+        />
+      )}
 
       {/* ============================================================== */}
+      {/* 3. RENDER MODEL QUESTION BANK SECTION      {/* ============================================================== */}
       {/* 3. RENDER MODEL QUESTION BANK SECTION (UBT SETS, NO PDFS)     */}
       {/* ============================================================== */}
-      {activeFolder === "Model Question Bank" && (() => {
+      {isKoreanFolderOpen && activeFolder === "Model Question Bank" && (() => {
         // STRICTLY FILTER OUT CHAPTERWISE SETS
         const filteredUbtSets = ubtSets.filter((s) => {
           const combined = `${s.name || ''} ${s.packageName || ''}`.toLowerCase();
@@ -4782,9 +4446,23 @@ export default function EpsBookReader({
       })()}
 
       {/* ============================================================== */}
-      {/* 4. RENDER OTHER MATERIAL FOLDERS (Grammar Book, Custom Folders)*/}
+      {/* 4. RENDER GRAMMAR BOOK SECTION (BASIC TO ADV, CHAPTERWISE, ETC)*/}
       {/* ============================================================== */}
-      {activeFolder !== "EPS Book" && activeFolder !== "Meaning Book" && activeFolder !== "Model Question Bank" && (() => {
+      {isKoreanFolderOpen && activeFolder === "Grammar Book" && (
+        <KoreanGrammarBookView
+          materials={materials}
+          isAdmin={isAdmin}
+          onUploadMaterial={(folderName) => {
+            setMatFolder(folderName || "Grammar Book");
+            setIsUploadMaterialOpen(true);
+          }}
+        />
+      )}
+
+      {/* ============================================================== */}
+      {/* 5. RENDER OTHER MATERIAL FOLDERS (Custom Folders)              */}
+      {/* ============================================================== */}
+      {activeFolder && activeFolder !== "EPS Book" && activeFolder !== "Meaning Book" && activeFolder !== "Model Question Bank" && activeFolder !== "Grammar Book" && (() => {
         const currentFolderObj = folders.find(f => f.name === activeFolder) || { name: activeFolder, icon: "📁", description: "" };
         const folderMats = materials.filter(m => m.folder === activeFolder);
 
@@ -5069,121 +4747,242 @@ export default function EpsBookReader({
       {/* ============================================================== */}
       {studyLanguage === "japanese" && (
         <>
-          {/* Japanese Folder Selection Tabs (4 Colorful Books - EXACT SAME SIZE & DESIGN AS KOREAN) */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "18px",
-            marginBottom: "32px",
-            backgroundColor: "#ffffff",
-            padding: "20px",
-            borderRadius: "18px",
-            border: "1.5px solid #e2e8f0",
-            boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
-          }}>
-            {JAPANESE_FOLDERS.map((folder) => {
-              const isActive = activeJapaneseFolder === folder.name;
-              const theme = JAPANESE_FOLDER_THEMES[folder.name] || JAPANESE_FOLDER_THEMES["JLPT N5・N4"];
-              const badgeText = folder.badgeText || "Learning Guide";
+          {/* Japanese Folder Selection Tabs & Opened Header */}
+          {!isJapaneseFolderOpen ? (
+            <div>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "18px",
+                marginBottom: "24px",
+                backgroundColor: "#ffffff",
+                padding: "20px",
+                borderRadius: "18px",
+                border: "1.5px solid #e2e8f0",
+                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
+              }}>
+                {JAPANESE_FOLDERS.map((folder) => {
+                  const isActive = activeJapaneseFolder === folder.name;
+                  const theme = JAPANESE_FOLDER_THEMES[folder.name] || JAPANESE_FOLDER_THEMES["JLPT N5・N4"];
+                  const badgeText = folder.badgeText || "Learning Guide";
+
+                  return (
+                    <button
+                      key={folder.id}
+                      type="button"
+                      className="book-library-tab-card"
+                      onClick={() => {
+                        setActiveJapaneseFolder(folder.name);
+                        setIsJapaneseFolderOpen(true);
+                      }}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        textAlign: "center",
+                        padding: "14px 14px 18px 14px",
+                        borderRadius: "16px",
+                        border: "3px solid",
+                        borderColor: isActive ? theme.activeBorder : "#e2e8f0",
+                        background: isActive ? theme.activeBg : "#ffffff",
+                        cursor: "pointer",
+                        position: "relative",
+                        outline: "none",
+                        userSelect: "none",
+                        boxSizing: "border-box",
+                        width: "100%",
+                        boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
+                        flexShrink: 0
+                      }}
+                    >
+                      {/* BOOK COVER PHOTO CONTAINER - EXACT SAME 240px HEIGHT AS KOREAN */}
+                      <div style={{
+                        width: "100%",
+                        height: "240px",
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                        backgroundColor: "#f1f5f9",
+                        position: "relative",
+                        boxShadow: isActive ? theme.activeShadow : "0 6px 14px rgba(15, 23, 42, 0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0
+                      }}>
+                        <img
+                          src={folder.coverImage}
+                          alt={folder.name}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block"
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/images/books/minna-nihongo-cover.svg";
+                          }}
+                        />
+                      </div>
+
+                      {/* TEXT BELOW COVERS - EXACT SAME SIZE */}
+                      <div style={{
+                        marginTop: "14px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "100%",
+                        gap: "6px"
+                      }}>
+                        <span style={{
+                          fontSize: "16px",
+                          fontWeight: "800",
+                          color: isActive ? theme.titleActive : "#0f172a",
+                          lineHeight: "1.3"
+                        }}>
+                          {folder.name}
+                        </span>
+
+                        <span style={{
+                          background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
+                          color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
+                          border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
+                          boxShadow: isActive ? theme.badgeActiveShadow : "none",
+                          fontSize: "12px",
+                          padding: "4px 14px",
+                          borderRadius: "16px",
+                          fontWeight: "800",
+                          letterSpacing: "0.2px",
+                          whiteSpace: "nowrap",
+                          display: "inline-block"
+                        }}>
+                          {badgeText}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Helper prompt banner when no folder is clicked yet */}
+              <div style={{
+                textAlign: "center",
+                padding: "32px 20px",
+                backgroundColor: "#f8fafc",
+                borderRadius: "16px",
+                border: "2px dashed #cbd5e1",
+                color: "#64748b",
+                marginBottom: "32px"
+              }}>
+                <div style={{ fontSize: "36px", marginBottom: "8px" }}>🇯🇵 🌸</div>
+                <h3 style={{ margin: "0 0 6px 0", fontSize: "18px", fontWeight: "800", color: "#1e293b" }}>
+                  Select a Japanese Course Folder Above
+                </h3>
+                <p style={{ margin: 0, fontSize: "14px", color: "#64748b" }}>
+                  Click on any course folder (JLPT N5・N4, JLPT N3・N2・N1, Kanji & Meaning, or Mock Test) to open all its lessons, audio, and exams.
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* When isJapaneseFolderOpen is TRUE: All other buttons are HIDDEN! Only active folder bar with back button is shown */
+            (() => {
+              const currentFolder = JAPANESE_FOLDERS.find(f => f.name === activeJapaneseFolder) || JAPANESE_FOLDERS[0];
+              const theme = JAPANESE_FOLDER_THEMES[currentFolder.name] || JAPANESE_FOLDER_THEMES["JLPT N5・N4"];
 
               return (
-                <button
-                  key={folder.id}
-                  type="button"
-                  className="book-library-tab-card"
-                  onClick={() => setActiveJapaneseFolder(folder.name)}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textAlign: "center",
-                    padding: "14px 14px 18px 14px",
-                    borderRadius: "16px",
-                    border: "3px solid",
-                    borderColor: isActive ? theme.activeBorder : "#e2e8f0",
-                    background: isActive ? theme.activeBg : "#ffffff",
-                    cursor: "pointer",
-                    position: "relative",
-                    outline: "none",
-                    userSelect: "none",
-                    boxSizing: "border-box",
-                    width: "100%",
-                    boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
-                    flexShrink: 0
-                  }}
-                >
-                  {/* BOOK COVER PHOTO CONTAINER - EXACT SAME 240px HEIGHT AS KOREAN */}
-                  <div style={{
-                    width: "100%",
-                    height: "240px",
-                    borderRadius: "10px",
-                    overflow: "hidden",
-                    backgroundColor: "#f1f5f9",
-                    position: "relative",
-                    boxShadow: isActive ? theme.activeShadow : "0 6px 14px rgba(15, 23, 42, 0.1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0
-                  }}>
-                    <img
-                      src={folder.coverImage}
-                      alt={folder.name}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block"
-                      }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "/images/books/minna-nihongo-cover.svg";
-                      }}
-                    />
+                <div style={{
+                  backgroundColor: "#ffffff",
+                  padding: "16px 22px",
+                  borderRadius: "18px",
+                  border: "2px solid #e2e8f0",
+                  marginBottom: "26px",
+                  boxShadow: "0 4px 16px rgba(15, 23, 42, 0.05)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "16px"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                    <div style={{
+                      width: "68px",
+                      height: "68px",
+                      borderRadius: "12px",
+                      overflow: "hidden",
+                      boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
+                      flexShrink: 0,
+                      backgroundColor: "#f8fafc",
+                      border: `2px solid ${theme.activeBorder}`
+                    }}>
+                      <img
+                        src={currentFolder.coverImage}
+                        alt={currentFolder.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                        <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "#0f172a" }}>
+                          {currentFolder.name}
+                        </h2>
+                        <span style={{
+                          backgroundColor: "#dcfce7",
+                          color: "#15803d",
+                          border: "1px solid #86efac",
+                          fontSize: "11px",
+                          fontWeight: "800",
+                          padding: "3px 10px",
+                          borderRadius: "12px"
+                        }}>
+                          ● Active Folder (खुला छ)
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px", fontWeight: "600" }}>
+                        {currentFolder.subName || currentFolder.description}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* TEXT BELOW COVERS - EXACT SAME SIZE */}
-                  <div style={{
-                    marginTop: "14px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "100%",
-                    gap: "6px"
-                  }}>
-                    <span style={{
-                      fontSize: "16px",
+                  <button
+                    type="button"
+                    onClick={() => setIsJapaneseFolderOpen(false)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "10px 22px",
+                      borderRadius: "12px",
+                      backgroundColor: "#1e3a8a",
+                      backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)",
+                      color: "#ffffff",
+                      border: "1.5px solid #1e40af",
                       fontWeight: "800",
-                      color: isActive ? theme.titleActive : "#0f172a",
-                      lineHeight: "1.3"
-                    }}>
-                      {folder.name}
-                    </span>
-
-                    <span style={{
-                      background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
-                      color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
-                      border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
-                      boxShadow: isActive ? theme.badgeActiveShadow : "none",
-                      fontSize: "12px",
-                      padding: "4px 14px",
-                      borderRadius: "16px",
-                      fontWeight: "800",
-                      letterSpacing: "0.2px",
-                      whiteSpace: "nowrap",
-                      display: "inline-block"
-                    }}>
-                      {badgeText}
-                    </span>
-                  </div>
-                </button>
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 14px rgba(30, 58, 138, 0.35)",
+                      transition: "all 0.18s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #172554 0%, #0f172a 100%)";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                      e.currentTarget.style.boxShadow = "0 6px 18px rgba(30, 58, 138, 0.45)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)";
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "0 4px 14px rgba(30, 58, 138, 0.35)";
+                    }}
+                  >
+                    <span>GO Back</span>
+                  </button>
+                </div>
               );
-            })}
-          </div>
+            })()
+          )}
 
-          {/* ACTIVE JAPANESE FOLDER CONTENT VIEWS */}
-          {(() => {
+          {/* ACTIVE JAPANESE FOLDER CONTENT VIEWS - OPENED WHEN isJapaneseFolderOpen IS TRUE */}
+          {isJapaneseFolderOpen && (() => {
             // ─────────────────────────────────────────────────────────
             // 1. JLPT N5 & N4 (Minna no Nihongo 50 Lessons)
             // ─────────────────────────────────────────────────────────
@@ -5529,30 +5328,6 @@ export default function EpsBookReader({
             // 2. JLPT N3・N2・N1 (Upper Intermediate & Advanced)
             // ─────────────────────────────────────────────────────────
             if (activeJapaneseFolder === "JLPT N3・N2・N1") {
-              const n3FullBooks = japaneseR2Data?.fullBooks?.filter(b => b.level === "N3" || b.level === "N2" || b.level === "N1") || [
-                {
-                  title: "JLPT N2 Complete Textbook",
-                  level: "N2",
-                  fileSize: "106.31 MB",
-                  pdfUrl: "/api/r2/books/japanese/full/JLPT_N2_Complete_Textbook.pdf",
-                  desc: "Complete official JLPT N2 comprehensive study textbook with all 18 chapters & answer keys"
-                },
-                {
-                  title: "Nihongo Soumatome N3 Goi (Vocabulary)",
-                  level: "N3",
-                  fileSize: "62.94 MB",
-                  pdfUrl: "/api/r2/books/japanese/full/Nihongo_Soumatome_N3_Goi.pdf",
-                  desc: "Complete 6-Week Vocabulary Drill with English, Chinese & Korean glosses"
-                },
-                {
-                  title: "Nihongo Soumatome N3 Choukai (Listening)",
-                  level: "N3",
-                  fileSize: "9.94 MB",
-                  pdfUrl: "/api/r2/books/japanese/full/Nihongo_Soumatome_N3_Choukai.pdf",
-                  desc: "Essential JLPT N3 Listening Comprehension textbook with audio dialogue scripts"
-                }
-              ];
-
               return (
                 <div style={{ marginBottom: "36px" }}>
                   {/* Top Control Bar */}
@@ -5599,8 +5374,7 @@ export default function EpsBookReader({
                           { id: "all", label: "All Levels" },
                           { id: "N3", label: `JLPT N3 (${filteredN3Units.length} Units)` },
                           { id: "N2", label: `JLPT N2 (${filteredN2Units.length} Chapters)` },
-                          { id: "N1", label: `JLPT N1 (${filteredN1Units.length} Chapters)` },
-                          { id: "full", label: "Full Textbooks" }
+                          { id: "N1", label: `JLPT N1 (${filteredN1Units.length} Chapters)` }
                         ].map(f => (
                           <button
                             key={f.id}
@@ -5654,96 +5428,6 @@ export default function EpsBookReader({
                       />
                     </div>
                   </div>
-
-                  {/* Full Textbooks Section (Shown on "all" or "full") */}
-                  {(n3LevelFilter === "all" || n3LevelFilter === "full") && (
-                    <div style={{
-                      marginBottom: "24px",
-                      padding: "18px 20px",
-                      backgroundColor: "#faf5ff",
-                      borderRadius: "14px",
-                      border: "1.5px solid #ede9fe"
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <strong style={{ fontSize: "15px", color: "#5b21b6" }}>
-                            Official Complete Textbooks
-                          </strong>
-                        </div>
-                      </div>
-
-                      <div style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                        gap: "14px"
-                      }}>
-                        {n3FullBooks.map((book, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              backgroundColor: "#ffffff",
-                              borderRadius: "12px",
-                              padding: "14px 16px",
-                              border: "1px solid #ddd6fe",
-                              boxShadow: "0 2px 8px rgba(124, 58, 237, 0.08)",
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "space-between",
-                              gap: "10px"
-                            }}
-                          >
-                            <div>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                                <span style={{
-                                  padding: "2px 8px",
-                                  borderRadius: "6px",
-                                  fontSize: "11px",
-                                  fontWeight: "800",
-                                  backgroundColor: "#faf5ff",
-                                  color: "#7c3aed",
-                                  border: "1px solid #ddd6fe"
-                                }}>
-                                  JLPT {book.level}
-                                </span>
-                              </div>
-                              <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#1e293b" }}>
-                                {book.title}
-                              </h4>
-                              <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#64748b", lineHeight: "1.4" }}>
-                                {book.desc}
-                              </p>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => setViewingMaterial({
-                                title: book.title,
-                                fileUrl: book.pdfUrl
-                              })}
-                              style={{
-                                padding: "8px 14px",
-                                borderRadius: "8px",
-                                border: "none",
-                                backgroundColor: "#7c3aed",
-                                backgroundImage: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
-                                color: "#ffffff",
-                                fontSize: "12px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "6px",
-                                boxShadow: "0 2px 8px rgba(124, 58, 237, 0.25)"
-                              }}
-                            >
-                              <span>Open Complete Textbook</span>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {/* 1. JLPT N3 Soumatome 36 Units Grid */}
                   {(n3LevelFilter === "all" || n3LevelFilter === "N3") && (

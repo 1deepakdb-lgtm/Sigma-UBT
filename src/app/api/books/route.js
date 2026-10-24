@@ -15,7 +15,7 @@ const DEFAULT_BOOKS_DATA = {
       id: "eps-book",
       name: "EPS Book",
       icon: "",
-      coverImage: "/images/books/eps-book-cover.svg",
+      coverImage: "/images/books/eps-book-cover.jpg",
       description: "Official 60-Chapter Korean EPS-TOPIK Textbook with Audio & PDFs",
       isSystem: true
     },
@@ -23,15 +23,15 @@ const DEFAULT_BOOKS_DATA = {
       id: "meaning-book",
       name: "Meaning Book",
       icon: "",
-      coverImage: "/images/books/meaning-book-cover.svg",
-      description: "Chapter-wise Korean Vocabulary & Word Meanings (Chapters 1 to 60)",
+      coverImage: "/images/books/meaning-book-cover.jpg",
+      description: "Chapter-wise Korean Vocabulary & Word Meanings in Nepali (Chapters 1 to 60)",
       isSystem: false
     },
     {
       id: "model-question-bank",
       name: "Model Question Bank",
       icon: "",
-      coverImage: "/images/books/model-bank-cover.svg",
+      coverImage: "/images/books/model-bank-cover.png",
       description: "UBT Exam Practice Question Sets (Reading 20 + Listening 20) with Time and Audio",
       isSystem: false
     },
@@ -39,8 +39,8 @@ const DEFAULT_BOOKS_DATA = {
       id: "grammar-book",
       name: "Grammar Book",
       icon: "",
-      coverImage: "/images/books/grammar-book-cover.svg",
-      description: "Comprehensive Korean Grammar Rules, Patterns & Examples",
+      coverImage: "/images/books/grammar-book-cover.png",
+      description: "Basic to Advanced Korean Grammar in Nepali, 60-Chapter Grammar Folders & Side-by-Side Comparisons",
       isSystem: false
     }
   ],
