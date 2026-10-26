@@ -1967,11 +1967,11 @@ function InstituteQuestionManagerContent() {
                     </div>
                   </div>
 
-                  {/* 4 Options listed in 2x2 grid: Option 1 & 2 in row 1, Option 3 & 4 in row 2 */}
+                  {/* 4 Options: 2 options above (Row 1), 2 options down (Row 2) */}
                   <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
-                    gap: "10px",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: "12px",
                     padding: "12px",
                     backgroundColor: "#f8fafc"
                   }}>
