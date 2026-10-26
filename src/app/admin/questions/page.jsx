@@ -2805,8 +2805,14 @@ function AdminQuestionManagerContent() {
                     </div>
                   </div>
 
-                  {/* 4 Options listed inside this ONE single box (no separate inner boxes) */}
-                  <div>
+                  {/* 4 Options listed in 2x2 grid: Option 1 & 2 in row 1, Option 3 & 4 in row 2 */}
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+                    gap: "10px",
+                    padding: "12px",
+                    backgroundColor: "#f8fafc"
+                  }}>
                     {qForm.options.map((opt, idx) => {
                       const isCorrect = qForm.answer === idx;
                       const symbols = ["①", "②", "③", "④"];
@@ -2814,63 +2820,49 @@ function AdminQuestionManagerContent() {
                         <div
                           key={idx}
                           style={{
-                            padding: "12px 16px",
-                            borderBottom: idx < 3 ? "1px solid #e2e8f0" : "none",
-                            backgroundColor: isCorrect ? "#f0fdf4" : (idx % 2 === 1 ? "#fafbfc" : "#ffffff"),
-                            borderLeft: isCorrect ? "4px solid #16a34a" : "4px solid transparent",
-                            transition: "all 0.15s ease"
+                            padding: "12px 14px",
+                            borderRadius: "8px",
+                            backgroundColor: isCorrect ? "#f0fdf4" : "#ffffff",
+                            border: isCorrect ? "1.5px solid #16a34a" : "1px solid #e2e8f0",
+                            borderLeft: isCorrect ? "4px solid #16a34a" : "4px solid #94a3b8",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                            transition: "all 0.15s ease",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between"
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", margin: 0 }}>
-                              <input
-                                type="radio"
-                                name="adminCorrectAnswer"
-                                checked={isCorrect}
-                                onChange={() => setQForm({ ...qForm, answer: idx })}
-                                style={{ width: "17px", height: "17px", cursor: "pointer", accentColor: "#16a34a" }}
-                              />
-                              <span style={{ fontWeight: "700", fontSize: "13px", color: isCorrect ? "#166534" : "#1e3a8a" }}>
-                                Option {idx + 1} {symbols[idx]}
-                              </span>
-                              {isCorrect && (
-                                <span style={{ fontSize: "11px", fontWeight: "700", color: "#166534", backgroundColor: "#dcfce7", padding: "1px 7px", borderRadius: "4px" }}>
-                                  ✓ Correct Answer
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", margin: 0 }}>
+                                <input
+                                  type="radio"
+                                  name="adminCorrectAnswer"
+                                  checked={isCorrect}
+                                  onChange={() => setQForm({ ...qForm, answer: idx })}
+                                  style={{ width: "17px", height: "17px", cursor: "pointer", accentColor: "#16a34a" }}
+                                />
+                                <span style={{ fontWeight: "700", fontSize: "13px", color: isCorrect ? "#166534" : "#1e3a8a" }}>
+                                  Option {idx + 1} {symbols[idx]}
                                 </span>
-                              )}
-                            </label>
-                          </div>
+                                {isCorrect && (
+                                  <span style={{ fontSize: "11px", fontWeight: "700", color: "#166534", backgroundColor: "#dcfce7", padding: "1px 7px", borderRadius: "4px" }}>
+                                    ✓ Correct Answer
+                                  </span>
+                                )}
+                              </label>
+                            </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: (opt.text || opt.image) ? "6px" : "0" }}>
-                            <input
-                              ref={(el) => (inputRefs.current[idx] = el)}
-                              type="text"
-                              placeholder={`Option ${idx + 1} text`}
-                              value={opt.text}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                const parsed = parseMultiOptionText(val, idx);
-                                if (parsed) {
-                                  const newOpts = [...qForm.options];
-                                  Object.keys(parsed).forEach(k => {
-                                    const oIdx = parseInt(k);
-                                    if (oIdx >= 0 && oIdx < 4) {
-                                      newOpts[oIdx] = { ...newOpts[oIdx], text: parsed[k] };
-                                    }
-                                  });
-                                  setQForm({ ...qForm, options: newOpts });
-                                  return;
-                                }
-                                const newOpts = [...qForm.options];
-                                newOpts[idx] = { ...newOpts[idx], text: val };
-                                setQForm({ ...qForm, options: newOpts });
-                              }}
-                              onPaste={(e) => {
-                                const pasted = e.clipboardData?.getData("text");
-                                if (pasted) {
-                                  const parsed = parseMultiOptionText(pasted, idx);
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: (opt.text || opt.image) ? "6px" : "0" }}>
+                              <input
+                                ref={(el) => (inputRefs.current[idx] = el)}
+                                type="text"
+                                placeholder={`Option ${idx + 1} text`}
+                                value={opt.text}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const parsed = parseMultiOptionText(val, idx);
                                   if (parsed) {
-                                    e.preventDefault();
                                     const newOpts = [...qForm.options];
                                     Object.keys(parsed).forEach(k => {
                                       const oIdx = parseInt(k);
@@ -2879,80 +2871,100 @@ function AdminQuestionManagerContent() {
                                       }
                                     });
                                     setQForm({ ...qForm, options: newOpts });
+                                    return;
                                   }
-                                }
-                              }}
-                              style={{
-                                ...inputStyle,
-                                width: "420px",
-                                maxWidth: "100%",
-                                flex: "0 1 420px",
-                                marginBottom: 0
-                              }}
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => applyUnderline(idx)}
-                              style={{
-                                backgroundColor: "#e2e8f0",
-                                color: "#1e293b",
-                                border: "none",
-                                borderRadius: "6px",
-                                padding: "9px 12px",
-                                fontSize: "12px",
-                                fontWeight: "bold",
-                                cursor: "pointer",
-                                whiteSpace: "nowrap"
-                              }}
-                              title="Select text and click here to underline"
-                            >
-                              Underline
-                            </button>
-
-                            <label style={{
-                              backgroundColor: "#e2e8f0",
-                              color: "#1e293b",
-                              padding: "9px 12px",
-                              borderRadius: "6px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "600",
-                              whiteSpace: "nowrap",
-                              display: "inline-flex",
-                              alignItems: "center"
-                            }}>
-                              Attach Image
-                              <input
-                                type="file"
-                                accept="image/*"
-                                style={{ display: "none" }}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    processFileToDataURL(file, (mediaUrl) => {
-                                      const newOpts = [...qForm.options];
-                                      newOpts[idx] = { ...newOpts[idx], image: mediaUrl };
-                                      setQForm({ ...qForm, options: newOpts });
-                                    });
-                                  }
-                                }}
-                              />
-                            </label>
-
-                            {opt.image && (
-                              <button
-                                type="button"
-                                onClick={() => {
                                   const newOpts = [...qForm.options];
-                                  newOpts[idx] = { ...newOpts[idx], image: "" };
+                                  newOpts[idx] = { ...newOpts[idx], text: val };
                                   setQForm({ ...qForm, options: newOpts });
                                 }}
-                                style={{ background: "#fee2e2", color: "#dc2626", border: "none", fontSize: "12px", padding: "9px 10px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap" }}
+                                onPaste={(e) => {
+                                  const pasted = e.clipboardData?.getData("text");
+                                  if (pasted) {
+                                    const parsed = parseMultiOptionText(pasted, idx);
+                                    if (parsed) {
+                                      e.preventDefault();
+                                      const newOpts = [...qForm.options];
+                                      Object.keys(parsed).forEach(k => {
+                                        const oIdx = parseInt(k);
+                                        if (oIdx >= 0 && oIdx < 4) {
+                                          newOpts[oIdx] = { ...newOpts[oIdx], text: parsed[k] };
+                                        }
+                                      });
+                                      setQForm({ ...qForm, options: newOpts });
+                                    }
+                                  }
+                                }}
+                                style={{
+                                  ...inputStyle,
+                                  flex: "1 1 180px",
+                                  minWidth: "140px",
+                                  marginBottom: 0
+                                }}
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() => applyUnderline(idx)}
+                                style={{
+                                  backgroundColor: "#e2e8f0",
+                                  color: "#1e293b",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  padding: "9px 11px",
+                                  fontSize: "12px",
+                                  fontWeight: "bold",
+                                  cursor: "pointer",
+                                  whiteSpace: "nowrap"
+                                }}
+                                title="Select text and click here to underline"
                               >
-                                Remove Image
+                                Underline
                               </button>
-                            )}
+
+                              <label style={{
+                                backgroundColor: "#e2e8f0",
+                                color: "#1e293b",
+                                padding: "9px 11px",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                whiteSpace: "nowrap",
+                                display: "inline-flex",
+                                alignItems: "center"
+                              }}>
+                                Attach Image
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  style={{ display: "none" }}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      processFileToDataURL(file, (mediaUrl) => {
+                                        const newOpts = [...qForm.options];
+                                        newOpts[idx] = { ...newOpts[idx], image: mediaUrl };
+                                        setQForm({ ...qForm, options: newOpts });
+                                      });
+                                    }
+                                  }}
+                                />
+                              </label>
+
+                              {opt.image && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newOpts = [...qForm.options];
+                                    newOpts[idx] = { ...newOpts[idx], image: "" };
+                                    setQForm({ ...qForm, options: newOpts });
+                                  }}
+                                  style={{ background: "#fee2e2", color: "#dc2626", border: "none", fontSize: "12px", padding: "9px 10px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap" }}
+                                >
+                                  Remove Image
+                                </button>
+                              )}
+                            </div>
                           </div>
 
                           {(opt.text || opt.image) && (
