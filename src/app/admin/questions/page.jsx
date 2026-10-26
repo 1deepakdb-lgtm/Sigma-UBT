@@ -2805,11 +2805,11 @@ function AdminQuestionManagerContent() {
                     </div>
                   </div>
 
-                  {/* 4 Options: 2 options above (Row 1), 2 options down (Row 2) */}
+                  {/* 4 Options: each option in one full row */}
                   <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
                     padding: "12px",
                     backgroundColor: "#f8fafc"
                   }}>
@@ -2820,7 +2820,7 @@ function AdminQuestionManagerContent() {
                         <div
                           key={idx}
                           style={{
-                            padding: "10px 12px",
+                            padding: "10px 14px",
                             borderRadius: "8px",
                             backgroundColor: isCorrect ? "#f0fdf4" : "#ffffff",
                             border: isCorrect ? "1.5px solid #16a34a" : "1px solid #e2e8f0",
@@ -2832,21 +2832,21 @@ function AdminQuestionManagerContent() {
                             gap: (opt.text || opt.image) ? "6px" : "0"
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", margin: 0, whiteSpace: "nowrap", flexShrink: 0 }}>
                               <input
                                 type="radio"
                                 name="adminCorrectAnswer"
                                 checked={isCorrect}
                                 onChange={() => setQForm({ ...qForm, answer: idx })}
-                                style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#16a34a" }}
+                                style={{ width: "17px", height: "17px", cursor: "pointer", accentColor: "#16a34a" }}
                               />
                               <span style={{ fontWeight: "700", fontSize: "13px", color: isCorrect ? "#166534" : "#1e3a8a" }}>
                                 Option {idx + 1} {symbols[idx]}
                               </span>
                               {isCorrect && (
-                                <span style={{ fontSize: "10.5px", fontWeight: "700", color: "#166534", backgroundColor: "#dcfce7", padding: "1px 6px", borderRadius: "4px" }}>
-                                  ✓
+                                <span style={{ fontSize: "11px", fontWeight: "700", color: "#166534", backgroundColor: "#dcfce7", padding: "1px 7px", borderRadius: "4px" }}>
+                                  ✓ Correct Answer
                                 </span>
                               )}
                             </label>
