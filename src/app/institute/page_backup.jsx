@@ -780,7 +780,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
             Billing
           </button>
           
-          <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>Books</button>
+          <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
           <button onClick={() => handleTabChange("dictionary")} style={getNavBtnStyle("dictionary")}>Dictionary</button>
           <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>EPS Notices</button>
           {userRole !== "staff" && (

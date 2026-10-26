@@ -103,7 +103,7 @@ export default function KoreanMeaningBookView({
       const model = gender === 'male' ? 'male-1' : 'female-1';
 
       // Exact dictionary neural model voice endpoint (Microsoft Neural Voice)
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ko&gender=${gender}&voice=${voice}&pitch=+0Hz&rate=-4%&model=${model}`;
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ko&gender=${gender}&voice=${voice}&pitch=%2B0Hz&rate=-4%25&model=${model}`;
       const audio = new Audio(ttsUrl);
       audioPlayerRef.current = audio;
       setSpeakingWordId(playKey);
@@ -253,21 +253,20 @@ export default function KoreanMeaningBookView({
           type="button"
           onClick={() => setSelectedChapter(null)}
           style={{
-            backgroundColor: "#f8fafc",
-            color: "#0f172a",
-            border: "1px solid #cbd5e1",
-            padding: "8px 16px",
+            backgroundColor: "#1e3a8a",
+            color: "#ffffff",
+            border: "1px solid #1e3a8a",
+            padding: "8px 18px",
             borderRadius: "8px",
             fontWeight: "700",
             fontSize: "13px",
             cursor: "pointer",
             display: "inline-flex",
             alignItems: "center",
-            gap: "6px",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.04)"
+            boxShadow: "0 2px 6px rgba(30, 58, 138, 0.25)"
           }}
         >
-          ← Back to Meaning Book Folders (सबै फोल्डरहरू)
+          Go Back
         </button>
 
         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
@@ -284,15 +283,16 @@ export default function KoreanMeaningBookView({
             style={{
               padding: "8px 14px",
               borderRadius: "8px",
-              border: "1px solid #cbd5e1",
-              backgroundColor: currentChapterObj.chapter <= 1 ? "#f1f5f9" : "#ffffff",
-              color: currentChapterObj.chapter <= 1 ? "#94a3b8" : "#0f172a",
+              border: `1px solid ${currentChapterObj.chapter <= 1 ? "#cbd5e1" : "#1e3a8a"}`,
+              backgroundColor: currentChapterObj.chapter <= 1 ? "#f1f5f9" : "#1e3a8a",
+              color: currentChapterObj.chapter <= 1 ? "#94a3b8" : "#ffffff",
               cursor: currentChapterObj.chapter <= 1 ? "not-allowed" : "pointer",
               fontWeight: "700",
-              fontSize: "12px"
+              fontSize: "12px",
+              boxShadow: currentChapterObj.chapter <= 1 ? "none" : "0 2px 6px rgba(30, 58, 138, 0.25)"
             }}
           >
-            ◀ Prev Chapter {currentChapterObj.chapter - 1}
+            ◀ Prev Chapter{currentChapterObj.chapter > 1 ? ` ${currentChapterObj.chapter - 1}` : ""}
           </button>
           <button
             type="button"
@@ -307,15 +307,16 @@ export default function KoreanMeaningBookView({
             style={{
               padding: "8px 14px",
               borderRadius: "8px",
-              border: "1px solid #cbd5e1",
-              backgroundColor: currentChapterObj.chapter >= 60 ? "#f1f5f9" : "#ffffff",
-              color: currentChapterObj.chapter >= 60 ? "#94a3b8" : "#0f172a",
+              border: `1px solid ${currentChapterObj.chapter >= 60 ? "#cbd5e1" : "#1e3a8a"}`,
+              backgroundColor: currentChapterObj.chapter >= 60 ? "#f1f5f9" : "#1e3a8a",
+              color: currentChapterObj.chapter >= 60 ? "#94a3b8" : "#ffffff",
               cursor: currentChapterObj.chapter >= 60 ? "not-allowed" : "pointer",
               fontWeight: "700",
-              fontSize: "12px"
+              fontSize: "12px",
+              boxShadow: currentChapterObj.chapter >= 60 ? "none" : "0 2px 6px rgba(30, 58, 138, 0.25)"
             }}
           >
-            Next Chapter {currentChapterObj.chapter + 1} ▶
+            Next Chapter{currentChapterObj.chapter < 60 ? ` ${currentChapterObj.chapter + 1}` : ""} ▶
           </button>
 
           {isAdmin && onOpenEditModal && (
@@ -346,49 +347,32 @@ export default function KoreanMeaningBookView({
       {/* ── 1. CHAPTER FOLDERS GRID VIEW (CHAPTERS 1 TO 60) ──────────────── */}
       {!selectedChapter ? (
         <div>
-          {/* Header Banner - Clean, Attractive, Simple */}
+          {/* Header Banner */}
           <div style={{
             backgroundColor: "#ffffff",
             borderRadius: "16px",
-            padding: "24px 28px",
+            padding: "20px 24px",
             marginBottom: "20px",
             border: "1.5px solid #e2e8f0",
             boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
           }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                  <span style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "44px",
-                    height: "44px",
-                    borderRadius: "12px",
-                    backgroundColor: "#fee2e2",
-                    color: "#dc2626",
-                    fontSize: "22px"
-                  }}>
-                    📕
-                  </span>
-                  <div>
-                    <h2 style={{ margin: 0, fontSize: "24px", fontWeight: "900", color: "#0f172a", letterSpacing: "-0.5px" }}>
-                      Meaning Book (अध्याय अनुसार शब्दार्थ संग्रह)
-                    </h2>
-                    <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: "700", backgroundColor: "#fee2e2", color: "#b91c1c", padding: "2px 8px", borderRadius: "6px" }}>
-                        60 Chapters (अध्याय १ देखि ६०)
-                      </span>
-                      <span style={{ fontSize: "12px", fontWeight: "700", backgroundColor: "#eff6ff", color: "#1d4ed8", padding: "2px 8px", borderRadius: "6px" }}>
-                        नेपाली देवनागरी उच्चारण र अर्थ सहित
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#475569", lineHeight: "1.5", maxWidth: "850px" }}>
-                  EPS-TOPIK Korean 60 Book अन्तर्गतका सम्पूर्ण अध्यायहरूका शब्दार्थ, नेपाली उच्चारण, अर्थ, उदाहरण वाक्यहरू तथा अडियो उच्चारण। अध्ययन गर्न जुनसुकै च्याप्टर फोल्डरमा क्लिक गर्नुहोस्।
-                </p>
-              </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "44px",
+                height: "44px",
+                borderRadius: "12px",
+                backgroundColor: "#fee2e2",
+                color: "#dc2626",
+                fontSize: "22px"
+              }}>
+                📕
+              </span>
+              <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "900", color: "#0f172a", letterSpacing: "-0.5px" }}>
+                Meaning Book (अध्याय अनुसार शब्दार्थ संग्रह)
+              </h2>
             </div>
           </div>
 
@@ -511,12 +495,14 @@ export default function KoreanMeaningBookView({
                     backgroundColor: "#ffffff",
                     borderRadius: "14px",
                     border: "1.5px solid #e2e8f0",
-                    padding: "18px 20px",
+                    padding: "24px 20px",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "space-between",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
                     boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
                   }}
                   onMouseEnter={(e) => {
@@ -530,77 +516,33 @@ export default function KoreanMeaningBookView({
                     e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
                   }}
                 >
-                  <div>
-                    {/* Chapter Header Badges */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                      <span style={{
-                        backgroundColor: isPart1 ? "#fee2e2" : "#fef3c7",
-                        color: isPart1 ? "#b91c1c" : "#b45309",
-                        padding: "3px 10px",
-                        borderRadius: "12px",
-                        fontSize: "12px",
-                        fontWeight: "800",
-                        border: `1px solid ${isPart1 ? '#fecaca' : '#fde68a'}`
-                      }}>
-                        Chapter {c.chapter}
-                      </span>
-
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <span style={{
-                          fontSize: "11px",
-                          fontWeight: "700",
-                          backgroundColor: "#dcfce7",
-                          color: "#166534",
-                          padding: "2px 7px",
-                          borderRadius: "4px"
-                        }}>
-                          {c.vocabularyCount} Words
-                        </span>
-                        {hasPdf && (
-                          <span style={{
-                            fontSize: "11px",
-                            fontWeight: "700",
-                            backgroundColor: "#eff6ff",
-                            color: "#1d4ed8",
-                            padding: "2px 6px",
-                            borderRadius: "4px"
-                          }}>
-                            PDF
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Titles */}
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "18px", fontWeight: "900", color: "#0f172a" }}>
-                      제{c.chapter}과 {c.titleKo}
-                    </h3>
-                    <div style={{ fontSize: "14px", fontWeight: "700", color: "#dc2626", marginBottom: "4px" }}>
-                      {c.titleNe}
-                    </div>
-                    {c.titleEn && (
-                      <div style={{ fontSize: "12px", color: "#64748b" }}>
-                        {c.titleEn}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bottom Footer */}
-                  <div style={{
-                    marginTop: "16px",
-                    paddingTop: "12px",
-                    borderTop: "1px solid #f1f5f9",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center"
-                  }}>
-                    <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
-                      Book Part {c.bookPart}
-                    </span>
-                    <span style={{ fontSize: "12px", fontWeight: "800", color: "#dc2626" }}>
-                      शब्दार्थ हेर्नुहोस् ➔
+                  {/* Chapter Header Badge (Centered) */}
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
+                    <span style={{
+                      backgroundColor: isPart1 ? "#fee2e2" : "#fef3c7",
+                      color: isPart1 ? "#b91c1c" : "#b45309",
+                      padding: "4px 14px",
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      fontWeight: "800",
+                      border: `1px solid ${isPart1 ? '#fecaca' : '#fde68a'}`
+                    }}>
+                      Chapter {c.chapter}
                     </span>
                   </div>
+
+                  {/* Titles (Centered) */}
+                  <h3 style={{ margin: "0 0 6px 0", fontSize: "18px", fontWeight: "900", color: "#0f172a", textAlign: "center" }}>
+                    제{c.chapter}과 {c.titleKo}
+                  </h3>
+                  <div style={{ fontSize: "14px", fontWeight: "700", color: "#dc2626", marginBottom: "4px", textAlign: "center" }}>
+                    {c.titleNe}
+                  </div>
+                  {c.titleEn && (
+                    <div style={{ fontSize: "12px", color: "#64748b", textAlign: "center" }}>
+                      {c.titleEn}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -784,9 +726,6 @@ export default function KoreanMeaningBookView({
                 border: "1.5px solid #e2e8f0",
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)"
               }}>
-                <div style={{ fontSize: "14px", color: "#64748b", marginBottom: "12px", fontWeight: "700" }}>
-                  कोरियन भाषा — नेपाली अर्थ, व्याकरण तथा उदाहरण
-                </div>
                 <div style={{
                   display: "inline-block",
                   backgroundColor: "#dc2626",
@@ -1530,9 +1469,18 @@ export default function KoreanMeaningBookView({
                         position: "absolute",
                         top: "14px",
                         right: "16px",
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        color: "#64748b"
+                        fontSize: "12px",
+                        fontWeight: "800",
+                        backgroundColor: "#16a34a",
+                        color: "#ffffff",
+                        padding: "6px 14px",
+                        borderRadius: "20px",
+                        boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease"
                       }}>
                         {isCardFlipped ? "Flip to Korean ↺" : "Click to Reveal Nepali ↻"}
                       </span>

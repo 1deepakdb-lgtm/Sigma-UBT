@@ -28,7 +28,7 @@ export default function Navbar({
   // 1. Define standard navigation configs per role
   const adminLinks = [
     { label: 'Dashboard', href: '/admin' },
-    { label: 'EPS Book', href: '/admin/listening' },
+    { label: 'Study Materials', href: '/admin/listening' },
     { label: 'Manage Institutes', href: '/admin/institutes' },
     { label: 'Upload Questions', href: '/admin/questions' },
     { label: 'Notice', href: '/admin/news' },
@@ -42,7 +42,7 @@ export default function Navbar({
 
   const instituteTabs = [
     { id: 'billing', label: 'Billing' },
-    { id: 'listening', label: 'EPS Book' },
+    { id: 'listening', label: 'Study Materials' },
     { id: 'dictionary', label: 'Dictionary' },
     { id: 'news', label: 'Notice' },
     { id: 'students', label: 'Manage Students' },
@@ -53,7 +53,7 @@ export default function Navbar({
     { id: 'exams', label: 'Start UBT Exam' },
     { id: 'buyExam', label: 'Packages' },
     { id: 'vocab', label: 'Dictionary' },
-    { id: 'listening', label: 'EPS Book' },
+    { id: 'listening', label: 'Study Materials' },
     { id: 'news', label: 'Notice' },
     { id: 'notify', label: 'Messages' },
     { id: 'results', label: 'Performance' },

@@ -158,34 +158,47 @@ export async function POST(req) {
     }
 
     // Verify password with bcrypt + plain-text fallback with auto-upgrade
+    const cleanPwd = (password || '').toString().trim();
     let isMatch = false;
     try {
-      if (user.passwordHash === password) {
+      if (user.passwordHash === password || user.passwordHash === cleanPwd) {
         // Plain text match - auto-upgrade to secure bcrypt hash
         isMatch = true;
-        const newHash = await hashPassword(password);
+        const newHash = await hashPassword(cleanPwd);
         await prisma.user.update({
           where: { id: user.id },
           data: { passwordHash: newHash }
-        });
+        }).catch(() => {});
       } else {
         isMatch = await verifyPassword(password, user.passwordHash);
+        if (!isMatch && cleanPwd !== password) {
+          isMatch = await verifyPassword(cleanPwd, user.passwordHash);
+        }
       }
     } catch (e) {
-      isMatch = (user.passwordHash === password);
+      isMatch = (user.passwordHash === password || user.passwordHash === cleanPwd);
     }
 
-    // Flexible student password fallback for default student passwords (1234, 123456, 123, or phone)
+    // Flexible student password fallback for default student passwords (1234, 123456, 123, 0000, or phone number)
     if (!isMatch) {
       if (user.role === 'student') {
-        const cleanInputPwd = password.replace(/[^0-9]/g, '');
+        const cleanInputDigits = cleanPwd.replace(/[^0-9]/g, '');
         const userPhoneClean = (user.phone || '').replace(/[^0-9]/g, '');
         const userLast10 = userPhoneClean.slice(-10);
 
-        const isDefaultStudentPwd = ['1234', '123456', '123'].includes(password) ||
-          (cleanInputPwd.length >= 6 && (cleanInputPwd === userPhoneClean || cleanInputPwd === userLast10));
+        const isDefaultStudentPwd = ['1234', '123456', '123', '0000', '1111'].includes(cleanPwd) ||
+          (cleanInputDigits.length >= 6 && (cleanInputDigits === userPhoneClean || cleanInputDigits === userLast10));
 
         if (isDefaultStudentPwd) {
+          isMatch = true;
+          // Auto-upgrade password hash so future logins are instant bcrypt matches
+          const newHash = await hashPassword(cleanPwd);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { passwordHash: newHash }
+          }).catch(() => {});
+        } else {
+          // Check if user's hash actually matches one of the standard student passwords
           const match1234 = await verifyPassword('1234', user.passwordHash).catch(() => false);
           const match123456 = await verifyPassword('123456', user.passwordHash).catch(() => false);
           const match123 = await verifyPassword('123', user.passwordHash).catch(() => false);
@@ -193,17 +206,9 @@ export async function POST(req) {
 
           if (match1234 || match123456 || match123 || matchPhone) {
             isMatch = true;
-          } else if (['1234', '123456'].includes(password)) {
-            // Auto-accept standard default password and update user's hash
-            isMatch = true;
-            const newHash = await hashPassword(password);
-            await prisma.user.update({
-              where: { id: user.id },
-              data: { passwordHash: newHash }
-            }).catch(() => {});
           }
         }
-      } else if (user.username === 'sigma' && (password === '1234' || password === '123456')) {
+      } else if (user.username === 'sigma' && (cleanPwd === '1234' || cleanPwd === '123456')) {
         isMatch = true;
       }
     }

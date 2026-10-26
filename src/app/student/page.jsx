@@ -92,6 +92,9 @@ const StudentDashboard = () => {
   const [examSets, setExamSets] = useState([]);
   const [examPackages, setExamPackages] = useState([]);
   const [selectedPackageFilter, setSelectedPackageFilter] = useState("All");
+  const [examSetsPage, setExamSetsPage] = useState(1);
+  const [examSetsSearch, setExamSetsSearch] = useState("");
+  const SETS_PER_PAGE = 20;
 
   const [activeBookFolder, setActiveBookFolder] = useState("EPS Book");
   const [folderMaterials, setFolderMaterials] = useState([]);
@@ -485,10 +488,26 @@ const StudentDashboard = () => {
     setLoadingVocab(false);
   };
 
-  const filteredSets =
+  const sortedExamSets = [...examSets].sort((a, b) => {
+    const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
+    const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
+    return numA - numB;
+  });
+
+  const baseFilteredSets =
     selectedPackageFilter === "All" || purchasedPackages.length <= 1
-      ? examSets
-      : examSets.filter((s) => s.packageName === selectedPackageFilter);
+      ? sortedExamSets
+      : sortedExamSets.filter((s) => s.packageName === selectedPackageFilter);
+
+  const filteredSets = examSetsSearch.trim()
+    ? baseFilteredSets.filter((s) =>
+        (s.name || '').toLowerCase().includes(examSetsSearch.toLowerCase()) ||
+        (s.packageName || '').toLowerCase().includes(examSetsSearch.toLowerCase())
+      )
+    : baseFilteredSets;
+
+  const totalExamPages = Math.ceil(filteredSets.length / SETS_PER_PAGE);
+  const paginatedSets = filteredSets.slice((examSetsPage - 1) * SETS_PER_PAGE, examSetsPage * SETS_PER_PAGE);
 
   const containerStyle = {
     minHeight: "100vh",
@@ -616,7 +635,7 @@ const StudentDashboard = () => {
           <button onClick={() => setActiveTab("exams")} style={getNavBtnStyle("exams")}>Start UBT Exam</button>
           <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>Dictionary</button>
-          <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>EPS Book</button>
+          <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
           <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
           <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
@@ -797,9 +816,18 @@ const StudentDashboard = () => {
               <h3 style={{ color: "#0f172a", margin: 0, fontSize: "20px", fontWeight: "800" }}>
                 Available UBT Exam Sets
               </h3>
-              <span style={{ fontSize: "12px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "4px 10px", borderRadius: "6px" }}>
-                {filteredSets.length} Sets Ready
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "12px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "4px 10px", borderRadius: "6px" }}>
+                  {filteredSets.length} Sets Ready
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search set (e.g. SET 05)"
+                  value={examSetsSearch}
+                  onChange={(e) => { setExamSetsSearch(e.target.value); setExamSetsPage(1); }}
+                  style={{ padding: "6px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", outline: "none", width: "180px" }}
+                />
+              </div>
             </div>
 
             {/* If student has multiple purchased packages, only filter between their purchased packages */}
@@ -807,7 +835,7 @@ const StudentDashboard = () => {
               <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  onClick={() => setSelectedPackageFilter("All")}
+                  onClick={() => { setSelectedPackageFilter("All"); setExamSetsPage(1); }}
                   style={{
                     padding: "7px 14px",
                     backgroundColor: selectedPackageFilter === "All" ? "#1e3a8a" : "#ffffff",
@@ -825,7 +853,7 @@ const StudentDashboard = () => {
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setSelectedPackageFilter(pkgName)}
+                    onClick={() => { setSelectedPackageFilter(pkgName); setExamSetsPage(1); }}
                     style={{
                       padding: "7px 14px",
                       backgroundColor: selectedPackageFilter === pkgName ? "#1e3a8a" : "#ffffff",
@@ -844,42 +872,44 @@ const StudentDashboard = () => {
             )}
 
             {/* Exam Sets Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "18px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "14px" }}>
               {filteredSets.length === 0 ? (
                 <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", backgroundColor: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                   <p style={{ color: "#64748b", margin: "0 0 10px 0" }}>No exam sets currently available for this package.</p>
                   <button
                     type="button"
-                    onClick={() => setSelectedPackageFilter("All")}
+                    onClick={() => { setSelectedPackageFilter("All"); setExamSetsSearch(""); }}
                     style={{ padding: "8px 16px", backgroundColor: "#2563eb", color: "#ffffff", border: "none", borderRadius: "6px", fontWeight: "700", cursor: "pointer", fontSize: "12px" }}
                   >
                     View All Sets
                   </button>
                 </div>
               ) : (
-                filteredSets.map((set, idx) => (
+                paginatedSets.map((set, idx) => (
                   <div
                     key={set.id || idx}
                     style={{
                       backgroundColor: "#ffffff",
                       borderRadius: "10px",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
                       border: "1px solid #e2e8f0",
-                      padding: "20px",
+                      padding: "16px",
                       display: "flex",
                       flexDirection: "column",
-                      justifyContent: "space-between"
+                      justifyContent: "space-between",
+                      gap: "12px"
                     }}
                   >
                     <div>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 8px", borderRadius: "4px" }}>
+                      <div style={{ display: "flex", alignItems: "center", marginBottom: "6px" }}>
+                        <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 7px", borderRadius: "4px" }}>
                           {set.packageName || "UBT Set"}
                         </span>
                       </div>
-                      <h4 style={{ margin: "0 0 14px 0", fontSize: "16px", color: "#0f172a", fontWeight: "700" }}>
+                      <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a", fontWeight: "800" }}>
                         {set.name}
                       </h4>
+                      <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#64748b" }}>40 Questions · 50 Min</p>
                     </div>
 
                     <button
@@ -887,22 +917,84 @@ const StudentDashboard = () => {
                       onClick={() => router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`)}
                       style={{
                         width: "100%",
-                        backgroundColor: "#16a34a",
+                        background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
                         color: "#ffffff",
                         border: "none",
-                        padding: "10px",
+                        padding: "9px",
                         borderRadius: "6px",
                         fontWeight: "700",
                         cursor: "pointer",
-                        fontSize: "13px"
+                        fontSize: "13px",
+                        letterSpacing: "0.3px"
                       }}
                     >
-                      START EXAM
+                      START EXAM ▶
                     </button>
                   </div>
                 ))
               )}
             </div>
+
+            {/* Pagination Controls */}
+            {totalExamPages > 1 && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "24px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setExamSetsPage(1)}
+                  disabled={examSetsPage === 1}
+                  style={{ padding: "6px 12px", backgroundColor: examSetsPage === 1 ? "#e2e8f0" : "#1e3a8a", color: examSetsPage === 1 ? "#94a3b8" : "#fff", border: "none", borderRadius: "5px", cursor: examSetsPage === 1 ? "not-allowed" : "pointer", fontWeight: "700", fontSize: "12px" }}
+                >
+                  ❮❮ First
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExamSetsPage(p => Math.max(1, p - 1))}
+                  disabled={examSetsPage === 1}
+                  style={{ padding: "6px 12px", backgroundColor: examSetsPage === 1 ? "#e2e8f0" : "#1e3a8a", color: examSetsPage === 1 ? "#94a3b8" : "#fff", border: "none", borderRadius: "5px", cursor: examSetsPage === 1 ? "not-allowed" : "pointer", fontWeight: "700", fontSize: "12px" }}
+                >
+                  ❮ Prev
+                </button>
+                {Array.from({ length: totalExamPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalExamPages || Math.abs(p - examSetsPage) <= 2)
+                  .reduce((acc, p, i, arr) => {
+                    if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((item, i) =>
+                    item === '...' ? (
+                      <span key={`dots-${i}`} style={{ padding: "6px 4px", color: "#94a3b8", fontSize: "14px" }}>…</span>
+                    ) : (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setExamSetsPage(item)}
+                        style={{ padding: "6px 11px", backgroundColor: item === examSetsPage ? "#2563eb" : "#ffffff", color: item === examSetsPage ? "#fff" : "#1e3a8a", border: "1px solid #cbd5e1", borderRadius: "5px", cursor: "pointer", fontWeight: "700", fontSize: "12px" }}
+                      >
+                        {item}
+                      </button>
+                    )
+                  )
+                }
+                <button
+                  type="button"
+                  onClick={() => setExamSetsPage(p => Math.min(totalExamPages, p + 1))}
+                  disabled={examSetsPage === totalExamPages}
+                  style={{ padding: "6px 12px", backgroundColor: examSetsPage === totalExamPages ? "#e2e8f0" : "#1e3a8a", color: examSetsPage === totalExamPages ? "#94a3b8" : "#fff", border: "none", borderRadius: "5px", cursor: examSetsPage === totalExamPages ? "not-allowed" : "pointer", fontWeight: "700", fontSize: "12px" }}
+                >
+                  Next ❯
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExamSetsPage(totalExamPages)}
+                  disabled={examSetsPage === totalExamPages}
+                  style={{ padding: "6px 12px", backgroundColor: examSetsPage === totalExamPages ? "#e2e8f0" : "#1e3a8a", color: examSetsPage === totalExamPages ? "#94a3b8" : "#fff", border: "none", borderRadius: "5px", cursor: examSetsPage === totalExamPages ? "not-allowed" : "pointer", fontWeight: "700", fontSize: "12px" }}
+                >
+                  Last ❯❯
+                </button>
+                <span style={{ fontSize: "12px", color: "#64748b", marginLeft: "4px" }}>Page {examSetsPage} of {totalExamPages}</span>
+              </div>
+            )}
           </div>
         )}
 

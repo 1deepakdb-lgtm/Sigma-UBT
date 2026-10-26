@@ -82,7 +82,7 @@ export default function AdminStudentsPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmitStudent = (e) => {
+  const handleSubmitStudent = async (e) => {
     e.preventDefault();
     const calculatedExpiryDate = calculateExpiryDate(formData.expiryDuration);
     const targetInst = formData.instituteName || (institutes[0]?.name || "Language Institute");
@@ -90,54 +90,62 @@ export default function AdminStudentsPage() {
     const allStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
     const currentInstStudents = allStudents[targetInst] || [];
 
-    if (editId) {
-      const updated = currentInstStudents.map((stu) =>
-        stu.id === editId ? { ...stu, ...formData, instituteName: targetInst, expiryDate: calculatedExpiryDate } : stu
-      );
-      allStudents[targetInst] = updated;
-      alert("Student updated successfully!");
-    } else {
-      const exists = currentInstStudents.some((s) => s.phone === formData.phone);
-      if (exists) {
-        alert("This student phone number is already registered under this institute!");
-        return;
-      }
-      const newStudent = {
-        id: Date.now(),
-        ...formData,
-        instituteName: targetInst,
-        expiryDate: calculatedExpiryDate,
-        status: "Active"
-      };
-      allStudents[targetInst] = [...currentInstStudents, newStudent];
+    const studentPayload = {
+      id: editId || undefined,
+      name: formData.name.trim(),
+      username: formData.phone.trim(),
+      phone: formData.phone.trim(),
+      password: (formData.password || "1234").trim(),
+      batch: formData.assignedPackage || "Full Set UBT",
+      status: "Active",
+      instituteName: targetInst
+    };
 
-      // Persist student to backend database for seamless student login
-      fetch("/api/institute/students", {
+    try {
+      const res = await fetch("/api/institute/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          username: formData.phone,
-          password: formData.password || "1234",
-          phone: formData.phone,
-          batch: formData.assignedPackage || "Full Set UBT",
-          status: "Active",
-          instituteId: targetInst
-        })
-      }).catch(err => console.warn("Background student sync notice:", err));
+        body: JSON.stringify(studentPayload)
+      });
+      const data = await res.json();
 
-      alert("Student registered successfully! They can log in with Phone: " + formData.phone + " and Password: " + (formData.password || "1234"));
+      if (!res.ok) {
+        alert(data.error || "Failed to save student in database");
+        return;
+      }
+
+      if (editId) {
+        const updated = currentInstStudents.map((stu) =>
+          stu.id === editId || stu.phone === formData.phone
+            ? { ...stu, ...formData, id: data.student?.id || stu.id, instituteName: targetInst, expiryDate: calculatedExpiryDate }
+            : stu
+        );
+        allStudents[targetInst] = updated;
+        alert("Student updated successfully in database!");
+      } else {
+        const newStudent = {
+          id: data.student?.id || Date.now(),
+          ...formData,
+          instituteName: targetInst,
+          expiryDate: calculatedExpiryDate,
+          status: "Active"
+        };
+        allStudents[targetInst] = [...currentInstStudents.filter(s => s.phone !== formData.phone), newStudent];
+        alert("Student registered successfully! They can log in with Phone: " + formData.phone + " and Password: " + (formData.password || "1234"));
+      }
+
+      localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+
+      const globalUsers = JSON.parse(localStorage.getItem("users") || "{}");
+      globalUsers[formData.phone] = { name: formData.name, password: formData.password || "1234" };
+      localStorage.setItem("users", JSON.stringify(globalUsers));
+
+      resetForm();
+      loadData();
+    } catch (err) {
+      console.error("Save student error:", err);
+      alert("Error connecting to server to save student: " + err.message);
     }
-
-    localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
-
-    // Also sync user credentials for student login
-    const globalUsers = JSON.parse(localStorage.getItem("users") || "{}");
-    globalUsers[formData.phone] = { name: formData.name, password: formData.password || "1234" };
-    localStorage.setItem("users", JSON.stringify(globalUsers));
-
-    resetForm();
-    loadData();
   };
 
   const handleEdit = (student) => {
@@ -154,13 +162,23 @@ export default function AdminStudentsPage() {
     window.scrollTo({ top: 120, behavior: "smooth" });
   };
 
-  const handleDelete = (id, instName) => {
+  const handleDelete = async (id, instName) => {
     if (window.confirm("Are you sure you want to delete this student?")) {
       const allStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
       const targetInst = instName || Object.keys(allStudents)[0];
+      let targetPhone = "";
       if (allStudents[targetInst]) {
+        const target = allStudents[targetInst].find(s => s.id === id);
+        targetPhone = target?.phone || '';
         allStudents[targetInst] = allStudents[targetInst].filter((s) => s.id !== id);
         localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+      }
+      try {
+        await fetch(`/api/institute/students?id=${encodeURIComponent(id || '')}&phone=${encodeURIComponent(targetPhone)}`, {
+          method: "DELETE"
+        });
+      } catch (e) {
+        console.warn("Delete student API notice:", e);
       }
       loadData();
     }

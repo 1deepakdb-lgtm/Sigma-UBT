@@ -104,9 +104,8 @@ const AdminDashboard = () => {
           <Link href="/admin" style={{ ...linkStyle, backgroundColor: "#2563eb", color: "white" }}>Dashboard</Link>
           <Link href="/admin/institutes" style={linkStyle}>Manage Institutes</Link>
           <Link href="/admin/questions" style={linkStyle}>Upload Questions</Link>
-          <Link href="/admin/listening" style={linkStyle}>Books</Link>
+          <Link href="/admin/listening" style={linkStyle}>Study Materials</Link>
           <Link href="/admin/news" style={linkStyle}>EPS News Update</Link>
-          <Link href="/admin/notifications" style={linkStyle}>Notifications</Link>
         </div>
       </div>
 

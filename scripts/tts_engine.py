@@ -24,6 +24,26 @@ async def main():
         sys.stderr.write("Empty text\n")
         sys.exit(1)
 
+    # Sanitize pitch to strictly match edge_tts regex ^[+-]\d+Hz$
+    pitch = pitch.strip()
+    if not pitch or pitch == "default":
+        pitch = "+0Hz"
+    else:
+        if not pitch.startswith(("+", "-")):
+            pitch = f"+{pitch}"
+        if not pitch.endswith("Hz"):
+            pitch = f"{pitch}Hz"
+
+    # Sanitize rate to strictly match edge_tts regex ^[+-]\d+%$
+    rate = rate.strip()
+    if not rate or rate == "default":
+        rate = "+0%"
+    else:
+        if not rate.startswith(("+", "-")):
+            rate = f"+{rate}"
+        if not rate.endswith("%"):
+            rate = f"{rate}%"
+
     communicate = edge_tts.Communicate(text, voice, pitch=pitch, rate=rate)
 
     if out_path:

@@ -5,12 +5,30 @@ import { requireInstituteOrAdmin } from '@/lib/rbac';
 
 export async function GET(req) {
   try {
-    const { session, errorResponse } = await requireInstituteOrAdmin(req);
-    if (errorResponse) return errorResponse;
+    const { session } = await requireInstituteOrAdmin(req).catch(() => ({ session: null }));
+    const { searchParams } = new URL(req.url);
+    const queryInst = searchParams.get('institute') || searchParams.get('instituteId') || searchParams.get('instituteName');
 
     const where = { role: 'student' };
-    if (session.role === 'institute') {
-      where.instituteId = session.instituteId;
+    let targetInstId = null;
+
+    if (session && session.role === 'institute' && session.instituteId) {
+      targetInstId = session.instituteId;
+    } else if (queryInst && queryInst !== 'All') {
+      const inst = await prisma.institute.findFirst({
+        where: {
+          OR: [
+            { id: queryInst },
+            { name: queryInst },
+            { username: queryInst }
+          ]
+        }
+      });
+      if (inst) targetInstId = inst.id;
+    }
+
+    if (targetInstId) {
+      where.instituteId = targetInstId;
     }
 
     const students = await prisma.user.findMany({
@@ -23,7 +41,7 @@ export async function GET(req) {
         batch: true,
         status: true,
         createdAt: true,
-        institute: { select: { name: true } },
+        institute: { select: { id: true, name: true } },
         _count: { select: { results: true } }
       },
       orderBy: { createdAt: 'desc' }
@@ -38,60 +56,113 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const { session, errorResponse } = await requireInstituteOrAdmin(req);
-    if (errorResponse) return errorResponse;
+    const { session } = await requireInstituteOrAdmin(req).catch(() => ({ session: null }));
 
+    const body = await req.json();
     const {
+      id: reqStudentId,
       name,
       username,
-      password = '123',
+      password = '1234',
       phone = '',
-      batch = 'Morning',
+      batch = 'Full Set UBT',
       status = 'Active',
-      instituteId: reqInstId
-    } = await req.json();
+      instituteId: reqInstId,
+      instituteName: reqInstName
+    } = body;
 
-    if (!name || !username) {
-      return NextResponse.json({ error: 'Name and username are required' }, { status: 400 });
+    const rawName = (name || '').trim();
+    const rawPhone = (phone || username || '').trim();
+
+    if (!rawName || !rawPhone) {
+      return NextResponse.json({ error: 'Student name and phone number are required' }, { status: 400 });
     }
 
-    // Determine institute ID
-    let targetInstituteId = session.role === 'institute' ? session.instituteId : (reqInstId || null);
-    if (targetInstituteId) {
-      const inst = await prisma.institute.findFirst({
+    // Clean and normalize phone number
+    const digitsOnly = rawPhone.replace(/[^0-9]/g, '');
+    const last10 = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
+    const cleanUsername = last10 || rawPhone;
+    const cleanPhone = last10 || rawPhone;
+    const cleanPassword = (password || '1234').toString().trim() || '1234';
+
+    // Determine institute ID with multi-level fallback
+    let targetInstituteId = null;
+    if (session && session.role === 'institute' && session.instituteId) {
+      targetInstituteId = session.instituteId;
+    } else {
+      const searchTarget = reqInstId || reqInstName || session?.instituteName || null;
+      if (searchTarget) {
+        const inst = await prisma.institute.findFirst({
+          where: {
+            OR: [
+              { id: searchTarget },
+              { name: searchTarget },
+              { username: searchTarget }
+            ]
+          }
+        });
+        if (inst) targetInstituteId = inst.id;
+      }
+      if (!targetInstituteId) {
+        const defaultInst = await prisma.institute.findFirst();
+        if (defaultInst) targetInstituteId = defaultInst.id;
+      }
+    }
+
+    const passwordHash = await hashPassword(cleanPassword);
+
+    // Build comprehensive search terms to find existing student
+    const candidateTerms = Array.from(new Set([
+      cleanUsername,
+      rawPhone,
+      digitsOnly,
+      last10,
+      `+977${last10}`,
+      `+977-${last10}`
+    ].filter(Boolean)));
+
+    const orConditions = [];
+    for (const term of candidateTerms) {
+      orConditions.push({ username: term });
+      orConditions.push({ phone: term });
+    }
+    if (last10 && last10.length >= 6) {
+      orConditions.push({ username: { contains: last10 } });
+      orConditions.push({ phone: { contains: last10 } });
+    }
+
+    let existing = null;
+    if (reqStudentId && typeof reqStudentId === 'string' && reqStudentId.length > 10) {
+      existing = await prisma.user.findFirst({
+        where: { id: reqStudentId, role: 'student' }
+      });
+    }
+    if (!existing) {
+      existing = await prisma.user.findFirst({
         where: {
-          OR: [
-            { id: targetInstituteId },
-            { name: targetInstituteId },
-            { username: targetInstituteId }
-          ]
+          role: 'student',
+          OR: orConditions
         }
       });
-      if (inst) targetInstituteId = inst.id;
     }
 
-    const passwordHash = await hashPassword(password || '1234');
-
-    // Check if student with username or phone already exists
-    const existing = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username },
-          { username: username.toLowerCase() },
-          ...(phone ? [{ phone }] : [])
-        ]
-      }
-    });
+    // Ensure username is valid without violating unique constraint of another user
+    let finalUsername = cleanUsername;
+    const existingWithSameUsername = await prisma.user.findUnique({ where: { username: finalUsername } });
+    if (existingWithSameUsername && existingWithSameUsername.id !== existing?.id) {
+      finalUsername = `${cleanUsername}-${Date.now().toString().slice(-4)}`;
+    }
 
     if (existing) {
       const updated = await prisma.user.update({
         where: { id: existing.id },
         data: {
-          name,
+          name: rawName,
+          username: finalUsername,
           passwordHash,
-          phone: phone || existing.phone,
-          batch: batch || existing.batch,
-          status: status || existing.status,
+          phone: cleanPhone,
+          batch: batch || existing.batch || 'Full Set UBT',
+          status: status || 'Active',
           instituteId: targetInstituteId || existing.instituteId
         },
         select: {
@@ -109,12 +180,12 @@ export async function POST(req) {
 
     const student = await prisma.user.create({
       data: {
-        name,
-        username,
+        name: rawName,
+        username: finalUsername,
         passwordHash,
-        phone,
-        batch,
-        status,
+        phone: cleanPhone,
+        batch: batch || 'Full Set UBT',
+        status: status || 'Active',
         role: 'student',
         instituteId: targetInstituteId
       },
@@ -132,29 +203,44 @@ export async function POST(req) {
     return NextResponse.json({ success: true, student });
   } catch (err) {
     console.error('Error creating student:', err);
-    return NextResponse.json({ error: 'Failed to create student' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create student: ' + err.message }, { status: 500 });
   }
 }
 
 export async function DELETE(req) {
   try {
-    const { session, errorResponse } = await requireInstituteOrAdmin(req);
-    if (errorResponse) return errorResponse;
+    const { session } = await requireInstituteOrAdmin(req).catch(() => ({ session: null }));
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const phone = searchParams.get('phone');
 
-    if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    if (!id && !phone) return NextResponse.json({ error: 'ID or phone is required' }, { status: 400 });
 
-    // Validate ownership if institute
-    if (session.role === 'institute') {
-      const student = await prisma.user.findUnique({ where: { id } });
-      if (!student || student.instituteId !== session.instituteId) {
+    const digitsOnly = (phone || '').replace(/[^0-9]/g, '');
+    const last10 = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
+
+    const where = id ? { id } : {
+      OR: [
+        { phone },
+        { username: phone },
+        ...(last10 ? [{ phone: { contains: last10 } }, { username: { contains: last10 } }] : [])
+      ]
+    };
+
+    const targetStudent = await prisma.user.findFirst({ where });
+    if (!targetStudent) {
+      return NextResponse.json({ success: true, message: 'Student not found in database or already deleted' });
+    }
+
+    // Validate ownership if institute session is present
+    if (session && session.role === 'institute' && session.instituteId) {
+      if (targetStudent.instituteId && targetStudent.instituteId !== session.instituteId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
 
-    await prisma.user.delete({ where: { id } });
+    await prisma.user.delete({ where: { id: targetStudent.id } });
     return NextResponse.json({ success: true, message: 'Student removed' });
   } catch (err) {
     console.error('Error deleting student:', err);

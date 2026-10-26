@@ -162,9 +162,8 @@ const AdminSettings = () => {
           <Link href="/admin" style={navLinkStyle}>Dashboard</Link>
           <Link href="/admin/institutes" style={navLinkStyle}>Manage Institutes</Link>
           <Link href="/admin/questions" style={navLinkStyle}>Upload Question</Link>
-          <Link href="/admin/listening" style={navLinkStyle}>Books</Link>
+          <Link href="/admin/listening" style={navLinkStyle}>Study Materials</Link>
           <Link href="/admin/news" style={navLinkStyle}>Notice</Link>
-          <Link href="/admin/notifications" style={navLinkStyle}>Notifications</Link>
           <Link href="/admin/settings" style={activeNavLinkStyle}>Settings</Link>
         </div>
 

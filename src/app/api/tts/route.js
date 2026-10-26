@@ -144,6 +144,15 @@ async function generateNeuralSpeech(text, lang = 'ja', gender = 'female', option
     else if (speechMode === 'news_announcer') rateStr = '+6%';
   }
 
+  // Ensure valid format (+/- sign and units) for edge-tts
+  pitchStr = pitchStr.trim();
+  if (!pitchStr.startsWith('+') && !pitchStr.startsWith('-')) pitchStr = `+${pitchStr}`;
+  if (!pitchStr.endsWith('Hz')) pitchStr = `${pitchStr}Hz`;
+
+  rateStr = rateStr.trim();
+  if (!rateStr.startsWith('+') && !rateStr.startsWith('-')) rateStr = `+${rateStr}`;
+  if (!rateStr.endsWith('%')) rateStr = `${rateStr}%`;
+
   const tmpOut = path.join(os.tmpdir(), `neural_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.mp3`);
   const scriptPath = path.join(process.cwd(), 'scripts', 'tts_engine.py');
 

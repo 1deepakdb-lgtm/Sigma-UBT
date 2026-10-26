@@ -760,25 +760,80 @@ export default function EpsBookReader({
   }, []);
 
   const [playingJpAudioId, setPlayingJpAudioId] = useState(null);
+  const jpAudioPlayerRef = useRef(null);
   const [kanjiVisibleLimit, setKanjiVisibleLimit] = useState(60);
   const [japaneseR2Data, setJapaneseR2Data] = useState(null);
 
   const handlePlayJpAudio = (id, text) => {
-    if (typeof window === "undefined") return;
+    if (!text || typeof window === "undefined") return;
+
     if (playingJpAudioId === id) {
+      if (jpAudioPlayerRef.current) {
+        jpAudioPlayerRef.current.pause();
+        jpAudioPlayerRef.current = null;
+      }
       if (window.speechSynthesis) window.speechSynthesis.cancel();
       setPlayingJpAudioId(null);
       return;
     }
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ja-JP";
-      utterance.rate = 0.88;
-      utterance.onend = () => setPlayingJpAudioId(null);
-      utterance.onerror = () => setPlayingJpAudioId(null);
-      setPlayingJpAudioId(id);
-      window.speechSynthesis.speak(utterance);
+
+    if (jpAudioPlayerRef.current) {
+      jpAudioPlayerRef.current.pause();
+      jpAudioPlayerRef.current = null;
+    }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+    let cleanText = String(text).trim().replace(/[#*`_~]/g, '');
+    setPlayingJpAudioId(id);
+
+    try {
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ja&voice=ja-JP-NanamiNeural&gender=female&model=ja-female-1`;
+      const audio = new Audio(ttsUrl);
+      jpAudioPlayerRef.current = audio;
+
+      audio.onended = () => {
+        setPlayingJpAudioId(null);
+        jpAudioPlayerRef.current = null;
+      };
+
+      audio.onerror = () => {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.88;
+          utterance.onend = () => setPlayingJpAudioId(null);
+          utterance.onerror = () => setPlayingJpAudioId(null);
+          window.speechSynthesis.speak(utterance);
+        } else {
+          setPlayingJpAudioId(null);
+        }
+      };
+
+      audio.play().catch(() => {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.88;
+          utterance.onend = () => setPlayingJpAudioId(null);
+          utterance.onerror = () => setPlayingJpAudioId(null);
+          window.speechSynthesis.speak(utterance);
+        } else {
+          setPlayingJpAudioId(null);
+        }
+      });
+    } catch (err) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.88;
+        utterance.onend = () => setPlayingJpAudioId(null);
+        utterance.onerror = () => setPlayingJpAudioId(null);
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setPlayingJpAudioId(null);
+      }
     }
   };
 
@@ -3269,11 +3324,11 @@ export default function EpsBookReader({
         justifyContent: "center",
         gap: "14px",
         marginBottom: "24px",
-        backgroundColor: "#ffffff",
-        padding: "18px 20px",
+        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #eff6ff 100%)",
+        padding: "16px 20px",
         borderRadius: "20px",
-        border: "1.5px solid #e2e8f0",
-        boxShadow: "0 4px 18px rgba(15, 23, 42, 0.04)",
+        border: "1.5px solid #dbeafe",
+        boxShadow: "0 4px 20px rgba(37, 99, 235, 0.06)",
         width: "100%",
         boxSizing: "border-box"
       }}>
@@ -3282,12 +3337,12 @@ export default function EpsBookReader({
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#f1f5f9",
-          padding: "6px",
+          backgroundColor: "#ffffff",
+          padding: "5px",
           borderRadius: "16px",
-          gap: "8px",
-          border: "1.5px solid #e2e8f0",
-          boxShadow: "inset 0 1px 3px rgba(0,0,0,0.06)",
+          gap: "6px",
+          border: "1.5px solid #cbd5e1",
+          boxShadow: "0 2px 10px rgba(15, 23, 42, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.02)",
           margin: "0 auto",
           flexWrap: "wrap"
         }}>
@@ -3300,7 +3355,7 @@ export default function EpsBookReader({
               alignItems: "center",
               justifyContent: "center",
               gap: "10px",
-              padding: "12px 28px",
+              padding: "11px 28px",
               borderRadius: "12px",
               border: "none",
               backgroundColor: studyLanguage === "korean" ? "#2563eb" : "transparent",
@@ -3311,6 +3366,18 @@ export default function EpsBookReader({
               cursor: "pointer",
               transition: "all 0.18s ease-in-out",
               boxShadow: studyLanguage === "korean" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
+            }}
+            onMouseEnter={(e) => {
+              if (studyLanguage !== "korean") {
+                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                e.currentTarget.style.color = "#0f172a";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (studyLanguage !== "korean") {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#475569";
+              }
             }}
           >
             <span style={{ fontSize: "22px", lineHeight: "1" }}>🇰🇷</span>
@@ -3326,7 +3393,7 @@ export default function EpsBookReader({
               alignItems: "center",
               justifyContent: "center",
               gap: "10px",
-              padding: "12px 28px",
+              padding: "11px 28px",
               borderRadius: "12px",
               border: "none",
               backgroundColor: studyLanguage === "japanese" ? "#2563eb" : "transparent",
@@ -3337,6 +3404,18 @@ export default function EpsBookReader({
               cursor: "pointer",
               transition: "all 0.18s ease-in-out",
               boxShadow: studyLanguage === "japanese" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
+            }}
+            onMouseEnter={(e) => {
+              if (studyLanguage !== "japanese") {
+                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                e.currentTarget.style.color = "#0f172a";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (studyLanguage !== "japanese") {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#475569";
+              }
             }}
           >
             <span style={{ fontSize: "22px", lineHeight: "1" }}>🇯🇵</span>
@@ -3671,25 +3750,9 @@ export default function EpsBookReader({
                   />
                 </div>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                    <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "#0f172a" }}>
-                      {currentFolder.name}
-                    </h2>
-                    <span style={{
-                      backgroundColor: "#dcfce7",
-                      color: "#15803d",
-                      border: "1px solid #86efac",
-                      fontSize: "11px",
-                      fontWeight: "800",
-                      padding: "3px 10px",
-                      borderRadius: "12px"
-                    }}>
-                      ● Active Folder (खुला छ)
-                    </span>
-                  </div>
-                  <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px", fontWeight: "600" }}>
-                    {currentFolder.description || "Korean Study Materials"}
-                  </div>
+                  <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "#0f172a" }}>
+                    {currentFolder.name}
+                  </h2>
                 </div>
               </div>
 
@@ -3863,9 +3926,6 @@ export default function EpsBookReader({
               </div>
             )}
         {filteredChapters.map((c) => {
-          const hasPdf = Boolean(c.pdfUrl);
-          const audioCount = c.audioTracks?.length || 0;
-
           return (
             <div
               key={c.id || c.chapter}
@@ -3896,54 +3956,22 @@ export default function EpsBookReader({
               }}
             >
               <div>
-                {/* CHAPTER HEADER: Center in Institute Mode, with PDF/Audio/Edit removed */}
-                {isInstitute ? (
-                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
-                    <span style={{
-                      backgroundColor: c.chapter <= 30 ? "#dbeafe" : "#fef3c7",
-                      color: c.chapter <= 30 ? "#1d4ed8" : "#b45309",
-                      padding: "5px 20px",
-                      borderRadius: "16px",
-                      fontSize: "13px",
-                      fontWeight: "800",
-                      letterSpacing: "0.5px",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                      border: c.chapter <= 30 ? "1px solid #bfdbfe" : "1px solid #fde68a"
-                    }}>
-                      Chapter {c.chapter}
-                    </span>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                    <span style={{
-                      backgroundColor: c.chapter <= 30 ? "#dbeafe" : "#fef3c7",
-                      color: c.chapter <= 30 ? "#1d4ed8" : "#b45309",
-                      padding: "3px 10px",
-                      borderRadius: "12px",
-                      fontSize: "11px",
-                      fontWeight: "bold"
-                    }}>
-                      Chapter {c.chapter}
-                    </span>
-
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                      {hasPdf ? (
-                        <span style={{ fontSize: "11px", backgroundColor: "#dcfce7", color: "#166534", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                          PDF
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: "11px", backgroundColor: "#f1f5f9", color: "#94a3b8", padding: "2px 6px", borderRadius: "4px" }}>
-                          No PDF
-                        </span>
-                      )}
-                      {audioCount > 0 && (
-                        <span style={{ fontSize: "11px", backgroundColor: "#e0f2fe", color: "#0369a1", padding: "2px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                          {audioCount} Audio
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* CHAPTER HEADER: Centered for all roles, PDF and Audio badges removed */}
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
+                  <span style={{
+                    backgroundColor: c.chapter <= 30 ? "#dbeafe" : "#fef3c7",
+                    color: c.chapter <= 30 ? "#1d4ed8" : "#b45309",
+                    padding: "5px 20px",
+                    borderRadius: "16px",
+                    fontSize: "13px",
+                    fontWeight: "800",
+                    letterSpacing: "0.5px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                    border: c.chapter <= 30 ? "1px solid #bfdbfe" : "1px solid #fde68a"
+                  }}>
+                    Chapter {c.chapter}
+                  </span>
+                </div>
 
                 {/* CHAPTER COVER / FIRST PAGE PREVIEW */}
                 <ChapterCover
@@ -4926,20 +4954,6 @@ export default function EpsBookReader({
                         <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "#0f172a" }}>
                           {currentFolder.name}
                         </h2>
-                        <span style={{
-                          backgroundColor: "#dcfce7",
-                          color: "#15803d",
-                          border: "1px solid #86efac",
-                          fontSize: "11px",
-                          fontWeight: "800",
-                          padding: "3px 10px",
-                          borderRadius: "12px"
-                        }}>
-                          ● Active Folder (खुला छ)
-                        </span>
-                      </div>
-                      <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px", fontWeight: "600" }}>
-                        {currentFolder.subName || currentFolder.description}
                       </div>
                     </div>
                   </div>

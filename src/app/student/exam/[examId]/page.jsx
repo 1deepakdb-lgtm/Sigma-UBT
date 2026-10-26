@@ -456,11 +456,7 @@ const StudentExam = () => {
     padding: "15px",
     overflow: "hidden",
     position: "relative",
-    backgroundImage: logoWatermark ? `url(${logoWatermark})` : "none",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "center",
-    backgroundSize: "400px",
-    backgroundBlendMode: "overlay",
+    backgroundImage: "none",
     ...protectedStyle
   };
 
@@ -663,83 +659,208 @@ const StudentExam = () => {
                     </div>
 
                     <div style={{ flex: 1, padding: "20px 25px", display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: "10px", overflowY: "auto", height: "100%" }}>
-                      {(currentQ.options || []).map((option, index) => {
-                        const isSelected = selectedAnswers[currentQ.id] === index;
-                        const optText = typeof option === 'object' && option !== null ? option.text : option;
-                        const optImg = typeof option === 'object' && option !== null ? option.image : null;
-                        const optAud = typeof option === 'object' && option !== null ? option.audio : (currentQ.optionAudios?.[index] || null);
-                        const isOptLocked = optionAudioLocked[index];
+                      {(() => {
+                        const rawOptions = currentQ.options || [];
+                        const hasImageOptions = rawOptions.some(o => Boolean(typeof o === 'object' && o !== null && o.image));
+                        const isBlindListening = !hasImageOptions && rawOptions.every(o => {
+                          const t = typeof o === 'object' && o !== null ? (o.text || '').trim() : (o || '').toString().trim();
+                          return !t || ['①', '②', '③', '④', '1', '2', '3', '4'].includes(t);
+                        });
 
-                        return (
-                          <div 
-                            key={index}
-                            onClick={() => handleOptionSelect(index)}
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              padding: "10px 12px",
-                              borderBottom: "1px solid #e2e8f0",
-                              cursor: "pointer",
-                              backgroundColor: isSelected ? "#eff6ff" : "transparent"
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                              <div style={{
-                                width: "32px", height: "32px", borderRadius: "50%", border: "2px solid #0284c7",
-                                display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "16px",
-                                marginRight: "15px", backgroundColor: isSelected ? "#0284c7" : "white", color: isSelected ? "white" : "#0284c7",
-                                flexShrink: 0
-                              }}>
-                                {index + 1}
+                        // ── CASE 1: BLIND LISTENING (Questions 29~32 & 33) ──
+                        if (isBlindListening) {
+                          return (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "16px", justifyContent: "center", height: "100%", padding: "10px" }}>
+                              <p style={{ color: "#475569", fontSize: "16px", margin: "0 0 10px 0", fontWeight: "600", textAlign: "center" }}>
+                                🎧 다음을 듣고 알맞은 번호를 고르십시오. (Blind Listening)
+                              </p>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                                {rawOptions.map((option, index) => {
+                                  const isSelected = selectedAnswers[currentQ.id] === index;
+                                  const symbols = ['①', '②', '③', '④'];
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={index}
+                                      onClick={() => handleOptionSelect(index)}
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        padding: "24px 15px",
+                                        borderRadius: "12px",
+                                        border: isSelected ? "3px solid #0284c7" : "1.5px solid #cbd5e1",
+                                        backgroundColor: isSelected ? "#e0f2fe" : "white",
+                                        cursor: "pointer",
+                                        boxShadow: isSelected ? "0 6px 16px rgba(2, 132, 199, 0.25)" : "0 2px 6px rgba(0,0,0,0.04)",
+                                        transition: "all 0.15s ease"
+                                      }}
+                                    >
+                                      <span style={{ fontSize: "40px", fontWeight: "bold", color: isSelected ? "#0284c7" : "#1e293b", lineHeight: 1 }}>
+                                        {symbols[index]}
+                                      </span>
+                                      <span style={{ fontSize: "14px", color: isSelected ? "#0369a1" : "#64748b", marginTop: "8px", fontWeight: "600" }}>
+                                        선택 {index + 1}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
                               </div>
-                              <span 
-                                style={{ fontSize: "20px", fontWeight: "normal", color: "#1e293b", flex: 1 }} 
-                                dangerouslySetInnerHTML={{ __html: optText }} 
-                              />
                             </div>
+                          );
+                        }
 
-                            {optImg && (
-                              <div style={{ marginTop: "6px", paddingLeft: "47px" }}>
-                                <img 
-                                  src={optImg} 
-                                  alt={`Option ${index + 1}`} 
-                                  style={{ 
-                                    maxHeight: "80px", 
-                                    maxWidth: "100%",
-                                    width: "auto",
-                                    height: "auto",
-                                    borderRadius: "4px", 
-                                    border: "1px solid #cbd5e1",
-                                    imageRendering: 'high-quality',
-                                    WebkitImageRendering: '-webkit-optimize-contrast'
-                                  }} 
+                        // ── CASE 2: 4-PICTURE OPTIONS GRID (Questions 23~28, 34~36) ──
+                        if (hasImageOptions) {
+                          return (
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", width: "100%", padding: "5px 0" }}>
+                              {rawOptions.map((option, index) => {
+                                const isSelected = selectedAnswers[currentQ.id] === index;
+                                const optText = typeof option === 'object' && option !== null ? option.text : option;
+                                const optImg = typeof option === 'object' && option !== null ? option.image : null;
+                                const symbols = ['①', '②', '③', '④'];
+
+                                return (
+                                  <div
+                                    key={index}
+                                    onClick={() => handleOptionSelect(index)}
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      padding: "10px",
+                                      borderRadius: "8px",
+                                      border: isSelected ? "2.5px solid #0284c7" : "1.5px solid #cbd5e1",
+                                      backgroundColor: isSelected ? "#eff6ff" : "white",
+                                      cursor: "pointer",
+                                      boxShadow: isSelected ? "0 4px 10px rgba(2, 132, 199, 0.2)" : "0 1px 3px rgba(0,0,0,0.05)",
+                                      position: "relative"
+                                    }}
+                                  >
+                                    <div style={{
+                                      alignSelf: "flex-start",
+                                      width: "28px",
+                                      height: "28px",
+                                      borderRadius: "50%",
+                                      border: "2px solid #0284c7",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontWeight: "bold",
+                                      fontSize: "15px",
+                                      backgroundColor: isSelected ? "#0284c7" : "white",
+                                      color: isSelected ? "white" : "#0284c7",
+                                      marginBottom: "6px"
+                                    }}>
+                                      {index + 1}
+                                    </div>
+                                    {optImg && (
+                                      <img
+                                        src={optImg}
+                                        alt={`Choice ${index + 1}`}
+                                        style={{
+                                          maxHeight: "110px",
+                                          maxWidth: "100%",
+                                          width: "auto",
+                                          height: "auto",
+                                          objectFit: "contain",
+                                          borderRadius: "4px",
+                                          pointerEvents: "none"
+                                        }}
+                                        draggable="false"
+                                      />
+                                    )}
+                                    {optText && !['①', '②', '③', '④', '1', '2', '3', '4'].includes(optText.trim()) && (
+                                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b", marginTop: "6px", textAlign: "center" }}>
+                                        {optText}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        }
+
+                        // ── CASE 3: STANDARD TEXT OPTIONS ──
+                        return rawOptions.map((option, index) => {
+                          const isSelected = selectedAnswers[currentQ.id] === index;
+                          const optText = typeof option === 'object' && option !== null ? option.text : option;
+                          const optImg = typeof option === 'object' && option !== null ? option.image : null;
+                          const optAud = typeof option === 'object' && option !== null ? option.audio : (currentQ.optionAudios?.[index] || null);
+                          const isOptLocked = optionAudioLocked[index];
+
+                          return (
+                            <div 
+                              key={index}
+                              onClick={() => handleOptionSelect(index)}
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                padding: "10px 12px",
+                                borderBottom: "1px solid #e2e8f0",
+                                cursor: "pointer",
+                                backgroundColor: isSelected ? "#eff6ff" : "transparent"
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                                <div style={{
+                                  width: "32px", height: "32px", borderRadius: "50%", border: "2px solid #0284c7",
+                                  display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "16px",
+                                  marginRight: "15px", backgroundColor: isSelected ? "#0284c7" : "white", color: isSelected ? "white" : "#0284c7",
+                                  flexShrink: 0
+                                }}>
+                                  {index + 1}
+                                </div>
+                                <span 
+                                  style={{ fontSize: "20px", fontWeight: "normal", color: "#1e293b", flex: 1 }} 
+                                  dangerouslySetInnerHTML={{ __html: optText }} 
                                 />
                               </div>
-                            )}
 
-                            {optAud && (
-                              <div style={{ marginTop: "6px", paddingLeft: "47px", width: "100%" }} onClick={(e) => e.stopPropagation()}>
-                                <audio 
-                                  ref={el => optionAudioRefs.current[index] = el}
-                                  controls
-                                  controlsList="nodownload noremoteplayback noplaybackrate"
-                                  onContextMenu={(e) => e.preventDefault()}
-                                  onPlay={() => handleOptionAudioPlay(index)}
-                                  onEnded={() => handleOptionAudioEnded(index)}
-                                  src={optAud}
-                                  style={{ 
-                                    width: "100%", 
-                                    height: "30px",
-                                    pointerEvents: (isOptLocked || isPlayingAnyAudio) ? "none" : "auto", 
-                                    opacity: isOptLocked ? 0.5 : 1,
-                                    filter: isOptLocked ? "grayscale(80%)" : "none"
-                                  }}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                              {optImg && (
+                                <div style={{ marginTop: "6px", paddingLeft: "47px" }}>
+                                  <img 
+                                    src={optImg} 
+                                    alt={`Option ${index + 1}`} 
+                                    style={{ 
+                                      maxHeight: "80px", 
+                                      maxWidth: "100%",
+                                      width: "auto",
+                                      height: "auto",
+                                      borderRadius: "4px", 
+                                      border: "1px solid #cbd5e1"
+                                    }} 
+                                  />
+                                </div>
+                              )}
+
+                              {optAud && (
+                                <div style={{ marginTop: "6px", paddingLeft: "47px", width: "100%" }} onClick={(e) => e.stopPropagation()}>
+                                  <audio 
+                                    ref={el => optionAudioRefs.current[index] = el}
+                                    controls
+                                    controlsList="nodownload noremoteplayback noplaybackrate"
+                                    onContextMenu={(e) => e.preventDefault()}
+                                    onPlay={() => handleOptionAudioPlay(index)}
+                                    onEnded={() => handleOptionAudioEnded(index)}
+                                    src={optAud}
+                                    style={{ 
+                                      width: "100%", 
+                                      height: "30px",
+                                      pointerEvents: (isOptLocked || isPlayingAnyAudio) ? "none" : "auto", 
+                                      opacity: isOptLocked ? 0.5 : 1,
+                                      filter: isOptLocked ? "grayscale(80%)" : "none"
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
 
