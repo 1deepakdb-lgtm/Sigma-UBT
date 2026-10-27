@@ -359,8 +359,7 @@ export default function AiStudio({
       <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #e2e8f0', marginBottom: '24px', flexWrap: 'wrap' }}>
         {[
           { id: 'generator', label: 'Voice Profiles & Speech Generator' },
-          { id: 'dialogue', label: 'Multi-Speaker Dialogue Studio' },
-          { id: 'benchmark', label: 'Quality Benchmarks & Tuning' }
+          { id: 'dialogue', label: 'Multi-Speaker Dialogue Studio' }
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (
@@ -1062,78 +1061,6 @@ export default function AiStudio({
         </div>
       )}
 
-      {/* ── TAB 3: QUALITY BENCHMARKS & TUNING ─────────────────────────────────── */}
-      {activeTab === 'benchmark' && (
-        <div style={{ background: '#ffffff', borderRadius: '16px', border: '1.5px solid #e2e8f0', padding: '24px', boxShadow: '0 4px 18px rgba(0,0,0,0.04)' }}>
-          <div style={{ marginBottom: '18px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a' }}>
-              Voice Profiles Acoustic Benchmarks
-            </h2>
-            <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-              Comparison of all 24 Korean & Japanese voice models and their pronunciation acoustics.
-            </p>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
-                  <th style={{ padding: '10px 12px' }}>Profile</th>
-                  <th style={{ padding: '10px 12px' }}>Language</th>
-                  <th style={{ padding: '10px 12px' }}>Gender</th>
-                  <th style={{ padding: '10px 12px' }}>Voice Character</th>
-                  <th style={{ padding: '10px 12px' }}>Stability / Style</th>
-                  <th style={{ padding: '10px 12px' }}>Sample Sentence</th>
-                  <th style={{ padding: '10px 12px' }}>Listen</th>
-                </tr>
-              </thead>
-              <tbody>
-                {VOICE_PROFILES.map(v => (
-                  <tr key={v.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: '800', color: '#0f172a' }}>
-                      {v.name}
-                    </td>
-                    <td style={{ padding: '10px 12px', fontWeight: '700', color: v.language === 'ko' ? '#4f46e5' : '#db2777' }}>
-                      {v.language === 'ko' ? 'Korean' : 'Japanese'}
-                    </td>
-                    <td style={{ padding: '10px 12px', fontWeight: '700', color: v.gender === 'female' ? '#be185d' : '#0369a1' }}>
-                      {v.gender === 'female' ? 'Female' : 'Male'}
-                    </td>
-                    <td style={{ padding: '10px 12px', color: '#475569' }}>
-                      {v.title}
-                    </td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>
-                      {v.settings.stability} / {v.settings.style}
-                    </td>
-                    <td style={{ padding: '10px 12px', maxWidth: '320px', color: '#1e293b' }}>
-                      "{v.sampleSentence}"
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <button
-                        type="button"
-                        onClick={() => handlePlayPreview(v)}
-                        title={`Listen to ${v.name}`}
-                        style={{
-                          background: previewingVoiceId === v.id ? '#ef4444' : '#4f46e5',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '4px 10px',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {previewingVoiceId === v.id ? '⏹' : '▶'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -129,16 +129,6 @@ export const CHAPTER_MEANINGS_DATA = {
       "exampleNe": "पाठ्यपुस्तकको शब्द: परिवार"
     },
     {
-      "id": "ch1-13",
-      "korean": "나라 이름",
-      "pronunciation": "नारा इरुम",
-      "nepali": "देशहरू",
-      "english": "나라 이름",
-      "category": "शब्दावली",
-      "exampleKo": "나라 이름을/를 공부합니다.",
-      "exampleNe": "पाठ्यपुस्तकको शब्दावली: देशहरू"
-    },
-    {
       "id": "ch1-14",
       "korean": "동티모르",
       "pronunciation": "थोङथिमोरु",

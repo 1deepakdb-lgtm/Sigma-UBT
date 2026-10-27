@@ -3,40 +3,40 @@
     "id": "PROD-1791548243307",
     "name": "Advance Book",
     "price": 900,
-    "stock": 45,
-    "totalSold": 5,
+    "stock": 44,
+    "totalSold": 6,
     "unit": "pcs",
     "createdAt": "2026-10-09T12:17:23.308Z",
-    "updatedAt": "2026-10-17T20:41:00.833Z"
+    "updatedAt": "2026-10-27T06:06:51.252Z"
   },
   {
     "id": "PROD-1791548270650",
     "name": "Grammer Book",
     "price": 500,
-    "stock": 47,
-    "totalSold": 3,
+    "stock": 46,
+    "totalSold": 4,
     "unit": "pcs",
     "createdAt": "2026-10-09T12:17:50.650Z",
-    "updatedAt": "2026-10-17T20:41:00.833Z"
+    "updatedAt": "2026-10-27T06:06:51.252Z"
   },
   {
     "id": "PROD-1791548289330",
     "name": "Meaning Book",
     "price": 500,
-    "stock": 449,
-    "totalSold": 1,
+    "stock": 448,
+    "totalSold": 2,
     "unit": "pcs",
     "createdAt": "2026-10-09T12:18:09.330Z",
-    "updatedAt": "2026-10-17T19:20:25.006Z"
+    "updatedAt": "2026-10-27T06:06:51.252Z"
   },
   {
     "id": "PROD-MODEL-UBT-BANK",
     "name": "Model Question Bank",
     "price": 2500,
-    "stock": 999,
-    "totalSold": 0,
+    "stock": 998,
+    "totalSold": 1,
     "unit": "package",
     "createdAt": "2026-10-15T00:00:00.000Z",
-    "updatedAt": "2026-10-15T00:00:00.000Z"
+    "updatedAt": "2026-10-27T06:06:51.252Z"
   }
 ]

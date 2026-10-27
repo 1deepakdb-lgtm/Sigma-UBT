@@ -80,14 +80,6 @@ export const KOREAN_CHAPTER_BOOK_DATA = {
         "pronunciation": "काजोक"
       },
       {
-        "korean": "나라 이름",
-        "nepali": "देशहरू",
-        "pronunciation": "नारा इरुम",
-        "category": "शब्दावली",
-        "exampleKo": "나라 이름을/를 공부합니다.",
-        "exampleNe": "पाठ्यपुस्तकको शब्दावली: देशहरू"
-      },
-      {
         "korean": "동티모르",
         "nepali": "पूर्वी टिमोर",
         "pronunciation": "थोङथिमोरु",
