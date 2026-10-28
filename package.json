@@ -3,13 +3,44 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "prisma:push": "prisma db push",
     "prisma:seed": "node prisma/seed.js",
-    "desktop:run": "electron electron/main.cjs"
+    "desktop:run": "electron electron/main.cjs",
+    "desktop:dist:mac": "electron-builder --mac",
+    "desktop:dist:win": "electron-builder --win",
+    "desktop:dist:all": "electron-builder -mw"
+  },
+  "build": {
+    "appId": "com.examjk.app",
+    "productName": "ExamJK",
+    "copyright": "Copyright © 2026 ExamJK",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "public/**/*"
+    ],
+    "mac": {
+      "target": ["dmg", "zip"],
+      "icon": "public/icon-512.png",
+      "category": "public.app-category.education"
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "public/icon-512.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1147.0",
@@ -30,6 +61,7 @@
   },
   "devDependencies": {
     "electron": "^45.1.0",
+    "electron-builder": "^26.18.0",
     "prisma": "^5.22.0"
   }
 }
