@@ -1,0 +1,57 @@
+{
+  "name": "ExamJK — Exam Japanese and Korean",
+  "short_name": "ExamJK",
+  "description": "Japanese and Korean CBT & UBT Examination and Learning System",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#003b73",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Student Exam Portal",
+      "short_name": "Exams",
+      "description": "Take Japanese & Korean Practice Exams",
+      "url": "/student",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI Voice Studio",
+      "short_name": "Voice Studio",
+      "description": "Practice Audio & Pronunciation",
+      "url": "/voice-studio",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Admin Portal",
+      "short_name": "Admin",
+      "description": "Manage Tests, Questions & Institute",
+      "url": "/admin",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import DesktopAppDownloads from "@/components/DesktopAppDownloads";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -132,10 +133,11 @@ export default function LoginPage() {
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
-        <h2 style={{ color: "#1e3a8a", margin: "0 0 5px 0", fontSize: "26px" }}>SIGMA UBT</h2>
-        <p style={{ color: "#64748b", margin: "0 0 25px 0", fontSize: "14px" }}>
-          EPS-TOPIK UBT Examination System
-        </p>
+        <img
+          src="/examjk-logo.png"
+          alt="ExamJK Logo"
+          style={{ width: "135px", height: "auto", margin: "0 auto 16px auto", display: "block" }}
+        />
 
         <h3 style={{ color: "#1e293b", marginBottom: "20px", fontSize: "18px" }}>System Login</h3>
 
@@ -157,7 +159,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} autoComplete="off">
           <div style={{ textAlign: "left", marginBottom: "6px" }}>
             <label style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>
-              Student Phone Number / Username:
+              Phone Number / Username:
             </label>
           </div>
           <input
@@ -177,7 +179,7 @@ export default function LoginPage() {
           </div>
           <input
             type="password"
-            placeholder="Enter Password (default: 1234)"
+            placeholder="Enter Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={inputStyle}
@@ -190,16 +192,8 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ marginTop: "24px", textAlign: "left", fontSize: "12px", color: "#64748b", background: "#f8fafc", padding: "12px", borderRadius: "6px", border: "1px dashed #cbd5e1", lineHeight: "1.6" }}>
-          <strong style={{ color: "#0f172a" }}>Student Access:</strong><br />
-          • Log in using your registered <strong>Phone Number</strong>.<br />
-          • Default password: <code>1234</code><br />
-          <hr style={{ border: "none", borderTop: "1px dashed #e2e8f0", margin: "8px 0" }} />
-          <strong style={{ color: "#0f172a" }}>Demo / Management Accounts:</strong><br />
-          • Student Demo: Phone <code>9800000000</code> / Pass: <code>1234</code><br />
-          • Institute: <code>sigma</code> / Pass: <code>1234</code> (or <code>123456</code>)<br />
-          • Super Admin: <code>admin</code> / Pass: <code>admin123</code>
-        </div>
+        {/* Windows & macOS Desktop App Download Section */}
+        <DesktopAppDownloads />
       </div>
     </div>
   );

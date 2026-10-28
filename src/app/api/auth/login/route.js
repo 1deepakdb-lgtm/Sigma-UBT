@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPassword, signToken, hashPassword } from '@/lib/auth';
-import { getRateLimitKey, checkRateLimit, recordFailedAttempt, clearRateLimit } from '@/lib/rateLimiter';
+import { getRateLimitKey, checkRateLimit, recordFailedAttempt, clearRateLimit, checkAdminRateLimit, recordAdminFailedAttempt } from '@/lib/rateLimiter';
 
 export async function POST(req) {
   try {
@@ -14,8 +14,27 @@ export async function POST(req) {
       );
     }
 
+    const identifier = (username || '').trim();
+    const isAdminTarget = identifier.toLowerCase() === 'admin';
+
     // ─── Brute-Force Protection ──────────────────────────────────────────────
     const rateLimitKey = getRateLimitKey(req);
+
+    // Hardened Super Admin Rate Limiting (Max 3 failed attempts, 30-min lockout)
+    if (isAdminTarget) {
+      const adminLimit = checkAdminRateLimit(`admin:${rateLimitKey}`);
+      if (adminLimit.limited) {
+        const minutesLeft = Math.ceil(adminLimit.retryAfterMs / 60000);
+        return NextResponse.json(
+          {
+            error: 'Super Admin access temporarily locked.',
+            message: `Too many failed Super Admin attempts. For high security, this IP is locked for ${minutesLeft} minute(s).`,
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     const { limited, retriesLeft, retryAfterMs } = checkRateLimit(rateLimitKey);
 
     if (limited) {
@@ -37,7 +56,6 @@ export async function POST(req) {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    const identifier = (username || '').trim();
     const digitsOnly = identifier.replace(/[^0-9]/g, '');
     const last10 = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
 
@@ -214,16 +232,33 @@ export async function POST(req) {
     }
 
     if (!isMatch) {
+      if (user.role === 'admin' || isAdminTarget) {
+        recordAdminFailedAttempt(`admin:${rateLimitKey}`);
+        recordFailedAttempt(rateLimitKey);
+        const checkAdm = checkAdminRateLimit(`admin:${rateLimitKey}`);
+        return NextResponse.json(
+          {
+            error: 'Invalid username or password.',
+            retriesLeft: checkAdm.retriesLeft,
+          },
+          { status: 401 }
+        );
+      }
+
       recordFailedAttempt(rateLimitKey);
       const afterFail = checkRateLimit(rateLimitKey);
       return NextResponse.json(
         {
-          error: 'Invalid password. Students: default password is 1234.',
+          error: 'Invalid credentials.',
           retriesLeft: afterFail.retriesLeft,
         },
         { status: 401 }
       );
     }
+
+    // Clear rate limits on successful authentication
+    clearRateLimit(rateLimitKey);
+    clearRateLimit(`admin:${rateLimitKey}`);
 
     if (user.status === 'Blocked') {
       return NextResponse.json(

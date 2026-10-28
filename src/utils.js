@@ -1,4 +1,4 @@
-export const LOGO = "/sigma-logo.png";
+export const LOGO = "/examjk-logo.png";
 
 export const EXAM_PACKAGES = [
   "10 Set UBT",
