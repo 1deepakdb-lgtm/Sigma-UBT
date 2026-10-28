@@ -146,8 +146,6 @@ export default function LoginPage() {
           }}
         />
 
-        <h3 style={{ color: "#1e293b", marginBottom: "20px", fontSize: "18px" }}>System Login</h3>
-
         {error && (
           <div
             style={{
