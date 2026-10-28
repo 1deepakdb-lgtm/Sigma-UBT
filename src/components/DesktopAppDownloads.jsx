@@ -122,7 +122,6 @@ export default function DesktopAppDownloads() {
             </span>
           </div>
           <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>Windows</span>
-          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600' }}>.exe / Desktop App</span>
         </button>
 
         {/* macOS App Button */}
@@ -198,7 +197,6 @@ export default function DesktopAppDownloads() {
             </span>
           </div>
           <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>macOS</span>
-          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600' }}>.dmg / Mac App</span>
         </button>
       </div>
 
@@ -269,7 +267,7 @@ export default function DesktopAppDownloads() {
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>
-                    Install ExamJK for {activeModal === 'windows' ? 'Windows (.exe)' : 'macOS (.dmg / App)'}
+                    Install ExamJK for {activeModal === 'windows' ? 'Windows' : 'macOS'}
                   </h3>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>
                     Distraction-free desktop exam environment
