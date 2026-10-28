@@ -137,7 +137,13 @@ export default function LoginPage() {
         <img
           src="/examjk-logo.png"
           alt="ExamJK Logo"
-          style={{ width: "135px", height: "auto", margin: "0 auto 16px auto", display: "block" }}
+          style={{
+            width: "185px",
+            height: "auto",
+            margin: "0 auto 18px auto",
+            display: "block",
+            filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.06))"
+          }}
         />
 
         <h3 style={{ color: "#1e293b", marginBottom: "20px", fontSize: "18px" }}>System Login</h3>

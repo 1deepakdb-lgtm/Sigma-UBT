@@ -98,11 +98,11 @@ export default function DesktopAppDownloads() {
               src="/icon-192.png"
               alt="ExamJK Windows App"
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '8px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
                 display: 'block',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
               }}
             />
             <span
@@ -173,11 +173,11 @@ export default function DesktopAppDownloads() {
               src="/icon-192.png"
               alt="ExamJK macOS App"
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '8px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
                 display: 'block',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
               }}
             />
             <span
