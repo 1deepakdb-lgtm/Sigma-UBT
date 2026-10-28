@@ -138,11 +138,10 @@ export default function LoginPage() {
           src="/examjk-logo.png"
           alt="ExamJK Logo"
           style={{
-            width: "185px",
+            width: "125px",
             height: "auto",
-            margin: "0 auto 18px auto",
-            display: "block",
-            filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.06))"
+            margin: "0 auto 16px auto",
+            display: "block"
           }}
         />
 
