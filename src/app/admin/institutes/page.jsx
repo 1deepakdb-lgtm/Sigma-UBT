@@ -21,6 +21,7 @@ export default function AdminInstitutesPage() {
     subscription: "1 Year",
     logoUrl: "",
     watermarkText: "",
+    language: "both",
     newPassword: "",   // admin-initiated password reset for an existing institute
   });
 
@@ -90,6 +91,7 @@ export default function AdminInstitutesPage() {
           examPackage: formData.examPackage,
           logoUrl: formData.logoUrl || null,
           watermarkText: formData.watermarkText || null,
+          language: formData.language || "both",
         };
         // Only send newPassword if super admin filled it in
         if (formData.newPassword && formData.newPassword.trim()) {
@@ -118,6 +120,7 @@ export default function AdminInstitutesPage() {
             subscription: formData.subscription,
             examPackage: formData.examPackage,
             watermarkText: formData.watermarkText || "",
+            language: formData.language || "both",
           }),
         });
         if (!res.ok) {
@@ -147,6 +150,7 @@ export default function AdminInstitutesPage() {
       subscription: inst.subscription || "1 Year",
       logoUrl: inst.logoUrl || "",
       watermarkText: inst.watermarkText || "",
+      language: inst.language || "both",
       newPassword: "",
     });
     setEditId(inst.id);
@@ -162,6 +166,7 @@ export default function AdminInstitutesPage() {
       subscription: "1 Year",
       logoUrl: "",
       watermarkText: "",
+      language: "both",
       newPassword: "",
     });
     setEditId(null);
@@ -373,6 +378,24 @@ export default function AdminInstitutesPage() {
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold" }}>
+                  🌐 Language Track / Organization
+                </label>
+                <select 
+                  name="language" 
+                  value={formData.language || "both"} 
+                  onChange={handleInputChange} 
+                  style={{ ...inputStyle, border: "2px solid #3b82f6", fontWeight: "600", backgroundColor: "#f8fafc" }}
+                >
+                  <option value="both">🌐 Both (Korean & Japanese Dual Track)</option>
+                  <option value="korean">🇰🇷 Korean Only (EPS-TOPIK)</option>
+                  <option value="japanese">🇯🇵 Japanese Only (JFT / JLPT)</option>
+                </select>
+                <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#64748b" }}>
+                  Controls whether study materials, dictionary, and billing separate or include both languages.
+                </p>
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold" }}>
                   Watermark Text
                 </label>
                 <input
@@ -434,6 +457,7 @@ export default function AdminInstitutesPage() {
               <tr style={{ backgroundColor: "#f8fafc" }}>
                 <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Institute Name</th>
                 <th style={thStyle}>Username</th>
+                <th style={thStyle}>Language Track</th>
                 <th style={thStyle}>Total Students</th>
                 <th style={thStyle}>Package & Expiry</th>
                 <th style={thStyle}>Status</th>
@@ -443,7 +467,7 @@ export default function AdminInstitutesPage() {
             <tbody>
               {institutes.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>
+                  <td colSpan="7" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>
                     No institutes registered yet.
                   </td>
                 </tr>
@@ -452,6 +476,42 @@ export default function AdminInstitutesPage() {
                   <tr key={inst.id}>
                     <td style={{ ...tdStyle, fontWeight: "bold" }}>{inst.name}</td>
                     <td style={tdStyle}>{inst.username}</td>
+                    <td style={tdStyle}>
+                      <span
+                        style={{
+                          backgroundColor:
+                            inst.language === "korean"
+                              ? "#eff6ff"
+                              : inst.language === "japanese"
+                              ? "#fdf2f8"
+                              : "#f0fdf4",
+                          color:
+                            inst.language === "korean"
+                              ? "#1d4ed8"
+                              : inst.language === "japanese"
+                              ? "#be185d"
+                              : "#15803d",
+                          border: `1px solid ${
+                            inst.language === "korean"
+                              ? "#bfdbfe"
+                              : inst.language === "japanese"
+                              ? "#fbcfe8"
+                              : "#bbf7d0"
+                          }`,
+                          padding: "3px 8px",
+                          borderRadius: "12px",
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        {inst.language === "korean"
+                          ? "🇰🇷 Korean"
+                          : inst.language === "japanese"
+                          ? "🇯🇵 Japanese"
+                          : "🌐 Both (Dual)"}
+                      </span>
+                    </td>
                     <td style={tdStyle}>{inst.studentCount || 0}</td>
                     <td style={tdStyle}>
                       <span style={{ fontWeight: "bold", color: "#2563eb" }}>{inst.examPackage}</span>

@@ -181,11 +181,49 @@ export function getPaymentMethodIcon(method, size = 15) {
   return <CardIcon size={size} color="#d97706" />;
 }
 
-export default function InstituteBillingSection({ instituteName, userRole, instId }) {
+export default function InstituteBillingSection({ instituteName, userRole, instId, instituteLanguage }) {
   const apiWithInst = (url) => {
     if (!instId) return url;
     return url.includes('?') ? url + '&instId=' + instId : url + '?instId=' + instId;
   };
+
+  // Language Track Resolution ('both' | 'korean' | 'japanese')
+  const effectiveInstLang = (
+    instituteLanguage ||
+    (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
+    "both"
+  ).toLowerCase();
+
+  const getFilteredCourses = () => {
+    if (effectiveInstLang === "korean") {
+      return [
+        "EPS Topik Full course",
+        "Topik Level 1",
+        "Topik Level 2",
+        "Topik Level 3",
+        "IELTS",
+        "PTE",
+        "English",
+        "Other"
+      ];
+    }
+    if (effectiveInstLang === "japanese") {
+      return [
+        "Japanese Language N5 & N4",
+        "Japanese Language N5",
+        "Japanese Language N4",
+        "Japanese Language N3",
+        "IELTS",
+        "PTE",
+        "English",
+        "Other"
+      ];
+    }
+    return COURSE_OPTIONS;
+  };
+
+  const defaultCourse = effectiveInstLang === "japanese" ? "Japanese Language N5 & N4" : "EPS Topik Full course";
+
   // Compulsory Authentication & Auto-Logout (30 seconds of inactivity)
   const [isBillingAuthenticated, setIsBillingAuthenticated] = useState(false);
   useEffect(() => {
@@ -239,7 +277,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   });
 
   const [showFeeConfigModal, setShowFeeConfigModal] = useState(false);
-  const [selectedCourseForFees, setSelectedCourseForFees] = useState("EPS Topik Full course");
+  const [selectedCourseForFees, setSelectedCourseForFees] = useState(defaultCourse);
   const [editingCourseFees, setEditingCourseFees] = useState({});
   const [editingPackageFees, setEditingPackageFees] = useState(() => ({ ...DEFAULT_PACKAGE_FEES }));
   const [selectedDefaultPkg, setSelectedDefaultPkg] = useState("Full course");
@@ -360,7 +398,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     parentNumber: "",
     classTime: initialRandomTime.time,
     classTimePeriod: initialRandomTime.period,
-    courseDetail: "EPS Topik Full course",
+    courseDetail: defaultCourse,
     coursePackage: defaultPackageName,
     paymentSystem: "Full Payment",
     paymentMethod: "Cash",
@@ -1594,7 +1632,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const resetBillForm = () => {
     const currentStaffName = (typeof window !== "undefined" && localStorage.getItem("currentUser")) || "";
     const rnd = getRandomClassTime();
-    const defCourse = "EPS Topik Full course";
+    const defCourse = defaultCourse;
     const defPkg = (feeConfig && feeConfig.courseFees?.[defCourse]?.defaultPackage) || (feeConfig && feeConfig.defaultPackage) || "Full course";
     const pkgDefaults = getPackageFee(defPkg, defCourse);
     const gross = Number(pkgDefaults.grossFee) || 15000;
@@ -3103,7 +3141,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 <button
                   type="button"
                   onClick={() => {
-                    const initialCourse = (form?.courseDetail && COURSE_OPTIONS.includes(form.courseDetail)) ? form.courseDetail : "EPS Topik Full course";
+                    const initialCourse = (form?.courseDetail && getFilteredCourses().includes(form.courseDetail)) ? form.courseDetail : defaultCourse;
                     setSelectedCourseForFees(initialCourse);
                     setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
                     setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
@@ -4794,7 +4832,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     <button
                       type="button"
                       onClick={() => {
-                        const initialCourse = (form?.courseDetail && COURSE_OPTIONS.includes(form.courseDetail)) ? form.courseDetail : "EPS Topik Full course";
+                        const initialCourse = (form?.courseDetail && getFilteredCourses().includes(form.courseDetail)) ? form.courseDetail : defaultCourse;
                         setSelectedCourseForFees(initialCourse);
                         setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
                         setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
@@ -4847,7 +4885,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </label>
                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                   <select
-                    value={COURSE_OPTIONS.includes(form.courseDetail) ? form.courseDetail : "Other"}
+                    value={getFilteredCourses().includes(form.courseDetail) ? form.courseDetail : "Other"}
                     disabled={form.isExistingStudent && !form.isEditingExistingBill}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -4871,7 +4909,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     }}
                   >
                     <option value="" disabled>-- Select a Standard Course --</option>
-                    {COURSE_OPTIONS.map((c, i) => (
+                    {getFilteredCourses().map((c, i) => (
                       <option key={i} value={c}>{c}</option>
                     ))}
                   </select>
@@ -4955,7 +4993,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         <button
                           type="button"
                           onClick={() => {
-                            const initialCourse = (form?.courseDetail && COURSE_OPTIONS.includes(form.courseDetail)) ? form.courseDetail : "EPS Topik Full course";
+                            const initialCourse = (form?.courseDetail && getFilteredCourses().includes(form.courseDetail)) ? form.courseDetail : defaultCourse;
                             setSelectedCourseForFees(initialCourse);
                             setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
                             setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
@@ -5837,7 +5875,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     >
                       <option value="STANDARD_DEFAULT">Standard Course Package (General Default for All)</option>
                       <optgroup label="Configure For Specific Standard Course">
-                        {COURSE_OPTIONS.map((c) => (
+                        {getFilteredCourses().map((c) => (
                           <option key={c} value={c}>{c}</option>
                         ))}
                       </optgroup>

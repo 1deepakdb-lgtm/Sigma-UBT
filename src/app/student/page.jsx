@@ -120,6 +120,12 @@ const StudentDashboard = () => {
   const [studentExpiryDate, setStudentExpiryDate] = useState("Active");
   const [purchasedPackages, setPurchasedPackages] = useState([]);
   const [logoWatermark, setLogoWatermark] = useState("");
+  const [instituteLanguage, setInstituteLanguage] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("instituteLanguage") || "both";
+    }
+    return "both";
+  });
 
   // 1. Authenticated Session Sync from /api/auth/me
   useEffect(() => {
@@ -147,6 +153,7 @@ const StudentDashboard = () => {
           const instName = data.user.institute?.name || null;
           const instLogo = data.user.institute?.logoUrl || logo;
           const batchName = data.user.batch || null;
+          const instLang = data.user.instituteLanguage || data.user.institute?.language || "both";
           const userPkg = (!isShift(data.user.studentPackage) && data.user.studentPackage) ||
                           (!isShift(data.user.batch) && data.user.batch) ||
                           data.user.institute?.examPackage ||
@@ -157,6 +164,8 @@ const StudentDashboard = () => {
 
           setStudentName(uName);
           setCurrentStudentPhone(uPhone);
+          setInstituteLanguage(instLang);
+          localStorage.setItem("instituteLanguage", instLang);
           if (instName) setStudentInstitute(instName);
           if (instLogo) setLogoWatermark(instLogo);
           if (batchName) setStudentBatch(batchName);
@@ -1000,7 +1009,7 @@ const StudentDashboard = () => {
 
         {/* DICTIONARY TAB */}
         {activeTab === "vocab" && (
-          <DictionarySection />
+          <DictionarySection instituteLanguage={instituteLanguage} />
         )}
 
         {/* EPS BOOK TAB */}
@@ -1010,6 +1019,7 @@ const StudentDashboard = () => {
               mode="student"
               studentPackage={studentPackage}
               purchasedPackages={purchasedPackages}
+              instituteLanguage={instituteLanguage}
               onNavigateTab={(tab) => setActiveTab(tab)}
             />
           </div>

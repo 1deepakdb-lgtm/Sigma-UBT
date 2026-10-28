@@ -35,6 +35,13 @@ const InstituteDashboard = () => {
 
   const [activeTab, setActiveTab] = useState("billing"); 
   const [students, setStudents] = useState([]);
+  const [instituteLanguage, setInstituteLanguage] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("instituteLanguage") || "both";
+    }
+    return "both";
+  });
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -49,6 +56,17 @@ const InstituteDashboard = () => {
       if (params.get("superadmin") === "true") setIsStudentsUnlocked(true);
       else setIsStudentsUnlocked(sessionStorage.getItem("instituteStudentsUnlocked") === "true");
     }
+
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          const lang = data.user.instituteLanguage || data.user.institute?.language || "both";
+          setInstituteLanguage(lang);
+          localStorage.setItem("instituteLanguage", lang);
+        }
+      })
+      .catch(() => {});
   }, []);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null); 
@@ -1004,7 +1022,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
       <div style={contentAreaStyle}>
         
         {activeTab === "billing" && (
-          <InstituteBillingSection instituteName={instituteName} userRole={userRole} instId={instId} />
+          <InstituteBillingSection instituteName={instituteName} userRole={userRole} instId={instId} instituteLanguage={instituteLanguage} />
         )}
 
         {(activeTab === "students" || activeTab === "exams") && (
@@ -1844,13 +1862,13 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
 
         {activeTab === "listening" && (
           <div style={{ marginTop: "10px", marginBottom: "30px" }}>
-            <EpsBookReader mode="institute" />
+            <EpsBookReader mode="institute" instituteLanguage={instituteLanguage} />
           </div>
         )}
 
         {/* DICTIONARY TAB */}
         {activeTab === "dictionary" && (
-          <DictionarySection />
+          <DictionarySection instituteLanguage={instituteLanguage} />
         )}
 
         {activeTab === "news" && (

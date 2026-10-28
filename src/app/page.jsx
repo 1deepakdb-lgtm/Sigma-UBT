@@ -45,6 +45,7 @@ export default function LoginPage() {
       localStorage.setItem("role", data.user.role);
       localStorage.setItem("currentRole", data.user.role);
       localStorage.setItem("sigma_current_user", JSON.stringify(data.user));
+      localStorage.setItem("instituteLanguage", data.user.instituteLanguage || "both");
 
       let redirectUrl = "/";
       if (data.user.role === "admin") {

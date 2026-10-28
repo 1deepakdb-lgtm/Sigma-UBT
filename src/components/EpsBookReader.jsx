@@ -679,7 +679,8 @@ export default function EpsBookReader({
   initialChapter = 1,
   studentPackage = "",
   purchasedPackages = [],
-  onNavigateTab = null
+  onNavigateTab = null,
+  instituteLanguage: propInstituteLanguage
 }) {
   const router = useRouter();
   const isInstitute = mode === "institute";
@@ -726,7 +727,21 @@ export default function EpsBookReader({
   const [isSavingChapterInfo, setIsSavingChapterInfo] = useState(false);
 
   // Primary Language Track State: "korean" | "japanese"
-  const [studyLanguage, setStudyLanguage] = useState("korean");
+  const effectiveInstLang = (
+    propInstituteLanguage ||
+    (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
+    "both"
+  ).toLowerCase();
+
+  const [studyLanguage, setStudyLanguage] = useState(() => (effectiveInstLang === "japanese" ? "japanese" : "korean"));
+
+  useEffect(() => {
+    if (effectiveInstLang === "japanese") {
+      setStudyLanguage("japanese");
+    } else if (effectiveInstLang === "korean") {
+      setStudyLanguage("korean");
+    }
+  }, [effectiveInstLang]);
   const [activeJapaneseFolder, setActiveJapaneseFolder] = useState("JLPT N5・N4");
   const [isJapaneseFolderOpen, setIsJapaneseFolderOpen] = useState(false);
   const [isKoreanFolderOpen, setIsKoreanFolderOpen] = useState(false);
@@ -3347,80 +3362,84 @@ export default function EpsBookReader({
           flexWrap: "wrap"
         }}>
           {/* KOREAN STUDY MATERIALS */}
-          <button
-            type="button"
-            onClick={() => setStudyLanguage("korean")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              padding: "11px 28px",
-              borderRadius: "12px",
-              border: "none",
-              backgroundColor: studyLanguage === "korean" ? "#2563eb" : "transparent",
-              backgroundImage: studyLanguage === "korean" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-              color: studyLanguage === "korean" ? "#ffffff" : "#475569",
-              fontSize: "15px",
-              fontWeight: "800",
-              cursor: "pointer",
-              transition: "all 0.18s ease-in-out",
-              boxShadow: studyLanguage === "korean" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
-            }}
-            onMouseEnter={(e) => {
-              if (studyLanguage !== "korean") {
-                e.currentTarget.style.backgroundColor = "#f1f5f9";
-                e.currentTarget.style.color = "#0f172a";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (studyLanguage !== "korean") {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#475569";
-              }
-            }}
-          >
-            <span style={{ fontSize: "22px", lineHeight: "1" }}>🇰🇷</span>
-            <span>Korean Study Materials</span>
-          </button>
+          {(effectiveInstLang === "both" || effectiveInstLang === "korean") && (
+            <button
+              type="button"
+              onClick={() => setStudyLanguage("korean")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                padding: "11px 28px",
+                borderRadius: "12px",
+                border: "none",
+                backgroundColor: studyLanguage === "korean" ? "#2563eb" : "transparent",
+                backgroundImage: studyLanguage === "korean" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
+                color: studyLanguage === "korean" ? "#ffffff" : "#475569",
+                fontSize: "15px",
+                fontWeight: "800",
+                cursor: "pointer",
+                transition: "all 0.18s ease-in-out",
+                boxShadow: studyLanguage === "korean" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
+              }}
+              onMouseEnter={(e) => {
+                if (studyLanguage !== "korean") {
+                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (studyLanguage !== "korean") {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#475569";
+                }
+              }}
+            >
+              <span style={{ fontSize: "22px", lineHeight: "1" }}>🇰🇷</span>
+              <span>Korean Study Materials</span>
+            </button>
+          )}
 
           {/* JAPANESE STUDY MATERIALS */}
-          <button
-            type="button"
-            onClick={() => setStudyLanguage("japanese")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              padding: "11px 28px",
-              borderRadius: "12px",
-              border: "none",
-              backgroundColor: studyLanguage === "japanese" ? "#2563eb" : "transparent",
-              backgroundImage: studyLanguage === "japanese" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-              color: studyLanguage === "japanese" ? "#ffffff" : "#475569",
-              fontSize: "15px",
-              fontWeight: "800",
-              cursor: "pointer",
-              transition: "all 0.18s ease-in-out",
-              boxShadow: studyLanguage === "japanese" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
-            }}
-            onMouseEnter={(e) => {
-              if (studyLanguage !== "japanese") {
-                e.currentTarget.style.backgroundColor = "#f1f5f9";
-                e.currentTarget.style.color = "#0f172a";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (studyLanguage !== "japanese") {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#475569";
-              }
-            }}
-          >
-            <span style={{ fontSize: "22px", lineHeight: "1" }}>🇯🇵</span>
-            <span>Japanese Study Materials</span>
-          </button>
+          {(effectiveInstLang === "both" || effectiveInstLang === "japanese") && (
+            <button
+              type="button"
+              onClick={() => setStudyLanguage("japanese")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                padding: "11px 28px",
+                borderRadius: "12px",
+                border: "none",
+                backgroundColor: studyLanguage === "japanese" ? "#2563eb" : "transparent",
+                backgroundImage: studyLanguage === "japanese" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
+                color: studyLanguage === "japanese" ? "#ffffff" : "#475569",
+                fontSize: "15px",
+                fontWeight: "800",
+                cursor: "pointer",
+                transition: "all 0.18s ease-in-out",
+                boxShadow: studyLanguage === "japanese" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
+              }}
+              onMouseEnter={(e) => {
+                if (studyLanguage !== "japanese") {
+                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (studyLanguage !== "japanese") {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#475569";
+                }
+              }}
+            >
+              <span style={{ fontSize: "22px", lineHeight: "1" }}>🇯🇵</span>
+              <span>Japanese Study Materials</span>
+            </button>
+          )}
         </div>
 
         {/* Action Controls for Admin (Centered below) */}

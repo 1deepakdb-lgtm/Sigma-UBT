@@ -30,7 +30,8 @@ export async function GET(req) {
             status: true,
             logoUrl: true,
             watermarkText: true,
-            examPackage: true
+            examPackage: true,
+            language: true
           }
         }
       }
@@ -101,7 +102,8 @@ export async function GET(req) {
       user: {
         ...user,
         studentPackage,
-        expiryDate: expiryDate || 'Active'
+        expiryDate: expiryDate || 'Active',
+        instituteLanguage: user.institute?.language || 'both'
       }
     });
   } catch (err) {

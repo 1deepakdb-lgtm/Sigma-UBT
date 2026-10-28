@@ -35,6 +35,7 @@ model Institute {
   status        String             @default("Active") // "Active" | "Expired"
   logoUrl       String?
   watermarkText String?
+  language      String             @default("both") // "korean" | "japanese" | "both"
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   users         User[]

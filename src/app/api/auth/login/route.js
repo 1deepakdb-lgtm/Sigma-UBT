@@ -346,7 +346,8 @@ export async function POST(req) {
       studentPackage: user.role === 'student' ? studentPackage : undefined,
       expiryDate: user.role === 'student' ? (expiryDate || 'Active') : undefined,
       instituteId: user.instituteId,
-      instituteName: user.institute?.name || null
+      instituteName: user.institute?.name || null,
+      instituteLanguage: user.institute?.language || 'both'
     };
 
     const token = await signToken(tokenPayload);

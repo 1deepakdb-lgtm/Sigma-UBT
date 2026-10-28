@@ -59,7 +59,8 @@ export async function POST(req) {
       subscription = '1 Month',
       entryDate = new Date().toISOString().slice(0, 10),
       examPackage = 'Full Set UBT',
-      watermarkText = ''
+      watermarkText = '',
+      language = 'both'
     } = await req.json();
 
     if (!name || !username || !password) {
@@ -74,6 +75,7 @@ export async function POST(req) {
 
     const expireDate = calculateExpiry(entryDate, subscription);
     const passwordHash = await hashPassword(password);
+    const validLang = ['korean', 'japanese', 'both'].includes((language || '').toLowerCase()) ? language.toLowerCase() : 'both';
 
     const institute = await prisma.institute.create({
       data: {
@@ -84,7 +86,8 @@ export async function POST(req) {
         expireDate,
         examPackage,
         status: 'Active',
-        watermarkText
+        watermarkText,
+        language: validLang
       }
     });
 
@@ -120,6 +123,7 @@ export async function PUT(req) {
       status,
       logoUrl,
       watermarkText,
+      language,
       // Optional: reset the institute's login user password
       newPassword,
     } = await req.json();
@@ -135,6 +139,9 @@ export async function PUT(req) {
     if (status) instituteData.status = status;
     if (logoUrl !== undefined) instituteData.logoUrl = logoUrl || null;
     if (watermarkText !== undefined) instituteData.watermarkText = watermarkText || null;
+    if (language !== undefined) {
+      instituteData.language = ['korean', 'japanese', 'both'].includes((language || '').toLowerCase()) ? language.toLowerCase() : 'both';
+    }
 
     if (entryDate && subscription) {
       instituteData.expireDate = calculateExpiry(entryDate, subscription);
