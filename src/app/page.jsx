@@ -537,27 +537,6 @@ export default function LoginPage() {
         {/* MODE 2: REGISTER FORM */}
         {authMode === "register" && (
           <form onSubmit={handleRegister} autoComplete="off">
-            {/* Free Materials Perks Card */}
-            <div
-              style={{
-                backgroundColor: "#f0fdf4",
-                border: "1px solid #bbf7d0",
-                borderRadius: "8px",
-                padding: "10px 12px",
-                marginBottom: "14px",
-                textAlign: "left"
-              }}
-            >
-              <div style={{ fontSize: "12px", fontWeight: "800", color: "#166534", marginBottom: "4px" }}>
-                🎁 Free Student Membership Includes:
-              </div>
-              <ul style={{ margin: 0, paddingLeft: "16px", fontSize: "11.5px", color: "#15803d", lineHeight: "1.5" }}>
-                <li>Korean EPS-TOPIK 60 Chapters &amp; Zero-Latency Audio</li>
-                <li>Japanese JLPT Study Books, Kanji 1000 &amp; Pronunciation</li>
-                <li>Bilingual Korean / Japanese / Nepali Dictionary</li>
-              </ul>
-            </div>
-
             <div style={{ textAlign: "left", marginBottom: "5px" }}>
               <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#334155" }}>
                 Full Name:

@@ -1,4 +1,4 @@
-import prisma from './prisma';
+import prisma from '@/lib/prisma';
 
 /**
  * Ensures a dedicated Open Learning Institute exists for self-registered and Google students.
