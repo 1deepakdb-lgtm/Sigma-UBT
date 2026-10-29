@@ -104,6 +104,7 @@ const StudentDashboard = () => {
   const [loadingVocab, setLoadingVocab] = useState(false);
 
   const [newsList, setNewsList] = useState([]);
+  const [noticeFilterTrack, setNoticeFilterTrack] = useState("auto"); // "auto" | "all" | "korean" | "japanese"
   const [results, setResults] = useState([]);
   const [showBannerPopup, setShowBannerPopup] = useState(false);
   const [popupNotice, setPopupNotice] = useState(null);
@@ -290,7 +291,14 @@ const StudentDashboard = () => {
             return target === cleanCurr || inst === cleanCurr;
           });
           setNewsList(instituteOnlyNotices);
-          const livePopup = instituteOnlyNotices.find((n) => n.isPopup);
+          const livePopup = instituteOnlyNotices.find((n) => {
+            if (!n.isPopup) return false;
+            const nLang = (n.language || n.track || "all").toLowerCase();
+            const instL = (instituteLanguage || "both").toLowerCase();
+            if (instL === "korean") return nLang === "all" || nLang === "korean";
+            if (instL === "japanese") return nLang === "all" || nLang === "japanese";
+            return true;
+          });
           if (livePopup) {
             const lastShownId = localStorage.getItem("lastShownStudentPopupId");
             if (lastShownId !== livePopup.id.toString()) {
@@ -301,7 +309,7 @@ const StudentDashboard = () => {
         }
       })
       .catch((err) => console.warn("Failed to fetch notices:", err));
-  }, [currentStudentPhone, studentInstitute, studentBatch, activeBookFolder]);
+  }, [currentStudentPhone, studentInstitute, studentBatch, activeBookFolder, instituteLanguage]);
 
   const filterAndSetExamSets = (allSets, packages) => {
     const studentsList = JSON.parse(localStorage.getItem("studentsList") || "[]");
@@ -1050,7 +1058,7 @@ const StudentDashboard = () => {
 
         {/* DICTIONARY TAB */}
         {activeTab === "vocab" && (
-          <DictionarySection instituteLanguage={instituteLanguage} />
+          <DictionarySection instituteLanguage={instituteLanguage} userRole="student" />
         )}
 
         {/* EPS BOOK TAB */}
@@ -1074,25 +1082,109 @@ const StudentDashboard = () => {
               <OfficialPortalButtons />
             </div>
 
-            {/* Notice Section — poster style */}
-            <div style={{ background: "white", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", maxWidth: "860px", margin: "0 auto" }}>
-              {newsList.length === 0 ? (
-                <p style={{ color: "#64748b", margin: 0, textAlign: "center", padding: "40px 0" }}>No notices posted currently.</p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-                  {newsList.map((item) => (
-                    <div key={item.id} style={{
-                      borderRadius: "14px",
-                      overflow: "hidden",
-                      border: item.isPopup ? "2px solid #6366f1" : "1px solid #e2e8f0",
-                      boxShadow: item.isPopup ? "0 4px 20px rgba(99,102,241,0.12)" : "0 2px 8px rgba(0,0,0,0.05)",
-                      background: item.isPopup ? "linear-gradient(135deg, #fafaff 0%, #f0f0ff 100%)" : "#fff",
-                    }}>
-                      {/* Header — centered */}
-                      <div style={{ background: item.isPopup ? "linear-gradient(90deg, #6366f1, #4f46e5)" : "linear-gradient(90deg, #475569, #334155)", padding: "14px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "4px" }}>
-                        <h4 style={{ margin: 0, color: "white", fontSize: "17px", fontWeight: "700", textAlign: "center" }}>{item.title}</h4>
-                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}>📅 {item.date}</span>
-                      </div>
+            {/* Notice Section — poster style with Study Track filtering */}
+            {(() => {
+              const effectiveFilter = noticeFilterTrack === "auto"
+                ? (instituteLanguage === "both" ? "all" : instituteLanguage)
+                : noticeFilterTrack;
+
+              const displayedNotices = newsList.filter((item) => {
+                const itemLang = (item.language || item.track || "all").toLowerCase();
+                if (effectiveFilter === "all") return true;
+                if (effectiveFilter === "korean") return itemLang === "all" || itemLang === "korean";
+                if (effectiveFilter === "japanese") return itemLang === "all" || itemLang === "japanese";
+                return true;
+              });
+
+              const totalKorean = newsList.filter(n => (n.language || n.track || "all").toLowerCase() === "korean").length;
+              const totalJapanese = newsList.filter(n => (n.language || n.track || "all").toLowerCase() === "japanese").length;
+              const totalAll = newsList.length;
+
+              return (
+                <div style={{ background: "white", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", maxWidth: "860px", margin: "0 auto" }}>
+                  {/* Study Track Notice Filter Bar */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px", flexWrap: "wrap", gap: "12px", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "16px" }}>
+                    <div>
+                      <h3 style={{ margin: 0, color: "#0f172a", fontSize: "19px", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span>📢</span> Notices & Announcements
+                      </h3>
+                      <p style={{ margin: "3px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+                        Active Track: <strong style={{ color: instituteLanguage === "japanese" ? "#9333ea" : instituteLanguage === "korean" ? "#2563eb" : "#0f172a" }}>
+                          {instituteLanguage === "japanese" ? "🇯🇵 Japanese (日本語)" : instituteLanguage === "korean" ? "🇰🇷 Korean (한국어)" : "🌐 Both (Dual Track)"}
+                        </strong>
+                      </p>
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div style={{ display: "inline-flex", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "10px", border: "1.5px solid #cbd5e1", gap: "4px", flexWrap: "wrap" }}>
+                      {[
+                        { key: "auto", label: instituteLanguage === "korean" ? "🇰🇷 My Track (Korean)" : instituteLanguage === "japanese" ? "🇯🇵 My Track (Japanese)" : "🌐 My Track (All)" },
+                        { key: "all", label: `🌐 All (${totalAll})` },
+                        { key: "korean", label: `🇰🇷 Korean (${totalKorean})` },
+                        { key: "japanese", label: `🇯🇵 Japanese (${totalJapanese})` }
+                      ].map((tab) => (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          onClick={() => setNoticeFilterTrack(tab.key)}
+                          style={{
+                            backgroundColor: noticeFilterTrack === tab.key ? (tab.key === "japanese" ? "#9333ea" : tab.key === "korean" ? "#2563eb" : "#1e293b") : "transparent",
+                            color: noticeFilterTrack === tab.key ? "#ffffff" : "#475569",
+                            border: "none",
+                            borderRadius: "7px",
+                            padding: "6px 12px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {displayedNotices.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px 0" }}>
+                      <p style={{ color: "#64748b", margin: "0 0 6px 0", fontSize: "15px" }}>No notices posted currently for this category.</p>
+                      <p style={{ color: "#94a3b8", margin: 0, fontSize: "12px" }}>Switch to All Notices or adjust your Study Track to view more announcements.</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                      {displayedNotices.map((item) => {
+                        const itemTrack = (item.language || item.track || "all").toLowerCase();
+                        return (
+                          <div key={item.id} style={{
+                            borderRadius: "14px",
+                            overflow: "hidden",
+                            border: item.isPopup ? "2px solid #6366f1" : "1px solid #e2e8f0",
+                            boxShadow: item.isPopup ? "0 4px 20px rgba(99,102,241,0.12)" : "0 2px 8px rgba(0,0,0,0.05)",
+                            background: item.isPopup ? "linear-gradient(135deg, #fafaff 0%, #f0f0ff 100%)" : "#fff",
+                          }}>
+                            {/* Header — centered */}
+                            <div style={{ background: item.isPopup ? "linear-gradient(90deg, #6366f1, #4f46e5)" : "linear-gradient(90deg, #475569, #334155)", padding: "14px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "6px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+                                <span style={{
+                                  fontSize: "11px",
+                                  fontWeight: "800",
+                                  padding: "2px 10px",
+                                  borderRadius: "12px",
+                                  backgroundColor: itemTrack === "japanese" ? "rgba(168, 85, 247, 0.3)" : itemTrack === "korean" ? "rgba(59, 130, 246, 0.3)" : "rgba(255, 255, 255, 0.2)",
+                                  color: "#ffffff",
+                                  border: "1px solid rgba(255,255,255,0.4)"
+                                }}>
+                                  {itemTrack === "japanese" ? "🇯🇵 Japanese Track" : itemTrack === "korean" ? "🇰🇷 Korean Track" : "🌐 All Tracks"}
+                                </span>
+                                {item.isPopup && (
+                                  <span style={{ fontSize: "10px", fontWeight: "800", backgroundColor: "#fbbf24", color: "#78350f", padding: "2px 8px", borderRadius: "10px" }}>
+                                    📢 Flex Banner
+                                  </span>
+                                )}
+                              </div>
+                              <h4 style={{ margin: 0, color: "white", fontSize: "17px", fontWeight: "700", textAlign: "center" }}>{item.title}</h4>
+                              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}>📅 {item.date}</span>
+                            </div>
 
                       {/* Body — centered */}
                       <div style={{ padding: "22px 24px", textAlign: "center" }}>
@@ -1153,10 +1245,13 @@ const StudentDashboard = () => {
                         )}
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               )}
             </div>
+            );
+          })()}
           </div>
         )}
 

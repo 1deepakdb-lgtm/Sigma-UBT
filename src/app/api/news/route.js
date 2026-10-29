@@ -27,12 +27,13 @@ async function saveNotices(notices) {
   }
 }
 
-// GET: Return notices, with optional institute-level filtering
+// GET: Return notices, with optional institute-level and study track language filtering
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const instituteParam = searchParams.get('institute');
     const roleParam = searchParams.get('role'); // 'student', 'institute', 'admin'
+    const languageParam = (searchParams.get('language') || searchParams.get('track') || '').trim().toLowerCase();
 
     const allNotices = await getStoredNotices();
 
@@ -56,6 +57,14 @@ export async function GET(req) {
       }
     }
 
+    // Filter by Study Track language if specified (and not 'both' or 'all')
+    if (languageParam && languageParam !== 'all' && languageParam !== 'both') {
+      filtered = filtered.filter((n) => {
+        const nLang = (n.language || n.track || 'all').trim().toLowerCase();
+        return nLang === 'all' || nLang === languageParam;
+      });
+    }
+
     return NextResponse.json({ success: true, notices: filtered, total: filtered.length }, { status: 200 });
   } catch (err) {
     console.error('GET /api/news error:', err);
@@ -63,7 +72,7 @@ export async function GET(req) {
   }
 }
 
-// POST: Publish a new notice (Superadmin for all or specific institute; Institute for own students)
+// POST: Publish a new notice (Superadmin for all or specific institute; Institute for own students; Korean / Japanese / All tracks)
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -79,7 +88,8 @@ export async function POST(req) {
       instituteName = null,
       instituteId = null,
       targetAudience = 'all',
-      publishedBy = 'institute'
+      publishedBy = 'institute',
+      language = 'all'
     } = body;
 
     if (!title || !content) {
@@ -91,6 +101,7 @@ export async function POST(req) {
     const isGlobal = targetAudience === 'all' && (!instituteName || publishedBy === 'admin');
     const chosenTarget = isGlobal ? 'all' : (targetAudience || instituteName || 'all');
     const assignedInst = isGlobal ? null : (instituteName || (targetAudience !== 'all' ? targetAudience : null));
+    const targetLanguage = (language || body.track || 'all').trim().toLowerCase();
 
     const newItem = {
       id: Date.now(),
@@ -106,6 +117,8 @@ export async function POST(req) {
       instituteName: assignedInst,
       instituteId: instituteId || null,
       publishedBy: publishedBy || (assignedInst ? 'institute' : 'admin'),
+      language: targetLanguage, // 'all' | 'korean' | 'japanese'
+      track: targetLanguage,
       date: new Date().toISOString().split('T')[0],
       createdAt: new Date().toISOString()
     };

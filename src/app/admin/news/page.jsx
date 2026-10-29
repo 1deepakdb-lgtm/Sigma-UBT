@@ -27,6 +27,8 @@ const AdminNews = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isPopupBanner, setIsPopupBanner] = useState(false);
+  const [targetTrack, setTargetTrack] = useState("all"); // "all" | "korean" | "japanese"
+  const [filterTrack, setFilterTrack] = useState("all");
   
   // Media upload states
   const [mediaFile, setMediaFile] = useState(null); 
@@ -205,6 +207,8 @@ const AdminNews = () => {
       instituteName: assignedInstName,
       instituteId: assignedInstId,
       publishedBy: "admin",
+      language: targetTrack,
+      track: targetTrack,
       date: new Date().toISOString().split("T")[0]
     };
 
@@ -275,8 +279,12 @@ const AdminNews = () => {
   };
 
   const filteredNewsList = newsList.filter(item => {
-    if (activeFilter === "notice") return item.category !== "news";
-    if (activeFilter === "news") return item.category === "news";
+    if (activeFilter === "notice" && item.category === "news") return false;
+    if (activeFilter === "news" && item.category !== "news") return false;
+    if (filterTrack !== "all") {
+      const itemTrack = (item.language || item.track || "all").toLowerCase();
+      if (itemTrack !== "all" && itemTrack !== filterTrack) return false;
+    }
     return true;
   });
 
@@ -630,6 +638,47 @@ const AdminNews = () => {
               )}
             </div>
 
+            {/* Target Study Track Selector */}
+            <div style={{ marginBottom: "18px", backgroundColor: "#f8fafc", padding: "14px 16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+              <label style={{ fontWeight: "bold", fontSize: "13px", color: "#1e3a8a", display: "block", marginBottom: "8px" }}>
+                🎯 Target Study Track (लक्षित भाषा ट्र्याक)
+              </label>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                {[
+                  { key: "all", label: "🌐 All Students (Korean & Japanese)" },
+                  { key: "korean", label: "🇰🇷 Korean Track Only (EPS-TOPIK)" },
+                  { key: "japanese", label: "🇯🇵 Japanese Track Only (SSW / JLPT)" }
+                ].map((opt) => (
+                  <label
+                    key={opt.key}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      border: targetTrack === opt.key ? "2px solid #2563eb" : "1px solid #cbd5e1",
+                      backgroundColor: targetTrack === opt.key ? "#eff6ff" : "#ffffff",
+                      cursor: "pointer",
+                      fontWeight: targetTrack === opt.key ? "700" : "500",
+                      fontSize: "13px",
+                      color: targetTrack === opt.key ? "#1d4ed8" : "#334155"
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="targetTrack"
+                      value={opt.key}
+                      checked={targetTrack === opt.key}
+                      onChange={(e) => setTargetTrack(e.target.value)}
+                      style={{ cursor: "pointer" }}
+                    />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             {/* Checkbox for Pop-up Flex Banner */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "22px", backgroundColor: "#f8fafc", padding: "12px 14px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
               <input 
@@ -750,6 +799,34 @@ const AdminNews = () => {
                 📰 Official News ({newsCount})
               </button>
             </div>
+
+            {/* Language Track Filter Pills */}
+            <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", paddingLeft: "6px" }}>Track:</span>
+              {[
+                { key: "all", label: "🌐 All Tracks" },
+                { key: "korean", label: "🇰🇷 Korean" },
+                { key: "japanese", label: "🇯🇵 Japanese" }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setFilterTrack(opt.key)}
+                  style={{
+                    backgroundColor: filterTrack === opt.key ? (opt.key === "japanese" ? "#9333ea" : opt.key === "korean" ? "#2563eb" : "#1e293b") : "transparent",
+                    color: filterTrack === opt.key ? "#ffffff" : "#475569",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "4px 10px",
+                    fontSize: "11.5px",
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {filteredNewsList.length === 0 ? (
@@ -776,6 +853,24 @@ const AdminNews = () => {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                         
+                        {/* Study Track Badge */}
+                        {(() => {
+                          const itemTrack = (item.language || item.track || "all").toLowerCase();
+                          return (
+                            <span style={{
+                              backgroundColor: itemTrack === "japanese" ? "#faf5ff" : itemTrack === "korean" ? "#eff6ff" : "#f1f5f9",
+                              color: itemTrack === "japanese" ? "#7e22ce" : itemTrack === "korean" ? "#1d4ed8" : "#475569",
+                              border: itemTrack === "japanese" ? "1px solid #d8b4fe" : itemTrack === "korean" ? "1px solid #bfdbfe" : "1px solid #cbd5e1",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              padding: "3px 9px",
+                              borderRadius: "10px"
+                            }}>
+                              {itemTrack === "japanese" ? "🇯🇵 Japanese Track" : itemTrack === "korean" ? "🇰🇷 Korean Track" : "🌐 All Tracks"}
+                            </span>
+                          );
+                        })()}
+
                         {/* Notice / News Category Badge */}
                         {isNews ? (
                           <span style={{ backgroundColor: "#e0f2fe", color: "#0369a1", fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "10px" }}>

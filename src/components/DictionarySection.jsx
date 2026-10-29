@@ -158,7 +158,7 @@ export const JAPANESE_MALE_VOICE_MODELS = VOICE_PROFILES
 export const FEMALE_VOICE_MODELS = KOREAN_FEMALE_VOICE_MODELS;
 export const MALE_VOICE_MODELS = KOREAN_MALE_VOICE_MODELS;
 
-export default function DictionarySection({ title = "", instituteLanguage: propInstituteLanguage }) {
+export default function DictionarySection({ title = "", instituteLanguage: propInstituteLanguage, userRole: propUserRole }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -220,8 +220,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const [editingVoiceId, setEditingVoiceId] = useState(null);
   const [editingWordValue, setEditingWordValue] = useState('');
 
-  // Role Detection for Audio Downloads (Institute & Admin only; NOT Student)
+  // Role Detection for Audio Downloads (Institute & Admin only; NEVER Student)
   const [userRole, setUserRole] = useState(() => {
+    if (propUserRole) return propUserRole.toLowerCase();
     if (typeof window === 'undefined') return 'student';
     try {
       const r = localStorage.getItem('currentRole') || localStorage.getItem('role');
@@ -238,20 +239,74 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     return 'student';
   });
 
+  // Strict check: if user is student or inside student portal, audio download is disabled
+  const isStudent = Boolean(
+    propUserRole === 'student' ||
+    userRole === 'student' ||
+    (typeof window !== 'undefined' && (
+      window.location.pathname.includes('/student') ||
+      localStorage.getItem('currentRole') === 'student' ||
+      localStorage.getItem('role') === 'student'
+    ))
+  );
+
+  const canDownloadAudio = !isStudent && (userRole === 'admin' || userRole === 'institute');
+
+  // Synchronize with Study Track (korean / japanese / both)
   useEffect(() => {
-    fetch('/api/auth/me')
+    const rawTrack = (
+      propInstituteLanguage ||
+      (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
+      "both"
+    ).toLowerCase();
+
+    setInstLang(rawTrack);
+
+    if (rawTrack === "japanese") {
+      if (activeLang !== "ja") {
+        handleSwitchLanguage("ja");
+      }
+    } else if (rawTrack === "korean") {
+      if (activeLang !== "ko") {
+        handleSwitchLanguage("ko");
+      }
+    }
+  }, [propInstituteLanguage]);
+
+  // Listen to window storage events if student switches track in another tab
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "instituteLanguage" && e.newValue) {
+        const newTrack = e.newValue.toLowerCase();
+        setInstLang(newTrack);
+        if (newTrack === "japanese" && activeLang !== "ja") {
+          handleSwitchLanguage("ja");
+        } else if (newTrack === "korean" && activeLang !== "ko") {
+          handleSwitchLanguage("ko");
+        }
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [activeLang]);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
       .then(res => res.json())
       .then(data => {
         if (data?.user?.role) {
           setUserRole(data.user.role.toLowerCase());
         }
-        const apiInstLang = (data?.user?.instituteLanguage || data?.user?.institute?.language || '').toLowerCase();
-        if (apiInstLang) {
-          setInstLang(apiInstLang);
-          if (apiInstLang === 'japanese' && activeLang !== 'ja') {
-            handleSwitchLanguage('ja');
-          } else if (apiInstLang === 'korean' && activeLang !== 'ko') {
-            handleSwitchLanguage('ko');
+        const savedTrack = typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null;
+        if (!propInstituteLanguage && !savedTrack) {
+          const apiInstLang = (data?.user?.instituteLanguage || data?.user?.institute?.language || "").toLowerCase();
+          if (apiInstLang) {
+            setInstLang(apiInstLang);
+            if (apiInstLang === "japanese" && activeLang !== "ja") {
+              handleSwitchLanguage("ja");
+            } else if (apiInstLang === "korean" && activeLang !== "ko") {
+              handleSwitchLanguage("ko");
+            }
           }
         }
       })
@@ -1328,7 +1383,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               <span style={{ fontSize: "14px" }}>⭐</span>
               <span>{playingAudioId === 'search-custom-voice' ? "⏹ Stop" : `▶ My Voice (${matchingSearchedCustomVoice.word})`}</span>
             </button>
-            {!(typeof window !== 'undefined' && window.location.pathname.includes('/student')) && (
+            {canDownloadAudio && (
               <button
                 type="button"
                 onClick={() => handleDownloadAudio(matchingSearchedCustomVoice.url, `${matchingSearchedCustomVoice.word}_my_voice.mp3`)}
@@ -1408,7 +1463,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             </button>
 
             {/* Download MP3 */}
-            {!(typeof window !== 'undefined' && window.location.pathname.includes('/student')) && (
+            {canDownloadAudio && (
               <button
                 type="button"
                 onClick={() => handleDownloadSearchWord('female')}
@@ -1655,7 +1710,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             </button>
 
             {/* Download MP3 */}
-            {!(typeof window !== 'undefined' && window.location.pathname.includes('/student')) && (
+            {canDownloadAudio && (
               <button
                 type="button"
                 onClick={() => handleDownloadSearchWord('male')}
@@ -2184,7 +2239,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             <FemaleIcon size={22} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
                             <span>{playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ Female"}</span>
                           </button>
-                          {!(typeof window !== 'undefined' && window.location.pathname.includes('/student')) && (
+                          {canDownloadAudio && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -2258,7 +2313,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             <MaleIcon size={22} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
                             <span>{playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ Male"}</span>
                           </button>
-                          {!(typeof window !== 'undefined' && window.location.pathname.includes('/student')) && (
+                          {canDownloadAudio && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -2755,22 +2810,24 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       >
                         {playingAudioId === 'my-voice-recorded' ? "⏹ Stop" : "▶ Play Preview"}
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadAudio(recordedAudioUrl, `my_voice_${currentActiveWord?.korean || 'recording'}.webm`)}
-                        style={{
-                          backgroundColor: "#ffffff",
-                          color: "#065f46",
-                          border: "1px solid #6ee7b7",
-                          borderRadius: "6px",
-                          padding: "8px 14px",
-                          fontSize: "13px",
-                          fontWeight: "700",
-                          cursor: "pointer"
-                        }}
-                      >
-                        📥 Download
-                      </button>
+                      {canDownloadAudio && (
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadAudio(recordedAudioUrl, `my_voice_${currentActiveWord?.korean || 'recording'}.webm`)}
+                          style={{
+                            backgroundColor: "#ffffff",
+                            color: "#065f46",
+                            border: "1px solid #6ee7b7",
+                            borderRadius: "6px",
+                            padding: "8px 14px",
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            cursor: "pointer"
+                          }}
+                        >
+                          📥 Download
+                        </button>
+                      )}
                     </div>
 
                     {/* Recording Target Word Scope */}
@@ -3026,21 +3083,23 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             )}
 
                             {/* Download */}
-                            <button
-                              type="button"
-                              onClick={() => handleDownloadAudio(voice.url, `${voice.name}.mp3`)}
-                              style={{
-                                backgroundColor: "#f8fafc",
-                                border: "1px solid #cbd5e1",
-                                borderRadius: "6px",
-                                padding: "5px 8px",
-                                fontSize: "12px",
-                                cursor: "pointer"
-                              }}
-                              title="Download Audio"
-                            >
-                              📥
-                            </button>
+                            {canDownloadAudio && (
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadAudio(voice.url, `${voice.name}.mp3`)}
+                                style={{
+                                  backgroundColor: "#f8fafc",
+                                  border: "1px solid #cbd5e1",
+                                  borderRadius: "6px",
+                                  padding: "5px 8px",
+                                  fontSize: "12px",
+                                  cursor: "pointer"
+                                }}
+                                title="Download Audio"
+                              >
+                                📥
+                              </button>
+                            )}
 
                             {/* Delete */}
                             <button

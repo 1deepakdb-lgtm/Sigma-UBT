@@ -88,6 +88,7 @@ const InstituteDashboard = () => {
   const [noticeFileType, setNoticeFileType] = useState("");
   const [noticeFileSize, setNoticeFileSize] = useState(0);
   const [isNoticePopup, setIsNoticePopup] = useState(false);
+  const [noticeTargetTrack, setNoticeTargetTrack] = useState("all"); // "all" | "korean" | "japanese"
   const [isNoticeUploading, setIsNoticeUploading] = useState(false);
   const [noticeUploadError, setNoticeUploadError] = useState("");
   const [showPublishNoticeForm, setShowPublishNoticeForm] = useState(false);
@@ -580,7 +581,9 @@ const InstituteDashboard = () => {
       fileSize: noticeFileSize,
       instituteName: instituteName || "Language Institute",
       instituteId: instId || null,
-      publishedBy: "institute"
+      publishedBy: "institute",
+      language: noticeTargetTrack,
+      track: noticeTargetTrack
     };
 
     try {
@@ -599,6 +602,7 @@ const InstituteDashboard = () => {
         setNoticeFileType("");
         setNoticeFileSize(0);
         setIsNoticePopup(false);
+        setNoticeTargetTrack("all");
         setShowPublishNoticeForm(false);
         loadData();
       } else {
@@ -1968,6 +1972,47 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
                       )}
                     </div>
 
+                    {/* Target Study Track Selector */}
+                    <div style={{ marginBottom: "18px", backgroundColor: "#f8fafc", padding: "14px 16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                      <label style={{ fontWeight: "bold", fontSize: "13px", color: "#1e3a8a", display: "block", marginBottom: "8px" }}>
+                        🎯 Target Study Track (लक्षित भाषा ट्र्याक)
+                      </label>
+                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                        {[
+                          { key: "all", label: "🌐 All Students (Korean & Japanese)" },
+                          { key: "korean", label: "🇰🇷 Korean Track Only (EPS-TOPIK)" },
+                          { key: "japanese", label: "🇯🇵 Japanese Track Only (SSW / JLPT)" }
+                        ].map((opt) => (
+                          <label
+                            key={opt.key}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              padding: "8px 14px",
+                              borderRadius: "8px",
+                              border: noticeTargetTrack === opt.key ? "2px solid #2563eb" : "1px solid #cbd5e1",
+                              backgroundColor: noticeTargetTrack === opt.key ? "#eff6ff" : "#ffffff",
+                              cursor: "pointer",
+                              fontWeight: noticeTargetTrack === opt.key ? "700" : "500",
+                              fontSize: "13px",
+                              color: noticeTargetTrack === opt.key ? "#1d4ed8" : "#334155"
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="noticeTargetTrack"
+                              value={opt.key}
+                              checked={noticeTargetTrack === opt.key}
+                              onChange={(e) => setNoticeTargetTrack(e.target.value)}
+                              style={{ cursor: "pointer" }}
+                            />
+                            <span>{opt.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Popup checkbox */}
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "18px" }}>
                       <input
@@ -2028,7 +2073,30 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
                       }}>
                         {/* Header bar — centered with delete action */}
                         <div style={{ background: item.isPopup ? "linear-gradient(90deg, #6366f1, #4f46e5)" : "linear-gradient(90deg, #475569, #334155)", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                          <div style={{ flex: 1, textAlign: "center" }}>
+                          <div style={{ flex: 1, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                              {(() => {
+                                const itemTrack = (item.language || item.track || "all").toLowerCase();
+                                return (
+                                  <span style={{
+                                    fontSize: "11px",
+                                    fontWeight: "800",
+                                    padding: "2px 8px",
+                                    borderRadius: "10px",
+                                    backgroundColor: itemTrack === "japanese" ? "rgba(168, 85, 247, 0.35)" : itemTrack === "korean" ? "rgba(59, 130, 246, 0.35)" : "rgba(255, 255, 255, 0.2)",
+                                    color: "#ffffff",
+                                    border: "1px solid rgba(255,255,255,0.4)"
+                                  }}>
+                                    {itemTrack === "japanese" ? "🇯🇵 Japanese Track" : itemTrack === "korean" ? "🇰🇷 Korean Track" : "🌐 All Tracks"}
+                                  </span>
+                                );
+                              })()}
+                              {item.isPopup && (
+                                <span style={{ fontSize: "10px", fontWeight: "800", backgroundColor: "#fbbf24", color: "#78350f", padding: "2px 6px", borderRadius: "8px" }}>
+                                  📢 Flex Banner
+                                </span>
+                              )}
+                            </div>
                             <h4 style={{ margin: 0, color: "white", fontSize: "17px", fontWeight: "700" }}>{item.title}</h4>
                             <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)" }}>📅 {item.date}</span>
                           </div>
