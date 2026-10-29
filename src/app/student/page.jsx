@@ -689,10 +689,51 @@ const StudentDashboard = () => {
                 )}
                 <span style={{ color: "#cbd5e1" }}>•</span>
                 <span style={{ fontSize: "12px", color: "#64748b" }}>
-                  Expiry Date: <strong style={{ color: "#047857" }}>{studentExpiryDate || "Active"}</strong>
+                  Expiry Date: <strong style={{ color: "#047857" }}>{studentExpiryDate || "Lifetime Free"}</strong>
                 </span>
               </div>
-              <p style={{ color: "#64748b", margin: "12px 0 0 0", fontSize: "14px" }}>
+
+              {/* Free Student Access Badge & Language Track Switcher */}
+              <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                <div style={{ background: "linear-gradient(90deg, #ecfdf5 0%, #f0fdf4 100%)", border: "1.5px solid #86efac", borderRadius: "12px", padding: "10px 18px", maxWidth: "800px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: "0 2px 8px rgba(22,163,74,0.06)" }}>
+                  <span style={{ fontSize: "18px" }}>🎁</span>
+                  <span style={{ fontSize: "13px", color: "#166534", fontWeight: "700" }}>
+                    Free Student Access: Full access to Korean &amp; Japanese Textbooks, Zero-Latency Audio, Dictionaries &amp; Practice Sets!
+                  </span>
+                </div>
+
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#ffffff", padding: "4px 8px", borderRadius: "12px", border: "1px solid #cbd5e1", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                  <span style={{ fontSize: "11.5px", fontWeight: "700", color: "#475569", paddingLeft: "4px" }}>Study Track:</span>
+                  {[
+                    { key: "both", label: "🌐 Both" },
+                    { key: "korean", label: "🇰🇷 Korean" },
+                    { key: "japanese", label: "🇯🇵 Japanese" }
+                  ].map((opt) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => {
+                        setInstituteLanguage(opt.key);
+                        localStorage.setItem("instituteLanguage", opt.key);
+                      }}
+                      style={{
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "4px 10px",
+                        fontSize: "11.5px",
+                        fontWeight: "800",
+                        cursor: "pointer",
+                        backgroundColor: instituteLanguage === opt.key ? "#2563eb" : "transparent",
+                        color: instituteLanguage === opt.key ? "#ffffff" : "#475569",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <p style={{ color: "#64748b", margin: "14px 0 0 0", fontSize: "14px" }}>
                 Select a service below to practice UBT exams, study books, or review test results.
               </p>
             </div>

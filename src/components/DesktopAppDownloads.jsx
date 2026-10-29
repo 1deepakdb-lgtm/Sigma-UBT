@@ -5,12 +5,14 @@ import React, { useState, useEffect } from 'react';
 export default function DesktopAppDownloads() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [currentOS, setCurrentOS] = useState('windows');
-  const [activeModal, setActiveModal] = useState(null); // 'windows' | 'mac' | 'android' | null
+  const [activeModal, setActiveModal] = useState(null); // 'windows' | 'mac' | 'android' | 'ios' | null
 
   useEffect(() => {
     // Detect user operating system
     const ua = window.navigator.userAgent.toLowerCase();
-    if (ua.includes('android')) {
+    if (/iphone|ipad|ipod/.test(ua)) {
+      setCurrentOS('ios');
+    } else if (ua.includes('android')) {
       setCurrentOS('android');
     } else if (ua.includes('mac')) {
       setCurrentOS('mac');
@@ -42,6 +44,11 @@ export default function DesktopAppDownloads() {
       return;
     }
 
+    if (targetOS === 'ios') {
+      setActiveModal('ios');
+      return;
+    }
+
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
@@ -58,11 +65,11 @@ export default function DesktopAppDownloads() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px' }}>
         <span style={{ fontSize: '15px' }}>📲</span>
         <span style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b', letterSpacing: '0.2px' }}>
-          Download ExamJK App
+          Download ExamJK App for All Devices
         </span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
         {/* Android App Button */}
         <button
           type="button"
@@ -72,7 +79,7 @@ export default function DesktopAppDownloads() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '12px 6px',
+            padding: '10px 4px',
             borderRadius: '10px',
             border: currentOS === 'android' ? '1.5px solid #16a34a' : '1.5px solid #cbd5e1',
             background: currentOS === 'android' ? '#f0fdf4' : '#ffffff',
@@ -94,12 +101,12 @@ export default function DesktopAppDownloads() {
               style={{
                 position: 'absolute',
                 top: '-7px',
-                right: '4px',
+                right: '2px',
                 background: '#16a34a',
                 color: '#ffffff',
-                fontSize: '8px',
+                fontSize: '7.5px',
                 fontWeight: '900',
-                padding: '1px 5px',
+                padding: '1px 4px',
                 borderRadius: '8px',
                 textTransform: 'uppercase'
               }}
@@ -107,24 +114,24 @@ export default function DesktopAppDownloads() {
               Your Phone
             </span>
           )}
-          <div style={{ position: 'relative', marginBottom: '6px' }}>
+          <div style={{ position: 'relative', marginBottom: '5px' }}>
             <img
               src="/icon-192.png"
               alt="ExamJK Android App"
               style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
                 display: 'block',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
               }}
             />
             <span
               style={{
                 position: 'absolute',
-                bottom: '-4px',
-                right: '-6px',
-                fontSize: '12px',
+                bottom: '-3px',
+                right: '-5px',
+                fontSize: '11px',
                 lineHeight: '1',
                 background: '#ffffff',
                 borderRadius: '50%',
@@ -135,7 +142,82 @@ export default function DesktopAppDownloads() {
               🤖
             </span>
           </div>
-          <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>Android</span>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#0f172a' }}>Android</span>
+        </button>
+
+        {/* iOS App Button */}
+        <button
+          type="button"
+          onClick={() => handleDownloadClick('ios')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '10px 4px',
+            borderRadius: '10px',
+            border: currentOS === 'ios' ? '1.5px solid #0284c7' : '1.5px solid #cbd5e1',
+            background: currentOS === 'ios' ? '#f0f9ff' : '#ffffff',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            position: 'relative'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#0284c7';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(2, 132, 199, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = currentOS === 'ios' ? '#0284c7' : '#cbd5e1';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          {currentOS === 'ios' && (
+            <span
+              style={{
+                position: 'absolute',
+                top: '-7px',
+                right: '2px',
+                background: '#0284c7',
+                color: '#ffffff',
+                fontSize: '7.5px',
+                fontWeight: '900',
+                padding: '1px 4px',
+                borderRadius: '8px',
+                textTransform: 'uppercase'
+              }}
+            >
+              Your Phone
+            </span>
+          )}
+          <div style={{ position: 'relative', marginBottom: '5px' }}>
+            <img
+              src="/icon-192.png"
+              alt="ExamJK iOS App"
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                display: 'block',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+              }}
+            />
+            <span
+              style={{
+                position: 'absolute',
+                bottom: '-3px',
+                right: '-5px',
+                fontSize: '11px',
+                lineHeight: '1',
+                background: '#ffffff',
+                borderRadius: '50%',
+                padding: '1px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+              }}
+            >
+              🍎
+            </span>
+          </div>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#0f172a' }}>iPhone/iPad</span>
         </button>
 
         {/* Windows App Button */}
@@ -147,7 +229,7 @@ export default function DesktopAppDownloads() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '12px 6px',
+            padding: '10px 4px',
             borderRadius: '10px',
             border: currentOS === 'windows' ? '1.5px solid #2563eb' : '1.5px solid #cbd5e1',
             background: currentOS === 'windows' ? '#eff6ff' : '#ffffff',
@@ -169,12 +251,12 @@ export default function DesktopAppDownloads() {
               style={{
                 position: 'absolute',
                 top: '-7px',
-                right: '4px',
+                right: '2px',
                 background: '#2563eb',
                 color: '#ffffff',
-                fontSize: '8px',
+                fontSize: '7.5px',
                 fontWeight: '900',
-                padding: '1px 5px',
+                padding: '1px 4px',
                 borderRadius: '8px',
                 textTransform: 'uppercase'
               }}
@@ -182,24 +264,24 @@ export default function DesktopAppDownloads() {
               Your PC
             </span>
           )}
-          <div style={{ position: 'relative', marginBottom: '6px' }}>
+          <div style={{ position: 'relative', marginBottom: '5px' }}>
             <img
               src="/icon-192.png"
               alt="ExamJK Windows App"
               style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
                 display: 'block',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
               }}
             />
             <span
               style={{
                 position: 'absolute',
-                bottom: '-4px',
-                right: '-6px',
-                fontSize: '12px',
+                bottom: '-3px',
+                right: '-5px',
+                fontSize: '11px',
                 lineHeight: '1',
                 background: '#ffffff',
                 borderRadius: '50%',
@@ -210,7 +292,7 @@ export default function DesktopAppDownloads() {
               🪟
             </span>
           </div>
-          <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>Windows</span>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#0f172a' }}>Windows</span>
         </button>
 
         {/* macOS App Button */}
@@ -222,7 +304,7 @@ export default function DesktopAppDownloads() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '12px 6px',
+            padding: '10px 4px',
             borderRadius: '10px',
             border: currentOS === 'mac' ? '1.5px solid #0f172a' : '1.5px solid #cbd5e1',
             background: currentOS === 'mac' ? '#f8fafc' : '#ffffff',
@@ -244,12 +326,12 @@ export default function DesktopAppDownloads() {
               style={{
                 position: 'absolute',
                 top: '-7px',
-                right: '4px',
+                right: '2px',
                 background: '#0f172a',
                 color: '#ffffff',
-                fontSize: '8px',
+                fontSize: '7.5px',
                 fontWeight: '900',
-                padding: '1px 5px',
+                padding: '1px 4px',
                 borderRadius: '8px',
                 textTransform: 'uppercase'
               }}
@@ -257,24 +339,24 @@ export default function DesktopAppDownloads() {
               Your Mac
             </span>
           )}
-          <div style={{ position: 'relative', marginBottom: '6px' }}>
+          <div style={{ position: 'relative', marginBottom: '5px' }}>
             <img
               src="/icon-192.png"
               alt="ExamJK macOS App"
               style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
                 display: 'block',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
               }}
             />
             <span
               style={{
                 position: 'absolute',
-                bottom: '-4px',
-                right: '-6px',
-                fontSize: '12px',
+                bottom: '-3px',
+                right: '-5px',
+                fontSize: '11px',
                 lineHeight: '1',
                 background: '#ffffff',
                 borderRadius: '50%',
@@ -285,13 +367,13 @@ export default function DesktopAppDownloads() {
               🍏
             </span>
           </div>
-          <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>macOS</span>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#0f172a' }}>macOS</span>
         </button>
       </div>
 
       <div style={{ marginTop: '8px', textAlign: 'center' }}>
         <span style={{ fontSize: '11px', color: '#64748b' }}>
-          ✓ Full Offline Cache · ✓ Zero Latency Audio · ✓ Exam Mode
+          ✓ Free Student Access · ✓ Zero Latency Audio · ✓ Offline Study Materials
         </span>
       </div>
 
@@ -351,15 +433,15 @@ export default function DesktopAppDownloads() {
                       boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
                     }}
                   >
-                    {activeModal === 'android' ? '🤖' : activeModal === 'windows' ? '🪟' : '🍏'}
+                    {activeModal === 'android' ? '🤖' : activeModal === 'ios' ? '🍎' : activeModal === 'windows' ? '🪟' : '🍏'}
                   </span>
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>
-                    Install ExamJK for {activeModal === 'android' ? 'Android' : activeModal === 'windows' ? 'Windows' : 'macOS'}
+                    Install ExamJK for {activeModal === 'android' ? 'Android' : activeModal === 'ios' ? 'iPhone & iPad (iOS)' : activeModal === 'windows' ? 'Windows' : 'macOS'}
                   </h3>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>
-                    {activeModal === 'android' ? 'Native Android APK (Korean & Japanese Tracks)' : 'Distraction-free desktop exam environment'}
+                    {activeModal === 'android' ? 'Native Android APK (Korean & Japanese Tracks)' : activeModal === 'ios' ? 'Instant iOS Web App (Free Student Access)' : 'Distraction-free desktop exam environment'}
                   </span>
                 </div>
               </div>
@@ -396,6 +478,18 @@ export default function DesktopAppDownloads() {
                     <li style={{ marginBottom: '6px' }}>Tap <strong>ExamJK.apk</strong> to start installation.</li>
                     <li style={{ marginBottom: '6px' }}>If prompted, tap <em>Settings</em> &gt; enable <strong>&quot;Allow from this source&quot;</strong>.</li>
                     <li>Tap <strong>Install</strong> and launch ExamJK!</li>
+                  </ol>
+                </>
+              ) : activeModal === 'ios' ? (
+                <>
+                  <p style={{ margin: '0 0 8px 0', fontWeight: '700', color: '#0f172a' }}>
+                    How to install on iPhone &amp; iPad (Safari):
+                  </p>
+                  <ol style={{ margin: 0, paddingLeft: '18px' }}>
+                    <li style={{ marginBottom: '6px' }}>Open this website in <strong>Safari</strong> on your iPhone or iPad.</li>
+                    <li style={{ marginBottom: '6px' }}>Tap the <strong>Share button (⎋ square with arrow up)</strong> in Safari&apos;s bottom toolbar.</li>
+                    <li style={{ marginBottom: '6px' }}>Scroll down and tap <strong>&quot;Add to Home Screen&quot; (⊞)</strong>.</li>
+                    <li>Tap <strong>Add</strong> in the top right. ExamJK is now on your iOS Home Screen with full offline materials &amp; zero-latency audio!</li>
                   </ol>
                 </>
               ) : activeModal === 'windows' ? (
@@ -466,7 +560,7 @@ export default function DesktopAppDownloads() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (deferredPrompt) {
+                    if (deferredPrompt && activeModal !== 'ios') {
                       deferredPrompt.prompt();
                       deferredPrompt.userChoice.then(() => setActiveModal(null));
                     } else {
@@ -476,7 +570,7 @@ export default function DesktopAppDownloads() {
                   style={{
                     flex: 1,
                     padding: '11px',
-                    background: activeModal === 'windows' ? '#2563eb' : '#0f172a',
+                    background: activeModal === 'ios' ? '#0284c7' : activeModal === 'windows' ? '#2563eb' : '#0f172a',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '8px',
@@ -485,7 +579,7 @@ export default function DesktopAppDownloads() {
                     cursor: 'pointer'
                   }}
                 >
-                  {deferredPrompt ? '⚡ Install Now' : '✓ Got it, Continue'}
+                  {deferredPrompt && activeModal !== 'ios' ? '⚡ Install Now' : '✓ Got it, Continue'}
                 </button>
               )}
             </div>
