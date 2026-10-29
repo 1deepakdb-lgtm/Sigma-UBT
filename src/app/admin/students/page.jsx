@@ -1,11 +1,73 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
-export default function AdminStudentsPage() {
+// Privacy Masking Helpers for Ambiguous / Self-Signup Guest Users
+function maskString(str) {
+  if (!str) return "••••••";
+  const s = String(str).trim();
+  if (s.includes("@")) {
+    const [local, domain] = s.split("@");
+    if (local.length <= 2) return `${local[0]}***@${domain}`;
+    return `${local.slice(0, 3)}***@${domain}`;
+  }
+  if (s.length >= 8) {
+    return `${s.slice(0, 2)}******${s.slice(-2)}`;
+  }
+  if (s.length >= 4) {
+    return `${s.slice(0, 1)}****${s.slice(-1)}`;
+  }
+  return "••••••";
+}
+
+function maskName(name) {
+  if (!name) return "Guest User";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    const w = parts[0];
+    return w.length > 3 ? `${w.slice(0, 3)}***` : `${w}***`;
+  }
+  return parts.map((p, i) => (i === 0 ? `${p.slice(0, 3)}***` : `${p[0]}***`)).join(" ");
+}
+
+function isStudentAmbiguous(stu, buyerMap = {}) {
+  // If explicitly marked as buyer/purchased, they are a buyer
+  if (stu.isBuyer === true || stu.hasPurchased === true) return false;
+  if (buyerMap[stu.id] || buyerMap[stu.phone] || buyerMap[stu.username]) return false;
+
+  const batchLower = (stu.batch || "").toLowerCase();
+  const pkgLower = (stu.assignedPackage || "").toLowerCase();
+  const instLower = (stu.instituteName || stu.institute?.name || "").toLowerCase();
+
+  const isGuest =
+    batchLower.includes("free") ||
+    batchLower.includes("guest") ||
+    pkgLower.includes("free") ||
+    instLower.includes("open") ||
+    instLower.includes("examjk") ||
+    stu.isFreeStudent === true ||
+    stu.isSelfSignup === true;
+
+  const hasPaidPkg =
+    (pkgLower.includes("chapter") || pkgLower.includes("ubt") || pkgLower.includes("package") || pkgLower.includes("standard")) &&
+    !pkgLower.includes("free") &&
+    !batchLower.includes("free");
+
+  if (isGuest && !hasPaidPkg) {
+    return true;
+  }
+  return false;
+}
+
+function AdminStudentsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Active folder tab: 'buyers' | 'ambiguous' | 'all'
+  const initialTab = searchParams.get("tab") || "buyers";
+  const [folderTab, setFolderTab] = useState(initialTab === "ambiguous" ? "ambiguous" : "buyers");
 
   // Institutes & Students states
   const [institutes, setInstitutes] = useState([]);
@@ -16,6 +78,13 @@ export default function AdminStudentsPage() {
   const [editId, setEditId] = useState(null);
   const [copiedStudentId, setCopiedStudentId] = useState(null);
   const [copiedAllStudents, setCopiedAllStudents] = useState(false);
+
+  // Upgrade / Sell Product Modal state for Ambiguous Guests
+  const [upgradeModalStudent, setUpgradeModalStudent] = useState(null);
+  const [upgradePackage, setUpgradePackage] = useState("Full Set UBT");
+  const [upgradeDuration, setUpgradeDuration] = useState("1 Month");
+  const [upgradeNotes, setUpgradeNotes] = useState("");
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -32,13 +101,13 @@ export default function AdminStudentsPage() {
   const [examPackages, setExamPackages] = useState([]);
   const [selectedPackageFilter, setSelectedPackageFilter] = useState("All");
 
-  const loadData = () => {
+  const loadData = async () => {
     try {
-      // Load institutes
+      // 1. Load institutes
       const savedInst = JSON.parse(localStorage.getItem("institutes") || "[]");
       setInstitutes(savedInst);
 
-      // Load all students across institutes
+      // 2. Load all students across institutes from localStorage
       const allInstStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
       let aggregatedStudents = [];
       for (const [instName, list] of Object.entries(allInstStudents)) {
@@ -48,9 +117,67 @@ export default function AdminStudentsPage() {
           });
         }
       }
-      setStudents(aggregatedStudents);
 
-      // Load packages & exam sets
+      // 3. Fetch all backend database users (including self-signup guests)
+      try {
+        const res = await fetch("/api/institute/students");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.students)) {
+            data.students.forEach((dbStu) => {
+              const existingIdx = aggregatedStudents.findIndex(
+                (s) => s.id === dbStu.id || s.phone === dbStu.phone || s.phone === dbStu.username
+              );
+              const mapped = {
+                id: dbStu.id,
+                name: dbStu.name,
+                phone: dbStu.phone || dbStu.username,
+                username: dbStu.username,
+                assignedPackage: dbStu.batch || "Full Set UBT",
+                batch: dbStu.batch || "Full Set UBT",
+                instituteName: dbStu.institute?.name || "ExamJK Open Academy",
+                status: dbStu.status || "Active",
+                createdAt: dbStu.createdAt,
+                isFreeStudent:
+                  (dbStu.batch || "").toLowerCase().includes("free") ||
+                  !dbStu.institute?.name ||
+                  dbStu.institute?.name.includes("Open"),
+                expiryDate: dbStu.expiryDate || "Active"
+              };
+              if (existingIdx >= 0) {
+                aggregatedStudents[existingIdx] = {
+                  ...mapped,
+                  ...aggregatedStudents[existingIdx]
+                };
+              } else {
+                aggregatedStudents.push(mapped);
+              }
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Backend students fetch notice:", err);
+      }
+
+      // 4. Check buyer map
+      const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+      const mappedList = aggregatedStudents.map((s) => {
+        const isMarked = Boolean(buyerMap[s.id] || buyerMap[s.phone] || buyerMap[s.username]);
+        if (isMarked) {
+          return {
+            ...s,
+            isBuyer: true,
+            hasPurchased: true,
+            assignedPackage: buyerMap[s.id]?.package || s.assignedPackage,
+            expiryDate: buyerMap[s.id]?.expiryDate || s.expiryDate
+          };
+        }
+        return s;
+      });
+
+      setStudents(mappedList);
+
+      // 5. Load packages & exam sets
       const savedPackages = JSON.parse(localStorage.getItem("examPackages") || "[]");
       const savedSets = JSON.parse(localStorage.getItem("examSets") || "[]");
       setExamPackages(savedPackages);
@@ -114,10 +241,21 @@ export default function AdminStudentsPage() {
         return;
       }
 
+      const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+      buyerMap[formData.phone] = { isBuyer: true, package: formData.assignedPackage, expiryDate: calculatedExpiryDate };
+      localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
+
       if (editId) {
         const updated = currentInstStudents.map((stu) =>
           stu.id === editId || stu.phone === formData.phone
-            ? { ...stu, ...formData, id: data.student?.id || stu.id, instituteName: targetInst, expiryDate: calculatedExpiryDate }
+            ? {
+                ...stu,
+                ...formData,
+                id: data.student?.id || stu.id,
+                instituteName: targetInst,
+                expiryDate: calculatedExpiryDate,
+                isBuyer: true
+              }
             : stu
         );
         allStudents[targetInst] = updated;
@@ -128,10 +266,14 @@ export default function AdminStudentsPage() {
           ...formData,
           instituteName: targetInst,
           expiryDate: calculatedExpiryDate,
-          status: "Active"
+          status: "Active",
+          isBuyer: true
         };
-        allStudents[targetInst] = [...currentInstStudents.filter(s => s.phone !== formData.phone), newStudent];
-        alert("Student registered successfully! They can log in with Phone: " + formData.phone + " and Password: " + (formData.password || "1234"));
+        allStudents[targetInst] = [
+          ...currentInstStudents.filter((s) => s.phone !== formData.phone),
+          newStudent
+        ];
+        alert("Student registered successfully! Added directly to Buyers Folder.");
       }
 
       localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
@@ -142,9 +284,78 @@ export default function AdminStudentsPage() {
 
       resetForm();
       loadData();
+      setFolderTab("buyers");
     } catch (err) {
       console.error("Save student error:", err);
       alert("Error connecting to server to save student: " + err.message);
+    }
+  };
+
+  // Upgrade Ambiguous User to Buyer upon Product Purchase
+  const handleConfirmUpgrade = async () => {
+    if (!upgradeModalStudent) return;
+    setIsUpgrading(true);
+
+    const calculatedExpiry = calculateExpiryDate(upgradeDuration);
+    const targetInst = upgradeModalStudent.instituteName || "ExamJK Institute";
+
+    try {
+      // 1. Update in backend database
+      await fetch("/api/institute/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: upgradeModalStudent.id,
+          name: upgradeModalStudent.name,
+          phone: upgradeModalStudent.phone || upgradeModalStudent.username,
+          username: upgradeModalStudent.username || upgradeModalStudent.phone,
+          batch: upgradePackage,
+          status: "Active",
+          instituteName: targetInst
+        })
+      });
+
+      // 2. Mark in admin buyer map
+      const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+      const stuKey = upgradeModalStudent.id || upgradeModalStudent.phone || upgradeModalStudent.username;
+      buyerMap[stuKey] = {
+        isBuyer: true,
+        hasPurchased: true,
+        package: upgradePackage,
+        expiryDate: calculatedExpiry,
+        purchasedAt: new Date().toISOString()
+      };
+      if (upgradeModalStudent.phone) buyerMap[upgradeModalStudent.phone] = buyerMap[stuKey];
+      if (upgradeModalStudent.username) buyerMap[upgradeModalStudent.username] = buyerMap[stuKey];
+      localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
+
+      // 3. Update in local storage instituteStudents
+      const allStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
+      const instList = allStudents[targetInst] || [];
+      const updatedInst = [
+        ...instList.filter((s) => s.id !== upgradeModalStudent.id && s.phone !== upgradeModalStudent.phone),
+        {
+          ...upgradeModalStudent,
+          assignedPackage: upgradePackage,
+          batch: upgradePackage,
+          expiryDate: calculatedExpiry,
+          isBuyer: true,
+          hasPurchased: true
+        }
+      ];
+      allStudents[targetInst] = updatedInst;
+      localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+
+      alert(`✅ Success! "${upgradeModalStudent.name}" has been upgraded to Buyer with package "${upgradePackage}".\nThey are now included in the Buyers Folder with full details unlocked!`);
+      setUpgradeModalStudent(null);
+      setUpgradeNotes("");
+      await loadData();
+      setFolderTab("buyers");
+    } catch (err) {
+      console.error("Upgrade error:", err);
+      alert("Failed to upgrade student: " + err.message);
+    } finally {
+      setIsUpgrading(false);
     }
   };
 
@@ -168,15 +379,16 @@ export default function AdminStudentsPage() {
       const targetInst = instName || Object.keys(allStudents)[0];
       let targetPhone = "";
       if (allStudents[targetInst]) {
-        const target = allStudents[targetInst].find(s => s.id === id);
-        targetPhone = target?.phone || '';
+        const target = allStudents[targetInst].find((s) => s.id === id);
+        targetPhone = target?.phone || "";
         allStudents[targetInst] = allStudents[targetInst].filter((s) => s.id !== id);
         localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
       }
       try {
-        await fetch(`/api/institute/students?id=${encodeURIComponent(id || '')}&phone=${encodeURIComponent(targetPhone)}`, {
-          method: "DELETE"
-        });
+        await fetch(
+          `/api/institute/students?id=${encodeURIComponent(id || "")}&phone=${encodeURIComponent(targetPhone)}`,
+          { method: "DELETE" }
+        );
       } catch (e) {
         console.warn("Delete student API notice:", e);
       }
@@ -205,39 +417,58 @@ export default function AdminStudentsPage() {
   };
 
   const handleCopyAllStudents = () => {
-    if (filteredStudents.length === 0) return;
+    if (displayList.length === 0) return;
     const header = "Name\tInstitute\tPhone\tPackage\tExpiry\tStatus";
-    const rows = filteredStudents.map((s) =>
-      `${s.name}\t${s.instituteName || "-"}\t${s.phone}\t${s.assignedPackage}\t${s.expiryDate}\t${s.status || "Active"}`
-    );
+    const rows = displayList.map((s) => {
+      const isAmb = isStudentAmbiguous(s);
+      const name = isAmb ? maskName(s.name) : s.name;
+      const phone = isAmb ? maskString(s.phone) : s.phone;
+      return `${name}\t${s.instituteName || "-"}\t${phone}\t${s.assignedPackage}\t${s.expiryDate}\t${s.status || "Active"}`;
+    });
     const content = [header, ...rows].join("\n");
     navigator.clipboard.writeText(content);
     setCopiedAllStudents(true);
     setTimeout(() => setCopiedAllStudents(false), 2500);
   };
 
-  // Filter students
-  const filteredStudents = students.filter((stu) => {
-    const matchesInstitute = selectedInstituteFilter === "All" || stu.instituteName === selectedInstituteFilter;
+  // Group into Buyers vs Ambiguous Users
+  const buyerMapCurrent = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}") : {};
+  const allAmbiguousStudents = students.filter((s) => isStudentAmbiguous(s, buyerMapCurrent));
+  const allBuyerStudents = students.filter((s) => !isStudentAmbiguous(s, buyerMapCurrent));
+
+  // Determine active list based on folderTab
+  const currentFolderList =
+    folderTab === "ambiguous"
+      ? allAmbiguousStudents
+      : folderTab === "buyers"
+      ? allBuyerStudents
+      : students;
+
+  // Search and Institute Filter
+  const displayList = currentFolderList.filter((stu) => {
+    const matchesInstitute =
+      selectedInstituteFilter === "All" || stu.instituteName === selectedInstituteFilter;
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
       stu.name?.toLowerCase().includes(q) ||
       stu.phone?.toLowerCase().includes(q) ||
+      stu.username?.toLowerCase().includes(q) ||
       stu.assignedPackage?.toLowerCase().includes(q) ||
       stu.instituteName?.toLowerCase().includes(q);
     return matchesInstitute && matchesSearch;
   });
 
   // Filter sets
-  const filteredSets = selectedPackageFilter === "All"
-    ? examSets
-    : examSets.filter((s) => s.packageName === selectedPackageFilter);
+  const filteredSets =
+    selectedPackageFilter === "All"
+      ? examSets
+      : examSets.filter((s) => s.packageName === selectedPackageFilter);
 
   // Styles
   const containerStyle = { minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif" };
   const contentStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto" };
-  const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "25px", border: "1px solid #e2e8f0" };
+  const cardStyle = { backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", marginBottom: "25px", border: "1px solid #e2e8f0" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", marginTop: "15px", backgroundColor: "white", borderRadius: "8px", overflow: "hidden" };
   const thStyle = { backgroundColor: "#f8fafc", color: "#475569", padding: "14px 16px", textAlign: "left", fontSize: "13px", fontWeight: "700", borderBottom: "2px solid #e2e8f0" };
   const tdStyle = { padding: "12px 15px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", fontSize: "14px" };
@@ -251,13 +482,15 @@ export default function AdminStudentsPage() {
         {/* TOP BAR / TITLE */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
           <div>
-            <h2 style={{ color: "#1e293b", margin: 0, fontSize: "22px" }}>Admin Student Management</h2>
+            <h2 style={{ color: "#1e293b", margin: 0, fontSize: "24px", fontWeight: "800" }}>
+              Admin Student Management
+            </h2>
             <p style={{ color: "#64748b", margin: "4px 0 0 0", fontSize: "14px" }}>
-              Manage registered students across institutes and review assigned UBT exam sets
+              Manage enrolled buyers and guest self-signups across Korean &amp; Japanese tracks
             </p>
           </div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            {filteredStudents.length > 0 && (
+            {displayList.length > 0 && (
               <button
                 onClick={handleCopyAllStudents}
                 style={{
@@ -275,7 +508,7 @@ export default function AdminStudentsPage() {
                 }}
               >
                 <span>{copiedAllStudents ? "✅" : "📋"}</span>
-                <span>{copiedAllStudents ? "All Copied!" : "Copy All Students Data"}</span>
+                <span>{copiedAllStudents ? "Copied!" : "Copy Folder Data"}</span>
               </button>
             )}
             <button
@@ -291,16 +524,172 @@ export default function AdminStudentsPage() {
                 fontSize: "13px"
               }}
             >
-              {showForm ? "Cancel" : "+ Add New Student"}
+              {showForm ? "Cancel" : "+ Add New Buyer Student"}
             </button>
           </div>
         </div>
+
+        {/* FOLDER NAVIGATION TABS (BUYERS vs AMBIGUOUS USERS vs ALL) */}
+        <div style={{ display: "flex", gap: "12px", marginBottom: "22px", flexWrap: "wrap" }}>
+          {/* Buyers Folder Tab */}
+          <button
+            type="button"
+            onClick={() => setFolderTab("buyers")}
+            style={{
+              flex: 1,
+              minWidth: "240px",
+              padding: "16px 20px",
+              borderRadius: "12px",
+              border: folderTab === "buyers" ? "2px solid #10b981" : "1.5px solid #cbd5e1",
+              backgroundColor: folderTab === "buyers" ? "#ecfdf5" : "#ffffff",
+              boxShadow: folderTab === "buyers" ? "0 4px 14px rgba(16, 185, 129, 0.15)" : "0 2px 5px rgba(0,0,0,0.04)",
+              cursor: "pointer",
+              textAlign: "left",
+              transition: "all 0.2s ease"
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "20px" }}>💼</span>
+                <strong style={{ fontSize: "16px", color: folderTab === "buyers" ? "#065f46" : "#1e293b" }}>
+                  Buyers Folder (खरिदकर्ता विद्यार्थीहरू)
+                </strong>
+              </div>
+              <span
+                style={{
+                  backgroundColor: folderTab === "buyers" ? "#10b981" : "#e2e8f0",
+                  color: folderTab === "buyers" ? "#ffffff" : "#475569",
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  fontWeight: "800",
+                  fontSize: "13px"
+                }}
+              >
+                {allBuyerStudents.length} Students
+              </span>
+            </div>
+            <p style={{ margin: "6px 0 0 0", fontSize: "12px", color: folderTab === "buyers" ? "#047857" : "#64748b" }}>
+              Enrolled students with paid exam packages. Full details, login credentials &amp; packages visible.
+            </p>
+          </button>
+
+          {/* Ambiguous Users Folder Tab */}
+          <button
+            type="button"
+            onClick={() => setFolderTab("ambiguous")}
+            style={{
+              flex: 1,
+              minWidth: "240px",
+              padding: "16px 20px",
+              borderRadius: "12px",
+              border: folderTab === "ambiguous" ? "2px solid #f59e0b" : "1.5px solid #cbd5e1",
+              backgroundColor: folderTab === "ambiguous" ? "#fffbeb" : "#ffffff",
+              boxShadow: folderTab === "ambiguous" ? "0 4px 14px rgba(245, 158, 11, 0.18)" : "0 2px 5px rgba(0,0,0,0.04)",
+              cursor: "pointer",
+              textAlign: "left",
+              transition: "all 0.2s ease"
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "20px" }}>❓</span>
+                <strong style={{ fontSize: "16px", color: folderTab === "ambiguous" ? "#92400e" : "#1e293b" }}>
+                  Ambiguous Users Folder (अन्योल पाहुनाहरू)
+                </strong>
+              </div>
+              <span
+                style={{
+                  backgroundColor: folderTab === "ambiguous" ? "#f59e0b" : "#e2e8f0",
+                  color: folderTab === "ambiguous" ? "#ffffff" : "#475569",
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  fontWeight: "800",
+                  fontSize: "13px"
+                }}
+              >
+                {allAmbiguousStudents.length} Guests
+              </span>
+            </div>
+            <p style={{ margin: "6px 0 0 0", fontSize: "12px", color: folderTab === "ambiguous" ? "#b45309" : "#64748b" }}>
+              Self-registered guests via Sign Up button. Full details masked until they buy a package via Super Admin.
+            </p>
+          </button>
+
+          {/* All Folder Tab */}
+          <button
+            type="button"
+            onClick={() => setFolderTab("all")}
+            style={{
+              padding: "16px 20px",
+              borderRadius: "12px",
+              border: folderTab === "all" ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
+              backgroundColor: folderTab === "all" ? "#eff6ff" : "#ffffff",
+              cursor: "pointer",
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              minWidth: "120px"
+            }}
+          >
+            <strong style={{ fontSize: "14px", color: folderTab === "all" ? "#1e40af" : "#475569" }}>
+              📁 All Users
+            </strong>
+            <span style={{ fontSize: "13px", fontWeight: "800", color: folderTab === "all" ? "#2563eb" : "#64748b", marginTop: "2px" }}>
+              {students.length} Total
+            </span>
+          </button>
+        </div>
+
+        {/* FOLDER NOTICE BANNER */}
+        {folderTab === "ambiguous" && (
+          <div
+            style={{
+              backgroundColor: "#fffbeb",
+              border: "1.5px solid #fde68a",
+              borderRadius: "10px",
+              padding: "14px 18px",
+              marginBottom: "20px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              boxShadow: "0 2px 6px rgba(245, 158, 11, 0.08)"
+            }}
+          >
+            <span style={{ fontSize: "22px" }}>🔒</span>
+            <div style={{ fontSize: "13px", color: "#92400e", lineHeight: "1.5" }}>
+              <strong>Guest Privacy Protection Active:</strong> These {allAmbiguousStudents.length} users came by themselves using the self-signup button. Full personal details (phone, email, login password) are masked to protect user privacy. When they buy a product or are upgraded by Super Admin, they will move into the <strong>Buyers Folder</strong> with full details unlocked.
+            </div>
+          </div>
+        )}
+
+        {folderTab === "buyers" && (
+          <div
+            style={{
+              backgroundColor: "#ecfdf5",
+              border: "1.5px solid #a7f3d0",
+              borderRadius: "10px",
+              padding: "14px 18px",
+              marginBottom: "20px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              boxShadow: "0 2px 6px rgba(16, 185, 129, 0.08)"
+            }}
+          >
+            <span style={{ fontSize: "22px" }}>💼</span>
+            <div style={{ fontSize: "13px", color: "#065f46", lineHeight: "1.5" }}>
+              <strong>Buyers Folder Active:</strong> Displaying {allBuyerStudents.length} verified purchasing students enrolled by institutes or upgraded via product purchase. Full contact details and package controls are fully accessible below.
+            </div>
+          </div>
+        )}
 
         {/* ADD / EDIT STUDENT FORM */}
         {showForm && (
           <div style={cardStyle}>
             <h3 style={{ margin: "0 0 15px 0", color: "#1e293b" }}>
-              {editId ? "Update Student Details" : "Register New Student"}
+              {editId ? "Update Student Details" : "Register New Buyer Student"}
             </h3>
             <form onSubmit={handleSubmitStudent} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
               <div>
@@ -344,6 +733,7 @@ export default function AdminStudentsPage() {
                   Assigned Package
                 </label>
                 <select name="assignedPackage" value={formData.assignedPackage} onChange={handleInputChange} style={inputStyle}>
+                  <option value="Full Set UBT">Full Set UBT</option>
                   <option value="Chapterwise 30 set">Chapterwise 30 set</option>
                   <option value="Chapterwise 12 set">Chapterwise 12 set</option>
                   <option value="100 UBT set">100 UBT set</option>
@@ -358,6 +748,7 @@ export default function AdminStudentsPage() {
                 <select name="expiryDuration" value={formData.expiryDuration} onChange={handleInputChange} style={inputStyle}>
                   <option value="15 Days">15 Days</option>
                   <option value="1 Month">1 Month</option>
+                  <option value="2 Months">2 Months</option>
                   <option value="3 Months">3 Months</option>
                   <option value="Lifetime">Lifetime</option>
                 </select>
@@ -367,7 +758,7 @@ export default function AdminStudentsPage() {
                 <button
                   type="submit"
                   style={{
-                    backgroundColor: editId ? "#f59e0b" : "#2563eb",
+                    backgroundColor: editId ? "#f59e0b" : "#16a34a",
                     color: "white",
                     border: "none",
                     padding: "12px",
@@ -378,7 +769,7 @@ export default function AdminStudentsPage() {
                     fontSize: "14px"
                   }}
                 >
-                  {editId ? "Update Student" : "Save Student"}
+                  {editId ? "Update Student" : "Save Student into Buyers Folder"}
                 </button>
               </div>
             </form>
@@ -390,7 +781,7 @@ export default function AdminStudentsPage() {
           <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", flex: 1 }}>
             <input
               type="text"
-              placeholder="🔍 Search student name, phone, package, institute..."
+              placeholder={folderTab === "ambiguous" ? "🔍 Search ambiguous guest name or institute..." : "🔍 Search student name, phone, package..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ ...inputStyle, marginBottom: 0, maxWidth: "380px" }}
@@ -408,7 +799,7 @@ export default function AdminStudentsPage() {
           </div>
 
           <div style={{ fontSize: "14px", color: "#64748b", fontWeight: "bold" }}>
-            Showing {filteredStudents.length} of {students.length} students
+            Showing {displayList.length} of {currentFolderList.length} in this folder
           </div>
         </div>
 
@@ -418,63 +809,204 @@ export default function AdminStudentsPage() {
             <thead>
               <tr style={{ backgroundColor: "#f8fafc" }}>
                 <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
-                <th style={thStyle}>Institute</th>
+                <th style={thStyle}>Source / Institute</th>
                 <th style={thStyle}>Phone (Login ID)</th>
-                <th style={thStyle}>Package & Expiry</th>
-                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Package &amp; Expiry</th>
+                <th style={thStyle}>Folder Status</th>
                 <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.length === 0 ? (
+              {displayList.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8", padding: "30px" }}>
-                    No students registered yet matching criteria.
+                  <td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8", padding: "40px" }}>
+                    {folderTab === "ambiguous"
+                      ? "No ambiguous self-signup guests found. All registered students are verified buyers!"
+                      : "No students registered yet in this folder."}
                   </td>
                 </tr>
               ) : (
-                filteredStudents.map((stu) => (
-                  <tr key={stu.id}>
-                    <td style={{ ...tdStyle, fontWeight: "bold" }}>{stu.name}</td>
-                    <td style={tdStyle}>
-                      <span style={{ backgroundColor: "#f1f5f9", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", color: "#334155", fontWeight: "bold" }}>
-                        {stu.instituteName || "Sigma Education"}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>{stu.phone}</td>
-                    <td style={tdStyle}>
-                      <span style={{ fontWeight: "bold", color: "#2563eb" }}>{stu.assignedPackage}</span>
-                      <br />
-                      <span style={{ fontSize: "12px", color: "#ef4444" }}>Ends: {stu.expiryDate}</span>
-                    </td>
-                    <td style={tdStyle}>
-                      <span style={{ backgroundColor: "#dcfce7", color: "#166534", padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold" }}>
-                        {stu.status || "Active"}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={() => handleCopyStudent(stu)}
-                        title="Copy Student Login Details"
-                        style={{
-                          backgroundColor: copiedStudentId === stu.id ? "#16a34a" : "#475569",
-                          color: "white",
-                          border: "none",
-                          padding: "6px 10px",
-                          borderRadius: "4px",
-                          marginRight: "5px",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                          fontWeight: "bold"
-                        }}
-                      >
-                        {copiedStudentId === stu.id ? "✅ Copied" : "📋 Copy"}
-                      </button>
-                      <button onClick={() => handleEdit(stu)} style={{ backgroundColor: "#2563eb", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", marginRight: "5px", cursor: "pointer", fontSize: "12px" }}>Edit</button>
-                      <button onClick={() => handleDelete(stu.id, stu.instituteName)} style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Delete</button>
-                    </td>
-                  </tr>
-                ))
+                displayList.map((stu) => {
+                  const isAmb = isStudentAmbiguous(stu, buyerMapCurrent);
+
+                  return (
+                    <tr key={stu.id} style={{ backgroundColor: isAmb ? "#fffdf5" : "#ffffff" }}>
+                      {/* Name Column */}
+                      <td style={{ ...tdStyle, fontWeight: "bold" }}>
+                        {isAmb ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span>👤</span>
+                            <span>{maskName(stu.name)}</span>
+                          </div>
+                        ) : (
+                          stu.name
+                        )}
+                      </td>
+
+                      {/* Institute Column */}
+                      <td style={tdStyle}>
+                        <span
+                          style={{
+                            backgroundColor: isAmb ? "#fef3c7" : "#f1f5f9",
+                            padding: "4px 8px",
+                            borderRadius: "4px",
+                            fontSize: "12px",
+                            color: isAmb ? "#92400e" : "#334155",
+                            fontWeight: "bold"
+                          }}
+                        >
+                          {isAmb ? "Self-Signup Guest" : (stu.instituteName || "Sigma Education")}
+                        </span>
+                      </td>
+
+                      {/* Phone Column - Masked for Ambiguous Users */}
+                      <td style={tdStyle}>
+                        {isAmb ? (
+                          <span style={{ color: "#b45309", fontFamily: "monospace", fontWeight: "700" }}>
+                            🔒 {maskString(stu.phone || stu.username)}
+                          </span>
+                        ) : (
+                          <span style={{ fontFamily: "monospace" }}>{stu.phone}</span>
+                        )}
+                      </td>
+
+                      {/* Package Column */}
+                      <td style={tdStyle}>
+                        {isAmb ? (
+                          <div>
+                            <span style={{ fontWeight: "700", color: "#f59e0b" }}>No Package Purchased</span>
+                            <br />
+                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>Free Access Student</span>
+                          </div>
+                        ) : (
+                          <div>
+                            <span style={{ fontWeight: "bold", color: "#16a34a" }}>
+                              {stu.assignedPackage || "Full Set UBT"}
+                            </span>
+                            <br />
+                            <span style={{ fontSize: "12px", color: "#64748b" }}>
+                              Ends: {stu.expiryDate || "Active"}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Status Column */}
+                      <td style={tdStyle}>
+                        {isAmb ? (
+                          <span
+                            style={{
+                              backgroundColor: "#fef3c7",
+                              color: "#b45309",
+                              border: "1px solid #fde68a",
+                              padding: "4px 10px",
+                              borderRadius: "12px",
+                              fontSize: "11.5px",
+                              fontWeight: "800"
+                            }}
+                          >
+                            ❓ Ambiguous Guest
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              backgroundColor: "#dcfce7",
+                              color: "#166534",
+                              border: "1px solid #bbf7d0",
+                              padding: "4px 10px",
+                              borderRadius: "12px",
+                              fontSize: "11.5px",
+                              fontWeight: "800"
+                            }}
+                          >
+                            ✅ Verified Buyer
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Actions Column */}
+                      <td style={tdStyle}>
+                        {isAmb ? (
+                          /* Ambiguous user can only be upgraded to Buyer by Super Admin purchasing a product */
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUpgradeModalStudent(stu);
+                              setUpgradePackage("Full Set UBT");
+                              setUpgradeDuration("1 Month");
+                            }}
+                            title="Super Admin sell product or assign package to include in Buyers Folder"
+                            style={{
+                              backgroundColor: "#2563eb",
+                              color: "white",
+                              border: "none",
+                              padding: "7px 14px",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                              boxShadow: "0 2px 6px rgba(37,99,235,0.25)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px"
+                            }}
+                          >
+                            <span>💳</span>
+                            <span>Sell Product &rarr; Move to Buyers</span>
+                          </button>
+                        ) : (
+                          /* Full actions for verified Buyers */
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <button
+                              onClick={() => handleCopyStudent(stu)}
+                              title="Copy Student Login Details"
+                              style={{
+                                backgroundColor: copiedStudentId === stu.id ? "#16a34a" : "#475569",
+                                color: "white",
+                                border: "none",
+                                padding: "6px 10px",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                fontSize: "12px",
+                                fontWeight: "bold"
+                              }}
+                            >
+                              {copiedStudentId === stu.id ? "✅ Copied" : "📋 Copy"}
+                            </button>
+                            <button
+                              onClick={() => handleEdit(stu)}
+                              style={{
+                                backgroundColor: "#2563eb",
+                                color: "white",
+                                border: "none",
+                                padding: "6px 10px",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                fontSize: "12px"
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(stu.id, stu.instituteName)}
+                              style={{
+                                backgroundColor: "#ef4444",
+                                color: "white",
+                                border: "none",
+                                padding: "6px 10px",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                fontSize: "12px"
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -484,7 +1016,7 @@ export default function AdminStudentsPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", flexWrap: "wrap", gap: "10px" }}>
               <div>
                 <h3 style={{ color: "#1e3a8a", margin: 0, fontSize: "18px", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span>📝</span> UBT Exam Sets & Packages Overview
+                  <span>📝</span> UBT Exam Sets &amp; Packages Overview
                 </h3>
                 <p style={{ color: "#64748b", fontSize: "13px", margin: "4px 0 0 0" }}>
                   Browse and test all active UBT exam sets available across institutes and students
@@ -580,6 +1112,152 @@ export default function AdminStudentsPage() {
           </div>
         </div>
       </div>
+
+      {/* MODAL: SUPER ADMIN SELL PRODUCT / UPGRADE GUEST TO BUYER */}
+      {upgradeModalStudent && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(3px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "20px"
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "16px",
+              padding: "28px",
+              maxWidth: "500px",
+              width: "100%",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
+              border: "1px solid #e2e8f0"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <div style={{ width: "42px", height: "42px", borderRadius: "10px", backgroundColor: "#ecfdf5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
+                💳
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "18px", color: "#0f172a", fontWeight: "800" }}>
+                  Sell Product to Guest
+                </h3>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Confirm purchase to unlock student details and move to Buyers Folder
+                </span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: "#f8fafc", padding: "12px 16px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "18px" }}>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>Selected Guest:</div>
+              <div style={{ fontSize: "15px", fontWeight: "800", color: "#1e293b", marginTop: "2px" }}>
+                {maskName(upgradeModalStudent.name)} ({maskString(upgradeModalStudent.phone || upgradeModalStudent.username)})
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                Select Purchased Product Package:
+              </label>
+              <select
+                value={upgradePackage}
+                onChange={(e) => setUpgradePackage(e.target.value)}
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1.5px solid #cbd5e1", fontSize: "14px" }}
+              >
+                <option value="Full Set UBT">Full Set UBT (40 Question Exam Simulator)</option>
+                <option value="Chapterwise 30 set">Chapterwise 30 set</option>
+                <option value="Chapterwise 12 set">Chapterwise 12 set</option>
+                <option value="100 UBT set">100 UBT Mega Set</option>
+                <option value="Full Package">Full Package (Complete Study + Exam)</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                Package Expiry Duration:
+              </label>
+              <select
+                value={upgradeDuration}
+                onChange={(e) => setUpgradeDuration(e.target.value)}
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1.5px solid #cbd5e1", fontSize: "14px" }}
+              >
+                <option value="15 Days">15 Days</option>
+                <option value="1 Month">1 Month</option>
+                <option value="2 Months">2 Months</option>
+                <option value="3 Months">3 Months</option>
+                <option value="Lifetime">Lifetime Access</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                Payment Note / Order Reference (Optional):
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Paid Rs. 1500 via eSewa / Cash"
+                value={upgradeNotes}
+                onChange={(e) => setUpgradeNotes(e.target.value)}
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setUpgradeModalStudent(null)}
+                disabled={isUpgrading}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  backgroundColor: "#ffffff",
+                  color: "#475569",
+                  fontWeight: "700",
+                  cursor: "pointer"
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmUpgrade}
+                disabled={isUpgrading}
+                style={{
+                  flex: 2,
+                  padding: "10px",
+                  borderRadius: "8px",
+                  border: "none",
+                  backgroundColor: "#16a34a",
+                  color: "#ffffff",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(22, 163, 74, 0.3)"
+                }}
+              >
+                {isUpgrading ? "Upgrading..." : "✅ Confirm Purchase & Move to Buyers"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function AdminStudentsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: "40px", textAlign: "center" }}>Loading Student Folders...</div>}>
+      <AdminStudentsContent />
+    </Suspense>
   );
 }

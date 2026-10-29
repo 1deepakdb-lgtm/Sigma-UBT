@@ -11,8 +11,9 @@ export default function AdminDashboardPage() {
 
   const [totalInstitutes, setTotalInstitutes] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
+  const [totalBuyers, setTotalBuyers] = useState(0);
+  const [totalAmbiguous, setTotalAmbiguous] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
-
 
   useEffect(() => {
     // Fetch live backend metrics
@@ -27,6 +28,54 @@ export default function AdminDashboardPage() {
         } else {
           const localInst = JSON.parse(localStorage.getItem("institutes") || "[]");
           setTotalInstitutes(localInst.length);
+        }
+
+        // Fetch students and separate Buyers vs Ambiguous Users
+        try {
+          const stuRes = await fetch("/api/institute/students");
+          let allStuList = [];
+          if (stuRes.ok) {
+            const stuData = await stuRes.json();
+            allStuList = stuData.students || [];
+          } else {
+            const allInstStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
+            for (const list of Object.values(allInstStudents)) {
+              if (Array.isArray(list)) allStuList.push(...list);
+            }
+          }
+          const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+          let bCount = 0;
+          let aCount = 0;
+          allStuList.forEach((s) => {
+            const isMarkedBuyer = Boolean(buyerMap[s.id] || buyerMap[s.phone] || buyerMap[s.username]);
+            const batchLower = (s.batch || "").toLowerCase();
+            const pkgLower = (s.assignedPackage || "").toLowerCase();
+            const instLower = (s.instituteName || s.institute?.name || "").toLowerCase();
+
+            const isGuest =
+              batchLower.includes("free") ||
+              batchLower.includes("guest") ||
+              pkgLower.includes("free") ||
+              instLower.includes("open") ||
+              instLower.includes("examjk") ||
+              s.isFreeStudent === true;
+
+            const hasPaidPkg =
+              (pkgLower.includes("chapter") || pkgLower.includes("ubt") || pkgLower.includes("package") || pkgLower.includes("standard")) &&
+              !pkgLower.includes("free") &&
+              !batchLower.includes("free");
+
+            if (!isMarkedBuyer && isGuest && !hasPaidPkg) {
+              aCount++;
+            } else {
+              bCount++;
+            }
+          });
+          setTotalBuyers(bCount);
+          setTotalAmbiguous(aCount);
+          if (allStuList.length > 0) setTotalStudents(allStuList.length);
+        } catch (e) {
+          console.warn("Failed to load student breakdown:", e);
         }
 
         const qRes = await fetch("/api/admin/questions");
@@ -47,7 +96,6 @@ export default function AdminDashboardPage() {
   const handleLogout = () => {
     performLogout();
   };
-
 
   const containerStyle = {
     minHeight: "100vh",
@@ -85,15 +133,15 @@ export default function AdminDashboardPage() {
   const contentAreaStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto" };
   const cardContainerStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
     gap: "20px",
     marginTop: "20px"
   };
   const cardStyle = {
     backgroundColor: "white",
-    padding: "25px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+    padding: "24px",
+    borderRadius: "12px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
     borderLeft: "5px solid #2563eb"
   };
 
@@ -108,17 +156,38 @@ export default function AdminDashboardPage() {
         <div style={cardContainerStyle}>
           <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #3b82f6, #2563eb)", color: "white", borderLeft: "none" }}>
             <h4 style={{ margin: "0 0 10px 0", color: "#f1f5f9", fontSize: "12px", textTransform: "uppercase", fontWeight: "700" }}>Total Institutes</h4>
-            <p style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#ffffff" }}>{totalInstitutes}</p>
+            <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#ffffff" }}>{totalInstitutes}</p>
           </div>
 
-          <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #10b981, #059669)", color: "white", borderLeft: "none" }}>
-            <h4 style={{ margin: "0 0 10px 0", color: "#f1f5f9", fontSize: "12px", textTransform: "uppercase", fontWeight: "700" }}>Registered Students</h4>
-            <p style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#ffffff" }}>{totalStudents}</p>
-          </div>
+          <Link
+            href="/admin/students?tab=buyers"
+            className="dynamic-card"
+            style={{ ...cardStyle, background: "linear-gradient(145deg, #10b981, #059669)", color: "white", borderLeft: "none", textDecoration: "none", cursor: "pointer", display: "block" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <h4 style={{ margin: 0, color: "#f1f5f9", fontSize: "12px", textTransform: "uppercase", fontWeight: "700" }}>💼 Buyers (Purchased)</h4>
+              <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "2px 8px", borderRadius: "10px", fontWeight: "700" }}>View Folder →</span>
+            </div>
+            <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#ffffff" }}>{totalBuyers}</p>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)", display: "block", marginTop: "6px" }}>Enrolled / purchased package students</span>
+          </Link>
 
-          <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #f59e0b, #d97706)", color: "white", borderLeft: "none" }}>
+          <Link
+            href="/admin/students?tab=ambiguous"
+            className="dynamic-card"
+            style={{ ...cardStyle, background: "linear-gradient(145deg, #f59e0b, #d97706)", color: "white", borderLeft: "none", textDecoration: "none", cursor: "pointer", display: "block" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <h4 style={{ margin: 0, color: "#f1f5f9", fontSize: "12px", textTransform: "uppercase", fontWeight: "700" }}>❓ Ambiguous Users</h4>
+              <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "2px 8px", borderRadius: "10px", fontWeight: "700" }}>View Folder →</span>
+            </div>
+            <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#ffffff" }}>{totalAmbiguous}</p>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)", display: "block", marginTop: "6px" }}>Self-registered guests (Details masked)</span>
+          </Link>
+
+          <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #6366f1, #4f46e5)", color: "white", borderLeft: "none" }}>
             <h4 style={{ margin: "0 0 10px 0", color: "#f1f5f9", fontSize: "12px", textTransform: "uppercase", fontWeight: "700" }}>Total Questions</h4>
-            <p style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#ffffff" }}>{totalQuestions}</p>
+            <p style={{ margin: 0, fontSize: "26px", fontWeight: "800", color: "#ffffff" }}>{totalQuestions}</p>
           </div>
         </div>
 

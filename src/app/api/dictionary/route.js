@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { VOCABULARY_LIST, searchDictionary, romanizeKorean, romanizeNepali, getKoreanPronunciationWithBatchim, koreanToNepaliRomanized } from '@/lib/dictionaryData';
 import { JAPANESE_VOCABULARY, ALL_JAPANESE_DICTIONARY, JAPANESE_KANJI_LIST, searchJapaneseDictionary, romajiToNepaliPhonetic } from '@/lib/japaneseDictionaryData';
 
+export const dynamic = 'force-dynamic';
+
 function buildAudioLinks(item) {
   const koSlug = (item.koreanRomanized || 'korean').replace(/[^a-zA-Z0-9]/g, '_');
   const neSlug = (item.nepaliRomanized || 'nepali').replace(/[^a-zA-Z0-9]/g, '_');

@@ -713,7 +713,9 @@ const StudentDashboard = () => {
           <button onClick={() => setActiveTab("home")} style={getNavBtnStyle("home")}>Dashboard</button>
           <button onClick={() => setActiveTab("exams")} style={getNavBtnStyle("exams")}>Start UBT Exam</button>
           <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
-          <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>Dictionary</button>
+          <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>
+            {instituteLanguage === "japanese" ? "Japanese Dictionary" : instituteLanguage === "korean" ? "Korean Dictionary" : "Dictionary"}
+          </button>
           <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
           <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
           <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
@@ -804,8 +806,12 @@ const StudentDashboard = () => {
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
                   <BookOpenIcon size={28} color="#7c3aed" />
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>Dictionary</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Korean, Nepali, and English vocabulary lookup</p>
+                <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>
+                  {instituteLanguage === "japanese" ? "Japanese Dictionary" : instituteLanguage === "korean" ? "Korean Dictionary" : "Dictionary"}
+                </h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                  {instituteLanguage === "japanese" ? "Japanese, Nepali, and English vocabulary lookup" : instituteLanguage === "korean" ? "Korean, Nepali, and English vocabulary lookup" : "Korean & Japanese vocabulary lookup with pronunciation"}
+                </p>
               </div>
 
               <div onClick={() => setActiveTab("buyExam")} style={{ background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fed7aa", boxShadow: "0 4px 12px rgba(234,88,12,0.08)" }}>
@@ -1431,11 +1437,11 @@ const StudentDashboard = () => {
             <h3 style={{ marginTop: 0, color: "#0f172a", marginBottom: "16px", fontSize: "18px" }}>My Exam Results & Performance Logs</h3>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
-                  <th style={{ padding: "12px", textAlign: "left", color: "#475569", fontSize: "13px" }}>Exam Set</th>
-                  <th style={{ padding: "12px", textAlign: "left", color: "#475569", fontSize: "13px" }}>Score</th>
-                  <th style={{ padding: "12px", textAlign: "left", color: "#475569", fontSize: "13px" }}>Percentage</th>
-                  <th style={{ padding: "12px", textAlign: "left", color: "#475569", fontSize: "13px" }}>Status</th>
+                <tr style={{ backgroundColor: "#1e3a8a", borderBottom: "2px solid #1d4ed8" }}>
+                  <th style={{ padding: "12px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700", borderTopLeftRadius: "8px" }}>Exam Set</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Score</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Percentage</th>
+                  <th style={{ padding: "12px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700", borderTopRightRadius: "8px" }}>Status</th>
                 </tr>
               </thead>
               <tbody>
