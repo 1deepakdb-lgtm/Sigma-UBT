@@ -322,8 +322,19 @@ export async function POST(req) {
           if (bill.date) {
             const bDate = new Date(bill.date);
             if (!isNaN(bDate.getTime())) {
-              bDate.setMonth(bDate.getMonth() + 1);
-              expiryDate = bDate.toISOString().split('T')[0];
+              const pkgLower = (bill.coursePackage || '').toLowerCase();
+              let durationMonths = 1;
+              if (pkgLower.includes('6 month') || pkgLower.includes('6 months')) durationMonths = 6;
+              else if (pkgLower.includes('3 month') || pkgLower.includes('3 months')) durationMonths = 3;
+              else if (pkgLower.includes('2 month') || pkgLower.includes('2 months')) durationMonths = 2;
+              else if (pkgLower.includes('15 day') || pkgLower.includes('15 days')) {
+                bDate.setDate(bDate.getDate() + 15);
+                expiryDate = bDate.toISOString().split('T')[0];
+              }
+              if (!expiryDate) {
+                bDate.setMonth(bDate.getMonth() + durationMonths);
+                expiryDate = bDate.toISOString().split('T')[0];
+              }
             }
           }
         }
@@ -331,8 +342,29 @@ export async function POST(req) {
 
       if (!expiryDate && user.createdAt) {
         const cDate = new Date(user.createdAt);
-        cDate.setMonth(cDate.getMonth() + 1);
-        expiryDate = cDate.toISOString().split('T')[0];
+        const batchLower = (user.batch || '').toLowerCase();
+        let durationMonths = 1;
+        if (batchLower.includes('6 month') || batchLower.includes('6 months')) durationMonths = 6;
+        else if (batchLower.includes('3 month') || batchLower.includes('3 months')) durationMonths = 3;
+        else if (batchLower.includes('2 month') || batchLower.includes('2 months')) durationMonths = 2;
+        else if (batchLower.includes('15 day') || batchLower.includes('15 days')) {
+          cDate.setDate(cDate.getDate() + 15);
+          expiryDate = cDate.toISOString().split('T')[0];
+        }
+        if (!expiryDate) {
+          cDate.setMonth(cDate.getMonth() + durationMonths);
+          expiryDate = cDate.toISOString().split('T')[0];
+        }
+      }
+
+      if (!expiryDate && user.institute?.expireDate) {
+        expiryDate = user.institute.expireDate;
+      }
+
+      if (!expiryDate) {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        expiryDate = d.toISOString().split('T')[0];
       }
     }
 
@@ -344,7 +376,7 @@ export async function POST(req) {
       phone: user.phone || null,
       batch: user.batch || null,
       studentPackage: user.role === 'student' ? studentPackage : undefined,
-      expiryDate: user.role === 'student' ? (expiryDate || 'Active') : undefined,
+      expiryDate: user.role === 'student' ? expiryDate : undefined,
       instituteId: user.instituteId,
       instituteName: user.institute?.name || null,
       instituteLanguage: user.institute?.language || 'both'

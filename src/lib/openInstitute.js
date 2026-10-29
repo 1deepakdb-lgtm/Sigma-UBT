@@ -24,7 +24,7 @@ export async function getOrCreateOpenInstitute(languageTrack = 'both') {
           id: 'examjk-open-academy',
           name: 'ExamJK Open Academy',
           username: 'examjk-open',
-          subscription: 'Free Lifetime Access',
+          subscription: 'Standard',
           entryDate: '2026-01-01',
           expireDate: '2099-12-31',
           examPackage: 'Full Set UBT',

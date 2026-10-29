@@ -79,11 +79,18 @@ export default function LoginPage() {
       localStorage.setItem("currentStudentPhone", studentPhone);
       localStorage.setItem("studentPhone", studentPhone);
       localStorage.setItem("currentStudentName", userData.name || userData.username);
-      if (userData.studentPackage) {
+      if (userData.studentPackage && !userData.studentPackage.toLowerCase().includes("google") && !userData.studentPackage.toLowerCase().includes("free")) {
         localStorage.setItem("currentStudentPackage", userData.studentPackage);
+      } else {
+        localStorage.setItem("currentStudentPackage", "Full Set UBT");
       }
       if (userData.expiryDate) {
         localStorage.setItem("currentStudentExpiryDate", userData.expiryDate);
+      }
+      if (userData.instituteLanguage) {
+        localStorage.setItem("instituteLanguage", userData.instituteLanguage);
+      } else if (regLanguage) {
+        localStorage.setItem("instituteLanguage", regLanguage);
       }
       if (userData.instituteName) {
         localStorage.setItem("currentInstitute", userData.instituteName);
@@ -717,6 +724,39 @@ export default function LoginPage() {
                   onChange={(e) => setGoogleName(e.target.value)}
                   style={inputStyle}
                 />
+              </div>
+
+              {/* Study Track Selection at Sign-up */}
+              <div style={{ marginBottom: "18px", textAlign: "left" }}>
+                <label style={{ display: "block", fontSize: "12.5px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
+                  Select Study Track (अध्ययन ट्र्याक):
+                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px" }}>
+                  {[
+                    { key: "both", label: "🌐 Both" },
+                    { key: "korean", label: "🇰🇷 Korean" },
+                    { key: "japanese", label: "🇯🇵 Japanese" }
+                  ].map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setRegLanguage(opt.key)}
+                      style={{
+                        padding: "8px 4px",
+                        borderRadius: "6px",
+                        border: regLanguage === opt.key ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                        backgroundColor: regLanguage === opt.key ? "#eff6ff" : "#ffffff",
+                        color: regLanguage === opt.key ? "#1d4ed8" : "#475569",
+                        fontWeight: "700",
+                        fontSize: "12px",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div style={{ display: "flex", gap: "10px" }}>

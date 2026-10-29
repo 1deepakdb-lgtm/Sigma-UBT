@@ -81,6 +81,17 @@ const StudentExam = () => {
       const targetSetName = currentExamSet ? currentExamSet.name : `Chapterwise 0${examId}`;
       setExactExamName(targetSetName);
 
+      // Check Package Expiry Date Authorization
+      const savedExpDate = typeof window !== 'undefined' ? localStorage.getItem("currentStudentExpiryDate") : null;
+      if (savedExpDate && savedExpDate !== 'Active' && !savedExpDate.toLowerCase().includes("lifetime") && !isNaN(new Date(savedExpDate).getTime())) {
+        const isExp = new Date(savedExpDate + 'T23:59:59') < new Date();
+        if (isExp) {
+          alert(`Access Restricted: Your package expired on ${savedExpDate}. Please renew your package with your institute to take this exam.`);
+          router.push("/student");
+          return;
+        }
+      }
+
       // Check Private Institute Bucket Access Authorization
       if (currentExamSet && currentExamSet.creatorInstituteName && !currentExamSet.isPublished) {
         const currentStudentPhone = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone")) : null;

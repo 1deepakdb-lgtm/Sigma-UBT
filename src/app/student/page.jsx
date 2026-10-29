@@ -118,7 +118,7 @@ const StudentDashboard = () => {
   const [studentInstitute, setStudentInstitute] = useState(null);
   const [studentBatch, setStudentBatch] = useState(null);
   const [studentPackage, setStudentPackage] = useState("Full Set UBT");
-  const [studentExpiryDate, setStudentExpiryDate] = useState("Active");
+  const [studentExpiryDate, setStudentExpiryDate] = useState("");
   const [purchasedPackages, setPurchasedPackages] = useState([]);
   const [logoWatermark, setLogoWatermark] = useState("");
   const [instituteLanguage, setInstituteLanguage] = useState(() => {
@@ -127,6 +127,13 @@ const StudentDashboard = () => {
     }
     return "both";
   });
+
+  const isPackageExpired = Boolean(
+    studentExpiryDate &&
+    studentExpiryDate !== "Active" &&
+    !isNaN(new Date(studentExpiryDate).getTime()) &&
+    new Date(studentExpiryDate + 'T23:59:59') < new Date()
+  );
 
   // 1. Authenticated Session Sync from /api/auth/me
   useEffect(() => {
@@ -142,7 +149,7 @@ const StudentDashboard = () => {
     setCurrentStudentPhone(localPhone);
     setLogoWatermark(logo);
     if (localPkg && !isShift(localPkg)) setStudentPackage(localPkg);
-    if (localExp && localExp !== "2027-09-30") setStudentExpiryDate(localExp);
+    if (localExp && localExp !== "2027-09-30" && !localExp.toLowerCase().includes("lifetime")) setStudentExpiryDate(localExp);
 
     // Fetch verified session from backend
     fetch("/api/auth/me")
@@ -155,13 +162,21 @@ const StudentDashboard = () => {
           const instLogo = data.user.institute?.logoUrl || logo;
           const batchName = data.user.batch || null;
           const instLang = data.user.instituteLanguage || data.user.institute?.language || "both";
-          const userPkg = (!isShift(data.user.studentPackage) && data.user.studentPackage) ||
-                          (!isShift(data.user.batch) && data.user.batch) ||
+          const rawPkg = data.user.studentPackage || data.user.batch || "";
+          const isGoogleOrFree =
+            rawPkg.toLowerCase().includes("google") ||
+            rawPkg.toLowerCase().includes("free");
+          const userPkg = (!isShift(rawPkg) && !isGoogleOrFree && rawPkg) ||
                           data.user.institute?.examPackage ||
                           "Full Set UBT";
-          const userExp = (data.user.expiryDate && data.user.expiryDate !== "2027-09-30")
+          const calculateFallbackExpiry = () => {
+            const d = new Date();
+            d.setMonth(d.getMonth() + 1);
+            return d.toISOString().split('T')[0];
+          };
+          const userExp = (data.user.expiryDate && data.user.expiryDate !== "2027-09-30" && !data.user.expiryDate.toLowerCase().includes("lifetime") && data.user.expiryDate !== "Active")
             ? data.user.expiryDate
-            : "Active";
+            : (localExp && !localExp.toLowerCase().includes("lifetime") && localExp !== "Active" ? localExp : calculateFallbackExpiry());
 
           setStudentName(uName);
           setCurrentStudentPhone(uPhone);
@@ -341,7 +356,7 @@ const StudentDashboard = () => {
     const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
     const isShift = (str) => shiftNames.includes((str || '').toLowerCase().trim());
 
-    if (currentStudent?.expiryDate && currentStudent.expiryDate !== "2027-09-30") {
+    if (currentStudent?.expiryDate && currentStudent.expiryDate !== "2027-09-30" && !currentStudent.expiryDate.toLowerCase().includes("lifetime") && currentStudent.expiryDate !== "Active") {
       setStudentExpiryDate(currentStudent.expiryDate);
       localStorage.setItem("currentStudentExpiryDate", currentStudent.expiryDate);
     }
@@ -679,75 +694,42 @@ const StudentDashboard = () => {
         {/* DASHBOARD TAB */}
         {activeTab === "home" && (
           <div>
-            <div style={{ textAlign: "center", marginBottom: "30px" }}>
-              <h2 style={{ color: "#0f172a", margin: "0 0 8px 0", fontSize: "28px", fontWeight: "800" }}>
+            <div style={{ textAlign: "center", marginBottom: "26px" }}>
+              <h2 style={{ color: "#0f172a", margin: "0", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px" }}>
                 Welcome, {studentName}
               </h2>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", backgroundColor: "#ffffff", padding: "6px 18px", borderRadius: "20px", border: "1px solid #cbd5e1", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>
-                  Enrolled Package: <strong style={{ color: "#1e3a8a" }}>{(!isShift(studentPackage) && studentPackage) || "Full Set UBT"}</strong>
-                </span>
-                {studentBatch && isShift(studentBatch) && (
-                  <>
-                    <span style={{ color: "#cbd5e1" }}>•</span>
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>
-                      Shift: <strong style={{ color: "#0284c7" }}>{studentBatch} Batch</strong>
-                    </span>
-                  </>
-                )}
-                <span style={{ color: "#cbd5e1" }}>•</span>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>
-                  Expiry Date: <strong style={{ color: "#047857" }}>{studentExpiryDate || "Lifetime Free"}</strong>
-                </span>
-              </div>
-
-              {/* Free Student Access Badge & Language Track Switcher */}
-              <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                <div style={{ background: "linear-gradient(90deg, #ecfdf5 0%, #f0fdf4 100%)", border: "1.5px solid #86efac", borderRadius: "12px", padding: "10px 18px", maxWidth: "800px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: "0 2px 8px rgba(22,163,74,0.06)" }}>
-                  <span style={{ fontSize: "18px" }}>🎁</span>
-                  <span style={{ fontSize: "13px", color: "#166534", fontWeight: "700" }}>
-                    Free Student Access: Full access to Korean &amp; Japanese Textbooks, Zero-Latency Audio, Dictionaries &amp; Practice Sets!
+              {studentExpiryDate && (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginTop: "12px", padding: "6px 16px", backgroundColor: isPackageExpired ? "#fee2e2" : "#f8fafc", borderRadius: "20px", border: isPackageExpired ? "1px solid #fca5a5" : "1px solid #e2e8f0" }}>
+                  <span style={{ fontSize: "12px", color: isPackageExpired ? "#991b1b" : "#475569", fontWeight: "600" }}>
+                    Package: <strong style={{ color: isPackageExpired ? "#dc2626" : "#1e3a8a" }}>{studentPackage}</strong>
+                  </span>
+                  <span style={{ color: "#cbd5e1" }}>•</span>
+                  <span style={{ fontSize: "12px", color: isPackageExpired ? "#991b1b" : "#475569", fontWeight: "600" }}>
+                    Package Expiry Date: <strong style={{ color: isPackageExpired ? "#dc2626" : "#047857" }}>{studentExpiryDate}</strong>
+                  </span>
+                  <span style={{
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: isPackageExpired ? "#b91c1c" : "#166534",
+                    backgroundColor: isPackageExpired ? "#fecaca" : "#dcfce7",
+                    padding: "2px 8px",
+                    borderRadius: "10px"
+                  }}>
+                    {isPackageExpired ? "Expired" : "Active"}
                   </span>
                 </div>
-
-                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#ffffff", padding: "4px 8px", borderRadius: "12px", border: "1px solid #cbd5e1", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                  <span style={{ fontSize: "11.5px", fontWeight: "700", color: "#475569", paddingLeft: "4px" }}>Study Track:</span>
-                  {[
-                    { key: "both", label: "🌐 Both" },
-                    { key: "korean", label: "🇰🇷 Korean" },
-                    { key: "japanese", label: "🇯🇵 Japanese" }
-                  ].map((opt) => (
-                    <button
-                      key={opt.key}
-                      onClick={() => {
-                        setInstituteLanguage(opt.key);
-                        localStorage.setItem("instituteLanguage", opt.key);
-                      }}
-                      style={{
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "4px 10px",
-                        fontSize: "11.5px",
-                        fontWeight: "800",
-                        cursor: "pointer",
-                        backgroundColor: instituteLanguage === opt.key ? "#2563eb" : "transparent",
-                        color: instituteLanguage === opt.key ? "#ffffff" : "#475569",
-                        transition: "all 0.15s ease"
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <p style={{ color: "#64748b", margin: "14px 0 0 0", fontSize: "14px" }}>
-                Select a service below to practice UBT exams, study books, or review test results.
-              </p>
+              )}
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", maxWidth: "1050px", margin: "0 auto" }}>
-              <div onClick={() => setActiveTab("exams")} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
+              <div onClick={() => {
+                if (isPackageExpired) {
+                  alert(`Your package expired on ${studentExpiryDate}. Please renew your package to take UBT exams.`);
+                  setActiveTab("buyExam");
+                  return;
+                }
+                setActiveTab("exams");
+              }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
                   <LaptopExamIcon size={28} color="#2563eb" />
                 </div>
@@ -837,7 +819,7 @@ const StudentDashboard = () => {
                     Your Purchased Package
                   </div>
                   <div style={{ fontSize: "20px", fontWeight: "800", color: "#1e3a8a", marginTop: "2px" }}>
-                    {(!isShift(studentPackage) && studentPackage) || "Full Set UBT"}
+                    {(studentPackage && !studentPackage.toLowerCase().includes("google") && !studentPackage.toLowerCase().includes("free") && !isShift(studentPackage)) ? studentPackage : "Full Set UBT"}
                   </div>
                 </div>
               </div>
@@ -847,28 +829,74 @@ const StudentDashboard = () => {
                   backgroundColor: "#ffffff",
                   padding: "8px 16px",
                   borderRadius: "8px",
-                  border: "1px solid #cbd5e1",
+                  border: isPackageExpired ? "1px solid #fca5a5" : "1px solid #cbd5e1",
                   textAlign: "right"
                 }}>
-                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#64748b" }}>Package Expiry Date</div>
-                  <div style={{ fontSize: "14px", fontWeight: "800", color: "#047857", marginTop: "2px" }}>
-                    {studentExpiryDate || "Active"}
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: isPackageExpired ? "#991b1b" : "#64748b" }}>Package Expiry Date</div>
+                  <div style={{ fontSize: "14px", fontWeight: "800", color: isPackageExpired ? "#dc2626" : "#047857", marginTop: "2px" }}>
+                    {studentExpiryDate || "—"}
                   </div>
                 </div>
 
                 <span style={{
                   fontSize: "12px",
                   fontWeight: "700",
-                  color: "#166534",
-                  backgroundColor: "#dcfce7",
+                  color: isPackageExpired ? "#b91c1c" : "#166534",
+                  backgroundColor: isPackageExpired ? "#fee2e2" : "#dcfce7",
                   padding: "6px 14px",
                   borderRadius: "20px",
-                  border: "1px solid #bbf7d0"
+                  border: isPackageExpired ? "1px solid #fecaca" : "1px solid #bbf7d0"
                 }}>
-                  Active
+                  {isPackageExpired ? "Expired" : "Active"}
                 </span>
               </div>
             </div>
+
+            {isPackageExpired && (
+              <div style={{
+                backgroundColor: "#fef2f2",
+                border: "1px solid #fca5a5",
+                borderRadius: "10px",
+                padding: "16px 20px",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "12px"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", color: "#dc2626", fontWeight: "900", fontSize: "18px" }}>
+                    ⚠️
+                  </div>
+                  <div>
+                    <div style={{ color: "#991b1b", fontWeight: "800", fontSize: "15px" }}>
+                      Package Expired on {studentExpiryDate}
+                    </div>
+                    <div style={{ color: "#7f1d1d", fontSize: "13px", marginTop: "2px" }}>
+                      Your purchased package has expired. Access to exam sets is locked according to your package expiry date.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("buyExam")}
+                  style={{
+                    backgroundColor: "#dc2626",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 4px rgba(220,38,38,0.2)"
+                  }}
+                >
+                  Renew / Extend Package
+                </button>
+              </div>
+            )}
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
               <h3 style={{ color: "#0f172a", margin: 0, fontSize: "20px", fontWeight: "800" }}>
@@ -972,21 +1000,29 @@ const StudentDashboard = () => {
 
                     <button
                       type="button"
-                      onClick={() => router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`)}
+                      onClick={() => {
+                        if (isPackageExpired) {
+                          alert(`Your package expired on ${studentExpiryDate}. Please renew your package to take UBT exam sets.`);
+                          return;
+                        }
+                        router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
+                      }}
                       style={{
                         width: "100%",
-                        background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                        background: isPackageExpired
+                          ? "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)"
+                          : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
                         color: "#ffffff",
                         border: "none",
                         padding: "9px",
                         borderRadius: "6px",
                         fontWeight: "700",
-                        cursor: "pointer",
+                        cursor: isPackageExpired ? "not-allowed" : "pointer",
                         fontSize: "13px",
                         letterSpacing: "0.3px"
                       }}
                     >
-                      START EXAM ▶
+                      {isPackageExpired ? "PACKAGE EXPIRED" : "START EXAM ▶"}
                     </button>
                   </div>
                 ))

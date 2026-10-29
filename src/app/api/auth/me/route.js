@@ -47,9 +47,12 @@ export async function GET(req) {
     if (user.role === 'student') {
       const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
       const isShiftOnly = user.batch && shiftNames.includes(user.batch.toLowerCase().trim());
+      const isGoogleOrFree =
+        user.batch?.toLowerCase().includes('google') ||
+        user.batch?.toLowerCase().includes('free');
 
-      // If user.batch is a real package name, use it; otherwise fallback to institute package or Full Set UBT
-      if (user.batch && !isShiftOnly) {
+      // If user.batch is a real custom package name, use it
+      if (user.batch && !isShiftOnly && !isGoogleOrFree) {
         studentPackage = user.batch;
       } else if (user.institute?.examPackage) {
         studentPackage = user.institute.examPackage;
@@ -77,23 +80,50 @@ export async function GET(req) {
           if (bill.date) {
             const bDate = new Date(bill.date);
             if (!isNaN(bDate.getTime())) {
-              bDate.setMonth(bDate.getMonth() + 1);
-              expiryDate = bDate.toISOString().split('T')[0];
+              const pkgLower = (bill.coursePackage || '').toLowerCase();
+              let durationMonths = 1;
+              if (pkgLower.includes('6 month') || pkgLower.includes('6 months')) durationMonths = 6;
+              else if (pkgLower.includes('3 month') || pkgLower.includes('3 months')) durationMonths = 3;
+              else if (pkgLower.includes('2 month') || pkgLower.includes('2 months')) durationMonths = 2;
+              else if (pkgLower.includes('15 day') || pkgLower.includes('15 days')) {
+                bDate.setDate(bDate.getDate() + 15);
+                expiryDate = bDate.toISOString().split('T')[0];
+              }
+              if (!expiryDate) {
+                bDate.setMonth(bDate.getMonth() + durationMonths);
+                expiryDate = bDate.toISOString().split('T')[0];
+              }
             }
           }
         }
       }
 
-      // 1. Calculate standard student package expiry date (1 Month from student creation date)
+      // Calculate package expiry date (from creation date if not already set from bill)
       if (!expiryDate && user.createdAt) {
         const cDate = new Date(user.createdAt);
-        cDate.setMonth(cDate.getMonth() + 1);
-        expiryDate = cDate.toISOString().split('T')[0];
+        const batchLower = (user.batch || '').toLowerCase();
+        let durationMonths = 1;
+        if (batchLower.includes('6 month') || batchLower.includes('6 months')) durationMonths = 6;
+        else if (batchLower.includes('3 month') || batchLower.includes('3 months')) durationMonths = 3;
+        else if (batchLower.includes('2 month') || batchLower.includes('2 months')) durationMonths = 2;
+        else if (batchLower.includes('15 day') || batchLower.includes('15 days')) {
+          cDate.setDate(cDate.getDate() + 15);
+          expiryDate = cDate.toISOString().split('T')[0];
+        }
+        if (!expiryDate) {
+          cDate.setMonth(cDate.getMonth() + durationMonths);
+          expiryDate = cDate.toISOString().split('T')[0];
+        }
       }
 
-      // 2. Fallback to institute expireDate if student creation date is unavailable
       if (!expiryDate && user.institute?.expireDate) {
         expiryDate = user.institute.expireDate;
+      }
+
+      if (!expiryDate) {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        expiryDate = d.toISOString().split('T')[0];
       }
     }
 
@@ -102,7 +132,7 @@ export async function GET(req) {
       user: {
         ...user,
         studentPackage,
-        expiryDate: expiryDate || 'Active',
+        expiryDate: expiryDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         instituteLanguage: user.institute?.language || 'both'
       }
     });

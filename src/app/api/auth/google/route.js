@@ -67,7 +67,7 @@ export async function POST(req) {
           role: 'student',
           name: fallbackName,
           phone: null,
-          batch: 'Google Sign-In - Free Access',
+          batch: 'Student',
           status: 'Active',
           instituteId: openInst?.id || null
         },
@@ -85,7 +85,11 @@ export async function POST(req) {
       phone: user.phone || null,
       batch: user.batch || 'Free Student Access',
       studentPackage: 'Full Set UBT',
-      expiryDate: 'Lifetime Free',
+      expiryDate: (() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        return d.toISOString().split('T')[0];
+      })(),
       instituteId: user.instituteId || openInst?.id || null,
       instituteName: user.institute?.name || openInst?.name || 'ExamJK Open Academy',
       instituteLanguage: languageTrack || user.institute?.language || 'both',
