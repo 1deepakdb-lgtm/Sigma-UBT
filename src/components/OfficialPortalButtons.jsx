@@ -2,11 +2,12 @@
 
 import React from 'react';
 
-export const PORTAL_ITEMS = [
+export const KOREAN_PORTAL_ITEMS = [
   {
     href: 'https://epsnepal.gov.np/notices',
     label: 'Official Notices',
     iconType: 'notice',
+    language: 'korean',
     gradient: 'linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%)',
     shadowColor: 'rgba(29, 78, 216, 0.38)',
     hoverShadow: '0 12px 28px rgba(29, 78, 216, 0.55)'
@@ -15,6 +16,7 @@ export const PORTAL_ITEMS = [
     href: 'https://epsnepal.gov.np/jobappform/?page=newreg',
     label: 'Job Application',
     iconType: 'job',
+    language: 'korean',
     gradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
     shadowColor: 'rgba(2, 132, 199, 0.38)',
     hoverShadow: '0 12px 28px rgba(2, 132, 199, 0.55)'
@@ -23,6 +25,7 @@ export const PORTAL_ITEMS = [
     href: 'https://eoers.epsnepal.gov.np/',
     label: 'New Application',
     iconType: 'application',
+    language: 'korean',
     gradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
     shadowColor: 'rgba(5, 150, 105, 0.38)',
     hoverShadow: '0 12px 28px rgba(5, 150, 105, 0.55)'
@@ -31,27 +34,53 @@ export const PORTAL_ITEMS = [
     href: 'https://epstopik.hrdkorea.or.kr/epstopik/pass/candidate/sucessReportList.do?lang=en',
     label: 'EPS Result',
     iconType: 'result',
+    language: 'korean',
     gradient: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
     shadowColor: 'rgba(217, 119, 6, 0.38)',
     hoverShadow: '0 12px 28px rgba(217, 119, 6, 0.55)'
+  }
+];
+
+export const JAPANESE_PORTAL_ITEMS = [
+  {
+    href: 'https://www.np.emb-japan.go.jp/',
+    label: 'Official Notice',
+    iconType: 'japan_embassy',
+    language: 'japanese',
+    gradient: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+    shadowColor: 'rgba(220, 38, 38, 0.38)',
+    hoverShadow: '0 12px 28px rgba(220, 38, 38, 0.55)'
   },
   {
     href: 'https://www.jaltan.org.np/',
     label: 'Japanese Notice & Info',
     iconType: 'japan_notice',
+    language: 'japanese',
     gradient: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
     shadowColor: 'rgba(225, 29, 72, 0.38)',
     hoverShadow: '0 12px 28px rgba(225, 29, 72, 0.55)'
   },
   {
-    href: 'https://www.prometric-jp.com/ne/ssw/test_list/archives/1',
-    label: 'JLPT, JFT Application Form',
+    href: 'https://www.jlpt.jp/e/application/overseas_list.html',
+    label: 'JLPT Application Form',
     iconType: 'jlpt_form',
+    language: 'japanese',
     gradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
     shadowColor: 'rgba(124, 58, 237, 0.38)',
     hoverShadow: '0 12px 28px rgba(124, 58, 237, 0.55)'
+  },
+  {
+    href: 'https://www.prometric-jp.com/ne/ssw/test_list/archives/1',
+    label: 'JFT Application Form',
+    iconType: 'jft_form',
+    language: 'japanese',
+    gradient: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
+    shadowColor: 'rgba(13, 148, 136, 0.38)',
+    hoverShadow: '0 12px 28px rgba(13, 148, 136, 0.55)'
   }
 ];
+
+export const PORTAL_ITEMS = [...KOREAN_PORTAL_ITEMS, ...JAPANESE_PORTAL_ITEMS];
 
 export function PortalIcon({ type }) {
   const size = 44;
@@ -126,6 +155,47 @@ export function PortalIcon({ type }) {
           <polygon points="24,15 25.5,19.2 30,19.2 26.5,21.8 28,26 24,23.2 20,26 21.5,21.8 18,19.2 22.5,19.2" fill="#ffffff" />
         </svg>
       );
+    case 'japan_embassy':
+      // Vibrant Japanese Official Embassy & National Seal Artwork
+      return (
+        <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+          {/* Official Building Base / Pedestal */}
+          <rect x="7" y="38" width="34" height="4" rx="1.5" fill="#991b1b" />
+          <rect x="9" y="35" width="30" height="3" fill="#dc2626" />
+          {/* Classical Embassy Pillars */}
+          <rect x="11" y="20" width="4" height="15" rx="1" fill="#fee2e2" stroke="#dc2626" strokeWidth="1" />
+          <rect x="18.5" y="20" width="4" height="15" rx="1" fill="#fee2e2" stroke="#dc2626" strokeWidth="1" />
+          <rect x="25.5" y="20" width="4" height="15" rx="1" fill="#fee2e2" stroke="#dc2626" strokeWidth="1" />
+          <rect x="33" y="20" width="4" height="15" rx="1" fill="#fee2e2" stroke="#dc2626" strokeWidth="1" />
+          {/* Embassy Roof Triangular Pediment */}
+          <polygon points="24,8 6,19 42,19" fill="#dc2626" />
+          <polygon points="24,11 10,19 38,19" fill="#ef4444" />
+          {/* Japanese Crimson Sun Seal in Center of Pediment */}
+          <circle cx="24" cy="15" r="3.2" fill="#ffffff" />
+          <circle cx="24" cy="15" r="2.2" fill="#b91c1c" />
+          {/* Embassy Entrance Door */}
+          <rect x="21" y="27" width="6" height="8" rx="1" fill="#7f1d1d" />
+        </svg>
+      );
+    case 'jft_form':
+      // Vibrant JFT-Basic CBT Prometric Computer Test with Teal Glow & Passed Screen
+      return (
+        <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+          {/* Desktop Monitor Screen Frame */}
+          <rect x="6" y="8" width="36" height="25" rx="4" fill="#0f766e" />
+          {/* Screen Display */}
+          <rect x="9" y="11" width="30" height="19" rx="2" fill="#ccfbf1" />
+          {/* Test Passed Checkmark on Screen */}
+          <circle cx="24" cy="19" r="6" fill="#0d9488" />
+          <path d="M21 19l2 2 4-4" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="12" y1="26" x2="36" y2="26" stroke="#5eead4" strokeWidth="1.5" strokeLinecap="round" />
+          {/* Monitor Stand Base */}
+          <path d="M22 33v4h4v-4" fill="#0f766e" />
+          <rect x="16" y="37" width="16" height="3" rx="1.5" fill="#115e59" />
+          {/* Sparkle Star on top corner */}
+          <polygon points="38,6 39,9 42,9 39.5,11 40.5,14 38,12 35.5,14 36.5,11 34,9 37,9" fill="#f59e0b" />
+        </svg>
+      );
     case 'japan_notice':
       // Vibrant Japanese Vermilion Torii Gate with Golden Rising Sun
       return (
@@ -174,80 +244,168 @@ export function PortalIcon({ type }) {
   }
 }
 
-export default function OfficialPortalButtons({ style = {} }) {
+export default function OfficialPortalButtons({
+  track = 'both',
+  style = {},
+  showTrackTabs = false
+}) {
+  const normTrack = (track || 'both').toLowerCase();
+  const [activeTab, setActiveTab] = React.useState(normTrack === 'japanese' ? 'japanese' : normTrack === 'korean' ? 'korean' : 'both');
+
+  React.useEffect(() => {
+    if (normTrack === 'korean' || normTrack === 'japanese') {
+      setActiveTab(normTrack);
+    }
+  }, [normTrack]);
+
+  const displayedItems = activeTab === 'korean'
+    ? KOREAN_PORTAL_ITEMS
+    : activeTab === 'japanese'
+    ? JAPANESE_PORTAL_ITEMS
+    : PORTAL_ITEMS;
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '16px', ...style }}>
-      {PORTAL_ITEMS.map((card) => (
-        <a
-          key={card.label}
-          href={card.href}
-          target="_blank"
-          rel="noopener noreferrer"
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', ...style }}>
+      {/* Optional Track Selector if 'both' and enabled */}
+      {showTrackTabs && normTrack === 'both' && (
+        <div
           style={{
-            background: card.gradient,
-            borderRadius: '16px',
-            padding: '20px 14px 18px 14px',
-            textAlign: 'center',
-            textDecoration: 'none',
-            color: 'white',
-            boxShadow: `0 6px 18px ${card.shadowColor}`,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '168px',
-            minHeight: '154px',
-            transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            cursor: 'pointer',
-            border: '1px solid rgba(255, 255, 255, 0.22)',
-            userSelect: 'none'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-6px) scale(1.03)';
-            e.currentTarget.style.boxShadow = card.hoverShadow;
-            const iconBox = e.currentTarget.querySelector('.portal-icon-container');
-            if (iconBox) iconBox.style.transform = 'scale(1.12) rotate(-3deg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-            e.currentTarget.style.boxShadow = `0 6px 18px ${card.shadowColor}`;
-            const iconBox = e.currentTarget.querySelector('.portal-icon-container');
-            if (iconBox) iconBox.style.transform = 'scale(1) rotate(0deg)';
+            display: 'inline-flex',
+            backgroundColor: '#f1f5f9',
+            padding: '4px',
+            borderRadius: '12px',
+            border: '1.5px solid #cbd5e1',
+            gap: '6px'
           }}
         >
-          {/* Clean White Squircle to make the Colorful Artwork POP */}
-          <div
-            className="portal-icon-container"
+          <button
+            type="button"
+            onClick={() => setActiveTab('both')}
             style={{
-              width: '70px',
-              height: '70px',
-              backgroundColor: '#ffffff',
-              border: '2px solid rgba(255, 255, 255, 0.85)',
-              borderRadius: '20px',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: '800',
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'both' ? '#0f172a' : 'transparent',
+              color: activeTab === 'both' ? '#ffffff' : '#475569',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            🌐 All Portals (8)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('korean')}
+            style={{
+              border: 'none',
+              borderRadius: '8px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: '800',
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'korean' ? '#2563eb' : 'transparent',
+              color: activeTab === 'korean' ? '#ffffff' : '#475569',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            🇰🇷 Korean Portals (4)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('japanese')}
+            style={{
+              border: 'none',
+              borderRadius: '8px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: '800',
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'japanese' ? '#9333ea' : 'transparent',
+              color: activeTab === 'japanese' ? '#ffffff' : '#475569',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            🇯🇵 Japanese Portals (4)
+          </button>
+        </div>
+      )}
+
+      {/* Grid of portal cards */}
+      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '16px', width: '100%' }}>
+        {displayedItems.map((card) => (
+          <a
+            key={card.label}
+            href={card.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: card.gradient,
+              borderRadius: '16px',
+              padding: '20px 14px 18px 14px',
+              textAlign: 'center',
+              textDecoration: 'none',
+              color: 'white',
+              boxShadow: `0 6px 18px ${card.shadowColor}`,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 12px auto',
-              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.20), 0 2px 6px rgba(0, 0, 0, 0.08)',
-              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+              width: '168px',
+              minHeight: '154px',
+              transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              cursor: 'pointer',
+              border: '1px solid rgba(255, 255, 255, 0.22)',
+              userSelect: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-6px) scale(1.03)';
+              e.currentTarget.style.boxShadow = card.hoverShadow;
+              const iconBox = e.currentTarget.querySelector('.portal-icon-container');
+              if (iconBox) iconBox.style.transform = 'scale(1.12) rotate(-3deg)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = `0 6px 18px ${card.shadowColor}`;
+              const iconBox = e.currentTarget.querySelector('.portal-icon-container');
+              if (iconBox) iconBox.style.transform = 'scale(1) rotate(0deg)';
             }}
           >
-            <PortalIcon type={card.iconType} />
-          </div>
-          <h4
-            style={{
-              margin: 0,
-              fontSize: '14px',
-              fontWeight: '700',
-              lineHeight: '1.3',
-              letterSpacing: '0.2px',
-              textShadow: '0 1px 3px rgba(0,0,0,0.30)'
-            }}
-          >
-            {card.label}
-          </h4>
-        </a>
-      ))}
+            {/* Clean White Squircle to make the Colorful Artwork POP */}
+            <div
+              className="portal-icon-container"
+              style={{
+                width: '70px',
+                height: '70px',
+                backgroundColor: '#ffffff',
+                border: '2px solid rgba(255, 255, 255, 0.85)',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px auto',
+                boxShadow: '0 8px 20px rgba(0, 0, 0, 0.20), 0 2px 6px rgba(0, 0, 0, 0.08)',
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+              }}
+            >
+              <PortalIcon type={card.iconType} />
+            </div>
+            <h4
+              style={{
+                margin: 0,
+                fontSize: '14px',
+                fontWeight: '700',
+                lineHeight: '1.3',
+                letterSpacing: '0.2px',
+                textShadow: '0 1px 3px rgba(0,0,0,0.30)'
+              }}
+            >
+              {card.label}
+            </h4>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }

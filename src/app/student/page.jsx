@@ -105,6 +105,7 @@ const StudentDashboard = () => {
 
   const [newsList, setNewsList] = useState([]);
   const [noticeFilterTrack, setNoticeFilterTrack] = useState("auto"); // "auto" | "all" | "korean" | "japanese"
+  const [noticeSubCategory, setNoticeSubCategory] = useState("all");
   const [results, setResults] = useState([]);
   const [showBannerPopup, setShowBannerPopup] = useState(false);
   const [popupNotice, setPopupNotice] = useState(null);
@@ -128,11 +129,33 @@ const StudentDashboard = () => {
     return "both";
   });
 
+  const isGoogleOrFree = Boolean(
+    studentPackage?.toLowerCase().includes("google") ||
+    studentPackage?.toLowerCase().includes("free") ||
+    studentBatch?.toLowerCase().includes("google") ||
+    studentBatch?.toLowerCase().includes("free") ||
+    currentStudentPhone?.includes("@") ||
+    (typeof window !== "undefined" && (
+      localStorage.getItem("isFreeStudent") === "true" ||
+      localStorage.getItem("isGoogleAuth") === "true" ||
+      (localStorage.getItem("currentUser") || "").includes("@") ||
+      (localStorage.getItem("currentStudentPhone") || "").includes("@") ||
+      (localStorage.getItem("studentPhone") || "").includes("@") ||
+      (localStorage.getItem("currentStudentPackage") || "").toLowerCase().includes("free") ||
+      (localStorage.getItem("currentStudentPackage") || "").toLowerCase().includes("google") ||
+      (localStorage.getItem("currentStudentExpiryDate") || "").toLowerCase().includes("free")
+    ))
+  );
+
+  const effectiveExpiryDate = isGoogleOrFree ? null : studentExpiryDate;
+
   const isPackageExpired = Boolean(
-    studentExpiryDate &&
-    studentExpiryDate !== "Active" &&
-    !isNaN(new Date(studentExpiryDate).getTime()) &&
-    new Date(studentExpiryDate + 'T23:59:59') < new Date()
+    !isGoogleOrFree &&
+    effectiveExpiryDate &&
+    effectiveExpiryDate !== "Active" &&
+    !effectiveExpiryDate.toLowerCase().includes("lifetime") &&
+    !isNaN(new Date(effectiveExpiryDate).getTime()) &&
+    new Date(effectiveExpiryDate + 'T23:59:59') < new Date()
   );
 
   // 1. Authenticated Session Sync from /api/auth/me
@@ -148,8 +171,21 @@ const StudentDashboard = () => {
     setStudentName(localName);
     setCurrentStudentPhone(localPhone);
     setLogoWatermark(logo);
-    if (localPkg && !isShift(localPkg)) setStudentPackage(localPkg);
-    if (localExp && localExp !== "2027-09-30" && !localExp.toLowerCase().includes("lifetime")) setStudentExpiryDate(localExp);
+
+    if (isGoogleOrFree) {
+      setStudentExpiryDate(null);
+      try { localStorage.removeItem("currentStudentExpiryDate"); } catch (e) {}
+    } else if (localExp && localExp !== "2027-09-30" && !localExp.toLowerCase().includes("lifetime")) {
+      setStudentExpiryDate(localExp);
+    }
+
+    if (localPkg && !isShift(localPkg)) {
+      if (localPkg.toLowerCase().includes("google") || localPkg.toLowerCase().includes("free")) {
+        setStudentPackage("Full Set UBT");
+      } else {
+        setStudentPackage(localPkg);
+      }
+    }
 
     // Fetch verified session from backend
     fetch("/api/auth/me")
@@ -163,25 +199,33 @@ const StudentDashboard = () => {
           const batchName = data.user.batch || null;
           const instLang = data.user.instituteLanguage || data.user.institute?.language || "both";
           const rawPkg = data.user.studentPackage || data.user.batch || "";
-          const isGoogleOrFree =
+          const isGoogleOrFreeUser =
             rawPkg.toLowerCase().includes("google") ||
-            rawPkg.toLowerCase().includes("free");
-          const userPkg = (!isShift(rawPkg) && !isGoogleOrFree && rawPkg) ||
+            rawPkg.toLowerCase().includes("free") ||
+            data.user.isFreeStudent ||
+            data.user.username?.includes("@") ||
+            !data.user.phone;
+
+          const userPkg = (!isShift(rawPkg) && !isGoogleOrFreeUser && rawPkg) ||
                           data.user.institute?.examPackage ||
                           "Full Set UBT";
-          const calculateFallbackExpiry = () => {
-            const d = new Date();
-            d.setMonth(d.getMonth() + 1);
-            return d.toISOString().split('T')[0];
-          };
-          const userExp = (data.user.expiryDate && data.user.expiryDate !== "2027-09-30" && !data.user.expiryDate.toLowerCase().includes("lifetime") && data.user.expiryDate !== "Active")
-            ? data.user.expiryDate
-            : (localExp && !localExp.toLowerCase().includes("lifetime") && localExp !== "Active" ? localExp : calculateFallbackExpiry());
+
+          const userExp = isGoogleOrFreeUser
+            ? null
+            : (data.user.expiryDate && data.user.expiryDate !== "2027-09-30" && !data.user.expiryDate.toLowerCase().includes("lifetime") && data.user.expiryDate !== "Active"
+                ? data.user.expiryDate
+                : (localExp && !localExp.toLowerCase().includes("lifetime") && localExp !== "Active" ? localExp : null));
 
           setStudentName(uName);
           setCurrentStudentPhone(uPhone);
           setInstituteLanguage(instLang);
           localStorage.setItem("instituteLanguage", instLang);
+          if (isGoogleOrFreeUser) {
+            setStudentExpiryDate(null);
+            try { localStorage.removeItem("currentStudentExpiryDate"); } catch (e) {}
+          } else {
+            setStudentExpiryDate(userExp);
+          }
           if (instName) setStudentInstitute(instName);
           if (instLogo) setLogoWatermark(instLogo);
           if (batchName) setStudentBatch(batchName);
@@ -192,6 +236,9 @@ const StudentDashboard = () => {
           if (userExp) {
             setStudentExpiryDate(userExp);
             localStorage.setItem("currentStudentExpiryDate", userExp);
+          } else {
+            setStudentExpiryDate("");
+            localStorage.removeItem("currentStudentExpiryDate");
           }
 
           localStorage.setItem("currentUser", uName);
@@ -698,14 +745,14 @@ const StudentDashboard = () => {
               <h2 style={{ color: "#0f172a", margin: "0", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px" }}>
                 Welcome, {studentName}
               </h2>
-              {studentExpiryDate && (
+              {!isGoogleOrFree && effectiveExpiryDate && (
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginTop: "12px", padding: "6px 16px", backgroundColor: isPackageExpired ? "#fee2e2" : "#f8fafc", borderRadius: "20px", border: isPackageExpired ? "1px solid #fca5a5" : "1px solid #e2e8f0" }}>
                   <span style={{ fontSize: "12px", color: isPackageExpired ? "#991b1b" : "#475569", fontWeight: "600" }}>
                     Package: <strong style={{ color: isPackageExpired ? "#dc2626" : "#1e3a8a" }}>{studentPackage}</strong>
                   </span>
                   <span style={{ color: "#cbd5e1" }}>•</span>
                   <span style={{ fontSize: "12px", color: isPackageExpired ? "#991b1b" : "#475569", fontWeight: "600" }}>
-                    Package Expiry Date: <strong style={{ color: isPackageExpired ? "#dc2626" : "#047857" }}>{studentExpiryDate}</strong>
+                    Package Expiry Date: <strong style={{ color: isPackageExpired ? "#dc2626" : "#047857" }}>{effectiveExpiryDate}</strong>
                   </span>
                   <span style={{
                     fontSize: "11px",
@@ -816,27 +863,29 @@ const StudentDashboard = () => {
                 </div>
                 <div>
                   <div style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.6px", color: "#64748b" }}>
-                    Your Purchased Package
+                    {isGoogleOrFree ? "Access Membership" : "Your Purchased Package"}
                   </div>
                   <div style={{ fontSize: "20px", fontWeight: "800", color: "#1e3a8a", marginTop: "2px" }}>
-                    {(studentPackage && !studentPackage.toLowerCase().includes("google") && !studentPackage.toLowerCase().includes("free") && !isShift(studentPackage)) ? studentPackage : "Full Set UBT"}
+                    {isGoogleOrFree ? "Full Student Access" : ((studentPackage && !studentPackage.toLowerCase().includes("google") && !studentPackage.toLowerCase().includes("free") && !isShift(studentPackage)) ? studentPackage : "Full Set UBT")}
                   </div>
                 </div>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-                <div style={{
-                  backgroundColor: "#ffffff",
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  border: isPackageExpired ? "1px solid #fca5a5" : "1px solid #cbd5e1",
-                  textAlign: "right"
-                }}>
-                  <div style={{ fontSize: "11px", fontWeight: "600", color: isPackageExpired ? "#991b1b" : "#64748b" }}>Package Expiry Date</div>
-                  <div style={{ fontSize: "14px", fontWeight: "800", color: isPackageExpired ? "#dc2626" : "#047857", marginTop: "2px" }}>
-                    {studentExpiryDate || "—"}
+                {!isGoogleOrFree && effectiveExpiryDate && (
+                  <div style={{
+                    backgroundColor: "#ffffff",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    border: isPackageExpired ? "1px solid #fca5a5" : "1px solid #cbd5e1",
+                    textAlign: "right"
+                  }}>
+                    <div style={{ fontSize: "11px", fontWeight: "600", color: isPackageExpired ? "#991b1b" : "#64748b" }}>Package Expiry Date</div>
+                    <div style={{ fontSize: "14px", fontWeight: "800", color: isPackageExpired ? "#dc2626" : "#047857", marginTop: "2px" }}>
+                      {effectiveExpiryDate}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <span style={{
                   fontSize: "12px",
@@ -1111,75 +1160,82 @@ const StudentDashboard = () => {
         )}
 
         {/* NOTICE BOARD TAB */}
-        {activeTab === "news" && (
-          <div>
-            {/* 6 official portal buttons with simple, attractive, larger icons */}
-            <div style={{ marginBottom: "30px" }}>
-              <OfficialPortalButtons />
-            </div>
+        {activeTab === "news" && (() => {
+          const effectiveFilter = noticeFilterTrack === "auto"
+            ? (instituteLanguage === "japanese" ? "japanese" : instituteLanguage === "korean" ? "korean" : "korean")
+            : noticeFilterTrack;
 
-            {/* Notice Section — poster style with Study Track filtering */}
-            {(() => {
-              const effectiveFilter = noticeFilterTrack === "auto"
-                ? (instituteLanguage === "both" ? "all" : instituteLanguage)
-                : noticeFilterTrack;
+          const displayedNotices = newsList.filter((item) => {
+            const itemLang = (item.language || item.track || "all").toLowerCase();
+            if (effectiveFilter === "all") return true;
+            if (effectiveFilter === "korean") return itemLang === "all" || itemLang === "korean";
+            if (effectiveFilter === "japanese") return itemLang === "all" || itemLang === "japanese";
+            return true;
+          });
 
-              const displayedNotices = newsList.filter((item) => {
-                const itemLang = (item.language || item.track || "all").toLowerCase();
-                if (effectiveFilter === "all") return true;
-                if (effectiveFilter === "korean") return itemLang === "all" || itemLang === "korean";
-                if (effectiveFilter === "japanese") return itemLang === "all" || itemLang === "japanese";
-                return true;
-              });
+          const totalKorean = newsList.filter(n => (n.language || n.track || "all").toLowerCase() === "korean").length;
+          const totalJapanese = newsList.filter(n => (n.language || n.track || "all").toLowerCase() === "japanese").length;
+          const totalAll = newsList.length;
 
-              const totalKorean = newsList.filter(n => (n.language || n.track || "all").toLowerCase() === "korean").length;
-              const totalJapanese = newsList.filter(n => (n.language || n.track || "all").toLowerCase() === "japanese").length;
-              const totalAll = newsList.length;
+          const portalTrack = effectiveFilter === "all"
+            ? (instituteLanguage === "both" ? "both" : instituteLanguage)
+            : effectiveFilter;
 
-              return (
-                <div style={{ background: "white", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", maxWidth: "860px", margin: "0 auto" }}>
-                  {/* Study Track Notice Filter Bar */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px", flexWrap: "wrap", gap: "12px", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "16px" }}>
-                    <div>
-                      <h3 style={{ margin: 0, color: "#0f172a", fontSize: "19px", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span>📢</span> Notices & Announcements
-                      </h3>
-                      <p style={{ margin: "3px 0 0 0", fontSize: "12px", color: "#64748b" }}>
-                        Active Track: <strong style={{ color: instituteLanguage === "japanese" ? "#9333ea" : instituteLanguage === "korean" ? "#2563eb" : "#0f172a" }}>
-                          {instituteLanguage === "japanese" ? "🇯🇵 Japanese (日本語)" : instituteLanguage === "korean" ? "🇰🇷 Korean (한국어)" : "🌐 Both (Dual Track)"}
-                        </strong>
-                      </p>
-                    </div>
+          return (
+            <div>
+              {/* Separate Official Portals:
+                  Korean: Official Notices, Job Application, New Application, EPS Result
+                  Japanese: Official Notice, Japanese Notice & Info, JLPT Application Form, JFT Application Form */}
+              <div style={{ marginBottom: "26px" }}>
+                <OfficialPortalButtons
+                  track={portalTrack}
+                  showTrackTabs={effectiveFilter === "all"}
+                />
+              </div>
 
-                    {/* Filter Pills */}
-                    <div style={{ display: "inline-flex", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "10px", border: "1.5px solid #cbd5e1", gap: "4px", flexWrap: "wrap" }}>
-                      {[
-                        { key: "auto", label: instituteLanguage === "korean" ? "🇰🇷 My Track (Korean)" : instituteLanguage === "japanese" ? "🇯🇵 My Track (Japanese)" : "🌐 My Track (All)" },
-                        { key: "all", label: `🌐 All (${totalAll})` },
-                        { key: "korean", label: `🇰🇷 Korean (${totalKorean})` },
-                        { key: "japanese", label: `🇯🇵 Japanese (${totalJapanese})` }
-                      ].map((tab) => (
-                        <button
-                          key={tab.key}
-                          type="button"
-                          onClick={() => setNoticeFilterTrack(tab.key)}
-                          style={{
-                            backgroundColor: noticeFilterTrack === tab.key ? (tab.key === "japanese" ? "#9333ea" : tab.key === "korean" ? "#2563eb" : "#1e293b") : "transparent",
-                            color: noticeFilterTrack === tab.key ? "#ffffff" : "#475569",
-                            border: "none",
-                            borderRadius: "7px",
-                            padding: "6px 12px",
-                            fontSize: "12px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease"
-                          }}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
+              {/* Notice Section — poster style with Study Track filtering */}
+              <div style={{ background: "white", borderRadius: "16px", padding: "28px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0", maxWidth: "860px", margin: "0 auto" }}>
+                {/* Study Track Notice Filter Bar */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px", flexWrap: "wrap", gap: "12px", borderBottom: "1.5px solid #f1f5f9", paddingBottom: "16px" }}>
+                  <div>
+                    <h3 style={{ margin: 0, color: "#0f172a", fontSize: "19px", fontWeight: "800", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span>📢</span> Notices & Announcements
+                    </h3>
+                    <p style={{ margin: "3px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+                      Active Category: <strong style={{ color: effectiveFilter === "japanese" ? "#9333ea" : effectiveFilter === "korean" ? "#2563eb" : "#0f172a" }}>
+                        {effectiveFilter === "japanese" ? "🇯🇵 Japanese Notices & Portals" : effectiveFilter === "korean" ? "🇰🇷 Korean Notices & Portals" : "🌐 All Announcements"}
+                      </strong>
+                    </p>
                   </div>
+
+                  {/* Filter Pills */}
+                  <div style={{ display: "inline-flex", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "10px", border: "1.5px solid #cbd5e1", gap: "4px", flexWrap: "wrap" }}>
+                    {[
+                      { key: "korean", label: `🇰🇷 Korean Notices & Portals (${totalKorean})` },
+                      { key: "japanese", label: `🇯🇵 Japanese Notices & Portals (${totalJapanese})` },
+                      { key: "all", label: `🌐 All (${totalAll})` }
+                    ].map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setNoticeFilterTrack(tab.key)}
+                        style={{
+                          backgroundColor: (effectiveFilter === tab.key) ? (tab.key === "japanese" ? "#9333ea" : tab.key === "korean" ? "#2563eb" : "#1e293b") : "transparent",
+                          color: (effectiveFilter === tab.key) ? "#ffffff" : "#475569",
+                          border: "none",
+                          borderRadius: "7px",
+                          padding: "6px 14px",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                   {displayedNotices.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "40px 0" }}>
@@ -1283,13 +1339,12 @@ const StudentDashboard = () => {
                     </div>
                   );
                 })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
             );
           })()}
-          </div>
-        )}
 
         {/* PACKAGES TAB */}
         {activeTab === "buyExam" && (

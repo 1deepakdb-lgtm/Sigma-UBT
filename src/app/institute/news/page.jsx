@@ -327,10 +327,9 @@ const InstituteNews = () => {
           </p>
         </div>
 
-        {/* OFFICIAL PORTALS GRAPHIC CARDS SECTION */}
         {/* OFFICIAL PORTALS GRAPHIC CARDS SECTION (SIMPLE, ATTRACTIVE, LARGER ICONS) */}
         <div style={{ marginBottom: "35px" }}>
-          <OfficialPortalButtons />
+          <OfficialPortalButtons track="both" showTrackTabs={true} />
         </div>
 
         {/* PUBLISH FORM CARD */}

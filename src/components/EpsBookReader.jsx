@@ -4193,10 +4193,12 @@ export default function EpsBookReader({
               {/* STATUS BANNER FOR STUDENT & INSTITUTE */}
               {(mode === "student" || mode === "institute") && (() => {
                 const isUnlocked = isModelBankUnlocked();
-                const entityLabel = mode === "student" ? "Enrolled Package:" : "Institute Package:";
-                const currentPkg = mode === "student" 
+                const rawPkg = mode === "student" 
                   ? (studentPackage || "Full Set UBT")
                   : (typeof window !== "undefined" ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage") || "Standard Package") : "Standard Package");
+                const isFreeOrGooglePkg = typeof rawPkg === "string" && (rawPkg.toLowerCase().includes("google") || rawPkg.toLowerCase().includes("free"));
+                const entityLabel = mode === "student" ? (isFreeOrGooglePkg ? "Access Membership:" : "Enrolled Package:") : "Institute Package:";
+                const currentPkg = isFreeOrGooglePkg ? "Full Student Access" : rawPkg;
                 const currentInst = typeof window !== "undefined" ? (localStorage.getItem("currentInstitute") || "Institute") : "Institute";
 
                 return (

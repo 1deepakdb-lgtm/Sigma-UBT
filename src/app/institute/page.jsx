@@ -1877,9 +1877,8 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
 
         {activeTab === "news" && (
           <div>
-            {/* 6 official portal buttons with simple, attractive, larger icons */}
             <div style={{ marginBottom: "32px" }}>
-              <OfficialPortalButtons />
+              <OfficialPortalButtons track={instituteLanguage || "both"} showTrackTabs={instituteLanguage === "both"} />
             </div>
 
             {/* INSTITUTE NOTICE SECTION — publish & full poster view */}

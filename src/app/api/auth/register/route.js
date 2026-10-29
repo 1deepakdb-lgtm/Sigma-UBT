@@ -103,11 +103,7 @@ export async function POST(req) {
       phone: user.phone || null,
       batch: 'Free Student Access',
       studentPackage: 'Full Set UBT',
-      expiryDate: (() => {
-        const d = new Date();
-        d.setMonth(d.getMonth() + 1);
-        return d.toISOString().split('T')[0];
-      })(),
+      expiryDate: null,
       instituteId: user.instituteId,
       instituteName: user.institute?.name || 'ExamJK Open Academy',
       instituteLanguage: languageTrack || 'both',

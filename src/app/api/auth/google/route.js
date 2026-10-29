@@ -85,15 +85,12 @@ export async function POST(req) {
       phone: user.phone || null,
       batch: user.batch || 'Free Student Access',
       studentPackage: 'Full Set UBT',
-      expiryDate: (() => {
-        const d = new Date();
-        d.setMonth(d.getMonth() + 1);
-        return d.toISOString().split('T')[0];
-      })(),
+      expiryDate: null,
       instituteId: user.instituteId || openInst?.id || null,
       instituteName: user.institute?.name || openInst?.name || 'ExamJK Open Academy',
       instituteLanguage: languageTrack || user.institute?.language || 'both',
       isGoogleAuth: true,
+      isFreeStudent: true,
       picture: picture || null
     };
 

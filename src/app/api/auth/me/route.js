@@ -98,32 +98,36 @@ export async function GET(req) {
         }
       }
 
-      // Calculate package expiry date (from creation date if not already set from bill)
-      if (!expiryDate && user.createdAt) {
-        const cDate = new Date(user.createdAt);
-        const batchLower = (user.batch || '').toLowerCase();
-        let durationMonths = 1;
-        if (batchLower.includes('6 month') || batchLower.includes('6 months')) durationMonths = 6;
-        else if (batchLower.includes('3 month') || batchLower.includes('3 months')) durationMonths = 3;
-        else if (batchLower.includes('2 month') || batchLower.includes('2 months')) durationMonths = 2;
-        else if (batchLower.includes('15 day') || batchLower.includes('15 days')) {
-          cDate.setDate(cDate.getDate() + 15);
-          expiryDate = cDate.toISOString().split('T')[0];
+      if (isGoogleOrFree) {
+        expiryDate = null;
+      } else {
+        // Calculate package expiry date (from creation date if not already set from bill)
+        if (!expiryDate && user.createdAt) {
+          const cDate = new Date(user.createdAt);
+          const batchLower = (user.batch || '').toLowerCase();
+          let durationMonths = 1;
+          if (batchLower.includes('6 month') || batchLower.includes('6 months')) durationMonths = 6;
+          else if (batchLower.includes('3 month') || batchLower.includes('3 months')) durationMonths = 3;
+          else if (batchLower.includes('2 month') || batchLower.includes('2 months')) durationMonths = 2;
+          else if (batchLower.includes('15 day') || batchLower.includes('15 days')) {
+            cDate.setDate(cDate.getDate() + 15);
+            expiryDate = cDate.toISOString().split('T')[0];
+          }
+          if (!expiryDate) {
+            cDate.setMonth(cDate.getMonth() + durationMonths);
+            expiryDate = cDate.toISOString().split('T')[0];
+          }
         }
+
+        if (!expiryDate && user.institute?.expireDate) {
+          expiryDate = user.institute.expireDate;
+        }
+
         if (!expiryDate) {
-          cDate.setMonth(cDate.getMonth() + durationMonths);
-          expiryDate = cDate.toISOString().split('T')[0];
+          const d = new Date();
+          d.setMonth(d.getMonth() + 1);
+          expiryDate = d.toISOString().split('T')[0];
         }
-      }
-
-      if (!expiryDate && user.institute?.expireDate) {
-        expiryDate = user.institute.expireDate;
-      }
-
-      if (!expiryDate) {
-        const d = new Date();
-        d.setMonth(d.getMonth() + 1);
-        expiryDate = d.toISOString().split('T')[0];
       }
     }
 
@@ -132,7 +136,8 @@ export async function GET(req) {
       user: {
         ...user,
         studentPackage,
-        expiryDate: expiryDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        expiryDate: isGoogleOrFree ? null : expiryDate,
+        isFreeStudent: Boolean(isGoogleOrFree),
         instituteLanguage: user.institute?.language || 'both'
       }
     });

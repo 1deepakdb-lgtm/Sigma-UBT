@@ -263,13 +263,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     setInstLang(rawTrack);
 
     if (rawTrack === "japanese") {
-      if (activeLang !== "ja") {
-        handleSwitchLanguage("ja");
-      }
+      setActiveLang("ja");
+      setSelectedFemaleModel(JAPANESE_FEMALE_VOICE_MODELS[0]);
+      setSelectedMaleModel(JAPANESE_MALE_VOICE_MODELS[0]);
+      fetchDictionary('', 'ja', 'all');
     } else if (rawTrack === "korean") {
-      if (activeLang !== "ko") {
-        handleSwitchLanguage("ko");
-      }
+      setActiveLang("ko");
+      setSelectedFemaleModel(KOREAN_FEMALE_VOICE_MODELS[0]);
+      setSelectedMaleModel(KOREAN_MALE_VOICE_MODELS[0]);
+      fetchDictionary('', 'ko', 'all');
+    } else {
+      fetchDictionary('', activeLang, activeLang === 'ja' ? japaneseFilter : 'all');
     }
   }, [propInstituteLanguage]);
 
@@ -431,10 +435,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
   }
 
-  // Initial load
-  useEffect(() => {
-    fetchDictionary('', activeLang);
-  }, []);
 
   function handleSwitchLanguage(newLang) {
     if (activeLang === newLang) return;
@@ -1038,118 +1038,74 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           {title && <h2 style={{ margin: 0, color: "#0f172a", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
 
           {/* 🇰🇷 Korean vs 🇯🇵 Japanese Language Switcher Toggle Buttons */}
-          {instLang === 'both' ? (
-            <div
+          <div
+            style={{
+              display: "inline-flex",
+              backgroundColor: "#f1f5f9",
+              padding: "4px",
+              borderRadius: "10px",
+              border: "1.5px solid #cbd5e1",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
+              gap: "4px"
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => handleSwitchLanguage('ko')}
+              title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
               style={{
-                display: "inline-flex",
-                backgroundColor: "#f1f5f9",
-                padding: "4px",
-                borderRadius: "10px",
-                border: "1.5px solid #cbd5e1",
-                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
-                gap: "4px"
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => handleSwitchLanguage('ko')}
-                title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
-                style={{
-                  backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
-                  color: activeLang === 'ko' ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
-                  padding: "6px 14px",
-                  fontSize: "13px",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: activeLang === 'ko' ? "0 2px 8px rgba(37,99,235,0.32)" : "none",
-                  transition: "all 0.18s ease"
-                }}
-              >
-                <span style={{ fontSize: "16px" }}>🇰🇷</span>
-                <span>Korean (한국어)</span>
-                {activeLang === 'ko' && (
-                  <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "10px", fontWeight: "700" }}>
-                    Active
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSwitchLanguage('ja')}
-                title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
-                style={{
-                  backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
-                  color: activeLang === 'ja' ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
-                  padding: "6px 14px",
-                  fontSize: "13px",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: activeLang === 'ja' ? "0 2px 8px rgba(147,51,234,0.35)" : "none",
-                  transition: "all 0.18s ease"
-                }}
-              >
-                <span style={{ fontSize: "16px" }}>🇯🇵</span>
-                <span>Japanese (日本語)</span>
-                {activeLang === 'ja' && (
-                  <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "10px", fontWeight: "700" }}>
-                    Active
-                  </span>
-                )}
-              </button>
-            </div>
-          ) : instLang === 'japanese' ? (
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#fdf2f8",
-                border: "1.5px solid #fbcfe8",
+                backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
+                color: activeLang === 'ko' ? "#ffffff" : "#475569",
+                border: "none",
+                borderRadius: "7px",
                 padding: "6px 14px",
-                borderRadius: "10px",
-                color: "#9333ea",
+                fontSize: "13px",
                 fontWeight: "800",
-                fontSize: "13px"
-              }}
-            >
-              <span style={{ fontSize: "18px" }}>🇯🇵</span>
-              <span>Japanese Dictionary (日本語 辞書)</span>
-              <span style={{ fontSize: "10px", backgroundColor: "#f3e8ff", color: "#7e22ce", padding: "2px 6px", borderRadius: "8px" }}>
-                Locked Track
-              </span>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "inline-flex",
+                cursor: "pointer",
+                display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#eff6ff",
-                border: "1.5px solid #bfdbfe",
-                padding: "6px 14px",
-                borderRadius: "10px",
-                color: "#1d4ed8",
-                fontWeight: "800",
-                fontSize: "13px"
+                gap: "6px",
+                boxShadow: activeLang === 'ko' ? "0 2px 8px rgba(37,99,235,0.32)" : "none",
+                transition: "all 0.18s ease"
               }}
             >
-              <span style={{ fontSize: "18px" }}>🇰🇷</span>
-              <span>Korean Dictionary (한국어 사전)</span>
-              <span style={{ fontSize: "10px", backgroundColor: "#dbeafe", color: "#1e40af", padding: "2px 6px", borderRadius: "8px" }}>
-                Locked Track
-              </span>
-            </div>
-          )}
+              <span style={{ fontSize: "16px" }}>🇰🇷</span>
+              <span>Korean (한국어)</span>
+              {activeLang === 'ko' && (
+                <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "10px", fontWeight: "700" }}>
+                  Active
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSwitchLanguage('ja')}
+              title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
+              style={{
+                backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
+                color: activeLang === 'ja' ? "#ffffff" : "#475569",
+                border: "none",
+                borderRadius: "7px",
+                padding: "6px 14px",
+                fontSize: "13px",
+                fontWeight: "800",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: activeLang === 'ja' ? "0 2px 8px rgba(147,51,234,0.35)" : "none",
+                transition: "all 0.18s ease"
+              }}
+            >
+              <span style={{ fontSize: "16px" }}>🇯🇵</span>
+              <span>Japanese (日本語)</span>
+              {activeLang === 'ja' && (
+                <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "10px", fontWeight: "700" }}>
+                  Active
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>

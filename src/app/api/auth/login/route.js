@@ -340,31 +340,41 @@ export async function POST(req) {
         }
       }
 
-      if (!expiryDate && user.createdAt) {
-        const cDate = new Date(user.createdAt);
-        const batchLower = (user.batch || '').toLowerCase();
-        let durationMonths = 1;
-        if (batchLower.includes('6 month') || batchLower.includes('6 months')) durationMonths = 6;
-        else if (batchLower.includes('3 month') || batchLower.includes('3 months')) durationMonths = 3;
-        else if (batchLower.includes('2 month') || batchLower.includes('2 months')) durationMonths = 2;
-        else if (batchLower.includes('15 day') || batchLower.includes('15 days')) {
-          cDate.setDate(cDate.getDate() + 15);
-          expiryDate = cDate.toISOString().split('T')[0];
+      const isGoogleOrFree =
+        user.batch?.toLowerCase().includes('google') ||
+        user.batch?.toLowerCase().includes('free') ||
+        user.username?.includes('@') ||
+        !user.phone;
+
+      if (isGoogleOrFree) {
+        expiryDate = null;
+      } else {
+        if (!expiryDate && user.createdAt) {
+          const cDate = new Date(user.createdAt);
+          const batchLower = (user.batch || '').toLowerCase();
+          let durationMonths = 1;
+          if (batchLower.includes('6 month') || batchLower.includes('6 months')) durationMonths = 6;
+          else if (batchLower.includes('3 month') || batchLower.includes('3 months')) durationMonths = 3;
+          else if (batchLower.includes('2 month') || batchLower.includes('2 months')) durationMonths = 2;
+          else if (batchLower.includes('15 day') || batchLower.includes('15 days')) {
+            cDate.setDate(cDate.getDate() + 15);
+            expiryDate = cDate.toISOString().split('T')[0];
+          }
+          if (!expiryDate) {
+            cDate.setMonth(cDate.getMonth() + durationMonths);
+            expiryDate = cDate.toISOString().split('T')[0];
+          }
         }
+
+        if (!expiryDate && user.institute?.expireDate) {
+          expiryDate = user.institute.expireDate;
+        }
+
         if (!expiryDate) {
-          cDate.setMonth(cDate.getMonth() + durationMonths);
-          expiryDate = cDate.toISOString().split('T')[0];
+          const d = new Date();
+          d.setMonth(d.getMonth() + 1);
+          expiryDate = d.toISOString().split('T')[0];
         }
-      }
-
-      if (!expiryDate && user.institute?.expireDate) {
-        expiryDate = user.institute.expireDate;
-      }
-
-      if (!expiryDate) {
-        const d = new Date();
-        d.setMonth(d.getMonth() + 1);
-        expiryDate = d.toISOString().split('T')[0];
       }
     }
 
