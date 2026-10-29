@@ -389,11 +389,11 @@ export default function LoginPage() {
               cursor: "pointer",
               transition: "all 0.15s ease",
               backgroundColor: authMode === "register" ? "#ffffff" : "transparent",
-              color: authMode === "register" ? "#16a34a" : "#64748b",
+              color: authMode === "register" ? "#1e3a8a" : "#64748b",
               boxShadow: authMode === "register" ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
             }}
           >
-            ✨ Free Student Sign Up
+            Sign Up
           </button>
         </div>
 
