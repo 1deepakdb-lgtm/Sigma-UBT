@@ -10,3 +10,7 @@ prisma/*.db-journal
 *.log
 .DS_Store
 dist-electron
+android/.gradle
+android/build
+android/app/build
+android/local.properties

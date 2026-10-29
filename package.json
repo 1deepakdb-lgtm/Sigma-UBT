@@ -13,7 +13,9 @@
     "desktop:run": "electron electron/main.cjs",
     "desktop:dist:mac": "electron-builder --mac",
     "desktop:dist:win": "electron-builder --win",
-    "desktop:dist:all": "electron-builder -mw"
+    "desktop:dist:all": "electron-builder -mw",
+    "android:build": "cd android && export JAVA_HOME=/Users/deepakbhatt/development/jdk-17/Contents/Home && ./gradlew assembleDebug && cp app/build/outputs/apk/debug/app-debug.apk ../public/downloads/ExamJK.apk",
+    "android:clean": "cd android && ./gradlew clean"
   },
   "build": {
     "appId": "com.examjk.app",
