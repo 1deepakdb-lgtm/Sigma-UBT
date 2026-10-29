@@ -82,7 +82,9 @@ export default function LoginPage() {
       if (userData.studentPackage && !userData.studentPackage.toLowerCase().includes("google") && !userData.studentPackage.toLowerCase().includes("free")) {
         localStorage.setItem("currentStudentPackage", userData.studentPackage);
       } else {
-        localStorage.setItem("currentStudentPackage", "Full Set UBT");
+        localStorage.setItem("currentStudentPackage", "Free Student Access");
+        localStorage.setItem("isFreeStudent", "true");
+        localStorage.setItem("accountValidity", "Lifetime");
       }
       if (userData.expiryDate) {
         localStorage.setItem("currentStudentExpiryDate", userData.expiryDate);

@@ -348,6 +348,9 @@ export async function POST(req) {
 
       if (isGoogleOrFree) {
         expiryDate = null;
+        if (!studentPackage || studentPackage === 'Full Set UBT') {
+          studentPackage = 'Free Student Access';
+        }
       } else {
         if (!expiryDate && user.createdAt) {
           const cDate = new Date(user.createdAt);

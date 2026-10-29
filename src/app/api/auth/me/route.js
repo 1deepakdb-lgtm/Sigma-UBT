@@ -51,8 +51,9 @@ export async function GET(req) {
         user.batch?.toLowerCase().includes('google') ||
         user.batch?.toLowerCase().includes('free');
 
-      // If user.batch is a real custom package name, use it
-      if (user.batch && !isShiftOnly && !isGoogleOrFree) {
+      if (isGoogleOrFree) {
+        studentPackage = 'Free Student Access';
+      } else if (user.batch && !isShiftOnly) {
         studentPackage = user.batch;
       } else if (user.institute?.examPackage) {
         studentPackage = user.institute.examPackage;

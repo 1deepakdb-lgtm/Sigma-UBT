@@ -81,6 +81,30 @@ const StudentExam = () => {
       const targetSetName = currentExamSet ? currentExamSet.name : `Chapterwise 0${examId}`;
       setExactExamName(targetSetName);
 
+      // Check Free Student / Self-Signup Paid Access Authorization
+      const savedPkg = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPackage") || "") : "";
+      const isFreeGuest = typeof window !== 'undefined' && (
+        localStorage.getItem("isFreeStudent") === "true" ||
+        localStorage.getItem("isGoogleAuth") === "true" ||
+        savedPkg.toLowerCase().includes("free")
+      );
+      const buyerMap = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}") : {};
+      const curPhone = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone") || "") : "";
+      const curUser = typeof window !== 'undefined' ? (localStorage.getItem("currentUser") || "") : "";
+      const buyerInfo = buyerMap[curPhone] || buyerMap[curUser];
+
+      const hasPaidExam = Boolean(
+        buyerInfo?.isBuyer ||
+        buyerInfo?.hasPurchased ||
+        (!isFreeGuest && savedPkg && !savedPkg.toLowerCase().includes("free"))
+      );
+
+      if (isFreeGuest && !hasPaidExam) {
+        alert("Access Restricted: UBT & Mock tests require a purchased package. Please purchase an exam package to unlock full student access.");
+        router.push("/student");
+        return;
+      }
+
       // Check Package Expiry Date Authorization
       const savedExpDate = typeof window !== 'undefined' ? localStorage.getItem("currentStudentExpiryDate") : null;
       if (savedExpDate && savedExpDate !== 'Active' && !savedExpDate.toLowerCase().includes("lifetime") && !isNaN(new Date(savedExpDate).getTime())) {
