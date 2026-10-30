@@ -752,9 +752,6 @@ const StudentDashboard = () => {
           {instituteLanguage !== "japanese" && (
             <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
           )}
-          {(instituteLanguage === "japanese" || instituteLanguage === "both") && (
-            <button onClick={() => setActiveTab("japaneseMock")} style={getNavBtnStyle("japaneseMock")}>Mock Test</button>
-          )}
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>
             {instituteLanguage === "japanese" ? "Japanese Dictionary" : instituteLanguage === "korean" ? "Korean Dictionary" : "Dictionary"}
           </button>
