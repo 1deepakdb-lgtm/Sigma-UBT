@@ -80,6 +80,14 @@ const BuildingIcon = ({ size = 20, color = "#0f766e" }) => (
   </svg>
 );
 
+const ClipboardIcon = ({ size = 28, color = "#7c3aed" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+    <path d="M9 12h6M9 16h6" />
+  </svg>
+);
+
 const SHIFT_NAMES = ['morning', 'day', 'evening', 'night', 'afternoon'];
 const isShift = (str) => SHIFT_NAMES.includes((str || '').toLowerCase().trim());
 
@@ -752,11 +760,18 @@ const StudentDashboard = () => {
           {instituteLanguage !== "japanese" && (
             <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
           )}
+          {(instituteLanguage === "japanese" || instituteLanguage === "both") && (
+            <button onClick={() => setActiveTab("japaneseMock")} style={getNavBtnStyle("japaneseMock")}>Open Mock Test</button>
+          )}
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>
             {instituteLanguage === "japanese" ? "Japanese Dictionary" : instituteLanguage === "korean" ? "Korean Dictionary" : "Dictionary"}
           </button>
-          <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
-          <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
+          <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>
+            {instituteLanguage === "japanese" ? "Japanese Study Materials" : instituteLanguage === "korean" ? "Korean Study Materials" : "Study Materials"}
+          </button>
+          <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>
+            {instituteLanguage === "japanese" ? "Japanese Notices & Portals" : instituteLanguage === "korean" ? "Korean Notices & Portals" : "Notice"}
+          </button>
           <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
         </div>
@@ -860,12 +875,26 @@ const StudentDashboard = () => {
                 <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Inspect past scores, accuracy, and logs</p>
               </div>
 
+              {(instituteLanguage === "japanese" || instituteLanguage === "both") && (
+                <div onClick={() => setActiveTab("japaneseMock")} style={{ background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #c4b5fd", boxShadow: "0 4px 12px rgba(124,58,237,0.12)" }}>
+                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                    <ClipboardIcon size={28} color="#7c3aed" />
+                  </div>
+                  <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>Open Mock Test</h3>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>50 JLPT (N5–N1) &amp; JFT Official Practice Sets</p>
+                </div>
+              )}
+
               <div onClick={() => setActiveTab("listening")} style={{ background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fcd34d", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
                   <BookStackIcon size={28} color="#d97706" />
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#92400e", fontSize: "18px", fontWeight: "700" }}>Study Materials</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Korean &amp; Japanese Textbooks, Question Banks &amp; Grammar</p>
+                <h3 style={{ margin: "0 0 4px 0", color: "#92400e", fontSize: "18px", fontWeight: "700" }}>
+                  {instituteLanguage === "japanese" ? "Japanese Study Materials" : instituteLanguage === "korean" ? "Korean Study Materials" : "Study Materials"}
+                </h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                  {instituteLanguage === "japanese" ? "Japanese Textbooks, Question Banks & Grammar" : instituteLanguage === "korean" ? "Korean Textbooks, Question Banks & Grammar" : "Korean & Japanese Textbooks, Question Banks & Grammar"}
+                </p>
               </div>
 
               <div onClick={() => setActiveTab("vocab")} style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #ddd6fe", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
@@ -1229,14 +1258,15 @@ const StudentDashboard = () => {
           <DictionarySection instituteLanguage={instituteLanguage} userRole="student" />
         )}
 
-        {/* EPS BOOK TAB */}
-        {activeTab === "listening" && (
+        {/* STUDY MATERIALS & JAPANESE MOCK TEST TAB */}
+        {(activeTab === "listening" || activeTab === "japaneseMock") && (
           <div style={{ marginTop: "10px", marginBottom: "30px" }}>
             <EpsBookReader
               mode="student"
               studentPackage={studentPackage}
               purchasedPackages={purchasedPackages}
               instituteLanguage={instituteLanguage}
+              initialFolder={activeTab === "japaneseMock" ? "Mock Test" : undefined}
               onNavigateTab={(tab) => setActiveTab(tab)}
             />
           </div>
@@ -1244,9 +1274,11 @@ const StudentDashboard = () => {
 
         {/* NOTICE BOARD TAB */}
         {activeTab === "news" && (() => {
-          const effectiveFilter = noticeFilterTrack === "auto"
-            ? (instituteLanguage === "japanese" ? "japanese" : instituteLanguage === "korean" ? "korean" : "korean")
-            : noticeFilterTrack;
+          const effectiveFilter = instituteLanguage === "japanese"
+            ? "japanese"
+            : instituteLanguage === "korean"
+            ? "korean"
+            : (noticeFilterTrack === "auto" ? "all" : noticeFilterTrack);
 
           const displayedNotices = newsList.filter((item) => {
             const itemLang = (item.language || item.track || "all").toLowerCase();
@@ -1260,9 +1292,21 @@ const StudentDashboard = () => {
           const totalJapanese = newsList.filter(n => (n.language || n.track || "all").toLowerCase() === "japanese").length;
           const totalAll = newsList.length;
 
-          const portalTrack = effectiveFilter === "all"
-            ? (instituteLanguage === "both" ? "both" : instituteLanguage)
+          const portalTrack = instituteLanguage === "japanese"
+            ? "japanese"
+            : instituteLanguage === "korean"
+            ? "korean"
             : effectiveFilter;
+
+          const filterTabs = instituteLanguage === "korean"
+            ? [{ key: "korean", label: `🇰🇷 Korean Notices & Portals (${totalKorean})` }]
+            : instituteLanguage === "japanese"
+            ? [{ key: "japanese", label: `🇯🇵 Japanese Notices & Portals (${totalJapanese})` }]
+            : [
+                { key: "korean", label: `🇰🇷 Korean Notices & Portals (${totalKorean})` },
+                { key: "japanese", label: `🇯🇵 Japanese Notices & Portals (${totalJapanese})` },
+                { key: "all", label: `🌐 All (${totalAll})` }
+              ];
 
           return (
             <div>
@@ -1272,7 +1316,7 @@ const StudentDashboard = () => {
               <div style={{ marginBottom: "26px" }}>
                 <OfficialPortalButtons
                   track={portalTrack}
-                  showTrackTabs={effectiveFilter === "all"}
+                  showTrackTabs={instituteLanguage === "both"}
                 />
               </div>
 
@@ -1293,11 +1337,7 @@ const StudentDashboard = () => {
 
                   {/* Filter Pills */}
                   <div style={{ display: "inline-flex", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "10px", border: "1.5px solid #cbd5e1", gap: "4px", flexWrap: "wrap" }}>
-                    {[
-                      { key: "korean", label: `🇰🇷 Korean Notices & Portals (${totalKorean})` },
-                      { key: "japanese", label: `🇯🇵 Japanese Notices & Portals (${totalJapanese})` },
-                      { key: "all", label: `🌐 All (${totalAll})` }
-                    ].map((tab) => (
+                    {filterTabs.map((tab) => (
                       <button
                         key={tab.key}
                         type="button"
@@ -1310,7 +1350,7 @@ const StudentDashboard = () => {
                           padding: "6px 14px",
                           fontSize: "12px",
                           fontWeight: "700",
-                          cursor: "pointer",
+                          cursor: instituteLanguage === "both" ? "pointer" : "default",
                           transition: "all 0.15s ease"
                         }}
                       >

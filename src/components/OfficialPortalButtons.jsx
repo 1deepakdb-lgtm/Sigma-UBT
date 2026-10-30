@@ -280,23 +280,6 @@ export default function OfficialPortalButtons({
         >
           <button
             type="button"
-            onClick={() => setActiveTab('both')}
-            style={{
-              border: 'none',
-              borderRadius: '8px',
-              padding: '6px 14px',
-              fontSize: '12px',
-              fontWeight: '800',
-              cursor: 'pointer',
-              backgroundColor: activeTab === 'both' ? '#0f172a' : 'transparent',
-              color: activeTab === 'both' ? '#ffffff' : '#475569',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            🌐 All Portals (8)
-          </button>
-          <button
-            type="button"
             onClick={() => setActiveTab('korean')}
             style={{
               border: 'none',
@@ -328,6 +311,23 @@ export default function OfficialPortalButtons({
             }}
           >
             🇯🇵 Japanese Portals (4)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('both')}
+            style={{
+              border: 'none',
+              borderRadius: '8px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: '800',
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'both' ? '#0f172a' : 'transparent',
+              color: activeTab === 'both' ? '#ffffff' : '#475569',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            🌐 All Portals (8)
           </button>
         </div>
       )}

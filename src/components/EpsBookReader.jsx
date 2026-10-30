@@ -680,7 +680,8 @@ export default function EpsBookReader({
   studentPackage = "",
   purchasedPackages = [],
   onNavigateTab = null,
-  instituteLanguage: propInstituteLanguage
+  instituteLanguage: propInstituteLanguage,
+  initialFolder = null
 }) {
   const router = useRouter();
   const isInstitute = mode === "institute";
@@ -742,7 +743,14 @@ export default function EpsBookReader({
       setStudyLanguage("korean");
     }
   }, [effectiveInstLang]);
-  const [activeJapaneseFolder, setActiveJapaneseFolder] = useState("JLPT N5・N4");
+
+  const [activeJapaneseFolder, setActiveJapaneseFolder] = useState(() => initialFolder || "JLPT N5・N4");
+
+  useEffect(() => {
+    if (initialFolder) {
+      setActiveJapaneseFolder(initialFolder);
+    }
+  }, [initialFolder]);
   const [isJapaneseFolderOpen, setIsJapaneseFolderOpen] = useState(false);
   const [isKoreanFolderOpen, setIsKoreanFolderOpen] = useState(false);
   const [minnaLessonFilter, setMinnaLessonFilter] = useState("all"); // "all", "n5", "n4", "full"
