@@ -80,14 +80,6 @@ const BuildingIcon = ({ size = 20, color = "#0f766e" }) => (
   </svg>
 );
 
-const ClipboardIcon = ({ size = 28, color = "#7c3aed" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-    <path d="M9 12h6M9 16h6" />
-  </svg>
-);
-
 const SHIFT_NAMES = ['morning', 'day', 'evening', 'night', 'afternoon'];
 const isShift = (str) => SHIFT_NAMES.includes((str || '').toLowerCase().trim());
 
@@ -760,9 +752,6 @@ const StudentDashboard = () => {
           {instituteLanguage !== "japanese" && (
             <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
           )}
-          {(instituteLanguage === "japanese" || instituteLanguage === "both") && (
-            <button onClick={() => setActiveTab("japaneseMock")} style={getNavBtnStyle("japaneseMock")}>Open Mock Test</button>
-          )}
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>
             {instituteLanguage === "japanese" ? "Japanese Dictionary" : instituteLanguage === "korean" ? "Korean Dictionary" : "Dictionary"}
           </button>
@@ -874,16 +863,6 @@ const StudentDashboard = () => {
                 <h3 style={{ margin: "0 0 4px 0", color: "#166534", fontSize: "18px", fontWeight: "700" }}>Your Performance</h3>
                 <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Inspect past scores, accuracy, and logs</p>
               </div>
-
-              {(instituteLanguage === "japanese" || instituteLanguage === "both") && (
-                <div onClick={() => setActiveTab("japaneseMock")} style={{ background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #c4b5fd", boxShadow: "0 4px 12px rgba(124,58,237,0.12)" }}>
-                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                    <ClipboardIcon size={28} color="#7c3aed" />
-                  </div>
-                  <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>Open Mock Test</h3>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>50 JLPT (N5–N1) &amp; JFT Official Practice Sets</p>
-                </div>
-              )}
 
               <div onClick={() => setActiveTab("listening")} style={{ background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fcd34d", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
