@@ -20,6 +20,8 @@ export default function EsewaCheckoutModal({
   const [selectedType, setSelectedType] = useState(item?.type || "set");
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isQrZoomed, setIsQrZoomed] = useState(false);
+  const [payMethod, setPayMethod] = useState("gateway"); // "gateway" | "qr"
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const esewaNumber = "9768444902";
   const esewaAccountName = "Deepak Bhatt";
@@ -29,6 +31,7 @@ export default function EsewaCheckoutModal({
     if (isOpen) {
       setIsSuccess(false);
       setIsProcessing(false);
+      setIsRedirecting(false);
       setTxnId("");
       setSenderPhone(studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "" : ""));
       setSelectedType(item?.type || "set");
@@ -42,6 +45,50 @@ export default function EsewaCheckoutModal({
   const itemName = isSet ? (item.name || "Individual UBT Set") : (selectedPackage?.name || item.name || "UBT Exam Package");
   const itemPrice = isSet ? 40 : (selectedPackage?.price || item.price || 1000);
   const formattedPrice = typeof itemPrice === "number" ? `Rs. ${itemPrice}` : itemPrice.toString().startsWith("Rs") ? itemPrice : `Rs. ${itemPrice}`;
+
+  const handlePayViaEsewaGateway = async () => {
+    setIsRedirecting(true);
+    try {
+      const res = await fetch("/api/payment/esewa/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: item.id || item.name,
+          itemName,
+          itemType: selectedType,
+          amount: typeof itemPrice === "number" ? itemPrice : Number(String(itemPrice).replace(/[^0-9.]/g, "")) || 40,
+          studentPhone: senderPhone || studentPhone,
+          studentName: studentName || "Student"
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.actionUrl || !data.formData) {
+        throw new Error(data.error || "Failed to initiate eSewa gateway session");
+      }
+
+      // Create a hidden form and automatically post to eSewa gateway
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = data.actionUrl;
+      form.style.display = "none";
+
+      for (const key in data.formData) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = data.formData[key];
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.error("[eSewa Gateway Redirect Error]:", err);
+      alert(`Could not open eSewa payment gateway: ${err.message}. Please switch to the QR Code tab to pay manually.`);
+      setIsRedirecting(false);
+    }
+  };
 
   const handleCopyNumber = () => {
     navigator.clipboard.writeText(esewaNumber);
@@ -420,207 +467,412 @@ export default function EsewaCheckoutModal({
                 </div>
               </div>
 
-              {/* eSewa Payment Details Box */}
-              <div
-                style={{
-                  backgroundColor: "#ffffff",
-                  border: "1.5px dashed #16a34a",
-                  borderRadius: "12px",
-                  padding: "14px 16px",
-                  marginBottom: "18px",
-                  display: "flex",
-                  gap: "16px",
-                  alignItems: "center"
-                }}
-              >
-                {/* QR Code Container */}
-                <div
+              {/* Payment Mode Selector Tabs */}
+              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                <button
+                  type="button"
+                  onClick={() => setPayMethod("gateway")}
                   style={{
-                    backgroundColor: "#ffffff",
-                    padding: "6px",
-                    borderRadius: "10px",
-                    border: "1.5px solid #86efac",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    textAlign: "center",
-                    flexShrink: 0,
-                    cursor: "pointer"
+                    flex: 1,
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: payMethod === "gateway" ? "2px solid #16a34a" : "1px solid #cbd5e1",
+                    backgroundColor: payMethod === "gateway" ? "#f0fdf4" : "#ffffff",
+                    color: payMethod === "gateway" ? "#166534" : "#475569",
+                    fontWeight: "800",
+                    fontSize: "12.5px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px"
                   }}
-                  onClick={() => setIsQrZoomed(true)}
-                  title="Click to enlarge QR code"
                 >
-                  <img
-                    src="/esewa-payment-qr.jpg"
-                    alt="eSewa QR 9768444902"
-                    style={{
-                      width: "120px",
-                      height: "120px",
-                      objectFit: "contain",
-                      display: "block",
-                      borderRadius: "6px"
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/esewa-payment-qr.jpg";
-                    }}
-                  />
-                  <div style={{ fontSize: "9.5px", fontWeight: "800", color: "#16a34a", marginTop: "3px" }}>
-                    🔍 SCAN OR ENLARGE
-                  </div>
-                </div>
+                  <span>⚡</span>
+                  <span>eSewa Gateway (Auto-Verified)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayMethod("qr")}
+                  style={{
+                    flex: 1,
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: payMethod === "qr" ? "2px solid #16a34a" : "1px solid #cbd5e1",
+                    backgroundColor: payMethod === "qr" ? "#f0fdf4" : "#ffffff",
+                    color: payMethod === "qr" ? "#166534" : "#475569",
+                    fontWeight: "800",
+                    fontSize: "12.5px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px"
+                  }}
+                >
+                  <span>📷</span>
+                  <span>Scan QR (9768444902)</span>
+                </button>
+              </div>
 
-                {/* Recipient Details & 1-Click Copy */}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>
-                    Official eSewa ID / Phone:
+              {payMethod === "gateway" ? (
+                /* OFFICIAL ESEWA GATEWAY VIEW */
+                <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "18px", marginBottom: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+                    <div style={{ backgroundColor: "#16a34a", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "900" }}>
+                      ✓
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "800" }}>
+                        Official eSewa EPAY Gateway
+                      </h4>
+                      <p style={{ margin: "2px 0 0 0", fontSize: "11.5px", color: "#64748b" }}>
+                        Direct server-to-server verification. Genuine payment guarantee, instant auto-unlock.
+                      </p>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "4px 0" }}>
-                    <span
+
+                  <div style={{ backgroundColor: "#ffffff", padding: "12px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", marginBottom: "14px", fontSize: "12px", color: "#334155" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <span style={{ color: "#64748b" }}>Pay for:</span>
+                      <strong style={{ color: "#0f172a" }}>{itemName}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <span style={{ color: "#64748b" }}>Amount to Pay:</span>
+                      <strong style={{ color: "#16a34a", fontSize: "15px" }}>{formattedPrice}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#64748b" }}>Verification Mode:</span>
+                      <strong style={{ color: "#2563eb" }}>eSewa EPAY Gateway</strong>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: "16px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#0f172a", marginBottom: "5px" }}>
+                      Your Mobile Number (Optional):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 98XXXXXXXX"
+                      value={senderPhone}
+                      onChange={(e) => setSenderPhone(e.target.value)}
                       style={{
-                        fontFamily: "monospace",
-                        fontSize: "20px",
-                        fontWeight: "900",
-                        color: "#0f172a",
-                        letterSpacing: "0.5px"
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1.5px solid #cbd5e1",
+                        fontSize: "13.5px",
+                        boxSizing: "border-box"
                       }}
-                    >
-                      {esewaNumber}
-                    </span>
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", gap: "10px" }}>
                     <button
                       type="button"
-                      onClick={handleCopyNumber}
+                      onClick={handlePayViaEsewaGateway}
+                      disabled={isRedirecting}
                       style={{
-                        backgroundColor: copied ? "#dcfce7" : "#f1f5f9",
-                        color: copied ? "#166534" : "#0f172a",
-                        border: "1px solid",
-                        borderColor: copied ? "#86efac" : "#cbd5e1",
-                        borderRadius: "6px",
-                        padding: "3px 8px",
-                        fontSize: "11.5px",
-                        fontWeight: "700",
+                        flex: 1,
+                        background: isRedirecting ? "#94a3b8" : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "14px",
+                        borderRadius: "8px",
+                        fontWeight: "900",
+                        fontSize: "15px",
+                        cursor: isRedirecting ? "wait" : "pointer",
+                        boxShadow: "0 4px 14px rgba(22, 163, 74, 0.35)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px"
+                      }}
+                    >
+                      {isRedirecting ? (
+                        <>
+                          <span>⏳</span>
+                          <span>Connecting to eSewa Portal...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🟢</span>
+                          <span>Pay {formattedPrice} via eSewa Gateway ▶</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      disabled={isRedirecting}
+                      style={{
+                        backgroundColor: "#f1f5f9",
+                        color: "#475569",
+                        border: "1px solid #cbd5e1",
+                        padding: "13px 18px",
+                        borderRadius: "8px",
+                        fontWeight: "600",
+                        fontSize: "13px",
                         cursor: "pointer"
                       }}
                     >
-                      {copied ? "✓ Copied" : "Copy"}
+                      Cancel
                     </button>
                   </div>
-
-                  <div style={{ fontSize: "12px", color: "#334155", margin: "3px 0" }}>
-                    Account Name: <strong>{esewaAccountName}</strong>
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#64748b" }}>
-                    Org: <strong>{esewaOrg}</strong>
-                  </div>
-
+                </div>
+              ) : (
+                /* MANUAL QR CODE VIEW */
+                <div>
+                  {/* eSewa Payment Details Box */}
                   <div
                     style={{
-                      display: "inline-block",
-                      marginTop: "6px",
-                      fontSize: "10.5px",
-                      fontWeight: "700",
-                      color: "#15803d",
-                      backgroundColor: "#dcfce7",
-                      padding: "2px 8px",
-                      borderRadius: "12px"
+                      backgroundColor: "#ffffff",
+                      border: "1.5px dashed #16a34a",
+                      borderRadius: "12px",
+                      padding: "14px 16px",
+                      marginBottom: "18px",
+                      display: "flex",
+                      gap: "16px",
+                      alignItems: "center"
                     }}
                   >
-                    ⚡ Auto-Unlocks in seconds after confirmation
+                    {/* QR Code Container */}
+                    <div
+                      style={{
+                        backgroundColor: "#ffffff",
+                        padding: "6px",
+                        borderRadius: "10px",
+                        border: "1.5px solid #86efac",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                        textAlign: "center",
+                        flexShrink: 0,
+                        cursor: "pointer"
+                      }}
+                      onClick={() => setIsQrZoomed(true)}
+                      title="Click to enlarge QR code"
+                    >
+                      <img
+                        src="/esewa-payment-qr.jpg"
+                        alt="eSewa QR 9768444902"
+                        style={{
+                          width: "120px",
+                          height: "120px",
+                          objectFit: "contain",
+                          display: "block",
+                          borderRadius: "6px"
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/esewa-payment-qr.jpg";
+                        }}
+                      />
+                      <div style={{ fontSize: "9.5px", fontWeight: "800", color: "#16a34a", marginTop: "3px" }}>
+                        🔍 SCAN OR ENLARGE
+                      </div>
+                    </div>
+
+                    {/* Recipient Details & 1-Click Copy */}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>
+                        Official eSewa ID / Phone:
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "4px 0" }}>
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            fontSize: "20px",
+                            fontWeight: "900",
+                            color: "#0f172a",
+                            letterSpacing: "0.5px"
+                          }}
+                        >
+                          {esewaNumber}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCopyNumber}
+                          style={{
+                            backgroundColor: copied ? "#dcfce7" : "#f1f5f9",
+                            color: copied ? "#166534" : "#0f172a",
+                            border: "1px solid",
+                            borderColor: copied ? "#86efac" : "#cbd5e1",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            fontSize: "11.5px",
+                            fontWeight: "700",
+                            cursor: "pointer"
+                          }}
+                        >
+                          {copied ? "✓ Copied" : "Copy"}
+                        </button>
+                      </div>
+
+                      <div style={{ fontSize: "12px", color: "#334155", margin: "3px 0" }}>
+                        Account Name: <strong>{esewaAccountName}</strong>
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#64748b" }}>
+                        Org: <strong>{esewaOrg}</strong>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "inline-block",
+                          marginTop: "6px",
+                          fontSize: "10.5px",
+                          fontWeight: "700",
+                          color: "#15803d",
+                          backgroundColor: "#dcfce7",
+                          padding: "2px 8px",
+                          borderRadius: "12px"
+                        }}
+                      >
+                        ⚡ Pay on eSewa app &amp; enter Ref ID below
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step Instructions */}
+                  <div
+                    style={{
+                      backgroundColor: "#f8fafc",
+                      borderRadius: "8px",
+                      padding: "10px 14px",
+                      fontSize: "12px",
+                      color: "#475569",
+                      marginBottom: "16px",
+                      border: "1px solid #e2e8f0"
+                    }}
+                  >
+                    <div style={{ fontWeight: "700", color: "#1e3a8a", marginBottom: "4px" }}>
+                      Quick 3-Step Verification:
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      <span>1. Open eSewa &rarr; Send Money to <strong>9768444902</strong> (Amount: <strong>{formattedPrice}</strong>).</span>
+                      <span>2. Copy the <strong>Transaction Code / Ref ID</strong> from your eSewa receipt.</span>
+                      <span>3. Paste below &amp; click <strong>Confirm &amp; Auto-Unlock</strong>!</span>
+                    </div>
+                  </div>
+
+                  {/* Form Input: Transaction Code */}
+                  <div style={{ marginBottom: "14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                      <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#0f172a" }}>
+                        eSewa Transaction ID / Ref Code <span style={{ color: "#dc2626" }}>*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleQuickFillTxn}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#2563eb",
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          padding: 0
+                        }}
+                        title="Fill a simulated test transaction ID"
+                      >
+                        ⚡ Test Auto-Fill ID
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g. 98A7B2X or 7-10 digit eSewa Txn ID"
+                      value={txnId}
+                      onChange={(e) => setTxnId(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1.5px solid #cbd5e1",
+                        fontSize: "14px",
+                        fontFamily: "monospace",
+                        boxSizing: "border-box",
+                        outline: "none"
+                      }}
+                      onFocus={(e) => (e.target.style.borderColor = "#16a34a")}
+                      onBlur={(e) => (e.target.style.borderColor = "#cbd5e1")}
+                    />
+                  </div>
+
+                  {/* Sender Phone (Optional / Pre-filled) */}
+                  <div style={{ marginBottom: "20px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#64748b", marginBottom: "5px" }}>
+                      Sender Mobile / eSewa Number (For Receipt Matching)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Your 10-digit mobile number"
+                      value={senderPhone}
+                      onChange={(e) => setSenderPhone(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "13px",
+                        boxSizing: "border-box"
+                      }}
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <button
+                      type="button"
+                      onClick={handleConfirmPayment}
+                      disabled={isProcessing}
+                      style={{
+                        flex: 1,
+                        background: isProcessing
+                          ? "#94a3b8"
+                          : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "13px",
+                        borderRadius: "8px",
+                        fontWeight: "800",
+                        fontSize: "14px",
+                        cursor: isProcessing ? "wait" : "pointer",
+                        boxShadow: "0 4px 12px rgba(22, 163, 74, 0.25)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px"
+                      }}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <span>⏳</span>
+                          <span>Verifying &amp; Unlocking...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>⚡</span>
+                          <span>Confirm &amp; Auto-Unlock ({formattedPrice})</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      disabled={isProcessing}
+                      style={{
+                        backgroundColor: "#f1f5f9",
+                        color: "#475569",
+                        border: "1px solid #cbd5e1",
+                        padding: "13px 18px",
+                        borderRadius: "8px",
+                        fontWeight: "600",
+                        fontSize: "13px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Step Instructions */}
-              <div
-                style={{
-                  backgroundColor: "#f8fafc",
-                  borderRadius: "8px",
-                  padding: "10px 14px",
-                  fontSize: "12px",
-                  color: "#475569",
-                  marginBottom: "16px",
-                  border: "1px solid #e2e8f0"
-                }}
-              >
-                <div style={{ fontWeight: "700", color: "#1e3a8a", marginBottom: "4px" }}>
-                  Quick 3-Step Verification:
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <span>1. Open eSewa &rarr; Send Money to <strong>9768444902</strong> (Amount: <strong>{formattedPrice}</strong>).</span>
-                  <span>2. Copy the <strong>Transaction Code / Ref ID</strong> from your eSewa receipt.</span>
-                  <span>3. Paste below &amp; click <strong>Confirm &amp; Auto-Unlock</strong>!</span>
-                </div>
-              </div>
-
-              {/* Form Input: Transaction Code */}
-              <div style={{ marginBottom: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-                  <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#0f172a" }}>
-                    eSewa Transaction ID / Ref Code <span style={{ color: "#dc2626" }}>*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleQuickFillTxn}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#2563eb",
-                      fontSize: "11px",
-                      fontWeight: "700",
-                      cursor: "pointer",
-                      padding: 0
-                    }}
-                    title="Fill a simulated test transaction ID"
-                  >
-                    ⚡ Test Auto-Fill ID
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  placeholder="e.g. 98A7B2X or 7-10 digit eSewa Txn ID"
-                  value={txnId}
-                  onChange={(e) => setTxnId(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    border: "1.5px solid #cbd5e1",
-                    fontSize: "14px",
-                    fontFamily: "monospace",
-                    boxSizing: "border-box",
-                    outline: "none"
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#16a34a")}
-                  onBlur={(e) => (e.target.style.borderColor = "#cbd5e1")}
-                />
-              </div>
-
-              {/* Sender Phone (Optional / Pre-filled) */}
-              <div style={{ marginBottom: "20px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#64748b", marginBottom: "5px" }}>
-                  Sender Mobile / eSewa Number (For Receipt Matching)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Your 10-digit mobile number"
-                  value={senderPhone}
-                  onChange={(e) => setSenderPhone(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "13px",
-                    boxSizing: "border-box"
-                  }}
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button
-                  type="button"
-                  onClick={handleConfirmPayment}
-                  disabled={isProcessing}
-                  style={{
-                    flex: 1,
+              )}
                     background: isProcessing
                       ? "#94a3b8"
                       : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",

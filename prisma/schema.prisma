@@ -216,3 +216,21 @@ model BillRecord {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @default(now()) @updatedAt
 }
+
+model PaymentTransaction {
+  id              String   @id @default(uuid())
+  transactionUuid String   @unique
+  transactionCode String?
+  userId          String?
+  studentPhone    String?
+  studentName     String?
+  itemId          String
+  itemName        String
+  itemType        String   // "set" | "package"
+  amount          Float
+  status          String   @default("PENDING") // "PENDING" | "COMPLETE" | "FAILED"
+  gateway         String   @default("ESEWA")
+  rawResponse     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

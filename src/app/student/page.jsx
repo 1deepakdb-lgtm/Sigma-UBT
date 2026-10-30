@@ -234,6 +234,58 @@ const StudentDashboard = () => {
     }
   };
 
+  // Handle return from official eSewa EPAY gateway
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get("payment_status");
+    if (!paymentStatus) return;
+
+    if (paymentStatus === "success") {
+      const itemId = params.get("item_id");
+      const itemName = params.get("item_name") || "UBT Exam Set";
+      const itemType = params.get("item_type") || "set";
+      const txnCode = params.get("txn_code") || "ESEWA_VERIFIED";
+      const amount = params.get("amount") || "40";
+
+      if (itemType === "set") {
+        const unlocked = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+        const updated = Array.from(new Set([...unlocked, itemId, itemName, itemId?.toString()]));
+        localStorage.setItem("unlockedStudentExamSets", JSON.stringify(updated));
+        setUnlockedSets(updated);
+      } else {
+        localStorage.setItem("hasPurchasedExamAccess", "true");
+        localStorage.setItem("currentStudentPackage", itemName);
+        setPaidAccessTrigger((p) => p + 1);
+      }
+
+      // Log purchase
+      const history = JSON.parse(localStorage.getItem("studentPayments") || "[]");
+      history.unshift({
+        id: Date.now(),
+        txnId: txnCode,
+        studentName: studentName || "Student",
+        studentPhone: currentStudentPhone || "",
+        item: itemName,
+        type: itemType === "set" ? "Individual UBT Set (Rs. 40)" : "UBT Package",
+        amount: Number(amount) || 40,
+        esewaNumber: "9768444902",
+        status: "Auto-Unlocked (eSewa Gateway Verified)",
+        date: new Date().toISOString(),
+        formattedDate: new Date().toLocaleString()
+      });
+      localStorage.setItem("studentPayments", JSON.stringify(history));
+
+      // Clean URL parameters
+      window.history.replaceState({}, "", window.location.pathname);
+
+      alert(`🎉 Payment Verified by eSewa Server!\n\n"${itemName}" (Rs. ${amount}) has been auto-unlocked.\nTransaction Ref: ${txnCode}\n\nYou can now start your practice exam immediately!`);
+    } else if (paymentStatus === "failed") {
+      window.history.replaceState({}, "", window.location.pathname);
+      alert("Payment was canceled or could not be verified by eSewa. Please try again.");
+    }
+  }, []);
+
   // 1. Authenticated Session Sync from /api/auth/me
   useEffect(() => {
     // Initial read from localStorage
