@@ -26,8 +26,6 @@ export default function EsewaCheckoutModal({
   const [selectedType, setSelectedType] = useState(item?.type || "set");
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isQrZoomed, setIsQrZoomed] = useState(false);
-  const [payMethod, setPayMethod] = useState("qr"); // "qr" (default send query) | "gateway"
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const esewaNumber = "9768444902";
   const esewaAccountName = "Deepak Bhatt";
@@ -38,7 +36,6 @@ export default function EsewaCheckoutModal({
     if (isOpen) {
       setIsQuerySubmitted(false);
       setIsProcessing(false);
-      setIsRedirecting(false);
       setTxnId("");
       setScreenshotFile(null);
       setScreenshotPreview(null);
@@ -224,50 +221,6 @@ export default function EsewaCheckoutModal({
       console.error("Query submission error:", err);
       setIsProcessing(false);
       alert("Failed to submit query: " + err.message);
-    }
-  };
-
-  // Optional: 1-Click eSewa Gateway payment
-  const handlePayViaEsewaGateway = async () => {
-    setIsRedirecting(true);
-    try {
-      const res = await fetch("/api/payment/esewa/initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          itemId: item.id || item.name,
-          itemName,
-          itemType: selectedType,
-          amount: typeof itemPrice === "number" ? itemPrice : Number(String(itemPrice).replace(/[^0-9.]/g, "")) || 40,
-          studentPhone: senderPhone || studentPhone,
-          studentName: studentName || "Student"
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.actionUrl || !data.formData) {
-        throw new Error(data.error || "Failed to initiate eSewa gateway session");
-      }
-
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = data.actionUrl;
-      form.style.display = "none";
-
-      for (const key in data.formData) {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = key;
-        input.value = data.formData[key];
-        form.appendChild(input);
-      }
-
-      document.body.appendChild(form);
-      form.submit();
-    } catch (err) {
-      console.error("[eSewa Gateway Redirect Error]:", err);
-      alert(`Could not open eSewa payment gateway: ${err.message}. Please use the QR code & Send Query method instead.`);
-      setIsRedirecting(false);
     }
   };
 
@@ -517,57 +470,29 @@ export default function EsewaCheckoutModal({
                 </div>
               </div>
 
-              {/* Mode Tabs */}
-              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                <button
-                  type="button"
-                  onClick={() => setPayMethod("qr")}
-                  style={{
-                    flex: 1,
-                    padding: "9px 12px",
-                    borderRadius: "8px",
-                    border: payMethod === "qr" ? "2px solid #16a34a" : "1px solid #cbd5e1",
-                    backgroundColor: payMethod === "qr" ? "#f0fdf4" : "#ffffff",
-                    color: payMethod === "qr" ? "#166534" : "#475569",
-                    fontWeight: "800",
-                    fontSize: "12.5px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px"
-                  }}
-                >
-                  <span>📷</span>
-                  <span>Scan QR &amp; Send Query</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPayMethod("gateway")}
-                  style={{
-                    flex: 1,
-                    padding: "9px 12px",
-                    borderRadius: "8px",
-                    border: payMethod === "gateway" ? "2px solid #16a34a" : "1px solid #cbd5e1",
-                    backgroundColor: payMethod === "gateway" ? "#f0fdf4" : "#ffffff",
-                    color: payMethod === "gateway" ? "#166534" : "#475569",
-                    fontWeight: "800",
-                    fontSize: "12.5px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px"
-                  }}
-                >
-                  <span>⚡</span>
-                  <span>Instant eSewa Gateway</span>
-                </button>
+              {/* Step Info Banner */}
+              <div
+                style={{
+                  backgroundColor: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: "8px",
+                  padding: "10px 14px",
+                  marginBottom: "16px",
+                  fontSize: "12.5px",
+                  color: "#166534",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px"
+                }}
+              >
+                <span>ℹ️</span>
+                <span>
+                  Scan the eSewa QR code below, upload your payment screenshot, and click <strong>Send Query</strong>. Super Admin will verify and unlock your exam set.
+                </span>
               </div>
 
-              {payMethod === "qr" ? (
-                /* QR CODE & SEND QUERY FLOW */
-                <div>
+              {/* QR CODE & SEND QUERY FLOW */}
+              <div>
                   {/* eSewa Details Box */}
                   <div
                     style={{
@@ -867,70 +792,7 @@ export default function EsewaCheckoutModal({
                     </button>
                   </div>
                 </div>
-              ) : (
-                /* OFFICIAL ESEWA GATEWAY TAB */
-                <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "18px", marginBottom: "16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-                    <div style={{ backgroundColor: "#16a34a", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "900" }}>
-                      ✓
-                    </div>
-                    <div>
-                      <h4 style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "800" }}>
-                        Instant eSewa EPAY Gateway
-                      </h4>
-                      <p style={{ margin: "2px 0 0 0", fontSize: "11.5px", color: "#64748b" }}>
-                        Automatic server verification directly on eSewa.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style={{ backgroundColor: "#ffffff", padding: "12px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", marginBottom: "16px", fontSize: "12px", color: "#334155" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <span style={{ color: "#64748b" }}>Item:</span>
-                      <strong style={{ color: "#0f172a" }}>{itemName}</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "#64748b" }}>Amount:</span>
-                      <strong style={{ color: "#16a34a", fontSize: "14px" }}>{formattedPrice}</strong>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handlePayViaEsewaGateway}
-                    disabled={isRedirecting}
-                    style={{
-                      width: "100%",
-                      background: isRedirecting ? "#94a3b8" : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "14px",
-                      borderRadius: "8px",
-                      fontWeight: "900",
-                      fontSize: "15px",
-                      cursor: isRedirecting ? "wait" : "pointer",
-                      boxShadow: "0 4px 14px rgba(22, 163, 74, 0.35)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px"
-                    }}
-                  >
-                    {isRedirecting ? (
-                      <>
-                        <span>⏳</span>
-                        <span>Connecting to eSewa...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>🟢</span>
-                        <span>Pay {formattedPrice} via Gateway ▶</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
           )}
         </div>
       </div>

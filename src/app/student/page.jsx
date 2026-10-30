@@ -323,41 +323,52 @@ const StudentDashboard = () => {
       const itemId = params.get("item_id");
       const itemName = params.get("item_name") || "UBT Exam Set";
       const itemType = params.get("item_type") || "set";
-      const txnCode = params.get("txn_code") || "ESEWA_VERIFIED";
+      const txnCode = params.get("txn_code") || "ESEWA_PAYMENT";
       const amount = params.get("amount") || "40";
 
-      if (itemType === "set") {
-        const unlocked = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-        const updated = Array.from(new Set([...unlocked, itemId, itemName, itemId?.toString()]));
-        localStorage.setItem("unlockedStudentExamSets", JSON.stringify(updated));
-        setUnlockedSets(updated);
-      } else {
-        localStorage.setItem("hasPurchasedExamAccess", "true");
-        localStorage.setItem("currentStudentPackage", itemName);
-        setPaidAccessTrigger((p) => p + 1);
-      }
-
-      // Log purchase
-      const history = JSON.parse(localStorage.getItem("studentPayments") || "[]");
-      history.unshift({
+      // Submit to studentPendingQueries for Super Admin review & release
+      const pending = JSON.parse(localStorage.getItem("studentPendingQueries") || "[]");
+      pending.unshift({
         id: Date.now(),
+        itemId,
+        itemName,
+        phone: currentStudentPhone || "",
+        studentName: studentName || "Student",
+        amount: Number(amount) || 40,
         txnId: txnCode,
+        status: "Pending",
+        date: new Date().toLocaleString()
+      });
+      localStorage.setItem("studentPendingQueries", JSON.stringify(pending));
+      setPendingQueries(pending);
+
+      // Notify Super Admin
+      const notifs = JSON.parse(localStorage.getItem("studentNotifications") || "[]");
+      notifs.unshift({
+        id: Date.now(),
+        type: "payment_query",
+        subject: `UBT Purchase Query: ${itemName} (Rs. ${amount})`,
+        message: `Student ${studentName || "Student"} (${currentStudentPhone || ""}) paid Rs. ${amount} via eSewa.\n\n` +
+                 `Item: ${itemName}\n` +
+                 `Txn ID: ${txnCode}\n\n` +
+                 `Please verify and confirm to release this UBT exam set.`,
         studentName: studentName || "Student",
         studentPhone: currentStudentPhone || "",
-        item: itemName,
-        type: itemType === "set" ? "Individual UBT Set (Rs. 40)" : "UBT Package",
+        itemName,
+        itemId,
+        itemType,
         amount: Number(amount) || 40,
-        esewaNumber: "9768444902",
-        status: "Auto-Unlocked (eSewa Gateway Verified)",
-        date: new Date().toISOString(),
-        formattedDate: new Date().toLocaleString()
+        txnId: txnCode,
+        status: "Pending",
+        read: false,
+        date: new Date().toLocaleString()
       });
-      localStorage.setItem("studentPayments", JSON.stringify(history));
+      localStorage.setItem("studentNotifications", JSON.stringify(notifs));
 
       // Clean URL parameters
       window.history.replaceState({}, "", window.location.pathname);
 
-      alert(`🎉 Payment Verified by eSewa Server!\n\n"${itemName}" (Rs. ${amount}) has been auto-unlocked.\nTransaction Ref: ${txnCode}\n\nYou can now start your practice exam immediately!`);
+      alert(`Payment Query Submitted!\n\nYour payment for "${itemName}" (Rs. ${amount}) has been submitted to Super Admin with Ref ${txnCode}.\nSuper Admin will review and release your UBT set.`);
     } else if (paymentStatus === "failed") {
       window.history.replaceState({}, "", window.location.pathname);
       alert("Payment was canceled or could not be verified by eSewa. Please try again.");
