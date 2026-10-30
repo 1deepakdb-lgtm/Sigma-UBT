@@ -365,13 +365,12 @@ export default function KoreanMeaningBookView({
                 height: "44px",
                 borderRadius: "12px",
                 backgroundColor: "#fee2e2",
-                color: "#dc2626",
-                fontSize: "22px"
+                color: "#dc2626"
               }}>
-                📕
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
               </span>
               <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "900", color: "#0f172a", letterSpacing: "-0.5px" }}>
-                Meaning Book (अध्याय अनुसार शब्दार्थ संग्रह)
+                Meaning Book
               </h2>
             </div>
           </div>

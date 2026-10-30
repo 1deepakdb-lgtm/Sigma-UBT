@@ -194,24 +194,10 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
               </span>
               <div>
                 <h2 style={{ margin: 0, fontSize: "24px", fontWeight: "900", color: "#0f172a", letterSpacing: "-0.5px" }}>
-                  Korean Grammar Book (कोरियन व्याकरण दिग्दर्शन)
+                  Korean Grammar Book
                 </h2>
-                <div style={{ display: "flex", gap: "8px", marginTop: "4px", flexWrap: "wrap" }}>
-                  <span style={{ fontSize: "12px", fontWeight: "700", backgroundColor: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: "6px" }}>
-                    기본부터 고급까지 (Basic to Advanced)
-                  </span>
-                  <span style={{ fontSize: "12px", fontWeight: "700", backgroundColor: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: "6px" }}>
-                    제1과~제60과 (Chapters 1–60 Folders)
-                  </span>
-                  <span style={{ fontSize: "12px", fontWeight: "700", backgroundColor: "#fee2e2", color: "#991b1b", padding: "2px 8px", borderRadius: "6px" }}>
-                    문법 비교 (Grammar Comparisons)
-                  </span>
-                </div>
               </div>
             </div>
-            <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#475569", lineHeight: "1.5", maxWidth: "850px" }}>
-              EPS-TOPIK UBT परीक्षा र भाषा दक्षताका लागि आवश्यक सम्पूर्ण आधारभूत देखि उच्च तहका व्याकरण नियमहरू, ६० वटै अध्यायका सुत्र तथा नेपाली व्याख्या र परीक्षामा झुक्किने व्याकरणहरूको तुलनात्मक अध्ययन।
-            </p>
           </div>
 
           {isAdmin && (

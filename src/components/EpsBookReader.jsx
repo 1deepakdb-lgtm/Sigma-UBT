@@ -4176,11 +4176,22 @@ export default function EpsBookReader({
               flexWrap: "wrap",
               gap: "16px"
             }}>
-              <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "12px",
+                  backgroundColor: "#fff7ed",
+                  color: "#ea580c"
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                </span>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ fontSize: "28px" }}>📙</span>
                   <h3 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#0f172a" }}>
-                    Model Question Bank (UBT Sets)
+                    Model Question Bank
                   </h3>
                   <span style={{
                     backgroundColor: "#eff6ff",
@@ -4191,79 +4202,10 @@ export default function EpsBookReader({
                     padding: "3px 10px",
                     borderRadius: "12px"
                   }}>
-                    {filteredUbtSets.length} UBT Sets
+                    {filteredUbtSets.length} Sets
                   </span>
                 </div>
-                <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#64748b" }}>
-                  वास्तविक EPS-TOPIK UBT परीक्षा मोडल सेटहरू (Reading 20 + Listening 20)। च्याप्टरवाइज सेट नभएर पूर्ण UBT सेटहरू मात्र यहाँ राखिएका छन्।
-                </p>
               </div>
-
-              {/* STATUS BANNER FOR STUDENT & INSTITUTE */}
-              {(mode === "student" || mode === "institute") && (() => {
-                const isUnlocked = isModelBankUnlocked();
-                const rawPkg = mode === "student" 
-                  ? (studentPackage || "Full Set UBT")
-                  : (typeof window !== "undefined" ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage") || "Standard Package") : "Standard Package");
-                const isFreeOrGooglePkg = typeof rawPkg === "string" && (rawPkg.toLowerCase().includes("google") || rawPkg.toLowerCase().includes("free"));
-                const entityLabel = mode === "student" ? (isFreeOrGooglePkg ? "Access Membership:" : "Enrolled Package:") : "Institute Package:";
-                const currentPkg = isFreeOrGooglePkg ? "Full Student Access" : rawPkg;
-                const currentInst = typeof window !== "undefined" ? (localStorage.getItem("currentInstitute") || "Institute") : "Institute";
-
-                return (
-                  <div style={{
-                    backgroundColor: "#ffffff",
-                    padding: "12px 18px",
-                    borderRadius: "12px",
-                    border: isUnlocked ? "2px solid #86efac" : "1.5px solid #cbd5e1",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                    textAlign: "right",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px"
-                  }}>
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>
-                      {entityLabel} <strong style={{ color: "#1e3a8a" }}>{currentPkg}</strong>
-                    </span>
-                    {isUnlocked ? (
-                      <span style={{ fontSize: "12px", fontWeight: "800", color: "#16a34a" }}>
-                        ✅ Model Question Bank Unlocked
-                      </span>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end", marginTop: "2px" }}>
-                        <span style={{ fontSize: "12px", fontWeight: "800", color: "#2563eb" }}>
-                          🔒 Not Unlocked ({mode === "student" ? "Student" : "Institute"} Must Buy Separately)
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (mode === "student") {
-                              if (onNavigateTab) onNavigateTab("buyExam");
-                              else alert("Please visit Packages section to purchase Model Question Bank separately.");
-                            } else {
-                              setShowInstituteBuyModal(true);
-                            }
-                          }}
-                          style={{
-                            backgroundColor: "#2563eb",
-                            backgroundImage: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                            color: "#ffffff",
-                            border: "none",
-                            padding: "6px 14px",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            fontWeight: "800",
-                            cursor: "pointer",
-                            boxShadow: "0 2px 6px rgba(37, 99, 235, 0.25)"
-                          }}
-                        >
-                          {mode === "student" ? "Buy Model Question Bank" : "Buy / Request for Institute"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
             </div>
 
             {/* SEARCH BAR */}
