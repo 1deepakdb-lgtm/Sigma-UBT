@@ -12,12 +12,27 @@ export default function Navbar({
   subtitle,
   activeTab,
   onTabChange,
-  notificationCount = 0
+  notificationCount = 0,
+  instituteLanguage
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+
+  const [currentLang, setCurrentLang] = useState(() => {
+    if (instituteLanguage) return instituteLanguage;
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('instituteLanguage') || 'both';
+    }
+    return 'both';
+  });
+
+  useEffect(() => {
+    if (instituteLanguage) {
+      setCurrentLang(instituteLanguage);
+    }
+  }, [instituteLanguage]);
 
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -50,9 +65,11 @@ export default function Navbar({
 
   const studentTabs = [
     { id: 'home', label: 'Dashboard' },
-    { id: 'exams', label: 'Start UBT Exam' },
-    { id: 'buyExam', label: 'Packages' },
-    { id: 'vocab', label: 'Dictionary' },
+    ...(currentLang !== 'japanese' ? [
+      { id: 'exams', label: 'Start UBT Exam' },
+      { id: 'buyExam', label: 'Packages' }
+    ] : []),
+    { id: 'vocab', label: currentLang === 'japanese' ? 'Japanese Dictionary' : currentLang === 'korean' ? 'Korean Dictionary' : 'Dictionary' },
     { id: 'listening', label: 'Study Materials' },
     { id: 'news', label: 'Notice' },
     { id: 'notify', label: 'Messages' },

@@ -275,8 +275,14 @@ const StudentDashboard = () => {
           if (instName) localStorage.setItem("currentInstitute", instName);
         }
       })
-      .catch((err) => console.warn("Session verify notice:", err));
   }, []);
+
+  // Ensure Japanese students are not stranded on exams or packages tabs
+  useEffect(() => {
+    if (instituteLanguage === "japanese" && (activeTab === "exams" || activeTab === "buyExam")) {
+      setActiveTab("home");
+    }
+  }, [instituteLanguage, activeTab]);
 
   // 2. Fetch Packages & Exam Sets (combining LocalStorage and Server DB)
   useEffect(() => {
@@ -740,8 +746,12 @@ const StudentDashboard = () => {
 
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
           <button onClick={() => setActiveTab("home")} style={getNavBtnStyle("home")}>Dashboard</button>
-          <button onClick={() => setActiveTab("exams")} style={getNavBtnStyle("exams")}>Start UBT Exam</button>
-          <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
+          {instituteLanguage !== "japanese" && (
+            <button onClick={() => setActiveTab("exams")} style={getNavBtnStyle("exams")}>Start UBT Exam</button>
+          )}
+          {instituteLanguage !== "japanese" && (
+            <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
+          )}
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>
             {instituteLanguage === "japanese" ? "Japanese Dictionary" : instituteLanguage === "korean" ? "Korean Dictionary" : "Dictionary"}
           </button>
@@ -781,10 +791,14 @@ const StudentDashboard = () => {
                   <span style={{ fontSize: "12px", color: "#166534", fontWeight: "700" }}>
                     Account Validity: <strong style={{ color: "#15803d" }}>Lifetime</strong>
                   </span>
-                  <span style={{ color: "#cbd5e1" }}>•</span>
-                  <span style={{ fontSize: "12px", color: "#b45309", fontWeight: "700" }}>
-                    UBT &amp; Mock Tests: <strong style={{ color: "#d97706" }}>Purchase Required</strong>
-                  </span>
+                  {instituteLanguage !== "japanese" && (
+                    <>
+                      <span style={{ color: "#cbd5e1" }}>•</span>
+                      <span style={{ fontSize: "12px", color: "#b45309", fontWeight: "700" }}>
+                        UBT &amp; Mock Tests: <strong style={{ color: "#d97706" }}>Purchase Required</strong>
+                      </span>
+                    </>
+                  )}
                 </div>
               ) : (
                 effectiveExpiryDate && (
@@ -812,29 +826,31 @@ const StudentDashboard = () => {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", maxWidth: "1050px", margin: "0 auto" }}>
-              <div onClick={() => {
-                if (!hasPaidExamAccess) {
-                  alert("Your free student account includes lifetime access to all Textbooks & Dictionaries! To take full 40-question UBT & Mock practice exams, please purchase an Exam Package.");
-                  setActiveTab("buyExam");
-                  return;
-                }
-                if (isPackageExpired) {
-                  alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exams.`);
-                  setActiveTab("buyExam");
-                  return;
-                }
-                setActiveTab("exams");
-              }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <LaptopExamIcon size={28} color="#2563eb" />
+              {instituteLanguage !== "japanese" && (
+                <div onClick={() => {
+                  if (!hasPaidExamAccess) {
+                    alert("Your free student account includes lifetime access to all Textbooks & Dictionaries! To take full 40-question UBT & Mock practice exams, please purchase an Exam Package.");
+                    setActiveTab("buyExam");
+                    return;
+                  }
+                  if (isPackageExpired) {
+                    alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exams.`);
+                    setActiveTab("buyExam");
+                    return;
+                  }
+                  setActiveTab("exams");
+                }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
+                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                    <LaptopExamIcon size={28} color="#2563eb" />
+                  </div>
+                  <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
+                    {hasPaidExamAccess ? "Start UBT Exam" : "🔒 Start UBT Exam"}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                    {hasPaidExamAccess ? "Take full 40-question EPS-TOPIK Korean tests" : "UBT & Mock Tests · Purchase required"}
+                  </p>
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
-                  {hasPaidExamAccess ? "Start UBT Exam" : "🔒 Start UBT Exam"}
-                </h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                  {hasPaidExamAccess ? "Take full 40-question EPS-TOPIK Korean tests" : "UBT & Mock Tests · Purchase required"}
-                </p>
-              </div>
+              )}
 
               <div onClick={() => setActiveTab("results")} style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bbf7d0", boxShadow: "0 4px 12px rgba(22,163,74,0.08)" }}>
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
@@ -864,13 +880,15 @@ const StudentDashboard = () => {
                 </p>
               </div>
 
-              <div onClick={() => setActiveTab("buyExam")} style={{ background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fed7aa", boxShadow: "0 4px 12px rgba(234,88,12,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <CartIcon size={28} color="#ea580c" />
+              {instituteLanguage !== "japanese" && (
+                <div onClick={() => setActiveTab("buyExam")} style={{ background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fed7aa", boxShadow: "0 4px 12px rgba(234,88,12,0.08)" }}>
+                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                    <CartIcon size={28} color="#ea580c" />
+                  </div>
+                  <h3 style={{ margin: "0 0 4px 0", color: "#9a3412", fontSize: "18px", fontWeight: "700" }}>Packages</h3>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Explore and request custom exam sets</p>
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#9a3412", fontSize: "18px", fontWeight: "700" }}>Packages</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Explore and request custom exam sets</p>
-              </div>
+              )}
 
               <div onClick={() => setActiveTab("notify")} style={{ background: "linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #99f6e4", boxShadow: "0 4px 12px rgba(13,148,136,0.08)" }}>
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
