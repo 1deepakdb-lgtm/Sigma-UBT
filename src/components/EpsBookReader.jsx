@@ -3406,7 +3406,7 @@ export default function EpsBookReader({
               }}
             >
               <span style={{ fontSize: "22px", lineHeight: "1" }}>🇰🇷</span>
-              <span>Korean Study Materials</span>
+              <span>{effectiveInstLang === "both" ? "Korean" : "Study Materials"}</span>
             </button>
           )}
 
@@ -3446,7 +3446,7 @@ export default function EpsBookReader({
               }}
             >
               <span style={{ fontSize: "22px", lineHeight: "1" }}>🇯🇵</span>
-              <span>Japanese Study Materials</span>
+              <span>{effectiveInstLang === "both" ? "Japanese" : "Study Materials"}</span>
             </button>
           )}
         </div>

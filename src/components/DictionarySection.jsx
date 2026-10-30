@@ -1074,7 +1074,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 }}
               >
                 <span style={{ fontSize: "17px" }}>🇰🇷</span>
-                <span>Korean Dictionary (한국어)</span>
+                <span>{instLang === "both" ? "Korean (한국어)" : "Dictionary"}</span>
                 {instLang === "both" && activeLang === 'ko' && (
                   <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
                     Active
@@ -1106,7 +1106,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 }}
               >
                 <span style={{ fontSize: "17px" }}>🇯🇵</span>
-                <span>Japanese Dictionary (日本語)</span>
+                <span>{instLang === "both" ? "Japanese (日本語)" : "Dictionary"}</span>
                 {instLang === "both" && activeLang === 'ja' && (
                   <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
                     Active

@@ -1268,13 +1268,13 @@ const StudentDashboard = () => {
             : effectiveFilter;
 
           const filterTabs = instituteLanguage === "korean"
-            ? [{ key: "korean", label: `🇰🇷 Korean Notices & Portals (${totalKorean})` }]
+            ? [{ key: "korean", label: `Notice (${totalKorean})` }]
             : instituteLanguage === "japanese"
-            ? [{ key: "japanese", label: `🇯🇵 Japanese Notices & Portals (${totalJapanese})` }]
+            ? [{ key: "japanese", label: `Notice (${totalJapanese})` }]
             : [
-                { key: "korean", label: `🇰🇷 Korean Notices & Portals (${totalKorean})` },
-                { key: "japanese", label: `🇯🇵 Japanese Notices & Portals (${totalJapanese})` },
-                { key: "all", label: `🌐 All (${totalAll})` }
+                { key: "korean", label: `Korean (${totalKorean})` },
+                { key: "japanese", label: `Japanese (${totalJapanese})` },
+                { key: "all", label: `All (${totalAll})` }
               ];
 
           return (
@@ -1299,7 +1299,7 @@ const StudentDashboard = () => {
                     </h3>
                     <p style={{ margin: "3px 0 0 0", fontSize: "12px", color: "#64748b" }}>
                       Active Category: <strong style={{ color: effectiveFilter === "japanese" ? "#9333ea" : effectiveFilter === "korean" ? "#2563eb" : "#0f172a" }}>
-                        {effectiveFilter === "japanese" ? "🇯🇵 Japanese Notices & Portals" : effectiveFilter === "korean" ? "🇰🇷 Korean Notices & Portals" : "🌐 All Announcements"}
+                        {effectiveFilter === "all" ? "All Announcements" : "Notice"}
                       </strong>
                     </p>
                   </div>
