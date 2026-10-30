@@ -141,7 +141,7 @@ export async function GET(req) {
         studentPackage,
         expiryDate: isGoogleOrFree ? null : expiryDate,
         isFreeStudent: Boolean(isGoogleOrFree),
-        instituteLanguage: user.institute?.language || 'both'
+        instituteLanguage: payload?.instituteLanguage || user.institute?.language || 'both'
       }
     });
   } catch (err) {

@@ -748,6 +748,7 @@ export default function EpsBookReader({
 
   useEffect(() => {
     if (initialFolder) {
+      setStudyLanguage("japanese");
       setActiveJapaneseFolder(initialFolder);
     }
   }, [initialFolder]);
