@@ -19,6 +19,7 @@ export default function EsewaCheckoutModal({
   const [isSuccess, setIsSuccess] = useState(false);
   const [selectedType, setSelectedType] = useState(item?.type || "set");
   const [selectedPackage, setSelectedPackage] = useState(null);
+  const [isQrZoomed, setIsQrZoomed] = useState(false);
 
   const esewaNumber = "9768444902";
   const esewaAccountName = "Deepak Bhatt";
@@ -437,24 +438,32 @@ export default function EsewaCheckoutModal({
                   style={{
                     backgroundColor: "#ffffff",
                     padding: "6px",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
+                    borderRadius: "10px",
+                    border: "1.5px solid #86efac",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                     textAlign: "center",
-                    flexShrink: 0
+                    flexShrink: 0,
+                    cursor: "pointer"
                   }}
+                  onClick={() => setIsQrZoomed(true)}
+                  title="Click to enlarge QR code"
                 >
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=9768444902`}
+                    src="/esewa-payment-qr.jpg"
                     alt="eSewa QR 9768444902"
-                    style={{ width: "110px", height: "110px", display: "block" }}
+                    style={{
+                      width: "120px",
+                      height: "120px",
+                      objectFit: "contain",
+                      display: "block",
+                      borderRadius: "6px"
+                    }}
                     onError={(e) => {
-                      // fallback representation if offline
-                      e.currentTarget.style.display = "none";
+                      e.currentTarget.src = "/images/esewa-payment-qr.jpg";
                     }}
                   />
-                  <div style={{ fontSize: "9.5px", fontWeight: "700", color: "#16a34a", marginTop: "3px" }}>
-                    SCAN WITH ESEWA
+                  <div style={{ fontSize: "9.5px", fontWeight: "800", color: "#16a34a", marginTop: "3px" }}>
+                    🔍 SCAN OR ENLARGE
                   </div>
                 </div>
 
@@ -663,6 +672,111 @@ export default function EsewaCheckoutModal({
           )}
         </div>
       </div>
+
+      {/* Full-Size Zoomed QR Code Modal */}
+      {isQrZoomed && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.85)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100000,
+            padding: "20px"
+          }}
+          onClick={() => setIsQrZoomed(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              padding: "22px",
+              borderRadius: "16px",
+              maxWidth: "360px",
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+              border: "2px solid #86efac"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <div style={{ textAlign: "left" }}>
+                <span style={{ fontSize: "15px", fontWeight: "800", color: "#16a34a" }}>eSewa Official QR</span>
+                <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#64748b" }}>Deepak Bhatt &middot; 9768444902</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQrZoomed(false)}
+                style={{
+                  background: "#f1f5f9",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "30px",
+                  height: "30px",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: "#475569",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                &times;
+              </button>
+            </div>
+            <div style={{ padding: "8px", backgroundColor: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+              <img
+                src="/esewa-payment-qr.jpg"
+                alt="eSewa Payment QR Code"
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  maxHeight: "300px",
+                  objectFit: "contain",
+                  display: "block",
+                  borderRadius: "6px"
+                }}
+                onError={(e) => {
+                  e.currentTarget.src = "/images/esewa-payment-qr.jpg";
+                }}
+              />
+            </div>
+            <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "12px", color: "#334155" }}>
+                Scan directly using your <strong>eSewa Mobile App</strong>
+              </span>
+              <span style={{ fontSize: "11px", color: "#64748b" }}>
+                Amount: <strong>{formattedPrice}</strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsQrZoomed(false)}
+              style={{
+                marginTop: "14px",
+                width: "100%",
+                padding: "10px",
+                backgroundColor: "#16a34a",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
+                fontWeight: "700",
+                fontSize: "13px",
+                cursor: "pointer"
+              }}
+            >
+              Close QR Preview
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
