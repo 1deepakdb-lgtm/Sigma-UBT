@@ -80,6 +80,138 @@ export default function DesktopAppDownloads() {
     }
   };
 
+  const downloadScriptBlob = (filename, content, mime = 'text/plain') => {
+    try {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      window.open(`/downloads/${filename}`, '_blank');
+    }
+  };
+
+  const handleDownloadWindowsBat = () => {
+    const origin = currentUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+    const content = `@echo off
+title ExamJK Windows Desktop App Launcher
+echo ========================================================
+echo        ExamJK - Japanese & Korean UBT Exam System
+echo ========================================================
+echo.
+echo Launching ExamJK in native standalone app window...
+echo.
+
+set "TARGET_URL=${origin}"
+if "%~1" neq "" set "TARGET_URL=%~1"
+
+:: Check for Google Chrome
+if exist "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe" (
+    start "" "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe" --app="%TARGET_URL%"
+    exit /b 0
+)
+if exist "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe" (
+    start "" "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe" --app="%TARGET_URL%"
+    exit /b 0
+)
+
+:: Check for Microsoft Edge
+if exist "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" (
+    start "" "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" --app="%TARGET_URL%"
+    exit /b 0
+)
+if exist "%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe" (
+    start "" "%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe" --app="%TARGET_URL%"
+    exit /b 0
+)
+
+:: Check for Brave Browser
+if exist "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\Application\\brave.exe" (
+    start "" "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\Application\\brave.exe" --app="%TARGET_URL%"
+    exit /b 0
+)
+
+:: Default browser fallback
+start "" "%TARGET_URL%"
+exit /b 0
+`;
+    downloadScriptBlob('ExamJK-Windows-Launcher.bat', content, 'application/x-bat');
+  };
+
+  const handleDownloadMacSilicon = () => {
+    const origin = currentUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+    const content = `#!/bin/bash
+# ExamJK macOS Native Launcher for Apple Silicon (M1, M2, M3, M4)
+echo "=========================================================="
+echo "   ExamJK - Apple Silicon Launcher (M1/M2/M3/M4)"
+echo "=========================================================="
+echo "Launching ExamJK in standalone high-performance window..."
+
+TARGET_URL="${origin}"
+if [ "$1" != "" ]; then
+    TARGET_URL="$1"
+fi
+
+if [ -d "/Applications/Google Chrome.app" ]; then
+    arch -arm64 open -na "/Applications/Google Chrome.app" --args --app="$TARGET_URL" 2>/dev/null || open -na "/Applications/Google Chrome.app" --args --app="$TARGET_URL"
+elif [ -d "/Applications/Microsoft Edge.app" ]; then
+    arch -arm64 open -na "/Applications/Microsoft Edge.app" --args --app="$TARGET_URL" 2>/dev/null || open -na "/Applications/Microsoft Edge.app" --args --app="$TARGET_URL"
+elif [ -d "/Applications/Brave Browser.app" ]; then
+    arch -arm64 open -na "/Applications/Brave Browser.app" --args --app="$TARGET_URL" 2>/dev/null || open -na "/Applications/Brave Browser.app" --args --app="$TARGET_URL"
+else
+    open "$TARGET_URL"
+fi
+exit 0
+`;
+    downloadScriptBlob('ExamJK-macOS-Silicon.command', content, 'application/x-sh');
+  };
+
+  const handleDownloadMacIntel = () => {
+    const origin = currentUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+    const content = `#!/bin/bash
+# ExamJK macOS Native Launcher for Intel Core Macs (x86_64)
+echo "=========================================================="
+echo "   ExamJK - Intel Mac Launcher (Core i3/i5/i7/i9)"
+echo "=========================================================="
+echo "Launching ExamJK in standalone high-performance window..."
+
+TARGET_URL="${origin}"
+if [ "$1" != "" ]; then
+    TARGET_URL="$1"
+fi
+
+if [ -d "/Applications/Google Chrome.app" ]; then
+    arch -x86_64 open -na "/Applications/Google Chrome.app" --args --app="$TARGET_URL" 2>/dev/null || open -na "/Applications/Google Chrome.app" --args --app="$TARGET_URL"
+elif [ -d "/Applications/Microsoft Edge.app" ]; then
+    arch -x86_64 open -na "/Applications/Microsoft Edge.app" --args --app="$TARGET_URL" 2>/dev/null || open -na "/Applications/Microsoft Edge.app" --args --app="$TARGET_URL"
+elif [ -d "/Applications/Brave Browser.app" ]; then
+    arch -x86_64 open -na "/Applications/Brave Browser.app" --args --app="$TARGET_URL" 2>/dev/null || open -na "/Applications/Brave Browser.app" --args --app="$TARGET_URL"
+else
+    open "$TARGET_URL"
+fi
+exit 0
+`;
+    downloadScriptBlob('ExamJK-macOS-Intel.command', content, 'application/x-sh');
+  };
+
+  const handleDownloadWindowsUrl = () => {
+    const origin = currentUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+    const content = `[{000214A0-0000-0000-C000-000000000046}]
+Prop3=19,0
+[InternetShortcut]
+IDList=
+URL=${origin}
+IconIndex=0
+IconFile=https://raw.githubusercontent.com/favicon.ico
+`;
+    downloadScriptBlob('ExamJK.url', content, 'application/internet-shortcut');
+  };
+
   const qrUrl = currentUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=4&data=${encodeURIComponent(currentUrl)}`
     : null;
@@ -585,9 +717,9 @@ export default function DesktopAppDownloads() {
                     )}
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      <a
-                        href="/downloads/ExamJK-Windows-Launcher.bat"
-                        download="ExamJK-Windows-Launcher.bat"
+                      <button
+                        type="button"
+                        onClick={handleDownloadWindowsBat}
                         style={{
                           padding: '9px 10px',
                           background: '#ffffff',
@@ -596,16 +728,16 @@ export default function DesktopAppDownloads() {
                           borderRadius: '8px',
                           fontSize: '12px',
                           fontWeight: '800',
-                          textDecoration: 'none',
+                          cursor: 'pointer',
                           textAlign: 'center',
                           boxSizing: 'border-box'
                         }}
                       >
                         📥 Desktop Launcher (.bat)
-                      </a>
-                      <a
-                        href="/downloads/ExamJK.url"
-                        download="ExamJK.url"
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadWindowsUrl}
                         style={{
                           padding: '9px 10px',
                           background: '#ffffff',
@@ -614,13 +746,13 @@ export default function DesktopAppDownloads() {
                           borderRadius: '8px',
                           fontSize: '12px',
                           fontWeight: '800',
-                          textDecoration: 'none',
+                          cursor: 'pointer',
                           textAlign: 'center',
                           boxSizing: 'border-box'
                         }}
                       >
                         📥 Web Shortcut (.url)
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -687,18 +819,14 @@ export default function DesktopAppDownloads() {
                     )}
 
                     {/* Apple Silicon Launcher (M1/M2/M3/M4) */}
-                    <a
-                      href="/downloads/ExamJK-macOS-Silicon.command"
-                      download="ExamJK-macOS-Silicon.command"
+                    <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '10px 12px',
                         background: '#ffffff',
-                        color: '#0f172a',
                         border: '1.5px solid #0f172a',
-                        textDecoration: 'none',
                         borderRadius: '8px',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                         boxSizing: 'border-box'
@@ -708,31 +836,61 @@ export default function DesktopAppDownloads() {
                         <span style={{ fontSize: '18px' }}>🍏</span>
                         <div style={{ textAlign: 'left' }}>
                           <span style={{ fontSize: '13px', fontWeight: '800', display: 'block', color: '#0f172a' }}>
-                            Apple Silicon Launcher (.command)
+                            Apple Silicon (M1 / M2 / M3 / M4)
                           </span>
                           <span style={{ fontSize: '11px', color: '#64748b' }}>
-                            For Mac with M1, M2, M3, M4 chips
+                            Optimized for ARM64 macOS
                           </span>
                         </div>
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
-                        📥 Download
-                      </span>
-                    </a>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={handleDownloadMacSilicon}
+                          style={{
+                            fontSize: '11.5px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            background: '#0f172a',
+                            border: 'none',
+                            padding: '5px 9px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          📥 .command
+                        </button>
+                        <a
+                          href="/downloads/ExamJK-macOS-Silicon.zip"
+                          download="ExamJK-macOS-Silicon.zip"
+                          style={{
+                            fontSize: '11.5px',
+                            fontWeight: '800',
+                            color: '#0f172a',
+                            background: '#f1f5f9',
+                            border: '1px solid #cbd5e1',
+                            padding: '5px 8px',
+                            borderRadius: '6px',
+                            textDecoration: 'none',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title="Download pre-extracted zip archive"
+                        >
+                          📦 .zip
+                        </a>
+                      </div>
+                    </div>
 
                     {/* Intel Mac Launcher (x86_64) */}
-                    <a
-                      href="/downloads/ExamJK-macOS-Intel.command"
-                      download="ExamJK-macOS-Intel.command"
+                    <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '10px 12px',
                         background: '#ffffff',
-                        color: '#334155',
                         border: '1.5px solid #cbd5e1',
-                        textDecoration: 'none',
                         borderRadius: '8px',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                         boxSizing: 'border-box'
@@ -742,17 +900,51 @@ export default function DesktopAppDownloads() {
                         <span style={{ fontSize: '18px' }}>💻</span>
                         <div style={{ textAlign: 'left' }}>
                           <span style={{ fontSize: '13px', fontWeight: '800', display: 'block', color: '#0f172a' }}>
-                            Intel Mac Launcher (.command)
+                            Intel Mac (x86_64 Core i5/i7/i9)
                           </span>
                           <span style={{ fontSize: '11px', color: '#64748b' }}>
-                            For Intel Core i3, i5, i7, i9 Macs
+                            Optimized for Intel-based Macs
                           </span>
                         </div>
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#334155', background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
-                        📥 Download
-                      </span>
-                    </a>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={handleDownloadMacIntel}
+                          style={{
+                            fontSize: '11.5px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            background: '#334155',
+                            border: 'none',
+                            padding: '5px 9px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          📥 .command
+                        </button>
+                        <a
+                          href="/downloads/ExamJK-macOS-Intel.zip"
+                          download="ExamJK-macOS-Intel.zip"
+                          style={{
+                            fontSize: '11.5px',
+                            fontWeight: '800',
+                            color: '#334155',
+                            background: '#f1f5f9',
+                            border: '1px solid #cbd5e1',
+                            padding: '5px 8px',
+                            borderRadius: '6px',
+                            textDecoration: 'none',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title="Download pre-extracted zip archive"
+                        >
+                          📦 .zip
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
