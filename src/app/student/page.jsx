@@ -114,11 +114,23 @@ const StudentDashboard = () => {
   const [notifySubject, setNotifySubject] = useState("");
   const [notifyMessage, setNotifyMessage] = useState("");
 
-  // Individual UBT sets & eSewa Auto-Unlock state
+  // Individual UBT sets, Released Sets & eSewa Query State
   const [unlockedSets, setUnlockedSets] = useState(() => {
     if (typeof window !== "undefined") {
       try {
-        return JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+        const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+        const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+        return Array.from(new Set([...u1, ...u2]));
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [pendingQueries, setPendingQueries] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return JSON.parse(localStorage.getItem("studentPendingQueries") || "[]");
       } catch (e) {
         return [];
       }
@@ -201,13 +213,27 @@ const StudentDashboard = () => {
     new Date(effectiveExpiryDate + 'T23:59:59') < new Date()
   );
 
-  // Helper: check if a specific exam set is individually unlocked (via Rs. 40 eSewa purchase)
+  // Helper: check if a specific exam set is individually unlocked (via Rs. 40 eSewa purchase or admin release)
   const isSetIndividuallyUnlocked = (set) => {
     if (!set) return false;
     return unlockedSets.some((id) =>
       id?.toString() === set.id?.toString() ||
       id?.toString() === set.name?.toString() ||
       (typeof set.name === "string" && id?.toString() === encodeURIComponent(set.name))
+    );
+  };
+
+  // Helper: check if a specific exam set has a pending payment query awaiting admin confirmation
+  const isSetPending = (set) => {
+    if (!set) return false;
+    const setId = set.id?.toString();
+    const setName = set.name?.toString();
+    return pendingQueries.some((q) =>
+      (q.status === "Pending" || q.status === "PENDING") && (
+        (q.itemId && q.itemId.toString() === setId) ||
+        (q.itemName && q.itemName.toString() === setName) ||
+        (q.itemId && q.itemId.toString() === setName)
+      )
     );
   };
 
@@ -223,16 +249,68 @@ const StudentDashboard = () => {
 
   const handleEsewaSuccessUnlock = (res) => {
     try {
-      const updated = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-      setUnlockedSets(updated);
+      const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+      const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+      setUnlockedSets(Array.from(new Set([...u1, ...u2])));
+      setPendingQueries(JSON.parse(localStorage.getItem("studentPendingQueries") || "[]"));
     } catch (e) {}
 
     setPaidAccessTrigger((prev) => prev + 1);
 
-    if (res.type === "package") {
+    if (res?.type === "package") {
       setStudentPackage(res.packageName || "Full Set UBT");
     }
   };
+
+  // Sync pending queries & released sets with database periodically
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const phone = currentStudentPhone || localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone") || "";
+
+    const syncStatus = async () => {
+      // 1. Sync from localStorage
+      try {
+        const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+        const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+        const combinedLocal = Array.from(new Set([...u1, ...u2]));
+        setUnlockedSets(combinedLocal);
+        setPendingQueries(JSON.parse(localStorage.getItem("studentPendingQueries") || "[]"));
+      } catch (e) {}
+
+      // 2. Sync from database if phone exists
+      if (!phone) return;
+      try {
+        const res = await fetch(`/api/payment/query?phone=${encodeURIComponent(phone)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.queries && data.queries.length > 0) {
+            const completeItems = [];
+            data.queries.forEach((q) => {
+              if (q.status === 'COMPLETE') {
+                if (q.itemId) completeItems.push(q.itemId);
+                if (q.itemName) completeItems.push(q.itemName);
+              }
+            });
+
+            if (completeItems.length > 0) {
+              const curUnlocked = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+              const curReleased = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+              const combined = Array.from(new Set([...curUnlocked, ...curReleased, ...completeItems]));
+              localStorage.setItem("unlockedStudentExamSets", JSON.stringify(combined));
+              localStorage.setItem("releasedStudentExamSets", JSON.stringify(combined));
+              setUnlockedSets(combined);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Sync error:", e);
+      }
+    };
+
+    syncStatus();
+    const interval = setInterval(syncStatus, 4000);
+    return () => clearInterval(interval);
+  }, [currentStudentPhone]);
 
   // Handle return from official eSewa EPAY gateway
   useEffect(() => {
@@ -1208,11 +1286,15 @@ const StudentDashboard = () => {
                         <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 7px", borderRadius: "4px" }}>
                           {set.packageName || "UBT Set"}
                         </span>
-                        {isSetIndividuallyUnlocked(set) && (
+                        {isSetIndividuallyUnlocked(set) ? (
                           <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
                             UNLOCKED (Rs. 40)
                           </span>
-                        )}
+                        ) : isSetPending(set) ? (
+                          <span style={{ fontSize: "10px", fontWeight: "800", color: "#0369a1", backgroundColor: "#e0f2fe", padding: "2px 6px", borderRadius: "4px" }}>
+                            ⏳ PENDING
+                          </span>
+                        ) : null}
                       </div>
                       <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a", fontWeight: "800" }}>
                         {set.name}
@@ -1224,45 +1306,60 @@ const StudentDashboard = () => {
                       type="button"
                       onClick={() => {
                         const unlocked = isSetUnlocked(set);
-                        if (!unlocked) {
-                          handleOpenEsewaModal({
-                            id: set.id,
-                            name: set.name,
-                            price: 40,
-                            type: "set",
-                            packageName: set.packageName || "UBT Set"
-                          });
+                        if (unlocked) {
+                          if (isPackageExpired && !isSetIndividuallyUnlocked(set)) {
+                            alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exam sets.`);
+                            return;
+                          }
+                          router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
                           return;
                         }
-                        if (isPackageExpired && !isSetIndividuallyUnlocked(set)) {
-                          alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exam sets.`);
+
+                        const pending = isSetPending(set);
+                        if (pending) {
+                          alert(`Your payment query for "${set.name}" (Rs. 40) is currently pending review by Super Admin.\n\nYour payment screenshot and eSewa transaction details have been submitted. Once Super Admin verifies and confirms the payment, your UBT set will be released automatically.`);
                           return;
                         }
-                        router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
+
+                        handleOpenEsewaModal({
+                          id: set.id,
+                          name: set.name,
+                          price: 40,
+                          type: "set",
+                          packageName: set.packageName || "UBT Set"
+                        });
                       }}
                       style={{
                         width: "100%",
-                        background: !isSetUnlocked(set)
-                          ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                          : (isPackageExpired && !isSetIndividuallyUnlocked(set))
-                          ? "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)"
-                          : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                        background: isSetUnlocked(set)
+                          ? (isPackageExpired && !isSetIndividuallyUnlocked(set))
+                            ? "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)"
+                            : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"
+                          : isSetPending(set)
+                          ? "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)"
+                          : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
                         color: "#ffffff",
                         border: "none",
                         padding: "9px",
                         borderRadius: "6px",
                         fontWeight: "700",
-                        cursor: (isPackageExpired && !isSetIndividuallyUnlocked(set)) ? "not-allowed" : "pointer",
+                        cursor: (isPackageExpired && isSetUnlocked(set) && !isSetIndividuallyUnlocked(set)) ? "not-allowed" : "pointer",
                         fontSize: "13px",
                         letterSpacing: "0.3px",
-                        boxShadow: !isSetUnlocked(set) ? "0 2px 6px rgba(217,119,6,0.25)" : "none"
+                        boxShadow: isSetUnlocked(set)
+                          ? "none"
+                          : isSetPending(set)
+                          ? "0 2px 6px rgba(2, 132, 199, 0.3)"
+                          : "0 2px 6px rgba(217,119,6,0.25)"
                       }}
                     >
-                      {!isSetUnlocked(set)
-                        ? "🔒 BUY TO UNLOCK ▶ (Rs. 40)"
-                        : (isPackageExpired && !isSetIndividuallyUnlocked(set))
-                        ? "PACKAGE EXPIRED"
-                        : "START EXAM ▶"}
+                      {isSetUnlocked(set)
+                        ? (isPackageExpired && !isSetIndividuallyUnlocked(set))
+                          ? "PACKAGE EXPIRED"
+                          : "START EXAM ▶"
+                        : isSetPending(set)
+                        ? "⏳ PENDING CONFIRMATION"
+                        : "🔒 BUY TO UNLOCK ▶ (Rs. 40)"}
                     </button>
                   </div>
                 ))

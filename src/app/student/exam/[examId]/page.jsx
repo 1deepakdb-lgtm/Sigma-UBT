@@ -93,7 +93,10 @@ const StudentExam = () => {
       const curUser = typeof window !== 'undefined' ? (localStorage.getItem("currentUser") || "") : "";
       const buyerInfo = buyerMap[curPhone] || buyerMap[curUser];
 
-      const unlockedSets = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]") : [];
+      const unlockedSets = typeof window !== 'undefined' ? [
+        ...(JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]")),
+        ...(JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]"))
+      ] : [];
       const isSetIndividuallyUnlocked = unlockedSets.some((id) =>
         id?.toString() === examId?.toString() ||
         id?.toString() === currentExamSet?.id?.toString() ||

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function EsewaCheckoutModal({
@@ -12,29 +12,40 @@ export default function EsewaCheckoutModal({
   onSuccessUnlock
 }) {
   const router = useRouter();
+  const fileInputRef = useRef(null);
+
   const [copied, setCopied] = useState(false);
   const [txnId, setTxnId] = useState("");
   const [senderPhone, setSenderPhone] = useState("");
+  const [screenshotFile, setScreenshotFile] = useState(null);
+  const [screenshotPreview, setScreenshotPreview] = useState(null);
+  const [screenshotUrl, setScreenshotUrl] = useState("");
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [isQuerySubmitted, setIsQuerySubmitted] = useState(false);
   const [selectedType, setSelectedType] = useState(item?.type || "set");
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isQrZoomed, setIsQrZoomed] = useState(false);
-  const [payMethod, setPayMethod] = useState("gateway"); // "gateway" | "qr"
+  const [payMethod, setPayMethod] = useState("qr"); // "qr" (default send query) | "gateway"
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const esewaNumber = "9768444902";
   const esewaAccountName = "Deepak Bhatt";
   const esewaOrg = "Sigma Education UBT";
+  const driveFolderUrl = "https://drive.google.com/drive/folders/1ZaKiEPRNOusOvCZSpstWyWHGVRk-lRlE?usp=drive_link";
 
   useEffect(() => {
     if (isOpen) {
-      setIsSuccess(false);
+      setIsQuerySubmitted(false);
       setIsProcessing(false);
       setIsRedirecting(false);
       setTxnId("");
+      setScreenshotFile(null);
+      setScreenshotPreview(null);
+      setScreenshotUrl("");
       setSenderPhone(studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "" : ""));
       setSelectedType(item?.type || "set");
+      setPayMethod("qr");
     }
   }, [isOpen, item, studentPhone]);
 
@@ -46,6 +57,177 @@ export default function EsewaCheckoutModal({
   const itemPrice = isSet ? 40 : (selectedPackage?.price || item.price || 1000);
   const formattedPrice = typeof itemPrice === "number" ? `Rs. ${itemPrice}` : itemPrice.toString().startsWith("Rs") ? itemPrice : `Rs. ${itemPrice}`;
 
+  const handleCopyNumber = () => {
+    navigator.clipboard.writeText(esewaNumber);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  };
+
+  const handleQuickFillTxn = () => {
+    const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase();
+    setTxnId(`ESW-${Date.now().toString().slice(-4)}-${randomHex}`);
+  };
+
+  const handleScreenshotChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScreenshotFile(file);
+    const preview = URL.createObjectURL(file);
+    setScreenshotPreview(preview);
+
+    setUploadingScreenshot(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/payment/upload-screenshot", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setScreenshotUrl(data.url);
+      }
+    } catch (err) {
+      console.warn("Screenshot local upload notice:", err.message);
+    } finally {
+      setUploadingScreenshot(false);
+    }
+  };
+
+  // Student submits the query with payment screenshot and Txn ID
+  const handleSendQuery = async () => {
+    if (!txnId.trim()) {
+      alert("Please enter the eSewa Transaction ID / Reference Code from your payment receipt.");
+      return;
+    }
+
+    if (!screenshotFile && !screenshotUrl) {
+      alert("Please upload your payment screenshot before sending the query.");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      let finalScreenshotUrl = screenshotUrl;
+
+      // If not yet uploaded, upload now
+      if (!finalScreenshotUrl && screenshotFile) {
+        const formData = new FormData();
+        formData.append("file", screenshotFile);
+        const uploadRes = await fetch("/api/payment/upload-screenshot", {
+          method: "POST",
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadData.success) {
+          finalScreenshotUrl = uploadData.url;
+        }
+      }
+
+      const cleanTxn = txnId.trim().toUpperCase();
+      const curPhone = senderPhone.trim() || studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "9800000000" : "9800000000");
+
+      // 1. Submit to server API
+      await fetch("/api/payment/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentName: studentName || "Student",
+          studentPhone: curPhone,
+          itemId: item.id || item.name,
+          itemName,
+          itemType: selectedType,
+          amount: typeof itemPrice === "number" ? itemPrice : 40,
+          txnId: cleanTxn,
+          screenshotUrl: finalScreenshotUrl,
+          driveFolderUrl
+        })
+      }).catch((e) => console.warn("API query notice:", e));
+
+      // 2. Add to studentNotifications so Super Admin receives real-time notification
+      const adminNotifs = JSON.parse(localStorage.getItem("studentNotifications") || "[]");
+      const newNotif = {
+        id: Date.now(),
+        type: "payment_query",
+        subject: `UBT Purchase Query: ${itemName} (${formattedPrice})`,
+        message: `Student ${studentName || "Student"} (${curPhone}) submitted an eSewa payment query.\n\n` +
+                 `Set/Package: ${itemName} (${formattedPrice})\n` +
+                 `eSewa Transaction ID: ${cleanTxn}\n` +
+                 `Payment Screenshot: ${finalScreenshotUrl ? "Uploaded" : "Attached"}\n` +
+                 `Google Drive Receipts Folder: ${driveFolderUrl}\n\n` +
+                 `Please verify the receipt and click 'Confirm & Release UBT' below to unlock.`,
+        studentName: studentName || "Student",
+        studentPhone: curPhone,
+        itemName,
+        itemId: item.id || item.name,
+        itemType: selectedType,
+        amount: itemPrice,
+        txnId: cleanTxn,
+        screenshotUrl: finalScreenshotUrl,
+        driveFolderUrl,
+        status: "Pending", // "Pending" | "Released" | "Rejected"
+        read: false,
+        date: new Date().toLocaleString()
+      };
+      localStorage.setItem("studentNotifications", JSON.stringify([newNotif, ...adminNotifs]));
+
+      // 3. Save to studentPendingQueries for immediate button state update
+      const pendingQueries = JSON.parse(localStorage.getItem("studentPendingQueries") || "[]");
+      pendingQueries.unshift({
+        id: Date.now(),
+        itemId: item.id || item.name,
+        itemName,
+        phone: curPhone,
+        studentName: studentName || "Student",
+        amount: itemPrice,
+        txnId: cleanTxn,
+        screenshotUrl: finalScreenshotUrl,
+        driveFolderUrl,
+        status: "Pending",
+        date: new Date().toLocaleString()
+      });
+      localStorage.setItem("studentPendingQueries", JSON.stringify(pendingQueries));
+
+      // 4. Save to student's payment history
+      const payments = JSON.parse(localStorage.getItem("studentPayments") || "[]");
+      payments.unshift({
+        id: Date.now(),
+        txnId: cleanTxn,
+        studentName: studentName || "Student",
+        studentPhone: curPhone,
+        item: itemName,
+        type: isSet ? "Individual UBT Set (Rs. 40)" : "UBT Package",
+        amount: itemPrice,
+        esewaNumber,
+        status: "Pending Admin Confirmation",
+        screenshotUrl: finalScreenshotUrl,
+        driveFolderUrl,
+        date: new Date().toISOString(),
+        formattedDate: new Date().toLocaleString()
+      });
+      localStorage.setItem("studentPayments", JSON.stringify(payments));
+
+      setIsProcessing(false);
+      setIsQuerySubmitted(true);
+
+      if (onSuccessUnlock) {
+        onSuccessUnlock({
+          type: selectedType,
+          item,
+          status: "Pending",
+          pendingQuery: true
+        });
+      }
+    } catch (err) {
+      console.error("Query submission error:", err);
+      setIsProcessing(false);
+      alert("Failed to submit query: " + err.message);
+    }
+  };
+
+  // Optional: 1-Click eSewa Gateway payment
   const handlePayViaEsewaGateway = async () => {
     setIsRedirecting(true);
     try {
@@ -67,7 +249,6 @@ export default function EsewaCheckoutModal({
         throw new Error(data.error || "Failed to initiate eSewa gateway session");
       }
 
-      // Create a hidden form and automatically post to eSewa gateway
       const form = document.createElement("form");
       form.method = "POST";
       form.action = data.actionUrl;
@@ -85,144 +266,8 @@ export default function EsewaCheckoutModal({
       form.submit();
     } catch (err) {
       console.error("[eSewa Gateway Redirect Error]:", err);
-      alert(`Could not open eSewa payment gateway: ${err.message}. Please switch to the QR Code tab to pay manually.`);
+      alert(`Could not open eSewa payment gateway: ${err.message}. Please use the QR code & Send Query method instead.`);
       setIsRedirecting(false);
-    }
-  };
-
-  const handleCopyNumber = () => {
-    navigator.clipboard.writeText(esewaNumber);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2200);
-  };
-
-  const handleQuickFillTxn = () => {
-    const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase();
-    setTxnId(`ESW-${Date.now().toString().slice(-4)}-${randomHex}`);
-  };
-
-  const handleConfirmPayment = () => {
-    if (!txnId.trim()) {
-      alert("Please enter the eSewa Transaction ID / Reference Code from your eSewa payment receipt.");
-      return;
-    }
-
-    setIsProcessing(true);
-
-    // Simulate instant verification and auto-unlock
-    setTimeout(() => {
-      try {
-        const cleanTxn = txnId.trim().toUpperCase();
-        const curPhone = senderPhone.trim() || studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "9800000000" : "9800000000");
-
-        if (isSet) {
-          // Unlock individual set (Rs. 40)
-          const unlockedSets = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-          const setId = item.id || item.name;
-          const setName = item.name;
-
-          const updatedSets = Array.from(new Set([...unlockedSets, setId, setName, setId?.toString()]));
-          localStorage.setItem("unlockedStudentExamSets", JSON.stringify(updatedSets));
-
-          // Log payment record
-          const purchaseHistory = JSON.parse(localStorage.getItem("studentPayments") || "[]");
-          const newPayment = {
-            id: Date.now(),
-            txnId: cleanTxn,
-            studentName: studentName || "Student",
-            studentPhone: curPhone,
-            item: setName,
-            type: "Individual UBT Set",
-            amount: 40,
-            esewaNumber,
-            recipientName: esewaAccountName,
-            status: "Auto-Unlocked",
-            date: new Date().toISOString(),
-            formattedDate: new Date().toLocaleString()
-          };
-          localStorage.setItem("studentPayments", JSON.stringify([newPayment, ...purchaseHistory]));
-
-          // Also record in examPurchaseRequests for admin tracking
-          const requests = JSON.parse(localStorage.getItem("examPurchaseRequests") || "[]");
-          requests.unshift({
-            id: Date.now(),
-            studentName: studentName || "Student",
-            studentPhone: curPhone,
-            packageName: `Set: ${setName} (Rs. 40 Individual Set)`,
-            txnId: cleanTxn,
-            date: new Date().toLocaleDateString(),
-            status: "Auto-Unlocked (eSewa)"
-          });
-          localStorage.setItem("examPurchaseRequests", JSON.stringify(requests));
-        } else {
-          // Unlock full package
-          const pkgName = selectedPackage?.name || item.name || "Full Set UBT";
-          localStorage.setItem("hasPurchasedExamAccess", "true");
-          localStorage.setItem("currentStudentPackage", pkgName);
-          localStorage.setItem("currentStudentExpiryDate", "1 Month");
-
-          // Update buyer map
-          const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
-          const expDate = new Date();
-          expDate.setMonth(expDate.getMonth() + 1);
-          const expString = expDate.toISOString().split("T")[0];
-
-          buyerMap[curPhone] = {
-            isBuyer: true,
-            hasPurchased: true,
-            package: pkgName,
-            expiryDate: expString
-          };
-          if (studentName) {
-            buyerMap[studentName] = buyerMap[curPhone];
-          }
-          localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
-
-          // Log payment
-          const purchaseHistory = JSON.parse(localStorage.getItem("studentPayments") || "[]");
-          purchaseHistory.unshift({
-            id: Date.now(),
-            txnId: cleanTxn,
-            studentName: studentName || "Student",
-            studentPhone: curPhone,
-            item: pkgName,
-            type: "UBT Exam Package",
-            amount: itemPrice,
-            esewaNumber,
-            recipientName: esewaAccountName,
-            status: "Auto-Unlocked",
-            date: new Date().toISOString(),
-            formattedDate: new Date().toLocaleString()
-          });
-          localStorage.setItem("studentPayments", JSON.stringify(purchaseHistory));
-        }
-
-        setIsProcessing(false);
-        setIsSuccess(true);
-
-        if (onSuccessUnlock) {
-          onSuccessUnlock({
-            type: selectedType,
-            item,
-            packageName: isSet ? null : (selectedPackage?.name || item.name),
-            price: itemPrice,
-            txnId: cleanTxn
-          });
-        }
-      } catch (err) {
-        console.error("Auto unlock error:", err);
-        setIsProcessing(false);
-        alert("Payment saved, but could not update local storage. Please refresh the page.");
-      }
-    }, 900);
-  };
-
-  const handleStartExamNow = () => {
-    onClose();
-    if (isSet) {
-      router.push(`/student/exam/${item.id || encodeURIComponent(item.name)}`);
-    } else {
-      router.push("/student");
     }
   };
 
@@ -244,7 +289,7 @@ export default function EsewaCheckoutModal({
         overflowY: "auto"
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isProcessing) onClose();
+        if (e.target === e.currentTarget && !isProcessing && !isRedirecting) onClose();
       }}
     >
       <div
@@ -255,8 +300,7 @@ export default function EsewaCheckoutModal({
           maxWidth: "540px",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
           overflow: "hidden",
-          border: "1px solid #e2e8f0",
-          animation: "modalFadeIn 0.2s ease-out"
+          border: "1px solid #e2e8f0"
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -297,17 +341,17 @@ export default function EsewaCheckoutModal({
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "800", letterSpacing: "-0.2px" }}>
-                Instant eSewa Auto-Unlock
+                eSewa Payment &amp; Query
               </h3>
               <p style={{ margin: "2px 0 0 0", fontSize: "11.5px", opacity: 0.9 }}>
-                Direct Payment &middot; Immediate 24/7 Activation
+                Send Screenshot &amp; Txn ID &middot; Super Admin Release
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            disabled={isProcessing}
+            disabled={isProcessing || isRedirecting}
             style={{
               background: "rgba(255,255,255,0.2)",
               border: "none",
@@ -329,30 +373,29 @@ export default function EsewaCheckoutModal({
 
         {/* Modal Body */}
         <div style={{ padding: "22px 24px" }}>
-          {isSuccess ? (
-            /* SUCCESS STATE */
+          {isQuerySubmitted ? (
+            /* SUCCESS QUERY SUBMISSION STATE */
             <div style={{ textAlign: "center", padding: "16px 8px" }}>
               <div
                 style={{
                   width: "72px",
                   height: "72px",
-                  backgroundColor: "#dcfce7",
+                  backgroundColor: "#eff6ff",
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   margin: "0 auto 16px auto",
-                  border: "3px solid #86efac"
+                  border: "3px solid #93c5fd"
                 }}
               >
-                <span style={{ fontSize: "36px", color: "#16a34a" }}>✓</span>
+                <span style={{ fontSize: "34px", color: "#2563eb" }}>📨</span>
               </div>
-              <h3 style={{ margin: "0 0 8px 0", fontSize: "22px", color: "#0f172a", fontWeight: "800" }}>
-                Payment Confirmed &amp; Auto-Unlocked!
+              <h3 style={{ margin: "0 0 8px 0", fontSize: "21px", color: "#0f172a", fontWeight: "800" }}>
+                Query Submitted to Super Admin!
               </h3>
-              <p style={{ margin: "0 0 18px 0", fontSize: "14px", color: "#64748b" }}>
-                Thank you! Your transaction has been registered and access to{" "}
-                <strong style={{ color: "#16a34a" }}>{itemName}</strong> is now unlocked.
+              <p style={{ margin: "0 0 16px 0", fontSize: "13.5px", color: "#64748b", lineHeight: "1.5" }}>
+                Your payment screenshot and Transaction ID for <strong style={{ color: "#1e3a8a" }}>{itemName}</strong> have been submitted.
               </p>
 
               <div
@@ -363,66 +406,73 @@ export default function EsewaCheckoutModal({
                   border: "1px solid #e2e8f0",
                   textAlign: "left",
                   fontSize: "13px",
-                  marginBottom: "20px"
+                  marginBottom: "16px"
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span style={{ color: "#64748b" }}>Item Unlocked:</span>
+                  <span style={{ color: "#64748b" }}>Requested Set:</span>
                   <strong style={{ color: "#0f172a" }}>{itemName}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span style={{ color: "#64748b" }}>Amount Paid:</span>
+                  <span style={{ color: "#64748b" }}>Amount:</span>
                   <strong style={{ color: "#16a34a" }}>{formattedPrice}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span style={{ color: "#64748b" }}>Transaction Ref:</span>
+                  <span style={{ color: "#64748b" }}>Transaction ID:</span>
                   <strong style={{ color: "#2563eb", fontFamily: "monospace" }}>{txnId}</strong>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#64748b" }}>eSewa Account:</span>
-                  <strong style={{ color: "#0f172a" }}>9768444902 ({esewaAccountName})</strong>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <span style={{ color: "#64748b" }}>Status:</span>
+                  <strong style={{ color: "#d97706" }}>Pending Super Admin Release</strong>
                 </div>
+                {screenshotPreview && (
+                  <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px dashed #cbd5e1" }}>
+                    <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginBottom: "6px" }}>Screenshot Uploaded:</span>
+                    <img
+                      src={screenshotPreview}
+                      alt="Receipt Preview"
+                      style={{ height: "64px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    />
+                  </div>
+                )}
               </div>
 
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button
-                  type="button"
-                  onClick={handleStartExamNow}
-                  style={{
-                    flex: 1,
-                    background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)"
-                  }}
-                >
-                  {isSet ? "🚀 Start This Exam Now ▶" : "Go to Exam Sets ▶"}
-                </button>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  style={{
-                    backgroundColor: "#f1f5f9",
-                    color: "#475569",
-                    border: "1px solid #cbd5e1",
-                    padding: "12px 18px",
-                    borderRadius: "8px",
-                    fontWeight: "600",
-                    fontSize: "13px",
-                    cursor: "pointer"
-                  }}
-                >
-                  Close
-                </button>
+              <div
+                style={{
+                  backgroundColor: "#fef3c7",
+                  border: "1px solid #fde68a",
+                  borderRadius: "8px",
+                  padding: "10px 14px",
+                  marginBottom: "20px",
+                  fontSize: "12px",
+                  color: "#92400e",
+                  textAlign: "left"
+                }}
+              >
+                Super Admin will verify your receipt in the Google Drive folder / eSewa statement and release the UBT set shortly.
               </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  width: "100%",
+                  background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  fontWeight: "700",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)"
+                }}
+              >
+                Close &amp; Check Status
+              </button>
             </div>
           ) : (
-            /* CHECKOUT FORM */
+            /* QUERY & PAYMENT FORM */
             <div>
               {/* Item Card with Price Highlight */}
               <div
@@ -456,7 +506,7 @@ export default function EsewaCheckoutModal({
                     {itemName}
                   </h4>
                   <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                    {isSet ? "Instant access to 40 EPS-TOPIK Questions & Audio" : "Full access to all included UBT sets"}
+                    {isSet ? "40 Questions, Audio & Timer practice" : "Full access to all included UBT sets"}
                   </p>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -467,30 +517,8 @@ export default function EsewaCheckoutModal({
                 </div>
               </div>
 
-              {/* Payment Mode Selector Tabs */}
+              {/* Mode Tabs */}
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                <button
-                  type="button"
-                  onClick={() => setPayMethod("gateway")}
-                  style={{
-                    flex: 1,
-                    padding: "9px 12px",
-                    borderRadius: "8px",
-                    border: payMethod === "gateway" ? "2px solid #16a34a" : "1px solid #cbd5e1",
-                    backgroundColor: payMethod === "gateway" ? "#f0fdf4" : "#ffffff",
-                    color: payMethod === "gateway" ? "#166534" : "#475569",
-                    fontWeight: "800",
-                    fontSize: "12.5px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px"
-                  }}
-                >
-                  <span>⚡</span>
-                  <span>eSewa Gateway (Auto-Verified)</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => setPayMethod("qr")}
@@ -511,126 +539,43 @@ export default function EsewaCheckoutModal({
                   }}
                 >
                   <span>📷</span>
-                  <span>Scan QR (9768444902)</span>
+                  <span>Scan QR &amp; Send Query</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayMethod("gateway")}
+                  style={{
+                    flex: 1,
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: payMethod === "gateway" ? "2px solid #16a34a" : "1px solid #cbd5e1",
+                    backgroundColor: payMethod === "gateway" ? "#f0fdf4" : "#ffffff",
+                    color: payMethod === "gateway" ? "#166534" : "#475569",
+                    fontWeight: "800",
+                    fontSize: "12.5px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px"
+                  }}
+                >
+                  <span>⚡</span>
+                  <span>Instant eSewa Gateway</span>
                 </button>
               </div>
 
-              {payMethod === "gateway" ? (
-                /* OFFICIAL ESEWA GATEWAY VIEW */
-                <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "18px", marginBottom: "16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-                    <div style={{ backgroundColor: "#16a34a", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "900" }}>
-                      ✓
-                    </div>
-                    <div>
-                      <h4 style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "800" }}>
-                        Official eSewa EPAY Gateway
-                      </h4>
-                      <p style={{ margin: "2px 0 0 0", fontSize: "11.5px", color: "#64748b" }}>
-                        Direct server-to-server verification. Genuine payment guarantee, instant auto-unlock.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style={{ backgroundColor: "#ffffff", padding: "12px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", marginBottom: "14px", fontSize: "12px", color: "#334155" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                      <span style={{ color: "#64748b" }}>Pay for:</span>
-                      <strong style={{ color: "#0f172a" }}>{itemName}</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                      <span style={{ color: "#64748b" }}>Amount to Pay:</span>
-                      <strong style={{ color: "#16a34a", fontSize: "15px" }}>{formattedPrice}</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "#64748b" }}>Verification Mode:</span>
-                      <strong style={{ color: "#2563eb" }}>eSewa EPAY Gateway</strong>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: "16px" }}>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#0f172a", marginBottom: "5px" }}>
-                      Your Mobile Number (Optional):
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 98XXXXXXXX"
-                      value={senderPhone}
-                      onChange={(e) => setSenderPhone(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        border: "1.5px solid #cbd5e1",
-                        fontSize: "13.5px",
-                        boxSizing: "border-box"
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <button
-                      type="button"
-                      onClick={handlePayViaEsewaGateway}
-                      disabled={isRedirecting}
-                      style={{
-                        flex: 1,
-                        background: isRedirecting ? "#94a3b8" : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                        color: "#ffffff",
-                        border: "none",
-                        padding: "14px",
-                        borderRadius: "8px",
-                        fontWeight: "900",
-                        fontSize: "15px",
-                        cursor: isRedirecting ? "wait" : "pointer",
-                        boxShadow: "0 4px 14px rgba(22, 163, 74, 0.35)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px"
-                      }}
-                    >
-                      {isRedirecting ? (
-                        <>
-                          <span>⏳</span>
-                          <span>Connecting to eSewa Portal...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>🟢</span>
-                          <span>Pay {formattedPrice} via eSewa Gateway ▶</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      disabled={isRedirecting}
-                      style={{
-                        backgroundColor: "#f1f5f9",
-                        color: "#475569",
-                        border: "1px solid #cbd5e1",
-                        padding: "13px 18px",
-                        borderRadius: "8px",
-                        fontWeight: "600",
-                        fontSize: "13px",
-                        cursor: "pointer"
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* MANUAL QR CODE VIEW */
+              {payMethod === "qr" ? (
+                /* QR CODE & SEND QUERY FLOW */
                 <div>
-                  {/* eSewa Payment Details Box */}
+                  {/* eSewa Details Box */}
                   <div
                     style={{
                       backgroundColor: "#ffffff",
                       border: "1.5px dashed #16a34a",
                       borderRadius: "12px",
                       padding: "14px 16px",
-                      marginBottom: "18px",
+                      marginBottom: "14px",
                       display: "flex",
                       gap: "16px",
                       alignItems: "center"
@@ -655,8 +600,8 @@ export default function EsewaCheckoutModal({
                         src="/esewa-payment-qr.jpg"
                         alt="eSewa QR 9768444902"
                         style={{
-                          width: "120px",
-                          height: "120px",
+                          width: "115px",
+                          height: "115px",
                           objectFit: "contain",
                           display: "block",
                           borderRadius: "6px"
@@ -665,12 +610,12 @@ export default function EsewaCheckoutModal({
                           e.currentTarget.src = "/images/esewa-payment-qr.jpg";
                         }}
                       />
-                      <div style={{ fontSize: "9.5px", fontWeight: "800", color: "#16a34a", marginTop: "3px" }}>
-                        🔍 SCAN OR ENLARGE
+                      <div style={{ fontSize: "9px", fontWeight: "800", color: "#16a34a", marginTop: "3px" }}>
+                        🔍 CLICK TO ENLARGE
                       </div>
                     </div>
 
-                    {/* Recipient Details & 1-Click Copy */}
+                    {/* Details & Copy */}
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", textTransform: "uppercase" }}>
                         Official eSewa ID / Phone:
@@ -706,55 +651,108 @@ export default function EsewaCheckoutModal({
                         </button>
                       </div>
 
-                      <div style={{ fontSize: "12px", color: "#334155", margin: "3px 0" }}>
+                      <div style={{ fontSize: "12px", color: "#334155", margin: "2px 0" }}>
                         Account Name: <strong>{esewaAccountName}</strong>
                       </div>
                       <div style={{ fontSize: "11px", color: "#64748b" }}>
                         Org: <strong>{esewaOrg}</strong>
                       </div>
 
-                      <div
+                      {/* Google Drive Link */}
+                      <a
+                        href={driveFolderUrl}
+                        target="_blank"
+                        rel="noreferrer"
                         style={{
-                          display: "inline-block",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
                           marginTop: "6px",
-                          fontSize: "10.5px",
+                          fontSize: "11px",
                           fontWeight: "700",
-                          color: "#15803d",
-                          backgroundColor: "#dcfce7",
-                          padding: "2px 8px",
-                          borderRadius: "12px"
+                          color: "#1d4ed8",
+                          textDecoration: "underline"
                         }}
                       >
-                        ⚡ Pay on eSewa app &amp; enter Ref ID below
+                        <span>📁</span>
+                        <span>Google Drive Receipts Folder ↗</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Upload Screenshot Card */}
+                  <div style={{ backgroundColor: "#f8fafc", border: "1.5px solid #cbd5e1", borderRadius: "10px", padding: "12px 14px", marginBottom: "14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                      <label style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a" }}>
+                        Upload Payment Screenshot <span style={{ color: "#dc2626" }}>*</span>
+                      </label>
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>JPG, PNG, WebP</span>
+                    </div>
+
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      onChange={handleScreenshotChange}
+                      style={{ display: "none" }}
+                    />
+
+                    {screenshotPreview ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#ffffff", padding: "8px", borderRadius: "8px", border: "1px solid #86efac" }}>
+                        <img
+                          src={screenshotPreview}
+                          alt="Selected receipt"
+                          style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: "12px", fontWeight: "700", color: "#166534", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {screenshotFile?.name || "Screenshot Selected"}
+                          </div>
+                          <div style={{ fontSize: "11px", color: "#64748b" }}>
+                            {uploadingScreenshot ? "⏳ Uploading..." : "✓ Ready to submit"}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setScreenshotFile(null);
+                            setScreenshotPreview(null);
+                            setScreenshotUrl("");
+                          }}
+                          style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "6px", padding: "6px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                        >
+                          Remove
+                        </button>
                       </div>
-                    </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          width: "100%",
+                          padding: "12px",
+                          border: "1.5px dashed #2563eb",
+                          backgroundColor: "#eff6ff",
+                          borderRadius: "8px",
+                          color: "#1d4ed8",
+                          fontWeight: "700",
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px"
+                        }}
+                      >
+                        <span>📷</span>
+                        <span>Click to Select &amp; Upload Payment Screenshot</span>
+                      </button>
+                    )}
                   </div>
 
-                  {/* Step Instructions */}
-                  <div
-                    style={{
-                      backgroundColor: "#f8fafc",
-                      borderRadius: "8px",
-                      padding: "10px 14px",
-                      fontSize: "12px",
-                      color: "#475569",
-                      marginBottom: "16px",
-                      border: "1px solid #e2e8f0"
-                    }}
-                  >
-                    <div style={{ fontWeight: "700", color: "#1e3a8a", marginBottom: "4px" }}>
-                      Quick 3-Step Verification:
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      <span>1. Open eSewa &rarr; Send Money to <strong>9768444902</strong> (Amount: <strong>{formattedPrice}</strong>).</span>
-                      <span>2. Copy the <strong>Transaction Code / Ref ID</strong> from your eSewa receipt.</span>
-                      <span>3. Paste below &amp; click <strong>Confirm &amp; Auto-Unlock</strong>!</span>
-                    </div>
-                  </div>
-
-                  {/* Form Input: Transaction Code */}
-                  <div style={{ marginBottom: "14px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                  {/* Transaction ID & Phone Inputs */}
+                  <div style={{ marginBottom: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                       <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#0f172a" }}>
                         eSewa Transaction ID / Ref Code <span style={{ color: "#dc2626" }}>*</span>
                       </label>
@@ -770,9 +768,8 @@ export default function EsewaCheckoutModal({
                           cursor: "pointer",
                           padding: 0
                         }}
-                        title="Fill a simulated test transaction ID"
                       >
-                        ⚡ Test Auto-Fill ID
+                        ⚡ Test Auto-Fill
                       </button>
                     </div>
                     <input
@@ -790,15 +787,12 @@ export default function EsewaCheckoutModal({
                         boxSizing: "border-box",
                         outline: "none"
                       }}
-                      onFocus={(e) => (e.target.style.borderColor = "#16a34a")}
-                      onBlur={(e) => (e.target.style.borderColor = "#cbd5e1")}
                     />
                   </div>
 
-                  {/* Sender Phone (Optional / Pre-filled) */}
-                  <div style={{ marginBottom: "20px" }}>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#64748b", marginBottom: "5px" }}>
-                      Sender Mobile / eSewa Number (For Receipt Matching)
+                  <div style={{ marginBottom: "18px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#64748b", marginBottom: "4px" }}>
+                      Sender Phone Number (eSewa Account)
                     </label>
                     <input
                       type="text"
@@ -816,25 +810,26 @@ export default function EsewaCheckoutModal({
                     />
                   </div>
 
-                  {/* Action Buttons */}
+                  {/* Action Buttons: SEND QUERY */}
                   <div style={{ display: "flex", gap: "10px" }}>
                     <button
                       type="button"
-                      onClick={handleConfirmPayment}
+                      onClick={handleSendQuery}
                       disabled={isProcessing}
                       style={{
                         flex: 1,
                         background: isProcessing
                           ? "#94a3b8"
-                          : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                          : "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
                         color: "#ffffff",
                         border: "none",
                         padding: "13px",
                         borderRadius: "8px",
-                        fontWeight: "800",
-                        fontSize: "14px",
+                        fontWeight: "900",
+                        fontSize: "14.5px",
+                        letterSpacing: "0.3px",
                         cursor: isProcessing ? "wait" : "pointer",
-                        boxShadow: "0 4px 12px rgba(22, 163, 74, 0.25)",
+                        boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -844,12 +839,12 @@ export default function EsewaCheckoutModal({
                       {isProcessing ? (
                         <>
                           <span>⏳</span>
-                          <span>Verifying &amp; Unlocking...</span>
+                          <span>Submitting Query to Admin...</span>
                         </>
                       ) : (
                         <>
-                          <span>⚡</span>
-                          <span>Confirm &amp; Auto-Unlock ({formattedPrice})</span>
+                          <span>📨</span>
+                          <span>SEND QUERY ({formattedPrice})</span>
                         </>
                       )}
                     </button>
@@ -871,6 +866,68 @@ export default function EsewaCheckoutModal({
                       Cancel
                     </button>
                   </div>
+                </div>
+              ) : (
+                /* OFFICIAL ESEWA GATEWAY TAB */
+                <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "18px", marginBottom: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+                    <div style={{ backgroundColor: "#16a34a", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "900" }}>
+                      ✓
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: "800" }}>
+                        Instant eSewa EPAY Gateway
+                      </h4>
+                      <p style={{ margin: "2px 0 0 0", fontSize: "11.5px", color: "#64748b" }}>
+                        Automatic server verification directly on eSewa.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: "#ffffff", padding: "12px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", marginBottom: "16px", fontSize: "12px", color: "#334155" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                      <span style={{ color: "#64748b" }}>Item:</span>
+                      <strong style={{ color: "#0f172a" }}>{itemName}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#64748b" }}>Amount:</span>
+                      <strong style={{ color: "#16a34a", fontSize: "14px" }}>{formattedPrice}</strong>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handlePayViaEsewaGateway}
+                    disabled={isRedirecting}
+                    style={{
+                      width: "100%",
+                      background: isRedirecting ? "#94a3b8" : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "14px",
+                      borderRadius: "8px",
+                      fontWeight: "900",
+                      fontSize: "15px",
+                      cursor: isRedirecting ? "wait" : "pointer",
+                      boxShadow: "0 4px 14px rgba(22, 163, 74, 0.35)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px"
+                    }}
+                  >
+                    {isRedirecting ? (
+                      <>
+                        <span>⏳</span>
+                        <span>Connecting to eSewa...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🟢</span>
+                        <span>Pay {formattedPrice} via Gateway ▶</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
             </div>
