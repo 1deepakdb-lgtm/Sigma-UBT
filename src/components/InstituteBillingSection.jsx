@@ -2816,17 +2816,17 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           <div style={{
             width: "100%",
             maxWidth: "420px",
-            backgroundColor: "#f0f9ff",
+            backgroundColor: "#ffffff",
             borderRadius: "14px",
-            boxShadow: "0 10px 25px rgba(2, 132, 199, 0.12)",
-            border: "1px solid #7dd3fc",
+            boxShadow: "0 10px 25px rgba(30, 58, 138, 0.12), 0 4px 10px rgba(0, 0, 0, 0.05)",
+            border: "1px solid #cbd5e1",
             overflow: "hidden",
             flexShrink: 0
           }}>
-            {/* Header: Sky Blue with Login Icon */}
+            {/* Header: Institute Navy Theme */}
             <div style={{
-              backgroundColor: "#0284c7",
-              backgroundImage: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%)",
+              backgroundColor: "#1e3a8a",
+              backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)",
               padding: "26px 20px 22px 20px",
               textAlign: "center",
               color: "#ffffff"
@@ -2841,7 +2841,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 alignItems: "center",
                 justifyContent: "center",
                 margin: "0 auto 12px auto",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)"
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
               }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
@@ -2854,8 +2854,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               </h2>
             </div>
 
-            {/* Form: Sky Blue Tint Background */}
-            <div style={{ padding: "26px 24px 30px 24px", backgroundColor: "#f0f9ff" }}>
+            {/* Form: White Background */}
+            <div style={{ padding: "26px 24px 30px 24px", backgroundColor: "#ffffff" }}>
               {loginError && (
                 <div style={{
                   backgroundColor: "#fef2f2",
@@ -2876,7 +2876,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
               <form onSubmit={handleGateLogin}>
                 <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#0369a1", marginBottom: "6px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
                     User ID / Username *
                   </label>
                   <input
@@ -2890,8 +2890,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       width: "100%",
                       padding: "12px 14px",
                       borderRadius: "8px",
-                      border: "1.5px solid #bae6fd",
-                      backgroundColor: "#ffffff",
+                      border: "1.5px solid #cbd5e1",
+                      backgroundColor: "#f8fafc",
                       fontSize: "14px",
                       boxSizing: "border-box",
                       outline: "none"
@@ -2900,7 +2900,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </div>
 
                 <div style={{ marginBottom: "22px" }}>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#0369a1", marginBottom: "6px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
                     Password *
                   </label>
                   <input
@@ -2913,8 +2913,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       width: "100%",
                       padding: "12px 14px",
                       borderRadius: "8px",
-                      border: "1.5px solid #bae6fd",
-                      backgroundColor: "#ffffff",
+                      border: "1.5px solid #cbd5e1",
+                      backgroundColor: "#f8fafc",
                       fontSize: "14px",
                       boxSizing: "border-box",
                       outline: "none"
@@ -2927,8 +2927,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   disabled={loginLoading}
                   style={{
                     width: "100%",
-                    backgroundColor: "#0284c7",
-                    backgroundImage: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+                    backgroundColor: "#1e3a8a",
+                    backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
                     color: "#ffffff",
                     border: "none",
                     padding: "13px 20px",
@@ -2940,7 +2940,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "8px",
-                    boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)",
+                    boxShadow: "0 4px 14px rgba(30, 58, 138, 0.3)",
                     transition: "all 0.15s ease"
                   }}
                 >
