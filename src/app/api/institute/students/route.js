@@ -45,8 +45,9 @@ export async function GET(req) {
         phone: true,
         batch: true,
         status: true,
+        language: true,
         createdAt: true,
-        institute: { select: { id: true, name: true } },
+        institute: { select: { id: true, name: true, language: true } },
         _count: { select: { results: true } }
       },
       orderBy: { createdAt: 'desc' }
@@ -73,6 +74,7 @@ export async function POST(req) {
       phone = '',
       batch = 'Full Set UBT',
       status = 'Active',
+      language = 'both',
       instituteId: reqInstId,
       instituteName: reqInstName
     } = body;
@@ -169,6 +171,7 @@ export async function POST(req) {
           phone: cleanPhone,
           batch: batch || existing.batch || 'Full Set UBT',
           status: status || 'Active',
+          language: language ? language.toLowerCase() : (existing.language || 'both'),
           instituteId: targetInstituteId || existing.instituteId
         },
         select: {
@@ -178,6 +181,7 @@ export async function POST(req) {
           phone: true,
           batch: true,
           status: true,
+          language: true,
           createdAt: true
         }
       });
@@ -193,6 +197,7 @@ export async function POST(req) {
         batch: batch || 'Full Set UBT',
         status: status || 'Active',
         role: 'student',
+        language: (language || 'both').toLowerCase(),
         instituteId: targetInstituteId
       },
       select: {
@@ -202,6 +207,7 @@ export async function POST(req) {
         phone: true,
         batch: true,
         status: true,
+        language: true,
         createdAt: true
       }
     });

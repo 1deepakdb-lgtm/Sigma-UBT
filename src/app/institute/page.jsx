@@ -75,7 +75,8 @@ const InstituteDashboard = () => {
     phone: "", 
     password: "", 
     assignedPackage: "Chapterwise 30 set",
-    expiryDuration: "1 Month" 
+    expiryDuration: "1 Month",
+    language: "both"
   });
   const [copiedStudentId, setCopiedStudentId] = useState(null);
   const [copiedAllStudents, setCopiedAllStudents] = useState(false);
@@ -700,6 +701,8 @@ const InstituteDashboard = () => {
     const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
     const currentInstStudents = allStudents[instituteName] || [];
 
+    const chosenLanguage = formData.language || (instituteLanguage === "both" ? "both" : instituteLanguage);
+
     const studentPayload = {
       id: editId || undefined,
       name: formData.name.trim(),
@@ -708,6 +711,7 @@ const InstituteDashboard = () => {
       password: (formData.password || "1234").trim(),
       batch: formData.assignedPackage || "Full Set UBT",
       status: "Active",
+      language: chosenLanguage,
       instituteName: instituteName,
       instituteId: instId || undefined
     };
@@ -728,7 +732,7 @@ const InstituteDashboard = () => {
       if (editId) {
         const updatedStudents = currentInstStudents.map((stu) =>
           stu.id === editId || stu.phone === formData.phone
-            ? { ...stu, ...formData, id: data.student?.id || stu.id, expiryDate: calculatedExpiryDate }
+            ? { ...stu, ...formData, id: data.student?.id || stu.id, expiryDate: calculatedExpiryDate, language: data.student?.language || chosenLanguage }
             : stu
         );
         allStudents[instituteName] = updatedStudents;
@@ -743,6 +747,7 @@ const InstituteDashboard = () => {
       const newStudent = {
         id: data.student?.id || Date.now(),
         ...formData,
+        language: data.student?.language || chosenLanguage,
         expiryDate: calculatedExpiryDate,
         status: "Active"
       };
@@ -770,7 +775,8 @@ const InstituteDashboard = () => {
       phone: student.phone,
       password: student.password || "",
       assignedPackage: student.assignedPackage || "Chapterwise 30 set",
-      expiryDuration: student.expiryDuration || "1 Month"
+      expiryDuration: student.expiryDuration || "1 Month",
+      language: student.language || (instituteLanguage === "both" ? "both" : instituteLanguage)
     });
     setEditId(student.id);
     setShowForm(true);
@@ -799,25 +805,33 @@ const InstituteDashboard = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", phone: "", password: "", assignedPackage: "Chapterwise 30 set", expiryDuration: "1 Month" });
+    setFormData({
+      name: "",
+      phone: "",
+      password: "",
+      assignedPackage: "Chapterwise 30 set",
+      expiryDuration: "1 Month",
+      language: instituteLanguage === "both" ? "both" : instituteLanguage
+    });
     setEditId(null);
     setShowForm(false);
   };
 
   const handleCopyStudent = (stu) => {
     if (!stu) return;
+    const stuLang = stu.language === "japanese" ? "🇯🇵 Japanese Track" : stu.language === "korean" ? "🇰🇷 Korean Track" : "🌐 Both (Dual Track)";
     const text = `🎓 SIGMA EPS STUDENT LOGIN DETAILS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 Name: ${stu.name}
-📱 Phone (Login ID): ${stu.phone}
-🔑 Password: ${stu.password || "1234"}
-Assigned Package: ${stu.assignedPackage || "Full Set"}
-⏳ Expiry Date: ${stu.expiryDate || "Active"}
-🏢 Institute: ${instituteName}
-🌐 Student Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
+Student Name: ${stu.name}
+Login ID / Phone: ${stu.phone}
+Password: ${stu.password || "1234"}
+Course Track: ${stuLang}
+Assigned Package: ${stu.assignedPackage || "Full Set UBT"}
+Validity: ${stu.expiryDate || "Active"}
+Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
     navigator.clipboard.writeText(text);
-    setCopiedStudentId(stu.id);
+    setCopiedStudentId(stu.id || stu.phone);
     setTimeout(() => setCopiedStudentId(null), 2500);
   };
 
@@ -1362,7 +1376,29 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
                         )}
                       </select>
                     </div>
-                    <div style={{ gridColumn: "span 2" }}>
+
+                    <div>
+                      <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "700", color: "#334155" }}>
+                        Select Study Language:
+                      </label>
+                      <select
+                        name="language"
+                        value={formData.language || (instituteLanguage === "both" ? "both" : instituteLanguage)}
+                        onChange={handleInputChange}
+                        style={{
+                          ...inputStyle,
+                          fontWeight: "700",
+                          backgroundColor: "#f8fafc",
+                          border: "1.5px solid #cbd5e1"
+                        }}
+                      >
+                        <option value="korean">🇰🇷 Korean</option>
+                        <option value="japanese">🇯🇵 Japanese</option>
+                        <option value="both">🌐 Both</option>
+                      </select>
+                    </div>
+
+                    <div>
                       <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#64748b" }}>Package Expiry Duration</label>
                       <select name="expiryDuration" value={formData.expiryDuration} onChange={handleInputChange} style={inputStyle}>
                         <option value="15 Days">15 Days</option>
@@ -1385,6 +1421,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
                   <tr style={{ backgroundColor: "#f8fafc" }}>
                     <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
                     <th style={thStyle}>Phone Number</th>
+                    <th style={thStyle}>Study Language</th>
                     <th style={thStyle}>Package & Expiry</th>
                     <th style={thStyle}>Status</th>
                     <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
@@ -1392,12 +1429,26 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
                 </thead>
                 <tbody>
                   {students.length === 0 ? (
-                    <tr><td colSpan="5" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>No students registered yet.</td></tr>
+                    <tr><td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>No students registered yet.</td></tr>
                   ) : (
                     students.map((stu) => (
                       <tr key={stu.id}>
                         <td style={{ ...tdStyle, fontWeight: "bold" }}>{stu.name}</td>
                         <td style={tdStyle}>{stu.phone}</td>
+                        <td style={tdStyle}>
+                          <span style={{
+                            display: "inline-block",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            fontWeight: "800",
+                            backgroundColor: stu.language === "japanese" ? "#f3e8ff" : stu.language === "korean" ? "#eff6ff" : "#f1f5f9",
+                            color: stu.language === "japanese" ? "#7e22ce" : stu.language === "korean" ? "#1d4ed8" : "#334155",
+                            border: `1px solid ${stu.language === "japanese" ? "#d8b4fe" : stu.language === "korean" ? "#bfdbfe" : "#cbd5e1"}`
+                          }}>
+                            {stu.language === "japanese" ? "🇯🇵 Japanese" : stu.language === "korean" ? "🇰🇷 Korean" : "🌐 Both"}
+                          </span>
+                        </td>
                         <td style={tdStyle}>
                           <span style={{ fontWeight: "bold", color: "#2563eb" }}>{stu.assignedPackage}</span>
                           <br/><span style={{ fontSize: "12px", color: "#ef4444" }}>Ends: {stu.expiryDate}</span>

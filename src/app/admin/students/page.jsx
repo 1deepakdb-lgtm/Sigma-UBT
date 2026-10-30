@@ -93,7 +93,8 @@ function AdminStudentsContent() {
     password: "",
     instituteName: "",
     assignedPackage: "Chapterwise 30 set",
-    expiryDuration: "1 Month"
+    expiryDuration: "1 Month",
+    language: "both"
   });
 
   // Exam Sets states
@@ -225,6 +226,7 @@ function AdminStudentsContent() {
       password: (formData.password || "1234").trim(),
       batch: formData.assignedPackage || "Full Set UBT",
       status: "Active",
+      language: formData.language || "both",
       instituteName: targetInst
     };
 
@@ -366,7 +368,8 @@ function AdminStudentsContent() {
       password: student.password || "",
       instituteName: student.instituteName || "",
       assignedPackage: student.assignedPackage || "Chapterwise 30 set",
-      expiryDuration: student.expiryDuration || "1 Month"
+      expiryDuration: student.expiryDuration || "1 Month",
+      language: student.language || "both"
     });
     setEditId(student.id);
     setShowForm(true);
@@ -403,7 +406,8 @@ function AdminStudentsContent() {
       password: "",
       instituteName: institutes[0]?.name || "",
       assignedPackage: "Chapterwise 30 set",
-      expiryDuration: "1 Month"
+      expiryDuration: "1 Month",
+      language: "both"
     });
     setEditId(null);
     setShowForm(false);
@@ -742,6 +746,27 @@ function AdminStudentsContent() {
               </div>
 
               <div>
+                <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold", color: "#334155" }}>
+                  Select Study Language:
+                </label>
+                <select
+                  name="language"
+                  value={formData.language || "both"}
+                  onChange={handleInputChange}
+                  style={{
+                    ...inputStyle,
+                    fontWeight: "700",
+                    backgroundColor: "#f8fafc",
+                    border: "1.5px solid #cbd5e1"
+                  }}
+                >
+                  <option value="korean">🇰🇷 Korean</option>
+                  <option value="japanese">🇯🇵 Japanese</option>
+                  <option value="both">🌐 Both</option>
+                </select>
+              </div>
+
+              <div>
                 <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold", color: "#475569" }}>
                   Package Expiry Duration
                 </label>
@@ -811,6 +836,7 @@ function AdminStudentsContent() {
                 <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
                 <th style={thStyle}>Source / Institute</th>
                 <th style={thStyle}>Phone (Login ID)</th>
+                <th style={thStyle}>Study Language</th>
                 <th style={thStyle}>Package &amp; Expiry</th>
                 <th style={thStyle}>Folder Status</th>
                 <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
@@ -819,7 +845,7 @@ function AdminStudentsContent() {
             <tbody>
               {displayList.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8", padding: "40px" }}>
+                  <td colSpan="7" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8", padding: "40px" }}>
                     {folderTab === "ambiguous"
                       ? "No ambiguous self-signup guests found. All registered students are verified buyers!"
                       : "No students registered yet in this folder."}
@@ -868,6 +894,22 @@ function AdminStudentsContent() {
                         ) : (
                           <span style={{ fontFamily: "monospace" }}>{stu.phone}</span>
                         )}
+                      </td>
+
+                      {/* Study Language Column */}
+                      <td style={tdStyle}>
+                        <span style={{
+                          display: "inline-block",
+                          padding: "3px 8px",
+                          borderRadius: "12px",
+                          fontSize: "11px",
+                          fontWeight: "800",
+                          backgroundColor: stu.language === "japanese" ? "#f3e8ff" : stu.language === "korean" ? "#eff6ff" : "#f1f5f9",
+                          color: stu.language === "japanese" ? "#7e22ce" : stu.language === "korean" ? "#1d4ed8" : "#334155",
+                          border: `1px solid ${stu.language === "japanese" ? "#d8b4fe" : stu.language === "korean" ? "#bfdbfe" : "#cbd5e1"}`
+                        }}>
+                          {stu.language === "japanese" ? "🇯🇵 Japanese" : stu.language === "korean" ? "🇰🇷 Korean" : "🌐 Both"}
+                        </span>
                       </td>
 
                       {/* Package Column */}

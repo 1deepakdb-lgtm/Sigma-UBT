@@ -19,6 +19,7 @@ export async function GET(req) {
         phone: true,
         batch: true,
         status: true,
+        language: true,
         createdAt: true,
         instituteId: true,
         institute: {
@@ -141,7 +142,7 @@ export async function GET(req) {
         studentPackage,
         expiryDate: isGoogleOrFree ? null : expiryDate,
         isFreeStudent: Boolean(isGoogleOrFree),
-        instituteLanguage: payload?.instituteLanguage || user.institute?.language || 'both'
+        instituteLanguage: payload?.instituteLanguage || user.language || user.institute?.language || 'both'
       }
     });
   } catch (err) {

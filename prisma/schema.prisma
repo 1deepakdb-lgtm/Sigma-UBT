@@ -16,6 +16,7 @@ model User {
   phone        String?
   batch        String?       // "Morning", "Day", "Evening" for students
   status       String        @default("Active") // "Active" | "Blocked"
+  language     String?       @default("both") // "korean" | "japanese" | "both"
   instituteId  String?
   institute    Institute?    @relation(fields: [instituteId], references: [id], onDelete: Cascade)
   createdAt    DateTime      @default(now())

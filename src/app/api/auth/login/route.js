@@ -377,7 +377,7 @@ export async function POST(req) {
       expiryDate: user.role === 'student' ? expiryDate : undefined,
       instituteId: user.instituteId,
       instituteName: user.institute?.name || null,
-      instituteLanguage: user.institute?.language || 'both'
+      instituteLanguage: user.language || user.institute?.language || 'both'
     };
 
     const token = await signToken(tokenPayload);
