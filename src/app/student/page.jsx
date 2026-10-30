@@ -975,52 +975,6 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {!hasPaidExamAccess && (
-              <div style={{
-                backgroundColor: "#fffbeb",
-                border: "1.5px solid #fde68a",
-                borderRadius: "12px",
-                padding: "16px 20px",
-                marginBottom: "20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: "14px"
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "38px", height: "38px", borderRadius: "50%", backgroundColor: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
-                    🔒
-                  </div>
-                  <div>
-                    <div style={{ color: "#92400e", fontWeight: "800", fontSize: "15px" }}>
-                      UBT &amp; Mock Tests Locked — Account Validity: Lifetime
-                    </div>
-                    <div style={{ color: "#b45309", fontSize: "13px", marginTop: "2px" }}>
-                      Your free student account gives you unlimited lifetime access to Korean &amp; Japanese Textbooks, Zero-Latency Audio &amp; Dictionaries. To practice official 40-question UBT &amp; Mock tests, please purchase an exam package.
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("buyExam")}
-                  style={{
-                    backgroundColor: "#d97706",
-                    backgroundImage: "linear-gradient(135deg, #d97706 0%, #b45309 100%)",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "9px 20px",
-                    fontSize: "13px",
-                    fontWeight: "800",
-                    cursor: "pointer",
-                    boxShadow: "0 2px 6px rgba(217,119,6,0.3)"
-                  }}
-                >
-                  🛒 View Packages / Buy Access
-                </button>
-              </div>
-            )}
 
             {isPackageExpired && (
               <div style={{
