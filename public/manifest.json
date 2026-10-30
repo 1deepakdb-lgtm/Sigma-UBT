@@ -2,13 +2,15 @@
   "name": "ExamJK — Exam Japanese and Korean",
   "short_name": "ExamJK",
   "description": "Japanese and Korean CBT & UBT Examination and Learning System",
-  "start_url": "/",
+  "start_url": "/student",
+  "id": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#003b73",
+  "version": "2.5.0",
   "categories": ["education", "productivity"],
   "icons": [
     {

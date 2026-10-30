@@ -105,7 +105,15 @@ const StudentExam = () => {
         (typeof examId === "string" && id?.toString() === decodeURIComponent(examId))
       );
 
+      const isExamSetFree = Boolean(
+        currentExamSet?.isFree ||
+        currentExamSet?.setType === "FREE" ||
+        (currentExamSet?.name && currentExamSet.name.toLowerCase().includes("free demo")) ||
+        (targetSetName && targetSetName.toLowerCase().includes("free demo"))
+      );
+
       const hasPaidExam = Boolean(
+        isExamSetFree ||
         isSetIndividuallyUnlocked ||
         buyerInfo?.isBuyer ||
         buyerInfo?.hasPurchased ||
@@ -113,14 +121,14 @@ const StudentExam = () => {
         (!isFreeGuest && savedPkg && !savedPkg.toLowerCase().includes("free"))
       );
 
-      if (isFreeGuest && !hasPaidExam) {
+      if (!isExamSetFree && isFreeGuest && !hasPaidExam) {
         alert("Access Restricted: UBT & Mock tests require a purchased package or individual set unlock. Please unlock this set via eSewa to take the exam.");
         router.push("/student");
         return;
       }
 
-      // Check Package Expiry Date Authorization (bypassed if individually unlocked)
-      if (!isSetIndividuallyUnlocked) {
+      // Check Package Expiry Date Authorization (bypassed if individually unlocked or free demo)
+      if (!isExamSetFree && !isSetIndividuallyUnlocked) {
         const savedExpDate = typeof window !== 'undefined' ? localStorage.getItem("currentStudentExpiryDate") : null;
         if (savedExpDate && savedExpDate !== 'Active' && !savedExpDate.toLowerCase().includes("lifetime") && !isNaN(new Date(savedExpDate).getTime())) {
           const isExp = new Date(savedExpDate + 'T23:59:59') < new Date();

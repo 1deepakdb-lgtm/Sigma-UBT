@@ -8,6 +8,8 @@ const SECRET = new TextEncoder().encode(
 // Define protected route prefixes and the roles permitted to access them
 const ROUTE_PERMISSIONS = [
   // Super-admin-only routes (most sensitive)
+  { prefix: '/api/admin/packages', allowedRoles: ['admin', 'institute', 'student'] },
+  { prefix: '/api/admin/questions', allowedRoles: ['admin', 'institute', 'student'] },
   { prefix: '/admin', allowedRoles: ['admin'] },
   { prefix: '/api/admin', allowedRoles: ['admin'] },
   // Institute-level routes

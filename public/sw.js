@@ -1,13 +1,16 @@
-// ExamJK Service Worker for Desktop App
-const CACHE_NAME = 'examjk-cache-v2';
+// ExamJK Service Worker for Multi-Device Native App Experience
+const CACHE_NAME = 'examjk-cache-v3';
 
 const STATIC_ASSETS = [
   '/',
+  '/student',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
+  '/icon-maskable.png',
   '/apple-touch-icon.png',
-  '/examjk-logo.png'
+  '/examjk-logo.png',
+  '/favicon.ico'
 ];
 
 self.addEventListener('install', (event) => {
@@ -49,7 +52,7 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(() => {
-        return caches.match('/') || caches.match(request);
+        return caches.match('/student') || caches.match('/') || caches.match(request);
       })
     );
     return;

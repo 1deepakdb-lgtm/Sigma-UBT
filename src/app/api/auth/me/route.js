@@ -142,7 +142,9 @@ export async function GET(req) {
         studentPackage,
         expiryDate: isGoogleOrFree ? null : expiryDate,
         isFreeStudent: Boolean(isGoogleOrFree),
-        instituteLanguage: payload?.instituteLanguage || user.language || user.institute?.language || 'both'
+        instituteLanguage: (user.role === 'student' && user.institute?.language && user.institute.language !== 'both')
+          ? user.institute.language
+          : (user.language && user.language !== 'both' ? user.language : (user.institute?.language || user.language || 'both'))
       }
     });
   } catch (err) {

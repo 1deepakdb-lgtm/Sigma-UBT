@@ -51,7 +51,7 @@ export async function POST(req) {
         message: `Student ${studentName} (${cleanPhone}) submitted eSewa payment query.\n` +
           `Set: ${itemName}\n` +
           `Txn ID: ${cleanTxn}\n` +
-          `Drive Folder: ${driveFolderUrl}`,
+          (screenshotUrl ? `Screenshot: ${screenshotUrl}` : `Drive Folder: ${driveFolderUrl}`),
         target: 'admin'
       }
     });

@@ -183,21 +183,66 @@ const StudentDashboard = () => {
   const isPurchasedBuyer = Boolean(
     currentBuyer?.isBuyer ||
     currentBuyer?.hasPurchased ||
-    (typeof window !== 'undefined' && localStorage.getItem("hasPurchasedExamAccess") === "true")
+    (currentBuyer?.packages && currentBuyer.packages.length > 0) ||
+    currentBuyer?.packageName ||
+    currentBuyer?.package ||
+    (typeof window !== "undefined" && (
+      localStorage.getItem("isPurchasedBuyer") === "true" ||
+      localStorage.getItem("hasPurchasedExamAccess") === "true" ||
+      (currentPhone && (buyerMap[currentPhone]?.isBuyer || buyerMap[currentPhone]?.hasPurchased)) ||
+      (studentName && (buyerMap[studentName]?.isBuyer || buyerMap[studentName]?.hasPurchased)) ||
+      (JSON.parse(localStorage.getItem("studentPurchasedSets") || "[]")).length > 0 ||
+      (JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]")).length > 0 ||
+      (JSON.parse(localStorage.getItem("purchasedPackages") || "[]")).length > 0
+    ))
   );
 
-  // A student has paid exam access if they are a verified buyer OR they are not a free self-signup guest
-  const hasPaidExamAccess = Boolean(
-    isPurchasedBuyer || (
-      !isGoogleOrFree &&
+  // Track active released packages specifically for this student
+  const activeStudentPackages = (() => {
+    const list = [];
+    if (!currentPhone && !studentName) return list;
+
+    // 1. From adminBuyerStudentsMap for this student phone
+    if (currentBuyer?.packages && Array.isArray(currentBuyer.packages)) {
+      list.push(...currentBuyer.packages);
+    }
+    if (currentBuyer?.packageName && !list.includes(currentBuyer.packageName)) {
+      list.push(currentBuyer.packageName);
+    }
+
+    // 2. From studentPendingQueries where status === "Released" && itemType === "package"
+    pendingQueries.forEach((q) => {
+      const qPhone = q.phone || "";
+      if (
+        (q.status === "Released" || q.status === "COMPLETE") &&
+        q.itemType === "package" &&
+        (!currentPhone || qPhone === currentPhone)
+      ) {
+        if (q.itemName && !list.includes(q.itemName)) {
+          list.push(q.itemName);
+        }
+      }
+    });
+
+    // 3. From institute-assigned package (if student was explicitly enrolled by institute in a paid package)
+    if (
       studentPackage &&
+      !isGoogleOrFree &&
       !studentPackage.toLowerCase().includes("free") &&
       !studentPackage.toLowerCase().includes("google")
-    )
-  );
+    ) {
+      if (!list.includes(studentPackage)) {
+        list.push(studentPackage);
+      }
+    }
 
-  const effectivePackageName = hasPaidExamAccess
-    ? (currentBuyer?.package || (studentPackage && !studentPackage.toLowerCase().includes("free") ? studentPackage : "Full Set UBT"))
+    return list;
+  })();
+
+  const hasPaidExamAccess = activeStudentPackages.length > 0;
+
+  const effectivePackageName = activeStudentPackages.length > 0
+    ? activeStudentPackages.join(", ")
     : "Free Student Access (Lifetime Account)";
 
   const effectiveExpiryDate = hasPaidExamAccess
@@ -213,14 +258,85 @@ const StudentDashboard = () => {
     new Date(effectiveExpiryDate + 'T23:59:59') < new Date()
   );
 
-  // Helper: check if a specific exam set is individually unlocked (via Rs. 40 eSewa purchase or admin release)
+  // Helper: check if a specific exam set belongs to a package name
+  const isSetInPackage = (set, pkgName) => {
+    if (!set || !pkgName) return false;
+    const norm = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const setPkgNorm = norm(set.packageName);
+    const targetPkgNorm = norm(pkgName);
+
+    if (!setPkgNorm || !targetPkgNorm) return false;
+
+    // Exact match (e.g. "30setchapterubt" === "30setchapterubt")
+    if (setPkgNorm === targetPkgNorm) return true;
+
+    // Chapterwise package match
+    if (targetPkgNorm.includes("chapter") && setPkgNorm.includes("chapter")) return true;
+
+    // 100 UBT package match
+    if (targetPkgNorm.includes("100") && setPkgNorm.includes("100")) return true;
+
+    // Model Question Bank match
+    if (targetPkgNorm.includes("model") && setPkgNorm.includes("model")) return true;
+
+    // Full Set UBT: covers standard EPS full sets (not chapter and not model question sets)
+    if (targetPkgNorm.includes("full") && !setPkgNorm.includes("chapter") && !setPkgNorm.includes("model")) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Helper: check if an exam set is covered by any of the student's active released packages
+  const isSetCoveredByStudentPackage = (set) => {
+    if (!set || isPackageExpired) return false;
+    return activeStudentPackages.some((pkgName) => isSetInPackage(set, pkgName));
+  };
+
+  // Helper: check if a specific exam set is individually unlocked (via Rs. 40 purchase or admin release)
   const isSetIndividuallyUnlocked = (set) => {
     if (!set) return false;
-    return unlockedSets.some((id) =>
-      id?.toString() === set.id?.toString() ||
-      id?.toString() === set.name?.toString() ||
-      (typeof set.name === "string" && id?.toString() === encodeURIComponent(set.name))
-    );
+    const setId = set.id?.toString();
+    const setName = set.name?.toString();
+    const encodedName = typeof set.name === "string" ? encodeURIComponent(set.name) : "";
+
+    // 1. Check in unlockedSets state
+    if (
+      unlockedSets.some((id) =>
+        id?.toString() === setId ||
+        id?.toString() === setName ||
+        (encodedName && id?.toString() === encodedName)
+      )
+    ) {
+      return true;
+    }
+
+    // 2. Check in studentPendingQueries for released individual sets
+    if (
+      pendingQueries.some((q) =>
+        (q.status === "Released" || q.status === "COMPLETE") &&
+        q.itemType !== "package" &&
+        (!currentPhone || q.phone === currentPhone) &&
+        (
+          (q.itemId && q.itemId.toString() === setId) ||
+          (q.itemName && q.itemName.toString() === setName) ||
+          (q.itemId && q.itemId.toString() === setName)
+        )
+      )
+    ) {
+      return true;
+    }
+
+    // 3. Check in adminStudentUnlockedSetsMap
+    if (currentPhone && typeof window !== "undefined") {
+      const studentSetMap = JSON.parse(localStorage.getItem("adminStudentUnlockedSetsMap") || "{}");
+      const phoneSets = studentSetMap[currentPhone] || [];
+      if (phoneSets.some((id) => id?.toString() === setId || id?.toString() === setName)) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   // Helper: check if a specific exam set has a pending payment query awaiting admin confirmation
@@ -229,7 +345,10 @@ const StudentDashboard = () => {
     const setId = set.id?.toString();
     const setName = set.name?.toString();
     return pendingQueries.some((q) =>
-      (q.status === "Pending" || q.status === "PENDING") && (
+      (q.status === "Pending" || q.status === "PENDING") &&
+      q.itemType !== "package" &&
+      (!currentPhone || q.phone === currentPhone) &&
+      (
         (q.itemId && q.itemId.toString() === setId) ||
         (q.itemName && q.itemName.toString() === setName) ||
         (q.itemId && q.itemId.toString() === setName)
@@ -237,9 +356,49 @@ const StudentDashboard = () => {
     );
   };
 
-  // Set is unlocked if student has full paid package OR has individually purchased this set
+  // Strict Set Unlock Rule:
+  // An exam set is ONLY unlocked if:
+  // 1) Super Admin designated it as FREE DEMO (set.isFree || set.setType === "FREE" || name includes "free demo"), OR
+  // 2) It was individually purchased & released for this student, OR
+  // 3) The student has an active package that covers this specific set!
   const isSetUnlocked = (set) => {
-    return Boolean(hasPaidExamAccess || isSetIndividuallyUnlocked(set));
+    if (!set) return false;
+    if (set.isFree === true || set.setType === "FREE" || (set.name && set.name.toLowerCase().includes("free demo"))) {
+      return true;
+    }
+    return Boolean(isSetIndividuallyUnlocked(set) || isSetCoveredByStudentPackage(set));
+  };
+
+  // Helper: check if a package has a pending payment query awaiting admin confirmation
+  const isPackagePending = (pkg) => {
+    if (!pkg) return false;
+    const norm = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const targetNorm = norm(pkg.name);
+    const pkgId = pkg.id?.toString();
+    return pendingQueries.some((q) =>
+      (q.status === "Pending" || q.status === "PENDING") &&
+      (!currentPhone || q.phone === currentPhone) &&
+      (
+        (q.itemType === "package" && (
+          norm(q.itemName) === targetNorm ||
+          (q.itemId && q.itemId.toString() === pkgId)
+        )) ||
+        norm(q.itemName) === targetNorm ||
+        (q.itemId && q.itemId.toString() === pkgId)
+      )
+    );
+  };
+
+  // Helper: check if a package is active and unlocked
+  const isPackageUnlocked = (pkg) => {
+    if (!pkg) return false;
+    if (isPackageExpired) return false;
+    const norm = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const targetNorm = norm(pkg.name);
+    return activeStudentPackages.some((pName) => {
+      const pNorm = norm(pName);
+      return pNorm === targetNorm || (pNorm.includes("chapter") && targetNorm.includes("chapter")) || (pNorm.includes("100") && targetNorm.includes("100"));
+    });
   };
 
   const handleOpenEsewaModal = (item) => {
@@ -257,7 +416,8 @@ const StudentDashboard = () => {
 
     setPaidAccessTrigger((prev) => prev + 1);
 
-    if (res?.type === "package") {
+    // Only auto-unlock if NOT a pending query (must be reviewed and released by admin)
+    if (res?.type === "package" && !res?.pendingQuery && res?.status !== "Pending") {
       setStudentPackage(res.packageName || "Full Set UBT");
     }
   };
@@ -275,6 +435,25 @@ const StudentDashboard = () => {
         const combinedLocal = Array.from(new Set([...u1, ...u2]));
         setUnlockedSets(combinedLocal);
         setPendingQueries(JSON.parse(localStorage.getItem("studentPendingQueries") || "[]"));
+
+        // Sync student-specific unlocked sets from map
+        if (phone) {
+          const studentSetMap = JSON.parse(localStorage.getItem("adminStudentUnlockedSetsMap") || "{}");
+          const mySets = studentSetMap[phone] || [];
+          if (mySets.length > 0) {
+            setUnlockedSets((prev) => Array.from(new Set([...prev, ...mySets])));
+          }
+
+          // Check if package was released by admin in localStorage for this phone
+          const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+          const curBuyer = buyerMap[phone] || buyerMap[studentName];
+          if (curBuyer?.isBuyer || curBuyer?.hasPurchased) {
+            const releasedPkg = curBuyer?.packageName;
+            if (releasedPkg && (!studentPackage || studentPackage.toLowerCase().includes("free"))) {
+              setStudentPackage(releasedPkg);
+            }
+          }
+        }
       } catch (e) {}
 
       // 2. Sync from database if phone exists
@@ -284,21 +463,35 @@ const StudentDashboard = () => {
         if (res.ok) {
           const data = await res.json();
           if (data.queries && data.queries.length > 0) {
-            const completeItems = [];
+            const completeSets = [];
+            const completePackages = [];
             data.queries.forEach((q) => {
-              if (q.status === 'COMPLETE') {
-                if (q.itemId) completeItems.push(q.itemId);
-                if (q.itemName) completeItems.push(q.itemName);
+              if (q.status === 'COMPLETE' || q.status === 'Released') {
+                if (q.itemType === 'package') {
+                  if (q.itemName) completePackages.push(q.itemName);
+                } else {
+                  if (q.itemId) completeSets.push(q.itemId);
+                  if (q.itemName) completeSets.push(q.itemName);
+                }
               }
             });
 
-            if (completeItems.length > 0) {
-              const curUnlocked = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-              const curReleased = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
-              const combined = Array.from(new Set([...curUnlocked, ...curReleased, ...completeItems]));
-              localStorage.setItem("unlockedStudentExamSets", JSON.stringify(combined));
-              localStorage.setItem("releasedStudentExamSets", JSON.stringify(combined));
-              setUnlockedSets(combined);
+            if (completeSets.length > 0) {
+              setUnlockedSets((prev) => Array.from(new Set([...prev, ...completeSets])));
+            }
+
+            if (completePackages.length > 0) {
+              const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+              const existingPkgs = buyerMap[phone]?.packages || [];
+              buyerMap[phone] = {
+                ...(buyerMap[phone] || {}),
+                isBuyer: true,
+                hasPurchased: true,
+                packageName: completePackages[0],
+                packages: Array.from(new Set([...existingPkgs, ...completePackages]))
+              };
+              localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
+              setPaidAccessTrigger((prev) => prev + 1);
             }
           }
         }
@@ -385,11 +578,28 @@ const StudentDashboard = () => {
     const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
     const logo = institutes[0]?.logoUrl || "";
 
+    const localBuyerMap = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}") : {};
+    const localBuyer = localPhone ? (localBuyerMap[localPhone] || localBuyerMap[localName]) : (localBuyerMap[localName] || null);
+    const hasPurchasedAccess = Boolean(
+      isPurchasedBuyer ||
+      localBuyer?.isBuyer ||
+      localBuyer?.hasPurchased ||
+      localBuyer?.packageName ||
+      localBuyer?.package ||
+      (localBuyer?.packages && localBuyer.packages.length > 0) ||
+      (typeof window !== "undefined" && (
+        localStorage.getItem("isPurchasedBuyer") === "true" ||
+        localStorage.getItem("hasPurchasedExamAccess") === "true" ||
+        (JSON.parse(localStorage.getItem("studentPurchasedSets") || "[]")).length > 0 ||
+        (JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]")).length > 0
+      ))
+    );
+
     setStudentName(localName);
     setCurrentStudentPhone(localPhone);
     setLogoWatermark(logo);
 
-    if (isGoogleOrFree && !isPurchasedBuyer) {
+    if (isGoogleOrFree && !hasPurchasedAccess) {
       setStudentExpiryDate(null);
       try { localStorage.removeItem("currentStudentExpiryDate"); } catch (e) {}
     } else if (localExp && localExp !== "2027-09-30" && !localExp.toLowerCase().includes("lifetime")) {
@@ -398,7 +608,7 @@ const StudentDashboard = () => {
 
     if (localPkg && !isShift(localPkg)) {
       if (localPkg.toLowerCase().includes("google") || localPkg.toLowerCase().includes("free")) {
-        setStudentPackage(isPurchasedBuyer ? (currentBuyer?.package || "Full Set UBT") : "Free Student Access");
+        setStudentPackage(hasPurchasedAccess ? (localBuyer?.package || localBuyer?.packageName || currentBuyer?.package || "Full Set UBT") : "Free Student Access");
       } else {
         setStudentPackage(localPkg);
       }
@@ -423,13 +633,22 @@ const StudentDashboard = () => {
             data.user.username?.includes("@") ||
             !data.user.phone;
 
-          const userPkg = isPurchasedBuyer
-            ? (currentBuyer?.package || "Full Set UBT")
+          const userBuyer = (uPhone && localBuyerMap[uPhone]) || (uName && localBuyerMap[uName]) || localBuyer;
+          const userHasPurchased = Boolean(
+            hasPurchasedAccess ||
+            userBuyer?.isBuyer ||
+            userBuyer?.hasPurchased ||
+            userBuyer?.packageName ||
+            userBuyer?.package
+          );
+
+          const userPkg = userHasPurchased
+            ? (userBuyer?.package || userBuyer?.packageName || currentBuyer?.package || "Full Set UBT")
             : ((!isShift(rawPkg) && !isGoogleOrFreeUser && rawPkg) ||
                (!isGoogleOrFreeUser && data.user.institute?.examPackage) ||
                "Free Student Access");
 
-          const userExp = (isGoogleOrFreeUser && !isPurchasedBuyer)
+          const userExp = (isGoogleOrFreeUser && !userHasPurchased)
             ? null
             : (data.user.expiryDate && data.user.expiryDate !== "2027-09-30" && !data.user.expiryDate.toLowerCase().includes("lifetime") && data.user.expiryDate !== "Active"
                 ? data.user.expiryDate
@@ -439,7 +658,7 @@ const StudentDashboard = () => {
           setCurrentStudentPhone(uPhone);
           setInstituteLanguage(instLang);
           localStorage.setItem("instituteLanguage", instLang);
-          if (isGoogleOrFreeUser) {
+          if (isGoogleOrFreeUser && !userHasPurchased) {
             setStudentExpiryDate(null);
             try { localStorage.removeItem("currentStudentExpiryDate"); } catch (e) {}
           } else {
@@ -501,19 +720,28 @@ const StudentDashboard = () => {
     fetch("/api/admin/packages")
       .then((res) => res.json())
       .then((data) => {
-        let mergedSets = [...savedSets];
+        let mergedSets = savedSets.map(s => ({
+          ...s,
+          isFree: Boolean(s.isFree || s.setType === "FREE" || (s.name && s.name.toLowerCase().includes("free demo")))
+        }));
         if (data.sets && Array.isArray(data.sets) && data.sets.length > 0) {
           data.sets.forEach((srvSet) => {
-            const exists = mergedSets.some(
+            const idx = mergedSets.findIndex(
               (s) => s.id === srvSet.id || (s.name && srvSet.name && s.name.trim().toUpperCase() === srvSet.name.trim().toUpperCase())
             );
-            if (!exists) {
+            if (idx >= 0) {
+              mergedSets[idx] = {
+                ...mergedSets[idx],
+                isFree: srvSet.isFree !== undefined ? Boolean(srvSet.isFree) : mergedSets[idx].isFree
+              };
+            } else {
               mergedSets.push({
                 id: srvSet.id,
                 name: srvSet.name,
                 packageName: srvSet.packageName || srvSet.package?.name || "Full Set UBT",
                 creatorInstituteName: srvSet.creatorInstituteName || null,
-                isPublished: srvSet.isPublished !== false
+                isPublished: srvSet.isPublished !== false,
+                isFree: Boolean(srvSet.isFree)
               });
             }
           });
@@ -1277,103 +1505,126 @@ const StudentDashboard = () => {
                   </button>
                 </div>
               ) : (
-                paginatedSets.map((set, idx) => (
-                  <div
-                    key={set.id || idx}
-                    style={{
-                      backgroundColor: "#ffffff",
-                      borderRadius: "10px",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-                      border: "1px solid #e2e8f0",
-                      padding: "16px",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      gap: "12px"
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-                        <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 7px", borderRadius: "4px" }}>
-                          {set.packageName || "UBT Set"}
-                        </span>
-                        {isSetIndividuallyUnlocked(set) ? (
-                          <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
-                            UNLOCKED (Rs. 40)
-                          </span>
-                        ) : isSetPending(set) ? (
-                          <span style={{ fontSize: "10px", fontWeight: "800", color: "#0369a1", backgroundColor: "#e0f2fe", padding: "2px 6px", borderRadius: "4px" }}>
-                            ⏳ PENDING
-                          </span>
-                        ) : null}
-                      </div>
-                      <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a", fontWeight: "800" }}>
-                        {set.name}
-                      </h4>
-                      <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#64748b" }}>40 Questions · 50 Min</p>
-                    </div>
+                paginatedSets.map((set, idx) => {
+                  const isFree = Boolean(set.isFree || set.setType === "FREE" || (set.name && set.name.toLowerCase().includes("free demo")));
+                  const unlocked = isSetUnlocked(set);
+                  const individuallyUnlocked = isSetIndividuallyUnlocked(set);
+                  const packageCovered = isSetCoveredByStudentPackage(set);
+                  const pending = isSetPending(set);
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const unlocked = isSetUnlocked(set);
-                        if (unlocked) {
-                          if (isPackageExpired && !isSetIndividuallyUnlocked(set)) {
-                            alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exam sets.`);
-                            return;
-                          }
-                          router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
-                          return;
-                        }
-
-                        const pending = isSetPending(set);
-                        if (pending) {
-                          alert(`Your payment query for "${set.name}" (Rs. 40) is currently pending review by Super Admin.\n\nYour payment screenshot and eSewa transaction details have been submitted. Once Super Admin verifies and confirms the payment, your UBT set will be released automatically.`);
-                          return;
-                        }
-
-                        handleOpenEsewaModal({
-                          id: set.id,
-                          name: set.name,
-                          price: 40,
-                          type: "set",
-                          packageName: set.packageName || "UBT Set"
-                        });
-                      }}
+                  return (
+                    <div
+                      key={set.id || idx}
                       style={{
-                        width: "100%",
-                        background: isSetUnlocked(set)
-                          ? (isPackageExpired && !isSetIndividuallyUnlocked(set))
-                            ? "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)"
-                            : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"
-                          : isSetPending(set)
-                          ? "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)"
-                          : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                        color: "#ffffff",
-                        border: "none",
-                        padding: "9px",
-                        borderRadius: "6px",
-                        fontWeight: "700",
-                        cursor: (isPackageExpired && isSetUnlocked(set) && !isSetIndividuallyUnlocked(set)) ? "not-allowed" : "pointer",
-                        fontSize: "13px",
-                        letterSpacing: "0.3px",
-                        boxShadow: isSetUnlocked(set)
-                          ? "none"
-                          : isSetPending(set)
-                          ? "0 2px 6px rgba(2, 132, 199, 0.3)"
-                          : "0 2px 6px rgba(217,119,6,0.25)"
+                        backgroundColor: "#ffffff",
+                        borderRadius: "10px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
+                        border: isFree ? "1.5px solid #6ee7b7" : "1px solid #e2e8f0",
+                        padding: "16px",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        gap: "12px"
                       }}
                     >
-                      {isSetUnlocked(set)
-                        ? (isPackageExpired && !isSetIndividuallyUnlocked(set))
-                          ? "PACKAGE EXPIRED"
-                          : "START EXAM ▶"
-                        : isSetPending(set)
-                        ? "⏳ PENDING CONFIRMATION"
-                        : "🔒 BUY TO UNLOCK ▶ (Rs. 40)"}
-                    </button>
-                  </div>
-                ))
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                          <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 7px", borderRadius: "4px" }}>
+                            {set.packageName || "UBT Set"}
+                          </span>
+                          {isFree ? (
+                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#065f46", backgroundColor: "#d1fae5", border: "1px solid #6ee7b7", padding: "2px 6px", borderRadius: "4px" }}>
+                              🎁 FREE DEMO
+                            </span>
+                          ) : individuallyUnlocked ? (
+                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
+                              UNLOCKED (Rs. 40)
+                            </span>
+                          ) : packageCovered ? (
+                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
+                              PACKAGE UNLOCKED
+                            </span>
+                          ) : pending ? (
+                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#0369a1", backgroundColor: "#e0f2fe", padding: "2px 6px", borderRadius: "4px" }}>
+                              ⏳ PENDING
+                            </span>
+                          ) : null}
+                        </div>
+                        <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a", fontWeight: "800" }}>
+                          {set.name}
+                        </h4>
+                        <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#64748b" }}>40 Questions · 50 Min</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isFree) {
+                            router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
+                            return;
+                          }
+
+                          if (unlocked) {
+                            if (isPackageExpired && !individuallyUnlocked) {
+                              alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exam sets.`);
+                              return;
+                            }
+                            router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
+                            return;
+                          }
+
+                          if (pending) {
+                            alert(`Your payment query for "${set.name}" (Rs. 40) is currently pending review by Super Admin.\n\nYour payment screenshot and eSewa transaction details have been submitted. Once Super Admin verifies and confirms the payment, your UBT set will be released automatically.`);
+                            return;
+                          }
+
+                          handleOpenEsewaModal({
+                            id: set.id,
+                            name: set.name,
+                            price: 40,
+                            type: "set",
+                            packageName: set.packageName || "UBT Set"
+                          });
+                        }}
+                        style={{
+                          width: "100%",
+                          background: isFree
+                            ? "linear-gradient(135deg, #059669 0%, #047857 100%)"
+                            : unlocked
+                            ? (isPackageExpired && !individuallyUnlocked)
+                              ? "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)"
+                              : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"
+                            : pending
+                            ? "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)"
+                            : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "9px",
+                          borderRadius: "6px",
+                          fontWeight: "700",
+                          cursor: (isPackageExpired && unlocked && !individuallyUnlocked && !isFree) ? "not-allowed" : "pointer",
+                          fontSize: "13px",
+                          letterSpacing: "0.3px",
+                          boxShadow: (unlocked || isFree)
+                            ? "none"
+                            : pending
+                            ? "0 2px 6px rgba(2, 132, 199, 0.3)"
+                            : "0 2px 6px rgba(217,119,6,0.25)"
+                        }}
+                      >
+                        {isFree
+                          ? "START FREE EXAM ▶"
+                          : unlocked
+                          ? (isPackageExpired && !individuallyUnlocked)
+                            ? "PACKAGE EXPIRED"
+                            : "START EXAM ▶"
+                          : pending
+                          ? "⏳ PENDING CONFIRMATION"
+                          : "🔒 BUY TO UNLOCK ▶ (Rs. 40)"}
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
 
@@ -1674,55 +1925,89 @@ const StudentDashboard = () => {
                   </div>
                   <div>
                     <div style={{ fontSize: "16px", fontWeight: "800", color: "#16a34a", marginBottom: "14px" }}>{pkg.price || "Contact Institute"}</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleOpenEsewaModal({
-                            id: pkg.id,
-                            name: pkg.name,
-                            price: pkg.price || "Rs. 1,000",
-                            type: "package",
-                            desc: pkg.desc
-                          })
-                        }
-                        style={{
-                          width: "100%",
-                          background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                          color: "#ffffff",
-                          border: "none",
-                          padding: "10px",
-                          borderRadius: "6px",
-                          fontWeight: "800",
-                          cursor: "pointer",
-                          fontSize: "13px",
-                          boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px"
-                        }}
-                      >
-                        <span>⚡</span>
-                        <span>BUY &amp; AUTO-UNLOCK (eSewa)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleBuyRequest(pkg.name)}
-                        style={{
-                          width: "100%",
-                          backgroundColor: "#f8fafc",
-                          color: "#475569",
-                          border: "1px solid #cbd5e1",
-                          padding: "8px",
-                          borderRadius: "6px",
-                          fontWeight: "600",
-                          cursor: "pointer",
-                          fontSize: "12px"
-                        }}
-                      >
-                        Request Enrollment
-                      </button>
+                    <div>
+                      {isPackageUnlocked(pkg) ? (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("exams")}
+                          style={{
+                            width: "100%",
+                            background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                            color: "#ffffff",
+                            border: "none",
+                            padding: "10px",
+                            borderRadius: "6px",
+                            fontWeight: "800",
+                            cursor: "pointer",
+                            fontSize: "13.5px",
+                            boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          <span>✓</span>
+                          <span>ACCESS EXAMS ▶</span>
+                        </button>
+                      ) : isPackagePending(pkg) ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            alert(`Your payment request for "${pkg.name}" is currently in review by Admin.\n\nWait for 5-10 minute, Admin will verify your payment and release your UBT package.`);
+                          }}
+                          style={{
+                            width: "100%",
+                            background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+                            color: "#ffffff",
+                            border: "none",
+                            padding: "10px",
+                            borderRadius: "6px",
+                            fontWeight: "800",
+                            cursor: "pointer",
+                            fontSize: "13px",
+                            boxShadow: "0 2px 6px rgba(2, 132, 199, 0.3)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          <span>⏳</span>
+                          <span>IN REVIEW</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleOpenEsewaModal({
+                              id: pkg.id,
+                              name: pkg.name,
+                              price: pkg.price || "Rs. 1,000",
+                              type: "package",
+                              desc: pkg.desc
+                            })
+                          }
+                          style={{
+                            width: "100%",
+                            background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                            color: "#ffffff",
+                            border: "none",
+                            padding: "10px",
+                            borderRadius: "6px",
+                            fontWeight: "800",
+                            cursor: "pointer",
+                            fontSize: "13.5px",
+                            boxShadow: "0 2px 6px rgba(37, 99, 235, 0.25)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px"
+                          }}
+                        >
+                          <span>Buy</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1784,11 +2069,11 @@ const StudentDashboard = () => {
             <h3 style={{ marginTop: 0, color: "#0f172a", marginBottom: "16px", fontSize: "18px" }}>My Exam Results & Performance Logs</h3>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ backgroundColor: "#1e3a8a", borderBottom: "2px solid #1d4ed8" }}>
-                  <th style={{ padding: "12px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700", borderTopLeftRadius: "8px" }}>Exam Set</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Score</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Percentage</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700", borderTopRightRadius: "8px" }}>Status</th>
+                <tr style={{ backgroundColor: "#ffffff", borderBottom: "2px solid #e2e8f0" }}>
+                  <th style={{ padding: "14px 16px", textAlign: "left", color: "#1e293b", fontSize: "13.5px", fontWeight: "700", borderTopLeftRadius: "8px", borderBottom: "2px solid #e2e8f0" }}>Exam Set</th>
+                  <th style={{ padding: "14px 16px", textAlign: "left", color: "#1e293b", fontSize: "13.5px", fontWeight: "700", borderBottom: "2px solid #e2e8f0" }}>Score</th>
+                  <th style={{ padding: "14px 16px", textAlign: "left", color: "#1e293b", fontSize: "13.5px", fontWeight: "700", borderBottom: "2px solid #e2e8f0" }}>Percentage</th>
+                  <th style={{ padding: "14px 16px", textAlign: "left", color: "#1e293b", fontSize: "13.5px", fontWeight: "700", borderTopRightRadius: "8px", borderBottom: "2px solid #e2e8f0" }}>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -1800,12 +2085,12 @@ const StudentDashboard = () => {
                   </tr>
                 ) : (
                   results.map((res, idx) => (
-                    <tr key={idx} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                      <td style={{ padding: "12px", fontWeight: "700", color: "#0f172a" }}>{res.examName || "UBT Set"}</td>
-                      <td style={{ padding: "12px", fontWeight: "700", color: "#2563eb" }}>{res.score} / {res.total || 40}</td>
-                      <td style={{ padding: "12px", color: "#334155" }}>{res.percentage || Math.round((Number(res.score) / (Number(res.total) || 40)) * 100)}%</td>
-                      <td style={{ padding: "12px" }}>
-                        <span style={{ backgroundColor: res.passed ? "#dcfce7" : "#fee2e2", color: res.passed ? "#166534" : "#991b1b", padding: "3px 9px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>
+                    <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#ffffff" }}>
+                      <td style={{ padding: "14px 16px", fontWeight: "700", color: "#0f172a" }}>{res.examName || "UBT Set"}</td>
+                      <td style={{ padding: "14px 16px", fontWeight: "700", color: "#2563eb" }}>{res.score} / {res.total || 40}</td>
+                      <td style={{ padding: "14px 16px", color: "#334155", fontWeight: "600" }}>{res.percentage || Math.round((Number(res.score) / (Number(res.total) || 40)) * 100)}%</td>
+                      <td style={{ padding: "14px 16px" }}>
+                        <span style={{ backgroundColor: res.passed ? "#dcfce7" : "#fee2e2", color: res.passed ? "#166534" : "#991b1b", padding: "4px 10px", borderRadius: "10px", fontSize: "12px", fontWeight: "700" }}>
                           {res.passed ? "Passed" : "Failed"}
                         </span>
                       </td>

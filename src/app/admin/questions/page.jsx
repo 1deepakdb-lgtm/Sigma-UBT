@@ -124,12 +124,17 @@ function AdminQuestionManagerContent() {
   const [ubtSetName, setUbtSetName] = useState("");
   const [ubtPackageName, setUbtPackageName] = useState("Full Set UBT");
   const [ubtAutoInit, setUbtAutoInit] = useState(true);
+  const [ubtIsFree, setUbtIsFree] = useState(false);
 
   // Chapter Wise Set creation state
   const [chapterSetName, setChapterSetName] = useState("");
   const [chapterPackageName, setChapterPackageName] = useState("30 Set Chapter UBT");
   const [chapterNote, setChapterNote] = useState("");
   const [chapterAutoInit, setChapterAutoInit] = useState(true);
+  const [chapterIsFree, setChapterIsFree] = useState(false);
+
+  // Free set toggle state
+  const [isTogglingFreeId, setIsTogglingFreeId] = useState(null);
 
   // Package creation state
   const [newPackageName, setNewPackageName] = useState("");
@@ -220,7 +225,8 @@ function AdminQuestionManagerContent() {
           setType: sType,
           creatorInstituteName: s.creatorInstituteName || "Super Admin",
           isPublished: s.isPublished !== undefined ? s.isPublished : true,
-          isPrivate: s.isPrivate !== undefined ? s.isPrivate : false
+          isPrivate: s.isPrivate !== undefined ? s.isPrivate : false,
+          isFree: Boolean(s.isFree || s.setType === "FREE" || (s.name && s.name.toLowerCase().includes("free demo")))
         };
       });
 
@@ -299,7 +305,8 @@ function AdminQuestionManagerContent() {
                 creatorInstituteId: dbSet.creatorInstituteId || existing?.creatorInstituteId || null,
                 creatorInstituteName: dbSet.creatorInstituteName || existing?.creatorInstituteName || "Super Admin",
                 isPublished: dbSet.isPublished !== undefined ? dbSet.isPublished : (existing?.isPublished !== undefined ? existing.isPublished : true),
-                isPrivate: dbSet.isPrivate !== undefined ? dbSet.isPrivate : (existing?.isPrivate !== undefined ? existing.isPrivate : false)
+                isPrivate: dbSet.isPrivate !== undefined ? dbSet.isPrivate : (existing?.isPrivate !== undefined ? existing.isPrivate : false),
+                isFree: dbSet.isFree !== undefined ? Boolean(dbSet.isFree) : (existing?.isFree !== undefined ? Boolean(existing.isFree) : false)
               });
             });
 
@@ -421,17 +428,18 @@ function AdminQuestionManagerContent() {
         <span style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: "6px",
-          padding: "4px 10px",
-          borderRadius: "12px",
-          fontSize: "12px",
+          gap: "4px",
+          padding: "3px 8px",
+          borderRadius: "10px",
+          fontSize: "11.5px",
           fontWeight: "600",
           backgroundColor: "#ede9fe",
           color: "#5b21b6",
-          border: "1px solid #ddd6fe"
+          border: "1px solid #ddd6fe",
+          whiteSpace: "nowrap"
         }}>
-          <BuildingIcon size={13} color="#6d28d9" />
-          <span>Institute: <strong>{setObj.creatorInstituteName}</strong></span>
+          <BuildingIcon size={11} color="#6d28d9" />
+          <span>{setObj.creatorInstituteName}</span>
         </span>
       );
     }
@@ -439,39 +447,63 @@ function AdminQuestionManagerContent() {
       <span style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "6px",
-        padding: "4px 10px",
-        borderRadius: "12px",
-        fontSize: "12px",
+        gap: "3px",
+        padding: "2px 7px",
+        borderRadius: "8px",
+        fontSize: "11px",
         fontWeight: "600",
         backgroundColor: "#eff6ff",
         color: "#1e40af",
-        border: "1px solid #bfdbfe"
+        border: "1px solid #bfdbfe",
+        whiteSpace: "nowrap"
       }}>
-        <ShieldIcon size={13} color="#2563eb" />
-        <span>Super Admin (Global)</span>
+        <ShieldIcon size={11} color="#2563eb" />
+        <span>Admin</span>
       </span>
     );
   };
 
   const renderVisibilityBadge = (setObj) => {
+    const isSuperAdminSet = !setObj.creatorInstituteName || setObj.creatorInstituteName === "Super Admin" || setObj.creatorInstituteName === "Admin";
+    if (isSuperAdminSet) {
+      return (
+        <span style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "3px",
+          padding: "2px 7px",
+          borderRadius: "8px",
+          fontSize: "11px",
+          fontWeight: "700",
+          backgroundColor: "#eff6ff",
+          color: "#1d4ed8",
+          border: "1px solid #bfdbfe",
+          whiteSpace: "nowrap"
+        }}>
+          <GlobeIcon size={11} color="#1d4ed8" />
+          <span>Global</span>
+        </span>
+      );
+    }
+
     const isPublished = setObj.isPublished !== false;
     if (isPublished) {
       return (
         <span style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: "5px",
-          padding: "4px 10px",
-          borderRadius: "12px",
-          fontSize: "12px",
+          gap: "3px",
+          padding: "2px 7px",
+          borderRadius: "8px",
+          fontSize: "11px",
           fontWeight: "700",
           backgroundColor: "#dcfce7",
           color: "#166534",
-          border: "1px solid #bbf7d0"
+          border: "1px solid #bbf7d0",
+          whiteSpace: "nowrap"
         }}>
-          <GlobeIcon size={13} color="#166534" />
-          <span>Published to All Institutes</span>
+          <GlobeIcon size={11} color="#166534" />
+          <span>Published</span>
         </span>
       );
     }
@@ -479,22 +511,33 @@ function AdminQuestionManagerContent() {
       <span style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "5px",
-        padding: "4px 10px",
-        borderRadius: "12px",
-        fontSize: "12px",
+        gap: "3px",
+        padding: "2px 7px",
+        borderRadius: "8px",
+        fontSize: "11px",
         fontWeight: "700",
         backgroundColor: "#fef3c7",
         color: "#92400e",
-        border: "1px solid #fde68a"
+        border: "1px solid #fde68a",
+        whiteSpace: "nowrap"
       }}>
-        <LockIcon size={13} color="#92400e" />
-        <span>Private Bucket (Creator Only)</span>
+        <LockIcon size={11} color="#92400e" />
+        <span>Private</span>
       </span>
     );
   };
 
   const renderPublishAuthorityButton = (setObj) => {
+    const isSuperAdminSet = !setObj.creatorInstituteName || setObj.creatorInstituteName === "Super Admin" || setObj.creatorInstituteName === "Admin";
+    // Super Admin sets are ALREADY published globally by default
+    if (isSuperAdminSet) {
+      return (
+        <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", fontStyle: "italic", whiteSpace: "nowrap" }}>
+          Global
+        </span>
+      );
+    }
+
     const isPublished = setObj.isPublished !== false;
     const isUpdating = isPublishingId === (setObj.id || setObj.name);
 
@@ -503,25 +546,26 @@ function AdminQuestionManagerContent() {
         <button
           onClick={() => handleTogglePublishSet(setObj)}
           disabled={isUpdating}
-          title="Super Admin Authority: Publish this set so other institutes can access and package it"
+          title="Super Admin Authority: Publish this institute set so other institutes can access and package it"
           style={{
             backgroundColor: "#16a34a",
             color: "#ffffff",
             border: "none",
-            padding: "6px 12px",
-            borderRadius: "5px",
+            padding: "4px 8px",
+            borderRadius: "4px",
             cursor: isUpdating ? "not-allowed" : "pointer",
-            fontSize: "12px",
+            fontSize: "11px",
             fontWeight: "700",
             display: "inline-flex",
             alignItems: "center",
-            gap: "5px",
+            gap: "3px",
             opacity: isUpdating ? 0.7 : 1,
-            boxShadow: "0 1px 3px rgba(22, 163, 74, 0.3)"
+            boxShadow: "0 1px 2px rgba(22, 163, 74, 0.25)",
+            whiteSpace: "nowrap"
           }}
         >
-          <GlobeIcon size={13} color="#ffffff" />
-          <span>{isUpdating ? "Publishing..." : "Publish to All Institutes"}</span>
+          <GlobeIcon size={11} color="#ffffff" />
+          <span>{isUpdating ? "..." : "Publish"}</span>
         </button>
       );
     }
@@ -535,20 +579,127 @@ function AdminQuestionManagerContent() {
           backgroundColor: "#d97706",
           color: "#ffffff",
           border: "none",
-          padding: "6px 12px",
-          borderRadius: "5px",
+          padding: "4px 8px",
+          borderRadius: "4px",
           cursor: isUpdating ? "not-allowed" : "pointer",
-          fontSize: "12px",
+          fontSize: "11px",
           fontWeight: "700",
           display: "inline-flex",
           alignItems: "center",
-          gap: "5px",
-          opacity: isUpdating ? 0.7 : 1
+          gap: "3px",
+          opacity: isUpdating ? 0.7 : 1,
+          whiteSpace: "nowrap"
         }}
       >
-        <LockIcon size={13} color="#ffffff" />
-        <span>{isUpdating ? "Updating..." : "Unpublish (Make Private)"}</span>
+        <LockIcon size={11} color="#ffffff" />
+        <span>{isUpdating ? "..." : "Make Private"}</span>
       </button>
+    );
+  };
+
+  // Super Admin Exclusive Authority: Toggle Exam Set as FREE DEMO vs PAID
+  const handleToggleFreeSet = async (setObj) => {
+    const currentFree = Boolean(setObj.isFree || setObj.setType === "FREE" || (setObj.name && setObj.name.toLowerCase().includes("free demo")));
+    const nextFree = !currentFree;
+    const key = setObj.id || setObj.name;
+    setIsTogglingFreeId(key);
+
+    try {
+      const res = await fetch("/api/admin/packages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "toggle_free_set",
+          setId: setObj.id,
+          setName: setObj.name,
+          isFree: nextFree,
+          superadmin: true
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update free status");
+
+      setSets((prev) =>
+        prev.map((s) =>
+          ((s.id && s.id === setObj.id) || s.name === setObj.name)
+            ? { ...s, isFree: nextFree }
+            : s
+        )
+      );
+
+      const localSets = JSON.parse(localStorage.getItem("examSets") || "[]");
+      const updatedLocal = localSets.map((s) =>
+        ((s.id && s.id === setObj.id) || s.name === setObj.name)
+          ? { ...s, isFree: nextFree }
+          : s
+      );
+      localStorage.setItem("examSets", JSON.stringify(updatedLocal));
+
+      alert(nextFree
+        ? `Set "${setObj.name}" is now marked as FREE DEMO. All students can access it without payment!`
+        : `Set "${setObj.name}" is now PAID. Students must purchase the set or its package to access.`
+      );
+    } catch (err) {
+      console.error("Error toggling free state:", err);
+      setSets((prev) =>
+        prev.map((s) =>
+          ((s.id && s.id === setObj.id) || s.name === setObj.name)
+            ? { ...s, isFree: nextFree }
+            : s
+        )
+      );
+      const localSets = JSON.parse(localStorage.getItem("examSets") || "[]");
+      const updatedLocal = localSets.map((s) =>
+        ((s.id && s.id === setObj.id) || s.name === setObj.name)
+          ? { ...s, isFree: nextFree }
+          : s
+      );
+      localStorage.setItem("examSets", JSON.stringify(updatedLocal));
+      alert(`Local update: Set "${setObj.name}" is now ${nextFree ? "FREE DEMO" : "PAID"}.`);
+    } finally {
+      setIsTogglingFreeId(null);
+    }
+  };
+
+  const renderFreeBadgeAndToggle = (setObj) => {
+    const isFree = Boolean(setObj.isFree || setObj.setType === "FREE" || (setObj.name && setObj.name.toLowerCase().includes("free demo")));
+    const isUpdating = isTogglingFreeId === (setObj.id || setObj.name);
+
+    return (
+      <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", justifyContent: "center", whiteSpace: "nowrap" }}>
+        <span style={{
+          display: "inline-block",
+          padding: "2px 6px",
+          borderRadius: "8px",
+          fontSize: "10.5px",
+          fontWeight: "800",
+          backgroundColor: isFree ? "#ecfdf5" : "#f1f5f9",
+          color: isFree ? "#059669" : "#64748b",
+          border: isFree ? "1px solid #a7f3d0" : "1px solid #cbd5e1",
+          whiteSpace: "nowrap"
+        }}>
+          {isFree ? "🎁 FREE" : "PAID"}
+        </span>
+        <button
+          type="button"
+          onClick={() => handleToggleFreeSet(setObj)}
+          disabled={isUpdating}
+          title={isFree ? "Click to set this exam set as Paid (requires purchase)" : "Click to mark this exam set as Free Demo for all students"}
+          style={{
+            backgroundColor: isFree ? "#f1f5f9" : "#10b981",
+            color: isFree ? "#475569" : "#ffffff",
+            border: isFree ? "1px solid #cbd5e1" : "none",
+            padding: "2px 6px",
+            borderRadius: "4px",
+            cursor: isUpdating ? "not-allowed" : "pointer",
+            fontSize: "10.5px",
+            fontWeight: "700",
+            whiteSpace: "nowrap"
+          }}
+        >
+          {isUpdating ? "..." : (isFree ? "Set Paid" : "Make Free")}
+        </button>
+      </div>
     );
   };
 
@@ -613,12 +764,31 @@ function AdminQuestionManagerContent() {
       creatorInstituteName: "Super Admin",
       isPublished: true,
       isPrivate: false,
+      isFree: Boolean(ubtIsFree),
       createdAt: new Date().toISOString()
     };
 
     const updatedSets = [...sets, newSetObj];
     setSets(updatedSets);
     localStorage.setItem("examSets", JSON.stringify(updatedSets));
+
+    // Sync to SQLite DB via API
+    fetch("/api/admin/packages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "create_set",
+        setName: cleanName,
+        packageName: ubtPackageName || "Full Set UBT",
+        duration: 3000,
+        setType: "UBT",
+        creatorInstituteName: "Super Admin",
+        isPrivate: false,
+        isPublished: true,
+        isFree: Boolean(ubtIsFree),
+        superadmin: true
+      })
+    }).catch(err => console.warn("DB set creation fallback:", err));
 
     // Also ensure package exists in packages list
     if (ubtPackageName && !packages.some(p => p.name === ubtPackageName)) {
@@ -632,8 +802,9 @@ function AdminQuestionManagerContent() {
       generate40Template(newSetObj.name, newSetObj.packageName);
     }
 
-    alert(`UBT Set "${cleanName}" created successfully with 20 Reading & 20 Listening slots!`);
+    alert(`UBT Set "${cleanName}" created successfully ${ubtIsFree ? "as FREE DEMO" : ""} with 20 Reading & 20 Listening slots!`);
     setUbtSetName("");
+    setUbtIsFree(false);
     handleSelectSetForUpload(newSetObj);
   };
 
@@ -659,12 +830,31 @@ function AdminQuestionManagerContent() {
       creatorInstituteName: "Super Admin",
       isPublished: true,
       isPrivate: false,
+      isFree: Boolean(chapterIsFree),
       createdAt: new Date().toISOString()
     };
 
     const updatedSets = [...sets, newSetObj];
     setSets(updatedSets);
     localStorage.setItem("examSets", JSON.stringify(updatedSets));
+
+    // Sync to SQLite DB via API
+    fetch("/api/admin/packages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "create_set",
+        setName: cleanName,
+        packageName: chapterPackageName || "30 Set Chapter UBT",
+        duration: 3000,
+        setType: "Chapterwise",
+        creatorInstituteName: "Super Admin",
+        isPrivate: false,
+        isPublished: true,
+        isFree: Boolean(chapterIsFree),
+        superadmin: true
+      })
+    }).catch(err => console.warn("DB set creation fallback:", err));
 
     if (chapterPackageName && !packages.some(p => p.name === chapterPackageName)) {
       const updatedPackages = [...packages, { id: "pkg-" + Date.now(), name: chapterPackageName, price: "Rs. 1,000" }];
@@ -676,9 +866,10 @@ function AdminQuestionManagerContent() {
       generate40Template(newSetObj.name, newSetObj.packageName);
     }
 
-    alert(`Chapter Wise Set "${cleanName}" created successfully with 20 Reading & 20 Listening slots!`);
+    alert(`Chapter Wise Set "${cleanName}" created successfully ${chapterIsFree ? "as FREE DEMO" : ""} with 20 Reading & 20 Listening slots!`);
     setChapterSetName("");
     setChapterNote("");
+    setChapterIsFree(false);
     handleSelectSetForUpload(newSetObj);
   };
 
@@ -1160,18 +1351,22 @@ function AdminQuestionManagerContent() {
   };
 
   const contentStyle = {
-    maxWidth: "1280px",
+    maxWidth: "100%",
+    width: "100%",
+    boxSizing: "border-box",
     margin: "0 auto",
-    padding: "24px 20px"
+    padding: "16px 18px"
   };
 
   const cardStyle = {
     backgroundColor: "#ffffff",
-    borderRadius: "12px",
-    padding: "24px",
+    borderRadius: "10px",
+    padding: "16px 18px",
     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
     border: "1px solid #e2e8f0",
-    marginBottom: "24px"
+    marginBottom: "20px",
+    boxSizing: "border-box",
+    width: "100%"
   };
 
   const inputStyle = {
@@ -1369,17 +1564,37 @@ function AdminQuestionManagerContent() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: "18px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
-                  <input
-                    type="checkbox"
-                    id="ubtAutoInit"
-                    checked={ubtAutoInit}
-                    onChange={(e) => setUbtAutoInit(e.target.checked)}
-                    style={{ width: "18px", height: "18px", cursor: "pointer" }}
-                  />
-                  <label htmlFor="ubtAutoInit" style={{ fontSize: "13px", color: "#166534", fontWeight: "600", cursor: "pointer" }}>
-                    <strong>Auto-initialize 40 Question slots</strong> (20 Reading + 20 Listening slots ready to upload/edit)
-                  </label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "12px", marginBottom: "18px" }}>
+                  <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input
+                      type="checkbox"
+                      id="ubtAutoInit"
+                      checked={ubtAutoInit}
+                      onChange={(e) => setUbtAutoInit(e.target.checked)}
+                      style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                    />
+                    <label htmlFor="ubtAutoInit" style={{ fontSize: "13px", color: "#166534", fontWeight: "600", cursor: "pointer" }}>
+                      <strong>Auto-initialize 40 Question slots</strong> (20 Reading + 20 Listening)
+                    </label>
+                  </div>
+
+                  <div style={{ backgroundColor: "#ecfdf5", border: "1.5px solid #10b981", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input
+                      type="checkbox"
+                      id="ubtIsFree"
+                      checked={ubtIsFree}
+                      onChange={(e) => setUbtIsFree(e.target.checked)}
+                      style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                    />
+                    <div>
+                      <label htmlFor="ubtIsFree" style={{ fontSize: "13px", color: "#065f46", fontWeight: "700", cursor: "pointer", display: "block" }}>
+                        🎁 Free Demo Exam Set (Free for All Students)
+                      </label>
+                      <span style={{ fontSize: "11px", color: "#047857" }}>
+                        Allow all students to practice this set for free without payment.
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <button type="submit" style={primaryBtnStyle}>
@@ -1509,19 +1724,20 @@ function AdminQuestionManagerContent() {
                   <p style={{ fontSize: "13px", margin: 0 }}>Select "All Creators" or create a new set above.</p>
                 </div>
               ) : (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                     <thead>
-                      <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff", textAlign: "center" }}>
-                        <th style={{ padding: "12px 14px", textAlign: "center", borderRadius: "6px 0 0 0" }}>S.N.</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center" }}>UBT Set Name</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center" }}>Package</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center" }}>Creator / Bucket</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center" }}>Visibility / Access</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center" }}>Reading (Target 20)</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center" }}>Listening (Target 20)</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center" }}>Total Status</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center", borderRadius: "0 6px 0 0" }}>Super Admin Authority & Actions</th>
+                      <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff", textAlign: "center", fontSize: "11px", letterSpacing: "0.2px" }}>
+                        <th style={{ padding: "6px 4px", width: "30px", textAlign: "center" }}>S.N.</th>
+                        <th style={{ padding: "6px 6px", textAlign: "left", whiteSpace: "nowrap" }}>Set Name</th>
+                        <th style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Package</th>
+                        <th style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Creator</th>
+                        <th style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Access</th>
+                        <th style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Pricing</th>
+                        <th style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }}>Reading</th>
+                        <th style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }}>Listening</th>
+                        <th style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }}>Status</th>
+                        <th style={{ padding: "6px 6px", textAlign: "center", whiteSpace: "nowrap" }}>Actions &amp; Authority</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1533,63 +1749,66 @@ function AdminQuestionManagerContent() {
                             key={setObj.id || idx}
                             style={{
                               borderBottom: "1px solid #e2e8f0",
-                              backgroundColor: isSelectedForView ? "#f0fdf4" : "transparent",
+                              backgroundColor: isSelectedForView ? "#f0fdf4" : (idx % 2 === 0 ? "#ffffff" : "#f8fafc"),
                               transition: "background-color 0.15s ease",
                               textAlign: "center"
                             }}
                           >
-                            <td style={{ padding: "12px 14px", fontWeight: "600", color: "#64748b", textAlign: "center" }}>{idx + 1}</td>
-                            <td style={{ padding: "12px 14px", fontWeight: "700", color: "#1e3a8a", textAlign: "center" }}>
+                            <td style={{ padding: "5px 3px", fontWeight: "600", color: "#64748b", textAlign: "center" }}>{idx + 1}</td>
+                            <td style={{ padding: "5px 6px", fontWeight: "700", color: "#1e3a8a", textAlign: "left", whiteSpace: "nowrap", fontSize: "11.5px" }}>
                               {setObj.name}
                             </td>
-                            <td style={{ padding: "12px 14px", color: "#475569", textAlign: "center" }}>{setObj.packageName || "Full Set UBT"}</td>
-                            <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                            <td style={{ padding: "5px 4px", color: "#475569", textAlign: "center", whiteSpace: "nowrap", fontSize: "11px" }}>{setObj.packageName || "Full Set UBT"}</td>
+                            <td style={{ padding: "5px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
                               {renderCreatorBadge(setObj)}
                             </td>
-                            <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                            <td style={{ padding: "5px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
                               {renderVisibilityBadge(setObj)}
                             </td>
-                            <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                            <td style={{ padding: "5px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
+                              {renderFreeBadgeAndToggle(setObj)}
+                            </td>
+                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
                                 display: "inline-block",
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12.5px",
+                                padding: "2px 5px",
+                                borderRadius: "3px",
+                                fontSize: "10.5px",
                                 fontWeight: "700",
                                 backgroundColor: counts.reading === 20 ? "#dcfce7" : "#fef3c7",
                                 color: counts.reading === 20 ? "#166534" : "#92400e"
                               }}>
-                                {counts.reading} / 20 Reading
+                                {counts.reading}/20
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
                                 display: "inline-block",
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "12.5px",
+                                padding: "2px 5px",
+                                borderRadius: "3px",
+                                fontSize: "10.5px",
                                 fontWeight: "700",
                                 backgroundColor: counts.listening === 20 ? "#dcfce7" : "#fef3c7",
                                 color: counts.listening === 20 ? "#166534" : "#92400e"
                               }}>
-                                {counts.listening} / 20 Listening
+                                {counts.listening}/20
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
                                 display: "inline-block",
-                                padding: "4px 12px",
-                                borderRadius: "6px",
-                                fontSize: "12.5px",
+                                padding: "2px 5px",
+                                borderRadius: "3px",
+                                fontSize: "10.5px",
                                 fontWeight: "700",
                                 backgroundColor: counts.isComplete ? "#dbeafe" : "#f1f5f9",
                                 color: counts.isComplete ? "#1e40af" : "#475569"
                               }}>
-                                {counts.total} / 40 {counts.isComplete ? "Ready" : "Incomplete"}
+                                {counts.total}/40 {counts.isComplete ? "Ready" : "Inc."}
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                              <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
+                            <td style={{ padding: "5px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
+                              <div style={{ display: "inline-flex", gap: "3px", justifyContent: "center", alignItems: "center", flexWrap: "nowrap" }}>
                                 {renderPublishAuthorityButton(setObj)}
                                 <button
                                   type="button"
@@ -1602,18 +1821,19 @@ function AdminQuestionManagerContent() {
                                     backgroundColor: isSelectedForView ? "#15803d" : "#f1f5f9",
                                     color: isSelectedForView ? "#ffffff" : "#1e3a8a",
                                     border: isSelectedForView ? "1px solid #166534" : "1px solid #cbd5e1",
-                                    padding: "6px 11px",
-                                    borderRadius: "5px",
+                                    padding: "3px 6px",
+                                    borderRadius: "3px",
                                     cursor: "pointer",
-                                    fontSize: "12px",
+                                    fontSize: "10.5px",
                                     fontWeight: "700",
                                     display: "inline-flex",
                                     alignItems: "center",
-                                    gap: "4px"
+                                    gap: "2px",
+                                    whiteSpace: "nowrap"
                                   }}
                                 >
-                                  <EyeIcon size={12} />
-                                  <span>{isSelectedForView ? "Viewing Qs" : "View Questions"}</span>
+                                  <EyeIcon size={10} />
+                                  <span>{isSelectedForView ? "Viewing" : "View"}</span>
                                 </button>
                                 <button
                                   onClick={() => handleSelectSetForUpload(setObj)}
@@ -1621,14 +1841,15 @@ function AdminQuestionManagerContent() {
                                     backgroundColor: "#2563eb",
                                     color: "#ffffff",
                                     border: "none",
-                                    padding: "6px 12px",
-                                    borderRadius: "5px",
+                                    padding: "3px 6px",
+                                    borderRadius: "3px",
                                     cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: "700"
+                                    fontSize: "10.5px",
+                                    fontWeight: "700",
+                                    whiteSpace: "nowrap"
                                   }}
                                 >
-                                  Upload / Edit Questions
+                                  Edit
                                 </button>
                                 <button
                                   onClick={() => handleDeleteSet(setObj.id, setObj.name)}
@@ -1636,11 +1857,12 @@ function AdminQuestionManagerContent() {
                                     backgroundColor: "#fee2e2",
                                     color: "#dc2626",
                                     border: "1px solid #fca5a5",
-                                    padding: "6px 10px",
-                                    borderRadius: "5px",
+                                    padding: "3px 5px",
+                                    borderRadius: "3px",
                                     cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: "600"
+                                    fontSize: "10.5px",
+                                    fontWeight: "600",
+                                    whiteSpace: "nowrap"
                                   }}
                                 >
                                   Delete
@@ -2191,17 +2413,37 @@ function AdminQuestionManagerContent() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: "18px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
-                  <input
-                    type="checkbox"
-                    id="chapterAutoInit"
-                    checked={chapterAutoInit}
-                    onChange={(e) => setChapterAutoInit(e.target.checked)}
-                    style={{ width: "18px", height: "18px", cursor: "pointer" }}
-                  />
-                  <label htmlFor="chapterAutoInit" style={{ fontSize: "13px", color: "#166534", fontWeight: "600", cursor: "pointer" }}>
-                    <strong>Auto-initialize 40 Question slots</strong> (20 Reading + 20 Listening slots ready to upload/edit)
-                  </label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "12px", marginBottom: "18px" }}>
+                  <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input
+                      type="checkbox"
+                      id="chapterAutoInit"
+                      checked={chapterAutoInit}
+                      onChange={(e) => setChapterAutoInit(e.target.checked)}
+                      style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                    />
+                    <label htmlFor="chapterAutoInit" style={{ fontSize: "13px", color: "#166534", fontWeight: "600", cursor: "pointer" }}>
+                      <strong>Auto-initialize 40 Question slots</strong> (20 Reading + 20 Listening slots ready to upload/edit)
+                    </label>
+                  </div>
+
+                  <div style={{ backgroundColor: "#ecfdf5", border: "1.5px solid #10b981", padding: "12px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input
+                      type="checkbox"
+                      id="chapterIsFree"
+                      checked={chapterIsFree}
+                      onChange={(e) => setChapterIsFree(e.target.checked)}
+                      style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                    />
+                    <div>
+                      <label htmlFor="chapterIsFree" style={{ fontSize: "13px", color: "#065f46", fontWeight: "700", cursor: "pointer", display: "block" }}>
+                        🎁 Free Demo Exam Set (Free for All Students)
+                      </label>
+                      <span style={{ fontSize: "11px", color: "#047857" }}>
+                        Allow all students to practice this chapter set for free without payment.
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <button type="submit" style={{ ...primaryBtnStyle, backgroundColor: "#059669", backgroundImage: "linear-gradient(135deg, #059669 0%, #047857 100%)" }}>
@@ -2227,82 +2469,90 @@ function AdminQuestionManagerContent() {
                   <p style={{ fontSize: "13px", margin: 0 }}>Use the form above to create your first chapter-wise set!</p>
                 </div>
               ) : (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                     <thead>
-                      <tr style={{ backgroundColor: "#065f46", color: "#ffffff", textAlign: "left" }}>
-                        <th style={{ padding: "12px 14px", borderRadius: "6px 0 0 0" }}>S.N.</th>
-                        <th style={{ padding: "12px 14px" }}>Chapter Set Name</th>
-                        <th style={{ padding: "12px 14px" }}>Package</th>
-                        <th style={{ padding: "12px 14px" }}>Reading Qs (Target 20)</th>
-                        <th style={{ padding: "12px 14px" }}>Listening Qs (Target 20)</th>
-                        <th style={{ padding: "12px 14px" }}>Total Status</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center", borderRadius: "0 6px 0 0" }}>Actions</th>
+                      <tr style={{ backgroundColor: "#065f46", color: "#ffffff", textAlign: "left", fontSize: "11.5px" }}>
+                        <th style={{ padding: "8px 6px", width: "36px", textAlign: "center" }}>S.N.</th>
+                        <th style={{ padding: "8px 8px", whiteSpace: "nowrap" }}>Chapter Set Name</th>
+                        <th style={{ padding: "8px 6px", whiteSpace: "nowrap" }}>Package</th>
+                        <th style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>Pricing / Demo</th>
+                        <th style={{ padding: "8px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Reading (20)</th>
+                        <th style={{ padding: "8px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Listening (20)</th>
+                        <th style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>Total Status</th>
+                        <th style={{ padding: "8px 8px", textAlign: "center", whiteSpace: "nowrap" }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {chapterSetsList.map((setObj, idx) => {
                         const counts = getSetQuestionCounts(setObj);
                         return (
-                          <tr key={setObj.id || idx} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                            <td style={{ padding: "12px 14px", fontWeight: "600", color: "#64748b" }}>{idx + 1}</td>
-                            <td style={{ padding: "12px 14px", fontWeight: "700", color: "#065f46" }}>
+                          <tr key={setObj.id || idx} style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
+                            <td style={{ padding: "6px 4px", fontWeight: "600", color: "#64748b", textAlign: "center" }}>{idx + 1}</td>
+                            <td style={{ padding: "6px 8px", fontWeight: "700", color: "#065f46", whiteSpace: "nowrap" }}>
                               {setObj.name}
-                              {setObj.note && <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "normal" }}>{setObj.note}</div>}
+                              {setObj.note && <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "normal" }}>{setObj.note}</div>}
                             </td>
-                            <td style={{ padding: "12px 14px", color: "#475569" }}>{setObj.packageName || "30 Set Chapter UBT"}</td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "6px 6px", color: "#475569", fontSize: "11.5px", whiteSpace: "nowrap" }}>{setObj.packageName || "30 Set Chapter UBT"}</td>
+                            <td style={{ padding: "6px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
+                              {renderFreeBadgeAndToggle(setObj)}
+                            </td>
+                            <td style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                fontSize: "12px",
+                                display: "inline-block",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
                                 fontWeight: "700",
                                 backgroundColor: counts.reading === 20 ? "#dcfce7" : "#fef3c7",
                                 color: counts.reading === 20 ? "#166534" : "#92400e"
                               }}>
-                                {counts.reading} / 20 Reading
+                                {counts.reading} / 20
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                fontSize: "12px",
+                                display: "inline-block",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
                                 fontWeight: "700",
                                 backgroundColor: counts.listening === 20 ? "#dcfce7" : "#fef3c7",
                                 color: counts.listening === 20 ? "#166534" : "#92400e"
                               }}>
-                                {counts.listening} / 20 Listening
+                                {counts.listening} / 20
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "6px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                fontSize: "12px",
+                                display: "inline-block",
+                                padding: "2px 7px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
                                 fontWeight: "700",
                                 backgroundColor: counts.isComplete ? "#dbeafe" : "#f1f5f9",
                                 color: counts.isComplete ? "#1e40af" : "#475569"
                               }}>
-                                {counts.total} / 40 Questions {counts.isComplete ? "(Ready)" : "(Incomplete)"}
+                                {counts.total} / 40 {counts.isComplete ? "Ready" : "Inc."}
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                              <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                            <td style={{ padding: "6px 8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                              <div style={{ display: "inline-flex", gap: "4px", justifyContent: "center", alignItems: "center", flexWrap: "nowrap" }}>
                                 <button
                                   onClick={() => handleSelectSetForUpload(setObj)}
                                   style={{
                                     backgroundColor: "#059669",
                                     color: "#ffffff",
                                     border: "none",
-                                    padding: "6px 12px",
-                                    borderRadius: "5px",
+                                    padding: "4px 8px",
+                                    borderRadius: "4px",
                                     cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: "700"
+                                    fontSize: "11px",
+                                    fontWeight: "700",
+                                    whiteSpace: "nowrap"
                                   }}
                                 >
-                                  Upload / Edit Questions
+                                  Upload / Edit
                                 </button>
                                 <button
                                   onClick={() => handleDeleteSet(setObj.id, setObj.name)}
@@ -2310,11 +2560,12 @@ function AdminQuestionManagerContent() {
                                     backgroundColor: "#fee2e2",
                                     color: "#dc2626",
                                     border: "1px solid #fca5a5",
-                                    padding: "6px 10px",
-                                    borderRadius: "5px",
+                                    padding: "4px 7px",
+                                    borderRadius: "4px",
                                     cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: "600"
+                                    fontSize: "11px",
+                                    fontWeight: "600",
+                                    whiteSpace: "nowrap"
                                   }}
                                 >
                                   Delete
@@ -3239,20 +3490,21 @@ function AdminQuestionManagerContent() {
                   <p style={{ fontSize: "15px", margin: 0 }}>No exam sets matching your filter.</p>
                 </div>
               ) : (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                     <thead>
-                      <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff", textAlign: "left" }}>
-                        <th style={{ padding: "12px 14px", width: "60px", borderRadius: "6px 0 0 0" }}>S.N.</th>
-                        <th style={{ padding: "12px 14px" }}>Set Name</th>
-                        <th style={{ padding: "12px 14px" }}>Category</th>
-                        <th style={{ padding: "12px 14px" }}>Package</th>
-                        <th style={{ padding: "12px 14px" }}>Creator / Bucket</th>
-                        <th style={{ padding: "12px 14px" }}>Visibility / Access</th>
-                        <th style={{ padding: "12px 14px" }}>Reading (X/20)</th>
-                        <th style={{ padding: "12px 14px" }}>Listening (Y/20)</th>
-                        <th style={{ padding: "12px 14px" }}>Total Status</th>
-                        <th style={{ padding: "12px 14px", textAlign: "center", borderRadius: "0 6px 0 0" }}>Super Admin Authority & Actions</th>
+                      <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff", textAlign: "left", fontSize: "11px", letterSpacing: "0.2px" }}>
+                        <th style={{ padding: "6px 4px", width: "30px", textAlign: "center" }}>S.N.</th>
+                        <th style={{ padding: "6px 6px", whiteSpace: "nowrap" }}>Set Name</th>
+                        <th style={{ padding: "6px 5px", whiteSpace: "nowrap" }}>Type</th>
+                        <th style={{ padding: "6px 5px", whiteSpace: "nowrap" }}>Package</th>
+                        <th style={{ padding: "6px 5px", whiteSpace: "nowrap" }}>Creator</th>
+                        <th style={{ padding: "6px 5px", whiteSpace: "nowrap" }}>Access</th>
+                        <th style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Pricing</th>
+                        <th style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }}>Reading</th>
+                        <th style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }}>Listening</th>
+                        <th style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }}>Status</th>
+                        <th style={{ padding: "6px 6px", textAlign: "center", whiteSpace: "nowrap" }}>Actions &amp; Authority</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3260,68 +3512,74 @@ function AdminQuestionManagerContent() {
                         const counts = getSetQuestionCounts(s);
                         const sType = getSetType(s);
                         return (
-                          <tr key={s.id || idx} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                            <td style={{ padding: "12px 14px", fontWeight: "600", color: "#64748b" }}>{idx + 1}</td>
-                            <td style={{ padding: "12px 14px", fontWeight: "700", color: sType === "UBT" ? "#1e3a8a" : "#065f46" }}>
+                          <tr key={s.id || idx} style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
+                            <td style={{ padding: "5px 3px", fontWeight: "600", color: "#64748b", textAlign: "center" }}>{idx + 1}</td>
+                            <td style={{ padding: "5px 6px", fontWeight: "700", color: sType === "UBT" ? "#1e3a8a" : "#065f46", whiteSpace: "nowrap", fontSize: "11.5px" }}>
                               {s.name}
                             </td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "5px 4px", whiteSpace: "nowrap" }}>
                               <span style={{
-                                padding: "3px 9px",
-                                borderRadius: "10px",
-                                fontSize: "11px",
+                                padding: "2px 6px",
+                                borderRadius: "6px",
+                                fontSize: "10px",
                                 fontWeight: "700",
                                 backgroundColor: sType === "UBT" ? "#dbeafe" : "#dcfce7",
                                 color: sType === "UBT" ? "#1e40af" : "#166534"
                               }}>
-                                {sType === "UBT" ? "UBT Set" : "Chapter Wise Set"}
+                                {sType === "UBT" ? "UBT" : "Chapter"}
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px", color: "#475569" }}>{s.packageName || "N/A"}</td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "5px 4px", color: "#475569", fontSize: "11px", whiteSpace: "nowrap" }}>{s.packageName || "N/A"}</td>
+                            <td style={{ padding: "5px 4px", whiteSpace: "nowrap" }}>
                               {renderCreatorBadge(s)}
                             </td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "5px 4px", whiteSpace: "nowrap" }}>
                               {renderVisibilityBadge(s)}
                             </td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "5px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
+                              {renderFreeBadgeAndToggle(s)}
+                            </td>
+                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
-                                padding: "3px 8px",
-                                borderRadius: "10px",
-                                fontSize: "12px",
+                                display: "inline-block",
+                                padding: "2px 5px",
+                                borderRadius: "3px",
+                                fontSize: "10.5px",
                                 fontWeight: "700",
                                 backgroundColor: counts.reading === 20 ? "#dcfce7" : "#fef3c7",
                                 color: counts.reading === 20 ? "#166534" : "#b45309"
                               }}>
-                                {counts.reading} / 20
+                                {counts.reading}/20
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
-                                padding: "3px 8px",
-                                borderRadius: "10px",
-                                fontSize: "12px",
+                                display: "inline-block",
+                                padding: "2px 5px",
+                                borderRadius: "3px",
+                                fontSize: "10.5px",
                                 fontWeight: "700",
                                 backgroundColor: counts.listening === 20 ? "#dcfce7" : "#fef3c7",
                                 color: counts.listening === 20 ? "#166534" : "#b45309"
                               }}>
-                                {counts.listening} / 20
+                                {counts.listening}/20
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px" }}>
+                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
-                                padding: "4px 10px",
-                                borderRadius: "12px",
-                                fontSize: "12px",
+                                display: "inline-block",
+                                padding: "2px 5px",
+                                borderRadius: "3px",
+                                fontSize: "10.5px",
                                 fontWeight: "700",
                                 backgroundColor: counts.isComplete ? "#dcfce7" : "#fef9c3",
                                 color: counts.isComplete ? "#166534" : "#854d0e"
                               }}>
-                                {counts.total} / 40 {counts.isComplete ? "(Complete)" : "(Incomplete)"}
+                                {counts.total}/40 {counts.isComplete ? "Ready" : "Inc."}
                               </span>
                             </td>
-                            <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                              <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
+                            <td style={{ padding: "5px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
+                              <div style={{ display: "inline-flex", gap: "3px", justifyContent: "center", alignItems: "center", flexWrap: "nowrap" }}>
                                 {renderPublishAuthorityButton(s)}
                                 <button
                                   onClick={() => handleSelectSetForUpload(s)}
@@ -3329,26 +3587,28 @@ function AdminQuestionManagerContent() {
                                     backgroundColor: "#2563eb",
                                     color: "#ffffff",
                                     border: "none",
-                                    padding: "6px 12px",
-                                    borderRadius: "4px",
+                                    padding: "3px 6px",
+                                    borderRadius: "3px",
                                     cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: "700"
+                                    fontSize: "10.5px",
+                                    fontWeight: "700",
+                                    whiteSpace: "nowrap"
                                   }}
                                 >
-                                  Manage Questions
+                                  Manage
                                 </button>
                                 <button
                                   onClick={() => handleDeleteSet(s.id, s.name)}
                                   style={{
                                     backgroundColor: "#fee2e2",
                                     color: "#dc2626",
-                                    border: "none",
-                                    padding: "6px 10px",
-                                    borderRadius: "4px",
+                                    border: "1px solid #fca5a5",
+                                    padding: "3px 5px",
+                                    borderRadius: "3px",
                                     cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: "600"
+                                    fontSize: "10.5px",
+                                    fontWeight: "600",
+                                    whiteSpace: "nowrap"
                                   }}
                                 >
                                   Delete

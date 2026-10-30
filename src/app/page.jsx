@@ -287,16 +287,16 @@ export default function LoginPage() {
     minHeight: "100vh",
     backgroundColor: "#f1f5f9",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    padding: "20px"
+    padding: "10px"
   };
 
   const cardStyle = {
     backgroundColor: "white",
-    padding: "36px 32px",
-    borderRadius: "16px",
-    boxShadow: "0 10px 30px -5px rgba(0,0,0,0.08)",
+    padding: "20px 22px",
+    borderRadius: "14px",
+    boxShadow: "0 10px 28px -5px rgba(0,0,0,0.08)",
     width: "100%",
-    maxWidth: "440px",
+    maxWidth: "400px",
     textAlign: "center",
     border: "1px solid #e2e8f0",
     boxSizing: "border-box"
@@ -304,11 +304,11 @@ export default function LoginPage() {
 
   const inputStyle = {
     width: "100%",
-    padding: "12px 14px",
-    marginBottom: "14px",
+    padding: "9px 12px",
+    marginBottom: "9px",
     borderRadius: "8px",
     border: "1px solid #cbd5e1",
-    fontSize: "14.5px",
+    fontSize: "13.5px",
     boxSizing: "border-box",
     backgroundColor: "#f8fafc",
     outline: "none",
@@ -317,15 +317,15 @@ export default function LoginPage() {
 
   const buttonStyle = {
     width: "100%",
-    padding: "13px",
+    padding: "10px",
     backgroundColor: "#1e3a8a",
     color: "white",
     border: "none",
     borderRadius: "8px",
     fontWeight: "800",
-    fontSize: "15px",
+    fontSize: "14px",
     cursor: loading ? "not-allowed" : "pointer",
-    marginTop: "8px",
+    marginTop: "6px",
     letterSpacing: "0.3px",
     boxShadow: "0 4px 12px rgba(30, 58, 138, 0.2)",
     opacity: loading ? 0.8 : 1,
@@ -340,9 +340,9 @@ export default function LoginPage() {
           src="/examjk-logo.png"
           alt="ExamJK Logo"
           style={{
-            width: "125px",
+            width: "100px",
             height: "auto",
-            margin: "0 auto 16px auto",
+            margin: "0 auto 10px auto",
             display: "block"
           }}
         />
@@ -352,10 +352,10 @@ export default function LoginPage() {
           style={{
             display: "flex",
             backgroundColor: "#f1f5f9",
-            borderRadius: "12px",
-            padding: "5px",
-            marginBottom: "20px",
-            gap: "6px",
+            borderRadius: "10px",
+            padding: "4px",
+            marginBottom: "12px",
+            gap: "5px",
             border: "1.5px solid #e2e8f0"
           }}
         >
@@ -368,10 +368,10 @@ export default function LoginPage() {
             }}
             style={{
               flex: 1,
-              padding: "11px 12px",
-              borderRadius: "9px",
+              padding: "8px 10px",
+              borderRadius: "8px",
               border: "none",
-              fontSize: "14px",
+              fontSize: "13px",
               fontWeight: "800",
               cursor: "pointer",
               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -392,10 +392,10 @@ export default function LoginPage() {
             }}
             style={{
               flex: 1,
-              padding: "11px 12px",
-              borderRadius: "9px",
+              padding: "8px 10px",
+              borderRadius: "8px",
               border: "none",
-              fontSize: "14px",
+              fontSize: "13px",
               fontWeight: "800",
               cursor: "pointer",
               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -419,17 +419,17 @@ export default function LoginPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "10px",
-            padding: "11px 14px",
+            gap: "8px",
+            padding: "8px 12px",
             borderRadius: "8px",
             border: "1.5px solid #cbd5e1",
             backgroundColor: "#ffffff",
             color: "#1e293b",
-            fontSize: "14px",
+            fontSize: "13px",
             fontWeight: "700",
             cursor: loading ? "not-allowed" : "pointer",
             transition: "all 0.15s ease",
-            marginBottom: "16px",
+            marginBottom: "10px",
             boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
           }}
           onMouseEnter={(e) => {
@@ -442,7 +442,7 @@ export default function LoginPage() {
           }}
         >
           {/* Official Google 'G' SVG Logo */}
-          <svg width="18" height="18" viewBox="0 0 24 24">
+          <svg width="16" height="16" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -464,9 +464,9 @@ export default function LoginPage() {
         </button>
 
         {/* Divider */}
-        <div style={{ display: "flex", alignItems: "center", margin: "14px 0 16px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", margin: "8px 0 10px 0" }}>
           <div style={{ flex: 1, height: "1px", backgroundColor: "#e2e8f0" }}></div>
-          <span style={{ padding: "0 10px", fontSize: "11px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>
+          <span style={{ padding: "0 8px", fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>
             Or with {authMode === "login" ? "credentials" : "phone / email"}
           </span>
           <div style={{ flex: 1, height: "1px", backgroundColor: "#e2e8f0" }}></div>
@@ -541,7 +541,7 @@ export default function LoginPage() {
             />
 
             <button type="submit" style={buttonStyle} disabled={loading}>
-              {loading ? "AUTHENTICATING..." : "SIGN IN TO PORTAL"}
+              {loading ? "AUTHENTICATING..." : "SIGN IN"}
             </button>
           </form>
         )}

@@ -153,37 +153,36 @@ const AdminNotifications = () => {
       const isPackage = item.itemType === "package";
 
       if (typeof window !== 'undefined') {
-        // 1. Add to releasedStudentExamSets
-        const released = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
-        const updatedReleased = Array.from(new Set([...released, targetId, targetName, targetId?.toString()]));
-        localStorage.setItem("releasedStudentExamSets", JSON.stringify(updatedReleased));
+        // 1. If individual set: release ONLY to this specific student
+        if (!isPackage && studentPhone) {
+          const studentSetMap = JSON.parse(localStorage.getItem("adminStudentUnlockedSetsMap") || "{}");
+          const curSets = studentSetMap[studentPhone] || [];
+          studentSetMap[studentPhone] = Array.from(new Set([...curSets, targetId, targetName, targetId?.toString()]));
+          localStorage.setItem("adminStudentUnlockedSetsMap", JSON.stringify(studentSetMap));
 
-        // 2. Add to unlockedStudentExamSets so student has direct access
-        const unlocked = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-        const updatedUnlocked = Array.from(new Set([...unlocked, targetId, targetName, targetId?.toString()]));
-        localStorage.setItem("unlockedStudentExamSets", JSON.stringify(updatedUnlocked));
-
-        // 3. If package, grant full package access
-        if (isPackage) {
-          localStorage.setItem("hasPurchasedExamAccess", "true");
-          localStorage.setItem("currentStudentPackage", targetName);
-
-          const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
-          if (studentPhone) {
-            buyerMap[studentPhone] = {
-              isBuyer: true,
-              hasPurchased: true,
-              packageName: targetName,
-              approvedAt: new Date().toISOString()
-            };
-            localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
-          }
+          // Also keep unlockedStudentExamSets for immediate local session
+          const unlocked = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+          localStorage.setItem("unlockedStudentExamSets", JSON.stringify(Array.from(new Set([...unlocked, targetId, targetName, targetId?.toString()]))));
         }
 
-        // 4. Update studentPendingQueries status
+        // 2. If package: release ONLY that specific package to this specific student
+        if (isPackage && studentPhone) {
+          const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+          const currentPkgs = buyerMap[studentPhone]?.packages || [];
+          buyerMap[studentPhone] = {
+            isBuyer: true,
+            hasPurchased: true,
+            packageName: targetName,
+            packages: Array.from(new Set([...currentPkgs, targetName])),
+            approvedAt: new Date().toISOString()
+          };
+          localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
+        }
+
+        // 3. Update studentPendingQueries status to Released for this specific student and item
         const pending = JSON.parse(localStorage.getItem("studentPendingQueries") || "[]");
         const updatedPending = pending.map((p) => {
-          if (p.txnId === item.txnId || p.itemId === item.itemId || p.phone === item.studentPhone) {
+          if (p.txnId === item.txnId || (p.phone === item.studentPhone && (p.itemId === item.itemId || p.itemName === item.itemName))) {
             return { ...p, status: "Released", releasedAt: new Date().toLocaleString() };
           }
           return p;

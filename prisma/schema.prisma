@@ -65,6 +65,7 @@ model ExamSet {
   creatorInstituteName String?
   isPrivate            Boolean            @default(false)
   isPublished          Boolean            @default(true)
+  isFree               Boolean            @default(false)
   setType              String?            @default("UBT")
   duration             Int                @default(3000) // 50 minutes in seconds
   questions            Question[]

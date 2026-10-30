@@ -35,6 +35,7 @@ function InstituteQuestionManagerContent() {
   const [newSetName, setNewSetName] = useState("");
   const [newSetPackage, setNewSetPackage] = useState("Full Set UBT");
   const [newSetAutoInit, setNewSetAutoInit] = useState(true);
+  const [newSetIsPublic, setNewSetIsPublic] = useState(false);
 
   // Question editing / uploading state
   const [filterPackage, setFilterPackage] = useState("");
@@ -343,6 +344,7 @@ function InstituteQuestionManagerContent() {
       return;
     }
 
+    const isPublic = Boolean(newSetIsPublic);
     const newSetObj = {
       id: `inst-${Date.now()}`,
       name: cleanName,
@@ -351,8 +353,8 @@ function InstituteQuestionManagerContent() {
       duration: 3000,
       creatorInstituteId: instId || null,
       creatorInstituteName: instituteName,
-      isPrivate: true,        // Strictly private to this institute
-      isPublished: false,      // Not published to other institutes
+      isPrivate: !isPublic,        // Strictly private if not public
+      isPublished: isPublic,       // Published to other institutes if checked
       createdAt: new Date().toISOString()
     };
 
@@ -399,8 +401,8 @@ function InstituteQuestionManagerContent() {
           setType: "UBT",
           creatorInstituteId: instId,
           creatorInstituteName: instituteName,
-          isPrivate: true,
-          isPublished: false
+          isPrivate: !isPublic,
+          isPublished: isPublic
         })
       });
     } catch (err) {
@@ -418,12 +420,52 @@ function InstituteQuestionManagerContent() {
     localStorage.setItem("questionBank", JSON.stringify(updatedQuestions));
 
     setNewSetName("");
+    setNewSetIsPublic(false);
     setFilterSet(cleanName);
     setFilterPackage(newSetPackage);
     setActiveTab("uploadQuestions");
     handleQNumberChange(1);
 
-    alert(`UBT Set "${cleanName}" created successfully in your private bucket!\n\nOther institutes cannot access these questions. You can now edit all 40 questions.`);
+    alert(isPublic
+      ? `UBT Set "${cleanName}" created and PUBLISHED globally for all institutes and students!`
+      : `UBT Set "${cleanName}" created successfully in your private bucket!\n\nOther institutes cannot access these questions. You can now edit all 40 questions.`
+    );
+  };
+
+  // Toggle institute set publication between Public (all institutes) and Private (own bucket)
+  const handleToggleInstitutePublish = async (setObj) => {
+    const nextPublished = !setObj.isPublished;
+    try {
+      await fetch("/api/admin/packages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create_set",
+          setName: setObj.name,
+          packageName: setObj.packageName,
+          duration: setObj.duration || 3000,
+          setType: setObj.setType || "UBT",
+          creatorInstituteId: instId,
+          creatorInstituteName: instituteName,
+          isPrivate: !nextPublished,
+          isPublished: nextPublished
+        })
+      });
+    } catch (e) {
+      console.warn("Could not sync publish toggle to DB:", e);
+    }
+
+    const updated = allSets.map(s =>
+      (s.id === setObj.id || s.name === setObj.name)
+        ? { ...s, isPublished: nextPublished, isPrivate: !nextPublished }
+        : s
+    );
+    setAllSets(updated);
+    localStorage.setItem("examSets", JSON.stringify(updated));
+    alert(nextPublished
+      ? `Set "${setObj.name}" is now PUBLISHED for all institutes and students across the platform!`
+      : `Set "${setObj.name}" is now PRIVATE to ${instituteName}. Other institutes cannot see or access it.`
+    );
   };
 
   // 2. SAVE QUESTION HANDLER
@@ -978,18 +1020,37 @@ function InstituteQuestionManagerContent() {
                             </span>
                           </td>
                           <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                            <span style={{
-                              display: "inline-block",
-                              backgroundColor: s.isPublished ? "#dcfce7" : "#fef3c7",
-                              color: s.isPublished ? "#15803d" : "#92400e",
-                              border: s.isPublished ? "1px solid #86efac" : "1px solid #fde68a",
-                              padding: "4px 10px",
-                              borderRadius: "6px",
-                              fontSize: "11.5px",
-                              fontWeight: "600"
-                            }}>
-                              {s.isPublished ? "Published Globally" : "Private (Own Bucket)"}
-                            </span>
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", justifyContent: "center" }}>
+                              <span style={{
+                                display: "inline-block",
+                                backgroundColor: s.isPublished ? "#dcfce7" : "#fef3c7",
+                                color: s.isPublished ? "#15803d" : "#92400e",
+                                border: s.isPublished ? "1px solid #86efac" : "1px solid #fde68a",
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                fontSize: "11.5px",
+                                fontWeight: "600"
+                              }}>
+                                {s.isPublished ? "Published Globally" : "Private (Own Bucket)"}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleInstitutePublish(s)}
+                                title={s.isPublished ? "Click to make this set private to your institute only" : "Click to publish this set globally for all institutes"}
+                                style={{
+                                  backgroundColor: s.isPublished ? "#f1f5f9" : "#16a34a",
+                                  color: s.isPublished ? "#475569" : "#ffffff",
+                                  border: s.isPublished ? "1px solid #cbd5e1" : "none",
+                                  padding: "3px 8px",
+                                  borderRadius: "4px",
+                                  fontSize: "11px",
+                                  fontWeight: "700",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                {s.isPublished ? "Make Private" : "Publish Globally"}
+                              </button>
+                            </div>
                           </td>
                           <td style={{ padding: "12px 14px", textAlign: "center" }}>
                             <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -1583,7 +1644,7 @@ function InstituteQuestionManagerContent() {
               </div>
 
               <div style={{
-                marginBottom: "20px",
+                marginBottom: "16px",
                 backgroundColor: "#f0fdf4",
                 border: "1.5px solid #86efac",
                 padding: "14px 18px",
@@ -1604,9 +1665,36 @@ function InstituteQuestionManagerContent() {
                 </label>
               </div>
 
+              <div style={{
+                marginBottom: "20px",
+                backgroundColor: "#eff6ff",
+                border: "1.5px solid #93c5fd",
+                padding: "14px 18px",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px"
+              }}>
+                <input
+                  type="checkbox"
+                  id="newSetIsPublic"
+                  checked={newSetIsPublic}
+                  onChange={(e) => setNewSetIsPublic(e.target.checked)}
+                  style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                />
+                <div>
+                  <label htmlFor="newSetIsPublic" style={{ fontSize: "13px", color: "#1e40af", fontWeight: "bold", cursor: "pointer", display: "block" }}>
+                    Public for All Institutes (Publish globally across all institutes & students)
+                  </label>
+                  <span style={{ fontSize: "11px", color: "#475569" }}>
+                    If checked, other institutes and students can also access this exam set. Unchecked keeps it strictly private to {instituteName}.
+                  </span>
+                </div>
+              </div>
+
               <div style={{ display: "flex", gap: "12px" }}>
                 <button type="submit" style={{ ...primaryBtnStyle, padding: "12px 24px" }}>
-                  + Create Set in Private Bucket & Open Editor
+                  {newSetIsPublic ? "+ Create & Publish Set for All Institutes" : "+ Create Set in Private Bucket & Open Editor"}
                 </button>
                 <button
                   type="button"

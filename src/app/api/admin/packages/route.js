@@ -110,6 +110,7 @@ export async function POST(req) {
 
       const finalIsPrivate = isPrivate !== null ? isPrivate : !isAdmin;
       const finalIsPublished = isPublished !== null ? isPublished : isAdmin;
+      const finalIsFree = Boolean(body.isFree);
 
       const created = await prisma.examSet.create({
         data: {
@@ -121,7 +122,8 @@ export async function POST(req) {
           creatorInstituteId: creatorInstituteId || session?.instituteId || null,
           creatorInstituteName: creatorInstituteName || (isAdmin ? 'Super Admin' : 'Institute'),
           isPrivate: finalIsPrivate,
-          isPublished: finalIsPublished
+          isPublished: finalIsPublished,
+          isFree: finalIsFree
         }
       });
       return NextResponse.json({ success: true, set: created });
@@ -171,7 +173,8 @@ export async function POST(req) {
             creatorInstituteId: creatorInstituteId || null,
             creatorInstituteName: creatorInstituteName || 'Institute',
             isPublished: newPublishedState,
-            isPrivate: !newPublishedState
+            isPrivate: !newPublishedState,
+            isFree: Boolean(body.isFree)
           }
         });
       }
@@ -181,6 +184,64 @@ export async function POST(req) {
         message: newPublishedState
           ? `Set "${updated.name}" is now PUBLISHED and accessible to all institutes.`
           : `Set "${updated.name}" is now UNPUBLISHED (private to creator institute).`,
+        set: updated
+      });
+    }
+
+    // 3b. TOGGLE FREE SET (SUPER ADMIN EXCLUSIVE AUTHORITY)
+    if (action === 'toggle_free_set') {
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: 'Forbidden. Only Super Admin has authority to designate sets as Free.' },
+          { status: 403 }
+        );
+      }
+
+      if (!setId && !setName) {
+        return NextResponse.json({ error: 'Set ID or Set Name is required' }, { status: 400 });
+      }
+
+      let targetSet = null;
+      if (setId) {
+        targetSet = await prisma.examSet.findUnique({ where: { id: setId } });
+      }
+      if (!targetSet && setName) {
+        targetSet = await prisma.examSet.findFirst({
+          where: { name: setName.trim().toUpperCase() }
+        });
+      }
+
+      const newFreeState = body.isFree !== undefined ? Boolean(body.isFree) : (targetSet ? !targetSet.isFree : true);
+
+      let updated;
+      if (targetSet) {
+        updated = await prisma.examSet.update({
+          where: { id: targetSet.id },
+          data: {
+            isFree: newFreeState
+          }
+        });
+      } else {
+        updated = await prisma.examSet.create({
+          data: {
+            name: (setName || setId).trim().toUpperCase(),
+            packageName: packageName || 'Full Set UBT',
+            duration: Number(duration) || 3000,
+            setType: setType || 'UBT',
+            creatorInstituteId: creatorInstituteId || null,
+            creatorInstituteName: creatorInstituteName || 'Super Admin',
+            isPublished: true,
+            isPrivate: false,
+            isFree: newFreeState
+          }
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: newFreeState
+          ? `Set "${updated.name}" is now FREE for all students.`
+          : `Set "${updated.name}" is now PAID (enrolled/purchased only).`,
         set: updated
       });
     }

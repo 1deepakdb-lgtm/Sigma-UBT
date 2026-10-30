@@ -470,13 +470,13 @@ function AdminStudentsContent() {
       : examSets.filter((s) => s.packageName === selectedPackageFilter);
 
   // Styles
-  const containerStyle = { minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif" };
-  const contentStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto" };
-  const cardStyle = { backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", marginBottom: "25px", border: "1px solid #e2e8f0" };
-  const tableStyle = { width: "100%", borderCollapse: "collapse", marginTop: "15px", backgroundColor: "white", borderRadius: "8px", overflow: "hidden" };
-  const thStyle = { backgroundColor: "#f8fafc", color: "#475569", padding: "14px 16px", textAlign: "left", fontSize: "13px", fontWeight: "700", borderBottom: "2px solid #e2e8f0" };
-  const tdStyle = { padding: "12px 15px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", fontSize: "14px" };
-  const inputStyle = { width: "100%", padding: "10px", marginBottom: "12px", borderRadius: "6px", border: "1px solid #cbd5e1", boxSizing: "border-box", backgroundColor: "white" };
+  const containerStyle = { minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" };
+  const contentStyle = { padding: "28px 32px", maxWidth: "1280px", margin: "0 auto" };
+  const cardStyle = { backgroundColor: "#ffffff", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", marginBottom: "22px", border: "1px solid #e2e8f0" };
+  const tableStyle = { width: "100%", borderCollapse: "collapse", marginTop: "12px", backgroundColor: "#ffffff", borderRadius: "8px", overflow: "hidden" };
+  const thStyle = { backgroundColor: "#0f172a", color: "#ffffff", padding: "12px 16px", textAlign: "left", fontSize: "12.5px", fontWeight: "700", letterSpacing: "0.3px" };
+  const tdStyle = { padding: "12px 16px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", fontSize: "13.5px", verticalAlign: "middle" };
+  const inputStyle = { width: "100%", padding: "10px 12px", marginBottom: "12px", borderRadius: "6px", border: "1px solid #cbd5e1", boxSizing: "border-box", backgroundColor: "#ffffff", fontSize: "13.5px" };
 
   return (
     <div style={containerStyle}>
@@ -484,78 +484,96 @@ function AdminStudentsContent() {
 
       <div style={contentStyle}>
         {/* TOP BAR / TITLE */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px", flexWrap: "wrap", gap: "14px" }}>
           <div>
-            <h2 style={{ color: "#1e293b", margin: 0, fontSize: "24px", fontWeight: "800" }}>
+            <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "2px" }}>
+              Admin Portal · Student Registry
+            </div>
+            <h1 style={{ color: "#0f172a", margin: 0, fontSize: "24px", fontWeight: "800", letterSpacing: "-0.4px" }}>
               Admin Student Management
-            </h2>
-            <p style={{ color: "#64748b", margin: "4px 0 0 0", fontSize: "14px" }}>
+            </h1>
+            <p style={{ color: "#64748b", margin: "3px 0 0 0", fontSize: "13.5px" }}>
               Manage enrolled buyers and guest self-signups across Korean &amp; Japanese tracks
             </p>
           </div>
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
             {displayList.length > 0 && (
               <button
+                type="button"
                 onClick={handleCopyAllStudents}
                 style={{
-                  backgroundColor: copiedAllStudents ? "#16a34a" : "#475569",
-                  color: "white",
+                  backgroundColor: copiedAllStudents ? "#15803d" : "#334155",
+                  color: "#ffffff",
                   border: "none",
-                  padding: "10px 16px",
-                  borderRadius: "6px",
+                  padding: "9px 15px",
+                  borderRadius: "7px",
                   cursor: "pointer",
-                  fontWeight: "bold",
+                  fontWeight: "700",
                   fontSize: "13px",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "6px"
+                  gap: "7px",
+                  whiteSpace: "nowrap",
+                  transition: "background-color 0.15s ease",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
                 }}
               >
                 <span>{copiedAllStudents ? "✅" : "📋"}</span>
-                <span>{copiedAllStudents ? "Copied!" : "Copy Folder Data"}</span>
+                <span>{copiedAllStudents ? "Folder Data Copied!" : "Copy Folder Data"}</span>
               </button>
             )}
             <button
+              type="button"
               onClick={() => (showForm ? resetForm() : setShowForm(true))}
               style={{
-                backgroundColor: showForm ? "#ef4444" : "#16a34a",
-                color: "white",
+                backgroundColor: showForm ? "#dc2626" : "#16a34a",
+                color: "#ffffff",
                 border: "none",
-                padding: "10px 20px",
-                borderRadius: "6px",
+                padding: "9px 18px",
+                borderRadius: "7px",
                 cursor: "pointer",
-                fontWeight: "bold",
-                fontSize: "13px"
+                fontWeight: "700",
+                fontSize: "13px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                whiteSpace: "nowrap",
+                transition: "background-color 0.15s ease",
+                boxShadow: showForm ? "none" : "0 2px 6px rgba(22, 163, 74, 0.25)"
               }}
             >
-              {showForm ? "Cancel" : "+ Add New Buyer Student"}
+              <span>{showForm ? "✕" : "+"}</span>
+              <span>{showForm ? "Cancel Form" : "Add New Buyer Student"}</span>
             </button>
           </div>
         </div>
 
-        {/* FOLDER NAVIGATION TABS (BUYERS vs AMBIGUOUS USERS vs ALL) */}
-        <div style={{ display: "flex", gap: "12px", marginBottom: "22px", flexWrap: "wrap" }}>
+        {/* FOLDER NAVIGATION TABS (EQUAL 3-COLUMN RESPONSIVE GRID) */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "14px", marginBottom: "20px" }}>
           {/* Buyers Folder Tab */}
           <button
             type="button"
             onClick={() => setFolderTab("buyers")}
             style={{
-              flex: 1,
-              minWidth: "240px",
               padding: "16px 20px",
               borderRadius: "12px",
               border: folderTab === "buyers" ? "2px solid #10b981" : "1.5px solid #cbd5e1",
               backgroundColor: folderTab === "buyers" ? "#ecfdf5" : "#ffffff",
-              boxShadow: folderTab === "buyers" ? "0 4px 14px rgba(16, 185, 129, 0.15)" : "0 2px 5px rgba(0,0,0,0.04)",
+              boxShadow: folderTab === "buyers" ? "0 4px 14px rgba(16, 185, 129, 0.15)" : "0 1px 3px rgba(0,0,0,0.04)",
               cursor: "pointer",
               textAlign: "left",
-              transition: "all 0.2s ease"
+              transition: "all 0.15s ease",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "8px"
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "20px" }}>💼</span>
-                <strong style={{ fontSize: "16px", color: folderTab === "buyers" ? "#065f46" : "#1e293b" }}>
+                <strong style={{ fontSize: "15px", color: folderTab === "buyers" ? "#065f46" : "#0f172a" }}>
                   Buyers Folder (खरिदकर्ता विद्यार्थीहरू)
                 </strong>
               </div>
@@ -564,40 +582,43 @@ function AdminStudentsContent() {
                   backgroundColor: folderTab === "buyers" ? "#10b981" : "#e2e8f0",
                   color: folderTab === "buyers" ? "#ffffff" : "#475569",
                   padding: "4px 12px",
-                  borderRadius: "20px",
+                  borderRadius: "14px",
                   fontWeight: "800",
-                  fontSize: "13px"
+                  fontSize: "12px",
+                  whiteSpace: "nowrap"
                 }}
               >
                 {allBuyerStudents.length} Students
               </span>
             </div>
-            <p style={{ margin: "6px 0 0 0", fontSize: "12px", color: folderTab === "buyers" ? "#047857" : "#64748b" }}>
+            <p style={{ margin: 0, fontSize: "12px", color: folderTab === "buyers" ? "#047857" : "#64748b", lineHeight: "1.4" }}>
               Enrolled students with paid exam packages. Full details, login credentials &amp; packages visible.
             </p>
           </button>
 
-          {/* Ambiguous Users Folder Tab */}
+          {/* Ambiguous / Self-Signup Guest Users Folder Tab */}
           <button
             type="button"
             onClick={() => setFolderTab("ambiguous")}
             style={{
-              flex: 1,
-              minWidth: "240px",
               padding: "16px 20px",
               borderRadius: "12px",
               border: folderTab === "ambiguous" ? "2px solid #f59e0b" : "1.5px solid #cbd5e1",
               backgroundColor: folderTab === "ambiguous" ? "#fffbeb" : "#ffffff",
-              boxShadow: folderTab === "ambiguous" ? "0 4px 14px rgba(245, 158, 11, 0.18)" : "0 2px 5px rgba(0,0,0,0.04)",
+              boxShadow: folderTab === "ambiguous" ? "0 4px 14px rgba(245, 158, 11, 0.18)" : "0 1px 3px rgba(0,0,0,0.04)",
               cursor: "pointer",
               textAlign: "left",
-              transition: "all 0.2s ease"
+              transition: "all 0.15s ease",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "8px"
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "20px" }}>❓</span>
-                <strong style={{ fontSize: "16px", color: folderTab === "ambiguous" ? "#92400e" : "#1e293b" }}>
+                <strong style={{ fontSize: "15px", color: folderTab === "ambiguous" ? "#92400e" : "#0f172a" }}>
                   Ambiguous Users Folder (अन्योल पाहुनाहरू)
                 </strong>
               </div>
@@ -606,20 +627,21 @@ function AdminStudentsContent() {
                   backgroundColor: folderTab === "ambiguous" ? "#f59e0b" : "#e2e8f0",
                   color: folderTab === "ambiguous" ? "#ffffff" : "#475569",
                   padding: "4px 12px",
-                  borderRadius: "20px",
+                  borderRadius: "14px",
                   fontWeight: "800",
-                  fontSize: "13px"
+                  fontSize: "12px",
+                  whiteSpace: "nowrap"
                 }}
               >
                 {allAmbiguousStudents.length} Guests
               </span>
             </div>
-            <p style={{ margin: "6px 0 0 0", fontSize: "12px", color: folderTab === "ambiguous" ? "#b45309" : "#64748b" }}>
+            <p style={{ margin: 0, fontSize: "12px", color: folderTab === "ambiguous" ? "#b45309" : "#64748b", lineHeight: "1.4" }}>
               Self-registered guests via Sign Up button. Full details masked until they buy a package via Super Admin.
             </p>
           </button>
 
-          {/* All Folder Tab */}
+          {/* All Users Folder Tab */}
           <button
             type="button"
             onClick={() => setFolderTab("all")}
@@ -628,21 +650,40 @@ function AdminStudentsContent() {
               borderRadius: "12px",
               border: folderTab === "all" ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
               backgroundColor: folderTab === "all" ? "#eff6ff" : "#ffffff",
+              boxShadow: folderTab === "all" ? "0 4px 14px rgba(37, 99, 235, 0.15)" : "0 1px 3px rgba(0,0,0,0.04)",
               cursor: "pointer",
-              textAlign: "center",
+              textAlign: "left",
+              transition: "all 0.15s ease",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              minWidth: "120px"
+              justifyContent: "space-between",
+              gap: "8px"
             }}
           >
-            <strong style={{ fontSize: "14px", color: folderTab === "all" ? "#1e40af" : "#475569" }}>
-              📁 All Users
-            </strong>
-            <span style={{ fontSize: "13px", fontWeight: "800", color: folderTab === "all" ? "#2563eb" : "#64748b", marginTop: "2px" }}>
-              {students.length} Total
-            </span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "20px" }}>📁</span>
+                <strong style={{ fontSize: "15px", color: folderTab === "all" ? "#1e40af" : "#0f172a" }}>
+                  All Users
+                </strong>
+              </div>
+              <span
+                style={{
+                  backgroundColor: folderTab === "all" ? "#2563eb" : "#e2e8f0",
+                  color: folderTab === "all" ? "#ffffff" : "#475569",
+                  padding: "4px 12px",
+                  borderRadius: "14px",
+                  fontWeight: "800",
+                  fontSize: "12px",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                {students.length} Total
+              </span>
+            </div>
+            <p style={{ margin: 0, fontSize: "12px", color: folderTab === "all" ? "#1d4ed8" : "#64748b", lineHeight: "1.4" }}>
+              Unified student directory of all enrolled buyers and self-signup guests combined.
+            </p>
           </button>
         </div>
 
@@ -651,20 +692,27 @@ function AdminStudentsContent() {
           <div
             style={{
               backgroundColor: "#fffbeb",
-              border: "1.5px solid #fde68a",
+              border: "1px solid #fde68a",
               borderRadius: "10px",
-              padding: "14px 18px",
+              padding: "14px 20px",
               marginBottom: "20px",
               display: "flex",
               alignItems: "center",
-              gap: "12px",
-              boxShadow: "0 2px 6px rgba(245, 158, 11, 0.08)"
+              justifyContent: "space-between",
+              gap: "14px",
+              flexWrap: "wrap",
+              boxShadow: "0 1px 3px rgba(245, 158, 11, 0.08)"
             }}
           >
-            <span style={{ fontSize: "22px" }}>🔒</span>
-            <div style={{ fontSize: "13px", color: "#92400e", lineHeight: "1.5" }}>
-              <strong>Guest Privacy Protection Active:</strong> These {allAmbiguousStudents.length} users came by themselves using the self-signup button. Full personal details (phone, email, login password) are masked to protect user privacy. When they buy a product or are upgraded by Super Admin, they will move into the <strong>Buyers Folder</strong> with full details unlocked.
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: "280px" }}>
+              <span style={{ fontSize: "20px" }}>🔒</span>
+              <div style={{ fontSize: "13px", color: "#92400e", lineHeight: "1.5" }}>
+                <strong>Guest Privacy Protection Active:</strong> These {allAmbiguousStudents.length} users came by themselves using the self-signup button. Full personal details (phone, email, login password) are masked to protect user privacy. When they buy a product or are upgraded by Super Admin, they will move into the <strong>Buyers Folder</strong> with full details unlocked.
+              </div>
             </div>
+            <span style={{ fontSize: "11.5px", fontWeight: "700", color: "#b45309", backgroundColor: "#fef3c7", border: "1px solid #fde68a", padding: "4px 12px", borderRadius: "12px", whiteSpace: "nowrap" }}>
+              🔒 Privacy Protected
+            </span>
           </div>
         )}
 
@@ -672,20 +720,55 @@ function AdminStudentsContent() {
           <div
             style={{
               backgroundColor: "#ecfdf5",
-              border: "1.5px solid #a7f3d0",
+              border: "1px solid #a7f3d0",
               borderRadius: "10px",
-              padding: "14px 18px",
+              padding: "12px 18px",
               marginBottom: "20px",
               display: "flex",
               alignItems: "center",
-              gap: "12px",
-              boxShadow: "0 2px 6px rgba(16, 185, 129, 0.08)"
+              justifyContent: "space-between",
+              gap: "14px",
+              flexWrap: "wrap",
+              boxShadow: "0 1px 3px rgba(16, 185, 129, 0.08)"
             }}
           >
-            <span style={{ fontSize: "22px" }}>💼</span>
-            <div style={{ fontSize: "13px", color: "#065f46", lineHeight: "1.5" }}>
-              <strong>Buyers Folder Active:</strong> Displaying {allBuyerStudents.length} verified purchasing students enrolled by institutes or upgraded via product purchase. Full contact details and package controls are fully accessible below.
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "18px" }}>💼</span>
+              <div style={{ fontSize: "13px", color: "#065f46", lineHeight: "1.5" }}>
+                <strong>Buyers Directory Active:</strong> Displaying {allBuyerStudents.length} verified purchasing students enrolled by institutes or upgraded via product purchase. Full contact details and package controls are fully accessible below.
+              </div>
             </div>
+            <span style={{ fontSize: "11.5px", fontWeight: "700", color: "#047857", backgroundColor: "#d1fae5", border: "1px solid #a7f3d0", padding: "4px 10px", borderRadius: "12px", whiteSpace: "nowrap" }}>
+              Verified Buyers
+            </span>
+          </div>
+        )}
+
+        {folderTab === "all" && (
+          <div
+            style={{
+              backgroundColor: "#eff6ff",
+              border: "1px solid #bfdbfe",
+              borderRadius: "10px",
+              padding: "12px 18px",
+              marginBottom: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "14px",
+              flexWrap: "wrap",
+              boxShadow: "0 1px 3px rgba(37, 99, 235, 0.08)"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "18px" }}>📁</span>
+              <div style={{ fontSize: "13px", color: "#1e40af", lineHeight: "1.5" }}>
+                <strong>All Users Directory:</strong> Showing complete roster of {students.length} accounts ({allBuyerStudents.length} verified buyers + {allAmbiguousStudents.length} self-signup guests).
+              </div>
+            </div>
+            <span style={{ fontSize: "11.5px", fontWeight: "700", color: "#1d4ed8", backgroundColor: "#dbeafe", border: "1px solid #bfdbfe", padding: "4px 10px", borderRadius: "12px", whiteSpace: "nowrap" }}>
+              Total: {students.length}
+            </span>
           </div>
         )}
 
@@ -990,7 +1073,8 @@ function AdminStudentsContent() {
                               boxShadow: "0 2px 6px rgba(37,99,235,0.25)",
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "5px"
+                              gap: "5px",
+                              whiteSpace: "nowrap"
                             }}
                           >
                             <span>💳</span>
@@ -998,7 +1082,7 @@ function AdminStudentsContent() {
                           </button>
                         ) : (
                           /* Full actions for verified Buyers */
-                          <div style={{ display: "flex", gap: "6px" }}>
+                          <div style={{ display: "flex", gap: "6px", flexWrap: "nowrap" }}>
                             <button
                               onClick={() => handleCopyStudent(stu)}
                               title="Copy Student Login Details"
@@ -1010,7 +1094,8 @@ function AdminStudentsContent() {
                                 borderRadius: "4px",
                                 cursor: "pointer",
                                 fontSize: "12px",
-                                fontWeight: "bold"
+                                fontWeight: "bold",
+                                whiteSpace: "nowrap"
                               }}
                             >
                               {copiedStudentId === stu.id ? "✅ Copied" : "📋 Copy"}
@@ -1024,7 +1109,8 @@ function AdminStudentsContent() {
                                 padding: "6px 10px",
                                 borderRadius: "4px",
                                 cursor: "pointer",
-                                fontSize: "12px"
+                                fontSize: "12px",
+                                whiteSpace: "nowrap"
                               }}
                             >
                               Edit
@@ -1038,7 +1124,8 @@ function AdminStudentsContent() {
                                 padding: "6px 10px",
                                 borderRadius: "4px",
                                 cursor: "pointer",
-                                fontSize: "12px"
+                                fontSize: "12px",
+                                whiteSpace: "nowrap"
                               }}
                             >
                               Delete

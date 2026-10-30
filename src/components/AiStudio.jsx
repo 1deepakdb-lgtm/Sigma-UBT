@@ -13,13 +13,31 @@ export default function AiStudio({
   initialLang = 'ko',
   initialText = '',
   onClose = null,
-  embedded = false
+  embedded = false,
+  instituteLanguage = null
 }) {
   const [activeTab, setActiveTab] = useState('generator'); // 'generator' | 'dialogue' | 'benchmark'
-  const [selectedLang, setSelectedLang] = useState(initialLang === 'ja' ? 'ja' : 'ko');
+
+  // Determine effective student language ('korean' | 'japanese' | 'both')
+  const [effectiveInstLang, setEffectiveInstLang] = useState(() => {
+    if (instituteLanguage) return instituteLanguage.toLowerCase();
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('instituteLanguage');
+      if (saved) return saved.toLowerCase();
+    }
+    return (initialLang === 'ja' ? 'japanese' : initialLang === 'ko' ? 'korean' : 'both');
+  });
+
+  const getInitialLang = () => {
+    if (effectiveInstLang === 'korean') return 'ko';
+    if (effectiveInstLang === 'japanese') return 'ja';
+    return initialLang === 'ja' ? 'ja' : 'ko';
+  };
+
+  const [selectedLang, setSelectedLang] = useState(getInitialLang);
   const [genderFilter, setGenderFilter] = useState('all'); // 'all' | 'female' | 'male'
   const [selectedProfile, setSelectedProfile] = useState(
-    VOICE_PROFILES.find(v => v.language === (initialLang === 'ja' ? 'ja' : 'ko')) || VOICE_PROFILES[0]
+    VOICE_PROFILES.find(v => v.language === getInitialLang()) || VOICE_PROFILES[0]
   );
   const [selectedStyle, setSelectedStyle] = useState('natural_conversation');
   const [inputText, setInputText] = useState(initialText || '');
@@ -49,9 +67,9 @@ export default function AiStudio({
   const [apiStatus, setApiStatus] = useState({ hasApiKey: false, ready: false });
 
   // Dialogue Studio State
-  const [dialogueLang, setDialogueLang] = useState(initialLang === 'ja' ? 'ja' : 'ko');
-  const [dialogueSpeakerA, setDialogueSpeakerA] = useState(initialLang === 'ja' ? 'ja-female-1' : 'ko-female-1');
-  const [dialogueSpeakerB, setDialogueSpeakerB] = useState(initialLang === 'ja' ? 'ja-male-1' : 'ko-male-2');
+  const [dialogueLang, setDialogueLang] = useState(getInitialLang());
+  const [dialogueSpeakerA, setDialogueSpeakerA] = useState(getInitialLang() === 'ja' ? 'ja-female-1' : 'ko-female-1');
+  const [dialogueSpeakerB, setDialogueSpeakerB] = useState(getInitialLang() === 'ja' ? 'ja-male-1' : 'ko-male-2');
   const [dialogueTurns, setDialogueTurns] = useState([]);
   const [isGeneratingDialogue, setIsGeneratingDialogue] = useState(false);
   const [dialogueAudioUrl, setDialogueAudioUrl] = useState(null);
@@ -59,15 +77,39 @@ export default function AiStudio({
   const audioRef = useRef(null);
   const previewAudioRef = useRef(null);
 
-  // Update language when initialLang prop changes
+  // Synchronize effective student instituteLanguage
   useEffect(() => {
-    if (initialLang) {
-      const l = initialLang === 'ja' ? 'ja' : 'ko';
-      setSelectedLang(l);
-      const match = VOICE_PROFILES.find(v => v.language === l);
-      if (match) setSelectedProfile(match);
+    if (instituteLanguage) {
+      setEffectiveInstLang(instituteLanguage.toLowerCase());
+    } else if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('instituteLanguage');
+      if (saved) setEffectiveInstLang(saved.toLowerCase());
     }
-  }, [initialLang]);
+  }, [instituteLanguage]);
+
+  // Update selected language when initialLang or effectiveInstLang changes
+  useEffect(() => {
+    let target = 'ko';
+    if (effectiveInstLang === 'korean') {
+      target = 'ko';
+    } else if (effectiveInstLang === 'japanese') {
+      target = 'ja';
+    } else if (initialLang === 'ja') {
+      target = 'ja';
+    } else {
+      target = 'ko';
+    }
+
+    setSelectedLang(target);
+    setDialogueLang(target);
+    const match = VOICE_PROFILES.find(v => v.language === target);
+    if (match) {
+      setSelectedProfile(match);
+      if (!initialText) {
+        setInputText(match.sampleSentence);
+      }
+    }
+  }, [initialLang, effectiveInstLang]);
 
   // Update input text when initialText prop changes
   useEffect(() => {
@@ -88,19 +130,20 @@ export default function AiStudio({
       .catch(() => {});
 
     // Set initial dialogue template
-    const initialTemplate = selectedLang === 'ja' ? DIALOGUE_TEMPLATES.ja[0] : DIALOGUE_TEMPLATES.ko[0];
+    const currentLang = effectiveInstLang === 'japanese' ? 'ja' : effectiveInstLang === 'korean' ? 'ko' : selectedLang;
+    const initialTemplate = currentLang === 'ja' ? DIALOGUE_TEMPLATES.ja[0] : DIALOGUE_TEMPLATES.ko[0];
     if (initialTemplate) {
       setDialogueTurns(initialTemplate.turns.map(t => ({
         speaker: t.speaker,
         text: t.text,
-        voiceProfileId: t.speaker === 'A' ? (selectedLang === 'ja' ? 'ja-female-1' : 'ko-female-1') : (selectedLang === 'ja' ? 'ja-male-1' : 'ko-male-2')
+        voiceProfileId: t.speaker === 'A' ? (currentLang === 'ja' ? 'ja-female-1' : 'ko-female-1') : (currentLang === 'ja' ? 'ja-male-1' : 'ko-male-2')
       })));
     }
     if (!initialText) {
-      const defaultProfile = VOICE_PROFILES.find(v => v.language === selectedLang) || VOICE_PROFILES[0];
+      const defaultProfile = VOICE_PROFILES.find(v => v.language === currentLang) || VOICE_PROFILES[0];
       setInputText(defaultProfile.sampleSentence);
     }
-  }, []);
+  }, [effectiveInstLang]);
 
   // Sync selected voice settings
   useEffect(() => {
@@ -400,56 +443,60 @@ export default function AiStudio({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '20px' }}>
             {/* Language Switcher */}
             <div style={{ display: 'inline-flex', background: '#e2e8f0', padding: '4px', borderRadius: '10px' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedLang('ko');
-                  const firstKo = VOICE_PROFILES.find(v => v.language === 'ko');
-                  if (firstKo) {
-                    setSelectedProfile(firstKo);
-                    if (!inputText) setInputText(firstKo.sampleSentence);
-                  }
-                }}
-                style={{
-                  padding: '8px 18px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  fontSize: '14px',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  background: selectedLang === 'ko' ? '#ffffff' : 'transparent',
-                  color: selectedLang === 'ko' ? '#4f46e5' : '#64748b',
-                  boxShadow: selectedLang === 'ko' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                Korean (한국어) · 12 Voices
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedLang('ja');
-                  const firstJa = VOICE_PROFILES.find(v => v.language === 'ja');
-                  if (firstJa) {
-                    setSelectedProfile(firstJa);
-                    if (!inputText) setInputText(firstJa.sampleSentence);
-                  }
-                }}
-                style={{
-                  padding: '8px 18px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  fontSize: '14px',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  background: selectedLang === 'ja' ? '#ffffff' : 'transparent',
-                  color: selectedLang === 'ja' ? '#db2777' : '#64748b',
-                  boxShadow: selectedLang === 'ja' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                Japanese (日本語) · 12 Voices
-              </button>
+              {(effectiveInstLang === 'both' || effectiveInstLang === 'korean') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedLang('ko');
+                    const firstKo = VOICE_PROFILES.find(v => v.language === 'ko');
+                    if (firstKo) {
+                      setSelectedProfile(firstKo);
+                      if (!inputText) setInputText(firstKo.sampleSentence);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '14px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    background: selectedLang === 'ko' ? '#ffffff' : 'transparent',
+                    color: selectedLang === 'ko' ? '#4f46e5' : '#64748b',
+                    boxShadow: selectedLang === 'ko' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Korean (한국어) · 12 Voices
+                </button>
+              )}
+              {(effectiveInstLang === 'both' || effectiveInstLang === 'japanese') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedLang('ja');
+                    const firstJa = VOICE_PROFILES.find(v => v.language === 'ja');
+                    if (firstJa) {
+                      setSelectedProfile(firstJa);
+                      if (!inputText) setInputText(firstJa.sampleSentence);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '14px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    background: selectedLang === 'ja' ? '#ffffff' : 'transparent',
+                    color: selectedLang === 'ja' ? '#db2777' : '#64748b',
+                    boxShadow: selectedLang === 'ja' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Japanese (日本語) · 12 Voices
+                </button>
+              )}
             </div>
 
             {/* Gender Filter */}
@@ -895,7 +942,12 @@ export default function AiStudio({
               📚 Load Authentic Dialogue Template:
             </span>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {[...DIALOGUE_TEMPLATES.ko, ...DIALOGUE_TEMPLATES.ja].map(tmpl => (
+              {(effectiveInstLang === 'korean'
+                ? DIALOGUE_TEMPLATES.ko
+                : effectiveInstLang === 'japanese'
+                ? DIALOGUE_TEMPLATES.ja
+                : [...DIALOGUE_TEMPLATES.ko, ...DIALOGUE_TEMPLATES.ja]
+              ).map(tmpl => (
                 <button
                   key={tmpl.id}
                   type="button"
@@ -953,7 +1005,11 @@ export default function AiStudio({
                       }}
                       style={{ width: '100%', fontSize: '11px', padding: '5px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                     >
-                      {VOICE_PROFILES.map(v => (
+                      {VOICE_PROFILES.filter(v => {
+                        if (effectiveInstLang === 'korean') return v.language === 'ko';
+                        if (effectiveInstLang === 'japanese') return v.language === 'ja';
+                        return true;
+                      }).map(v => (
                         <option key={v.id} value={v.id}>{v.name}</option>
                       ))}
                     </select>

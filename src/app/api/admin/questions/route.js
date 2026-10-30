@@ -44,7 +44,8 @@ export async function GET(req) {
             creatorInstituteId: true,
             creatorInstituteName: true,
             isPrivate: true,
-            isPublished: true
+            isPublished: true,
+            isFree: true
           }
         }
       },
