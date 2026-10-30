@@ -58,11 +58,13 @@ export default function EsewaCheckoutModal({
 
   // WhatsApp prefilled message URL for 9768444902
   const whatsappUrl = `https://wa.me/9779768444902?text=${encodeURIComponent(
-    `Hello Deepak Sir,\n\nI have made the eSewa payment of ${formattedPrice} for "${itemName}".\n` +
+    `Hello Deepak Sir,\n\nI have sent my payment request for "${itemName}" (${formattedPrice}).\n\n` +
     `Student Name: ${studentName || "Student"}\n` +
-    `Sender Phone: ${senderPhone || studentPhone || "N/A"}\n` +
-    (txnId ? `eSewa Txn ID: ${txnId}\n\n` : "\n") +
-    `I am attaching my payment screenshot here for UBT set unlock confirmation. Thank you!`
+    `Phone: ${senderPhone || studentPhone || "N/A"}\n` +
+    (txnId ? `eSewa Txn ID: ${txnId}\n` : "") +
+    (driveReceiptLink ? `Drive Receipt Link / File: ${driveReceiptLink}\n` : "") +
+    `Google Drive Folder: ${driveFolderUrl}\n\n` +
+    `I am attaching my payment screenshot here. Please verify and release my UBT exam set. Thank you!`
   )}`;
 
   const handleCopyNumber = () => {
@@ -174,7 +176,7 @@ export default function EsewaCheckoutModal({
         studentName: studentName || "Student",
         amount: itemPrice,
         txnId: cleanTxn,
-        screenshotUrl: finalScreenshotUrl,
+        screenshotUrl: screenshotLocation,
         driveFolderUrl,
         status: "Pending",
         date: new Date().toLocaleString()
@@ -193,12 +195,29 @@ export default function EsewaCheckoutModal({
         amount: itemPrice,
         esewaNumber,
         status: "Pending Admin Confirmation",
-        screenshotUrl: finalScreenshotUrl,
+        screenshotUrl: screenshotLocation,
         driveFolderUrl,
         date: new Date().toISOString(),
         formattedDate: new Date().toLocaleString()
       });
       localStorage.setItem("studentPayments", JSON.stringify(payments));
+
+      // 5. Automatically open WhatsApp to send request directly to Deepak Bhatt (9768444902)
+      try {
+        const waSendMsg = encodeURIComponent(
+          `Hello Deepak Sir,\n\nI have submitted my UBT unlock request on the website.\n\n` +
+          `Student Name: ${studentName || "Student"}\n` +
+          `Phone: ${curPhone}\n` +
+          `Item: ${itemName} (${formattedPrice})\n` +
+          `eSewa Txn ID: ${cleanTxn}\n` +
+          `Google Drive Folder: ${driveFolderUrl}\n` +
+          (driveReceiptLink.trim() ? `Drive File / Link: ${driveReceiptLink.trim()}\n\n` : `\n`) +
+          `I am attaching my payment screenshot here. Please confirm my request and release the UBT set. Thank you!`
+        );
+        window.open(`https://wa.me/9779768444902?text=${waSendMsg}`, "_blank");
+      } catch (waErr) {
+        console.warn("WhatsApp popup notice:", waErr);
+      }
 
       setIsProcessing(false);
       setIsQuerySubmitted(true);
@@ -339,10 +358,10 @@ export default function EsewaCheckoutModal({
                 <span style={{ fontSize: "34px", color: "#2563eb" }}>📨</span>
               </div>
               <h3 style={{ margin: "0 0 8px 0", fontSize: "21px", color: "#0f172a", fontWeight: "800" }}>
-                Query Submitted to Super Admin!
+                Request Sent to WhatsApp &amp; Super Admin!
               </h3>
               <p style={{ margin: "0 0 16px 0", fontSize: "13.5px", color: "#64748b", lineHeight: "1.5" }}>
-                Your payment screenshot and Transaction ID for <strong style={{ color: "#1e3a8a" }}>{itemName}</strong> have been submitted.
+                Your payment query for <strong style={{ color: "#1e3a8a" }}>{itemName}</strong> has been submitted to Super Admin, and WhatsApp has been launched.
               </p>
 
               <div
@@ -369,19 +388,13 @@ export default function EsewaCheckoutModal({
                   <strong style={{ color: "#2563eb", fontFamily: "monospace" }}>{txnId}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span style={{ color: "#64748b" }}>Status:</span>
+                  <span style={{ color: "#64748b" }}>Web Status:</span>
                   <strong style={{ color: "#d97706" }}>Pending Super Admin Release</strong>
                 </div>
-                {screenshotPreview && (
-                  <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px dashed #cbd5e1" }}>
-                    <span style={{ fontSize: "11px", color: "#64748b", display: "block", marginBottom: "6px" }}>Screenshot Uploaded:</span>
-                    <img
-                      src={screenshotPreview}
-                      alt="Receipt Preview"
-                      style={{ height: "64px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                    />
-                  </div>
-                )}
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#64748b" }}>WhatsApp (9768444902):</span>
+                  <strong style={{ color: "#16a34a" }}>✓ Request Message Sent</strong>
+                </div>
               </div>
 
               <div
@@ -390,16 +403,16 @@ export default function EsewaCheckoutModal({
                   border: "1px solid #fde68a",
                   borderRadius: "8px",
                   padding: "10px 14px",
-                  marginBottom: "20px",
+                  marginBottom: "16px",
                   fontSize: "12px",
                   color: "#92400e",
                   textAlign: "left"
                 }}
               >
-                Super Admin will verify your receipt in the Google Drive folder / eSewa statement and release the UBT set shortly.
+                Super Admin has received your request on the web dashboard and WhatsApp. Once verified, your UBT set will be unlocked immediately!
               </div>
 
-              {/* Direct WhatsApp Share Option */}
+              {/* Direct WhatsApp Action Button */}
               <a
                 href={whatsappUrl}
                 target="_blank"
@@ -423,7 +436,7 @@ export default function EsewaCheckoutModal({
                 }}
               >
                 <span>💬</span>
-                <span>Send Screenshot on WhatsApp (9768444902) ↗</span>
+                <span>Open WhatsApp Chat Again (9768444902) ↗</span>
               </a>
 
               <button
@@ -809,12 +822,12 @@ export default function EsewaCheckoutModal({
                       {isProcessing ? (
                         <>
                           <span>⏳</span>
-                          <span>Submitting Query to Admin...</span>
+                          <span>Sending to WhatsApp &amp; Super Admin...</span>
                         </>
                       ) : (
                         <>
                           <span>📨</span>
-                          <span>SEND QUERY ({formattedPrice})</span>
+                          <span>SEND REQUEST TO WHATSAPP &amp; SUPER ADMIN ({formattedPrice})</span>
                         </>
                       )}
                     </button>
