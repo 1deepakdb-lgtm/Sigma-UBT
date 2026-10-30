@@ -873,53 +873,6 @@ export default function EsewaCheckoutModal({
                   </div>
                 </div>
               )}
-                    background: isProcessing
-                      ? "#94a3b8"
-                      : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "13px",
-                    borderRadius: "8px",
-                    fontWeight: "800",
-                    fontSize: "14px",
-                    cursor: isProcessing ? "wait" : "pointer",
-                    boxShadow: "0 4px 12px rgba(22, 163, 74, 0.25)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px"
-                  }}
-                >
-                  {isProcessing ? (
-                    <>
-                      <span>⏳</span>
-                      <span>Verifying &amp; Unlocking...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>⚡</span>
-                      <span>Confirm &amp; Auto-Unlock ({formattedPrice})</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={isProcessing}
-                  style={{
-                    backgroundColor: "#f1f5f9",
-                    color: "#475569",
-                    border: "1px solid #cbd5e1",
-                    padding: "13px 18px",
-                    borderRadius: "8px",
-                    fontWeight: "600",
-                    fontSize: "13px",
-                    cursor: "pointer"
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
             </div>
           )}
         </div>
