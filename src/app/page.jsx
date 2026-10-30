@@ -347,15 +347,16 @@ export default function LoginPage() {
           }}
         />
 
-        {/* Tab Toggle: Sign In vs Create Free Account */}
+        {/* Tab Toggle: Login vs Sign Up */}
         <div
           style={{
             display: "flex",
             backgroundColor: "#f1f5f9",
-            borderRadius: "10px",
-            padding: "4px",
-            marginBottom: "18px",
-            gap: "4px"
+            borderRadius: "12px",
+            padding: "5px",
+            marginBottom: "20px",
+            gap: "6px",
+            border: "1.5px solid #e2e8f0"
           }}
         >
           <button
@@ -367,19 +368,20 @@ export default function LoginPage() {
             }}
             style={{
               flex: 1,
-              padding: "10px 8px",
-              borderRadius: "8px",
+              padding: "11px 12px",
+              borderRadius: "9px",
               border: "none",
-              fontSize: "13.5px",
+              fontSize: "14px",
               fontWeight: "800",
               cursor: "pointer",
-              transition: "all 0.15s ease",
-              backgroundColor: authMode === "login" ? "#ffffff" : "transparent",
-              color: authMode === "login" ? "#1e3a8a" : "#64748b",
-              boxShadow: authMode === "login" ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              backgroundColor: authMode === "login" ? "#2563eb" : "transparent",
+              backgroundImage: authMode === "login" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
+              color: authMode === "login" ? "#ffffff" : "#64748b",
+              boxShadow: authMode === "login" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
             }}
           >
-            Sign In
+            Login
           </button>
           <button
             type="button"
@@ -390,16 +392,17 @@ export default function LoginPage() {
             }}
             style={{
               flex: 1,
-              padding: "10px 8px",
-              borderRadius: "8px",
+              padding: "11px 12px",
+              borderRadius: "9px",
               border: "none",
-              fontSize: "13.5px",
+              fontSize: "14px",
               fontWeight: "800",
               cursor: "pointer",
-              transition: "all 0.15s ease",
-              backgroundColor: authMode === "register" ? "#ffffff" : "transparent",
-              color: authMode === "register" ? "#1e3a8a" : "#64748b",
-              boxShadow: authMode === "register" ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              backgroundColor: authMode === "register" ? "#16a34a" : "transparent",
+              backgroundImage: authMode === "register" ? "linear-gradient(135deg, #16a34a 0%, #15803d 100%)" : "none",
+              color: authMode === "register" ? "#ffffff" : "#64748b",
+              boxShadow: authMode === "register" ? "0 4px 14px rgba(22, 163, 74, 0.35)" : "none"
             }}
           >
             Sign Up
@@ -595,23 +598,26 @@ export default function LoginPage() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "14px" }}>
               {[
-                { key: "both", label: "🌐 Both" },
                 { key: "korean", label: "🇰🇷 Korean" },
-                { key: "japanese", label: "🇯🇵 Japanese" }
+                { key: "japanese", label: "🇯🇵 Japanese" },
+                { key: "both", label: "🌐 Both" }
               ].map((opt) => (
                 <button
                   key={opt.key}
                   type="button"
                   onClick={() => setRegLanguage(opt.key)}
                   style={{
-                    padding: "8px 4px",
-                    borderRadius: "6px",
+                    padding: "9px 6px",
+                    borderRadius: "8px",
                     border: regLanguage === opt.key ? "1.5px solid #16a34a" : "1px solid #cbd5e1",
-                    backgroundColor: regLanguage === opt.key ? "#dcfce7" : "#ffffff",
-                    color: regLanguage === opt.key ? "#166534" : "#475569",
-                    fontWeight: "700",
-                    fontSize: "12px",
-                    cursor: "pointer"
+                    backgroundColor: regLanguage === opt.key ? "#16a34a" : "#ffffff",
+                    backgroundImage: regLanguage === opt.key ? "linear-gradient(135deg, #16a34a 0%, #15803d 100%)" : "none",
+                    color: regLanguage === opt.key ? "#ffffff" : "#475569",
+                    fontWeight: "800",
+                    fontSize: "12.5px",
+                    cursor: "pointer",
+                    boxShadow: regLanguage === opt.key ? "0 4px 12px rgba(22, 163, 74, 0.35)" : "none",
+                    transition: "all 0.18s ease"
                   }}
                 >
                   {opt.label}
@@ -735,24 +741,26 @@ export default function LoginPage() {
                 </label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px" }}>
                   {[
-                    { key: "both", label: "🌐 Both" },
                     { key: "korean", label: "🇰🇷 Korean" },
-                    { key: "japanese", label: "🇯🇵 Japanese" }
+                    { key: "japanese", label: "🇯🇵 Japanese" },
+                    { key: "both", label: "🌐 Both" }
                   ].map((opt) => (
                     <button
                       key={opt.key}
                       type="button"
                       onClick={() => setRegLanguage(opt.key)}
                       style={{
-                        padding: "8px 4px",
-                        borderRadius: "6px",
+                        padding: "9px 6px",
+                        borderRadius: "8px",
                         border: regLanguage === opt.key ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
-                        backgroundColor: regLanguage === opt.key ? "#eff6ff" : "#ffffff",
-                        color: regLanguage === opt.key ? "#1d4ed8" : "#475569",
-                        fontWeight: "700",
-                        fontSize: "12px",
+                        backgroundColor: regLanguage === opt.key ? "#2563eb" : "#ffffff",
+                        backgroundImage: regLanguage === opt.key ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
+                        color: regLanguage === opt.key ? "#ffffff" : "#475569",
+                        fontWeight: "800",
+                        fontSize: "12.5px",
                         cursor: "pointer",
-                        transition: "all 0.15s ease"
+                        boxShadow: regLanguage === opt.key ? "0 4px 12px rgba(37, 99, 235, 0.35)" : "none",
+                        transition: "all 0.18s ease"
                       }}
                     >
                       {opt.label}
