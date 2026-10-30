@@ -104,6 +104,28 @@ export default function Navbar({
 
   const getItemStyle = (isActive, itemKey) => {
     const isHovered = hoveredItem === itemKey;
+
+    if (itemKey === 'students') {
+      if (isActive) {
+        return {
+          ...navItemBase,
+          background: 'linear-gradient(135deg, #15803d 0%, #166534 100%)',
+          color: '#ffffff',
+          border: '1.5px solid #86efac',
+          boxShadow: '0 0 0 2px rgba(134, 239, 172, 0.45), 0 4px 12px rgba(22, 163, 74, 0.4)'
+        };
+      }
+      return {
+        ...navItemBase,
+        background: isHovered 
+          ? 'linear-gradient(135deg, #15803d 0%, #166534 100%)' 
+          : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+        color: '#ffffff',
+        border: '1.5px solid #4ade80',
+        boxShadow: '0 2px 8px rgba(22, 163, 74, 0.35)'
+      };
+    }
+
     if (isActive) {
       return {
         ...navItemBase,

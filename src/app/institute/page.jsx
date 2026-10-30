@@ -886,17 +886,42 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
   const menuContainerStyle = { display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" };
   
-  const getNavBtnStyle = (tabName) => ({
-    backgroundColor: activeTab === tabName ? "#2563eb" : "transparent",
-    color: "#ffffff",
-    border: "none",
-    padding: "8px 14px",
-    borderRadius: "6px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    fontSize: "14px",
-    transition: "0.2s"
-  });
+  const getNavBtnStyle = (tabName) => {
+    if (tabName === "students") {
+      const isSelected = activeTab === "students";
+      return {
+        background: isSelected 
+          ? "linear-gradient(135deg, #15803d 0%, #166534 100%)" 
+          : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+        color: "#ffffff",
+        border: isSelected ? "1.5px solid #86efac" : "1.5px solid #4ade80",
+        padding: "8px 16px",
+        borderRadius: "7px",
+        fontWeight: "800",
+        cursor: "pointer",
+        fontSize: "14px",
+        transition: "all 0.2s ease",
+        boxShadow: isSelected 
+          ? "0 0 0 2px rgba(134, 239, 172, 0.45), 0 4px 12px rgba(22, 163, 74, 0.4)" 
+          : "0 2px 8px rgba(22, 163, 74, 0.35)",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px"
+      };
+    }
+
+    return {
+      backgroundColor: activeTab === tabName ? "#2563eb" : "transparent",
+      color: "#ffffff",
+      border: "none",
+      padding: "8px 14px",
+      borderRadius: "6px",
+      fontWeight: "bold",
+      cursor: "pointer",
+      fontSize: "14px",
+      transition: "0.2s"
+    };
+  };
 
   const contentAreaStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto", userSelect: "text" };
   const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "20px", border: "1px solid #e2e8f0" };
