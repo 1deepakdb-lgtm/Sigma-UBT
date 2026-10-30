@@ -67,11 +67,6 @@ export async function middleware(req) {
     return NextResponse.next();
   }
 
-  // Allow institute student creation and syncing so student login registration is 100% resilient
-  if (pathname === '/api/institute/students' && (req.method === 'POST' || req.method === 'GET')) {
-    return NextResponse.next();
-  }
-
   // 2. Check Protected Routes
   const matchedRule = ROUTE_PERMISSIONS.find((rule) => pathname.startsWith(rule.prefix));
 

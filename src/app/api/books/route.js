@@ -295,16 +295,8 @@ export async function GET() {
 // POST /api/books - Admin/Institute adds material, folder, deletes, or updates chapter meaning
 export async function POST(req) {
   try {
-    let { session, errorResponse } = await requireInstituteOrAdmin(req);
-    if (errorResponse) {
-      const roleHeader = req.headers.get('x-user-role') || req.headers.get('x-role');
-      if (roleHeader === 'admin' || roleHeader === 'institute') {
-        session = { role: roleHeader, username: roleHeader };
-        errorResponse = null;
-      } else {
-        return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
-      }
-    }
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
 
     const body = await req.json();
     const data = await getStoredBooksData();

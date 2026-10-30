@@ -41,18 +41,8 @@ const MAX_FILE_SIZE = 150 * 1024 * 1024; // 150 MB for rich media (Video, Audio,
 export async function POST(req) {
   try {
     // 1. Enforce Role-Based Access Control (Admin or Institute only)
-    let { session, errorResponse } = await requireInstituteOrAdmin(req);
-    
-    // Support admin authorization headers for reliable file upload
-    if (errorResponse) {
-      const roleHeader = req.headers.get('x-user-role') || req.headers.get('x-role');
-      if (roleHeader === 'admin' || roleHeader === 'institute') {
-        session = { role: roleHeader, username: roleHeader, id: 'admin-authenticated' };
-        errorResponse = null;
-      } else {
-        return errorResponse;
-      }
-    }
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
 
     const data = await req.formData();
     const file = data.get('file');

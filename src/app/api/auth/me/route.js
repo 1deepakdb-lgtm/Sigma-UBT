@@ -43,13 +43,15 @@ export async function GET(req) {
 
     let studentPackage = 'Full Set UBT';
     let expiryDate = null;
+    let isGoogleOrFree = false;
 
     if (user.role === 'student') {
       const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
       const isShiftOnly = user.batch && shiftNames.includes(user.batch.toLowerCase().trim());
-      const isGoogleOrFree =
+      isGoogleOrFree = Boolean(
         user.batch?.toLowerCase().includes('google') ||
-        user.batch?.toLowerCase().includes('free');
+        user.batch?.toLowerCase().includes('free')
+      );
 
       if (isGoogleOrFree) {
         studentPackage = 'Free Student Access';

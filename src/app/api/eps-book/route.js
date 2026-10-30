@@ -88,20 +88,8 @@ export async function GET() {
 // POST /api/eps-book: Update chapter(s) with new PDF or Audio tracks (Admin / Institute)
 export async function POST(req) {
   try {
-    // 1. Authorize admin or institute
-    let { session, errorResponse } = await requireInstituteOrAdmin(req);
-    if (errorResponse) {
-      const roleHeader = req.headers.get('x-user-role') || req.headers.get('x-role');
-      if (roleHeader === 'admin' || roleHeader === 'institute') {
-        session = { role: roleHeader, username: roleHeader, id: 'admin-authenticated' };
-        errorResponse = null;
-      } else {
-        return NextResponse.json(
-          { success: false, error: 'Unauthorized. Admin or Institute privileges required.' },
-          { status: 403 }
-        );
-      }
-    }
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
 
     const body = await req.json();
     const currentChapters = await getStoredChapters();

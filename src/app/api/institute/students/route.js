@@ -5,26 +5,31 @@ import { requireInstituteOrAdmin } from '@/lib/rbac';
 
 export async function GET(req) {
   try {
-    const { session } = await requireInstituteOrAdmin(req).catch(() => ({ session: null }));
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
+
     const { searchParams } = new URL(req.url);
     const queryInst = searchParams.get('institute') || searchParams.get('instituteId') || searchParams.get('instituteName');
 
     const where = { role: 'student' };
     let targetInstId = null;
 
-    if (session && session.role === 'institute' && session.instituteId) {
+    if (session.role === 'admin') {
+      if (queryInst && queryInst !== 'All') {
+        const inst = await prisma.institute.findFirst({
+          where: {
+            OR: [
+              { id: queryInst },
+              { name: queryInst },
+              { username: queryInst }
+            ]
+          }
+        });
+        if (inst) targetInstId = inst.id;
+      }
+    } else {
+      // Institutes and staff can ONLY query their own students
       targetInstId = session.instituteId;
-    } else if (queryInst && queryInst !== 'All') {
-      const inst = await prisma.institute.findFirst({
-        where: {
-          OR: [
-            { id: queryInst },
-            { name: queryInst },
-            { username: queryInst }
-          ]
-        }
-      });
-      if (inst) targetInstId = inst.id;
     }
 
     if (targetInstId) {
@@ -56,7 +61,8 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const { session } = await requireInstituteOrAdmin(req).catch(() => ({ session: null }));
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
 
     const body = await req.json();
     const {
@@ -209,7 +215,8 @@ export async function POST(req) {
 
 export async function DELETE(req) {
   try {
-    const { session } = await requireInstituteOrAdmin(req).catch(() => ({ session: null }));
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
@@ -233,10 +240,10 @@ export async function DELETE(req) {
       return NextResponse.json({ success: true, message: 'Student not found in database or already deleted' });
     }
 
-    // Validate ownership if institute session is present
-    if (session && session.role === 'institute' && session.instituteId) {
-      if (targetStudent.instituteId && targetStudent.instituteId !== session.instituteId) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // Validate ownership: non-admin institutes can only delete students belonging to their institute
+    if (session.role !== 'admin') {
+      if (!targetStudent.instituteId || targetStudent.instituteId !== session.instituteId) {
+        return NextResponse.json({ error: 'Forbidden. You do not own this student record.' }, { status: 403 });
       }
     }
 
