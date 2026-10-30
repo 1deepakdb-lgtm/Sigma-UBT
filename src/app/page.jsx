@@ -381,7 +381,7 @@ export default function LoginPage() {
               boxShadow: authMode === "login" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
             }}
           >
-            Login
+            Sign In
           </button>
           <button
             type="button"
@@ -405,7 +405,7 @@ export default function LoginPage() {
               boxShadow: authMode === "register" ? "0 4px 14px rgba(22, 163, 74, 0.35)" : "none"
             }}
           >
-            Sign Up
+            Register
           </button>
         </div>
 
@@ -634,7 +634,7 @@ export default function LoginPage() {
               }}
               disabled={loading}
             >
-              {loading ? "CREATING FREE ACCOUNT..." : "CREATE ACCOUNT & ACCESS FREE MATERIALS"}
+              {loading ? "REGISTERING..." : "REGISTER"}
             </button>
           </form>
         )}
