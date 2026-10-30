@@ -31,6 +31,7 @@ export default function EsewaCheckoutModal({
   const esewaAccountName = "Deepak Bhatt";
   const esewaOrg = "Sigma Education UBT";
   const driveFolderUrl = "https://drive.google.com/drive/folders/1ZaKiEPRNOusOvCZSpstWyWHGVRk-lRlE?usp=drive_link";
+  const whatsappNumber = "9768444902";
 
   useEffect(() => {
     if (isOpen) {
@@ -42,7 +43,6 @@ export default function EsewaCheckoutModal({
       setScreenshotUrl("");
       setSenderPhone(studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "" : ""));
       setSelectedType(item?.type || "set");
-      setPayMethod("qr");
     }
   }, [isOpen, item, studentPhone]);
 
@@ -53,6 +53,15 @@ export default function EsewaCheckoutModal({
   const itemName = isSet ? (item.name || "Individual UBT Set") : (selectedPackage?.name || item.name || "UBT Exam Package");
   const itemPrice = isSet ? 40 : (selectedPackage?.price || item.price || 1000);
   const formattedPrice = typeof itemPrice === "number" ? `Rs. ${itemPrice}` : itemPrice.toString().startsWith("Rs") ? itemPrice : `Rs. ${itemPrice}`;
+
+  // WhatsApp prefilled message URL for 9768444902
+  const whatsappUrl = `https://wa.me/9779768444902?text=${encodeURIComponent(
+    `Hello Deepak Sir,\n\nI have made the eSewa payment of ${formattedPrice} for "${itemName}".\n` +
+    `Student Name: ${studentName || "Student"}\n` +
+    `Sender Phone: ${senderPhone || studentPhone || "N/A"}\n` +
+    (txnId ? `eSewa Txn ID: ${txnId}\n\n` : "\n") +
+    `I am attaching my payment screenshot here for UBT set unlock confirmation. Thank you!`
+  )}`;
 
   const handleCopyNumber = () => {
     navigator.clipboard.writeText(esewaNumber);
@@ -405,6 +414,33 @@ export default function EsewaCheckoutModal({
                 Super Admin will verify your receipt in the Google Drive folder / eSewa statement and release the UBT set shortly.
               </div>
 
+              {/* Direct WhatsApp Share Option */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  width: "100%",
+                  backgroundColor: "#25D366",
+                  color: "#ffffff",
+                  padding: "13px",
+                  borderRadius: "8px",
+                  fontWeight: "800",
+                  fontSize: "14px",
+                  textDecoration: "none",
+                  marginBottom: "10px",
+                  boxShadow: "0 4px 12px rgba(37, 211, 102, 0.35)",
+                  boxSizing: "border-box"
+                }}
+              >
+                <span>💬</span>
+                <span>Send Screenshot on WhatsApp (9768444902) ↗</span>
+              </a>
+
               <button
                 type="button"
                 onClick={onClose}
@@ -583,25 +619,49 @@ export default function EsewaCheckoutModal({
                         Org: <strong>{esewaOrg}</strong>
                       </div>
 
-                      {/* Google Drive Link */}
-                      <a
-                        href={driveFolderUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          marginTop: "6px",
-                          fontSize: "11px",
-                          fontWeight: "700",
-                          color: "#1d4ed8",
-                          textDecoration: "underline"
-                        }}
-                      >
-                        <span>📁</span>
-                        <span>Google Drive Receipts Folder ↗</span>
-                      </a>
+                      {/* WhatsApp & Google Drive Action Links */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" }}>
+                        <a
+                          href={whatsappUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            backgroundColor: "#25D366",
+                            color: "#ffffff",
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            fontSize: "11.5px",
+                            fontWeight: "800",
+                            textDecoration: "none",
+                            boxShadow: "0 2px 6px rgba(37, 211, 102, 0.3)",
+                            width: "fit-content"
+                          }}
+                        >
+                          <span>💬</span>
+                          <span>Send Screenshot on WhatsApp (9768444902) ↗</span>
+                        </a>
+
+                        <a
+                          href={driveFolderUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            fontSize: "11px",
+                            fontWeight: "700",
+                            color: "#1d4ed8",
+                            textDecoration: "underline"
+                          }}
+                        >
+                          <span>📁</span>
+                          <span>Google Drive Receipts Folder ↗</span>
+                        </a>
+                      </div>
                     </div>
                   </div>
 
@@ -673,6 +733,46 @@ export default function EsewaCheckoutModal({
                         <span>Click to Select &amp; Upload Payment Screenshot</span>
                       </button>
                     )}
+
+                    {/* WhatsApp Direct Option Banner */}
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        padding: "8px 12px",
+                        backgroundColor: "#f0fdf4",
+                        border: "1px solid #bbf7d0",
+                        borderRadius: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "8px"
+                      }}
+                    >
+                      <div style={{ fontSize: "11.5px", color: "#166534" }}>
+                        <span>💬 Prefer WhatsApp? Send screenshot directly:</span>
+                      </div>
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          backgroundColor: "#25D366",
+                          color: "#ffffff",
+                          padding: "5px 12px",
+                          borderRadius: "6px",
+                          fontSize: "11.5px",
+                          fontWeight: "800",
+                          textDecoration: "none",
+                          boxShadow: "0 2px 6px rgba(37, 211, 102, 0.3)"
+                        }}
+                      >
+                        <span>WhatsApp (9768444902) ↗</span>
+                      </a>
+                    </div>
                   </div>
 
                   {/* Transaction ID & Phone Inputs */}

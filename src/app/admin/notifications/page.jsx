@@ -570,30 +570,81 @@ const AdminNotifications = () => {
                       </p>
                     )}
 
-                    {/* Google Drive Folder Direct Link */}
-                    <a
-                      href={selected.driveFolderUrl || GOOGLE_DRIVE_FOLDER_URL}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        backgroundColor: "#f8fafc",
-                        border: "1px solid #cbd5e1",
-                        padding: "8px 14px",
-                        borderRadius: "6px",
-                        color: "#1d4ed8",
-                        textDecoration: "none",
-                        fontWeight: "700",
-                        fontSize: "12.5px"
-                      }}
-                    >
-                      <span>📁</span>
-                      <span>Open Google Drive Receipts Folder ↗</span>
-                    </a>
-                    <span style={{ display: "block", fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
-                      Folder ID: 1ZaKiEPRNOusOvCZSpstWyWHGVRk-lRlE
+                    {/* External Action Links: Google Drive & WhatsApp */}
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                      <a
+                        href={selected.driveFolderUrl || GOOGLE_DRIVE_FOLDER_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          backgroundColor: "#f8fafc",
+                          border: "1px solid #cbd5e1",
+                          padding: "8px 14px",
+                          borderRadius: "6px",
+                          color: "#1d4ed8",
+                          textDecoration: "none",
+                          fontWeight: "700",
+                          fontSize: "12.5px"
+                        }}
+                      >
+                        <span>📁</span>
+                        <span>Open Google Drive Receipts Folder ↗</span>
+                      </a>
+
+                      <a
+                        href={`https://wa.me/9779768444902?text=${encodeURIComponent(
+                          `Super Admin Inquiry: Payment Query for student ${selected.studentName} (${selected.studentPhone || "No Phone"}), Set: ${selected.itemName}, Txn ID: ${selected.txnId || "N/A"}`
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          backgroundColor: "#25D366",
+                          color: "#ffffff",
+                          padding: "8px 14px",
+                          borderRadius: "6px",
+                          textDecoration: "none",
+                          fontWeight: "700",
+                          fontSize: "12.5px",
+                          boxShadow: "0 2px 6px rgba(37, 211, 102, 0.3)"
+                        }}
+                      >
+                        <span>💬</span>
+                        <span>WhatsApp Deepak Bhatt (9768444902) ↗</span>
+                      </a>
+
+                      {selected.studentPhone && (
+                        <a
+                          href={`https://wa.me/977${selected.studentPhone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
+                            `Hello ${selected.studentName}, regarding your UBT purchase query for "${selected.itemName}"...`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            backgroundColor: "#15803d",
+                            color: "#ffffff",
+                            padding: "8px 14px",
+                            borderRadius: "6px",
+                            textDecoration: "none",
+                            fontWeight: "700",
+                            fontSize: "12.5px"
+                          }}
+                        >
+                          <span>💬</span>
+                          <span>WhatsApp Student ({selected.studentPhone}) ↗</span>
+                        </a>
+                      )}
+                    </div>
+                    <span style={{ display: "block", fontSize: "11px", color: "#64748b", marginTop: "6px" }}>
+                      Folder ID: 1ZaKiEPRNOusOvCZSpstWyWHGVRk-lRlE &middot; WhatsApp: 9768444902
                     </span>
                   </div>
 
