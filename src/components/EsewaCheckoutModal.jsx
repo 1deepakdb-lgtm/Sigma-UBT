@@ -242,7 +242,7 @@ export default function EsewaCheckoutModal({
         overflowY: "auto"
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isProcessing && !isRedirecting) onClose();
+        if (e.target === e.currentTarget && !isProcessing) onClose();
       }}
     >
       <div
@@ -304,7 +304,7 @@ export default function EsewaCheckoutModal({
           <button
             type="button"
             onClick={onClose}
-            disabled={isProcessing || isRedirecting}
+            disabled={isProcessing}
             style={{
               background: "rgba(255,255,255,0.2)",
               border: "none",
