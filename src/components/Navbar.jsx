@@ -69,9 +69,9 @@ export default function Navbar({
       { id: 'exams', label: 'Start UBT Exam' },
       { id: 'buyExam', label: 'Packages' }
     ] : []),
-    { id: 'vocab', label: currentLang === 'japanese' ? 'Japanese Dictionary' : currentLang === 'korean' ? 'Korean Dictionary' : 'Dictionary' },
-    { id: 'listening', label: currentLang === 'japanese' ? 'Japanese Study Materials' : currentLang === 'korean' ? 'Korean Study Materials' : 'Study Materials' },
-    { id: 'news', label: currentLang === 'japanese' ? 'Japanese Notices & Portals' : currentLang === 'korean' ? 'Korean Notices & Portals' : 'Notice' },
+    { id: 'vocab', label: 'Dictionary' },
+    { id: 'listening', label: 'Study Materials' },
+    { id: 'news', label: 'Notice' },
     { id: 'notify', label: 'Messages' },
     { id: 'results', label: 'Performance' },
   ];

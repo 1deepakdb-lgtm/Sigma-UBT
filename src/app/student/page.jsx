@@ -752,15 +752,9 @@ const StudentDashboard = () => {
           {instituteLanguage !== "japanese" && (
             <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
           )}
-          <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>
-            {instituteLanguage === "japanese" ? "Japanese Dictionary" : instituteLanguage === "korean" ? "Korean Dictionary" : "Dictionary"}
-          </button>
-          <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>
-            {instituteLanguage === "japanese" ? "Japanese Study Materials" : instituteLanguage === "korean" ? "Korean Study Materials" : "Study Materials"}
-          </button>
-          <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>
-            {instituteLanguage === "japanese" ? "Japanese Notices & Portals" : instituteLanguage === "korean" ? "Korean Notices & Portals" : "Notice"}
-          </button>
+          <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>Dictionary</button>
+          <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
+          <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
           <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
         </div>
@@ -868,9 +862,7 @@ const StudentDashboard = () => {
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
                   <BookStackIcon size={28} color="#d97706" />
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#92400e", fontSize: "18px", fontWeight: "700" }}>
-                  {instituteLanguage === "japanese" ? "Japanese Study Materials" : instituteLanguage === "korean" ? "Korean Study Materials" : "Study Materials"}
-                </h3>
+                <h3 style={{ margin: "0 0 4px 0", color: "#92400e", fontSize: "18px", fontWeight: "700" }}>Study Materials</h3>
                 <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
                   {instituteLanguage === "japanese" ? "Japanese Textbooks, Question Banks & Grammar" : instituteLanguage === "korean" ? "Korean Textbooks, Question Banks & Grammar" : "Korean & Japanese Textbooks, Question Banks & Grammar"}
                 </p>
@@ -880,9 +872,7 @@ const StudentDashboard = () => {
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
                   <BookOpenIcon size={28} color="#7c3aed" />
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>
-                  {instituteLanguage === "japanese" ? "Japanese Dictionary" : instituteLanguage === "korean" ? "Korean Dictionary" : "Dictionary"}
-                </h3>
+                <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>Dictionary</h3>
                 <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
                   {instituteLanguage === "japanese" ? "Japanese, Nepali, and English vocabulary lookup" : instituteLanguage === "korean" ? "Korean, Nepali, and English vocabulary lookup" : "Korean & Japanese vocabulary lookup with pronunciation"}
                 </p>
