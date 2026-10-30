@@ -108,30 +108,9 @@ export default function EsewaCheckoutModal({
       return;
     }
 
-    if (!screenshotFile && !screenshotUrl) {
-      alert("Please upload your payment screenshot before sending the query.");
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
-      let finalScreenshotUrl = screenshotUrl;
-
-      // If not yet uploaded, upload now
-      if (!finalScreenshotUrl && screenshotFile) {
-        const formData = new FormData();
-        formData.append("file", screenshotFile);
-        const uploadRes = await fetch("/api/payment/upload-screenshot", {
-          method: "POST",
-          body: formData
-        });
-        const uploadData = await uploadRes.json();
-        if (uploadData.success) {
-          finalScreenshotUrl = uploadData.url;
-        }
-      }
-
       const cleanTxn = txnId.trim().toUpperCase();
       const curPhone = senderPhone.trim() || studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "9800000000" : "9800000000");
 
@@ -523,7 +502,7 @@ export default function EsewaCheckoutModal({
               >
                 <span>ℹ️</span>
                 <span>
-                  Scan the eSewa QR code below, upload your payment screenshot, and click <strong>Send Query</strong>. Super Admin will verify and unlock your exam set.
+                  Scan the eSewa QR code below, send your payment screenshot on WhatsApp to <strong>9768444902</strong>, enter your eSewa Transaction ID, and click <strong>Send Query</strong>. Super Admin will verify and release your UBT set.
                 </span>
               </div>
 
@@ -665,138 +644,11 @@ export default function EsewaCheckoutModal({
                     </div>
                   </div>
 
-                  {/* Upload Screenshot Card */}
-                  <div style={{ backgroundColor: "#f8fafc", border: "1.5px solid #cbd5e1", borderRadius: "10px", padding: "12px 14px", marginBottom: "14px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                      <label style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a" }}>
-                        Upload Payment Screenshot <span style={{ color: "#dc2626" }}>*</span>
-                      </label>
-                      <span style={{ fontSize: "11px", color: "#64748b" }}>JPG, PNG, WebP</span>
-                    </div>
-
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      accept="image/*"
-                      onChange={handleScreenshotChange}
-                      style={{ display: "none" }}
-                    />
-
-                    {screenshotPreview ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#ffffff", padding: "8px", borderRadius: "8px", border: "1px solid #86efac" }}>
-                        <img
-                          src={screenshotPreview}
-                          alt="Selected receipt"
-                          style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                        />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: "12px", fontWeight: "700", color: "#166534", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {screenshotFile?.name || "Screenshot Selected"}
-                          </div>
-                          <div style={{ fontSize: "11px", color: "#64748b" }}>
-                            {uploadingScreenshot ? "⏳ Uploading..." : "✓ Ready to submit"}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setScreenshotFile(null);
-                            setScreenshotPreview(null);
-                            setScreenshotUrl("");
-                          }}
-                          style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "6px", padding: "6px 10px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{
-                          width: "100%",
-                          padding: "12px",
-                          border: "1.5px dashed #2563eb",
-                          backgroundColor: "#eff6ff",
-                          borderRadius: "8px",
-                          color: "#1d4ed8",
-                          fontWeight: "700",
-                          fontSize: "13px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "8px"
-                        }}
-                      >
-                        <span>📷</span>
-                        <span>Click to Select &amp; Upload Payment Screenshot</span>
-                      </button>
-                    )}
-
-                    {/* WhatsApp Direct Option Banner */}
-                    <div
-                      style={{
-                        marginTop: "10px",
-                        padding: "8px 12px",
-                        backgroundColor: "#f0fdf4",
-                        border: "1px solid #bbf7d0",
-                        borderRadius: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        gap: "8px"
-                      }}
-                    >
-                      <div style={{ fontSize: "11.5px", color: "#166534" }}>
-                        <span>💬 Prefer WhatsApp? Send screenshot directly:</span>
-                      </div>
-                      <a
-                        href={whatsappUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          backgroundColor: "#25D366",
-                          color: "#ffffff",
-                          padding: "5px 12px",
-                          borderRadius: "6px",
-                          fontSize: "11.5px",
-                          fontWeight: "800",
-                          textDecoration: "none",
-                          boxShadow: "0 2px 6px rgba(37, 211, 102, 0.3)"
-                        }}
-                      >
-                        <span>WhatsApp (9768444902) ↗</span>
-                      </a>
-                    </div>
-                  </div>
-
                   {/* Transaction ID & Phone Inputs */}
-                  <div style={{ marginBottom: "12px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                      <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#0f172a" }}>
-                        eSewa Transaction ID / Ref Code <span style={{ color: "#dc2626" }}>*</span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={handleQuickFillTxn}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#2563eb",
-                          fontSize: "11px",
-                          fontWeight: "700",
-                          cursor: "pointer",
-                          padding: 0
-                        }}
-                      >
-                        ⚡ Test Auto-Fill
-                      </button>
-                    </div>
+                  <div style={{ marginBottom: "14px" }}>
+                    <label style={{ display: "block", fontSize: "12.5px", fontWeight: "700", color: "#0f172a", marginBottom: "6px" }}>
+                      eSewa Transaction ID / Ref Code <span style={{ color: "#dc2626" }}>*</span>
+                    </label>
                     <input
                       type="text"
                       placeholder="e.g. 98A7B2X or 7-10 digit eSewa Txn ID"
