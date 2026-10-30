@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
+import EsewaCheckoutModal from "@/components/EsewaCheckoutModal";
 import { performLogout } from "@/lib/clientAuth";
 
 // Clean SVG Icons for zero-emoji compliance
@@ -113,6 +114,21 @@ const StudentDashboard = () => {
   const [notifySubject, setNotifySubject] = useState("");
   const [notifyMessage, setNotifyMessage] = useState("");
 
+  // Individual UBT sets & eSewa Auto-Unlock state
+  const [unlockedSets, setUnlockedSets] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [esewaModalOpen, setEsewaModalOpen] = useState(false);
+  const [selectedEsewaItem, setSelectedEsewaItem] = useState(null);
+  const [paidAccessTrigger, setPaidAccessTrigger] = useState(0);
+
   // Student profile & institute info
   const [studentName, setStudentName] = useState("");
   const [currentStudentPhone, setCurrentStudentPhone] = useState(null);
@@ -184,6 +200,39 @@ const StudentDashboard = () => {
     !isNaN(new Date(effectiveExpiryDate).getTime()) &&
     new Date(effectiveExpiryDate + 'T23:59:59') < new Date()
   );
+
+  // Helper: check if a specific exam set is individually unlocked (via Rs. 40 eSewa purchase)
+  const isSetIndividuallyUnlocked = (set) => {
+    if (!set) return false;
+    return unlockedSets.some((id) =>
+      id?.toString() === set.id?.toString() ||
+      id?.toString() === set.name?.toString() ||
+      (typeof set.name === "string" && id?.toString() === encodeURIComponent(set.name))
+    );
+  };
+
+  // Set is unlocked if student has full paid package OR has individually purchased this set
+  const isSetUnlocked = (set) => {
+    return Boolean(hasPaidExamAccess || isSetIndividuallyUnlocked(set));
+  };
+
+  const handleOpenEsewaModal = (item) => {
+    setSelectedEsewaItem(item);
+    setEsewaModalOpen(true);
+  };
+
+  const handleEsewaSuccessUnlock = (res) => {
+    try {
+      const updated = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+      setUnlockedSets(updated);
+    } catch (e) {}
+
+    setPaidAccessTrigger((prev) => prev + 1);
+
+    if (res.type === "package") {
+      setStudentPackage(res.packageName || "Full Set UBT");
+    }
+  };
 
   // 1. Authenticated Session Sync from /api/auth/me
   useEffect(() => {
@@ -826,26 +875,20 @@ const StudentDashboard = () => {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", maxWidth: "1050px", margin: "0 auto" }}>
               {instituteLanguage !== "japanese" && (
                 <div onClick={() => {
-                  if (!hasPaidExamAccess) {
-                    alert("Your free student account includes lifetime access to all Textbooks & Dictionaries! To take full 40-question UBT & Mock practice exams, please purchase an Exam Package.");
-                    setActiveTab("buyExam");
-                    return;
-                  }
-                  if (isPackageExpired) {
-                    alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exams.`);
-                    setActiveTab("buyExam");
-                    return;
-                  }
                   setActiveTab("exams");
                 }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
                   <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
                     <LaptopExamIcon size={28} color="#2563eb" />
                   </div>
                   <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
-                    {hasPaidExamAccess ? "Start UBT Exam" : "🔒 Start UBT Exam"}
+                    {hasPaidExamAccess ? "Start UBT Exam" : unlockedSets.length > 0 ? "Start UBT Exam (Active)" : "Start UBT Exam"}
                   </h3>
                   <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                    {hasPaidExamAccess ? "Take full 40-question EPS-TOPIK Korean tests" : "UBT & Mock Tests · Purchase required"}
+                    {hasPaidExamAccess
+                      ? "Take full 40-question EPS-TOPIK Korean tests"
+                      : unlockedSets.length > 0
+                      ? `${unlockedSets.length} Set(s) Unlocked · Click to practice or unlock more (Rs. 40 each)`
+                      : "UBT & Mock Tests · Unlock sets for Rs. 40 each"}
                   </p>
                 </div>
               )}
@@ -962,13 +1005,13 @@ const StudentDashboard = () => {
                 <span style={{
                   fontSize: "12px",
                   fontWeight: "700",
-                  color: !hasPaidExamAccess ? "#b45309" : isPackageExpired ? "#b91c1c" : "#166534",
-                  backgroundColor: !hasPaidExamAccess ? "#fef3c7" : isPackageExpired ? "#fee2e2" : "#dcfce7",
+                  color: !hasPaidExamAccess ? (unlockedSets.length > 0 ? "#15803d" : "#b45309") : isPackageExpired ? "#b91c1c" : "#166534",
+                  backgroundColor: !hasPaidExamAccess ? (unlockedSets.length > 0 ? "#dcfce7" : "#fef3c7") : isPackageExpired ? "#fee2e2" : "#dcfce7",
                   padding: "6px 14px",
                   borderRadius: "20px",
-                  border: !hasPaidExamAccess ? "1px solid #fde68a" : isPackageExpired ? "1px solid #fecaca" : "1px solid #bbf7d0"
+                  border: !hasPaidExamAccess ? (unlockedSets.length > 0 ? "1px solid #86efac" : "1px solid #fde68a") : isPackageExpired ? "1px solid #fecaca" : "1px solid #bbf7d0"
                 }}>
-                  {!hasPaidExamAccess ? "Locked · Purchase Required" : isPackageExpired ? "Expired" : "Active"}
+                  {!hasPaidExamAccess ? (unlockedSets.length > 0 ? `${unlockedSets.length} Set(s) Unlocked (Rs. 40 each)` : "Locked · Purchase Required") : isPackageExpired ? "Expired" : "Active"}
                 </span>
               </div>
             </div>
@@ -1109,10 +1152,15 @@ const StudentDashboard = () => {
                     }}
                   >
                     <div>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: "6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                         <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 7px", borderRadius: "4px" }}>
                           {set.packageName || "UBT Set"}
                         </span>
+                        {isSetIndividuallyUnlocked(set) && (
+                          <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
+                            UNLOCKED (Rs. 40)
+                          </span>
+                        )}
                       </div>
                       <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a", fontWeight: "800" }}>
                         {set.name}
@@ -1123,12 +1171,18 @@ const StudentDashboard = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        if (!hasPaidExamAccess) {
-                          alert("Access Restricted: UBT & Mock exam sets require a purchased package. Please select and purchase a package to unlock full student access.");
-                          setActiveTab("buyExam");
+                        const unlocked = isSetUnlocked(set);
+                        if (!unlocked) {
+                          handleOpenEsewaModal({
+                            id: set.id,
+                            name: set.name,
+                            price: 40,
+                            type: "set",
+                            packageName: set.packageName || "UBT Set"
+                          });
                           return;
                         }
-                        if (isPackageExpired) {
+                        if (isPackageExpired && !isSetIndividuallyUnlocked(set)) {
                           alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exam sets.`);
                           return;
                         }
@@ -1136,9 +1190,9 @@ const StudentDashboard = () => {
                       }}
                       style={{
                         width: "100%",
-                        background: !hasPaidExamAccess
+                        background: !isSetUnlocked(set)
                           ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                          : isPackageExpired
+                          : (isPackageExpired && !isSetIndividuallyUnlocked(set))
                           ? "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)"
                           : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
                         color: "#ffffff",
@@ -1146,13 +1200,17 @@ const StudentDashboard = () => {
                         padding: "9px",
                         borderRadius: "6px",
                         fontWeight: "700",
-                        cursor: isPackageExpired ? "not-allowed" : "pointer",
+                        cursor: (isPackageExpired && !isSetIndividuallyUnlocked(set)) ? "not-allowed" : "pointer",
                         fontSize: "13px",
                         letterSpacing: "0.3px",
-                        boxShadow: !hasPaidExamAccess ? "0 2px 6px rgba(217,119,6,0.25)" : "none"
+                        boxShadow: !isSetUnlocked(set) ? "0 2px 6px rgba(217,119,6,0.25)" : "none"
                       }}
                     >
-                      {!hasPaidExamAccess ? "🔒 BUY TO UNLOCK ▶" : isPackageExpired ? "PACKAGE EXPIRED" : "START EXAM ▶"}
+                      {!isSetUnlocked(set)
+                        ? "🔒 BUY TO UNLOCK ▶ (Rs. 40)"
+                        : (isPackageExpired && !isSetIndividuallyUnlocked(set))
+                        ? "PACKAGE EXPIRED"
+                        : "START EXAM ▶"}
                     </button>
                   </div>
                 ))
@@ -1456,13 +1514,56 @@ const StudentDashboard = () => {
                   </div>
                   <div>
                     <div style={{ fontSize: "16px", fontWeight: "800", color: "#16a34a", marginBottom: "14px" }}>{pkg.price || "Contact Institute"}</div>
-                    <button
-                      type="button"
-                      onClick={() => handleBuyRequest(pkg.name)}
-                      style={{ width: "100%", backgroundColor: "#2563eb", color: "#ffffff", border: "none", padding: "10px", borderRadius: "6px", fontWeight: "700", cursor: "pointer", fontSize: "13px" }}
-                    >
-                      REQUEST ENROLLMENT
-                    </button>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleOpenEsewaModal({
+                            id: pkg.id,
+                            name: pkg.name,
+                            price: pkg.price || "Rs. 1,000",
+                            type: "package",
+                            desc: pkg.desc
+                          })
+                        }
+                        style={{
+                          width: "100%",
+                          background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "10px",
+                          borderRadius: "6px",
+                          fontWeight: "800",
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px"
+                        }}
+                      >
+                        <span>⚡</span>
+                        <span>BUY &amp; AUTO-UNLOCK (eSewa)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBuyRequest(pkg.name)}
+                        style={{
+                          width: "100%",
+                          backgroundColor: "#f8fafc",
+                          color: "#475569",
+                          border: "1px solid #cbd5e1",
+                          padding: "8px",
+                          borderRadius: "6px",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          fontSize: "12px"
+                        }}
+                      >
+                        Request Enrollment
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1556,6 +1657,16 @@ const StudentDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* eSewa Instant Payment & Auto-Unlock Modal */}
+      <EsewaCheckoutModal
+        isOpen={esewaModalOpen}
+        onClose={() => setEsewaModalOpen(false)}
+        item={selectedEsewaItem}
+        studentName={studentName}
+        studentPhone={currentStudentPhone}
+        onSuccessUnlock={handleEsewaSuccessUnlock}
+      />
     </div>
   );
 };

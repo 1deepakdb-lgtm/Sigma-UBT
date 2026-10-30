@@ -93,26 +93,39 @@ const StudentExam = () => {
       const curUser = typeof window !== 'undefined' ? (localStorage.getItem("currentUser") || "") : "";
       const buyerInfo = buyerMap[curPhone] || buyerMap[curUser];
 
+      const unlockedSets = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]") : [];
+      const isSetIndividuallyUnlocked = unlockedSets.some((id) =>
+        id?.toString() === examId?.toString() ||
+        id?.toString() === currentExamSet?.id?.toString() ||
+        id?.toString() === currentExamSet?.name?.toString() ||
+        id?.toString() === targetSetName?.toString() ||
+        (typeof examId === "string" && id?.toString() === decodeURIComponent(examId))
+      );
+
       const hasPaidExam = Boolean(
+        isSetIndividuallyUnlocked ||
         buyerInfo?.isBuyer ||
         buyerInfo?.hasPurchased ||
+        (typeof window !== 'undefined' && localStorage.getItem("hasPurchasedExamAccess") === "true") ||
         (!isFreeGuest && savedPkg && !savedPkg.toLowerCase().includes("free"))
       );
 
       if (isFreeGuest && !hasPaidExam) {
-        alert("Access Restricted: UBT & Mock tests require a purchased package. Please purchase an exam package to unlock full student access.");
+        alert("Access Restricted: UBT & Mock tests require a purchased package or individual set unlock. Please unlock this set via eSewa to take the exam.");
         router.push("/student");
         return;
       }
 
-      // Check Package Expiry Date Authorization
-      const savedExpDate = typeof window !== 'undefined' ? localStorage.getItem("currentStudentExpiryDate") : null;
-      if (savedExpDate && savedExpDate !== 'Active' && !savedExpDate.toLowerCase().includes("lifetime") && !isNaN(new Date(savedExpDate).getTime())) {
-        const isExp = new Date(savedExpDate + 'T23:59:59') < new Date();
-        if (isExp) {
-          alert(`Access Restricted: Your package expired on ${savedExpDate}. Please renew your package with your institute to take this exam.`);
-          router.push("/student");
-          return;
+      // Check Package Expiry Date Authorization (bypassed if individually unlocked)
+      if (!isSetIndividuallyUnlocked) {
+        const savedExpDate = typeof window !== 'undefined' ? localStorage.getItem("currentStudentExpiryDate") : null;
+        if (savedExpDate && savedExpDate !== 'Active' && !savedExpDate.toLowerCase().includes("lifetime") && !isNaN(new Date(savedExpDate).getTime())) {
+          const isExp = new Date(savedExpDate + 'T23:59:59') < new Date();
+          if (isExp) {
+            alert(`Access Restricted: Your package expired on ${savedExpDate}. Please renew your package with your institute to take this exam.`);
+            router.push("/student");
+            return;
+          }
         }
       }
 
