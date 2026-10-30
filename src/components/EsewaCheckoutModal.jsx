@@ -26,6 +26,7 @@ export default function EsewaCheckoutModal({
   const [selectedType, setSelectedType] = useState(item?.type || "set");
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isQrZoomed, setIsQrZoomed] = useState(false);
+  const [driveReceiptLink, setDriveReceiptLink] = useState("");
 
   const esewaNumber = "9768444902";
   const esewaAccountName = "Deepak Bhatt";
@@ -38,6 +39,7 @@ export default function EsewaCheckoutModal({
       setIsQuerySubmitted(false);
       setIsProcessing(false);
       setTxnId("");
+      setDriveReceiptLink("");
       setScreenshotFile(null);
       setScreenshotPreview(null);
       setScreenshotUrl("");
@@ -113,6 +115,7 @@ export default function EsewaCheckoutModal({
     try {
       const cleanTxn = txnId.trim().toUpperCase();
       const curPhone = senderPhone.trim() || studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "9800000000" : "9800000000");
+      const screenshotLocation = driveReceiptLink.trim() || driveFolderUrl;
 
       // 1. Submit to server API
       await fetch("/api/payment/query", {
@@ -126,8 +129,9 @@ export default function EsewaCheckoutModal({
           itemType: selectedType,
           amount: typeof itemPrice === "number" ? itemPrice : 40,
           txnId: cleanTxn,
-          screenshotUrl: finalScreenshotUrl,
-          driveFolderUrl
+          screenshotUrl: screenshotLocation,
+          driveFolderUrl,
+          driveReceiptLink: driveReceiptLink.trim()
         })
       }).catch((e) => console.warn("API query notice:", e));
 
@@ -140,9 +144,10 @@ export default function EsewaCheckoutModal({
         message: `Student ${studentName || "Student"} (${curPhone}) submitted an eSewa payment query.\n\n` +
                  `Set/Package: ${itemName} (${formattedPrice})\n` +
                  `eSewa Transaction ID: ${cleanTxn}\n` +
-                 `Payment Screenshot: ${finalScreenshotUrl ? "Uploaded" : "Attached"}\n` +
-                 `Google Drive Receipts Folder: ${driveFolderUrl}\n\n` +
-                 `Please verify the receipt and click 'Confirm & Release UBT' below to unlock.`,
+                 `Screenshot Storage: Google Drive Folder\n` +
+                 `Google Drive Folder: ${driveFolderUrl}\n` +
+                 (driveReceiptLink.trim() ? `Uploaded File / Link: ${driveReceiptLink.trim()}\n\n` : `\n`) +
+                 `Please check the Google Drive Receipts Folder and click 'Confirm & Release UBT' below to unlock.`,
         studentName: studentName || "Student",
         studentPhone: curPhone,
         itemName,
@@ -150,8 +155,9 @@ export default function EsewaCheckoutModal({
         itemType: selectedType,
         amount: itemPrice,
         txnId: cleanTxn,
-        screenshotUrl: finalScreenshotUrl,
+        screenshotUrl: screenshotLocation,
         driveFolderUrl,
+        driveReceiptLink: driveReceiptLink.trim(),
         status: "Pending", // "Pending" | "Released" | "Rejected"
         read: false,
         date: new Date().toLocaleString()
@@ -641,6 +647,93 @@ export default function EsewaCheckoutModal({
                           <span>Google Drive Receipts Folder ↗</span>
                         </a>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Google Drive Upload Screenshot Box */}
+                  <div
+                    style={{
+                      backgroundColor: "#f0f7ff",
+                      border: "1.5px solid #93c5fd",
+                      borderRadius: "12px",
+                      padding: "14px 16px",
+                      marginBottom: "16px"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                      <div
+                        style={{
+                          backgroundColor: "#2563eb",
+                          color: "#ffffff",
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "16px",
+                          flexShrink: 0
+                        }}
+                      >
+                        📁
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "13.5px", fontWeight: "800", color: "#1e3a8a" }}>
+                          Store Screenshot in Google Drive
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#2563eb" }}>
+                          Receipts are stored directly in Google Drive (not on website server)
+                        </div>
+                      </div>
+                    </div>
+
+                    <p style={{ margin: "0 0 10px 0", fontSize: "12px", color: "#334155", lineHeight: "1.4" }}>
+                      Please click below to open the official Google Drive folder and upload your payment screenshot:
+                    </p>
+
+                    <a
+                      href={driveFolderUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        backgroundColor: "#2563eb",
+                        color: "#ffffff",
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        fontWeight: "800",
+                        fontSize: "13px",
+                        textDecoration: "none",
+                        boxShadow: "0 2px 6px rgba(37, 99, 235, 0.3)",
+                        marginBottom: "10px",
+                        boxSizing: "border-box"
+                      }}
+                    >
+                      <span>📁</span>
+                      <span>Click to Open &amp; Upload to Google Drive Folder ↗</span>
+                    </a>
+
+                    <div style={{ marginTop: "8px" }}>
+                      <label style={{ display: "block", fontSize: "11.5px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
+                        Google Drive File Name / Link (Optional):
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. MyReceipt.jpg or pasted Drive link"
+                        value={driveReceiptLink}
+                        onChange={(e) => setDriveReceiptLink(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #cbd5e1",
+                          fontSize: "12.5px",
+                          boxSizing: "border-box"
+                        }}
+                      />
                     </div>
                   </div>
 

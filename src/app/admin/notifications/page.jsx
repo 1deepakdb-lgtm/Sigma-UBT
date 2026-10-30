@@ -523,10 +523,11 @@ const AdminNotifications = () => {
                   {/* Screenshot Preview & Google Drive Folder Link */}
                   <div style={{ backgroundColor: "#ffffff", padding: "12px", borderRadius: "8px", border: "1px solid #e0f2fe", marginBottom: "14px" }}>
                     <div style={{ fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "8px" }}>
-                      Payment Screenshot Proof
+                      Payment Screenshot Proof (Stored in Google Drive)
                     </div>
 
-                    {selected.screenshotUrl ? (
+                    {/* Check if screenshot is direct image or stored in Google Drive */}
+                    {selected.screenshotUrl && (selected.screenshotUrl.startsWith("data:image") || selected.screenshotUrl.startsWith("/uploads/") || selected.screenshotUrl.endsWith(".jpg") || selected.screenshotUrl.endsWith(".png") || selected.screenshotUrl.endsWith(".webp")) ? (
                       <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", marginBottom: "10px" }}>
                         <img
                           src={selected.screenshotUrl}
@@ -565,9 +566,19 @@ const AdminNotifications = () => {
                         </div>
                       </div>
                     ) : (
-                      <p style={{ margin: "0 0 10px 0", fontSize: "12px", color: "#64748b", fontStyle: "italic" }}>
-                        Screenshot uploaded to Google Drive folder or submitted via eSewa Txn ID.
-                      </p>
+                      <div style={{ backgroundColor: "#f0f7ff", border: "1px solid #bfdbfe", borderRadius: "8px", padding: "10px 14px", marginBottom: "12px" }}>
+                        <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#1e40af" }}>
+                          📁 Stored in Google Drive Receipts Folder
+                        </div>
+                        <p style={{ margin: "4px 0 6px 0", fontSize: "11.5px", color: "#3b82f6" }}>
+                          Payment screenshots are stored directly in Google Drive (not stored on website server).
+                        </p>
+                        {selected.driveReceiptLink && (
+                          <div style={{ fontSize: "12px", color: "#0f172a", marginTop: "4px" }}>
+                            Student File/Link: <strong>{selected.driveReceiptLink}</strong>
+                          </div>
+                        )}
+                      </div>
                     )}
 
                     {/* External Action Links: Google Drive & WhatsApp */}
