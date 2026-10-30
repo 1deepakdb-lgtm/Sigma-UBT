@@ -264,6 +264,78 @@ export default function OfficialPortalButtons({
     ? JAPANESE_PORTAL_ITEMS
     : PORTAL_ITEMS;
 
+  const renderPortalCard = (card) => (
+    <a
+      key={card.label}
+      href={card.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        background: card.gradient,
+        borderRadius: '16px',
+        padding: '20px 14px 18px 14px',
+        textAlign: 'center',
+        textDecoration: 'none',
+        color: 'white',
+        boxShadow: `0 6px 18px ${card.shadowColor}`,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '168px',
+        minHeight: '154px',
+        transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        cursor: 'pointer',
+        border: '1px solid rgba(255, 255, 255, 0.22)',
+        userSelect: 'none'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-6px) scale(1.03)';
+        e.currentTarget.style.boxShadow = card.hoverShadow;
+        const iconBox = e.currentTarget.querySelector('.portal-icon-container');
+        if (iconBox) iconBox.style.transform = 'scale(1.12) rotate(-3deg)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+        e.currentTarget.style.boxShadow = `0 6px 18px ${card.shadowColor}`;
+        const iconBox = e.currentTarget.querySelector('.portal-icon-container');
+        if (iconBox) iconBox.style.transform = 'scale(1) rotate(0deg)';
+      }}
+    >
+      {/* Clean White Squircle to make the Colorful Artwork POP */}
+      <div
+        className="portal-icon-container"
+        style={{
+          width: '70px',
+          height: '70px',
+          backgroundColor: '#ffffff',
+          border: '2px solid rgba(255, 255, 255, 0.85)',
+          borderRadius: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 12px auto',
+          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.20), 0 2px 6px rgba(0, 0, 0, 0.08)',
+          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        }}
+      >
+        <PortalIcon type={card.iconType} />
+      </div>
+      <h4
+        style={{
+          margin: 0,
+          fontSize: '14px',
+          fontWeight: '700',
+          lineHeight: '1.3',
+          letterSpacing: '0.2px',
+          textShadow: '0 1px 3px rgba(0,0,0,0.30)'
+        }}
+      >
+        {card.label}
+      </h4>
+    </a>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', ...style }}>
       {/* Optional Track Selector if 'both' and enabled */}
@@ -332,80 +404,23 @@ export default function OfficialPortalButtons({
         </div>
       )}
 
-      {/* Grid of portal cards */}
-      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '16px', width: '100%' }}>
-        {displayedItems.map((card) => (
-          <a
-            key={card.label}
-            href={card.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              background: card.gradient,
-              borderRadius: '16px',
-              padding: '20px 14px 18px 14px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              color: 'white',
-              boxShadow: `0 6px 18px ${card.shadowColor}`,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '168px',
-              minHeight: '154px',
-              transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              cursor: 'pointer',
-              border: '1px solid rgba(255, 255, 255, 0.22)',
-              userSelect: 'none'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-6px) scale(1.03)';
-              e.currentTarget.style.boxShadow = card.hoverShadow;
-              const iconBox = e.currentTarget.querySelector('.portal-icon-container');
-              if (iconBox) iconBox.style.transform = 'scale(1.12) rotate(-3deg)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0) scale(1)';
-              e.currentTarget.style.boxShadow = `0 6px 18px ${card.shadowColor}`;
-              const iconBox = e.currentTarget.querySelector('.portal-icon-container');
-              if (iconBox) iconBox.style.transform = 'scale(1) rotate(0deg)';
-            }}
-          >
-            {/* Clean White Squircle to make the Colorful Artwork POP */}
-            <div
-              className="portal-icon-container"
-              style={{
-                width: '70px',
-                height: '70px',
-                backgroundColor: '#ffffff',
-                border: '2px solid rgba(255, 255, 255, 0.85)',
-                borderRadius: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 12px auto',
-                boxShadow: '0 8px 20px rgba(0, 0, 0, 0.20), 0 2px 6px rgba(0, 0, 0, 0.08)',
-                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
-              }}
-            >
-              <PortalIcon type={card.iconType} />
-            </div>
-            <h4
-              style={{
-                margin: 0,
-                fontSize: '14px',
-                fontWeight: '700',
-                lineHeight: '1.3',
-                letterSpacing: '0.2px',
-                textShadow: '0 1px 3px rgba(0,0,0,0.30)'
-              }}
-            >
-              {card.label}
-            </h4>
-          </a>
-        ))}
-      </div>
+      {/* Grid of portal cards: 4, 4 divided in two lines */}
+      {displayedItems.length > 4 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', width: '100%' }}>
+          {/* Line 1: First 4 cards (Korean Portals) */}
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '16px', width: '100%' }}>
+            {displayedItems.slice(0, 4).map(renderPortalCard)}
+          </div>
+          {/* Line 2: Next 4 cards (Japanese Portals) */}
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '16px', width: '100%' }}>
+            {displayedItems.slice(4, 8).map(renderPortalCard)}
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '16px', width: '100%' }}>
+          {displayedItems.map(renderPortalCard)}
+        </div>
+      )}
     </div>
   );
 }
