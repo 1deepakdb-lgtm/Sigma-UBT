@@ -894,20 +894,15 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
 
   return (
     <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1.5px solid #e2e8f0', padding: '20px', boxShadow: '0 4px 16px rgba(15,23,42,0.06)' }}>
-      {/* Title & Introduction */}
+      {/* Title & Action */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '16px', marginBottom: '18px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '26px' }}>🎧</span>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#1e3a8a' }}>
-                EPS-TOPIK Korean Listening Synchronizer (Q21 – Q40)
-              </h2>
-              <p style={{ margin: '3px 0 0 0', fontSize: '12.5px', color: '#64748b' }}>
-                Upload or generate Korean audio for Questions 21 to 40, set gaps (3s options, 7s questions), and merge into a full 15–20 minute listening exam track.
-              </p>
-            </div>
-          </div>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#1e3a8a' }}>
+            EPS-TOPIK Korean Listening Synchronizer (Q21 – Q40)
+          </h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: '#64748b' }}>
+            Configure Questions 21 to 40, set timing intervals, and export master listening track.
+          </p>
         </div>
 
         {/* Global Action: Synchronize All 20 Questions */}
@@ -921,27 +916,21 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '10px',
-            padding: '12px 22px',
-            fontWeight: '800',
-            fontSize: '13.5px',
+            borderRadius: '9px',
+            padding: '11px 22px',
+            fontWeight: '700',
+            fontSize: '13px',
             cursor: isSynthesizing ? 'wait' : 'pointer',
-            boxShadow: '0 4px 12px rgba(22, 163, 74, 0.35)',
+            boxShadow: '0 3px 10px rgba(22, 163, 74, 0.3)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
           }}
         >
           {isSynthesizing ? (
-            <>
-              <span className="spinner">⏳</span>
-              <span>Synchronizing Q21–Q40... ({synthProgress}%)</span>
-            </>
+            <span>Synchronizing (Q21–Q40)... {synthProgress}%</span>
           ) : (
-            <>
-              <span>🚀</span>
-              <span>Merge &amp; Generate All (Q21–Q40) in 1 Download File</span>
-            </>
+            <span>Merge &amp; Generate Audio Track (Q21–Q40)</span>
           )}
         </button>
       </div>
@@ -959,15 +948,15 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         </div>
       )}
 
-      {/* MASTER AUDIO PLAYER & EXPORT BAR (When generated) */}
+      {/* MASTER AUDIO PLAYER & EXPORT BAR */}
       {masterAudioUrl && (
         <div style={{
           backgroundColor: '#0f172a',
           color: '#ffffff',
-          borderRadius: '14px',
-          padding: '18px 22px',
-          marginBottom: '24px',
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.25)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '22px',
+          boxShadow: '0 6px 20px rgba(15, 23, 42, 0.2)',
           border: '1.5px solid #334155'
         }}>
           <audio
@@ -983,29 +972,29 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 type="button"
                 onClick={toggleMasterPlay}
                 style={{
-                  width: '46px',
-                  height: '46px',
+                  width: '42px',
+                  height: '42px',
                   borderRadius: '50%',
                   backgroundColor: '#22c55e',
                   color: '#ffffff',
                   border: 'none',
-                  fontSize: '20px',
+                  fontSize: '16px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)'
+                  boxShadow: '0 3px 10px rgba(34, 197, 94, 0.35)'
                 }}
               >
                 {isMasterPlaying ? '⏸' : '▶'}
               </button>
               <div>
-                <div style={{ fontWeight: '800', fontSize: '15.5px', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>🎧 Complete Exam Track: Q21 to Q40 Merged</span>
-                  <span style={{ backgroundColor: '#15803d', color: '#ffffff', fontSize: '11px', padding: '2px 8px', borderRadius: '12px', fontWeight: '800' }}>20 Questions in 1 File</span>
+                <div style={{ fontWeight: '800', fontSize: '14.5px', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Master Listening Track (Q21 – Q40)</span>
+                  <span style={{ backgroundColor: '#15803d', color: '#ffffff', fontSize: '10.5px', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>20 Questions Merged</span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '3px' }}>
-                  Total Duration: {formatTime(masterDuration)} ({Math.round(masterDuration / 60)} minutes) · Standard 44.1kHz Stereo PCM WAV
+                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
+                  Duration: {formatTime(masterDuration)} ({Math.round(masterDuration / 60)} min) · 44.1kHz Stereo WAV
                 </div>
               </div>
             </div>
@@ -1017,20 +1006,18 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 style={{
                   background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                   color: '#ffffff',
-                  padding: '11px 22px',
-                  borderRadius: '9px',
-                  fontWeight: '800',
-                  fontSize: '13.5px',
+                  padding: '9px 18px',
+                  borderRadius: '8px',
+                  fontWeight: '700',
+                  fontSize: '12.5px',
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.45)',
-                  border: '1px solid rgba(255,255,255,0.2)'
+                  gap: '6px',
+                  boxShadow: '0 3px 10px rgba(37, 99, 235, 0.35)'
                 }}
               >
-                <span style={{ fontSize: '16px' }}>⬇️</span>
-                <span>Download Merged Q21–Q40 Audio (.wav)</span>
+                Download Audio (.wav)
               </a>
             </div>
           </div>
@@ -1056,44 +1043,37 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         </div>
       )}
 
-      {/* Global Timing Configuration & Bell Engine */}
+      {/* Global Timing Configuration */}
       <div style={{
         backgroundColor: '#f8fafc',
-        borderRadius: '12px',
-        border: '1.5px solid #cbd5e1',
-        padding: '16px 20px',
-        marginBottom: '20px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        borderRadius: '10px',
+        border: '1px solid #cbd5e1',
+        padding: '14px 18px',
+        marginBottom: '20px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>⏱️</span>
-            <span style={{ fontSize: '13.5px', fontWeight: '900', color: '#1e3a8a' }}>
-              EPS Exam Timing &amp; Bell Engine Configuration
-            </span>
-          </div>
-          <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
-            Bell ➔ 1s Gap ➔ Q# ➔ 1s Gap ➔ Prompt ➔ 3s Gap ➔ Options ➔ 7s Gap
+        <div style={{ marginBottom: '10px' }}>
+          <span style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
+            Exam Timing &amp; Sequence Settings
           </span>
         </div>
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '14px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '12px',
           alignItems: 'start'
         }}>
-          {/* 1. BELL CHIME & 1S GAP */}
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+          {/* 1. BELL CHIME */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '7px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <label style={{ fontSize: '12px', fontWeight: '800', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={includeBell}
                   onChange={(e) => setIncludeBell(e.target.checked)}
                   style={{ accentColor: '#1e3a8a' }}
                 />
-                <span>🔔 Exam Bell Chime</span>
+                <span>Exam Bell Chime</span>
               </label>
               <button
                 type="button"
@@ -1102,19 +1082,19 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                   backgroundColor: '#f1f5f9',
                   color: '#1e293b',
                   border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
+                  borderRadius: '5px',
                   padding: '3px 8px',
                   fontSize: '11px',
                   fontWeight: '700',
                   cursor: 'pointer'
                 }}
               >
-                🔊 Test Bell
+                Test Bell
               </button>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-              <label style={{ fontSize: '11.5px', color: '#475569', fontWeight: '700' }}>Post-Bell Gap:</label>
+              <label style={{ fontSize: '11.5px', color: '#475569', fontWeight: '600' }}>Gap after Bell:</label>
               <input
                 type="number"
                 min="0.5"
@@ -1122,17 +1102,16 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 step="0.5"
                 value={bellGapSec}
                 onChange={(e) => setBellGapSec(parseFloat(e.target.value) || 1.0)}
-                style={{ width: '56px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '800', fontSize: '12px' }}
+                style={{ width: '54px', padding: '3px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700', fontSize: '12px' }}
               />
-              <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700' }}>sec (1.0s)</span>
+              <span style={{ fontSize: '11.5px', color: '#64748b' }}>sec</span>
             </div>
 
-            {/* Custom Bell File Upload / Default indicator */}
             <div style={{ fontSize: '11px', color: '#64748b' }}>
               {customBellFileName ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#0284c7', fontWeight: '700' }}>📁 {customBellFileName.slice(0, 15)}...</span>
-                  <button type="button" onClick={handleResetToDefaultBell} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '11px' }}>✕ Reset</button>
+                  <span style={{ color: '#0284c7', fontWeight: '600' }}>{customBellFileName.slice(0, 16)}</span>
+                  <button type="button" onClick={handleResetToDefaultBell} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '11px' }}>Reset</button>
                 </div>
               ) : (
                 <label style={{ color: '#2563eb', cursor: 'pointer', textDecoration: 'underline' }}>
@@ -1143,22 +1122,22 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             </div>
           </div>
 
-          {/* 2. QUESTION NUMBER ANNOUNCEMENT & 1S GAP */}
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+          {/* 2. QUESTION NUMBER */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '7px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <label style={{ fontSize: '12px', fontWeight: '800', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={includeQuestionNumber}
                   onChange={(e) => setIncludeQuestionNumber(e.target.checked)}
                   style={{ accentColor: '#1e3a8a' }}
                 />
-                <span>🔢 Number Voice (21번)</span>
+                <span>Number Voice (21번)</span>
               </label>
               <select
                 value={qNumFormat}
                 onChange={(e) => setQNumFormat(e.target.value)}
-                style={{ fontSize: '11px', padding: '2px 4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700' }}
+                style={{ fontSize: '11px', padding: '2px 4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '600' }}
               >
                 <option value="short">21번.</option>
                 <option value="full">21번 문제입니다.</option>
@@ -1166,7 +1145,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <label style={{ fontSize: '11.5px', color: '#475569', fontWeight: '700' }}>Post-Number Gap:</label>
+              <label style={{ fontSize: '11.5px', color: '#475569', fontWeight: '600' }}>Gap after Number:</label>
               <input
                 type="number"
                 min="0.5"
@@ -1174,16 +1153,16 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 step="0.5"
                 value={qNumGapSec}
                 onChange={(e) => setQNumGapSec(parseFloat(e.target.value) || 1.0)}
-                style={{ width: '56px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '800', fontSize: '12px' }}
+                style={{ width: '54px', padding: '3px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700', fontSize: '12px' }}
               />
-              <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700' }}>sec (1.0s)</span>
+              <span style={{ fontSize: '11.5px', color: '#64748b' }}>sec</span>
             </div>
           </div>
 
-          {/* 3. OPTION GAP (3.0s) */}
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
-              ⏱️ Option Gap
+          {/* 3. OPTION GAP */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '7px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
+              Option Gap
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
               <input
@@ -1193,17 +1172,17 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 step="0.5"
                 value={optionGapSec}
                 onChange={(e) => setOptionGapSec(parseFloat(e.target.value) || 3.0)}
-                style={{ width: '56px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '800', fontSize: '12px' }}
+                style={{ width: '54px', padding: '3px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700', fontSize: '12px' }}
               />
-              <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700' }}>seconds (3.0s)</span>
+              <span style={{ fontSize: '11.5px', color: '#64748b' }}>seconds</span>
             </div>
-            <div style={{ fontSize: '11px', color: '#64748b' }}>Between Prompt &amp; Options 1..4</div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>Between prompt and options</div>
           </div>
 
-          {/* 4. INTER-QUESTION GAP (7.0s) */}
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
-              ⏱️ Inter-Question Gap
+          {/* 4. INTER-QUESTION GAP */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '7px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
+              Inter-Question Gap
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
               <input
@@ -1213,23 +1192,23 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 step="0.5"
                 value={questionGapSec}
                 onChange={(e) => setQuestionGapSec(parseFloat(e.target.value) || 7.0)}
-                style={{ width: '56px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '800', fontSize: '12px' }}
+                style={{ width: '54px', padding: '3px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700', fontSize: '12px' }}
               />
-              <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700' }}>seconds (7.0s)</span>
+              <span style={{ fontSize: '11.5px', color: '#64748b' }}>seconds</span>
             </div>
-            <div style={{ fontSize: '11px', color: '#64748b' }}>Gap between Q21 and Q22 (6-8s)</div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>Between questions (6–8s)</div>
           </div>
 
-          {/* 5. AI VOICE & SPEED */}
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
-              🎙️ Korean Voice &amp; Speed
+          {/* 5. VOICE & SPEED */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '7px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
+              Voice Model &amp; Speed
             </label>
             <div style={{ display: 'flex', gap: '6px' }}>
               <select
                 value={voiceGender}
                 onChange={(e) => setVoiceGender(e.target.value)}
-                style={{ flex: 1, padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700', fontSize: '11.5px' }}
+                style={{ flex: 1, padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '600', fontSize: '11.5px' }}
               >
                 <option value="female">SunHi (Female)</option>
                 <option value="male">InJoon (Male)</option>
@@ -1237,7 +1216,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               <select
                 value={speakingRate}
                 onChange={(e) => setSpeakingRate(e.target.value)}
-                style={{ flex: 1, padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700', fontSize: '11.5px' }}
+                style={{ flex: 1, padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '600', fontSize: '11.5px' }}
               >
                 <option value="-4%">Exam Pace (-4%)</option>
                 <option value="+0%">Normal (1.0x)</option>
@@ -1248,18 +1227,15 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         </div>
       </div>
 
-      {/* QUESTION NAVIGATOR PILLS (Questions 21 through 40) */}
-      <div style={{ marginBottom: '22px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '800', color: '#334155' }}>
-            Select Question to Configure:
-          </span>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>
-            Green badge indicates audio is uploaded/generated
+      {/* QUESTION NAVIGATOR PILLS */}
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '8px' }}>
+          <span style={{ fontSize: '12.5px', fontWeight: '800', color: '#334155' }}>
+            Select Question:
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
           {questions.map((q) => {
             const isSelected = q.qNum === activeQNum;
             const hasQAudio = Boolean(q.questionAudioUrl);
@@ -1272,8 +1248,8 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 type="button"
                 onClick={() => setActiveQNum(q.qNum)}
                 style={{
-                  padding: '7px 11px',
-                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
                   border: isSelected
                     ? '2px solid #2563eb'
                     : isComplete
@@ -1282,25 +1258,20 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                   backgroundColor: isSelected
                     ? '#2563eb'
                     : isComplete
-                    ? '#dcfce7'
+                    ? '#f0fdf4'
                     : '#ffffff',
                   color: isSelected
                     ? '#ffffff'
                     : isComplete
                     ? '#166534'
                     : '#334155',
-                  fontWeight: isSelected ? '800' : '700',
-                  fontSize: '12.5px',
+                  fontWeight: isSelected ? '800' : '600',
+                  fontSize: '12px',
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  boxShadow: isSelected ? '0 2px 8px rgba(37,99,235,0.3)' : 'none',
                   transition: 'all 0.15s ease'
                 }}
               >
-                <span>Q{q.qNum}</span>
-                {isComplete && <span style={{ fontSize: '10px' }}>✓</span>}
+                Q{q.qNum}
               </button>
             );
           })}
@@ -1308,14 +1279,14 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       </div>
 
       {/* ACTIVE QUESTION EDITOR CARD */}
-      <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '12px', padding: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         {/* Question Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ backgroundColor: '#1e3a8a', color: '#ffffff', padding: '4px 10px', borderRadius: '6px', fontWeight: '900', fontSize: '14px' }}>
+            <span style={{ backgroundColor: '#1e3a8a', color: '#ffffff', padding: '3px 9px', borderRadius: '5px', fontWeight: '800', fontSize: '13px' }}>
               Question {activeQNum}
             </span>
-            <span style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
               {currentQuestion.title}
             </span>
           </div>
@@ -1326,53 +1297,50 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               disabled={activeQNum <= 21}
               onClick={() => setActiveQNum(prev => Math.max(21, prev - 1))}
               style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
+                padding: '5px 12px',
+                borderRadius: '5px',
                 border: '1px solid #cbd5e1',
                 backgroundColor: activeQNum <= 21 ? '#f8fafc' : '#ffffff',
                 color: activeQNum <= 21 ? '#94a3b8' : '#334155',
-                fontWeight: '700',
+                fontWeight: '600',
                 fontSize: '12px',
                 cursor: activeQNum <= 21 ? 'not-allowed' : 'pointer'
               }}
             >
-              ◀ Previous (Q{activeQNum - 1})
+              Previous (Q{activeQNum - 1})
             </button>
             <button
               type="button"
               disabled={activeQNum >= 40}
               onClick={() => setActiveQNum(prev => Math.min(40, prev + 1))}
               style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
+                padding: '5px 12px',
+                borderRadius: '5px',
                 border: '1px solid #cbd5e1',
                 backgroundColor: activeQNum >= 40 ? '#f8fafc' : '#ffffff',
                 color: activeQNum >= 40 ? '#94a3b8' : '#334155',
-                fontWeight: '700',
+                fontWeight: '600',
                 fontSize: '12px',
                 cursor: activeQNum >= 40 ? 'not-allowed' : 'pointer'
               }}
             >
-              Next (Q{activeQNum + 1}) ▶
+              Next (Q{activeQNum + 1})
             </button>
           </div>
         </div>
 
-        {/* INTERACTIVE SEQUENCE FLOW & LIVE PREVIEW BAR FOR THIS QUESTION */}
+        {/* SEQUENCE FLOW PREVIEW BAR FOR THIS QUESTION */}
         <div style={{
-          backgroundColor: '#eff6ff',
-          border: '1.5px solid #bfdbfe',
-          borderRadius: '10px',
-          padding: '12px 16px',
-          marginBottom: '18px'
+          backgroundColor: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '10px 14px',
+          marginBottom: '16px'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '16px' }}>🎬</span>
-              <span style={{ fontSize: '13px', fontWeight: '800', color: '#1e40af' }}>
-                Question {activeQNum} Sequence Flow &amp; Timing Verification:
-              </span>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a' }}>
+              Question {activeQNum} Sequence Flow:
+            </span>
 
             <button
               type="button"
@@ -1381,213 +1349,189 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 backgroundColor: previewStage ? '#dc2626' : '#2563eb',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '6px',
-                padding: '6px 14px',
-                fontSize: '12px',
-                fontWeight: '800',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 6px rgba(37,99,235,0.3)'
+                borderRadius: '5px',
+                padding: '5px 12px',
+                fontSize: '11.5px',
+                fontWeight: '700',
+                cursor: 'pointer'
               }}
             >
-              <span>{previewStage ? '⏹ Stop Sequence' : `▶ Test Q${activeQNum} Full Sequence (Bell ➔ 1s ➔ 21번 ➔ 1s ➔ ...)`}</span>
+              {previewStage ? 'Stop Preview' : `Test Sequence (Q${activeQNum})`}
             </button>
           </div>
 
-          {/* Visual Sequence Chain */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11.5px', fontWeight: '700' }}>
-            {/* Bell */}
+          {/* Clean Sequence Pills */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', fontSize: '11.5px', fontWeight: '600' }}>
             <span style={{
-              padding: '4px 8px',
-              borderRadius: '6px',
-              backgroundColor: previewStage === 'bell' ? '#fbbf24' : '#ffffff',
+              padding: '3px 7px',
+              borderRadius: '5px',
+              backgroundColor: previewStage === 'bell' ? '#fde68a' : '#ffffff',
               color: previewStage === 'bell' ? '#78350f' : '#1e3a8a',
-              border: previewStage === 'bell' ? '1.5px solid #d97706' : '1px solid #cbd5e1',
-              boxShadow: previewStage === 'bell' ? '0 0 8px rgba(245, 158, 11, 0.5)' : 'none',
-              transition: 'all 0.15s'
+              border: '1px solid #cbd5e1'
             }}>
-              🔔 Bell
+              Bell
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* 1s Gap */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
-              backgroundColor: previewStage === 'gap-bell' ? '#86efac' : '#f1f5f9',
-              color: previewStage === 'gap-bell' ? '#14532d' : '#64748b',
-              border: previewStage === 'gap-bell' ? '1.5px solid #16a34a' : '1px solid #e2e8f0'
+              padding: '3px 6px',
+              borderRadius: '5px',
+              backgroundColor: previewStage === 'gap-bell' ? '#bbf7d0' : '#f1f5f9',
+              color: '#334155'
             }}>
-              ⏱️ {bellGapSec}s Gap
+              {bellGapSec}s Gap
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* Question Number */}
             <span style={{
-              padding: '4px 8px',
-              borderRadius: '6px',
-              backgroundColor: previewStage === 'qnum' ? '#93c5fd' : '#ffffff',
-              color: previewStage === 'qnum' ? '#1e3a8a' : '#1e3a8a',
-              border: previewStage === 'qnum' ? '1.5px solid #2563eb' : '1px solid #cbd5e1'
+              padding: '3px 7px',
+              borderRadius: '5px',
+              backgroundColor: previewStage === 'qnum' ? '#bfdbfe' : '#ffffff',
+              color: '#1e3a8a',
+              border: '1px solid #cbd5e1'
             }}>
-              🔢 {activeQNum}번
+              {activeQNum}번
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* 1s Gap */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
-              backgroundColor: previewStage === 'gap-qnum' ? '#86efac' : '#f1f5f9',
-              color: previewStage === 'gap-qnum' ? '#14532d' : '#64748b',
-              border: previewStage === 'gap-qnum' ? '1.5px solid #16a34a' : '1px solid #e2e8f0'
+              padding: '3px 6px',
+              borderRadius: '5px',
+              backgroundColor: previewStage === 'gap-qnum' ? '#bbf7d0' : '#f1f5f9',
+              color: '#334155'
             }}>
-              ⏱️ {qNumGapSec}s Gap
+              {qNumGapSec}s Gap
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* Question Prompt */}
             <span style={{
-              padding: '4px 8px',
-              borderRadius: '6px',
+              padding: '3px 7px',
+              borderRadius: '5px',
               backgroundColor: previewStage === 'prompt' ? '#bae6fd' : '#ffffff',
-              color: previewStage === 'prompt' ? '#0369a1' : '#0369a1',
-              border: previewStage === 'prompt' ? '1.5px solid #0284c7' : '1px solid #cbd5e1'
+              color: '#0369a1',
+              border: '1px solid #cbd5e1'
             }}>
-              📢 Question Audio
+              Question Audio
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* 3s Gap */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
-              backgroundColor: previewStage === 'gap-prompt' ? '#86efac' : '#f1f5f9',
-              color: previewStage === 'gap-prompt' ? '#14532d' : '#64748b',
-              border: previewStage === 'gap-prompt' ? '1.5px solid #16a34a' : '1px solid #e2e8f0'
+              padding: '3px 6px',
+              borderRadius: '5px',
+              backgroundColor: previewStage === 'gap-prompt' ? '#bbf7d0' : '#f1f5f9',
+              color: '#334155'
             }}>
-              ⏱️ {optionGapSec}s Gap
+              {optionGapSec}s Gap
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* Option 1 */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
+              padding: '3px 6px',
+              borderRadius: '5px',
               backgroundColor: previewStage === 'opt-1' ? '#c7d2fe' : '#ffffff',
               color: '#3730a3',
-              border: previewStage === 'opt-1' ? '1.5px solid #4f46e5' : '1px solid #cbd5e1'
+              border: '1px solid #cbd5e1'
             }}>
-              1️⃣ Opt 1
+              Option 1
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* 3s Gap */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
-              backgroundColor: previewStage === 'gap-opt-1' ? '#86efac' : '#f1f5f9',
-              color: previewStage === 'gap-opt-1' ? '#14532d' : '#64748b'
+              padding: '3px 6px',
+              borderRadius: '5px',
+              backgroundColor: previewStage === 'gap-opt-1' ? '#bbf7d0' : '#f1f5f9',
+              color: '#334155'
             }}>
-              ⏱️ {optionGapSec}s
+              {optionGapSec}s
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* Option 2 */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
+              padding: '3px 6px',
+              borderRadius: '5px',
               backgroundColor: previewStage === 'opt-2' ? '#c7d2fe' : '#ffffff',
               color: '#3730a3',
-              border: previewStage === 'opt-2' ? '1.5px solid #4f46e5' : '1px solid #cbd5e1'
+              border: '1px solid #cbd5e1'
             }}>
-              2️⃣ Opt 2
+              Option 2
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* 3s Gap */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
-              backgroundColor: previewStage === 'gap-opt-2' ? '#86efac' : '#f1f5f9',
-              color: previewStage === 'gap-opt-2' ? '#14532d' : '#64748b'
+              padding: '3px 6px',
+              borderRadius: '5px',
+              backgroundColor: previewStage === 'gap-opt-2' ? '#bbf7d0' : '#f1f5f9',
+              color: '#334155'
             }}>
-              ⏱️ {optionGapSec}s
+              {optionGapSec}s
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* Option 3 */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
+              padding: '3px 6px',
+              borderRadius: '5px',
               backgroundColor: previewStage === 'opt-3' ? '#c7d2fe' : '#ffffff',
               color: '#3730a3',
-              border: previewStage === 'opt-3' ? '1.5px solid #4f46e5' : '1px solid #cbd5e1'
+              border: '1px solid #cbd5e1'
             }}>
-              3️⃣ Opt 3
+              Option 3
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* 3s Gap */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
-              backgroundColor: previewStage === 'gap-opt-3' ? '#86efac' : '#f1f5f9',
-              color: previewStage === 'gap-opt-3' ? '#14532d' : '#64748b'
+              padding: '3px 6px',
+              borderRadius: '5px',
+              backgroundColor: previewStage === 'gap-opt-3' ? '#bbf7d0' : '#f1f5f9',
+              color: '#334155'
             }}>
-              ⏱️ {optionGapSec}s
+              {optionGapSec}s
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* Option 4 */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
+              padding: '3px 6px',
+              borderRadius: '5px',
               backgroundColor: previewStage === 'opt-4' ? '#c7d2fe' : '#ffffff',
               color: '#3730a3',
-              border: previewStage === 'opt-4' ? '1.5px solid #4f46e5' : '1px solid #cbd5e1'
+              border: '1px solid #cbd5e1'
             }}>
-              4️⃣ Opt 4
+              Option 4
             </span>
 
-            <span>➔</span>
+            <span style={{ color: '#94a3b8' }}>→</span>
 
-            {/* 7s Gap */}
             <span style={{
-              padding: '4px 6px',
-              borderRadius: '6px',
+              padding: '3px 6px',
+              borderRadius: '5px',
               backgroundColor: '#fef3c7',
               color: '#92400e',
               border: '1px solid #fde68a'
             }}>
-              ⏱️ {questionGapSec}s (Next Q)
+              {questionGapSec}s (Next Q)
             </span>
           </div>
         </div>
 
-        {/* STEP 1: QUESTION AUDIO (PROMPT) */}
-        <div style={{ backgroundColor: '#f0f9ff', border: '1.5px solid #bae6fd', borderRadius: '10px', padding: '16px', marginBottom: '20px' }}>
+        {/* QUESTION AUDIO PROMPT */}
+        <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px', marginBottom: '18px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '800', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>📢</span>
-              <span>1. Question Prompt Audio (Plays First / Default)</span>
+            <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
+              Question Prompt Audio
             </label>
             {currentQuestion.questionDuration > 0 && (
-              <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#0284c7' }}>
                 Duration: {currentQuestion.questionDuration}s
               </span>
             )}
@@ -1599,12 +1543,11 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               value={currentQuestion.questionText || ''}
               onChange={(e) => updateCurrentQuestion({ questionText: e.target.value })}
               placeholder="Enter Korean question text (e.g. 21번 문제입니다. 들은 것을 고르십시오.)"
-              style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13.5px', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '8px 12px', borderRadius: '5px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Generate TTS Button */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             <button
               type="button"
               onClick={handleGenerateQuestionAudio}
@@ -1613,34 +1556,29 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 backgroundColor: '#0284c7',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '6px',
-                padding: '8px 14px',
+                borderRadius: '5px',
+                padding: '7px 14px',
                 fontWeight: '700',
-                fontSize: '12.5px',
-                cursor: generatingKey === 'q' ? 'wait' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
+                fontSize: '12px',
+                cursor: generatingKey === 'q' ? 'wait' : 'pointer'
               }}
             >
-              {generatingKey === 'q' ? '⏳ Generating...' : '🎙️ Generate Speech from Text'}
+              {generatingKey === 'q' ? 'Generating...' : 'Generate Audio'}
             </button>
 
-            {/* Upload File Input */}
             <label style={{
               backgroundColor: '#ffffff',
               color: '#0369a1',
-              border: '1.5px dashed #0284c7',
-              borderRadius: '6px',
-              padding: '7px 14px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '5px',
+              padding: '6px 12px',
               fontWeight: '700',
               fontSize: '12px',
               cursor: 'pointer',
               display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
+              alignItems: 'center'
             }}>
-              <span>📁 Upload Audio File</span>
+              <span>Upload Audio</span>
               <input
                 type="file"
                 accept="audio/*"
@@ -1649,7 +1587,6 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               />
             </label>
 
-            {/* Play Preview */}
             {currentQuestion.questionAudioUrl && (
               <button
                 type="button"
@@ -1658,28 +1595,24 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                   backgroundColor: playingItemKey === `q-${activeQNum}` ? '#dc2626' : '#16a34a',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 14px',
+                  borderRadius: '5px',
+                  padding: '7px 12px',
                   fontWeight: '700',
                   fontSize: '12px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px'
+                  cursor: 'pointer'
                 }}
               >
-                <span>{playingItemKey === `q-${activeQNum}` ? '⏹ Stop' : '▶ Play Preview'}</span>
+                {playingItemKey === `q-${activeQNum}` ? 'Stop' : 'Play Preview'}
               </button>
             )}
           </div>
         </div>
 
-        {/* STEP 2: 4 OPTIONS (OPTION 1, 2, 3, 4) */}
+        {/* 4 OPTIONS */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-            <label style={{ fontSize: '13.5px', fontWeight: '800', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>🔢</span>
-              <span>2. Four Options (3-second gap between each option)</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
+              Options (1 to 4)
             </label>
 
             <button
@@ -1690,34 +1623,30 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 backgroundColor: '#4f46e5',
                 color: '#ffffff',
                 border: 'none',
-                borderRadius: '6px',
-                padding: '6px 14px',
-                fontSize: '12px',
+                borderRadius: '5px',
+                padding: '5px 12px',
+                fontSize: '11.5px',
                 fontWeight: '700',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
+                cursor: 'pointer'
               }}
             >
-              <span>⚡</span>
-              <span>Generate All 4 Options Speech</span>
+              Generate All Options
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
             {currentQuestion.options.map((opt) => (
               <div
                 key={opt.id}
                 style={{
                   backgroundColor: opt.audioUrl ? '#f0fdf4' : '#f8fafc',
                   border: opt.audioUrl ? '1.5px solid #86efac' : '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '12px'
+                  borderRadius: '7px',
+                  padding: '10px'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: '800', fontSize: '13px', color: opt.audioUrl ? '#15803d' : '#334155' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontWeight: '800', fontSize: '12.5px', color: opt.audioUrl ? '#15803d' : '#334155' }}>
                     Option {opt.id}
                   </span>
                   {opt.duration > 0 && (
@@ -1731,11 +1660,11 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                   type="text"
                   value={opt.text}
                   onChange={(e) => updateOption(opt.id, { text: e.target.value })}
-                  placeholder={`Option ${opt.id} Korean text`}
-                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', marginBottom: '8px' }}
+                  placeholder={`Option ${opt.id} text`}
+                  style={{ width: '100%', padding: '6px 9px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12.5px', boxSizing: 'border-box', marginBottom: '8px' }}
                 />
 
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
                   <button
                     type="button"
                     onClick={() => handleGenerateOptionAudio(opt.id, opt.text)}
@@ -1747,12 +1676,12 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                       border: 'none',
                       borderRadius: '4px',
                       padding: '5px 8px',
-                      fontSize: '11.5px',
+                      fontSize: '11px',
                       fontWeight: '700',
                       cursor: 'pointer'
                     }}
                   >
-                    {generatingKey === `opt-${opt.id}` ? '⏳...' : '🎙️ Generate'}
+                    {generatingKey === `opt-${opt.id}` ? '...' : 'Generate'}
                   </button>
 
                   <label style={{
@@ -1763,11 +1692,11 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                     border: '1px solid #cbd5e1',
                     borderRadius: '4px',
                     padding: '5px 8px',
-                    fontSize: '11.5px',
+                    fontSize: '11px',
                     fontWeight: '700',
                     cursor: 'pointer'
                   }}>
-                    <span>📁 Upload</span>
+                    <span>Upload</span>
                     <input
                       type="file"
                       accept="audio/*"
@@ -1785,13 +1714,13 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '4px',
-                        padding: '5px 10px',
-                        fontSize: '11.5px',
+                        padding: '5px 9px',
+                        fontSize: '11px',
                         fontWeight: '700',
                         cursor: 'pointer'
                       }}
                     >
-                      {playingItemKey === `opt-${activeQNum}-${opt.id}` ? '⏹' : '▶'}
+                      {playingItemKey === `opt-${activeQNum}-${opt.id}` ? 'Stop' : 'Play'}
                     </button>
                   )}
                 </div>

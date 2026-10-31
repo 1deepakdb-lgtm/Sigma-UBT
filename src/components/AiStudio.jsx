@@ -404,7 +404,7 @@ export default function AiStudio({
         {[
           { id: 'generator', label: 'Voice Profiles & Speech Generator' },
           { id: 'dialogue', label: 'Multi-Speaker Dialogue Studio' },
-          { id: 'listeningBuilder', label: '🎧 EPS Listening Studio (Q21–Q40 Synchronizer)' }
+          { id: 'listeningBuilder', label: 'EPS Listening Studio (Q21–Q40)' }
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (
