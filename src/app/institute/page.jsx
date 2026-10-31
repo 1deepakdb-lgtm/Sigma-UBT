@@ -2277,6 +2277,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             </div>
           </div>
         </div>
+      )}
+
       {/* ADMIN-ONLY: Change Shared Gate Credentials Modal */}
       {showCredModal && (
         <div style={{
