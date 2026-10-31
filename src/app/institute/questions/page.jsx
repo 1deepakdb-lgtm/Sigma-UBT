@@ -144,8 +144,37 @@ function InstituteQuestionManagerContent() {
         { id: 3, name: "100 UBT set" }
       ];
 
-      const savedPackages = safeJsonParse(localStorage.getItem("examPackages"), defaultPkgs);
-      const savedSets = safeJsonParse(localStorage.getItem("examSets"), []);
+      const rawPackages = safeJsonParse(localStorage.getItem("examPackages"), defaultPkgs);
+      let savedPackages = rawPackages;
+      if (isJapanese) {
+        savedPackages = rawPackages.filter(p => {
+          if (!p) return false;
+          const name = (p.name || "").toLowerCase();
+          const type = (p.type || "").toLowerCase();
+          const isKorean = p.track === "korean" || name.includes("ubt") || name.includes("chapter") || name.includes("eps") || name.includes("topik") || type.includes("ubt") || type.includes("chapter");
+          const isJp = p.track === "japanese" || name.includes("mock") || name.includes("jft") || name.includes("jlpt") || name.includes("nat") || type.includes("mock");
+          return isJp && !isKorean;
+        });
+        if (savedPackages.length === 0) savedPackages = defaultPkgs;
+      }
+
+      const rawSets = safeJsonParse(localStorage.getItem("examSets"), []);
+      const savedSets = rawSets.filter(s => {
+        if (!s) return false;
+        if (isJapanese) {
+          const name = (s.name || s.title || "").toLowerCase();
+          const sType = (s.setType || "").toUpperCase();
+          const isKorean = s.track === "korean" || sType === "UBT" || sType === "CHAPTERWISE" || name.includes("ubt") || name.includes("eps") || name.includes("chapter") || name.includes("topik") || name.includes("reading") || name.includes("listening");
+          const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat");
+          if (isKorean || !isJp) return false;
+        }
+        return (
+          s.isPublished === true ||
+          (!s.creatorInstituteName && s.isPrivate !== true) ||
+          (s.creatorInstituteName && s.creatorInstituteName.toLowerCase() === instituteName.toLowerCase()) ||
+          (instId && s.creatorInstituteId === instId)
+        );
+      });
       const savedQuestions = safeJsonParse(localStorage.getItem("questionBank"), []);
 
       // Build Japanese Mock Exam Sets from JLPT_MOCK_SETS_META
@@ -1742,7 +1771,13 @@ function InstituteQuestionManagerContent() {
                         <option value="NAT-TEST Mock Test">NAT-TEST Mock Test</option>
                         <option value="JLPT Mock Test">JLPT Mock Test</option>
                         {packages
-                          .filter(p => !["Full Mock Test", "JFT-Basic Mock Test", "NAT-TEST Mock Test", "JLPT Mock Test", "Full Set UBT", "100 UBT set", "General UBT"].includes(p.name))
+                          .filter(p => {
+                            if (!p) return false;
+                            const name = p.name || "";
+                            if (["Full Mock Test", "JFT-Basic Mock Test", "NAT-TEST Mock Test", "JLPT Mock Test"].includes(name)) return false;
+                            const low = name.toLowerCase();
+                            return !low.includes("ubt") && !low.includes("chapter") && !low.includes("eps") && !low.includes("topik");
+                          })
                           .map((p, idx) => (
                             <option key={idx} value={p.name}>{p.name}</option>
                           ))

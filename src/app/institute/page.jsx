@@ -76,7 +76,7 @@ const InstituteDashboard = () => {
     name: "", 
     phone: "", 
     password: "", 
-    assignedPackage: "Chapterwise 30 set",
+    assignedPackage: typeof window !== "undefined" && (localStorage.getItem("instituteLanguage") === "japanese" || (typeof window !== "undefined" && window.location.search.includes("lang=japanese"))) ? "Full Mock Test" : "Full Set UBT",
     expiryDuration: "1 Month",
     language: "both"
   });
@@ -337,7 +337,7 @@ const InstituteDashboard = () => {
   const [showCreatePkgForm, setShowCreatePkgForm] = useState(false);
   const [newPkgName, setNewPkgName] = useState("");
   const [newPkgPrice, setNewPkgPrice] = useState("Rs. 1,500");
-  const [newPkgType, setNewPkgType] = useState("UBT Full Exam");
+  const [newPkgType, setNewPkgType] = useState(() => (typeof window !== "undefined" && (localStorage.getItem("instituteLanguage") === "japanese" || (typeof window !== "undefined" && window.location.search.includes("lang=japanese"))) ? "Full Mock Test" : "UBT Full Exam"));
   const [newPkgDuration, setNewPkgDuration] = useState("1 Month");
   const [newPkgDesc, setNewPkgDesc] = useState("");
   const [selectedSetsForPkg, setSelectedSetsForPkg] = useState([]);
@@ -435,7 +435,17 @@ const InstituteDashboard = () => {
 
     const currentPkgs = JSON.parse(localStorage.getItem("examPackages")) || examPackages;
     const updatedPackages = [...currentPkgs.filter(p => p.name !== newPkg.name), newPkg];
-    setExamPackages(updatedPackages);
+    if (instituteLanguage === "japanese") {
+      setExamPackages(updatedPackages.filter(p => {
+        const name = (p.name || "").toLowerCase();
+        const type = (p.type || "").toLowerCase();
+        const isKorean = p.track === "korean" || name.includes("ubt") || name.includes("chapter") || name.includes("eps") || name.includes("topik") || type.includes("ubt") || type.includes("chapter");
+        const isJp = p.track === "japanese" || name.includes("mock") || name.includes("jft") || name.includes("jlpt") || name.includes("nat") || type.includes("mock");
+        return isJp && !isKorean;
+      }));
+    } else {
+      setExamPackages(updatedPackages);
+    }
     localStorage.setItem("examPackages", JSON.stringify(updatedPackages));
 
     alert(`✅ Custom ${isJapaneseTrack ? "Mock Test" : "UBT"} package "${newPkgName}" created with price ${formattedPrice}! (${selectedSetsForPkg.length} sets included)`);
@@ -500,7 +510,7 @@ const InstituteDashboard = () => {
             name: s.name,
             phone: s.phone || s.username,
             password: localList.find((l) => l.phone === (s.phone || s.username))?.password || "1234",
-            assignedPackage: s.batch || "Full Set UBT",
+            assignedPackage: s.batch || (instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT"),
             expiryDate: calculateExpiryDate("1 Month"),
             status: s.status || "Active"
           }));
@@ -518,7 +528,7 @@ const InstituteDashboard = () => {
                   username: loc.phone,
                   password: loc.password || "1234",
                   phone: loc.phone,
-                  batch: loc.assignedPackage || "Full Set UBT",
+                  batch: loc.assignedPackage || (instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT"),
                   status: loc.status || "Active",
                   instituteName: instituteName
                 })
@@ -545,15 +555,31 @@ const InstituteDashboard = () => {
       { id: "pkg-jp-4", name: "JLPT Mock Test Bundle", price: "Rs. 2,000", desc: "Standard JLPT N5 & N4 simulation mock exam sets.", duration: "1 Month", type: "JLPT Mock Test", track: "japanese" }
     ];
 
-    if (savedPackages.length === 0) {
-      savedPackages = isJapaneseInst ? defaultMockPackages : [
+    if (isJapaneseInst) {
+      // In Japanese Institute: Strictly strip out ANY Korean UBT / Chapter / EPS packages
+      savedPackages = savedPackages.filter(p => {
+        if (!p) return false;
+        const name = (p.name || "").toLowerCase();
+        const type = (p.type || "").toLowerCase();
+        const isKorean = p.track === "korean" || name.includes("ubt") || name.includes("chapter") || name.includes("eps") || name.includes("topik") || type.includes("ubt") || type.includes("chapter");
+        const isJp = p.track === "japanese" || name.includes("mock") || name.includes("jft") || name.includes("jlpt") || name.includes("nat") || type.includes("mock");
+        return isJp && !isKorean;
+      });
+      // Ensure the standard Japanese mock test packages are always present
+      defaultMockPackages.forEach(jpPkg => {
+        if (!savedPackages.some(p => (p.name || "").toLowerCase() === jpPkg.name.toLowerCase())) {
+          savedPackages.push(jpPkg);
+        }
+      });
+    } else if (savedPackages.length === 0) {
+      savedPackages = [
         { id: "pkg-1", name: "Full Set UBT", price: "Rs. 2,000", desc: "Full EPS-TOPIK UBT exam sets (20 Reading + 20 Listening).", duration: "1 Month", type: "UBT Full Exam" },
         { id: "pkg-2", name: "30 Set Chapter UBT", price: "Rs. 1,000", desc: "Chapterwise practice sets with listening audio.", duration: "1 Month", type: "Chapter Wise" },
         { id: "pkg-3", name: "100 UBT set", price: "Rs. 3,500", desc: "Comprehensive 100 UBT test sets simulation.", duration: "3 Months", type: "UBT Full Exam" },
         { id: "pkg-4", name: "Full Package", price: "Rs. 4,500", desc: "Complete access to all UBT & chapterwise test sets.", duration: "Lifetime", type: "Combo Package" }
       ];
       localStorage.setItem("examPackages", JSON.stringify(savedPackages));
-    } else if (isJapaneseInst || instituteLanguage === "both") {
+    } else if (instituteLanguage === "both") {
       let updated = false;
       defaultMockPackages.forEach(jpPkg => {
         if (!savedPackages.some(p => (p.name || "").toLowerCase() === jpPkg.name.toLowerCase())) {
@@ -598,7 +624,15 @@ const InstituteDashboard = () => {
 
     let combinedExamSets = [];
     if (isJapaneseInst) {
-      const instituteMockSets = savedSets.filter(s => s.track === "japanese" || s.setType === "MOCK" || (s.name && (s.name.includes("Mock") || s.name.includes("JLPT") || s.name.includes("JFT"))));
+      // In Japanese Institute: Strictly exclude ANY Korean UBT / Chapterwise / EPS sets
+      const instituteMockSets = savedSets.filter(s => {
+        if (!s) return false;
+        const name = (s.name || s.title || "").toLowerCase();
+        const sType = (s.setType || "").toUpperCase();
+        const isKorean = s.track === "korean" || sType === "UBT" || sType === "CHAPTERWISE" || name.includes("ubt") || name.includes("eps") || name.includes("chapter") || name.includes("topik") || name.includes("reading") || name.includes("listening");
+        const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat");
+        return isJp && !isKorean;
+      });
       const seen = new Set();
       [...instituteMockSets, ...jpMockSets].forEach(s => {
         const key = (s.name || s.id).toLowerCase();
@@ -884,7 +918,7 @@ const InstituteDashboard = () => {
       username: formData.phone.trim(),
       phone: formData.phone.trim(),
       password: (formData.password || "1234").trim(),
-      batch: formData.assignedPackage || "Full Set UBT",
+      batch: formData.assignedPackage || (instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT"),
       status: "Active",
       language: chosenLanguage,
       instituteName: instituteName,
@@ -984,9 +1018,9 @@ const InstituteDashboard = () => {
       name: "",
       phone: "",
       password: "",
-      assignedPackage: "Chapterwise 30 set",
+      assignedPackage: instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT",
       expiryDuration: "1 Month",
-      language: instituteLanguage === "both" ? "both" : instituteLanguage
+      language: instituteLanguage === "japanese" ? "japanese" : (instituteLanguage === "both" ? "both" : instituteLanguage)
     });
     setEditId(null);
     setShowForm(false);
@@ -1001,7 +1035,7 @@ Student Name: ${stu.name}
 Login ID / Phone: ${stu.phone}
 Password: ${stu.password || "1234"}
 Course Track: ${stuLang}
-Assigned Package: ${stu.assignedPackage || "Full Set UBT"}
+Assigned Package: ${stu.assignedPackage || (instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT")}
 Validity: ${stu.expiryDate || "Active"}
 Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
@@ -1585,11 +1619,20 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#64748b" }}>Assigned Package</label>
                       <select name="assignedPackage" value={formData.assignedPackage} onChange={handleInputChange} style={inputStyle}>
                         {examPackages.length === 0 ? (
-                          <>
-                            <option value="Full Set UBT">Full Set UBT</option>
-                            <option value="30 Set Chapter UBT">30 Set Chapter UBT</option>
-                            <option value="100 UBT set">100 UBT set</option>
-                          </>
+                          instituteLanguage === "japanese" ? (
+                            <>
+                              <option value="Full Mock Test">Full Mock Test</option>
+                              <option value="JFT-Basic Mock Test">JFT-Basic Mock Test</option>
+                              <option value="NAT-TEST Mock Test">NAT-TEST Mock Test</option>
+                              <option value="JLPT Mock Test Bundle">JLPT Mock Test Bundle</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="Full Set UBT">Full Set UBT</option>
+                              <option value="30 Set Chapter UBT">30 Set Chapter UBT</option>
+                              <option value="100 UBT set">100 UBT set</option>
+                            </>
+                          )
                         ) : (
                           examPackages.map((pkg, idx) => (
                             <option key={idx} value={pkg.name}>
@@ -2050,7 +2093,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                         </h4>
 
                         <p style={{ margin: "0 0 16px 0", fontSize: "13px", color: "#64748b", lineHeight: "1.5" }}>
-                          {pkg.desc || "Full EPS-TOPIK UBT examination sets with audio and detailed scoring."}
+                          {pkg.desc || (instituteLanguage === "japanese" ? "Full simulated Japanese CBT Mock Test examination sets with audio and detailed scoring." : "Full EPS-TOPIK UBT examination sets with audio and detailed scoring.")}
                         </p>
 
                         {/* Sets preview */}
@@ -2201,7 +2244,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     filteredSets.map((set) => (
                       <div key={set.id} style={{ backgroundColor: "white", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "20px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                         <div>
-                          <span style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", background: "#cbd5e1", padding: "2px 6px", borderRadius: "4px" }}>{set.packageName || "UBT-TEST"}</span>
+                          <span style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", background: "#cbd5e1", padding: "2px 6px", borderRadius: "4px" }}>{set.packageName || (instituteLanguage === "japanese" ? "Mock Test" : "UBT-TEST")}</span>
                           <h4 style={{ margin: "10px 0", fontSize: "16px", color: "#1e293b" }}>{set.name}</h4>
                         </div>
                         <div style={{ marginTop: "15px" }}>

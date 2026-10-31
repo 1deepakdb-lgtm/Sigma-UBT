@@ -149,7 +149,12 @@ const StudentDashboard = () => {
   const [currentStudentPhone, setCurrentStudentPhone] = useState(null);
   const [studentInstitute, setStudentInstitute] = useState(null);
   const [studentBatch, setStudentBatch] = useState(null);
-  const [studentPackage, setStudentPackage] = useState("Full Set UBT");
+  const [studentPackage, setStudentPackage] = useState(() => (
+    typeof window !== "undefined" && (
+      window.location.search.includes("lang=japanese") ||
+      localStorage.getItem("instituteLanguage") === "japanese"
+    ) ? "Full Mock Test" : "Full Set UBT"
+  ));
   const [studentExpiryDate, setStudentExpiryDate] = useState("");
   const [purchasedPackages, setPurchasedPackages] = useState([]);
   const [logoWatermark, setLogoWatermark] = useState("");
@@ -236,6 +241,17 @@ const StudentDashboard = () => {
     ) {
       if (!list.includes(studentPackage)) {
         list.push(studentPackage);
+      }
+    }
+
+    // In Japanese Track: Strictly strip out ANY Korean packages from student package list
+    if (isJapaneseTrack) {
+      list = list.filter(pkgName => {
+        const lower = (pkgName || "").toLowerCase();
+        return !lower.includes("ubt") && !lower.includes("chapter") && !lower.includes("eps") && !lower.includes("topik") && !lower.includes("model question");
+      });
+      if (list.length === 0 && (currentBuyer?.hasPurchased || currentBuyer?.isBuyer)) {
+        list = ["Full Mock Test"];
       }
     }
 
@@ -630,9 +646,17 @@ const StudentDashboard = () => {
 
     if (localPkg && !isShift(localPkg)) {
       if (localPkg.toLowerCase().includes("google") || localPkg.toLowerCase().includes("free")) {
-        setStudentPackage(hasPurchasedAccess ? (localBuyer?.package || localBuyer?.packageName || currentBuyer?.package || "Full Set UBT") : "Free Student Access");
+        let defaultPkg = hasPurchasedAccess ? (localBuyer?.package || localBuyer?.packageName || currentBuyer?.package || (isJapaneseTrack ? "Full Mock Test" : "Full Set UBT")) : "Free Student Access";
+        if (isJapaneseTrack && defaultPkg && (defaultPkg.toLowerCase().includes("ubt") || defaultPkg.toLowerCase().includes("chapter") || defaultPkg.toLowerCase().includes("eps"))) {
+          defaultPkg = "Full Mock Test";
+        }
+        setStudentPackage(defaultPkg);
       } else {
-        setStudentPackage(localPkg);
+        let chosenPkg = localPkg;
+        if (isJapaneseTrack && (chosenPkg.toLowerCase().includes("ubt") || chosenPkg.toLowerCase().includes("chapter") || chosenPkg.toLowerCase().includes("eps"))) {
+          chosenPkg = "Full Mock Test";
+        }
+        setStudentPackage(chosenPkg);
       }
     }
 
@@ -664,11 +688,15 @@ const StudentDashboard = () => {
             userBuyer?.package
           );
 
-          const userPkg = userHasPurchased
-            ? (userBuyer?.package || userBuyer?.packageName || currentBuyer?.package || "Full Set UBT")
+          let userPkg = userHasPurchased
+            ? (userBuyer?.package || userBuyer?.packageName || currentBuyer?.package || (isJapaneseTrack ? "Full Mock Test" : "Full Set UBT"))
             : ((!isShift(rawPkg) && !isGoogleOrFreeUser && rawPkg) ||
                (!isGoogleOrFreeUser && data.user.institute?.examPackage) ||
                "Free Student Access");
+
+          if (isJapaneseTrack && userPkg && userPkg !== "Free Student Access" && (userPkg.toLowerCase().includes("ubt") || userPkg.toLowerCase().includes("chapter") || userPkg.toLowerCase().includes("eps"))) {
+            userPkg = "Full Mock Test";
+          }
 
           const userExp = (isGoogleOrFreeUser && !userHasPurchased)
             ? null
@@ -814,9 +842,14 @@ const StudentDashboard = () => {
 
         if (isJapaneseTrack) {
           const jpSets = buildJapaneseSets();
-          const customJpSets = mergedSets.filter(s =>
-            s && (s.track === "japanese" || s.setType === "MOCK" || (s.packageName && s.packageName.toLowerCase().includes("mock")))
-          );
+          const customJpSets = mergedSets.filter(s => {
+            if (!s) return false;
+            const name = (s.name || s.title || "").toLowerCase();
+            const sType = (s.setType || "").toUpperCase();
+            const isKorean = s.track === "korean" || sType === "UBT" || sType === "CHAPTERWISE" || name.includes("ubt") || name.includes("eps") || name.includes("chapter") || name.includes("topik") || name.includes("reading") || name.includes("listening");
+            const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat") || (s.packageName && s.packageName.toLowerCase().includes("mock"));
+            return isJp && !isKorean;
+          });
           filterAndSetExamSets([...jpSets, ...customJpSets], finalPackages);
         } else if (instituteLanguage === "both") {
           const jpSets = buildJapaneseSets();
@@ -828,9 +861,14 @@ const StudentDashboard = () => {
       .catch(() => {
         if (isJapaneseTrack) {
           const jpSets = buildJapaneseSets();
-          const customJpSets = savedSets.filter(s =>
-            s && (s.track === "japanese" || s.setType === "MOCK" || (s.packageName && s.packageName.toLowerCase().includes("mock")))
-          );
+          const customJpSets = savedSets.filter(s => {
+            if (!s) return false;
+            const name = (s.name || s.title || "").toLowerCase();
+            const sType = (s.setType || "").toUpperCase();
+            const isKorean = s.track === "korean" || sType === "UBT" || sType === "CHAPTERWISE" || name.includes("ubt") || name.includes("eps") || name.includes("chapter") || name.includes("topik") || name.includes("reading") || name.includes("listening");
+            const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat") || (s.packageName && s.packageName.toLowerCase().includes("mock"));
+            return isJp && !isKorean;
+          });
           filterAndSetExamSets([...jpSets, ...customJpSets], finalPackages);
         } else {
           filterAndSetExamSets(savedSets, finalPackages);
@@ -953,7 +991,16 @@ const StudentDashboard = () => {
 
     const rawAssigned = currentStudent?.assignedPackage || currentStudent?.package || studentBatch;
     const assignedPackage = !isShift(rawAssigned) ? rawAssigned : null;
-    const allowedPackages = currentStudent?.assignedPackages || (assignedPackage ? [assignedPackage] : []);
+    let allowedPackages = currentStudent?.assignedPackages || (assignedPackage ? [assignedPackage] : []);
+    if (isJapaneseTrack) {
+      allowedPackages = allowedPackages.filter(p => {
+        const pLower = (p || "").toLowerCase();
+        return !pLower.includes("ubt") && !pLower.includes("chapter") && !pLower.includes("topik") && !pLower.includes("eps") && !pLower.includes("model question");
+      });
+      if (allowedPackages.length === 0) {
+        allowedPackages = ["Full Mock Test"];
+      }
+    }
     setPurchasedPackages(allowedPackages);
 
     const accessible = allSets.filter((set) => {
@@ -994,13 +1041,24 @@ const StudentDashboard = () => {
       return true;
     });
 
-    const finalSets = accessible.length > 0
+    let finalSets = accessible.length > 0
       ? accessible
       : allSets.filter((s) => !s.creatorInstituteName || !myInstName || s.creatorInstituteName.toLowerCase() === myInstName.toLowerCase() || s.isPublished !== false);
 
+    if (isJapaneseTrack) {
+      finalSets = finalSets.filter(s => {
+        if (!s) return false;
+        const name = (s.name || s.title || "").toLowerCase();
+        const sType = (s.setType || "").toUpperCase();
+        const isKorean = s.track === "korean" || sType === "UBT" || sType === "CHAPTERWISE" || name.includes("ubt") || name.includes("eps") || name.includes("chapter") || name.includes("topik") || name.includes("reading") || name.includes("listening");
+        const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat");
+        return isJp && !isKorean;
+      });
+    }
+
     setExamSets(finalSets);
-    const defaultPackageName = instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT";
-    if (finalSets.length > 0 && (!studentPackage || isShift(studentPackage) || studentPackage === "Full Set UBT" || studentPackage === "Full Mock Test")) {
+    const defaultPackageName = isJapaneseTrack ? "Full Mock Test" : "Full Set UBT";
+    if (finalSets.length > 0 && (!studentPackage || isShift(studentPackage) || (isJapaneseTrack && (studentPackage.toLowerCase().includes("ubt") || studentPackage.toLowerCase().includes("chapter"))))) {
       const bestPkg = finalSets.find((s) => s.packageName && !isShift(s.packageName))?.packageName || defaultPackageName;
       setStudentPackage(bestPkg);
     }
@@ -1109,11 +1167,23 @@ const StudentDashboard = () => {
     setLoadingVocab(false);
   };
 
-  const sortedExamSets = [...examSets].sort((a, b) => {
-    const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
-    const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
-    return numA - numB;
-  });
+  const sortedExamSets = [...examSets]
+    .filter(s => {
+      if (isJapaneseTrack) {
+        if (!s) return false;
+        const name = (s.name || s.title || "").toLowerCase();
+        const sType = (s.setType || "").toUpperCase();
+        const isKorean = s.track === "korean" || sType === "UBT" || sType === "CHAPTERWISE" || name.includes("ubt") || name.includes("eps") || name.includes("chapter") || name.includes("topik") || name.includes("reading") || name.includes("listening");
+        const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat");
+        return isJp && !isKorean;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
+      const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
+      return numA - numB;
+    });
 
   const baseFilteredSets =
     selectedPackageFilter === "All" || purchasedPackages.length <= 1
@@ -2080,7 +2150,7 @@ const StudentDashboard = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            alert(`Your payment request for "${pkg.name}" is currently in review by Admin.\n\nWait for 5-10 minute, Admin will verify your payment and release your UBT package.`);
+                            alert(`Your payment request for "${pkg.name}" is currently in review by Admin.\n\nWait for 5-10 minute, Admin will verify your payment and release your ${isJapaneseTrack ? "Mock Test package" : "UBT package"}.`);
                           }}
                           style={{
                             width: "100%",
@@ -2212,13 +2282,13 @@ const StudentDashboard = () => {
                     {results.length === 0 ? (
                       <tr>
                         <td colSpan="4" style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}>
-                          No exam results recorded yet. Start a UBT exam to view your scores here.
+                          No exam results recorded yet. Start a {isJapaneseTrack ? "Japanese CBT Mock Exam" : "UBT exam"} to view your scores here.
                         </td>
                       </tr>
                     ) : (
                       results.map((res, idx) => (
                         <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#ffffff" }}>
-                          <td style={{ padding: "14px 16px", fontWeight: "700", color: "#0f172a" }}>{res.examName || "UBT Set"}</td>
+                          <td style={{ padding: "14px 16px", fontWeight: "700", color: "#0f172a" }}>{res.examName || (isJapaneseTrack ? "Japanese Mock Set" : "UBT Set")}</td>
                           <td style={{ padding: "14px 16px", fontWeight: "700", color: "#2563eb" }}>{res.score} / {res.total || 40}</td>
                           <td style={{ padding: "14px 16px", color: "#334155", fontWeight: "600" }}>{res.percentage || Math.round((Number(res.score) / (Number(res.total) || 40)) * 100)}%</td>
                           <td style={{ padding: "14px 16px" }}>
