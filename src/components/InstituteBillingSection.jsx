@@ -7942,6 +7942,42 @@ function doPost(e) {
 
             <form onSubmit={handleStaffResetPassword}>
               <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#64748b", marginBottom: "6px" }}>
+                  User ID (Fixed - Staff cannot change ID)
+                </label>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "#f1f5f9",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  padding: "10px 12px",
+                  gap: "8px"
+                }}>
+                  <span>🔒</span>
+                  <input
+                    type="text"
+                    value={activeStaffUsername || activeStaffName || "staff"}
+                    disabled
+                    readOnly
+                    style={{
+                      width: "100%",
+                      backgroundColor: "transparent",
+                      border: "none",
+                      fontSize: "14px",
+                      color: "#475569",
+                      fontWeight: "bold",
+                      cursor: "not-allowed",
+                      outline: "none"
+                    }}
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>
+                    ID Locked
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "14px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
                   Current Password *
                 </label>

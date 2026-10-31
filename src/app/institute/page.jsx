@@ -104,13 +104,22 @@ const InstituteDashboard = () => {
   const lastStudentsActivityRef = useRef(Date.now());
   const [studentsAutoLockCountdown, setStudentsAutoLockCountdown] = useState(20);
 
-  // Admin-only shared credential update modal state
+  // Credential update modal state (Admin changes ID & Password; Staff changes Password ONLY)
   const [showCredModal, setShowCredModal] = useState(false);
   const [newCredUserId, setNewCredUserId] = useState("");
+  const [credCurrentPassword, setCredCurrentPassword] = useState("");
   const [newCredPassword, setNewCredPassword] = useState("");
   const [confirmCredPassword, setConfirmCredPassword] = useState("");
   const [credMsg, setCredMsg] = useState("");
   const [credLoading, setCredLoading] = useState(false);
+  const [unlockedRole, setUnlockedRole] = useState(() => {
+    if (typeof window === "undefined") return userRole || "admin";
+    return sessionStorage.getItem("instituteUnlockedRole") || (userRole === "staff" ? "staff" : "admin");
+  });
+  const [unlockedUserId, setUnlockedUserId] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return sessionStorage.getItem("instituteBillingStaffUser") || "";
+  });
 
   // Check if already unlocked in session (either in Billing or Manage Students)
   useEffect(() => {
@@ -172,6 +181,11 @@ const InstituteDashboard = () => {
     setUnlockLoading(false);
 
     if (result.ok) {
+      const isAdm = result.role === "admin";
+      setUnlockedRole(isAdm ? "admin" : "staff");
+      setUnlockedUserId(result.userId || uid);
+      sessionStorage.setItem("instituteUnlockedRole", isAdm ? "admin" : "staff");
+      sessionStorage.setItem("instituteBillingStaffUser", result.userId || uid);
       setIsStudentsUnlocked(true);
       sessionStorage.setItem("instituteStudentsUnlocked", "true");
       sessionStorage.setItem("instituteBillingUnlocked", "true");
@@ -187,11 +201,18 @@ const InstituteDashboard = () => {
     setIsStudentsUnlocked(false);
     sessionStorage.removeItem("instituteStudentsUnlocked");
     sessionStorage.removeItem("instituteBillingUnlocked");
+    sessionStorage.removeItem("instituteUnlockedRole");
   };
 
   const handleOpenCredModal = () => {
-    const creds = getSharedGateCredentials(instituteName);
-    setNewCredUserId(creds.userId || "admin");
+    const isStaff = (unlockedRole === "staff" || userRole === "staff");
+    if (isStaff) {
+      setNewCredUserId(unlockedUserId || (typeof window !== "undefined" && localStorage.getItem("currentUser")) || "staff");
+    } else {
+      const creds = getSharedGateCredentials(instituteName);
+      setNewCredUserId(creds.userId || "admin");
+    }
+    setCredCurrentPassword("");
     setNewCredPassword("");
     setConfirmCredPassword("");
     setCredMsg("");
@@ -202,11 +223,68 @@ const InstituteDashboard = () => {
     e.preventDefault();
     setCredMsg("");
 
-    if (userRole === "staff") {
-      setCredMsg("Permission Denied: Only Admin can update the User ID or Password!");
+    const isStaff = (unlockedRole === "staff" || userRole === "staff");
+
+    if (isStaff) {
+      // Staff User: change password only, not ID!
+      if (!credCurrentPassword) {
+        setCredMsg("Please enter your current password.");
+        return;
+      }
+      if (!newCredPassword || newCredPassword.trim().length < 4) {
+        setCredMsg("New password must be at least 4 characters.");
+        return;
+      }
+      if (newCredPassword !== confirmCredPassword) {
+        setCredMsg("New password and confirm password do not match.");
+        return;
+      }
+
+      setCredLoading(true);
+      try {
+        const username = unlockedUserId || (typeof window !== "undefined" && localStorage.getItem("currentUser")) || "staff";
+        const res = await fetch("/api/institute/staff", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username,
+            currentPassword: credCurrentPassword,
+            newPassword: newCredPassword
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setCredMsg("SUCCESS: Password updated successfully! Please use your new password next time you log in.");
+          const instKey = instituteName ? `inst_${instituteName.trim().toLowerCase().replace(/\s+/g, '_')}` : "default";
+          try {
+            const staffKey = `instituteStaffList_${instKey}`;
+            const stored = JSON.parse(localStorage.getItem(staffKey) || "[]");
+            const idx = stored.findIndex(s => s.username?.toLowerCase() === username.toLowerCase() || s.phone === username);
+            if (idx !== -1) {
+              stored[idx].password = newCredPassword;
+              localStorage.setItem(staffKey, JSON.stringify(stored));
+            }
+          } catch (e) {}
+
+          setTimeout(() => {
+            setShowCredModal(false);
+            setCredMsg("");
+            setCredCurrentPassword("");
+            setNewCredPassword("");
+            setConfirmCredPassword("");
+          }, 1600);
+        } else {
+          setCredMsg(data.error || "Failed to update password.");
+        }
+      } catch (err) {
+        setCredMsg("Failed to connect to server. Please try again.");
+      } finally {
+        setCredLoading(false);
+      }
       return;
     }
 
+    // Admin: can update both User ID and Password
     if (!newCredUserId || newCredUserId.trim().length < 3) {
       setCredMsg("User ID must be at least 3 characters.");
       return;
@@ -227,7 +305,7 @@ const InstituteDashboard = () => {
       newUserId: newCredUserId,
       newPassword: newCredPassword,
       instituteName,
-      currentRole: userRole || "admin"
+      currentRole: "admin"
     });
     setCredLoading(false);
 
@@ -236,6 +314,8 @@ const InstituteDashboard = () => {
       setTimeout(() => {
         setShowCredModal(false);
         setCredMsg("");
+        setNewCredPassword("");
+        setConfirmCredPassword("");
       }, 1500);
     } else {
       setCredMsg(res.error || "Failed to update credentials.");
@@ -1285,27 +1365,33 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     <span>Lock Section</span>
                   </button>
 
-                  {userRole !== "staff" && (
-                    <button
-                      onClick={handleOpenCredModal}
-                      title="Update shared Login ID and Password for Billing & Manage Students (Admin Only)"
-                      style={{
-                        backgroundColor: "#1e3a8a",
-                        color: "white",
-                        border: "1px solid #1e40af",
-                        padding: "10px 14px",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        fontSize: "13px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px"
-                      }}
-                    >
-                      <span>🔑 Change ID / Password</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={handleOpenCredModal}
+                    title={
+                      (unlockedRole === "staff" || userRole === "staff")
+                        ? "Change your staff login password (Password only, ID cannot be changed)"
+                        : "Update shared Login ID and Password for Billing & Manage Students (Admin Only)"
+                    }
+                    style={{
+                      backgroundColor: "#1e3a8a",
+                      color: "white",
+                      border: "1px solid #1e40af",
+                      padding: "10px 14px",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    <span>
+                      {(unlockedRole === "staff" || userRole === "staff")
+                        ? "🔑 Change Password"
+                        : "🔑 Change ID / Password"}
+                    </span>
+                  </button>
                   <span style={{
                     fontSize: "12px",
                     color: "#64748b",
@@ -2279,7 +2365,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
         </div>
       )}
 
-      {/* ADMIN-ONLY: Change Shared Gate Credentials Modal */}
+      {/* Shared Gate / Staff Password Modal */}
       {showCredModal && (
         <div style={{
           position: "fixed",
@@ -2304,37 +2390,97 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             border: "1px solid #cbd5e1"
           }}>
             <h3 style={{ margin: "0 0 8px 0", color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-              🔑 Update Login Credentials
+              🔑 {(unlockedRole === "staff" || userRole === "staff") ? "Change Staff Password" : "Update Login Credentials"}
             </h3>
             <p style={{ margin: "0 0 18px 0", color: "#64748b", fontSize: "13px" }}>
-              Admin only: Updating this User ID and Password will immediately work for <strong>both Billing and Manage Students</strong>.
+              {(unlockedRole === "staff" || userRole === "staff")
+                ? "Staff User: You can change your password only (User ID cannot be modified)."
+                : "Admin only: Updating this User ID and Password will immediately work for both Billing and Manage Students."}
             </p>
 
             <form onSubmit={handleUpdateCredSubmit}>
               <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
-                  User ID / Username *
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: (unlockedRole === "staff" || userRole === "staff") ? "#64748b" : "#1e3a8a", marginBottom: "6px" }}>
+                  {(unlockedRole === "staff" || userRole === "staff")
+                    ? "User ID (Fixed - Staff cannot change ID)"
+                    : "User ID / Username *"}
                 </label>
-                <input
-                  type="text"
-                  value={newCredUserId}
-                  onChange={(e) => setNewCredUserId(e.target.value)}
-                  placeholder="e.g. admin or custom ID"
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "6px",
+                {(unlockedRole === "staff" || userRole === "staff") ? (
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: "#f1f5f9",
                     border: "1px solid #cbd5e1",
-                    fontSize: "14px",
-                    boxSizing: "border-box"
-                  }}
-                />
+                    borderRadius: "6px",
+                    padding: "10px 12px",
+                    gap: "8px"
+                  }}>
+                    <span>🔒</span>
+                    <input
+                      type="text"
+                      value={unlockedUserId || newCredUserId || "staff"}
+                      disabled
+                      readOnly
+                      style={{
+                        width: "100%",
+                        backgroundColor: "transparent",
+                        border: "none",
+                        fontSize: "14px",
+                        color: "#475569",
+                        fontWeight: "bold",
+                        cursor: "not-allowed",
+                        outline: "none"
+                      }}
+                    />
+                    <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>
+                      ID Locked
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={newCredUserId}
+                    onChange={(e) => setNewCredUserId(e.target.value)}
+                    placeholder="e.g. admin or custom ID"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "14px",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                )}
               </div>
+
+              {(unlockedRole === "staff" || userRole === "staff") && (
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                    Current Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={credCurrentPassword}
+                    onChange={(e) => setCredCurrentPassword(e.target.value)}
+                    placeholder="Enter your current password"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "14px",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+              )}
 
               <div style={{ marginBottom: "14px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
-                  New Password / PIN (Min 4 chars) *
+                  New Password (Min 4 chars) *
                 </label>
                 <input
                   type="password"
@@ -2411,7 +2557,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                   style={{
                     flex: 1,
                     padding: "10px",
-                    backgroundColor: "#1e3a8a",
+                    backgroundColor: credLoading ? "#93c5fd" : "#1e3a8a",
                     color: "white",
                     border: "none",
                     borderRadius: "6px",
@@ -2419,7 +2565,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     cursor: credLoading ? "not-allowed" : "pointer"
                   }}
                 >
-                  {credLoading ? "Saving..." : "Save for Both"}
+                  {credLoading ? "Saving..." : (unlockedRole === "staff" || userRole === "staff") ? "Update My Password" : "Save for Both"}
                 </button>
               </div>
             </form>
