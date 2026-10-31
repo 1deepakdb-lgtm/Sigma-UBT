@@ -1088,15 +1088,15 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 maxWidth: "420px",
                 backgroundColor: "#ffffff",
                 borderRadius: "14px",
-                boxShadow: "0 10px 25px rgba(30, 58, 138, 0.12), 0 4px 10px rgba(0, 0, 0, 0.05)",
+                boxShadow: "0 10px 25px rgba(5, 150, 105, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05)",
                 border: "1px solid #cbd5e1",
                 overflow: "hidden",
                 flexShrink: 0
               }}>
-                {/* Header: Institute Navy Theme */}
+                {/* Header: Manage Students Emerald Green Theme */}
                 <div style={{
-                  backgroundColor: "#1e3a8a",
-                  backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)",
+                  backgroundColor: "#059669",
+                  backgroundImage: "linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)",
                   padding: "26px 20px 22px 20px",
                   textAlign: "center",
                   color: "#ffffff"
@@ -1146,7 +1146,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
                   <form onSubmit={handleUnlockStudentsWithBilling} style={{ textAlign: "left" }}>
                     <div style={{ marginBottom: "16px" }}>
-                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#047857", marginBottom: "6px" }}>
                         User ID / Username *
                       </label>
                       <input
@@ -1170,7 +1170,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     </div>
 
                     <div style={{ marginBottom: "22px" }}>
-                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#047857", marginBottom: "6px" }}>
                         Password *
                       </label>
                       <input
@@ -1197,8 +1197,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       disabled={unlockLoading}
                       style={{
                         width: "100%",
-                        backgroundColor: "#1e3a8a",
-                        backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
+                        backgroundColor: "#059669",
+                        backgroundImage: "linear-gradient(135deg, #047857 0%, #10b981 100%)",
                         color: "#ffffff",
                         border: "none",
                         padding: "13px 20px",
@@ -1210,7 +1210,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                         alignItems: "center",
                         justifyContent: "center",
                         gap: "8px",
-                        boxShadow: "0 4px 14px rgba(30, 58, 138, 0.3)",
+                        boxShadow: "0 4px 14px rgba(5, 150, 105, 0.35)",
                         transition: "all 0.15s ease"
                       }}
                     >
