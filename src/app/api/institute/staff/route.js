@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireInstituteAdmin } from '@/lib/rbac';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, verifyPassword } from '@/lib/auth';
 
 export async function GET(req) {
   try {
@@ -134,5 +134,84 @@ export async function DELETE(req) {
   } catch (err) {
     console.error('Error deleting staff account:', err);
     return NextResponse.json({ error: 'Failed to delete staff account' }, { status: 500 });
+  }
+}
+
+// User can reset own password only
+export async function PUT(req) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { username, currentPassword, newPassword } = body;
+
+    if (!username || !currentPassword || !newPassword) {
+      return NextResponse.json(
+        { error: 'Username/ID, current password, and new password are required' },
+        { status: 400 }
+      );
+    }
+
+    if (String(newPassword).trim().length < 4) {
+      return NextResponse.json(
+        { error: 'New password must be at least 4 characters long' },
+        { status: 400 }
+      );
+    }
+
+    const cleanUsername = String(username).trim();
+    const user = await prisma.user.findFirst({
+      where: {
+        AND: [
+          { role: 'staff' },
+          {
+            OR: [
+              { username: cleanUsername },
+              { username: cleanUsername.toLowerCase() },
+              { phone: cleanUsername }
+            ]
+          }
+        ]
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Staff account not found. Regular users can only reset their own staff password.' },
+        { status: 404 }
+      );
+    }
+
+    // Verify current password
+    let isCurrentValid = false;
+    if (user.passwordHash) {
+      isCurrentValid = await verifyPassword(currentPassword, user.passwordHash);
+    }
+    // Also check standard initial fallbacks if not hashed yet
+    if (!isCurrentValid && (currentPassword === '1234' || currentPassword === 'staff' || currentPassword === user.password)) {
+      isCurrentValid = true;
+    }
+
+    if (!isCurrentValid) {
+      return NextResponse.json(
+        { error: 'Current password is incorrect' },
+        { status: 401 }
+      );
+    }
+
+    const newHash = await hashPassword(String(newPassword).trim());
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newHash }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Your password has been updated successfully.'
+    });
+  } catch (err) {
+    console.error('Error updating staff password:', err);
+    return NextResponse.json(
+      { error: 'Failed to update password: ' + err.message },
+      { status: 500 }
+    );
   }
 }

@@ -322,6 +322,18 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const [staffError, setStaffError] = useState("");
   const [staffSuccess, setStaffSuccess] = useState("");
 
+  // Regular user (staff) password reset states
+  const [activeStaffUsername, setActiveStaffUsername] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return sessionStorage.getItem("instituteBillingStaffUser") || "";
+  });
+  const [showStaffResetModal, setShowStaffResetModal] = useState(false);
+  const [staffCurrentPassword, setStaffCurrentPassword] = useState("");
+  const [staffNewPassword, setStaffNewPassword] = useState("");
+  const [staffConfirmPassword, setStaffConfirmPassword] = useState("");
+  const [staffResetMsg, setStaffResetMsg] = useState("");
+  const [staffResetLoading, setStaffResetLoading] = useState(false);
+
   // Expenses Management States (Day, Week, Month records by all users for admin)
   const [expenses, setExpenses] = useState(() => {
     if (typeof window === "undefined") return [];
@@ -727,8 +739,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       setIsBillingAuthenticated(true);
       setBillingRole(isAdm ? "admin" : "user");
       setActiveStaffName(result.userName || (isAdm ? "Admin" : uid));
+      setActiveStaffUsername(result.userId || uid);
       sessionStorage.setItem("instituteBillingUnlocked", "true");
       sessionStorage.setItem("instituteStudentsUnlocked", "true");
+      sessionStorage.setItem("instituteBillingStaffUser", result.userId || uid);
       setLoginUserId("");
       setLoginPassword("");
       setAutoLogoutNotice("");
@@ -1091,6 +1105,67 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     }
   };
 
+  // Regular user (staff) can reset own password only
+  const handleStaffResetPassword = async (e) => {
+    e.preventDefault();
+    setStaffResetMsg("");
+
+    if (!staffCurrentPassword.trim()) {
+      setStaffResetMsg("Please enter your current password.");
+      return;
+    }
+    if (!staffNewPassword.trim() || staffNewPassword.length < 4) {
+      setStaffResetMsg("New password must be at least 4 characters long.");
+      return;
+    }
+    if (staffNewPassword !== staffConfirmPassword) {
+      setStaffResetMsg("New password and confirm password do not match.");
+      return;
+    }
+
+    setStaffResetLoading(true);
+    try {
+      const username = activeStaffUsername || activeStaffName || (typeof window !== "undefined" && localStorage.getItem("currentUser")) || "staff";
+      const res = await fetch(apiWithInst("/api/institute/staff"), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          currentPassword: staffCurrentPassword,
+          newPassword: staffNewPassword
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStaffResetMsg("✅ Password updated successfully! Please use your new password next time you log in.");
+        // Sync local storage if present
+        try {
+          const staffKey = `instituteStaffList_${instKey}`;
+          const stored = JSON.parse(localStorage.getItem(staffKey) || "[]");
+          const idx = stored.findIndex(s => s.username?.toLowerCase() === username.toLowerCase() || s.phone === username);
+          if (idx !== -1) {
+            stored[idx].password = staffNewPassword;
+            localStorage.setItem(staffKey, JSON.stringify(stored));
+          }
+        } catch (e) {}
+
+        setTimeout(() => {
+          setShowStaffResetModal(false);
+          setStaffCurrentPassword("");
+          setStaffNewPassword("");
+          setStaffConfirmPassword("");
+          setStaffResetMsg("");
+        }, 1600);
+      } else {
+        setStaffResetMsg(data.error || "Failed to update password.");
+      }
+    } catch (err) {
+      setStaffResetMsg("Failed to connect to server. Please try again.");
+    } finally {
+      setStaffResetLoading(false);
+    }
+  };
+
   const loadStaffList = async () => {
     setStaffLoading(true);
     setStaffError("");
@@ -1381,12 +1456,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           setShowPinModal(false);
         } else if (showChangePinModal) {
           setShowChangePinModal(false);
+        } else if (showStaffResetModal) {
+          setShowStaffResetModal(false);
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editingExpense, selectedInvoice, showProfileModal, showFeeConfigModal, showScriptModal, showStaffModal, showStockModal, showExpenseModal, showPinModal, showChangePinModal]);
+  }, [editingExpense, selectedInvoice, showProfileModal, showFeeConfigModal, showScriptModal, showStaffModal, showStockModal, showExpenseModal, showPinModal, showChangePinModal, showStaffResetModal]);
 
   // Compute next bill number
   const getNextBillNumber = () => {
@@ -2584,6 +2661,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const monthlyStats = getPeriodStats("monthly", selectedMonth);
   const activeStats = adminTimeframe === "daily" ? dailyStats : adminTimeframe === "weekly" ? weeklyStats : adminTimeframe === "monthly" ? monthlyStats : getPeriodStats("all");
 
+  const todayExpensesTotal = expenses
+    .filter(exp => {
+      const d = exp.date || "";
+      return d === todayStr || d === (new Date().toISOString().split('T')[0]);
+    })
+    .reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+
   // Filter bills by search query (WhatsApp number, name, or bill no) and tab
   const filteredBills = bills.filter(b => {
     const bDate = b.date || (b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : "");
@@ -3114,6 +3198,37 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </>
               )}
 
+              {/* REGULAR USER / STAFF: ONLY CAN RESET OWN PASSWORD (NO ID CREATION, NO ADMIN ID/PASSWORD ACCESS) */}
+              {billingRole !== "admin" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStaffCurrentPassword("");
+                    setStaffNewPassword("");
+                    setStaffConfirmPassword("");
+                    setStaffResetMsg("");
+                    setShowStaffResetModal(true);
+                  }}
+                  title="Reset your own staff login password"
+                  style={{
+                    backgroundColor: "#1e3a8a",
+                    color: "white",
+                    border: "1px solid #1e40af",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 6px rgba(30, 58, 138, 0.25)"
+                  }}
+                >
+                  🔑 Change My Password
+                </button>
+              )}
+
               {billingRole === "admin" && (
                 <button
                   type="button"
@@ -3325,6 +3440,111 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             <span style={{ backgroundColor: "#166534", border: "1px solid #14532d", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
               Other: <strong style={{ color: "#ffffff" }}>{formatCurrency(activeStats.breakdown["Other"])}</strong>
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* REGULAR USER / STAFF: TODAY'S FINANCIAL SUMMARY ONLY (Today's Income & Today's Expenses) */}
+      {billingRole !== "admin" && (
+        <div style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "10px",
+          border: "2px solid #0f766e",
+          padding: "16px 20px",
+          marginBottom: "20px",
+          boxShadow: "0 2px 8px rgba(15, 118, 110, 0.08)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px", borderBottom: "1px solid #e2e8f0", paddingBottom: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "20px" }}>📊</span>
+              <div>
+                <h4 style={{ margin: 0, color: "#0f766e", fontSize: "16px", fontWeight: "900" }}>
+                  Today's Financial Summary ({todayStr})
+                </h4>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Active Desk Operator: <strong>{activeStaffName || "Staff User"}</strong> • Showing Today's Income & Expenses Only
+                </span>
+              </div>
+            </div>
+            <span style={{
+              backgroundColor: "#f0fdf4",
+              color: "#166534",
+              border: "1px solid #bbf7d0",
+              padding: "4px 12px",
+              borderRadius: "20px",
+              fontSize: "12px",
+              fontWeight: "bold"
+            }}>
+              ● Live Today Desk
+            </span>
+          </div>
+
+          {/* 3 Metric Cards: Today's Total Income, Today's Expenses, Today's Net Balance */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px", marginBottom: "8px" }}>
+            {/* Today's Income */}
+            <div style={{
+              backgroundColor: "#f0fdf4",
+              border: "1.5px solid #86efac",
+              borderRadius: "8px",
+              padding: "14px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px"
+            }}>
+              <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Today's Income
+              </div>
+              <div style={{ fontSize: "24px", fontWeight: "900", color: "#15803d" }}>
+                {formatCurrency(dailyStats.total)}
+              </div>
+              <div style={{ fontSize: "11px", color: "#166534", display: "flex", gap: "8px", marginTop: "2px" }}>
+                <span>Cash: <strong>{formatCurrency(dailyStats.cash)}</strong></span>
+                <span>•</span>
+                <span>Online: <strong>{formatCurrency(dailyStats.online)}</strong></span>
+              </div>
+            </div>
+
+            {/* Today's Expenses */}
+            <div style={{
+              backgroundColor: "#fef2f2",
+              border: "1.5px solid #fca5a5",
+              borderRadius: "8px",
+              padding: "14px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px"
+            }}>
+              <div style={{ fontSize: "12px", fontWeight: "bold", color: "#991b1b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Today's Expenses
+              </div>
+              <div style={{ fontSize: "24px", fontWeight: "900", color: "#dc2626" }}>
+                {formatCurrency(todayExpensesTotal)}
+              </div>
+              <div style={{ fontSize: "11px", color: "#991b1b", marginTop: "2px" }}>
+                Recorded Today: <strong>{expenses.filter(exp => { const d = exp.date || ""; return d === todayStr || d === (new Date().toISOString().split('T')[0]); }).length}</strong> item(s)
+              </div>
+            </div>
+
+            {/* Today's Net Balance */}
+            <div style={{
+              backgroundColor: (dailyStats.total - todayExpensesTotal) >= 0 ? "#eff6ff" : "#fff1f2",
+              border: `1.5px solid ${(dailyStats.total - todayExpensesTotal) >= 0 ? "#93c5fd" : "#fda4af"}`,
+              borderRadius: "8px",
+              padding: "14px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px"
+            }}>
+              <div style={{ fontSize: "12px", fontWeight: "bold", color: (dailyStats.total - todayExpensesTotal) >= 0 ? "#1e40af" : "#9f1239", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Today's Net Balance
+              </div>
+              <div style={{ fontSize: "24px", fontWeight: "900", color: (dailyStats.total - todayExpensesTotal) >= 0 ? "#1d4ed8" : "#e11d48" }}>
+                {formatCurrency(dailyStats.total - todayExpensesTotal)}
+              </div>
+              <div style={{ fontSize: "11px", color: (dailyStats.total - todayExpensesTotal) >= 0 ? "#1e40af" : "#9f1239", marginTop: "2px" }}>
+                (Today's Income - Today's Expenses)
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -7682,6 +7902,157 @@ function doPost(e) {
                   }}
                 >
                   Save for Both
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 9B. STAFF RESET OWN PASSWORD MODAL (User can reset own password only) */}
+      {showStaffResetModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(15, 23, 42, 0.7)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 999999,
+          padding: "20px"
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "12px",
+            width: "100%",
+            maxWidth: "420px",
+            padding: "26px",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+            border: "1px solid #cbd5e1"
+          }}>
+            <h3 style={{ margin: "0 0 10px 0", color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+              🔑 Change My Password
+            </h3>
+            <p style={{ margin: "0 0 18px 0", color: "#64748b", fontSize: "13px" }}>
+              Staff User: Reset your own login password for account <strong>{activeStaffUsername || activeStaffName || "Your Account"}</strong>.
+            </p>
+
+            <form onSubmit={handleStaffResetPassword}>
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  Current Password *
+                </label>
+                <input
+                  type="password"
+                  value={staffCurrentPassword}
+                  onChange={(e) => setStaffCurrentPassword(e.target.value)}
+                  placeholder="Enter your current password"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "14px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  New Password (Min 4 chars) *
+                </label>
+                <input
+                  type="password"
+                  value={staffNewPassword}
+                  onChange={(e) => setStaffNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  maxLength={30}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "14px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "18px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  Confirm New Password *
+                </label>
+                <input
+                  type="password"
+                  value={staffConfirmPassword}
+                  onChange={(e) => setStaffConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  maxLength={30}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "14px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              {staffResetMsg && (
+                <div style={{
+                  padding: "10px 12px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  marginBottom: "16px",
+                  backgroundColor: staffResetMsg.includes("✅") ? "#f0fdf4" : "#fef2f2",
+                  color: staffResetMsg.includes("✅") ? "#15803d" : "#b91c1c",
+                  border: `1px solid ${staffResetMsg.includes("✅") ? "#86efac" : "#fca5a5"}`
+                }}>
+                  {staffResetMsg}
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowStaffResetModal(false)}
+                  style={{
+                    padding: "9px 18px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    fontWeight: "bold"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={staffResetLoading}
+                  style={{
+                    padding: "9px 18px",
+                    backgroundColor: staffResetLoading ? "#93c5fd" : "#1e3a8a",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: staffResetLoading ? "not-allowed" : "pointer",
+                    fontSize: "13px",
+                    fontWeight: "bold"
+                  }}
+                >
+                  {staffResetLoading ? "Updating..." : "Update My Password"}
                 </button>
               </div>
             </form>

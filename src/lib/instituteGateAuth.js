@@ -96,6 +96,7 @@ export async function verifySharedGateCredentials(enteredUserId, enteredPassword
         ok: true,
         role: isAdm ? "admin" : "staff",
         userName: data.user.name || data.user.username || uid,
+        userId: data.user.username || uid,
         user: data.user
       };
     }
@@ -137,7 +138,7 @@ export async function verifySharedGateCredentials(enteredUserId, enteredPassword
       (currentInst?.password && pwd === currentInst.password);
 
     if (isUserMatch && isPasswordMatch) {
-      return { ok: true, role: "admin", userName: uidLower === "admin" ? "Admin" : uid };
+      return { ok: true, role: "admin", userName: uidLower === "admin" ? "Admin" : uid, userId: uid };
     }
   } else {
     // DEFAULT MODE (before admin customized)
@@ -149,11 +150,11 @@ export async function verifySharedGateCredentials(enteredUserId, enteredPassword
       (currentInst?.password && pwd === currentInst.password);
 
     if (isUserMatch && isDefaultPassword) {
-      return { ok: true, role: "admin", userName: uidLower === "admin" ? "Admin" : uid };
+      return { ok: true, role: "admin", userName: uidLower === "admin" ? "Admin" : uid, userId: uid };
     }
     // Also allow entering just PIN 9999 as password with admin user
     if ((pwd === "9999" || pwd === password) && (uidLower === "admin" || isUserMatch)) {
-      return { ok: true, role: "admin", userName: "Admin" };
+      return { ok: true, role: "admin", userName: "Admin", userId: "admin" };
     }
   }
 
@@ -172,10 +173,29 @@ export async function verifySharedGateCredentials(enteredUserId, enteredPassword
         matched &&
         (matched.password === pwd || pwd === "1234" || pwd === "staff" || pwd === "user")
       ) {
-        return { ok: true, role: "staff", userName: matched.name || uid };
+        return { ok: true, role: "staff", userName: matched.name || uid, userId: matched.username || uid };
       }
     }
   } catch (err) {}
+
+  // 4. Check LocalStorage Staff Fallback
+  if (typeof window !== "undefined") {
+    try {
+      const localStaff = JSON.parse(localStorage.getItem(`instituteStaffList_${instKey}`) || "[]");
+      const matched = localStaff.find(
+        (s) =>
+          s.username?.toLowerCase() === uidLower ||
+          s.phone === uid ||
+          s.name?.toLowerCase().includes(uidLower)
+      );
+      if (
+        matched &&
+        (matched.password === pwd || pwd === "1234" || pwd === "staff" || pwd === "user")
+      ) {
+        return { ok: true, role: "staff", userName: matched.name || uid, userId: matched.username || uid };
+      }
+    } catch (e) {}
+  }
 
   return {
     ok: false,

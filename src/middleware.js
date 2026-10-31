@@ -70,6 +70,11 @@ export async function middleware(req) {
   }
 
   // 2. Check Protected Routes
+  // Allow staff password reset endpoint to verify its own credentials in handler
+  if (pathname === '/api/institute/staff' && req.method === 'PUT') {
+    return NextResponse.next();
+  }
+
   const matchedRule = ROUTE_PERMISSIONS.find((rule) => pathname.startsWith(rule.prefix));
 
   if (matchedRule) {
