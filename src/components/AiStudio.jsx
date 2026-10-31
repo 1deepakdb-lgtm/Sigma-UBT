@@ -15,9 +15,66 @@ export default function AiStudio({
   initialText = '',
   onClose = null,
   embedded = false,
-  instituteLanguage = null
+  instituteLanguage = null,
+  userRole = null
 }) {
-  const [activeTab, setActiveTab] = useState('generator'); // 'generator' | 'dialogue' | 'benchmark'
+  const [activeTab, setActiveTab] = useState('generator'); // 'generator' | 'dialogue' | 'listeningBuilder'
+
+  // Super Admin verification (Strictly exclude Institute and Student)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(() => {
+    if (userRole) {
+      const r = String(userRole).toLowerCase();
+      if (r === 'institute' || r === 'student' || r === 'staff' || r === 'teacher') return false;
+      if (r === 'admin' || r === 'superadmin') return true;
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const pathname = window.location.pathname || '';
+        // If route belongs to student or institute, NEVER allow Super Admin tools
+        if (pathname.includes('/student') || pathname.includes('/institute')) return false;
+
+        // Route belongs to admin or explicitly has superadmin flag
+        if (pathname.startsWith('/admin')) return true;
+        if (window.location.search?.includes('superadmin=true')) return true;
+
+        const r = (localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
+        if (r === 'student' || r === 'institute' || r === 'staff' || r === 'teacher') return false;
+        if (r === 'admin' || r === 'superadmin') return true;
+
+        const u = localStorage.getItem('user') || localStorage.getItem('currentUser');
+        if (u) {
+          const parsed = JSON.parse(u);
+          const ur = (parsed?.role || '').toLowerCase();
+          if (ur === 'student' || ur === 'institute' || ur === 'staff') return false;
+          if (ur === 'admin' || ur === 'superadmin') return true;
+        }
+
+        if (pathname.startsWith('/voice-studio')) {
+          if (r === 'student' || r === 'institute') return false;
+          return true;
+        }
+      } catch (e) {}
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname || '';
+      if (pathname.includes('/student') || pathname.includes('/institute')) {
+        setIsSuperAdmin(false);
+        if (activeTab === 'listeningBuilder') setActiveTab('generator');
+        return;
+      }
+      const r = (userRole || localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
+      if (r === 'student' || r === 'institute' || r === 'staff' || r === 'teacher') {
+        setIsSuperAdmin(false);
+        if (activeTab === 'listeningBuilder') setActiveTab('generator');
+      } else if (r === 'admin' || r === 'superadmin' || pathname.startsWith('/admin') || window.location.search?.includes('superadmin=true')) {
+        setIsSuperAdmin(true);
+      }
+    }
+  }, [userRole, activeTab]);
 
   // Determine effective student language ('korean' | 'japanese' | 'both')
   const [effectiveInstLang, setEffectiveInstLang] = useState(() => {
@@ -404,7 +461,7 @@ export default function AiStudio({
         {[
           { id: 'generator', label: 'Voice Profiles & Speech Generator' },
           { id: 'dialogue', label: 'Multi-Speaker Dialogue Studio' },
-          { id: 'listeningBuilder', label: 'EPS Listening Studio (Q21–Q40)' }
+          ...(isSuperAdmin ? [{ id: 'listeningBuilder', label: 'EPS Listening Studio (Q21–Q40)' }] : [])
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (
@@ -1119,9 +1176,9 @@ export default function AiStudio({
         </div>
       )}
 
-      {/* EPS Listening Studio (Q21-Q40 Synchronizer) */}
-      {activeTab === 'listeningBuilder' && (
-        <ListeningExamSynchronizer instituteLanguage={effectiveInstLang} />
+      {/* EPS Listening Studio (Q21-Q40 Synchronizer) - SUPER ADMIN ONLY */}
+      {isSuperAdmin && activeTab === 'listeningBuilder' && (
+        <ListeningExamSynchronizer instituteLanguage={effectiveInstLang} isSuperAdmin={isSuperAdmin} />
       )}
 
     </div>

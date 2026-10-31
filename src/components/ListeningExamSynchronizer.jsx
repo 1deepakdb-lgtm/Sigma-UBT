@@ -237,7 +237,38 @@ const SAMPLE_EPS_LISTENING_DATA = [
   }
 ];
 
-export default function ListeningExamSynchronizer({ instituteLanguage = 'korean' }) {
+export default function ListeningExamSynchronizer({ instituteLanguage = 'korean', isSuperAdmin = null }) {
+  // Strict Super Admin Access Control: Hidden & Blocked for Institutes & Students
+  const [isAuthorized] = useState(() => {
+    if (isSuperAdmin === true) return true;
+    if (isSuperAdmin === false) return false;
+    if (typeof window === 'undefined') return false;
+    try {
+      const pathname = window.location.pathname || '';
+      if (pathname.includes('/student') || pathname.includes('/institute')) return false;
+      if (pathname.startsWith('/admin')) return true;
+      if (window.location.search?.includes('superadmin=true')) return true;
+
+      const r = (localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
+      if (r === 'student' || r === 'institute' || r === 'staff' || r === 'teacher') return false;
+      if (r === 'admin' || r === 'superadmin') return true;
+
+      const u = localStorage.getItem('user') || localStorage.getItem('currentUser');
+      if (u) {
+        const parsed = JSON.parse(u);
+        const ur = (parsed?.role || '').toLowerCase();
+        if (ur === 'student' || ur === 'institute' || ur === 'staff') return false;
+        if (ur === 'admin' || ur === 'superadmin') return true;
+      }
+      if (pathname.startsWith('/voice-studio')) return true;
+    } catch (e) {}
+    return false;
+  });
+
+  if (!isAuthorized) {
+    return null;
+  }
+
   // Questions 21 to 40 state
   const [questions, setQuestions] = useState(() => {
     if (typeof window !== 'undefined') {

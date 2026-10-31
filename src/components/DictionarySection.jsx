@@ -1232,6 +1232,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         <div ref={aiStudioRef} style={{ marginBottom: "22px" }}>
           <AiStudio
             embedded={true}
+            userRole={userRole}
             initialLang={activeLang}
             instituteLanguage={instLang}
             initialText={searchQuery || (activeLang === 'ja' ? selectedWord?.japanese : selectedWord?.korean) || ''}
