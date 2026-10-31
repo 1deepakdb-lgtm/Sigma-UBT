@@ -207,7 +207,7 @@ const StudentDashboard = () => {
 
   // Track active released packages specifically for this student
   const activeStudentPackages = (() => {
-    const list = [];
+    let list = [];
     if (!currentPhone && !studentName) return list;
 
     // 1. From adminBuyerStudentsMap for this student phone
