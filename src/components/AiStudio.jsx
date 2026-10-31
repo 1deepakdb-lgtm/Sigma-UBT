@@ -19,6 +19,34 @@ export default function AiStudio({
 }) {
   const [activeTab, setActiveTab] = useState('generator'); // 'generator' | 'dialogue' | 'benchmark'
 
+  // Super Admin Role Verification (EPS Listening Studio is for Super Admin only)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const role = (localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
+      if (role === 'admin' || role === 'superadmin') return true;
+
+      const userStr = localStorage.getItem('sigma_current_user') || localStorage.getItem('user') || localStorage.getItem('currentUser');
+      if (userStr) {
+        try {
+          const parsed = JSON.parse(userStr);
+          if (parsed?.role === 'admin' || parsed?.role === 'superadmin' || parsed?.isSuperAdmin) return true;
+        } catch (e) {
+          if (typeof userStr === 'string' && (userStr.toLowerCase() === 'admin' || userStr.toLowerCase() === 'super admin')) {
+            return true;
+          }
+        }
+      }
+
+      const search = window.location.search || '';
+      if (search.includes('superadmin=true')) return true;
+
+      const path = window.location.pathname || '';
+      if (path.startsWith('/admin')) return true;
+    } catch (e) {}
+    return false;
+  });
+
   // Determine effective student language ('korean' | 'japanese' | 'both')
   const [effectiveInstLang, setEffectiveInstLang] = useState(() => {
     if (instituteLanguage) return instituteLanguage.toLowerCase();
@@ -404,7 +432,7 @@ export default function AiStudio({
         {[
           { id: 'generator', label: 'Voice Profiles & Speech Generator' },
           { id: 'dialogue', label: 'Multi-Speaker Dialogue Studio' },
-          { id: 'listeningBuilder', label: 'EPS Listening Studio (Q21–Q40)' }
+          ...(isSuperAdmin ? [{ id: 'listeningBuilder', label: 'EPS Listening Studio (Q21–Q40)' }] : [])
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (
@@ -1119,8 +1147,8 @@ export default function AiStudio({
         </div>
       )}
 
-      {/* EPS Listening Studio (Q21-Q40 Synchronizer) */}
-      {activeTab === 'listeningBuilder' && (
+      {/* EPS Listening Studio (Q21-Q40 Synchronizer) - SUPER ADMIN ONLY */}
+      {isSuperAdmin && activeTab === 'listeningBuilder' && (
         <ListeningExamSynchronizer instituteLanguage={effectiveInstLang} />
       )}
 
