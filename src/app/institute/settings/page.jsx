@@ -53,8 +53,13 @@ const AdminSettings = () => {
 
     localStorage.setItem("adminPassword", newPassword);
     localStorage.setItem("billingAdminPin", newPassword);
+    localStorage.setItem("shared_institute_gate_password", newPassword);
+    localStorage.setItem("shared_institute_gate_is_custom", "true");
     localStorage.setItem("adminPinIsCustom", "true");
-    setMessage("Password successfully updated! Default passwords have been disabled.");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+    }
+    setMessage("Password successfully updated for both Billing & Manage Students! Default passwords have been disabled.");
     setIsError(false);
     setCurrentPassword("");
     setNewPassword("");

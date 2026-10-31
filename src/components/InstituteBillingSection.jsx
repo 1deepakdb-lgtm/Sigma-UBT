@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from '@/lib/instituteGateAuth';
 
 // Number to Indian/Nepali Rupees in Words helper
 export const numberToRupeesInWords = (num) => {
@@ -230,6 +231,12 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("superadmin") === "true") setIsBillingAuthenticated(true);
+      if (
+        sessionStorage.getItem("instituteBillingUnlocked") === "true" ||
+        sessionStorage.getItem("instituteStudentsUnlocked") === "true"
+      ) {
+        setIsBillingAuthenticated(true);
+      }
     }
   }, []);
   const [billingRole, setBillingRole] = useState(() => {
@@ -247,11 +254,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
 
+  // Admin Credential update state (Shared for both Billing & Manage Students)
+  const [newAdminUserId, setNewAdminUserId] = useState("");
+
   const instKey = instituteName ? `inst_${instituteName.trim().toLowerCase().replace(/\s+/g, '_')}` : "default";
 
   const [adminPin, setAdminPin] = useState(() => {
     if (typeof window === "undefined") return "9999";
-    return localStorage.getItem(`billingAdminPin_${instKey}`) || "9999";
+    return getSharedGateCredentials(instituteName).password || localStorage.getItem(`billingAdminPin_${instKey}`) || "9999";
   });
 
   // Course Package Default Fees & Discounts Configuration (Persisted per institute)
@@ -692,7 +702,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
 
 
-  // Authentication & Gate Handler (Unified  Login for Admin & User)
+  // Authentication & Gate Handler (Unified Login for Admin & User sharing same credentials as Manage Students)
   const handleGateLogin = async (e) => {
     e.preventDefault();
     setLoginError("");
@@ -709,84 +719,24 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     }
 
     setLoginLoading(true);
-    try {
-      // 1. Attempt API authentication
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: uid,
-          password: pwd
-        })
-      });
-      const data = await res.json();
-      if (res.ok && data.user) {
-        const isAdmin = data.user.role === "admin" || data.user.role === "institute";
-        setIsBillingAuthenticated(true);
-        setBillingRole(isAdmin ? "admin" : "user");
-        setActiveStaffName(data.user.name || data.user.username || uid);
-        setLoginUserId("");
-        setLoginPassword("");
-        setAutoLogoutNotice("");
-        setLoginError("");
-        lastActivityRef.current = Date.now();
-        setLoginLoading(false);
-        return;
-      }
-    } catch (err) {
-      console.warn("API login attempt, checking fallback:", err);
-    }
-
-    // 2. Fallback check for Admin
-    const currentAdminPin = getEffectiveAdminPin();
-    const hasCustomPin = isCustomAdminPinSet();
-
-    // STRICT: If admin changed password/PIN, NEVER take default passwords ("9999", "admin", "admin123")!
-    const isAdminMatch = hasCustomPin
-      ? ((uid.toLowerCase() === "admin" && pwd === currentAdminPin) || pwd === currentAdminPin)
-      : ((uid.toLowerCase() === "admin" && (pwd === currentAdminPin || pwd === "9999" || pwd === "admin" || pwd === "admin123")) ||
-         (pwd === currentAdminPin || pwd === "9999"));
-
-    if (isAdminMatch) {
-      setIsBillingAuthenticated(true);
-      setBillingRole("admin");
-      setActiveStaffName(uid.toLowerCase() === "admin" ? "Admin" : uid);
-      setLoginUserId("");
-      setLoginPassword("");
-      setAutoLogoutNotice("");
-      setLoginError("");
-      lastActivityRef.current = Date.now();
-      setLoginLoading(false);
-      return;
-    }
-
-    // 3. Fallback check for User / Staff
-    const matched = staffList.find(
-      (s) =>
-        s.username?.toLowerCase() === uid.toLowerCase() ||
-        s.phone?.includes(uid) ||
-        s.name?.toLowerCase().includes(uid.toLowerCase())
-    );
-
-    if ((matched && (matched.password === pwd || pwd === "1234")) || pwd === "1234" || pwd === "user" || pwd === "staff") {
-      setIsBillingAuthenticated(true);
-      setBillingRole("user");
-      setActiveStaffName(matched ? matched.name : uid);
-      setLoginUserId("");
-      setLoginPassword("");
-      setAutoLogoutNotice("");
-      setLoginError("");
-      lastActivityRef.current = Date.now();
-      setLoginLoading(false);
-      return;
-    }
-
-    setLoginError(
-      hasCustomPin
-        ? "Invalid User ID or Password."
-        : "Invalid User ID or Password. (Admin: admin / 9999 | User: 1234)"
-    );
+    const result = await verifySharedGateCredentials(uid, pwd, instituteName);
     setLoginLoading(false);
+
+    if (result.ok) {
+      const isAdm = result.role === "admin";
+      setIsBillingAuthenticated(true);
+      setBillingRole(isAdm ? "admin" : "user");
+      setActiveStaffName(result.userName || (isAdm ? "Admin" : uid));
+      sessionStorage.setItem("instituteBillingUnlocked", "true");
+      sessionStorage.setItem("instituteStudentsUnlocked", "true");
+      setLoginUserId("");
+      setLoginPassword("");
+      setAutoLogoutNotice("");
+      setLoginError("");
+      lastActivityRef.current = Date.now();
+    } else {
+      setLoginError(result.error || "Invalid User ID or Password.");
+    }
   };
 
   // Helper to get local YYYY-MM-DD
@@ -1015,6 +965,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   // Immediate manual logout/lock
   const handleBillingLogout = () => {
     setIsBillingAuthenticated(false);
+    sessionStorage.removeItem("instituteBillingUnlocked");
+    sessionStorage.removeItem("instituteStudentsUnlocked");
     setAutoLogoutNotice("Billing system is locked. Please login to access records.");
     setShowBillModal(false);
     setShowProfileModal(false);
@@ -1091,29 +1043,52 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     }
   };
 
-  const handleChangePinSubmit = (e) => {
+  const handleChangePinSubmit = async (e) => {
     e.preventDefault();
     setPinChangeMsg("");
-    if (!newPin || newPin.length < 4) {
-      setPinChangeMsg("PIN must be at least 4 digits/characters.");
+
+    if (billingRole !== "admin") {
+      setPinChangeMsg("Permission Denied: Only Admin can update the User ID or Password!");
       return;
     }
+
+    if (!newAdminUserId || newAdminUserId.trim().length < 3) {
+      setPinChangeMsg("User ID must be at least 3 characters.");
+      return;
+    }
+
+    if (!newPin || newPin.trim().length < 4) {
+      setPinChangeMsg("Password / PIN must be at least 4 digits/characters.");
+      return;
+    }
+
     if (newPin !== confirmPin) {
-      setPinChangeMsg("New PIN and Confirm PIN do not match.");
+      setPinChangeMsg("New Password and Confirm Password do not match.");
       return;
     }
+
     const cleanPin = newPin.trim();
-    setAdminPin(cleanPin);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`billingAdminPin_${instKey}`, cleanPin);
+    const cleanUid = newAdminUserId.trim();
+
+    const res = await updateSharedGateCredentials({
+      newUserId: cleanUid,
+      newPassword: cleanPin,
+      instituteName,
+      currentRole: billingRole
+    });
+
+    if (res.ok) {
+      setAdminPin(cleanPin);
+      setPinChangeMsg("SUCCESS: User ID and Password updated! This now works for both Billing and Manage Students.");
+      setTimeout(() => {
+        setShowChangePinModal(false);
+        setNewPin("");
+        setConfirmPin("");
+        setPinChangeMsg("");
+      }, 1500);
+    } else {
+      setPinChangeMsg(res.error || "Failed to update credentials.");
     }
-    setPinChangeMsg("SUCCESS: Admin PIN has been updated! Default passwords (9999, admin) are now permanently disabled.");
-    setTimeout(() => {
-      setShowChangePinModal(false);
-      setNewPin("");
-      setConfirmPin("");
-      setPinChangeMsg("");
-    }, 1500);
   };
 
   const loadStaffList = async () => {
@@ -3088,15 +3063,17 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
                   <button
                     onClick={() => {
+                      const currentCreds = getSharedGateCredentials(instituteName);
+                      setNewAdminUserId(currentCreds.userId || "admin");
                       setNewPin("");
                       setConfirmPin("");
                       setPinChangeMsg("");
                       setShowChangePinModal(true);
                     }}
                     style={{
-                      backgroundColor: "#6366f1",
+                      backgroundColor: "#1e3a8a",
                       color: "white",
-                      border: "1px solid #4f46e5",
+                      border: "1px solid #1e40af",
                       padding: "8px 14px",
                       borderRadius: "8px",
                       cursor: "pointer",
@@ -3105,10 +3082,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "6px",
-                      boxShadow: "0 2px 6px rgba(99, 102, 241, 0.25)"
+                      boxShadow: "0 2px 6px rgba(30, 58, 138, 0.25)"
                     }}
                   >
-                    PIN Settings
+                    🔑 ID & Password
                   </button>
 
                   {/* Automatically hide once successfully linked unless superadmin */}
@@ -7588,50 +7565,73 @@ function doPost(e) {
             border: "1px solid #cbd5e1"
           }}>
             <h3 style={{ margin: "0 0 10px 0", color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-              Change Admin PIN
+              🔑 Update Login Credentials
             </h3>
             <p style={{ margin: "0 0 18px 0", color: "#64748b", fontSize: "13px" }}>
-              Update the passcode required to access Admin mode in the billing module.
+              Admin Only: Update the User ID and Password required for <strong>both Billing and Manage Students</strong>.
             </p>
 
             <form onSubmit={handleChangePinSubmit}>
               <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#334155", marginBottom: "6px" }}>
-                  New PIN (Minimum 4 digits)
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  User ID / Username *
+                </label>
+                <input
+                  type="text"
+                  value={newAdminUserId}
+                  onChange={(e) => setNewAdminUserId(e.target.value)}
+                  placeholder="e.g. admin or custom ID"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "14px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  New Password / PIN (Min 4 chars) *
                 </label>
                 <input
                   type="password"
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value)}
                   placeholder="e.g. 1234 or custom"
-                  maxLength={12}
+                  maxLength={20}
+                  required
                   style={{
                     width: "100%",
                     padding: "10px 12px",
                     borderRadius: "6px",
                     border: "1px solid #cbd5e1",
-                    fontSize: "16px",
+                    fontSize: "14px",
                     boxSizing: "border-box"
                   }}
                 />
               </div>
 
               <div style={{ marginBottom: "18px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#334155", marginBottom: "6px" }}>
-                  Confirm New PIN
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  Confirm New Password *
                 </label>
                 <input
                   type="password"
                   value={confirmPin}
                   onChange={(e) => setConfirmPin(e.target.value)}
-                  placeholder="Re-enter new PIN"
-                  maxLength={12}
+                  placeholder="Re-enter new password"
+                  maxLength={20}
+                  required
                   style={{
                     width: "100%",
                     padding: "10px 12px",
                     borderRadius: "6px",
                     border: "1px solid #cbd5e1",
-                    fontSize: "16px",
+                    fontSize: "14px",
                     boxSizing: "border-box"
                   }}
                 />
@@ -7644,7 +7644,8 @@ function doPost(e) {
                   padding: "10px",
                   borderRadius: "6px",
                   fontSize: "13px",
-                  marginBottom: "16px"
+                  marginBottom: "16px",
+                  fontWeight: "600"
                 }}>
                   {pinChangeMsg}
                 </div>
@@ -7672,7 +7673,7 @@ function doPost(e) {
                   style={{
                     flex: 1,
                     padding: "10px",
-                    backgroundColor: "#6366f1",
+                    backgroundColor: "#1e3a8a",
                     color: "white",
                     border: "none",
                     borderRadius: "6px",
@@ -7680,7 +7681,7 @@ function doPost(e) {
                     cursor: "pointer"
                   }}
                 >
-                  Save New PIN
+                  Save for Both
                 </button>
               </div>
             </form>

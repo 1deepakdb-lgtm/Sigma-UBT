@@ -19,6 +19,7 @@ import EpsBookReader from "@/components/EpsBookReader";
 import InstituteBillingSection from "@/components/InstituteBillingSection";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import { performLogout } from "@/lib/clientAuth";
+import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from "@/lib/instituteGateAuth";
 
 const InstituteDashboard = () => {
   const router = useRouter();
@@ -103,6 +104,25 @@ const InstituteDashboard = () => {
   const lastStudentsActivityRef = useRef(Date.now());
   const [studentsAutoLockCountdown, setStudentsAutoLockCountdown] = useState(20);
 
+  // Admin-only shared credential update modal state
+  const [showCredModal, setShowCredModal] = useState(false);
+  const [newCredUserId, setNewCredUserId] = useState("");
+  const [newCredPassword, setNewCredPassword] = useState("");
+  const [confirmCredPassword, setConfirmCredPassword] = useState("");
+  const [credMsg, setCredMsg] = useState("");
+  const [credLoading, setCredLoading] = useState(false);
+
+  // Check if already unlocked in session (either in Billing or Manage Students)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isUnlocked = sessionStorage.getItem("instituteStudentsUnlocked") === "true" ||
+                         sessionStorage.getItem("instituteBillingUnlocked") === "true";
+      if (isUnlocked) {
+        setIsStudentsUnlocked(true);
+      }
+    }
+  }, []);
+
   // 20s inactivity auto-lock for Manage Students
   useEffect(() => {
     if (!isStudentsUnlocked) return;
@@ -125,6 +145,7 @@ const InstituteDashboard = () => {
       if (remaining <= 0) {
         setIsStudentsUnlocked(false);
         sessionStorage.removeItem("instituteStudentsUnlocked");
+        sessionStorage.removeItem("instituteBillingUnlocked");
       }
     }, 1000);
 
@@ -134,6 +155,7 @@ const InstituteDashboard = () => {
     };
   }, [isStudentsUnlocked]);
 
+  // Unified unlock handler using shared credentials
   const handleUnlockStudentsWithBilling = async (e) => {
     e.preventDefault();
     setUnlockError("");
@@ -141,91 +163,83 @@ const InstituteDashboard = () => {
     const pwd = billingLoginPassword.trim();
 
     if (!uid || !pwd) {
-      setUnlockError("Please enter both Billing User ID and Password.");
+      setUnlockError("Please enter both User ID and Password.");
       return;
     }
 
     setUnlockLoading(true);
+    const result = await verifySharedGateCredentials(uid, pwd, instituteName);
+    setUnlockLoading(false);
 
-    try {
-      // 1. Live authentication check via API
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: uid, password: pwd })
-      });
-      const data = await res.json();
-      if (res.ok && data.user) {
-        if (data.user.role === "institute" || data.user.role === "admin" || data.user.role === "staff") {
-          setIsStudentsUnlocked(true);
-          sessionStorage.setItem("instituteStudentsUnlocked", "true");
-          setBillingLoginUserId("");
-          setBillingLoginPassword("");
-          setUnlockLoading(false);
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn("Backend auth verification error, checking fallback:", err);
-    }
-
-    // 2. Local Billing Admin User ID & PIN / Password fallback
-    const savedAdminPin = localStorage.getItem("billingAdminPin") || localStorage.getItem("adminPassword");
-    const hasCustomPin = Boolean(savedAdminPin || localStorage.getItem("adminPinIsCustom"));
-    const billingAdminPin = savedAdminPin || "9999";
-    const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
-    const currentInst = institutes.find(i => i.name === instituteName);
-
-    // If password/PIN was changed by Admin, NEVER accept default password ("9999", "admin", "admin123")!
-    const isAdminOrOwnerMatch = hasCustomPin
-      ? ((uid.toLowerCase() === "admin" && pwd === billingAdminPin) ||
-         (currentInst && (uid.toLowerCase() === currentInst.username?.toLowerCase() || uid.toLowerCase() === currentInst.name?.toLowerCase()) && (pwd === currentInst.password || pwd === billingAdminPin)) ||
-         (pwd === billingAdminPin))
-      : ((uid.toLowerCase() === "admin" && (pwd === billingAdminPin || pwd === "9999" || pwd === "admin" || pwd === "admin123")) ||
-         (currentInst && (uid.toLowerCase() === currentInst.username?.toLowerCase() || uid.toLowerCase() === currentInst.name?.toLowerCase()) && (pwd === currentInst.password || pwd === billingAdminPin || pwd === "9999")) ||
-         (pwd === billingAdminPin || (uid.toLowerCase() === "admin" && pwd === "9999")));
-
-    if (isAdminOrOwnerMatch) {
+    if (result.ok) {
       setIsStudentsUnlocked(true);
       sessionStorage.setItem("instituteStudentsUnlocked", "true");
+      sessionStorage.setItem("instituteBillingUnlocked", "true");
       setBillingLoginUserId("");
       setBillingLoginPassword("");
-      setUnlockLoading(false);
-      return;
+      setUnlockError("");
+    } else {
+      setUnlockError(result.error || "Invalid User ID or Password.");
     }
-
-    // 3. Fallback: Staff account check
-    try {
-      const staffRes = await fetch('/api/institute/staff');
-      if (staffRes.ok) {
-        const staffData = await staffRes.json();
-        const matched = (staffData.staff || []).find(
-          s => s.username?.toLowerCase() === uid.toLowerCase() || s.phone === uid || s.name?.toLowerCase().includes(uid.toLowerCase())
-        );
-        if (matched && (pwd === "1234" || pwd === "staff" || pwd === "user")) {
-          setIsStudentsUnlocked(true);
-          sessionStorage.setItem("instituteStudentsUnlocked", "true");
-          setBillingLoginUserId("");
-          setBillingLoginPassword("");
-          setUnlockLoading(false);
-          return;
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-
-    setUnlockLoading(false);
-    setUnlockError(
-      hasCustomPin
-        ? "Invalid Billing User ID or Password."
-        : `Invalid Billing User ID or Password. (Default: admin / ${billingAdminPin})`
-    );
   };
 
   const handleLockStudents = () => {
     setIsStudentsUnlocked(false);
     sessionStorage.removeItem("instituteStudentsUnlocked");
+    sessionStorage.removeItem("instituteBillingUnlocked");
+  };
+
+  const handleOpenCredModal = () => {
+    const creds = getSharedGateCredentials(instituteName);
+    setNewCredUserId(creds.userId || "admin");
+    setNewCredPassword("");
+    setConfirmCredPassword("");
+    setCredMsg("");
+    setShowCredModal(true);
+  };
+
+  const handleUpdateCredSubmit = async (e) => {
+    e.preventDefault();
+    setCredMsg("");
+
+    if (userRole === "staff") {
+      setCredMsg("Permission Denied: Only Admin can update the User ID or Password!");
+      return;
+    }
+
+    if (!newCredUserId || newCredUserId.trim().length < 3) {
+      setCredMsg("User ID must be at least 3 characters.");
+      return;
+    }
+
+    if (!newCredPassword || newCredPassword.trim().length < 4) {
+      setCredMsg("Password must be at least 4 characters/digits.");
+      return;
+    }
+
+    if (newCredPassword !== confirmCredPassword) {
+      setCredMsg("New Password and Confirm Password do not match.");
+      return;
+    }
+
+    setCredLoading(true);
+    const res = await updateSharedGateCredentials({
+      newUserId: newCredUserId,
+      newPassword: newCredPassword,
+      instituteName,
+      currentRole: userRole || "admin"
+    });
+    setCredLoading(false);
+
+    if (res.ok) {
+      setCredMsg("SUCCESS: User ID and Password updated! This now works for both Billing and Manage Students.");
+      setTimeout(() => {
+        setShowCredModal(false);
+        setCredMsg("");
+      }, 1500);
+    } else {
+      setCredMsg(res.error || "Failed to update credentials.");
+    }
   };
 
   // Dictionary states
@@ -1270,6 +1284,28 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                   >
                     <span>Lock Section</span>
                   </button>
+
+                  {userRole !== "staff" && (
+                    <button
+                      onClick={handleOpenCredModal}
+                      title="Update shared Login ID and Password for Billing & Manage Students (Admin Only)"
+                      style={{
+                        backgroundColor: "#1e3a8a",
+                        color: "white",
+                        border: "1px solid #1e40af",
+                        padding: "10px 14px",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px"
+                      }}
+                    >
+                      <span>🔑 Change ID / Password</span>
+                    </button>
+                  )}
                   <span style={{
                     fontSize: "12px",
                     color: "#64748b",
@@ -2241,10 +2277,153 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             </div>
           </div>
         </div>
+      {/* ADMIN-ONLY: Change Shared Gate Credentials Modal */}
+      {showCredModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(15, 23, 42, 0.7)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 999999,
+          padding: "20px"
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "14px",
+            width: "100%",
+            maxWidth: "420px",
+            padding: "26px",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+            border: "1px solid #cbd5e1"
+          }}>
+            <h3 style={{ margin: "0 0 8px 0", color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+              🔑 Update Login Credentials
+            </h3>
+            <p style={{ margin: "0 0 18px 0", color: "#64748b", fontSize: "13px" }}>
+              Admin only: Updating this User ID and Password will immediately work for <strong>both Billing and Manage Students</strong>.
+            </p>
+
+            <form onSubmit={handleUpdateCredSubmit}>
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  User ID / Username *
+                </label>
+                <input
+                  type="text"
+                  value={newCredUserId}
+                  onChange={(e) => setNewCredUserId(e.target.value)}
+                  placeholder="e.g. admin or custom ID"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "14px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  New Password / PIN (Min 4 chars) *
+                </label>
+                <input
+                  type="password"
+                  value={newCredPassword}
+                  onChange={(e) => setNewCredPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "14px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "18px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  Confirm New Password *
+                </label>
+                <input
+                  type="password"
+                  value={confirmCredPassword}
+                  onChange={(e) => setConfirmCredPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "14px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              {credMsg && (
+                <div style={{
+                  backgroundColor: credMsg.startsWith("SUCCESS") ? "#dcfce7" : "#fee2e2",
+                  color: credMsg.startsWith("SUCCESS") ? "#166534" : "#991b1b",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  marginBottom: "16px",
+                  fontWeight: "600"
+                }}>
+                  {credMsg}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCredModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontWeight: "bold",
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={credLoading}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    backgroundColor: "#1e3a8a",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontWeight: "bold",
+                    cursor: credLoading ? "not-allowed" : "pointer"
+                  }}
+                >
+                  {credLoading ? "Saving..." : "Save for Both"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
-
-
-
 
       </div>
     </div>
