@@ -268,6 +268,24 @@ export default function AdminDashboardPage() {
               <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", color: "#0f172a", fontWeight: "700" }}>All Sets</h4>
               <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Count all sets and view status overview</p>
             </Link>
+
+            <Link
+              href="/admin/dictionary"
+              style={{
+                backgroundColor: "#ffffff",
+                padding: "18px",
+                borderRadius: "10px",
+                border: "1.5px solid #c7d2fe",
+                boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+                textDecoration: "none",
+                display: "block",
+                transition: "transform 0.15s ease, box-shadow 0.15s ease"
+              }}
+            >
+              <div style={{ fontSize: "24px", marginBottom: "6px" }}>📖</div>
+              <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", color: "#3730a3", fontWeight: "700" }}>Dictionary &amp; AI Studio</h4>
+              <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Master Korean &amp; Japanese vocabulary and speech generator</p>
+            </Link>
           </div>
         </div>
 

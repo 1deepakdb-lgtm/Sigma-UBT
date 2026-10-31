@@ -44,6 +44,7 @@ export default function Navbar({
   const adminLinks = [
     { label: 'Dashboard', href: '/admin' },
     { label: 'Study Materials', href: '/admin/listening' },
+    { label: 'Dictionary', href: '/admin/dictionary' },
     { label: 'Manage Institutes', href: '/admin/institutes' },
     { label: 'Upload Questions', href: '/admin/questions' },
     { label: 'Notice', href: '/admin/news' },
