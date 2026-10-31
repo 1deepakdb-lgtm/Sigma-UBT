@@ -541,17 +541,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     return (localStorage.getItem(`billingAdminPin_${instKey}`) || adminPin || "9999").trim();
   };
 
-  // Hidden background sync fallback to Google Sheet (Zero UI delay)
+  // Hidden background sync to Google Sheet (Zero UI delay)
   const autoSyncToGoogleSheetBackground = (bill, allBills) => {
-    // If backend profile has googleSheetUrl, the backend API (/api/institute/billing)
-    // already automatically triggers background sync (triggerSheetSync).
-    // Firing simultaneously from frontend causes duplicate entries in Google Sheet.
-    if (profile && profile.googleSheetUrl && profile.googleSheetUrl.trim()) {
-      return; // Handled reliably by backend triggerSheetSync (avoids double entry!)
-    }
+    if (!bill) return;
 
-    const localWebhook = (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "";
-    if (!localWebhook.trim()) return;
+    const webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+      (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "";
+    if (!webhookUrl || webhookUrl === "setup_done") return;
 
     // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
     const formatNepalPhone = (val) => {
@@ -573,27 +569,41 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       hour12: true
     }).format(new Date());
 
-    const formattedBill = bill ? {
+    const formattedBill = {
       ...bill,
       ...(bill.contactNumber !== undefined ? { contactNumber: formatNepalPhone(bill.contactNumber) } : {}),
       ...(bill.parentNumber !== undefined ? { parentNumber: formatNepalPhone(bill.parentNumber) } : {}),
       lastUpdated: nowEnglish
-    } : bill;
+    };
 
-    try {
-      fetch(localWebhook.trim(), {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "append_or_update_bill",
-          bill: formattedBill,
-          materials: (bill && bill.materials) || [],
-          ownerEmail: profile.ownerEmail || "",
-          timestamp: Date.now()
-        })
-      }).catch(() => {});
-    } catch (e) {}
+    // 1. Primary: Server-side API (/api/institute/billing/sync) follows redirects cleanly
+    fetch(apiWithInst("/api/institute/billing/sync"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "sync_bill",
+        googleSheetUrl: webhookUrl,
+        ownerEmail: (profile && profile.ownerEmail) || "",
+        bill: formattedBill,
+        materials: (bill && bill.materials) || []
+      })
+    }).catch(() => {
+      // 2. Client fallback direct fetch
+      try {
+        fetch(webhookUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "append_or_update_bill",
+            bill: formattedBill,
+            materials: (bill && bill.materials) || [],
+            ownerEmail: profile.ownerEmail || "",
+            timestamp: Date.now()
+          })
+        }).catch(() => {});
+      } catch (e) {}
+    });
   };
 
   // Hidden background sync for Expenses to Google Sheet (Zero UI delay)
@@ -2267,7 +2277,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         setSyncStatus(` ${successMsg}`);
         setTestStatus({
           state: "success",
-          message: ` ${successMsg} Open your Google Sheet to view the 'StudentBills' and 'Expenses' tabs.`
+          message: ` ${successMsg} Open your Google Sheet to view Sheet 1 (Bills) and Sheet 2 (Expenses).`
         });
         const updated = bills.map(b => ({ ...b, isSyncedToSheet: true }));
         setBills(updated);
@@ -2276,7 +2286,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           setGoogleSheetViewUrl(data.result.sheetUrl);
           localStorage.setItem(`instituteGoogleSheetViewUrl_${instKey}`, data.result.sheetUrl);
         }
-        alert(` ${successMsg}\n\nYour bills and expenses have been written to the 'StudentBills' and 'Expenses' tabs in your Google Sheet.`);
+        alert(` ${successMsg}\n\nYour bills have been written to Sheet 1 (Bills) and expenses to Sheet 2 (Expenses) in your Google Sheet.`);
       } else {
         const errorMsg = data.error || "Sync failed. Please check your Google Apps Script URL.";
         setSyncStatus(` ${errorMsg}`);
@@ -7041,7 +7051,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       <a href="https://sheets.new" target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontWeight: "bold" }}>
                         sheets.new ↗
                       </a>{" "}
-                      to create a new Google Sheet. Name it <em>"Sigma Institute Bills"</em>.
+                      to create a new Google Sheet. All <strong>Bills</strong> automatically store in <strong>Sheet 1</strong>, and all <strong>Expenses</strong> automatically store in <strong>Sheet 2</strong> when entering data.
                     </div>
 
                     <div style={{ backgroundColor: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
@@ -7123,19 +7133,26 @@ function doPost(e) {
       }
     }
 
-    // Helper: Get or Create 'StudentBills' Sheet
+    // Helper: Get or Create Sheet 1 (Bills)
     function getOrCreateStudentBillsSheet() {
-      var sheetName = "StudentBills";
-      var s = ss.getSheetByName(sheetName);
+      var s = ss.getSheetByName("Sheet 1") ||
+              ss.getSheetByName("Sheet1") ||
+              ss.getSheetByName("StudentBills") ||
+              ss.getSheetByName("Bills");
+
+      var allSheets = ss.getSheets();
       if (!s) {
-        var allSheets = ss.getSheets();
-        if (allSheets.length === 1 && allSheets[0].getLastRow() <= 1 && allSheets[0].getName() !== "Expenses") {
-          s = allSheets[0];
-          try { s.setName(sheetName); } catch (e) {}
+        if (allSheets.length > 0) {
+          s = allSheets[0]; // 1st sheet = Sheet 1 (Bills)
         } else {
-          s = ss.insertSheet(sheetName, 0);
+          s = ss.insertSheet("Sheet 1", 0);
         }
       }
+
+      if (s.getName() === "StudentBills" || s.getName() === "Sheet1") {
+        try { s.setName("Sheet 1"); } catch (e) {}
+      }
+
       var headers = [
         "Bill No", "Date", "Student Name", "WhatsApp", "Address", "Parent Contact",
         "Course Detail", "Package", "Payment Method", "Gross Fee", "Discount %",
@@ -7168,13 +7185,28 @@ function doPost(e) {
       return s;
     }
 
-    // Helper: Get or Create 'Expenses' Sheet
+    // Helper: Get or Create Sheet 2 (Expenses)
     function getOrCreateExpenseSheet() {
-      var expSheetName = "Expenses";
-      var es = ss.getSheetByName(expSheetName);
+      var s1 = getOrCreateStudentBillsSheet();
+
+      var es = ss.getSheetByName("Sheet 2") ||
+               ss.getSheetByName("Sheet2") ||
+               ss.getSheetByName("Expenses") ||
+               ss.getSheetByName("Expense");
+
       if (!es) {
-        es = ss.insertSheet(expSheetName);
+        var allSheets = ss.getSheets();
+        if (allSheets.length >= 2 && allSheets[1].getName() !== s1.getName()) {
+          es = allSheets[1]; // 2nd sheet = Sheet 2 (Expenses)
+        } else {
+          es = ss.insertSheet("Sheet 2", 1);
+        }
       }
+
+      if (es.getName() === "Expenses" || es.getName() === "Sheet2") {
+        try { es.setName("Sheet 2"); } catch (e) {}
+      }
+
       var expHeaders = [
         "Expense ID", "Date", "Title / Description", "Category",
         "Amount (Rs)", "Payment Method", "Bill / Voucher No",
@@ -7280,7 +7312,7 @@ function doPost(e) {
       getOrCreateExpenseSheet();
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'! ('StudentBills' and 'Expenses' tabs ready)",
+        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'! ('Sheet 1 (Bills)' and 'Sheet 2 (Expenses)' ready)",
         sheetUrl: ss.getUrl()
       })).setMimeType(ContentService.MimeType.JSON);
     }
@@ -7476,7 +7508,7 @@ function doPost(e) {
 
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Synchronized " + syncedBillsCount + " student bills & " + syncedExpensesCount + " expenses to Google Sheet.",
+        message: "Synchronized " + syncedBillsCount + " bills to Sheet 1 & " + syncedExpensesCount + " expenses to Sheet 2.",
         syncedBills: syncedBillsCount,
         syncedExpenses: syncedExpensesCount
       })).setMimeType(ContentService.MimeType.JSON);

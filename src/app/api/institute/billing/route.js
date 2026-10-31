@@ -358,7 +358,7 @@ export async function POST(req) {
 async function triggerSheetSync(instituteId, bill, materials) {
   try {
     const profile = await prisma.billingProfile.findUnique({ where: { instituteId } });
-    if (profile?.googleSheetUrl) {
+    if (profile?.googleSheetUrl && profile.googleSheetUrl.startsWith('http') && profile.googleSheetUrl !== 'setup_done') {
       // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
       const formatNepalPhone = (val) => {
         if (!val) return '';
@@ -394,7 +394,8 @@ async function triggerSheetSync(instituteId, bill, materials) {
           bill: formattedBill,
           materials: materials || [],
           ownerEmail: profile.ownerEmail || ''
-        })
+        }),
+        redirect: 'follow'
       }).then(async (res) => {
         if (res.ok && !bill.isDeleted) {
           await prisma.billRecord.update({

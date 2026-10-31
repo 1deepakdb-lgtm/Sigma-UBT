@@ -128,6 +128,55 @@ export async function POST(req) {
       hour12: true
     }).format(new Date());
 
+    // Handle Single Bill Sync (Create, Edit, Installment, Delete)
+    if (body.action === 'sync_bill' || body.action === 'append_or_update_bill') {
+      const b = body.bill;
+      if (!b) {
+        return NextResponse.json({ error: 'No bill payload provided' }, { status: 400 });
+      }
+
+      const billPayload = {
+        action: 'append_or_update_bill',
+        ownerEmail: ownerEmail || '',
+        bill: b,
+        materials: body.materials || []
+      };
+
+      try {
+        const res = await fetch(googleSheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(billPayload),
+          redirect: 'follow'
+        });
+
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          return NextResponse.json({
+            error: formatGoogleError(res.status, errText, googleSheetUrl)
+          }, { status: 502 });
+        }
+
+        let billResult = null;
+        try {
+          const text = await res.text();
+          try { billResult = JSON.parse(text); } catch { billResult = { message: text }; }
+        } catch {
+          billResult = { success: true };
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: billResult?.message || 'Bill successfully synced to Google Sheet!',
+          result: billResult
+        });
+      } catch (billErr) {
+        return NextResponse.json({
+          error: `Failed to sync bill to Google Apps Script URL: ${billErr.message}`
+        }, { status: 502 });
+      }
+    }
+
     // Handle Single Expense Sync (Create, Edit, Delete)
     if (body.action === 'sync_expense' || body.action === 'append_or_update_expense') {
       const exp = body.expense;
