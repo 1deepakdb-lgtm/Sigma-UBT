@@ -395,6 +395,27 @@ const InstituteDashboard = () => {
     setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...names])));
   };
 
+  const handleSelectMockModel = () => {
+    const modelNames = examSets.filter(s => {
+      const isJp = s.track === "japanese" || s.setType === "MOCK" || s.isMock;
+      if (!isJp) return false;
+      const name = (s.name || s.title || "").toLowerCase();
+      const desc = (s.desc || "").toLowerCase();
+      const titleJp = (s.titleJp || "").toLowerCase();
+      return name.includes("model") || name.includes("simulation") || desc.includes("simulation") || titleJp.includes("模試") || titleJp.includes("模擬");
+    }).map(s => s.name);
+    setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...modelNames])));
+  };
+
+  const handleSelectAllModelSets = () => {
+    const modelNames = examSets.filter(s => {
+      const name = (s.name || "").toLowerCase();
+      const pkg = (s.packageName || "").toLowerCase();
+      return name.includes("model") || pkg.includes("model");
+    }).map(s => s.name);
+    setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...modelNames])));
+  };
+
   const handleSelectAllSets = () => {
     setSelectedSetsForPkg(examSets.map(s => s.name));
   };
@@ -1893,6 +1914,13 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                               >
                                 + JFT-Basic (10)
                               </button>
+                              <button
+                                type="button"
+                                onClick={handleSelectMockModel}
+                                style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "700", cursor: "pointer" }}
+                              >
+                                🎯 Model Exam / Simulation
+                              </button>
                             </>
                           ) : (
                             <>
@@ -1909,6 +1937,13 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                                 style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
                               >
                                 + All Chapter Sets
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSelectAllModelSets}
+                                style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                + All Model Sets
                               </button>
                             </>
                           )}

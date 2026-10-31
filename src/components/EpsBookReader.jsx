@@ -6236,7 +6236,18 @@ export default function EpsBookReader({
             if (activeJapaneseFolder === "Mock Test" || activeJapaneseFolder === "JLPT & JFT Question Bank") {
               const setsToRender = (JLPT_MOCK_SETS_META && JLPT_MOCK_SETS_META.length > 0) ? JLPT_MOCK_SETS_META : JLPT_JFT_SETS;
               const filteredJlptSets = setsToRender.filter(s => {
-                if (jlptLevelFilter !== "all" && s.level !== jlptLevelFilter) return false;
+                if (jlptLevelFilter !== "all") {
+                  if (jlptLevelFilter === "model") {
+                    const matchModel = (s.title || "").toLowerCase().includes("simulation") ||
+                      (s.title || "").toLowerCase().includes("model") ||
+                      (s.desc || "").toLowerCase().includes("simulation") ||
+                      (s.titleJp || "").includes("模試") ||
+                      (s.titleJp || "").includes("模擬");
+                    if (!matchModel) return false;
+                  } else if (s.level !== jlptLevelFilter) {
+                    return false;
+                  }
+                }
                 if (jlptSearchQuery.trim()) {
                   const q = jlptSearchQuery.toLowerCase().trim();
                   const matchTitle = (s.title || "").toLowerCase().includes(q);
@@ -6279,6 +6290,7 @@ export default function EpsBookReader({
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                         {[
                           { id: "all", label: `All Sets (${setsToRender.length})` },
+                          { id: "model", label: `🎯 Model Exam (${setsToRender.filter(s => (s.title||"").toLowerCase().includes("simulation") || (s.title||"").toLowerCase().includes("model") || (s.desc||"").toLowerCase().includes("simulation") || (s.titleJp||"").includes("模試")).length} Sets)` },
                           { id: "JLPT N5", label: `JLPT N5 (${setsToRender.filter(s => s.level === "JLPT N5").length} Sets)` },
                           { id: "JLPT N4", label: `JLPT N4 (${setsToRender.filter(s => s.level === "JLPT N4").length} Sets)` },
                           { id: "JLPT N3", label: `JLPT N3 (${setsToRender.filter(s => s.level === "JLPT N3").length} Sets)` },

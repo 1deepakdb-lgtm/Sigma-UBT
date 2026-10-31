@@ -2594,6 +2594,21 @@ function InstituteQuestionManagerContent() {
                             >
                               + JFT-Basic (10)
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const modelSets = selectableSets.filter(s => {
+                                  const name = (s.name || s.title || "").toLowerCase();
+                                  const desc = (s.desc || "").toLowerCase();
+                                  const titleJp = (s.titleJp || "").toLowerCase();
+                                  return name.includes("model") || name.includes("simulation") || desc.includes("simulation") || titleJp.includes("模試") || titleJp.includes("模擬");
+                                }).map(s => s.name);
+                                setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...modelSets])));
+                              }}
+                              style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              🎯 Model Exam / Simulation
+                            </button>
                             {mySets.length > 0 && (
                               <button
                                 type="button"
@@ -2608,13 +2623,29 @@ function InstituteQuestionManagerContent() {
                             )}
                           </>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedSetsForPkg(mySets.map(s => s.name))}
-                            style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
-                          >
-                            Select All My Private Sets
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const modelSets = selectableSets.filter(s => {
+                                  const name = (s.name || "").toLowerCase();
+                                  const pkg = (s.packageName || "").toLowerCase();
+                                  return name.includes("model") || pkg.includes("model");
+                                }).map(s => s.name);
+                                setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...modelSets])));
+                              }}
+                              style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              + All Model Sets
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedSetsForPkg(mySets.map(s => s.name))}
+                              style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              Select All My Private Sets
+                            </button>
+                          </>
                         )}
                         <button
                           type="button"

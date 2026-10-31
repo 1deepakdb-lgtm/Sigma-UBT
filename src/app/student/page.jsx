@@ -158,6 +158,7 @@ const StudentDashboard = () => {
   const [studentExpiryDate, setStudentExpiryDate] = useState("");
   const [purchasedPackages, setPurchasedPackages] = useState([]);
   const [logoWatermark, setLogoWatermark] = useState("");
+  const [japaneseMockFilter, setJapaneseMockFilter] = useState("all");
   const [instituteLanguage, setInstituteLanguage] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("instituteLanguage") || "both";
@@ -1185,10 +1186,28 @@ const StudentDashboard = () => {
       return numA - numB;
     });
 
-  const baseFilteredSets =
-    selectedPackageFilter === "All" || purchasedPackages.length <= 1
+  const baseFilteredSets = (() => {
+    let list = (selectedPackageFilter === "All" || purchasedPackages.length <= 1)
       ? sortedExamSets
       : sortedExamSets.filter((s) => s.packageName === selectedPackageFilter);
+
+    if (isJapaneseTrack && japaneseMockFilter !== "all") {
+      if (japaneseMockFilter === "model") {
+        list = list.filter(s => {
+          const name = (s.name || s.title || "").toLowerCase();
+          const desc = (s.desc || "").toLowerCase();
+          const titleJp = (s.titleJp || "").toLowerCase();
+          return name.includes("simulation") || name.includes("model") || desc.includes("simulation") || titleJp.includes("模試") || titleJp.includes("模擬");
+        });
+      } else {
+        list = list.filter(s => {
+          const match = (s.level || s.packageName || s.name || "").toLowerCase().includes(japaneseMockFilter.toLowerCase());
+          return match;
+        });
+      }
+    }
+    return list;
+  })();
 
   const filteredSets = examSetsSearch.trim()
     ? baseFilteredSets.filter((s) =>
@@ -1646,6 +1665,44 @@ const StudentDashboard = () => {
                     {pkgName}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Japanese Mock Test Level & Model Selection Pills */}
+            {isJapaneseTrack && (
+              <div style={{ display: "flex", gap: "8px", marginBottom: "18px", flexWrap: "wrap", alignItems: "center" }}>
+                {[
+                  { id: "all", label: `⛩️ All Mock Sets (${sortedExamSets.length})` },
+                  { id: "model", label: `🎯 Model Exam / Simulation (${sortedExamSets.filter(s => (s.name||"").toLowerCase().includes("simulation") || (s.name||"").toLowerCase().includes("model") || (s.desc||"").toLowerCase().includes("simulation")).length})` },
+                  { id: "N5", label: "JLPT N5" },
+                  { id: "N4", label: "JLPT N4" },
+                  { id: "N3", label: "JLPT N3" },
+                  { id: "N2", label: "JLPT N2" },
+                  { id: "JFT", label: "JFT-Basic" }
+                ].map((f) => {
+                  const isActive = japaneseMockFilter === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => { setJapaneseMockFilter(f.id); setExamSetsPage(1); }}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: "20px",
+                        border: isActive ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                        backgroundColor: isActive ? "#2563eb" : "#ffffff",
+                        color: isActive ? "#ffffff" : "#334155",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        boxShadow: isActive ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
