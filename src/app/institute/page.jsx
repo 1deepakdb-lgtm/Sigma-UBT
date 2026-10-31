@@ -1407,7 +1407,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     ⏱️ Auto-lock in: <strong style={{ color: studentsAutoLockCountdown <= 5 ? "#ef4444" : "#0284c7" }}>{studentsAutoLockCountdown}s</strong>
                   </span>
                   <Link
-                    href={`/institute/questions?institute=${encodeURIComponent(instituteName)}${instId ? `&instId=${instId}` : ""}`}
+                    href={`/institute/questions?institute=${encodeURIComponent(instituteName)}${instId ? `&instId=${instId}` : ""}&lang=${encodeURIComponent(instituteLanguage || "korean")}`}
                     className="dynamic-btn"
                     style={{
                       textDecoration: "none",
@@ -1425,9 +1425,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       justifyContent: "center",
                       boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
                     }}
-                    title="Create and manage your private UBT sets & question bucket"
+                    title={instituteLanguage === "japanese" ? "Create and manage your private Japanese Mock Tests & question bucket" : "Create and manage your private UBT sets & question bucket"}
                   >
-                    <span style={{ color: "#ffffff" }}>Create UBT Set</span>
+                    <span style={{ color: "#ffffff" }}>
+                      {instituteLanguage === "japanese" ? "Create Mock Test" : "Create UBT Set"}
+                    </span>
                   </Link>
 
                   <button
@@ -1452,7 +1454,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     {showCreatePkgForm ? (
                       <span style={{ color: "#ffffff" }}>✕ Cancel Creation</span>
                     ) : (
-                      <span style={{ color: "#ffffff" }}>Create UBT Exam Package</span>
+                      <span style={{ color: "#ffffff" }}>
+                        {instituteLanguage === "japanese" ? "Create Mock Test Package" : "Create UBT Exam Package"}
+                      </span>
                     )}
                   </button>
 
@@ -1613,7 +1617,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               <div style={cardStyle}>
                 <div style={{ paddingTop: "10px" }}>
                   <h4 style={{ margin: "0 0 16px 0", fontSize: "16px", color: "#0f172a", fontWeight: "700" }}>
-                    🛠️ Design Custom Package Details
+                    🛠️ Design Custom {instituteLanguage === "japanese" ? "Mock Test" : "Exam"} Package Details
                   </h4>
 
                   <form onSubmit={handleCreateCustomPackage}>
@@ -1624,7 +1628,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                         </label>
                         <input
                           type="text"
-                          placeholder="e.g. Special 20 UBT Sets or Crash Course Bundle"
+                          placeholder={instituteLanguage === "japanese" ? "e.g. Special 20 Japanese Mock Test Sets or JLPT Bundle" : "e.g. Special 20 UBT Sets or Crash Course Bundle"}
                           value={newPkgName}
                           onChange={(e) => setNewPkgName(e.target.value)}
                           style={inputStyle}
@@ -1655,8 +1659,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                           onChange={(e) => setNewPkgType(e.target.value)}
                           style={inputStyle}
                         >
-                          <option value="UBT Full Exam">UBT Full Exam</option>
-                          <option value="Chapter Wise">Chapter Wise Practice</option>
+                          <option value="UBT Full Exam">{instituteLanguage === "japanese" ? "Full Mock Test" : "UBT Full Exam"}</option>
+                          <option value="Chapter Wise">{instituteLanguage === "japanese" ? "Topic Wise Practice" : "Chapter Wise Practice"}</option>
                           <option value="Combo Package">Combo Full Package</option>
                         </select>
                       </div>
@@ -1685,7 +1689,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Intensive model test sets with 20 Reading + 20 Listening questions per set."
+                        placeholder={instituteLanguage === "japanese" ? "e.g. Intensive Japanese mock test sets with reading & listening questions." : "e.g. Intensive model test sets with 20 Reading + 20 Listening questions per set."}
                         value={newPkgDesc}
                         onChange={(e) => setNewPkgDesc(e.target.value)}
                         style={inputStyle}
@@ -1710,7 +1714,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                             onClick={handleSelectAllUbtSets}
                             style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
                           >
-                            + All UBT Sets
+                            + All {instituteLanguage === "japanese" ? "Mock" : "UBT"} Sets
                           </button>
                           <button
                             type="button"
@@ -1800,7 +1804,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>
-                    Configured UBT Packages ({examPackages.length})
+                    {instituteLanguage === "japanese" ? "Configured Mock Test Packages" : "Configured UBT Packages"} ({examPackages.length})
                   </h3>
                   <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#64748b" }}>
                     Click <strong>"✏️ Set / Edit Price"</strong> on any package to customize its fee for your students.
@@ -1808,7 +1812,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 </div>
 
                 <Link
-                  href={`/institute/questions?institute=${encodeURIComponent(instituteName)}${instId ? `&instId=${instId}` : ""}`}
+                  href={`/institute/questions?institute=${encodeURIComponent(instituteName)}${instId ? `&instId=${instId}` : ""}&lang=${encodeURIComponent(instituteLanguage || "korean")}`}
                   style={{
                     textDecoration: "none",
                     background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
@@ -1823,9 +1827,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     gap: "6px",
                     boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
                   }}
-                  title="Create your own private UBT sets & question bucket"
+                  title={instituteLanguage === "japanese" ? "Create your own private Japanese Mock Tests & question bucket" : "Create your own private UBT sets & question bucket"}
                 >
-                  <span style={{ color: "#ffffff" }}>Create UBT Set</span>
+                  <span style={{ color: "#ffffff" }}>
+                    {instituteLanguage === "japanese" ? "Create Mock Test" : "Create UBT Set"}
+                  </span>
                 </Link>
               </div>
 
@@ -2013,10 +2019,12 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", flexWrap: "wrap", gap: "10px" }}>
                   <div>
                     <h3 style={{ color: "#1e3a8a", margin: 0, fontSize: "18px", display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span>📝</span> UBT Exam Sets & Packages Overview
+                      <span>📝</span> {instituteLanguage === "japanese" ? "Mock Test Sets & Packages Overview" : "UBT Exam Sets & Packages Overview"}
                     </h3>
                     <p style={{ color: "#64748b", fontSize: "13px", margin: "4px 0 0 0" }}>
-                      Preview and verify available UBT test sets for students under your institute
+                      {instituteLanguage === "japanese"
+                        ? "Preview and verify available Japanese mock test sets for students under your institute"
+                        : "Preview and verify available UBT test sets for students under your institute"}
                     </p>
                   </div>
                   <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "bold" }}>

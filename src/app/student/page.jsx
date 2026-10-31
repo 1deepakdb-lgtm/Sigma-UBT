@@ -7,6 +7,8 @@ import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import EsewaCheckoutModal from "@/components/EsewaCheckoutModal";
+import JlptMockExamModal from "@/components/JlptMockExamModal";
+import { JLPT_MOCK_SETS_META, getMockExamSetById } from "@/data/jlptMockTestData";
 import { performLogout } from "@/lib/clientAuth";
 
 // Clean SVG Icons for zero-emoji compliance
@@ -95,6 +97,7 @@ const StudentDashboard = () => {
   const [selectedPackageFilter, setSelectedPackageFilter] = useState("All");
   const [examSetsPage, setExamSetsPage] = useState(1);
   const [examSetsSearch, setExamSetsSearch] = useState("");
+  const [activeJlptExamSet, setActiveJlptExamSet] = useState(null);
   const SETS_PER_PAGE = 20;
 
   const [activeBookFolder, setActiveBookFolder] = useState("EPS Book");
@@ -281,6 +284,15 @@ const StudentDashboard = () => {
 
     // Full Set UBT: covers standard EPS full sets (not chapter and not model question sets)
     if (targetPkgNorm.includes("full") && !setPkgNorm.includes("chapter") && !setPkgNorm.includes("model")) {
+      return true;
+    }
+
+    // Japanese Mock Test package matches
+    if (targetPkgNorm.includes("mock") && setPkgNorm.includes("mock")) return true;
+    if (targetPkgNorm.includes("jft") && setPkgNorm.includes("jft")) return true;
+    if (targetPkgNorm.includes("jlpt") && setPkgNorm.includes("jlpt")) return true;
+    if (targetPkgNorm.includes("nat") && setPkgNorm.includes("nat")) return true;
+    if (targetPkgNorm.includes("full") && (setPkgNorm.includes("mock") || setPkgNorm.includes("jlpt") || setPkgNorm.includes("jft") || setPkgNorm.includes("nat"))) {
       return true;
     }
 
@@ -686,16 +698,16 @@ const StudentDashboard = () => {
       })
   }, []);
 
-  // Ensure Japanese students are not stranded on exams or packages tabs
-  useEffect(() => {
-    if (instituteLanguage === "japanese" && (activeTab === "exams" || activeTab === "buyExam")) {
-      setActiveTab("home");
-    }
-  }, [instituteLanguage, activeTab]);
-
   // 2. Fetch Packages & Exam Sets (combining LocalStorage and Server DB)
   useEffect(() => {
-    const defaultPackages = [
+    const isJapaneseTrack = instituteLanguage === "japanese";
+
+    const defaultPackages = isJapaneseTrack ? [
+      { id: "jp-1", name: "Full Mock Test", price: "Rs. 2,500", desc: "Complete access to all JLPT (N5-N2) & JFT-Basic CBT Mock Test Sets." },
+      { id: "jp-2", name: "JFT-Basic Mock Test", price: "Rs. 1,500", desc: "Official JFT-Basic SSW mock test sets with audio and real-time evaluation." },
+      { id: "jp-3", name: "NAT-TEST Mock Test", price: "Rs. 1,500", desc: "NAT-TEST 5Q & 4Q authentic practice sets with listening." },
+      { id: "jp-4", name: "JLPT Mock Test Bundle", price: "Rs. 2,000", desc: "Standard JLPT N5 & N4 simulation mock exam sets." }
+    ] : [
       { id: 1, name: "30 Set Chapter UBT", price: "Rs. 1,000", desc: "Complete chapterwise practice sets with audio." },
       { id: 2, name: "100 UBT set", price: "Rs. 2,500", desc: "Full-length simulated exam packages for real test experience." },
       { id: 3, name: "Full Set UBT", price: "Rs. 4,000", desc: "Full EPS-TOPIK Korean 40-question UBT sets." },
@@ -704,15 +716,43 @@ const StudentDashboard = () => {
 
     const savedPackages = JSON.parse(localStorage.getItem("examPackages") || "[]");
     let finalPackages = savedPackages.length > 0 ? [...savedPackages] : [...defaultPackages];
-    if (!finalPackages.some(p => (p.name || "").toLowerCase().includes("model question"))) {
-      finalPackages.push({
-        id: 4,
-        name: "Model Question Bank",
-        price: "Rs. 1,500",
-        desc: "Exclusive Model Question Bank 40-question UBT sets with Korean Audio & Real-time Evaluation (Sold Separately)."
+    if (isJapaneseTrack) {
+      defaultPackages.forEach(jpPkg => {
+        if (!finalPackages.some(p => (p.name || "").toLowerCase() === jpPkg.name.toLowerCase())) {
+          finalPackages.push(jpPkg);
+        }
       });
+    } else {
+      if (!finalPackages.some(p => (p.name || "").toLowerCase().includes("model question"))) {
+        finalPackages.push({
+          id: 4,
+          name: "Model Question Bank",
+          price: "Rs. 1,500",
+          desc: "Exclusive Model Question Bank 40-question UBT sets with Korean Audio & Real-time Evaluation (Sold Separately)."
+        });
+      }
     }
     setExamPackages(finalPackages);
+
+    // Build Japanese Mock Exam Sets from JLPT_MOCK_SETS_META
+    const buildJapaneseSets = () => {
+      return (JLPT_MOCK_SETS_META || []).map((meta) => {
+        const isFree = Boolean(meta.setNumber === 1 || (meta.id && meta.id.endsWith("-01")));
+        return {
+          id: meta.id,
+          name: meta.title,
+          titleJp: meta.titleJp,
+          packageName: meta.level || "Full Mock Test",
+          level: meta.level,
+          timeMin: meta.timeMin || 50,
+          totalQs: meta.totalQs || 40,
+          desc: meta.desc,
+          setType: isFree ? "FREE" : "MOCK",
+          isFree,
+          track: "japanese"
+        };
+      });
+    };
 
     const savedSets = JSON.parse(localStorage.getItem("examSets") || "[]");
 
@@ -741,17 +781,37 @@ const StudentDashboard = () => {
                 packageName: srvSet.packageName || srvSet.package?.name || "Full Set UBT",
                 creatorInstituteName: srvSet.creatorInstituteName || null,
                 isPublished: srvSet.isPublished !== false,
-                isFree: Boolean(srvSet.isFree)
+                isFree: Boolean(srvSet.isFree),
+                setType: srvSet.setType || "UBT",
+                track: srvSet.track || "korean"
               });
             }
           });
         }
 
-        // Apply student filtering
-        filterAndSetExamSets(mergedSets, finalPackages);
+        if (isJapaneseTrack) {
+          const jpSets = buildJapaneseSets();
+          const customJpSets = mergedSets.filter(s =>
+            s && (s.track === "japanese" || s.setType === "MOCK" || (s.packageName && s.packageName.toLowerCase().includes("mock")))
+          );
+          filterAndSetExamSets([...jpSets, ...customJpSets], finalPackages);
+        } else if (instituteLanguage === "both") {
+          const jpSets = buildJapaneseSets();
+          filterAndSetExamSets([...mergedSets, ...jpSets], finalPackages);
+        } else {
+          filterAndSetExamSets(mergedSets, finalPackages);
+        }
       })
       .catch(() => {
-        filterAndSetExamSets(savedSets, finalPackages);
+        if (isJapaneseTrack) {
+          const jpSets = buildJapaneseSets();
+          const customJpSets = savedSets.filter(s =>
+            s && (s.track === "japanese" || s.setType === "MOCK" || (s.packageName && s.packageName.toLowerCase().includes("mock")))
+          );
+          filterAndSetExamSets([...jpSets, ...customJpSets], finalPackages);
+        } else {
+          filterAndSetExamSets(savedSets, finalPackages);
+        }
       });
 
     // Load past results from API and LocalStorage
@@ -892,6 +952,11 @@ const StudentDashboard = () => {
           if (ap === setPkgNorm) return true;
           if (ap.includes('chapter') && setPkgNorm.includes('chapter')) return true;
           if (ap.includes('full') && setPkgNorm.includes('full')) return true;
+          if (ap.includes('mock') && setPkgNorm.includes('mock')) return true;
+          if (ap.includes('jlpt') && setPkgNorm.includes('jlpt')) return true;
+          if (ap.includes('jft') && setPkgNorm.includes('jft')) return true;
+          if (ap.includes('nat') && setPkgNorm.includes('nat')) return true;
+          if (ap.includes('full') && (setPkgNorm.includes('mock') || setPkgNorm.includes('jlpt') || setPkgNorm.includes('jft') || setPkgNorm.includes('nat'))) return true;
           return false;
         });
         if (isMatch) return true;
@@ -911,8 +976,9 @@ const StudentDashboard = () => {
       : allSets.filter((s) => !s.creatorInstituteName || !myInstName || s.creatorInstituteName.toLowerCase() === myInstName.toLowerCase() || s.isPublished !== false);
 
     setExamSets(finalSets);
-    if (finalSets.length > 0 && (!studentPackage || isShift(studentPackage) || studentPackage === "Full Set UBT")) {
-      const bestPkg = finalSets.find((s) => s.packageName && !isShift(s.packageName))?.packageName || "Full Set UBT";
+    const defaultPackageName = instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT";
+    if (finalSets.length > 0 && (!studentPackage || isShift(studentPackage) || studentPackage === "Full Set UBT" || studentPackage === "Full Mock Test")) {
+      const bestPkg = finalSets.find((s) => s.packageName && !isShift(s.packageName))?.packageName || defaultPackageName;
       setStudentPackage(bestPkg);
     }
   };
@@ -1164,12 +1230,12 @@ const StudentDashboard = () => {
 
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
           <button onClick={() => setActiveTab("home")} style={getNavBtnStyle("home")}>Dashboard</button>
-          {instituteLanguage !== "japanese" && (
-            <button onClick={() => setActiveTab("exams")} style={getNavBtnStyle("exams")}>Start UBT Exam</button>
-          )}
-          {instituteLanguage !== "japanese" && (
-            <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>Packages</button>
-          )}
+          <button onClick={() => setActiveTab("exams")} style={getNavBtnStyle("exams")}>
+            {instituteLanguage === "japanese" ? "Mock Test" : "Start UBT Exam"}
+          </button>
+          <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>
+            {instituteLanguage === "japanese" ? "Mock Test Packages" : "Packages"}
+          </button>
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>Dictionary</button>
           <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
           <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
@@ -1207,14 +1273,11 @@ const StudentDashboard = () => {
                   <span style={{ fontSize: "12px", color: "#166534", fontWeight: "700" }}>
                     Account Validity: <strong style={{ color: "#15803d" }}>Lifetime</strong>
                   </span>
-                  {instituteLanguage !== "japanese" && (
-                    <>
-                      <span style={{ color: "#cbd5e1" }}>•</span>
-                      <span style={{ fontSize: "12px", color: "#b45309", fontWeight: "700" }}>
-                        UBT &amp; Mock Tests: <strong style={{ color: "#d97706" }}>Purchase Required</strong>
-                      </span>
-                    </>
-                  )}
+                  <span style={{ color: "#cbd5e1" }}>•</span>
+                  <span style={{ fontSize: "12px", color: "#b45309", fontWeight: "700" }}>
+                    {instituteLanguage === "japanese" ? "Mock Tests: " : "UBT & Mock Tests: "}
+                    <strong style={{ color: "#d97706" }}>Purchase Required</strong>
+                  </span>
                 </div>
               ) : (
                 effectiveExpiryDate && (
@@ -1242,25 +1305,27 @@ const StudentDashboard = () => {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", maxWidth: "1050px", margin: "0 auto" }}>
-              {instituteLanguage !== "japanese" && (
-                <div onClick={() => {
-                  setActiveTab("exams");
-                }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
-                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                    <LaptopExamIcon size={28} color="#2563eb" />
-                  </div>
-                  <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
-                    {hasPaidExamAccess ? "Start UBT Exam" : unlockedSets.length > 0 ? "Start UBT Exam (Active)" : "Start UBT Exam"}
-                  </h3>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                    {hasPaidExamAccess
-                      ? "Take full 40-question EPS-TOPIK Korean tests"
-                      : unlockedSets.length > 0
-                      ? `${unlockedSets.length} Set(s) Unlocked · Click to practice or unlock more (Rs. 40 each)`
-                      : "UBT & Mock Tests · Unlock sets for Rs. 40 each"}
-                  </p>
+              <div onClick={() => {
+                setActiveTab("exams");
+              }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
+                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                  <LaptopExamIcon size={28} color="#2563eb" />
                 </div>
-              )}
+                <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
+                  {hasPaidExamAccess
+                    ? (instituteLanguage === "japanese" ? "Start Mock Test" : "Start UBT Exam")
+                    : (unlockedSets.length > 0
+                        ? (instituteLanguage === "japanese" ? "Start Mock Test (Active)" : "Start UBT Exam (Active)")
+                        : (instituteLanguage === "japanese" ? "Start Mock Test" : "Start UBT Exam"))}
+                </h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                  {hasPaidExamAccess
+                    ? (instituteLanguage === "japanese" ? "Take full Japanese CBT mock tests (JFT-Basic / NAT-TEST / JLPT)" : "Take full 40-question EPS-TOPIK Korean tests")
+                    : unlockedSets.length > 0
+                    ? `${unlockedSets.length} Set(s) Unlocked · Click to practice or unlock more (Rs. 40 each)`
+                    : (instituteLanguage === "japanese" ? "Japanese Mock Tests · Unlock sets for Rs. 40 each" : "UBT & Mock Tests · Unlock sets for Rs. 40 each")}
+                </p>
+              </div>
 
               <div onClick={() => setActiveTab("results")} style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bbf7d0", boxShadow: "0 4px 12px rgba(22,163,74,0.08)" }}>
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
@@ -1434,7 +1499,7 @@ const StudentDashboard = () => {
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
               <h3 style={{ color: "#0f172a", margin: 0, fontSize: "20px", fontWeight: "800" }}>
-                Available UBT Exam Sets
+                {instituteLanguage === "japanese" ? "Available Japanese Mock Tests" : "Available UBT Exam Sets"}
               </h3>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                 <span style={{ fontSize: "12px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "4px 10px", borderRadius: "6px" }}>
@@ -1442,10 +1507,10 @@ const StudentDashboard = () => {
                 </span>
                 <input
                   type="text"
-                  placeholder="Search set (e.g. SET 05)"
+                  placeholder={instituteLanguage === "japanese" ? "Search mock test (e.g. N5, JFT, SET 01)" : "Search set (e.g. SET 05)"}
                   value={examSetsSearch}
                   onChange={(e) => { setExamSetsSearch(e.target.value); setExamSetsPage(1); }}
-                  style={{ padding: "6px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", outline: "none", width: "180px" }}
+                  style={{ padding: "6px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", outline: "none", width: "200px" }}
                 />
               </div>
             </div>
@@ -1530,7 +1595,7 @@ const StudentDashboard = () => {
                       <div>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                           <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 7px", borderRadius: "4px" }}>
-                            {set.packageName || "UBT Set"}
+                            {set.packageName || (instituteLanguage === "japanese" ? "Mock Test" : "UBT Set")}
                           </span>
                           {isFree ? (
                             <span style={{ fontSize: "10px", fontWeight: "800", color: "#065f46", backgroundColor: "#d1fae5", border: "1px solid #6ee7b7", padding: "2px 6px", borderRadius: "4px" }}>
@@ -1553,28 +1618,45 @@ const StudentDashboard = () => {
                         <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a", fontWeight: "800" }}>
                           {set.name}
                         </h4>
-                        <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#64748b" }}>40 Questions · 50 Min</p>
+                        <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#64748b" }}>
+                          {set.totalQs || 40} Questions · {set.timeMin || 50} Min
+                        </p>
                       </div>
 
                       <button
                         type="button"
                         onClick={() => {
+                          const isJlptSet = Boolean(
+                            set.track === "japanese" ||
+                            set.level ||
+                            (set.id && (String(set.id).startsWith("jlpt-") || String(set.id).startsWith("jft-")))
+                          );
+
+                          const startExam = () => {
+                            if (isJlptSet) {
+                              const fullSet = getMockExamSetById(set.id);
+                              setActiveJlptExamSet(fullSet);
+                            } else {
+                              router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
+                            }
+                          };
+
                           if (isFree) {
-                            router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
+                            startExam();
                             return;
                           }
 
                           if (unlocked) {
                             if (isPackageExpired && !individuallyUnlocked) {
-                              alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take UBT exam sets.`);
+                              alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take mock exam sets.`);
                               return;
                             }
-                            router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
+                            startExam();
                             return;
                           }
 
                           if (pending) {
-                            alert(`Your payment query for "${set.name}" (Rs. 40) is currently pending review by Super Admin.\n\nYour payment screenshot and eSewa transaction details have been submitted. Once Super Admin verifies and confirms the payment, your UBT set will be released automatically.`);
+                            alert(`Your payment query for "${set.name}" (Rs. 40) is currently pending review by Admin.\n\nYour payment screenshot and eSewa transaction details have been submitted. Once Admin verifies and confirms the payment, your set will be released automatically.`);
                             return;
                           }
 
@@ -1583,7 +1665,7 @@ const StudentDashboard = () => {
                             name: set.name,
                             price: 40,
                             type: "set",
-                            packageName: set.packageName || "UBT Set"
+                            packageName: set.packageName || (instituteLanguage === "japanese" ? "Japanese Mock Test" : "UBT Set")
                           });
                         }}
                         style={{
@@ -1911,17 +1993,19 @@ const StudentDashboard = () => {
         {activeTab === "buyExam" && (
           <div>
             <h3 style={{ color: "#0f172a", marginTop: 0, marginBottom: "20px", fontSize: "20px", fontWeight: "800" }}>
-              Available Exam Packages
+              {instituteLanguage === "japanese" ? "Available Japanese Mock Test Packages" : "Available Exam Packages"}
             </h3>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
               {examPackages.map((pkg, idx) => (
                 <div key={pkg.id || idx} style={{ backgroundColor: "#ffffff", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                   <div>
-                    <span style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", background: "#eff6ff", padding: "3px 8px", borderRadius: "4px" }}>
-                      UBT PACKAGE
+                    <span style={{ fontSize: "11px", fontWeight: "700", color: instituteLanguage === "japanese" ? "#7e22ce" : "#2563eb", background: instituteLanguage === "japanese" ? "#faf5ff" : "#eff6ff", border: instituteLanguage === "japanese" ? "1px solid #e9d5ff" : "1px solid #bfdbfe", padding: "3px 8px", borderRadius: "4px" }}>
+                      {instituteLanguage === "japanese" ? "MOCK TEST PACKAGE" : "UBT PACKAGE"}
                     </span>
                     <h4 style={{ margin: "14px 0 8px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>{pkg.name}</h4>
-                    <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: "18px" }}>{pkg.desc || "Full simulated exam practice sets with Korean audio and timer."}</p>
+                    <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: "18px" }}>
+                      {pkg.desc || (instituteLanguage === "japanese" ? "Full simulated Japanese mock test sets with audio and timer." : "Full simulated exam practice sets with Korean audio and timer.")}
+                    </p>
                   </div>
                   <div>
                     <div style={{ fontSize: "16px", fontWeight: "800", color: "#16a34a", marginBottom: "14px" }}>{pkg.price || "Contact Institute"}</div>
@@ -2112,6 +2196,21 @@ const StudentDashboard = () => {
         studentPhone={currentStudentPhone}
         onSuccessUnlock={handleEsewaSuccessUnlock}
       />
+
+      {/* JLPT & JFT Japanese CBT Mock Exam Modal */}
+      {activeJlptExamSet && (
+        <JlptMockExamModal
+          examSet={activeJlptExamSet}
+          mode="student"
+          onClose={() => setActiveJlptExamSet(null)}
+          onComplete={() => {
+            try {
+              const prevResults = JSON.parse(localStorage.getItem("examResults") || "[]");
+              setResults(prevResults);
+            } catch (e) {}
+          }}
+        />
+      )}
     </div>
   );
 };

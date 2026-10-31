@@ -23,6 +23,14 @@ function InstituteQuestionManagerContent() {
 
   const [instituteName, setInstituteName] = useState("Language Institute");
   const [instId, setInstId] = useState(null);
+  const [instituteLanguage, setInstituteLanguage] = useState(() => {
+    if (typeof window !== "undefined") {
+      const qLang = new URLSearchParams(window.location.search).get("lang");
+      return qLang || localStorage.getItem("instituteLanguage") || "korean";
+    }
+    return "korean";
+  });
+  const isJapanese = instituteLanguage === "japanese";
 
   // Active navigation tab: "mySets" | "createSet" | "uploadQuestions" | "createPackage" | "sharedSets"
   const [activeTab, setActiveTab] = useState("mySets");
@@ -33,7 +41,7 @@ function InstituteQuestionManagerContent() {
 
   // Create Set Form state
   const [newSetName, setNewSetName] = useState("");
-  const [newSetPackage, setNewSetPackage] = useState("Full Set UBT");
+  const [newSetPackage, setNewSetPackage] = useState(() => (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("lang") === "japanese" ? "Full Mock Test" : "Full Set UBT"));
   const [newSetAutoInit, setNewSetAutoInit] = useState(true);
   const [newSetIsPublic, setNewSetIsPublic] = useState(false);
 
@@ -97,10 +105,19 @@ function InstituteQuestionManagerContent() {
       const qInstId = searchParams?.get("instId");
       const qTab = searchParams?.get("tab");
       const qSet = searchParams?.get("set");
+      const qLang = searchParams?.get("lang");
 
       const name = qInst ? decodeURIComponent(qInst) : (localStorage.getItem("currentInstitute") || "Language Institute");
       setInstituteName(name);
       if (qInstId) setInstId(qInstId);
+
+      const savedLang = localStorage.getItem("instituteLanguage") || "korean";
+      const finalLang = qLang || savedLang;
+      setInstituteLanguage(finalLang);
+
+      if (finalLang === "japanese" && (!newSetPackage || newSetPackage === "Full Set UBT")) {
+        setNewSetPackage("Full Mock Test");
+      }
 
       if (qTab && ["mySets", "createSet", "uploadQuestions", "createPackage", "sharedSets"].includes(qTab)) {
         setActiveTab(qTab);
@@ -115,17 +132,26 @@ function InstituteQuestionManagerContent() {
   // 2. Load sets, packages, and questions with Institute Isolation
   const loadData = () => {
     try {
-      const savedPackages = safeJsonParse(localStorage.getItem("examPackages"), [
+      const defaultPkgs = isJapanese ? [
+        { id: 1, name: "Full Mock Test" },
+        { id: 2, name: "JFT-Basic Mock Test" },
+        { id: 3, name: "NAT-TEST Mock Test" },
+        { id: 4, name: "JLPT Mock Test" }
+      ] : [
         { id: 1, name: "Full Set UBT" },
         { id: 2, name: "30 Set Chapter UBT" },
         { id: 3, name: "100 UBT set" }
-      ]);
+      ];
+
+      const savedPackages = safeJsonParse(localStorage.getItem("examPackages"), defaultPkgs);
       const savedSets = safeJsonParse(localStorage.getItem("examSets"), []);
       const savedQuestions = safeJsonParse(localStorage.getItem("questionBank"), []);
 
       setPackages(savedPackages);
       setAllSets(savedSets);
       setQuestions(savedQuestions);
+
+      const defaultPackageName = isJapanese ? "Full Mock Test" : "Full Set UBT";
 
       // Filter sets belonging to this institute
       const myInstituteSets = savedSets.filter(s =>
@@ -137,10 +163,10 @@ function InstituteQuestionManagerContent() {
 
       if (myInstituteSets.length > 0 && !filterSet) {
         setFilterSet(myInstituteSets[0].name);
-        setFilterPackage(myInstituteSets[0].packageName || savedPackages[0]?.name || "Full Set UBT");
+        setFilterPackage(myInstituteSets[0].packageName || savedPackages[0]?.name || defaultPackageName);
       } else if (savedSets.length > 0 && !filterSet) {
         setFilterSet(savedSets[0].name);
-        setFilterPackage(savedSets[0].packageName || "Full Set UBT");
+        setFilterPackage(savedSets[0].packageName || defaultPackageName);
       }
     } catch (err) {
       console.error("Error loading institute question bank data:", err);
@@ -149,7 +175,7 @@ function InstituteQuestionManagerContent() {
 
   useEffect(() => {
     loadData();
-  }, [instituteName, instId]);
+  }, [instituteName, instId, instituteLanguage]);
 
   // Sets created by this institute (Private Bucket)
   const mySets = allSets.filter(s =>
@@ -329,7 +355,7 @@ function InstituteQuestionManagerContent() {
     }, 0);
   };
 
-  // 1. CREATE NEW UBT SET IN INSTITUTE PRIVATE BUCKET
+  // 1. CREATE NEW SET IN INSTITUTE PRIVATE BUCKET
   const handleCreatePrivateSet = async (e) => {
     e.preventDefault();
     const cleanName = newSetName.trim().toUpperCase();
@@ -345,11 +371,13 @@ function InstituteQuestionManagerContent() {
     }
 
     const isPublic = Boolean(newSetIsPublic);
+    const defaultPackageName = isJapanese ? "Full Mock Test" : "Full Set UBT";
     const newSetObj = {
       id: `inst-${Date.now()}`,
       name: cleanName,
-      packageName: newSetPackage || "Full Set UBT",
-      setType: "UBT",
+      packageName: newSetPackage || defaultPackageName,
+      setType: isJapanese ? "MOCK" : "UBT",
+      track: isJapanese ? "japanese" : "korean",
       duration: 3000,
       creatorInstituteId: instId || null,
       creatorInstituteName: instituteName,
@@ -365,13 +393,13 @@ function InstituteQuestionManagerContent() {
         const isReading = i <= 20;
         initialBatch.push({
           id: Date.now() + i + Math.random(),
-          package: newSetPackage,
+          package: newSetPackage || defaultPackageName,
           set: cleanName,
           qIndex: i,
           type: isReading ? "Reading" : "Listening",
           mainHeading: isReading
-            ? `[ ${i} ] 다음을 읽고 알맞은 것을 고르십시오.`
-            : `[ ${i} ] 이야기를 듣고 알맞은 것을 고르십시오.`,
+            ? (isJapanese ? `[ ${i} ] 次の文章を読んで、正しいものを一つ選びなさい。` : `[ ${i} ] 다음을 읽고 알맞은 것을 고르십시오.`)
+            : (isJapanese ? `[ ${i} ] 音声を聞いて、正しいものを一つ選びなさい。` : `[ ${i} ] 이야기를 듣고 알맞은 것을 고르십시오.`),
           questionHeading: String(i),
           description: "",
           image: "",
@@ -396,9 +424,10 @@ function InstituteQuestionManagerContent() {
         body: JSON.stringify({
           action: "create_set",
           setName: cleanName,
-          packageName: newSetPackage,
+          packageName: newSetPackage || defaultPackageName,
           duration: 3000,
-          setType: "UBT",
+          setType: isJapanese ? "MOCK" : "UBT",
+          track: isJapanese ? "japanese" : "korean",
           creatorInstituteId: instId,
           creatorInstituteName: instituteName,
           isPrivate: !isPublic,
@@ -422,13 +451,14 @@ function InstituteQuestionManagerContent() {
     setNewSetName("");
     setNewSetIsPublic(false);
     setFilterSet(cleanName);
-    setFilterPackage(newSetPackage);
+    setFilterPackage(newSetPackage || defaultPackageName);
     setActiveTab("uploadQuestions");
     handleQNumberChange(1);
 
+    const term = isJapanese ? "Mock Test" : "UBT Set";
     alert(isPublic
-      ? `UBT Set "${cleanName}" created and PUBLISHED globally for all institutes and students!`
-      : `UBT Set "${cleanName}" created successfully in your private bucket!\n\nOther institutes cannot access these questions. You can now edit all 40 questions.`
+      ? `${term} "${cleanName}" created and PUBLISHED globally for all institutes and students!`
+      : `${term} "${cleanName}" created successfully in your private bucket!\n\nOther institutes cannot access these questions. You can now edit all 40 questions.`
     );
   };
 
@@ -571,7 +601,8 @@ function InstituteQuestionManagerContent() {
 
   // 3. DELETE SET
   const handleDeleteSet = async (setId, sName) => {
-    if (!window.confirm(`Delete UBT Set "${sName}" and all its questions from your institute's bucket?`)) {
+    const term = isJapanese ? "Mock Test" : "UBT Set";
+    if (!window.confirm(`Delete ${term} "${sName}" and all its questions from your institute's bucket?`)) {
       return;
     }
 
@@ -593,7 +624,7 @@ function InstituteQuestionManagerContent() {
     localStorage.setItem("examSets", JSON.stringify(updatedSets));
     localStorage.setItem("questionBank", JSON.stringify(updatedQuestions));
 
-    alert(`Set "${sName}" removed from your private bucket.`);
+    alert(`${term} "${sName}" removed from your private bucket.`);
   };
 
   // 4. CREATE INSTITUTE CUSTOM PACKAGE
@@ -610,10 +641,11 @@ function InstituteQuestionManagerContent() {
       name: pkgName,
       price: newPkgPrice || "Rs. 2,000",
       duration: newPkgDuration || "1 Month",
-      desc: newPkgDesc || `Custom UBT Package created by ${instituteName}`,
+      desc: newPkgDesc || `Custom ${isJapanese ? "Mock Test" : "UBT"} Package created by ${instituteName}`,
       isCustom: true,
       createdBy: instituteName,
       creatorInstituteName: instituteName,
+      track: isJapanese ? "japanese" : "korean",
       includedSets: selectedSetsForPkg,
       createdAt: new Date().toISOString()
     };
@@ -765,7 +797,7 @@ function InstituteQuestionManagerContent() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
           <span style={{ fontSize: "17px", fontWeight: "bold" }}>
-            CREATE UBT SET - PRIVATE BUCKET
+            {isJapanese ? "CREATE MOCK TEST - PRIVATE BUCKET" : "CREATE UBT SET - PRIVATE BUCKET"}
           </span>
           <span style={{
             fontSize: "12px",
@@ -788,6 +820,49 @@ function InstituteQuestionManagerContent() {
           }}>
             Isolated & Private
           </span>
+
+          {/* Quick Track Switcher */}
+          <div style={{ display: "inline-flex", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: "8px", padding: "2px" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setInstituteLanguage("korean");
+                if (typeof window !== "undefined") localStorage.setItem("instituteLanguage", "korean");
+              }}
+              style={{
+                backgroundColor: !isJapanese ? "#ffffff" : "transparent",
+                color: !isJapanese ? "#1e3a8a" : "#cbd5e1",
+                border: "none",
+                borderRadius: "6px",
+                padding: "4px 10px",
+                fontSize: "12px",
+                fontWeight: "700",
+                cursor: "pointer"
+              }}
+            >
+              🇰🇷 Korean UBT
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setInstituteLanguage("japanese");
+                if (typeof window !== "undefined") localStorage.setItem("instituteLanguage", "japanese");
+                if (newSetPackage === "Full Set UBT") setNewSetPackage("Full Mock Test");
+              }}
+              style={{
+                backgroundColor: isJapanese ? "#ffffff" : "transparent",
+                color: isJapanese ? "#7e22ce" : "#cbd5e1",
+                border: "none",
+                borderRadius: "6px",
+                padding: "4px 10px",
+                fontSize: "12px",
+                fontWeight: "700",
+                cursor: "pointer"
+              }}
+            >
+              🇯🇵 Japanese Mock Test
+            </button>
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -845,7 +920,7 @@ function InstituteQuestionManagerContent() {
               Private Institute Question Bucket Policy
             </div>
             <p style={{ margin: 0, fontSize: "12.5px", color: "#334155", lineHeight: "1.5" }}>
-              • All UBT sets and questions created in this section belong exclusively to <strong>{instituteName}</strong>.<br />
+              • All {isJapanese ? "mock test sets" : "UBT sets"} and questions created in this section belong exclusively to <strong>{instituteName}</strong>.<br />
               • <strong>Other institutes CANNOT access or view your private questions</strong>.<br />
               • You can create custom packages from your own questions for your students.<br />
               • Super Admin stores sets separately and has authority to review and publish questions globally if approved.
@@ -880,10 +955,10 @@ function InstituteQuestionManagerContent() {
         {/* PRIMARY TAB NAVIGATION */}
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "20px" }}>
           {[
-            { key: "mySets", label: `My UBT Sets (${mySets.length})` },
-            { key: "createSet", label: "+ Create New UBT Set" },
+            { key: "mySets", label: isJapanese ? `My Mock Tests (${mySets.length})` : `My UBT Sets (${mySets.length})` },
+            { key: "createSet", label: isJapanese ? "+ Create Mock Test" : "+ Create New UBT Set" },
             { key: "uploadQuestions", label: "Upload / Edit Questions (40 Qs)" },
-            { key: "createPackage", label: "Create Custom Package" },
+            { key: "createPackage", label: isJapanese ? "+ Create Mock Test Package" : "+ Create Custom Package" },
             { key: "sharedSets", label: `Global Shared Sets (${globalSharedSets.length})` }
           ].map(tab => (
             <button
@@ -908,14 +983,14 @@ function InstituteQuestionManagerContent() {
         </div>
 
         {/* ======================================================== */}
-        {/* TAB 1: MY PRIVATE UBT SETS                               */}
+        {/* TAB 1: MY PRIVATE SETS                                   */}
         {/* ======================================================== */}
         {activeTab === "mySets" && (
           <div style={cardStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "10px" }}>
               <div>
                 <h3 style={{ margin: 0, color: "#1e3a8a", fontSize: "18px" }}>
-                  Private UBT Sets Created by {instituteName} ({mySets.length})
+                  Private {isJapanese ? "Mock Tests" : "UBT Sets"} Created by {instituteName} ({mySets.length})
                 </h3>
                 <p style={{ margin: "3px 0 0 0", fontSize: "12.5px", color: "#64748b" }}>
                   These sets are only accessible to students enrolled in your institute.
@@ -926,20 +1001,22 @@ function InstituteQuestionManagerContent() {
                 onClick={() => setActiveTab("createSet")}
                 style={{ ...primaryBtnStyle, backgroundColor: "#16a34a" }}
               >
-                + Create New Private Set
+                + Create New {isJapanese ? "Mock Test" : "Private Set"}
               </button>
             </div>
 
             {mySets.length === 0 ? (
               <div style={{ textAlign: "center", padding: "50px 20px", color: "#64748b", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1.5px dashed #cbd5e1" }}>
                 <p style={{ fontSize: "16px", fontWeight: "bold", margin: "0 0 8px 0" }}>
-                  No private UBT sets created yet.
+                  No private {isJapanese ? "mock test sets" : "UBT sets"} created yet.
                 </p>
                 <p style={{ fontSize: "13px", margin: "0 0 16px 0" }}>
-                  Click below to create your institute's first private set with 40 EPS-TOPIK questions template!
+                  {isJapanese
+                    ? "Click below to create your institute's first private Japanese mock test set!"
+                    : "Click below to create your institute's first private set with 40 EPS-TOPIK questions template!"}
                 </p>
                 <button onClick={() => setActiveTab("createSet")} style={primaryBtnStyle}>
-                  + Create Your First UBT Set
+                  + Create Your First {isJapanese ? "Mock Test" : "UBT Set"}
                 </button>
               </div>
             ) : (
@@ -948,7 +1025,7 @@ function InstituteQuestionManagerContent() {
                   <thead>
                     <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff", textAlign: "center" }}>
                       <th style={{ padding: "12px 14px", textAlign: "center" }}>S.N.</th>
-                      <th style={{ padding: "12px 14px", textAlign: "center" }}>UBT Set Name</th>
+                      <th style={{ padding: "12px 14px", textAlign: "center" }}>{isJapanese ? "Mock Test Name" : "UBT Set Name"}</th>
                       <th style={{ padding: "12px 14px", textAlign: "center" }}>Linked Package</th>
                       <th style={{ padding: "12px 14px", textAlign: "center" }}>Reading (Target 20)</th>
                       <th style={{ padding: "12px 14px", textAlign: "center" }}>Listening (Target 20)</th>
@@ -1591,26 +1668,28 @@ function InstituteQuestionManagerContent() {
         )}
 
         {/* ======================================================== */}
-        {/* TAB 2: CREATE NEW UBT SET                                */}
+        {/* TAB 2: CREATE NEW SET                                    */}
         {/* ======================================================== */}
         {activeTab === "createSet" && (
           <div style={cardStyle}>
             <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px" }}>
-              Create New UBT Set in Your Private Bucket
+              Create New {isJapanese ? "Mock Test" : "UBT Set"} in Your Private Bucket
             </h3>
             <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "#64748b" }}>
-              Each UBT exam set contains 40 questions (20 Reading + 20 Listening). Sets created here are completely isolated to {instituteName}.
+              {isJapanese
+                ? `Each mock test set contains reading and listening question sections. Sets created here are completely isolated to ${instituteName}.`
+                : `Each UBT exam set contains 40 questions (20 Reading + 20 Listening). Sets created here are completely isolated to ${instituteName}.`}
             </p>
 
             <form onSubmit={handleCreatePrivateSet}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#334155", marginBottom: "6px" }}>
-                    UBT Set Name *
+                    {isJapanese ? "Mock Test Name *" : "UBT Set Name *"}
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. UBT SET 01, EPS SPECIAL MODEL 01"
+                    placeholder={isJapanese ? "e.g. JFT-BASIC MOCK 01, NAT-TEST 01, JLPT N4 MOCK 01" : "e.g. UBT SET 01, EPS SPECIAL MODEL 01"}
                     value={newSetName}
                     onChange={(e) => setNewSetName(e.target.value.toUpperCase())}
                     style={{ ...inputStyle, textTransform: "uppercase" }}
@@ -1630,15 +1709,32 @@ function InstituteQuestionManagerContent() {
                     onChange={(e) => setNewSetPackage(e.target.value)}
                     style={inputStyle}
                   >
-                    <option value="Full Set UBT">Full Set UBT (Default)</option>
-                    <option value="100 UBT set">100 UBT set</option>
-                    <option value="General UBT">General UBT</option>
-                    {packages
-                      .filter(p => !["Full Set UBT", "100 UBT set", "General UBT"].includes(p.name))
-                      .map((p, idx) => (
-                        <option key={idx} value={p.name}>{p.name}</option>
-                      ))
-                    }
+                    {isJapanese ? (
+                      <>
+                        <option value="Full Mock Test">Full Mock Test (Default)</option>
+                        <option value="JFT-Basic Mock Test">JFT-Basic Mock Test</option>
+                        <option value="NAT-TEST Mock Test">NAT-TEST Mock Test</option>
+                        <option value="JLPT Mock Test">JLPT Mock Test</option>
+                        {packages
+                          .filter(p => !["Full Mock Test", "JFT-Basic Mock Test", "NAT-TEST Mock Test", "JLPT Mock Test", "Full Set UBT", "100 UBT set", "General UBT"].includes(p.name))
+                          .map((p, idx) => (
+                            <option key={idx} value={p.name}>{p.name}</option>
+                          ))
+                        }
+                      </>
+                    ) : (
+                      <>
+                        <option value="Full Set UBT">Full Set UBT (Default)</option>
+                        <option value="100 UBT set">100 UBT set</option>
+                        <option value="General UBT">General UBT</option>
+                        {packages
+                          .filter(p => !["Full Set UBT", "100 UBT set", "General UBT"].includes(p.name))
+                          .map((p, idx) => (
+                            <option key={idx} value={p.name}>{p.name}</option>
+                          ))
+                        }
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
@@ -2291,10 +2387,12 @@ function InstituteQuestionManagerContent() {
         {activeTab === "createPackage" && (
           <div style={cardStyle}>
             <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px" }}>
-              Create Custom Package from Your Private Sets
+              Create {isJapanese ? "Mock Test Package" : "Custom Package"} from Your Private Sets
             </h3>
             <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "#64748b" }}>
-              Bundle your institute's private UBT sets into packages for your enrolled students.
+              {isJapanese
+                ? "Bundle your institute's private Japanese mock test sets into packages for your enrolled students."
+                : "Bundle your institute's private UBT sets into packages for your enrolled students."}
             </p>
 
             <form onSubmit={handleSavePackage}>
@@ -2305,7 +2403,7 @@ function InstituteQuestionManagerContent() {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. VIP 10 Set UBT Model Exam"
+                    placeholder={isJapanese ? "e.g. Japanese Mock Test Special Pack" : "e.g. VIP 10 Set UBT Model Exam"}
                     value={newPkgName}
                     onChange={(e) => setNewPkgName(e.target.value)}
                     style={inputStyle}
