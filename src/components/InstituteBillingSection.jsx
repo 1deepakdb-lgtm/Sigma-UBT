@@ -2277,7 +2277,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         setSyncStatus(` ${successMsg}`);
         setTestStatus({
           state: "success",
-          message: ` ${successMsg} Open your Google Sheet to view Sheet 1 (Bills) and Sheet 2 (Expenses).`
+          message: ` ${successMsg} Open your Google Sheet to view the 'Billing' and 'Expenses' tabs.`
         });
         const updated = bills.map(b => ({ ...b, isSyncedToSheet: true }));
         setBills(updated);
@@ -2286,7 +2286,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           setGoogleSheetViewUrl(data.result.sheetUrl);
           localStorage.setItem(`instituteGoogleSheetViewUrl_${instKey}`, data.result.sheetUrl);
         }
-        alert(` ${successMsg}\n\nYour bills have been written to Sheet 1 (Bills) and expenses to Sheet 2 (Expenses) in your Google Sheet.`);
+        alert(` ${successMsg}\n\nYour bills have been written to the 'Billing' tab and expenses to the 'Expenses' tab in your Google Sheet.`);
       } else {
         const errorMsg = data.error || "Sync failed. Please check your Google Apps Script URL.";
         setSyncStatus(` ${errorMsg}`);
@@ -7051,7 +7051,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       <a href="https://sheets.new" target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontWeight: "bold" }}>
                         sheets.new ↗
                       </a>{" "}
-                      to create a new Google Sheet. All <strong>Bills</strong> automatically store in <strong>Sheet 1</strong>, and all <strong>Expenses</strong> automatically store in <strong>Sheet 2</strong> when entering data.
+                      to create a new Google Sheet. <strong>Sheet 1</strong> will automatically be renamed to <strong>Billing</strong>, and <strong>Sheet 2</strong> will automatically be renamed to <strong>Expenses</strong> when entering data.
                     </div>
 
                     <div style={{ backgroundColor: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
@@ -7133,9 +7133,10 @@ function doPost(e) {
       }
     }
 
-    // Helper: Get or Create Sheet 1 (Bills)
+    // Helper: Get or Create 'Billing' Sheet (Auto-renames Sheet 1 to 'Billing')
     function getOrCreateStudentBillsSheet() {
-      var s = ss.getSheetByName("Sheet 1") ||
+      var s = ss.getSheetByName("Billing") ||
+              ss.getSheetByName("Sheet 1") ||
               ss.getSheetByName("Sheet1") ||
               ss.getSheetByName("StudentBills") ||
               ss.getSheetByName("Bills");
@@ -7143,14 +7144,20 @@ function doPost(e) {
       var allSheets = ss.getSheets();
       if (!s) {
         if (allSheets.length > 0) {
-          s = allSheets[0]; // 1st sheet = Sheet 1 (Bills)
+          s = allSheets[0]; // 1st sheet = Billing
         } else {
-          s = ss.insertSheet("Sheet 1", 0);
+          s = ss.insertSheet("Billing", 0);
         }
       }
 
-      if (s.getName() === "StudentBills" || s.getName() === "Sheet1") {
-        try { s.setName("Sheet 1"); } catch (e) {}
+      // Automatically rename sheet to 'Billing'
+      if (s.getName() !== "Billing") {
+        try {
+          var existingBilling = ss.getSheetByName("Billing");
+          if (!existingBilling) {
+            s.setName("Billing");
+          }
+        } catch (e) {}
       }
 
       var headers = [
@@ -7185,26 +7192,32 @@ function doPost(e) {
       return s;
     }
 
-    // Helper: Get or Create Sheet 2 (Expenses)
+    // Helper: Get or Create 'Expenses' Sheet (Auto-renames Sheet 2 to 'Expenses')
     function getOrCreateExpenseSheet() {
       var s1 = getOrCreateStudentBillsSheet();
 
-      var es = ss.getSheetByName("Sheet 2") ||
-               ss.getSheetByName("Sheet2") ||
-               ss.getSheetByName("Expenses") ||
-               ss.getSheetByName("Expense");
+      var es = ss.getSheetByName("Expenses") ||
+               ss.getSheetByName("Expense") ||
+               ss.getSheetByName("Sheet 2") ||
+               ss.getSheetByName("Sheet2");
 
       if (!es) {
         var allSheets = ss.getSheets();
         if (allSheets.length >= 2 && allSheets[1].getName() !== s1.getName()) {
-          es = allSheets[1]; // 2nd sheet = Sheet 2 (Expenses)
+          es = allSheets[1]; // 2nd sheet = Expenses
         } else {
-          es = ss.insertSheet("Sheet 2", 1);
+          es = ss.insertSheet("Expenses", 1);
         }
       }
 
-      if (es.getName() === "Expenses" || es.getName() === "Sheet2") {
-        try { es.setName("Sheet 2"); } catch (e) {}
+      // Automatically rename sheet to 'Expenses'
+      if (es.getName() !== "Expenses") {
+        try {
+          var existingExpenses = ss.getSheetByName("Expenses");
+          if (!existingExpenses) {
+            es.setName("Expenses");
+          }
+        } catch (e) {}
       }
 
       var expHeaders = [
@@ -7312,7 +7325,7 @@ function doPost(e) {
       getOrCreateExpenseSheet();
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'! ('Sheet 1 (Bills)' and 'Sheet 2 (Expenses)' ready)",
+        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'! ('Billing' and 'Expenses' tabs ready)",
         sheetUrl: ss.getUrl()
       })).setMimeType(ContentService.MimeType.JSON);
     }
@@ -7508,7 +7521,7 @@ function doPost(e) {
 
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Synchronized " + syncedBillsCount + " bills to Sheet 1 & " + syncedExpensesCount + " expenses to Sheet 2.",
+        message: "Synchronized " + syncedBillsCount + " bills to 'Billing' & " + syncedExpensesCount + " expenses to 'Expenses'.",
         syncedBills: syncedBillsCount,
         syncedExpenses: syncedExpensesCount
       })).setMimeType(ContentService.MimeType.JSON);
