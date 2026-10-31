@@ -940,7 +940,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           ) : (
             <>
               <span>🚀</span>
-              <span>Synchronize &amp; Generate Full Track (Q21–Q40)</span>
+              <span>Merge &amp; Generate All (Q21–Q40) in 1 Download File</span>
             </>
           )}
         </button>
@@ -1000,35 +1000,37 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 {isMasterPlaying ? '⏸' : '▶'}
               </button>
               <div>
-                <div style={{ fontWeight: '800', fontSize: '15px', color: '#f8fafc' }}>
-                  Master Synchronized Listening Track (Q21 – Q40)
+                <div style={{ fontWeight: '800', fontSize: '15.5px', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🎧 Complete Exam Track: Q21 to Q40 Merged</span>
+                  <span style={{ backgroundColor: '#15803d', color: '#ffffff', fontSize: '11px', padding: '2px 8px', borderRadius: '12px', fontWeight: '800' }}>20 Questions in 1 File</span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
-                  Total Duration: {formatTime(masterDuration)} ({Math.round(masterDuration / 60)} minutes) · 44.1kHz Stereo
+                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '3px' }}>
+                  Total Duration: {formatTime(masterDuration)} ({Math.round(masterDuration / 60)} minutes) · Standard 44.1kHz Stereo PCM WAV
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <a
                 href={masterAudioUrl}
-                download="EPS_TOPIK_Listening_Q21-Q40_Master.wav"
+                download="EPS_TOPIK_Listening_Q21-Q40_Merged_Master.wav"
                 style={{
-                  backgroundColor: '#3b82f6',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                   color: '#ffffff',
-                  padding: '9px 18px',
-                  borderRadius: '8px',
-                  fontWeight: '700',
-                  fontSize: '13px',
+                  padding: '11px 22px',
+                  borderRadius: '9px',
+                  fontWeight: '800',
+                  fontSize: '13.5px',
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.35)'
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.45)',
+                  border: '1px solid rgba(255,255,255,0.2)'
                 }}
               >
-                <span>⬇️</span>
-                <span>Download Master Audio (.wav)</span>
+                <span style={{ fontSize: '16px' }}>⬇️</span>
+                <span>Download Merged Q21–Q40 Audio (.wav)</span>
               </a>
             </div>
           </div>
