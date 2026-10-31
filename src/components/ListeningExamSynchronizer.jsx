@@ -70,6 +70,49 @@ function writeString(view, offset, string) {
   }
 }
 
+// Authentic EPS-TOPIK Dual-Tone Bell Chime Generator (Ding-Dong)
+function createEpsExamBellBuffer(ctx) {
+  const sampleRate = ctx.sampleRate || 44100;
+  const duration = 1.3;
+  const numSamples = Math.round(sampleRate * duration);
+  const buffer = ctx.createBuffer(2, numSamples, sampleRate);
+  const left = buffer.getChannelData(0);
+  const right = buffer.getChannelData(1);
+
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    let sample = 0;
+
+    // Tone 1: High Bell "Ding" at t = 0s (C6 1046.50 Hz + harmonics)
+    if (t >= 0 && t < 0.85) {
+      const env1 = Math.exp(-t * 5.8);
+      const tone1 = 
+        0.50 * Math.sin(2 * Math.PI * 1046.50 * t) + 
+        0.26 * Math.sin(2 * Math.PI * 2093.00 * t) + 
+        0.14 * Math.sin(2 * Math.PI * 3139.50 * t) +
+        0.06 * Math.sin(2 * Math.PI * 4186.00 * t);
+      sample += tone1 * env1;
+    }
+
+    // Tone 2: Warm Bell "Dong" at t = 0.38s (G5 783.99 Hz + harmonics)
+    if (t >= 0.38) {
+      const t2 = t - 0.38;
+      const env2 = Math.exp(-t2 * 4.2);
+      const tone2 = 
+        0.58 * Math.sin(2 * Math.PI * 783.99 * t2) + 
+        0.24 * Math.sin(2 * Math.PI * 1567.98 * t2) + 
+        0.12 * Math.sin(2 * Math.PI * 2351.97 * t2) +
+        0.05 * Math.sin(2 * Math.PI * 3135.96 * t2);
+      sample += tone2 * env2;
+    }
+
+    sample = Math.max(-0.95, Math.min(0.95, sample * 0.75));
+    left[i] = sample;
+    right[i] = sample;
+  }
+  return buffer;
+}
+
 // Sample EPS-TOPIK Q21-Q40 Question Scripts
 const SAMPLE_EPS_LISTENING_DATA = [
   {
@@ -231,9 +274,23 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
   const [activeQNum, setActiveQNum] = useState(21);
   const currentQuestion = questions.find(q => q.qNum === activeQNum) || questions[0];
 
-  // Timing Gaps (As requested: 3s gap before/between options, 7s gap between questions)
+  // Timing Gaps & Sequence Configuration (As requested: Bell -> 1s gap -> Question number -> 1s gap -> Prompt -> 3s gap -> Options -> 7s gap)
+  const [includeBell, setIncludeBell] = useState(true); // Bell chime before each question
+  const [bellGapSec, setBellGapSec] = useState(1.0); // 1.0s gap after bell chime
+  const [includeQuestionNumber, setIncludeQuestionNumber] = useState(true); // "21번", "22번", etc.
+  const [qNumFormat, setQNumFormat] = useState('short'); // 'short' ("21번.") or 'full' ("21번 문제입니다.")
+  const [qNumGapSec, setQNumGapSec] = useState(1.0); // 1.0s gap after question number announcement
   const [optionGapSec, setOptionGapSec] = useState(3.0); // 3 seconds between question and option, and between options
-  const [questionGapSec, setQuestionGapSec] = useState(7.0); // 7 seconds (6 to 8s) between Q21 and Q22
+  const [questionGapSec, setQuestionGapSec] = useState(7.0); // 7 seconds (6 to 8s) between questions
+
+  // Custom Bell Sound
+  const [customBellAudioUrl, setCustomBellAudioUrl] = useState(null);
+  const [customBellFileName, setCustomBellFileName] = useState('');
+  const [defaultBellUrl, setDefaultBellUrl] = useState(null);
+
+  // Single Question Sequence Preview State
+  const [previewStage, setPreviewStage] = useState(null); // 'bell' | 'gap-bell' | 'qnum' | 'gap-qnum' | 'prompt' | 'gap-prompt' | 'opt-1' | 'opt-2' | 'opt-3' | 'opt-4'
+  const previewCancelRef = useRef(false);
 
   // Voice Selection for AI Generation
   const [voiceGender, setVoiceGender] = useState('female');
@@ -272,6 +329,187 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       } catch (e) {}
     }
   }, [questions]);
+
+  // Initialize Default EPS Exam Bell URL on client mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass();
+          const buf = createEpsExamBellBuffer(ctx);
+          const wavBlob = audioBufferToWav(buf);
+          const url = URL.createObjectURL(wavBlob);
+          setDefaultBellUrl(url);
+          ctx.close().catch(() => {});
+        }
+      } catch (e) {
+        console.error('Failed to create default bell audio:', e);
+      }
+    }
+  }, []);
+
+  // Play test bell chime
+  const playBellPreview = () => {
+    const url = customBellAudioUrl || defaultBellUrl;
+    if (!url) return;
+    const audio = new Audio(url);
+    audio.play().catch(e => console.error('Bell play error:', e));
+  };
+
+  // Handle custom bell upload
+  const handleCustomBellUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setCustomBellAudioUrl(url);
+    setCustomBellFileName(file.name);
+  };
+
+  const handleResetToDefaultBell = () => {
+    setCustomBellAudioUrl(null);
+    setCustomBellFileName('');
+  };
+
+  // Helper to format question announcement text
+  const getQuestionNumberUrl = (qNum) => {
+    const text = qNumFormat === 'full' ? `${qNum}번 문제입니다.` : `${qNum}번.`;
+    const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+    return `/api/tts?text=${encodeURIComponent(text)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+  };
+
+  // Stop sequence preview
+  const stopSequencePreview = () => {
+    previewCancelRef.current = true;
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.currentTime = 0;
+    }
+    setPreviewStage(null);
+    setPlayingItemKey(null);
+  };
+
+  // Preview full sequence for active question
+  const handlePreviewSingleSequence = async (qNum) => {
+    if (previewStage) {
+      stopSequencePreview();
+      return;
+    }
+
+    const q = questions.find(item => item.qNum === qNum) || currentQuestion;
+    previewCancelRef.current = false;
+
+    const playAndWait = (url) => {
+      return new Promise((resolve) => {
+        if (previewCancelRef.current || !url) return resolve();
+        const audio = previewAudioRef.current || new Audio();
+        previewAudioRef.current = audio;
+        audio.src = url;
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve();
+        audio.play().catch(() => resolve());
+      });
+    };
+
+    const waitSeconds = (sec) => {
+      return new Promise((resolve) => {
+        let elapsed = 0;
+        const interval = 100;
+        const timer = setInterval(() => {
+          if (previewCancelRef.current) {
+            clearInterval(timer);
+            return resolve();
+          }
+          elapsed += interval / 1000;
+          if (elapsed >= sec) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, interval);
+      });
+    };
+
+    try {
+      // 1. Bell
+      if (includeBell && !previewCancelRef.current) {
+        setPreviewStage('bell');
+        const bellUrl = customBellAudioUrl || defaultBellUrl;
+        await playAndWait(bellUrl);
+        if (previewCancelRef.current) return;
+
+        // 1.0s Gap after Bell
+        if (bellGapSec > 0) {
+          setPreviewStage('gap-bell');
+          await waitSeconds(bellGapSec);
+          if (previewCancelRef.current) return;
+        }
+      }
+
+      // 2. Question Number
+      if (includeQuestionNumber && !previewCancelRef.current) {
+        setPreviewStage('qnum');
+        const qNumUrl = getQuestionNumberUrl(q.qNum);
+        await playAndWait(qNumUrl);
+        if (previewCancelRef.current) return;
+
+        // 1.0s Gap after Question Number
+        if (qNumGapSec > 0) {
+          setPreviewStage('gap-qnum');
+          await waitSeconds(qNumGapSec);
+          if (previewCancelRef.current) return;
+        }
+      }
+
+      // 3. Question Prompt Audio
+      if (!previewCancelRef.current) {
+        setPreviewStage('prompt');
+        let promptUrl = q.questionAudioUrl;
+        if (!promptUrl && q.questionText?.trim()) {
+          const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+          promptUrl = `/api/tts?text=${encodeURIComponent(q.questionText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+        }
+        if (promptUrl) {
+          await playAndWait(promptUrl);
+        }
+        if (previewCancelRef.current) return;
+
+        // 3.0s Gap after Question Prompt
+        if (optionGapSec > 0) {
+          setPreviewStage('gap-prompt');
+          await waitSeconds(optionGapSec);
+          if (previewCancelRef.current) return;
+        }
+      }
+
+      // 4. Options 1 to 4 with 3.0s gap
+      for (let i = 0; i < q.options.length; i++) {
+        if (previewCancelRef.current) break;
+        const opt = q.options[i];
+        setPreviewStage(`opt-${opt.id}`);
+
+        let optUrl = opt.audioUrl;
+        if (!optUrl && opt.text?.trim()) {
+          const prefix = `${opt.id}번. `;
+          const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+          const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+          optUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+        }
+        if (optUrl) {
+          await playAndWait(optUrl);
+        }
+        if (previewCancelRef.current) break;
+
+        if (i < q.options.length - 1 && optionGapSec > 0) {
+          setPreviewStage(`gap-opt-${opt.id}`);
+          await waitSeconds(optionGapSec);
+        }
+      }
+    } catch (e) {
+      console.error('Sequence preview failed:', e);
+    } finally {
+      setPreviewStage(null);
+    }
+  };
 
   // Handle Question Audio Upload
   const handleQuestionAudioUpload = (e) => {
@@ -457,7 +695,40 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         setSynthProgress(progressPct);
         setSynthStatusText(`Processing Question ${q.qNum} of 40...`);
 
-        // 1. Get or Generate Question Audio Buffer
+        // 1. Bell Chime Before Question (if enabled)
+        if (includeBell) {
+          let bellBuffer = null;
+          if (customBellAudioUrl) {
+            bellBuffer = await fetchAndDecodeAudio(decodeCtx, customBellAudioUrl);
+          }
+          if (!bellBuffer) {
+            bellBuffer = createEpsExamBellBuffer(decodeCtx);
+          }
+          if (bellBuffer) {
+            segmentsToStitch.push({ type: 'audio', buffer: bellBuffer, label: `Q${q.qNum} Bell Chime` });
+          }
+
+          // 1.0s Gap after Bell (as requested: "KEEP GAP 1. SECOND")
+          if (bellGapSec > 0) {
+            segmentsToStitch.push({ type: 'silence', durationSec: bellGapSec, label: `Q${q.qNum} Post-Bell Gap (${bellGapSec}s)` });
+          }
+        }
+
+        // 2. Question Number Announcement (if enabled, e.g. "21번")
+        if (includeQuestionNumber) {
+          const qNumTtsUrl = getQuestionNumberUrl(q.qNum);
+          const qNumBuffer = await fetchAndDecodeAudio(decodeCtx, qNumTtsUrl);
+          if (qNumBuffer) {
+            segmentsToStitch.push({ type: 'audio', buffer: qNumBuffer, label: `Q${q.qNum} Number Announcement` });
+          }
+
+          // 1.0s Gap after Question Number (as requested: "AFTER QUESTION NUMBER ALSO KEEP 1 SECOND GAP")
+          if (qNumGapSec > 0) {
+            segmentsToStitch.push({ type: 'silence', durationSec: qNumGapSec, label: `Q${q.qNum} Post-Number Gap (${qNumGapSec}s)` });
+          }
+        }
+
+        // 3. Question Audio Prompt Buffer
         let qBuffer = null;
         if (q.questionAudioUrl) {
           qBuffer = await fetchAndDecodeAudio(decodeCtx, q.questionAudioUrl);
@@ -472,7 +743,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           segmentsToStitch.push({ type: 'audio', buffer: qBuffer, label: `Q${q.qNum} Prompt` });
         }
 
-        // 2. Insert 3-second gap after question
+        // 4. Insert 3-second gap after question
         segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Q${q.qNum} 3s Gap` });
 
         // 3. Process 4 Options with 3-second gap between each option
@@ -783,86 +1054,195 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         </div>
       )}
 
-      {/* Global Timing Configuration & Voice Settings */}
+      {/* Global Timing Configuration & Bell Engine */}
       <div style={{
         backgroundColor: '#f8fafc',
-        borderRadius: '10px',
-        border: '1px solid #cbd5e1',
-        padding: '14px 18px',
+        borderRadius: '12px',
+        border: '1.5px solid #cbd5e1',
+        padding: '16px 20px',
         marginBottom: '20px',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '14px',
-        alignItems: 'center'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
       }}>
-        {/* Option Gap (3s) */}
-        <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1e3a8a', marginBottom: '4px' }}>
-            ⏱️ Question-to-Option Gap
-          </label>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="number"
-              min="1"
-              max="6"
-              step="0.5"
-              value={optionGapSec}
-              onChange={(e) => setOptionGapSec(parseFloat(e.target.value) || 3.0)}
-              style={{ width: '70px', padding: '6px 8px', borderRadius: '6px', border: '1.5px solid #cbd5e1', fontWeight: '800', fontSize: '13px' }}
-            />
-            <span style={{ fontSize: '12px', color: '#64748b' }}>seconds (Standard 3.0s)</span>
+            <span style={{ fontSize: '18px' }}>⏱️</span>
+            <span style={{ fontSize: '13.5px', fontWeight: '900', color: '#1e3a8a' }}>
+              EPS Exam Timing &amp; Bell Engine Configuration
+            </span>
           </div>
+          <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
+            Bell ➔ 1s Gap ➔ Q# ➔ 1s Gap ➔ Prompt ➔ 3s Gap ➔ Options ➔ 7s Gap
+          </span>
         </div>
 
-        {/* Question Gap (7s) */}
-        <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1e3a8a', marginBottom: '4px' }}>
-            ⏱️ Inter-Question Gap (e.g. Q21 ➔ Q22)
-          </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="number"
-              min="4"
-              max="10"
-              step="0.5"
-              value={questionGapSec}
-              onChange={(e) => setQuestionGapSec(parseFloat(e.target.value) || 7.0)}
-              style={{ width: '70px', padding: '6px 8px', borderRadius: '6px', border: '1.5px solid #cbd5e1', fontWeight: '800', fontSize: '13px' }}
-            />
-            <span style={{ fontSize: '12px', color: '#64748b' }}>seconds (Standard 7.0s)</span>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '14px',
+          alignItems: 'start'
+        }}>
+          {/* 1. BELL CHIME & 1S GAP */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={includeBell}
+                  onChange={(e) => setIncludeBell(e.target.checked)}
+                  style={{ accentColor: '#1e3a8a' }}
+                />
+                <span>🔔 Exam Bell Chime</span>
+              </label>
+              <button
+                type="button"
+                onClick={playBellPreview}
+                style={{
+                  backgroundColor: '#f1f5f9',
+                  color: '#1e293b',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                🔊 Test Bell
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+              <label style={{ fontSize: '11.5px', color: '#475569', fontWeight: '700' }}>Post-Bell Gap:</label>
+              <input
+                type="number"
+                min="0.5"
+                max="3"
+                step="0.5"
+                value={bellGapSec}
+                onChange={(e) => setBellGapSec(parseFloat(e.target.value) || 1.0)}
+                style={{ width: '56px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '800', fontSize: '12px' }}
+              />
+              <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700' }}>sec (1.0s)</span>
+            </div>
+
+            {/* Custom Bell File Upload / Default indicator */}
+            <div style={{ fontSize: '11px', color: '#64748b' }}>
+              {customBellFileName ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#0284c7', fontWeight: '700' }}>📁 {customBellFileName.slice(0, 15)}...</span>
+                  <button type="button" onClick={handleResetToDefaultBell} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '11px' }}>✕ Reset</button>
+                </div>
+              ) : (
+                <label style={{ color: '#2563eb', cursor: 'pointer', textDecoration: 'underline' }}>
+                  <span>Upload custom bell sound</span>
+                  <input type="file" accept="audio/*" onChange={handleCustomBellUpload} style={{ display: 'none' }} />
+                </label>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* AI Voice Gender */}
-        <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1e3a8a', marginBottom: '4px' }}>
-            🎙️ AI Voice Model for Speech
-          </label>
-          <select
-            value={voiceGender}
-            onChange={(e) => setVoiceGender(e.target.value)}
-            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1.5px solid #cbd5e1', fontWeight: '700', fontSize: '12.5px', backgroundColor: '#ffffff' }}
-          >
-            <option value="female">Korean Female (SunHi Neural)</option>
-            <option value="male">Korean Male (InJoon Neural)</option>
-          </select>
-        </div>
+          {/* 2. QUESTION NUMBER ANNOUNCEMENT & 1S GAP */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={includeQuestionNumber}
+                  onChange={(e) => setIncludeQuestionNumber(e.target.checked)}
+                  style={{ accentColor: '#1e3a8a' }}
+                />
+                <span>🔢 Number Voice (21번)</span>
+              </label>
+              <select
+                value={qNumFormat}
+                onChange={(e) => setQNumFormat(e.target.value)}
+                style={{ fontSize: '11px', padding: '2px 4px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700' }}
+              >
+                <option value="short">21번.</option>
+                <option value="full">21번 문제입니다.</option>
+              </select>
+            </div>
 
-        {/* Voice Rate */}
-        <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1e3a8a', marginBottom: '4px' }}>
-            ⚡ Exam Speech Speed
-          </label>
-          <select
-            value={speakingRate}
-            onChange={(e) => setSpeakingRate(e.target.value)}
-            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1.5px solid #cbd5e1', fontWeight: '700', fontSize: '12.5px', backgroundColor: '#ffffff' }}
-          >
-            <option value="-5%">Authentic Exam Pace (-5%)</option>
-            <option value="+0%">Normal Speed (1.0x)</option>
-            <option value="-10%">Slow Practice (-10%)</option>
-            <option value="+5%">Fast Practice (+5%)</option>
-          </select>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ fontSize: '11.5px', color: '#475569', fontWeight: '700' }}>Post-Number Gap:</label>
+              <input
+                type="number"
+                min="0.5"
+                max="3"
+                step="0.5"
+                value={qNumGapSec}
+                onChange={(e) => setQNumGapSec(parseFloat(e.target.value) || 1.0)}
+                style={{ width: '56px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '800', fontSize: '12px' }}
+              />
+              <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700' }}>sec (1.0s)</span>
+            </div>
+          </div>
+
+          {/* 3. OPTION GAP (3.0s) */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
+              ⏱️ Option Gap
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <input
+                type="number"
+                min="1"
+                max="6"
+                step="0.5"
+                value={optionGapSec}
+                onChange={(e) => setOptionGapSec(parseFloat(e.target.value) || 3.0)}
+                style={{ width: '56px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '800', fontSize: '12px' }}
+              />
+              <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700' }}>seconds (3.0s)</span>
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>Between Prompt &amp; Options 1..4</div>
+          </div>
+
+          {/* 4. INTER-QUESTION GAP (7.0s) */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
+              ⏱️ Inter-Question Gap
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <input
+                type="number"
+                min="4"
+                max="10"
+                step="0.5"
+                value={questionGapSec}
+                onChange={(e) => setQuestionGapSec(parseFloat(e.target.value) || 7.0)}
+                style={{ width: '56px', padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '800', fontSize: '12px' }}
+              />
+              <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700' }}>seconds (7.0s)</span>
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>Gap between Q21 and Q22 (6-8s)</div>
+          </div>
+
+          {/* 5. AI VOICE & SPEED */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
+              🎙️ Korean Voice &amp; Speed
+            </label>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <select
+                value={voiceGender}
+                onChange={(e) => setVoiceGender(e.target.value)}
+                style={{ flex: 1, padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700', fontSize: '11.5px' }}
+              >
+                <option value="female">SunHi (Female)</option>
+                <option value="male">InJoon (Male)</option>
+              </select>
+              <select
+                value={speakingRate}
+                onChange={(e) => setSpeakingRate(e.target.value)}
+                style={{ flex: 1, padding: '4px 6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: '700', fontSize: '11.5px' }}
+              >
+                <option value="-4%">Exam Pace (-4%)</option>
+                <option value="+0%">Normal (1.0x)</option>
+                <option value="-10%">Slow (-10%)</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -973,6 +1353,227 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             >
               Next (Q{activeQNum + 1}) ▶
             </button>
+          </div>
+        </div>
+
+        {/* INTERACTIVE SEQUENCE FLOW & LIVE PREVIEW BAR FOR THIS QUESTION */}
+        <div style={{
+          backgroundColor: '#eff6ff',
+          border: '1.5px solid #bfdbfe',
+          borderRadius: '10px',
+          padding: '12px 16px',
+          marginBottom: '18px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '16px' }}>🎬</span>
+              <span style={{ fontSize: '13px', fontWeight: '800', color: '#1e40af' }}>
+                Question {activeQNum} Sequence Flow &amp; Timing Verification:
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handlePreviewSingleSequence(activeQNum)}
+              style={{
+                backgroundColor: previewStage ? '#dc2626' : '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: '800',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 6px rgba(37,99,235,0.3)'
+              }}
+            >
+              <span>{previewStage ? '⏹ Stop Sequence' : `▶ Test Q${activeQNum} Full Sequence (Bell ➔ 1s ➔ 21번 ➔ 1s ➔ ...)`}</span>
+            </button>
+          </div>
+
+          {/* Visual Sequence Chain */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11.5px', fontWeight: '700' }}>
+            {/* Bell */}
+            <span style={{
+              padding: '4px 8px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'bell' ? '#fbbf24' : '#ffffff',
+              color: previewStage === 'bell' ? '#78350f' : '#1e3a8a',
+              border: previewStage === 'bell' ? '1.5px solid #d97706' : '1px solid #cbd5e1',
+              boxShadow: previewStage === 'bell' ? '0 0 8px rgba(245, 158, 11, 0.5)' : 'none',
+              transition: 'all 0.15s'
+            }}>
+              🔔 Bell
+            </span>
+
+            <span>➔</span>
+
+            {/* 1s Gap */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'gap-bell' ? '#86efac' : '#f1f5f9',
+              color: previewStage === 'gap-bell' ? '#14532d' : '#64748b',
+              border: previewStage === 'gap-bell' ? '1.5px solid #16a34a' : '1px solid #e2e8f0'
+            }}>
+              ⏱️ {bellGapSec}s Gap
+            </span>
+
+            <span>➔</span>
+
+            {/* Question Number */}
+            <span style={{
+              padding: '4px 8px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'qnum' ? '#93c5fd' : '#ffffff',
+              color: previewStage === 'qnum' ? '#1e3a8a' : '#1e3a8a',
+              border: previewStage === 'qnum' ? '1.5px solid #2563eb' : '1px solid #cbd5e1'
+            }}>
+              🔢 {activeQNum}번
+            </span>
+
+            <span>➔</span>
+
+            {/* 1s Gap */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'gap-qnum' ? '#86efac' : '#f1f5f9',
+              color: previewStage === 'gap-qnum' ? '#14532d' : '#64748b',
+              border: previewStage === 'gap-qnum' ? '1.5px solid #16a34a' : '1px solid #e2e8f0'
+            }}>
+              ⏱️ {qNumGapSec}s Gap
+            </span>
+
+            <span>➔</span>
+
+            {/* Question Prompt */}
+            <span style={{
+              padding: '4px 8px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'prompt' ? '#bae6fd' : '#ffffff',
+              color: previewStage === 'prompt' ? '#0369a1' : '#0369a1',
+              border: previewStage === 'prompt' ? '1.5px solid #0284c7' : '1px solid #cbd5e1'
+            }}>
+              📢 Question Audio
+            </span>
+
+            <span>➔</span>
+
+            {/* 3s Gap */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'gap-prompt' ? '#86efac' : '#f1f5f9',
+              color: previewStage === 'gap-prompt' ? '#14532d' : '#64748b',
+              border: previewStage === 'gap-prompt' ? '1.5px solid #16a34a' : '1px solid #e2e8f0'
+            }}>
+              ⏱️ {optionGapSec}s Gap
+            </span>
+
+            <span>➔</span>
+
+            {/* Option 1 */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'opt-1' ? '#c7d2fe' : '#ffffff',
+              color: '#3730a3',
+              border: previewStage === 'opt-1' ? '1.5px solid #4f46e5' : '1px solid #cbd5e1'
+            }}>
+              1️⃣ Opt 1
+            </span>
+
+            <span>➔</span>
+
+            {/* 3s Gap */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'gap-opt-1' ? '#86efac' : '#f1f5f9',
+              color: previewStage === 'gap-opt-1' ? '#14532d' : '#64748b'
+            }}>
+              ⏱️ {optionGapSec}s
+            </span>
+
+            <span>➔</span>
+
+            {/* Option 2 */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'opt-2' ? '#c7d2fe' : '#ffffff',
+              color: '#3730a3',
+              border: previewStage === 'opt-2' ? '1.5px solid #4f46e5' : '1px solid #cbd5e1'
+            }}>
+              2️⃣ Opt 2
+            </span>
+
+            <span>➔</span>
+
+            {/* 3s Gap */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'gap-opt-2' ? '#86efac' : '#f1f5f9',
+              color: previewStage === 'gap-opt-2' ? '#14532d' : '#64748b'
+            }}>
+              ⏱️ {optionGapSec}s
+            </span>
+
+            <span>➔</span>
+
+            {/* Option 3 */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'opt-3' ? '#c7d2fe' : '#ffffff',
+              color: '#3730a3',
+              border: previewStage === 'opt-3' ? '1.5px solid #4f46e5' : '1px solid #cbd5e1'
+            }}>
+              3️⃣ Opt 3
+            </span>
+
+            <span>➔</span>
+
+            {/* 3s Gap */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'gap-opt-3' ? '#86efac' : '#f1f5f9',
+              color: previewStage === 'gap-opt-3' ? '#14532d' : '#64748b'
+            }}>
+              ⏱️ {optionGapSec}s
+            </span>
+
+            <span>➔</span>
+
+            {/* Option 4 */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: previewStage === 'opt-4' ? '#c7d2fe' : '#ffffff',
+              color: '#3730a3',
+              border: previewStage === 'opt-4' ? '1.5px solid #4f46e5' : '1px solid #cbd5e1'
+            }}>
+              4️⃣ Opt 4
+            </span>
+
+            <span>➔</span>
+
+            {/* 7s Gap */}
+            <span style={{
+              padding: '4px 6px',
+              borderRadius: '6px',
+              backgroundColor: '#fef3c7',
+              color: '#92400e',
+              border: '1px solid #fde68a'
+            }}>
+              ⏱️ {questionGapSec}s (Next Q)
+            </span>
           </div>
         </div>
 
