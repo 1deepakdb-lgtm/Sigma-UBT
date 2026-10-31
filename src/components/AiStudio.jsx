@@ -8,6 +8,7 @@ import {
   DIALOGUE_TEMPLATES, 
   ELEVENLABS_MODELS 
 } from '@/lib/elevenlabsConfig';
+import ListeningExamSynchronizer from './ListeningExamSynchronizer';
 
 export default function AiStudio({
   initialLang = 'ko',
@@ -402,7 +403,8 @@ export default function AiStudio({
       <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #e2e8f0', marginBottom: '24px', flexWrap: 'wrap' }}>
         {[
           { id: 'generator', label: 'Voice Profiles & Speech Generator' },
-          { id: 'dialogue', label: 'Multi-Speaker Dialogue Studio' }
+          { id: 'dialogue', label: 'Multi-Speaker Dialogue Studio' },
+          { id: 'listeningBuilder', label: '🎧 EPS Listening Studio (Q21–Q40 Synchronizer)' }
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (
@@ -1115,6 +1117,11 @@ export default function AiStudio({
             </div>
           </div>
         </div>
+      )}
+
+      {/* EPS Listening Studio (Q21-Q40 Synchronizer) */}
+      {activeTab === 'listeningBuilder' && (
+        <ListeningExamSynchronizer instituteLanguage={effectiveInstLang} />
       )}
 
     </div>
