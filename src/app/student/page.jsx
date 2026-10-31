@@ -265,9 +265,19 @@ const StudentDashboard = () => {
   const isSetInPackage = (set, pkgName) => {
     if (!set || !pkgName) return false;
     const norm = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const setPkgNorm = norm(set.packageName);
     const targetPkgNorm = norm(pkgName);
 
+    // 1. Direct check: If any exam package named pkgName explicitly includes this set
+    const matchingPkg = examPackages.find(p => norm(p.name) === targetPkgNorm);
+    if (matchingPkg?.includedSets && Array.isArray(matchingPkg.includedSets)) {
+      const match = matchingPkg.includedSets.some(sName => {
+        const incNorm = norm(sName);
+        return incNorm === norm(set.name) || incNorm === norm(set.id) || incNorm === norm(set.title);
+      });
+      if (match) return true;
+    }
+
+    const setPkgNorm = norm(set.packageName);
     if (!setPkgNorm || !targetPkgNorm) return false;
 
     // Exact match (e.g. "30setchapterubt" === "30setchapterubt")
@@ -283,7 +293,7 @@ const StudentDashboard = () => {
     if (targetPkgNorm.includes("model") && setPkgNorm.includes("model")) return true;
 
     // Full Set UBT: covers standard EPS full sets (not chapter and not model question sets)
-    if (targetPkgNorm.includes("full") && !setPkgNorm.includes("chapter") && !setPkgNorm.includes("model")) {
+    if (targetPkgNorm.includes("full") && !setPkgNorm.includes("chapter") && !setPkgNorm.includes("model") && !setPkgNorm.includes("mock") && !setPkgNorm.includes("jlpt") && !setPkgNorm.includes("jft") && !setPkgNorm.includes("nat")) {
       return true;
     }
 
@@ -722,7 +732,20 @@ const StudentDashboard = () => {
           finalPackages.push(jpPkg);
         }
       });
+      // Show only Mock Test packages to Japanese track students
+      finalPackages = finalPackages.filter(p => {
+        const name = (p.name || "").toLowerCase();
+        const type = (p.type || "").toLowerCase();
+        return p.track === "japanese" || name.includes("mock") || name.includes("jft") || name.includes("jlpt") || name.includes("nat") || type.includes("mock") || type.includes("jft") || type.includes("jlpt");
+      });
     } else {
+      // Show Korean UBT packages to Korean track students
+      finalPackages = finalPackages.filter(p => {
+        const name = (p.name || "").toLowerCase();
+        const type = (p.type || "").toLowerCase();
+        const isJp = p.track === "japanese" || name.includes("mock") || name.includes("jft") || name.includes("jlpt") || name.includes("nat") || type.includes("mock");
+        return !isJp;
+      });
       if (!finalPackages.some(p => (p.name || "").toLowerCase().includes("model question"))) {
         finalPackages.push({
           id: 4,
@@ -2003,9 +2026,28 @@ const StudentDashboard = () => {
                       {instituteLanguage === "japanese" ? "MOCK TEST PACKAGE" : "UBT PACKAGE"}
                     </span>
                     <h4 style={{ margin: "14px 0 8px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>{pkg.name}</h4>
-                    <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: "18px" }}>
+                    <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: pkg.includedSets?.length ? "10px" : "18px" }}>
                       {pkg.desc || (instituteLanguage === "japanese" ? "Full simulated Japanese mock test sets with audio and timer." : "Full simulated exam practice sets with Korean audio and timer.")}
                     </p>
+                    {pkg.includedSets && pkg.includedSets.length > 0 && (
+                      <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "8px 10px", marginBottom: "14px", fontSize: "12px" }}>
+                        <div style={{ fontWeight: "700", color: "#1e40af", marginBottom: "4px", fontSize: "11px" }}>
+                          📦 {pkg.includedSets.length} Included Sets:
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                          {pkg.includedSets.slice(0, 3).map((setName, sIdx) => (
+                            <span key={sIdx} style={{ fontSize: "10.5px", backgroundColor: "#e0f2fe", color: "#0369a1", padding: "1px 5px", borderRadius: "3px", fontWeight: "600" }}>
+                              {setName}
+                            </span>
+                          ))}
+                          {pkg.includedSets.length > 3 && (
+                            <span style={{ fontSize: "10.5px", color: "#64748b", fontStyle: "italic", alignSelf: "center" }}>
+                              +{pkg.includedSets.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div style={{ fontSize: "16px", fontWeight: "800", color: "#16a34a", marginBottom: "14px" }}>{pkg.price || "Contact Institute"}</div>

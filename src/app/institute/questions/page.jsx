@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { performLogout } from "@/lib/clientAuth";
 import PdfQuestionUploadModal from "@/components/PdfQuestionUploadModal";
+import { JLPT_MOCK_SETS_META } from "@/data/jlptMockTestData";
 
 function InstituteQuestionManagerContent() {
   const router = useRouter();
@@ -147,8 +148,33 @@ function InstituteQuestionManagerContent() {
       const savedSets = safeJsonParse(localStorage.getItem("examSets"), []);
       const savedQuestions = safeJsonParse(localStorage.getItem("questionBank"), []);
 
+      // Build Japanese Mock Exam Sets from JLPT_MOCK_SETS_META
+      const jpMockSets = (JLPT_MOCK_SETS_META || []).map((meta) => ({
+        id: meta.id,
+        name: meta.title,
+        titleJp: meta.titleJp,
+        packageName: meta.level || "Full Mock Test",
+        setType: "MOCK",
+        track: "japanese",
+        level: meta.level,
+        totalQs: meta.totalQs || 40,
+        isPublished: true,
+        isMock: true
+      }));
+
+      const seen = new Set();
+      const mergedSets = [];
+      [...savedSets, ...(isJapanese ? jpMockSets : [])].forEach(s => {
+        if (!s) return;
+        const key = (s.name || s.id || "").toLowerCase();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          mergedSets.push(s);
+        }
+      });
+
       setPackages(savedPackages);
-      setAllSets(savedSets);
+      setAllSets(mergedSets);
       setQuestions(savedQuestions);
 
       const defaultPackageName = isJapanese ? "Full Mock Test" : "Full Set UBT";
@@ -2387,11 +2413,11 @@ function InstituteQuestionManagerContent() {
         {activeTab === "createPackage" && (
           <div style={cardStyle}>
             <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px" }}>
-              Create {isJapanese ? "Mock Test Package" : "Custom Package"} from Your Private Sets
+              {isJapanese ? "⛩️ Create Mock Test Package from Mock Tests" : "📦 Create Custom Package from Your Sets"}
             </h3>
             <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "#64748b" }}>
               {isJapanese
-                ? "Bundle your institute's private Japanese mock test sets into packages for your enrolled students."
+                ? "Bundle Japanese mock test sets (JLPT N5-N2, JFT-Basic & your institute's sets) into packages for your enrolled students."
                 : "Bundle your institute's private UBT sets into packages for your enrolled students."}
             </p>
 
@@ -2403,7 +2429,7 @@ function InstituteQuestionManagerContent() {
                   </label>
                   <input
                     type="text"
-                    placeholder={isJapanese ? "e.g. Japanese Mock Test Special Pack" : "e.g. VIP 10 Set UBT Model Exam"}
+                    placeholder={isJapanese ? "e.g. JLPT N5 Complete Mock Bundle or JFT Speed Pass" : "e.g. VIP 10 Set UBT Model Exam"}
                     value={newPkgName}
                     onChange={(e) => setNewPkgName(e.target.value)}
                     style={inputStyle}
@@ -2448,7 +2474,7 @@ function InstituteQuestionManagerContent() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Comprehensive EPS-TOPIK practice bundle curated by our institute"
+                  placeholder={isJapanese ? "e.g. Complete JLPT simulation mock test package with real-time scoring and audio." : "e.g. Comprehensive EPS-TOPIK practice bundle curated by our institute"}
                   value={newPkgDesc}
                   onChange={(e) => setNewPkgDesc(e.target.value)}
                   style={inputStyle}
@@ -2456,61 +2482,159 @@ function InstituteQuestionManagerContent() {
               </div>
 
               {/* Set Selection for Package */}
-              <div style={{ marginBottom: "20px", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <label style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a" }}>
-                    Select Sets Included in this Package ({selectedSetsForPkg.length} selected):
-                  </label>
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSetsForPkg(mySets.map(s => s.name))}
-                      style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
-                    >
-                      Select All My Private Sets
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSetsForPkg([])}
-                      style={{ backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
+              {(() => {
+                const selectableSets = isJapanese
+                  ? allSets.filter(s => s && (s.setType === "MOCK" || s.track === "japanese" || s.isMock || (s.name && (s.name.includes("Mock") || s.name.includes("JLPT") || s.name.includes("JFT") || s.name.includes("NAT")))))
+                  : (mySets.length > 0 ? mySets : allSets);
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px" }}>
-                  {mySets.map((s, idx) => {
-                    const isChecked = selectedSetsForPkg.includes(s.name);
-                    return (
-                      <label
-                        key={idx}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          padding: "8px 10px",
-                          borderRadius: "6px",
-                          backgroundColor: isChecked ? "#eff6ff" : "#ffffff",
-                          border: isChecked ? "1.5px solid #3b82f6" : "1px solid #cbd5e1",
-                          cursor: "pointer",
-                          fontSize: "12.5px"
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            if (e.target.checked) setSelectedSetsForPkg([...selectedSetsForPkg, s.name]);
-                            else setSelectedSetsForPkg(selectedSetsForPkg.filter(name => name !== s.name));
-                          }}
-                        />
-                        <span style={{ fontWeight: isChecked ? "bold" : "normal" }}>{s.name}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
+                return (
+                  <div style={{ marginBottom: "20px", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+                      <div>
+                        <label style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a" }}>
+                          {isJapanese ? "⛩️ Select Mock Test Sets to Include" : "Select Sets Included in this Package"} ({selectedSetsForPkg.length} selected):
+                        </label>
+                        <p style={{ margin: "2px 0 0 0", fontSize: "11.5px", color: "#64748b" }}>
+                          {isJapanese ? "Choose from standard JLPT / JFT mock tests or your private mock sets" : "Students assigned this package will have access to all selected sets"}
+                        </p>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        {isJapanese ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedSetsForPkg(selectableSets.map(s => s.name))}
+                              style={{ backgroundColor: "#faf5ff", color: "#7e22ce", border: "1px solid #e9d5ff", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              ⛩️ All Mock Sets
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const n5s = selectableSets.filter(s => (s.level || s.name || "").includes("N5")).map(s => s.name);
+                                setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...n5s])));
+                              }}
+                              style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              + JLPT N5 (10)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const n4s = selectableSets.filter(s => (s.level || s.name || "").includes("N4")).map(s => s.name);
+                                setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...n4s])));
+                              }}
+                              style={{ backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              + JLPT N4 (10)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const n3s = selectableSets.filter(s => (s.level || s.name || "").includes("N3")).map(s => s.name);
+                                setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...n3s])));
+                              }}
+                              style={{ backgroundColor: "#fffbeb", color: "#b45309", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              + JLPT N3 (10)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const n2s = selectableSets.filter(s => (s.level || s.name || "").includes("N2")).map(s => s.name);
+                                setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...n2s])));
+                              }}
+                              style={{ backgroundColor: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              + JLPT N2 (10)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const jfts = selectableSets.filter(s => (s.level || s.name || "").includes("JFT")).map(s => s.name);
+                                setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...jfts])));
+                              }}
+                              style={{ backgroundColor: "#fdf4ff", color: "#a21caf", border: "1px solid #f0abfc", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              + JFT-Basic (10)
+                            </button>
+                            {mySets.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const myNames = mySets.map(s => s.name);
+                                  setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...myNames])));
+                                }}
+                                style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                              >
+                                + My Private Sets
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSetsForPkg(mySets.map(s => s.name))}
+                            style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                          >
+                            Select All My Private Sets
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSetsForPkg([])}
+                          style={{ backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "10px", maxHeight: "260px", overflowY: "auto", padding: "2px" }}>
+                      {selectableSets.map((s, idx) => {
+                        const isChecked = selectedSetsForPkg.includes(s.name);
+                        const isMock = s.setType === "MOCK" || s.track === "japanese" || s.isMock || (s.name && (s.name.includes("Mock") || s.name.includes("JLPT") || s.name.includes("JFT") || s.name.includes("NAT")));
+                        const badge = s.level || (isMock ? "Mock" : (s.packageName || "Set"));
+                        return (
+                          <label
+                            key={idx}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              backgroundColor: isChecked ? (isMock ? "#faf5ff" : "#eff6ff") : "#ffffff",
+                              border: isChecked ? (isMock ? "1.5px solid #9333ea" : "1.5px solid #3b82f6") : "1px solid #cbd5e1",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              fontWeight: isChecked ? "bold" : "normal",
+                              color: isChecked ? (isMock ? "#6b21a8" : "#1e40af") : "#1e293b"
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedSetsForPkg([...selectedSetsForPkg, s.name]);
+                                else setSelectedSetsForPkg(selectedSetsForPkg.filter(name => name !== s.name));
+                              }}
+                            />
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <span>{isMock ? "⛩️" : "🎯"}</span>
+                              <span style={{ fontSize: "9.5px", padding: "1px 5px", borderRadius: "3px", backgroundColor: isMock ? "#f3e8ff" : "#e0f2fe", color: isMock ? "#7e22ce" : "#0369a1", fontWeight: "700", flexShrink: 0 }}>
+                                {badge}
+                              </span>
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <button type="submit" style={primaryBtnStyle}>
                 + Save Package for My Students

@@ -20,6 +20,7 @@ import InstituteBillingSection from "@/components/InstituteBillingSection";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import { performLogout } from "@/lib/clientAuth";
 import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from "@/lib/instituteGateAuth";
+import { JLPT_MOCK_SETS_META } from "@/data/jlptMockTestData";
 
 const InstituteDashboard = () => {
   const router = useRouter();
@@ -366,7 +367,7 @@ const InstituteDashboard = () => {
   const handleSelectAllUbtSets = () => {
     const ubtNames = examSets.filter(s => {
       const sType = s.setType || (s.name?.toLowerCase().includes("chapter") ? "Chapterwise" : "UBT");
-      return sType === "UBT";
+      return sType === "UBT" && s.track !== "japanese";
     }).map(s => s.name);
     setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...ubtNames])));
   };
@@ -377,6 +378,21 @@ const InstituteDashboard = () => {
       return sType === "Chapterwise";
     }).map(s => s.name);
     setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...chNames])));
+  };
+
+  const handleSelectAllMockSets = () => {
+    const mockNames = examSets.filter(s => {
+      return s.setType === "MOCK" || s.track === "japanese" || s.isMock || (s.name && (s.name.toLowerCase().includes("mock") || s.name.toLowerCase().includes("jlpt") || s.name.toLowerCase().includes("jft") || s.name.toLowerCase().includes("nat")));
+    }).map(s => s.name);
+    setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...mockNames])));
+  };
+
+  const handleSelectMockByLevel = (levelStr) => {
+    const names = examSets.filter(s => {
+      const match = (s.level || s.packageName || s.name || "").toLowerCase().includes(levelStr.toLowerCase());
+      return match;
+    }).map(s => s.name);
+    setSelectedSetsForPkg(Array.from(new Set([...selectedSetsForPkg, ...names])));
   };
 
   const handleSelectAllSets = () => {
@@ -399,6 +415,11 @@ const InstituteDashboard = () => {
       ? cleanPrice
       : `Rs. ${cleanPrice.replace(/[^0-9,]/g, "") || '1,500'}`;
 
+    const isJapaneseTrack = instituteLanguage === "japanese" || selectedSetsForPkg.some(s => {
+      const low = (s || "").toLowerCase();
+      return low.includes("mock") || low.includes("jlpt") || low.includes("jft") || low.includes("nat");
+    });
+
     const newPkg = {
       id: "pkg-inst-" + Date.now(),
       name: newPkgName.trim(),
@@ -408,7 +429,8 @@ const InstituteDashboard = () => {
       type: newPkgType,
       includedSets: selectedSetsForPkg,
       createdBy: instituteName,
-      isCustom: true
+      isCustom: true,
+      track: isJapaneseTrack ? "japanese" : "korean"
     };
 
     const currentPkgs = JSON.parse(localStorage.getItem("examPackages")) || examPackages;
@@ -416,7 +438,7 @@ const InstituteDashboard = () => {
     setExamPackages(updatedPackages);
     localStorage.setItem("examPackages", JSON.stringify(updatedPackages));
 
-    alert(`✅ Custom package "${newPkgName}" created with price ${formattedPrice}!`);
+    alert(`✅ Custom ${isJapaneseTrack ? "Mock Test" : "UBT"} package "${newPkgName}" created with price ${formattedPrice}! (${selectedSetsForPkg.length} sets included)`);
     setNewPkgName("");
     setNewPkgPrice("Rs. 1,500");
     setNewPkgDesc("");
@@ -514,14 +536,34 @@ const InstituteDashboard = () => {
     }
 
     let savedPackages = JSON.parse(localStorage.getItem("examPackages")) || [];
+    const isJapaneseInst = instituteLanguage === "japanese";
+
+    const defaultMockPackages = [
+      { id: "pkg-jp-1", name: "Full Mock Test", price: "Rs. 2,500", desc: "Complete access to all JLPT (N5-N2) & JFT-Basic CBT Mock Test Sets.", duration: "1 Month", type: "Full Mock Test", track: "japanese" },
+      { id: "pkg-jp-2", name: "JFT-Basic Mock Test", price: "Rs. 1,500", desc: "Official JFT-Basic SSW mock test sets with audio and real-time evaluation.", duration: "1 Month", type: "JFT-Basic Mock Test", track: "japanese" },
+      { id: "pkg-jp-3", name: "NAT-TEST Mock Test", price: "Rs. 1,500", desc: "NAT-TEST 5Q & 4Q authentic practice sets with listening.", duration: "1 Month", type: "NAT-TEST Mock Test", track: "japanese" },
+      { id: "pkg-jp-4", name: "JLPT Mock Test Bundle", price: "Rs. 2,000", desc: "Standard JLPT N5 & N4 simulation mock exam sets.", duration: "1 Month", type: "JLPT Mock Test", track: "japanese" }
+    ];
+
     if (savedPackages.length === 0) {
-      savedPackages = [
+      savedPackages = isJapaneseInst ? defaultMockPackages : [
         { id: "pkg-1", name: "Full Set UBT", price: "Rs. 2,000", desc: "Full EPS-TOPIK UBT exam sets (20 Reading + 20 Listening).", duration: "1 Month", type: "UBT Full Exam" },
         { id: "pkg-2", name: "30 Set Chapter UBT", price: "Rs. 1,000", desc: "Chapterwise practice sets with listening audio.", duration: "1 Month", type: "Chapter Wise" },
         { id: "pkg-3", name: "100 UBT set", price: "Rs. 3,500", desc: "Comprehensive 100 UBT test sets simulation.", duration: "3 Months", type: "UBT Full Exam" },
         { id: "pkg-4", name: "Full Package", price: "Rs. 4,500", desc: "Complete access to all UBT & chapterwise test sets.", duration: "Lifetime", type: "Combo Package" }
       ];
       localStorage.setItem("examPackages", JSON.stringify(savedPackages));
+    } else if (isJapaneseInst || instituteLanguage === "both") {
+      let updated = false;
+      defaultMockPackages.forEach(jpPkg => {
+        if (!savedPackages.some(p => (p.name || "").toLowerCase() === jpPkg.name.toLowerCase())) {
+          savedPackages.push(jpPkg);
+          updated = true;
+        }
+      });
+      if (updated) {
+        localStorage.setItem("examPackages", JSON.stringify(savedPackages));
+      }
     }
 
     const instPrices = JSON.parse(localStorage.getItem(`instPrices_${instituteName}`) || "{}");
@@ -539,11 +581,50 @@ const InstituteDashboard = () => {
         (instId && s.creatorInstituteId === instId)
       )
     );
+
+    // Build Japanese Mock Exam Sets from JLPT_MOCK_SETS_META for making Mock Test Packages
+    const jpMockSets = (JLPT_MOCK_SETS_META || []).map((meta) => ({
+      id: meta.id,
+      name: meta.title,
+      titleJp: meta.titleJp,
+      packageName: meta.level || "Full Mock Test",
+      setType: "MOCK",
+      track: "japanese",
+      level: meta.level,
+      totalQs: meta.totalQs || 40,
+      isPublished: true,
+      isMock: true
+    }));
+
+    let combinedExamSets = [];
+    if (isJapaneseInst) {
+      const instituteMockSets = savedSets.filter(s => s.track === "japanese" || s.setType === "MOCK" || (s.name && (s.name.includes("Mock") || s.name.includes("JLPT") || s.name.includes("JFT"))));
+      const seen = new Set();
+      [...instituteMockSets, ...jpMockSets].forEach(s => {
+        const key = (s.name || s.id).toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          combinedExamSets.push(s);
+        }
+      });
+    } else if (instituteLanguage === "both") {
+      const seen = new Set();
+      [...savedSets, ...jpMockSets].forEach(s => {
+        const key = (s.name || s.id).toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          combinedExamSets.push(s);
+        }
+      });
+    } else {
+      combinedExamSets = savedSets;
+    }
+
     const allFoldersData = JSON.parse(localStorage.getItem("epsFoldersContent")) || {};
     const savedNews = JSON.parse(localStorage.getItem("epsNewsList")) || [];
 
     setExamPackages(savedPackages);
-    setExamSets(savedSets);
+    setExamSets(combinedExamSets);
     setFolderMaterials(allFoldersData[activeBookFolder] || []);
     setNewsList(savedNews);
 
@@ -1659,9 +1740,23 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                           onChange={(e) => setNewPkgType(e.target.value)}
                           style={inputStyle}
                         >
-                          <option value="UBT Full Exam">{instituteLanguage === "japanese" ? "Full Mock Test" : "UBT Full Exam"}</option>
-                          <option value="Chapter Wise">{instituteLanguage === "japanese" ? "Topic Wise Practice" : "Chapter Wise Practice"}</option>
-                          <option value="Combo Package">Combo Full Package</option>
+                          {instituteLanguage === "japanese" ? (
+                            <>
+                              <option value="Full Mock Test">Full Mock Test</option>
+                              <option value="JLPT Mock Test">JLPT Mock Test</option>
+                              <option value="JFT-Basic Mock Test">JFT-Basic Mock Test</option>
+                              <option value="NAT-TEST Mock Test">NAT-TEST Mock Test</option>
+                              <option value="Combo Package">Combo Mock Package</option>
+                              <option value="Special Offer">Special Offer</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="UBT Full Exam">UBT Full Exam</option>
+                              <option value="Chapter Wise">Chapter Wise Practice</option>
+                              <option value="Combo Package">Combo Full Package</option>
+                              <option value="Special Offer">Special Offer</option>
+                            </>
+                          )}
                         </select>
                       </div>
 
@@ -1701,28 +1796,79 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
                         <div>
                           <label style={{ fontSize: "13px", fontWeight: "700", color: "#1e3a8a" }}>
-                            🎯 Choose Exam Sets Included in this Package ({selectedSetsForPkg.length} selected)
+                            {instituteLanguage === "japanese" ? "⛩️ Choose Mock Test Sets to Bundle in this Package" : "🎯 Choose Exam Sets Included in this Package"} ({selectedSetsForPkg.length} selected)
                           </label>
                           <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" }}>
-                            Students who purchase or are assigned this package will have access to these sets.
+                            {instituteLanguage === "japanese"
+                              ? "Select specific JLPT / JFT mock test sets to build a custom mock package. Students purchasing will auto-unlock these sets."
+                              : "Students who purchase or are assigned this package will have access to these sets."}
                           </p>
                         </div>
 
                         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                          <button
-                            type="button"
-                            onClick={handleSelectAllUbtSets}
-                            style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
-                          >
-                            + All {instituteLanguage === "japanese" ? "Mock" : "UBT"} Sets
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleSelectAllChapterSets}
-                            style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
-                          >
-                            + All Chapter Sets
-                          </button>
+                          {instituteLanguage === "japanese" || examSets.some(s => s.track === "japanese" || s.setType === "MOCK") ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={handleSelectAllMockSets}
+                                style={{ backgroundColor: "#faf5ff", color: "#7e22ce", border: "1px solid #e9d5ff", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}
+                              >
+                                ⛩️ All Mock Sets
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectMockByLevel("N5")}
+                                style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                + JLPT N5 (10)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectMockByLevel("N4")}
+                                style={{ backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                + JLPT N4 (10)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectMockByLevel("N3")}
+                                style={{ backgroundColor: "#fffbeb", color: "#b45309", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                + JLPT N3 (10)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectMockByLevel("N2")}
+                                style={{ backgroundColor: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                + JLPT N2 (10)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectMockByLevel("JFT")}
+                                style={{ backgroundColor: "#fdf4ff", color: "#a21caf", border: "1px solid #f0abfc", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                + JFT-Basic (10)
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={handleSelectAllUbtSets}
+                                style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                + All UBT Sets
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSelectAllChapterSets}
+                                style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                + All Chapter Sets
+                              </button>
+                            </>
+                          )}
                           <button
                             type="button"
                             onClick={handleSelectAllSets}
@@ -1743,10 +1889,13 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       {examSets.length === 0 ? (
                         <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>No sets available in the system yet.</p>
                       ) : (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "10px", maxHeight: "200px", overflowY: "auto", padding: "4px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px", maxHeight: "250px", overflowY: "auto", padding: "4px" }}>
                           {examSets.map((s, idx) => {
                             const isChecked = selectedSetsForPkg.includes(s.name);
-                            const isUbt = (s.setType || (s.name?.toLowerCase().includes("chapter") ? "Chapterwise" : "UBT")) === "UBT";
+                            const isMock = s.setType === "MOCK" || s.track === "japanese" || s.isMock || (s.name && (s.name.toLowerCase().includes("mock") || s.name.toLowerCase().includes("jlpt") || s.name.toLowerCase().includes("jft") || s.name.toLowerCase().includes("nat")));
+                            const isChapter = (s.setType || "").toLowerCase().includes("chapter") || (s.name || "").toLowerCase().includes("chapter");
+                            const icon = isMock ? "⛩️" : (isChapter ? "📚" : "🎯");
+                            const levelBadge = s.level || (isMock ? "Mock" : (isChapter ? "Chapter" : "UBT"));
                             return (
                               <label
                                 key={idx}
@@ -1756,12 +1905,12 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                                   gap: "8px",
                                   padding: "8px 10px",
                                   borderRadius: "6px",
-                                  backgroundColor: isChecked ? "#eff6ff" : "#ffffff",
-                                  border: isChecked ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                                  backgroundColor: isChecked ? (isMock ? "#faf5ff" : "#eff6ff") : "#ffffff",
+                                  border: isChecked ? (isMock ? "1.5px solid #9333ea" : "1.5px solid #2563eb") : "1px solid #cbd5e1",
                                   cursor: "pointer",
-                                  fontSize: "13px",
+                                  fontSize: "12.5px",
                                   fontWeight: isChecked ? "700" : "normal",
-                                  color: isChecked ? "#1e40af" : "#1e293b"
+                                  color: isChecked ? (isMock ? "#6b21a8" : "#1e40af") : "#1e293b"
                                 }}
                               >
                                 <input
@@ -1770,7 +1919,13 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                                   onChange={() => handleToggleSetForPackage(s.name)}
                                   style={{ cursor: "pointer" }}
                                 />
-                                <span>{isUbt ? "🎯" : "📚"} {s.name}</span>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  <span>{icon}</span>
+                                  <span style={{ fontSize: "10px", padding: "1px 5px", borderRadius: "3px", backgroundColor: isMock ? "#f3e8ff" : "#e0f2fe", color: isMock ? "#7e22ce" : "#0369a1", fontWeight: "700", flexShrink: 0 }}>
+                                    {levelBadge}
+                                  </span>
+                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
+                                </span>
                               </label>
                             );
                           })}
