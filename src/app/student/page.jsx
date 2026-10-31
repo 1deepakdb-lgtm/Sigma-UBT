@@ -2193,15 +2193,16 @@ const StudentDashboard = () => {
         {activeTab === "results" && (
           <div style={cardStyle}>
             <h3 style={{ marginTop: 0, color: "#0f172a", marginBottom: "16px", fontSize: "18px" }}>My Exam Results & Performance Logs</h3>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ backgroundColor: "#ffffff", borderBottom: "2px solid #e2e8f0" }}>
-                  <th style={{ padding: "14px 16px", textAlign: "left", color: "#1e293b", fontSize: "13.5px", fontWeight: "700", borderTopLeftRadius: "8px", borderBottom: "2px solid #e2e8f0" }}>Exam Set</th>
-                  <th style={{ padding: "14px 16px", textAlign: "left", color: "#1e293b", fontSize: "13.5px", fontWeight: "700", borderBottom: "2px solid #e2e8f0" }}>Score</th>
-                  <th style={{ padding: "14px 16px", textAlign: "left", color: "#1e293b", fontSize: "13.5px", fontWeight: "700", borderBottom: "2px solid #e2e8f0" }}>Percentage</th>
-                  <th style={{ padding: "14px 16px", textAlign: "left", color: "#1e293b", fontSize: "13.5px", fontWeight: "700", borderTopRightRadius: "8px", borderBottom: "2px solid #e2e8f0" }}>Status</th>
-                </tr>
-              </thead>
+            <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff" }}>
+                    <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Exam Set</th>
+                    <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Score</th>
+                    <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Percentage</th>
+                    <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Status</th>
+                  </tr>
+                </thead>
               <tbody>
                 {results.length === 0 ? (
                   <tr>
@@ -2225,6 +2226,7 @@ const StudentDashboard = () => {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
