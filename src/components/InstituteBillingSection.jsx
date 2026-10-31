@@ -545,10 +545,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const autoSyncToGoogleSheetBackground = (bill, allBills) => {
     if (!bill) return;
 
-    const webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
-      (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "";
-    if (!webhookUrl || webhookUrl === "setup_done") return;
-
     // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
     const formatNepalPhone = (val) => {
       if (!val) return '';
@@ -576,42 +572,62 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       lastUpdated: nowEnglish
     };
 
-    // 1. Primary: Server-side API (/api/institute/billing/sync) follows redirects cleanly
+    const webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+      (typeof window !== "undefined" ? (localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) || localStorage.getItem("instituteGoogleSheetWebhook_default") || "") : "") || "";
+
+    // 1. Primary: Server-side API (/api/institute/billing/sync) has credentials and database profile fallback
     fetch(apiWithInst("/api/institute/billing/sync"), {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "sync_bill",
-        googleSheetUrl: webhookUrl,
+        googleSheetUrl: (webhookUrl && webhookUrl.startsWith("http") && webhookUrl !== "setup_done") ? webhookUrl : undefined,
         ownerEmail: (profile && profile.ownerEmail) || "",
         bill: formattedBill,
         materials: (bill && bill.materials) || []
       })
+    }).then(async (res) => {
+      if (!res.ok && webhookUrl && webhookUrl.startsWith("http") && webhookUrl !== "setup_done") {
+        // Fallback: direct browser fetch using text/plain to avoid CORS preflight rejection
+        try {
+          fetch(webhookUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "append_or_update_bill",
+              bill: formattedBill,
+              materials: (bill && bill.materials) || [],
+              ownerEmail: profile.ownerEmail || "",
+              timestamp: Date.now()
+            })
+          }).catch(() => {});
+        } catch (e) {}
+      }
     }).catch(() => {
-      // 2. Client fallback direct fetch
-      try {
-        fetch(webhookUrl, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "append_or_update_bill",
-            bill: formattedBill,
-            materials: (bill && bill.materials) || [],
-            ownerEmail: profile.ownerEmail || "",
-            timestamp: Date.now()
-          })
-        }).catch(() => {});
-      } catch (e) {}
+      if (webhookUrl && webhookUrl.startsWith("http") && webhookUrl !== "setup_done") {
+        try {
+          fetch(webhookUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "append_or_update_bill",
+              bill: formattedBill,
+              materials: (bill && bill.materials) || [],
+              ownerEmail: profile.ownerEmail || "",
+              timestamp: Date.now()
+            })
+          }).catch(() => {});
+        } catch (e) {}
+      }
     });
   };
 
   // Hidden background sync for Expenses to Google Sheet (Zero UI delay)
   const autoSyncExpenseToGoogleSheet = (expense) => {
     if (!expense) return;
-    const webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
-      (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "";
-    if (!webhookUrl || webhookUrl === "setup_done") return;
 
     // English-only Date Time for Last Updated column
     const nowEnglish = new Intl.DateTimeFormat('en-US', {
@@ -638,31 +654,53 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       isDeleted: Boolean(expense.isDeleted)
     };
 
-    // 1. Primary: Server-side API (/api/institute/billing/sync) follows redirects cleanly
+    const webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+      (typeof window !== "undefined" ? (localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) || localStorage.getItem("instituteGoogleSheetWebhook_default") || "") : "") || "";
+
+    // 1. Primary: Server-side API (/api/institute/billing/sync) has credentials and database profile fallback
     fetch(apiWithInst("/api/institute/billing/sync"), {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "sync_expense",
-        googleSheetUrl: webhookUrl,
+        googleSheetUrl: (webhookUrl && webhookUrl.startsWith("http") && webhookUrl !== "setup_done") ? webhookUrl : undefined,
         ownerEmail: (profile && profile.ownerEmail) || "",
         expense: formattedExpense
       })
+    }).then(async (res) => {
+      if (!res.ok && webhookUrl && webhookUrl.startsWith("http") && webhookUrl !== "setup_done") {
+        // Fallback: direct browser fetch using text/plain to avoid CORS preflight rejection
+        try {
+          fetch(webhookUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "append_or_update_expense",
+              expense: formattedExpense,
+              ownerEmail: (profile && profile.ownerEmail) || "",
+              timestamp: Date.now()
+            })
+          }).catch(() => {});
+        } catch (e) {}
+      }
     }).catch(() => {
-      // 2. Client fallback direct fetch
-      try {
-        fetch(webhookUrl, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "append_or_update_expense",
-            expense: formattedExpense,
-            ownerEmail: (profile && profile.ownerEmail) || "",
-            timestamp: Date.now()
-          })
-        }).catch(() => {});
-      } catch (e) {}
+      if (webhookUrl && webhookUrl.startsWith("http") && webhookUrl !== "setup_done") {
+        try {
+          fetch(webhookUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "append_or_update_expense",
+              expense: formattedExpense,
+              ownerEmail: (profile && profile.ownerEmail) || "",
+              timestamp: Date.now()
+            })
+          }).catch(() => {});
+        } catch (e) {}
+      }
     });
   };
 
@@ -1279,6 +1317,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         if (data.profile) {
           setProfile(data.profile);
           localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify(data.profile));
+          if (data.profile.googleSheetUrl && data.profile.googleSheetUrl.startsWith("http") && data.profile.googleSheetUrl !== "setup_done") {
+            localStorage.setItem(`instituteGoogleSheetWebhook_${instKey}`, data.profile.googleSheetUrl.trim());
+            localStorage.setItem("instituteGoogleSheetWebhook_default", data.profile.googleSheetUrl.trim());
+          }
         }
         if (data.bills) {
           setBills(data.bills);
@@ -2342,6 +2384,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     try {
       localStorage.setItem(`instituteGoogleSheetViewUrl_${instKey}`, viewUrl);
       localStorage.setItem(`instituteGoogleDriveUrl_${instKey}`, driveUrl);
+      if (webhookUrl && webhookUrl.startsWith("http")) {
+        localStorage.setItem(`instituteGoogleSheetWebhook_${instKey}`, webhookUrl);
+        localStorage.setItem("instituteGoogleSheetWebhook_default", webhookUrl);
+      }
 
       const savedGoogleSheetUrl = webhookUrl || (driveUrl || viewUrl ? "setup_done" : "");
       const res = await fetch(apiWithInst("/api/institute/billing"), {
@@ -6804,9 +6850,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           border: "1px solid #cbd5e1",
                           fontSize: "13px",
                           boxSizing: "border-box",
-                          backgroundColor: isPermanentlyLinked ? "#e2e8f0" : "#f8fafc",
-                          color: isPermanentlyLinked ? "#64748b" : "#000",
-                          cursor: isPermanentlyLinked ? "not-allowed" : "text"
+                          backgroundColor: "#ffffff",
+                          color: "#0f172a",
+                          cursor: "text"
                         }}
                       />
                       <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", display: "block" }}>
@@ -6853,9 +6899,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             border: "1px solid #cbd5e1",
                             fontSize: "13px",
                             boxSizing: "border-box",
-                            backgroundColor: isPermanentlyLinked ? "#e2e8f0" : "#fff",
-                            color: isPermanentlyLinked ? "#64748b" : "#000",
-                            cursor: isPermanentlyLinked ? "not-allowed" : "text"
+                            backgroundColor: "#ffffff",
+                            color: "#0f172a",
+                            cursor: "text"
                           }}
                         />
                         {googleSheetViewUrl && (
@@ -6922,9 +6968,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             border: "1px solid #cbd5e1",
                             fontSize: "13px",
                             boxSizing: "border-box",
-                            backgroundColor: isPermanentlyLinked ? "#e2e8f0" : "#fff",
-                            color: isPermanentlyLinked ? "#64748b" : "#000",
-                            cursor: isPermanentlyLinked ? "not-allowed" : "text"
+                            backgroundColor: "#ffffff",
+                            color: "#0f172a",
+                            cursor: "text"
                           }}
                         />
                         {googleDriveUrl && (
@@ -6969,9 +7015,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           border: "1px solid #cbd5e1",
                           fontSize: "13px",
                           boxSizing: "border-box",
-                          backgroundColor: isPermanentlyLinked ? "#e2e8f0" : "#fff",
-                          color: isPermanentlyLinked ? "#64748b" : "#000",
-                          cursor: isPermanentlyLinked ? "not-allowed" : "text"
+                          backgroundColor: "#ffffff",
+                          color: "#0f172a",
+                          cursor: "text"
                         }}
                       />
                       <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", display: "block" }}>
@@ -7135,26 +7181,36 @@ function doPost(e) {
 
     // Helper: Get or Create 'Billing' Sheet (Auto-renames Sheet 1 to 'Billing')
     function getOrCreateStudentBillsSheet() {
-      var s = ss.getSheetByName("Billing") ||
-              ss.getSheetByName("Sheet 1") ||
-              ss.getSheetByName("Sheet1") ||
-              ss.getSheetByName("StudentBills") ||
-              ss.getSheetByName("Bills");
-
       var allSheets = ss.getSheets();
-      if (!s) {
-        if (allSheets.length > 0) {
-          s = allSheets[0]; // 1st sheet = Billing
-        } else {
-          s = ss.insertSheet("Billing", 0);
+      var s = null;
+
+      // 1. Check existing sheets by name (case-insensitive)
+      for (var i = 0; i < allSheets.length; i++) {
+        var n = allSheets[i].getName().trim().toLowerCase();
+        if (n === "billing" || n === "sheet 1" || n === "sheet1" || n === "studentbills" || n === "bills") {
+          s = allSheets[i];
+          break;
         }
       }
 
-      // Automatically rename sheet to 'Billing'
+      // 2. If not found by name, use the 1st sheet tab
+      if (!s) {
+        if (allSheets.length > 0) {
+          s = allSheets[0];
+        } else {
+          try {
+            s = ss.insertSheet("Billing", 0);
+          } catch (e) {
+            s = ss.insertSheet();
+          }
+        }
+      }
+
+      // 3. Rename to 'Billing' safely
       if (s.getName() !== "Billing") {
         try {
-          var existingBilling = ss.getSheetByName("Billing");
-          if (!existingBilling) {
+          var existing = ss.getSheetByName("Billing");
+          if (!existing) {
             s.setName("Billing");
           }
         } catch (e) {}
@@ -7195,26 +7251,36 @@ function doPost(e) {
     // Helper: Get or Create 'Expenses' Sheet (Auto-renames Sheet 2 to 'Expenses')
     function getOrCreateExpenseSheet() {
       var s1 = getOrCreateStudentBillsSheet();
+      var allSheets = ss.getSheets();
+      var es = null;
 
-      var es = ss.getSheetByName("Expenses") ||
-               ss.getSheetByName("Expense") ||
-               ss.getSheetByName("Sheet 2") ||
-               ss.getSheetByName("Sheet2");
-
-      if (!es) {
-        var allSheets = ss.getSheets();
-        if (allSheets.length >= 2 && allSheets[1].getName() !== s1.getName()) {
-          es = allSheets[1]; // 2nd sheet = Expenses
-        } else {
-          es = ss.insertSheet("Expenses", 1);
+      // 1. Check existing sheets by name (case-insensitive)
+      for (var i = 0; i < allSheets.length; i++) {
+        var n = allSheets[i].getName().trim().toLowerCase();
+        if (n === "expenses" || n === "expense" || n === "sheet 2" || n === "sheet2") {
+          es = allSheets[i];
+          break;
         }
       }
 
-      // Automatically rename sheet to 'Expenses'
+      // 2. If not found by name, use the 2nd sheet tab if available
+      if (!es) {
+        if (allSheets.length >= 2 && allSheets[1].getName() !== s1.getName()) {
+          es = allSheets[1];
+        } else {
+          try {
+            es = ss.insertSheet("Expenses", 1);
+          } catch (e) {
+            es = ss.getSheetByName("Expenses") || ss.insertSheet();
+          }
+        }
+      }
+
+      // 3. Rename to 'Expenses' safely
       if (es.getName() !== "Expenses") {
         try {
-          var existingExpenses = ss.getSheetByName("Expenses");
-          if (!existingExpenses) {
+          var existingExp = ss.getSheetByName("Expenses");
+          if (!existingExp) {
             es.setName("Expenses");
           }
         } catch (e) {}
@@ -7331,7 +7397,7 @@ function doPost(e) {
     }
 
     // 2. Handle Single Expense (Create, Edit, Delete)
-    if (data.expense || data.action === "append_or_update_expense") {
+    if (data.expense || data.action === "append_or_update_expense" || data.action === "sync_expense") {
       var exp = data.expense;
       if (exp) {
         var es = getOrCreateExpenseSheet();
@@ -7391,7 +7457,7 @@ function doPost(e) {
     }
 
     // 3. Handle Single Bill (Create, Installment, Edit, Delete)
-    if (data.bill) {
+    if (data.bill || data.action === "append_or_update_bill" || data.action === "sync_bill") {
       var sheet = getOrCreateStudentBillsSheet();
       var b = data.bill;
       var matchingRows = findMatchingBillRows(sheet, b);

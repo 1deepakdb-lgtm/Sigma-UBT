@@ -386,7 +386,7 @@ async function triggerSheetSync(instituteId, bill, materials) {
         lastUpdated: nowEnglish
       };
 
-      fetch(profile.googleSheetUrl, {
+      fetch(profile.googleSheetUrl.trim(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -397,11 +397,15 @@ async function triggerSheetSync(instituteId, bill, materials) {
         }),
         redirect: 'follow'
       }).then(async (res) => {
-        if (res.ok && !bill.isDeleted) {
+        const text = await res.text().catch(() => '');
+        const isHtml = text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('drive-logo');
+        if (res.ok && !isHtml && !bill.isDeleted) {
           await prisma.billRecord.update({
             where: { id: bill.id },
             data: { isSyncedToSheet: true, syncedAt: new Date() }
           }).catch(() => {});
+        } else if (isHtml) {
+          console.warn('Google Sheet auto-sync returned an HTML error page. Check Web App deployment permissions.');
         }
       }).catch((e) => {
         console.warn('Background Google Sheet sync notice:', e.message);

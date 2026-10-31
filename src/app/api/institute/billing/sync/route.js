@@ -21,6 +21,25 @@ function formatGoogleError(status, errText, url) {
   return `Google Apps Script returned status ${status}. ${errText || 'Please verify deployment permissions.'}`;
 }
 
+function parseGoogleResponse(text, status, url) {
+  if (!text || typeof text !== 'string') {
+    return { error: 'Empty response received from Google Apps Script Web App.' };
+  }
+  const trimmed = text.trim();
+  if (trimmed.startsWith('<') || trimmed.includes('<!DOCTYPE') || trimmed.includes('<html') || trimmed.includes('drive-logo') || trimmed.includes('असमर्थ')) {
+    return { error: formatGoogleError(status, trimmed, url) };
+  }
+  try {
+    const json = JSON.parse(trimmed);
+    if (json.status === 'error') {
+      return { error: json.message || 'Google Apps Script reported an execution error.' };
+    }
+    return { data: json };
+  } catch {
+    return { data: { message: trimmed } };
+  }
+}
+
 export async function POST(req) {
   try {
     const { session, errorResponse } = await requireInstituteOrAdmin(req);
@@ -85,25 +104,19 @@ export async function POST(req) {
           redirect: 'follow'
         });
 
+        const text = await res.text().catch(() => '');
         if (!res.ok) {
-          const errText = await res.text().catch(() => '');
           return NextResponse.json({
-            error: formatGoogleError(res.status, errText, googleSheetUrl)
+            error: formatGoogleError(res.status, text, googleSheetUrl)
           }, { status: 502 });
         }
 
-        let testResult = null;
-        try {
-          const text = await res.text();
-          try {
-            testResult = JSON.parse(text);
-          } catch {
-            testResult = { message: text };
-          }
-        } catch {
-          testResult = { message: 'Connection successful' };
+        const parsed = parseGoogleResponse(text, res.status, googleSheetUrl);
+        if (parsed.error) {
+          return NextResponse.json({ error: parsed.error }, { status: 502 });
         }
 
+        const testResult = parsed.data || {};
         return NextResponse.json({
           success: true,
           message: testResult.message || 'Connection test successful! Google Sheet Webhook is active and responding.',
@@ -150,24 +163,22 @@ export async function POST(req) {
           redirect: 'follow'
         });
 
+        const text = await res.text().catch(() => '');
         if (!res.ok) {
-          const errText = await res.text().catch(() => '');
           return NextResponse.json({
-            error: formatGoogleError(res.status, errText, googleSheetUrl)
+            error: formatGoogleError(res.status, text, googleSheetUrl)
           }, { status: 502 });
         }
 
-        let billResult = null;
-        try {
-          const text = await res.text();
-          try { billResult = JSON.parse(text); } catch { billResult = { message: text }; }
-        } catch {
-          billResult = { success: true };
+        const parsed = parseGoogleResponse(text, res.status, googleSheetUrl);
+        if (parsed.error) {
+          return NextResponse.json({ error: parsed.error }, { status: 502 });
         }
 
+        const billResult = parsed.data || {};
         return NextResponse.json({
           success: true,
-          message: billResult?.message || 'Bill successfully synced to Google Sheet!',
+          message: billResult?.message || 'Bill successfully synced to Google Sheet (Billing tab)!',
           result: billResult
         });
       } catch (billErr) {
@@ -209,22 +220,20 @@ export async function POST(req) {
           redirect: 'follow'
         });
 
+        const text = await res.text().catch(() => '');
         if (!res.ok) {
-          const errText = await res.text().catch(() => '');
           return NextResponse.json({
-            error: formatGoogleError(res.status, errText, googleSheetUrl)
+            error: formatGoogleError(res.status, text, googleSheetUrl)
           }, { status: 502 });
         }
 
-        let expResult = null;
-        try {
-          const text = await res.text();
-          try { expResult = JSON.parse(text); } catch { expResult = { message: text }; }
-        } catch {
-          expResult = { success: true };
+        const parsed = parseGoogleResponse(text, res.status, googleSheetUrl);
+        if (parsed.error) {
+          return NextResponse.json({ error: parsed.error }, { status: 502 });
         }
 
-        if (expResult?.message === "Sheet ready." || (expResult?.status === "success" && !expResult?.action && !expResult?.message?.includes("expense"))) {
+        const expResult = parsed.data || {};
+        if (expResult?.message === "Sheet ready." || (expResult?.status === "success" && !expResult?.action && !expResult?.message?.includes("expense") && !expResult?.message?.includes("Expense"))) {
           return NextResponse.json({
             success: false,
             error: "Your Google Sheet is still running an older version of the Apps Script code. To enable automatic expense storage: Open your Google Sheet, click Extensions > Apps Script, paste the updated script from Tab 2, and deploy as a New version.",
@@ -234,7 +243,7 @@ export async function POST(req) {
 
         return NextResponse.json({
           success: true,
-          message: expResult?.message || 'Expense successfully synced to Google Sheet!',
+          message: expResult?.message || 'Expense successfully synced to Google Sheet (Expenses tab)!',
           result: expResult
         });
       } catch (expErr) {
@@ -330,24 +339,19 @@ export async function POST(req) {
       redirect: 'follow'
     });
 
+    const text = await res.text().catch(() => '');
     if (!res.ok) {
-      const errText = await res.text().catch(() => '');
       return NextResponse.json({
-        error: formatGoogleError(res.status, errText, googleSheetUrl)
+        error: formatGoogleError(res.status, text, googleSheetUrl)
       }, { status: 502 });
     }
 
-    let result = null;
-    try {
-      const text = await res.text();
-      try {
-        result = JSON.parse(text);
-      } catch {
-        result = { message: text };
-      }
-    } catch {
-      result = { success: true };
+    const parsed = parseGoogleResponse(text, res.status, googleSheetUrl);
+    if (parsed.error) {
+      return NextResponse.json({ error: parsed.error }, { status: 502 });
     }
+
+    const result = parsed.data || {};
 
     if (bills.length > 0) {
       try {
