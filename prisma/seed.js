@@ -34,8 +34,8 @@ const PIC = JSON.stringify([
 async function main() {
   console.log('Seeding Sigma UBT database...');
 
-  // 1. Create Super Admin
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  // 1. Create Super Admin with Strong Credentials
+  const adminPassword = await bcrypt.hash('Admin@Sigma2026!', 10);
   const admin = await prisma.user.upsert({
     where: { username: 'admin' },
     update: { passwordHash: adminPassword },
@@ -49,8 +49,8 @@ async function main() {
   });
   console.log('Created admin:', admin.username);
 
-  // 2. Create Demo Institute
-  const instPassword = await bcrypt.hash('1234', 10);
+  // 2. Create Demo Institute with Strong Credentials
+  const instPassword = await bcrypt.hash('Institute@Sigma2026!', 10);
   const today = new Date();
   const nextMonth = new Date(today);
   nextMonth.setMonth(today.getMonth() + 1);

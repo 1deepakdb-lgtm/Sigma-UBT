@@ -26,9 +26,9 @@ Open: **[http://localhost:3000](http://localhost:3000)**
 
 | Role | Username | Password | Dashboard URL | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Super Admin** | `admin` | `admin123` | `/admin` | Manages institutes, packages, questions, global notices |
-| **Institute** | `sigma` | `1234` | `/institute` | Manages student enrollments, batches, exam preview |
-| **Student** | `student` | `1234` | `/student` | Takes 40-question UBT exam with listening audio & timer |
+| **Super Admin** | `admin` | `Admin@Sigma2026!` | `/admin` | Manages institutes, packages, questions, global notices |
+| **Institute** | `sigma` | `Institute@Sigma2026!` | `/institute` | Manages student enrollments, batches, exam preview |
+| **Student** | `student` / phone | `1234` | `/student` | Takes 40-question UBT exam with listening audio & timer |
 
 ---
 

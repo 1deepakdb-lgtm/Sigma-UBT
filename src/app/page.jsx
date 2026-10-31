@@ -7,7 +7,7 @@ import DesktopAppDownloads from "@/components/DesktopAppDownloads";
 export default function LoginPage() {
   const router = useRouter();
 
-  // Active form view: 'login' | 'register'
+  // Active form view: 'login' | 'register' | 'reset'
   const [authMode, setAuthMode] = useState("login");
 
   // Login form fields
@@ -19,6 +19,14 @@ export default function LoginPage() {
   const [regIdentifier, setRegIdentifier] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regLanguage, setRegLanguage] = useState("both");
+
+  // Reset password form fields (Super Admin, Institute, Student, Staff)
+  const [resetIdentifier, setResetIdentifier] = useState("");
+  const [resetStep, setResetStep] = useState(1); // 1 = lookup, 2 = verify & set
+  const [resetAccountInfo, setResetAccountInfo] = useState(null);
+  const [resetCodeInput, setResetCodeInput] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
 
   // Google Sign-In modal state
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -200,6 +208,131 @@ export default function LoginPage() {
     }
   };
 
+  // Password Strength Evaluator for Super Admin & Institute
+  const getPasswordStrength = (pwd) => {
+    if (!pwd) return { score: 0, text: 'Required', percent: '0%', color: '#94a3b8' };
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (pwd.length >= 12) score++;
+    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+
+    if (score <= 2) return { score, text: 'Weak', percent: '33%', color: '#ef4444' };
+    if (score <= 4) return { score, text: 'Good', percent: '66%', color: '#f59e0b' };
+    return { score, text: 'Strong', percent: '100%', color: '#16a34a' };
+  };
+
+  // Step 1: Look up account for reset
+  const handleResetLookup = async (e) => {
+    if (e) e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+
+    if (!resetIdentifier.trim()) {
+      setError("Please enter your Phone number, Username, or ID");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "lookup",
+          identifier: resetIdentifier.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "No matching account found");
+        setLoading(false);
+        return;
+      }
+
+      setResetAccountInfo(data);
+      setResetCodeInput(data.verificationCode || "");
+      setResetStep(2);
+      setError("");
+    } catch (err) {
+      console.error("Password reset lookup error:", err);
+      setError("Failed to connect to server. Please check your network and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Verify code and update password
+  const handleResetSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+
+    if (!resetNewPassword) {
+      setError("Please enter a new password");
+      return;
+    }
+
+    if (resetNewPassword !== resetConfirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (resetAccountInfo?.isStrongPasswordRequired) {
+      if (resetNewPassword.length < 8) {
+        setError("Super Admin & Institute passwords must be at least 8 characters long.");
+        return;
+      }
+      if (!/[a-zA-Z]/.test(resetNewPassword) || !/[0-9]/.test(resetNewPassword)) {
+        setError("Strong password required: Must contain both letters and numbers.");
+        return;
+      }
+    } else {
+      if (resetNewPassword.length < 4) {
+        setError("Password must be at least 4 characters long.");
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "reset",
+          resetToken: resetAccountInfo?.resetToken,
+          code: resetCodeInput.trim(),
+          newPassword: resetNewPassword
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to reset password");
+        setLoading(false);
+        return;
+      }
+
+      setSuccessMsg("Password reset successfully! Please sign in with your new password.");
+      setIdentifier(resetAccountInfo?.username || resetIdentifier);
+      setPassword("");
+      setResetStep(1);
+      setResetAccountInfo(null);
+      setResetNewPassword("");
+      setResetConfirmPassword("");
+      setResetCodeInput("");
+      setAuthMode("login");
+    } catch (err) {
+      console.error("Password reset update error:", err);
+      setError("Failed to update password. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 3. Google Sign-In Handler
   const handleGoogleCredentialResponse = async (response) => {
     if (!response?.credential) return;
@@ -347,7 +480,7 @@ export default function LoginPage() {
           }}
         />
 
-        {/* Tab Toggle: Login vs Sign Up */}
+        {/* Tab Toggle: Login vs Sign Up vs Forgot Password */}
         <div
           style={{
             display: "flex",
@@ -368,10 +501,10 @@ export default function LoginPage() {
             }}
             style={{
               flex: 1,
-              padding: "8px 10px",
+              padding: "8px 6px",
               borderRadius: "8px",
               border: "none",
-              fontSize: "13px",
+              fontSize: "12.5px",
               fontWeight: "800",
               cursor: "pointer",
               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -392,10 +525,10 @@ export default function LoginPage() {
             }}
             style={{
               flex: 1,
-              padding: "8px 10px",
+              padding: "8px 6px",
               borderRadius: "8px",
               border: "none",
-              fontSize: "13px",
+              fontSize: "12.5px",
               fontWeight: "800",
               cursor: "pointer",
               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -406,6 +539,31 @@ export default function LoginPage() {
             }}
           >
             Register
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMode("reset");
+              if (identifier) setResetIdentifier(identifier);
+              setError("");
+              setSuccessMsg("");
+            }}
+            style={{
+              flex: 1.15,
+              padding: "8px 6px",
+              borderRadius: "8px",
+              border: "none",
+              fontSize: "12px",
+              fontWeight: "800",
+              cursor: "pointer",
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              backgroundColor: authMode === "reset" ? "#4f46e5" : "transparent",
+              backgroundImage: authMode === "reset" ? "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)" : "none",
+              color: authMode === "reset" ? "#ffffff" : "#64748b",
+              boxShadow: authMode === "reset" ? "0 4px 14px rgba(79, 70, 229, 0.35)" : "none"
+            }}
+          >
+            Forgot Password
           </button>
         </div>
 
@@ -540,6 +698,31 @@ export default function LoginPage() {
               required
             />
 
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", marginTop: "-3px" }}>
+              <span style={{ fontSize: "11px", color: "#64748b" }}>Super Admin · Institute · Student</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("reset");
+                  if (identifier) setResetIdentifier(identifier);
+                  setError("");
+                  setSuccessMsg("");
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#2563eb",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  padding: "0 2px",
+                  textDecoration: "underline"
+                }}
+              >
+                Forgot Password?
+              </button>
+            </div>
+
             <button type="submit" style={buttonStyle} disabled={loading}>
               {loading ? "AUTHENTICATING..." : "SIGN IN"}
             </button>
@@ -637,6 +820,269 @@ export default function LoginPage() {
               {loading ? "REGISTERING..." : "REGISTER"}
             </button>
           </form>
+        )}
+
+        {/* MODE 3: FORGOT / RESET PASSWORD FORM (ALL ACCOUNTS) */}
+        {authMode === "reset" && (
+          <div>
+            {/* Header info */}
+            <div style={{ marginBottom: "14px", textAlign: "center" }}>
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "4px 12px",
+                background: "#eef2ff",
+                color: "#4338ca",
+                borderRadius: "20px",
+                fontSize: "12px",
+                fontWeight: "800",
+                marginBottom: "4px"
+              }}>
+                <span>🔑 Reset Account Password</span>
+              </div>
+              <p style={{ margin: 0, fontSize: "11.5px", color: "#64748b" }}>
+                Self-Service Password Reset for All Accounts
+              </p>
+            </div>
+
+            {/* STEP 1: Search Account */}
+            {resetStep === 1 && (
+              <form onSubmit={handleResetLookup} autoComplete="off">
+                <div style={{ textAlign: "left", marginBottom: "5px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#334155" }}>
+                    Phone Number, Username, or ID:
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. admin, sigma, or 98XXXXXXXX"
+                  value={resetIdentifier}
+                  onChange={(e) => setResetIdentifier(e.target.value)}
+                  style={inputStyle}
+                  autoComplete="username"
+                  required
+                />
+                <div style={{ textAlign: "left", fontSize: "11px", color: "#64748b", marginBottom: "14px", lineHeight: "1.4" }}>
+                  💡 Enter <strong>admin</strong> for Super Admin, institute username for Institute, or mobile number for Student.
+                </div>
+
+                <button
+                  type="submit"
+                  style={{
+                    ...buttonStyle,
+                    backgroundColor: "#4f46e5",
+                    backgroundImage: "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)",
+                    boxShadow: "0 4px 14px rgba(79, 70, 229, 0.35)",
+                    marginBottom: "10px"
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? "SEARCHING ACCOUNT..." : "FIND ACCOUNT & VERIFY"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode("login");
+                    setError("");
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    background: "transparent",
+                    border: "none",
+                    color: "#64748b",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    cursor: "pointer"
+                  }}
+                >
+                  ← Back to Sign In
+                </button>
+              </form>
+            )}
+
+            {/* STEP 2: Verify & Enter New Password */}
+            {resetStep === 2 && resetAccountInfo && (
+              <form onSubmit={handleResetSubmit} autoComplete="off">
+                {/* Account details card */}
+                <div style={{
+                  background: "#f8fafc",
+                  border: "1.5px solid #e2e8f0",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "12px",
+                  textAlign: "left"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <span style={{ fontSize: "13.5px", fontWeight: "800", color: "#0f172a" }}>
+                      {resetAccountInfo.name || resetAccountInfo.username}
+                    </span>
+                    <span style={{
+                      fontSize: "10.5px",
+                      fontWeight: "800",
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                      background: resetAccountInfo.role === "admin" ? "#fef2f2" : resetAccountInfo.role === "institute" ? "#eef2ff" : "#f0fdf4",
+                      color: resetAccountInfo.role === "admin" ? "#991b1b" : resetAccountInfo.role === "institute" ? "#4338ca" : "#16a34a",
+                      border: `1px solid ${resetAccountInfo.role === "admin" ? "#fecaca" : resetAccountInfo.role === "institute" ? "#c7d2fe" : "#bbf7d0"}`
+                    }}>
+                      {resetAccountInfo.role === "admin" ? "SUPER ADMIN" : resetAccountInfo.role === "institute" ? "INSTITUTE" : resetAccountInfo.role.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "11.5px", color: "#64748b" }}>
+                    Account: <strong style={{ color: "#334155" }}>@{resetAccountInfo.username}</strong>
+                    {resetAccountInfo.maskedPhone && (
+                      <span style={{ marginLeft: "8px" }}>· Phone: <strong style={{ color: "#334155" }}>{resetAccountInfo.maskedPhone}</strong></span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Security Verification Code Box */}
+                <div style={{
+                  background: "#f0fdf4",
+                  border: "1.5px dashed #86efac",
+                  borderRadius: "10px",
+                  padding: "10px 12px",
+                  marginBottom: "12px",
+                  textAlign: "center"
+                }}>
+                  <div style={{ fontSize: "10.5px", color: "#166534", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Security Verification Code
+                  </div>
+                  <div style={{ fontSize: "24px", fontWeight: "900", letterSpacing: "5px", color: "#15803d", margin: "3px 0" }}>
+                    {resetAccountInfo.verificationCode}
+                  </div>
+                  <div style={{ fontSize: "10.5px", color: "#166534" }}>
+                    Enter this code (or your registered phone) below
+                  </div>
+                </div>
+
+                <div style={{ textAlign: "left", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155" }}>
+                    Verification Code / Phone:
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit code or registered phone"
+                  value={resetCodeInput}
+                  onChange={(e) => setResetCodeInput(e.target.value)}
+                  style={inputStyle}
+                  required
+                />
+
+                {/* New Password input */}
+                <div style={{ textAlign: "left", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155" }}>
+                    New Password:
+                  </label>
+                </div>
+                <input
+                  type="password"
+                  placeholder={resetAccountInfo.isStrongPasswordRequired ? "Min 8 chars (e.g. Pass@2026)" : "Min 4 characters"}
+                  value={resetNewPassword}
+                  onChange={(e) => setResetNewPassword(e.target.value)}
+                  style={inputStyle}
+                  required
+                />
+
+                {/* Password strength indicator for Super Admin & Institute */}
+                {resetAccountInfo.isStrongPasswordRequired && resetNewPassword && (() => {
+                  const strength = getPasswordStrength(resetNewPassword);
+                  return (
+                    <div style={{ textAlign: "left", marginBottom: "10px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: "700", marginBottom: "3px" }}>
+                        <span style={{ color: "#475569" }}>Password Strength:</span>
+                        <span style={{ color: strength.color }}>{strength.text}</span>
+                      </div>
+                      <div style={{ height: "4px", width: "100%", background: "#e2e8f0", borderRadius: "2px", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: strength.percent, background: strength.color, transition: "all 0.2s ease" }} />
+                      </div>
+                      <span style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px", display: "block" }}>
+                        🛡️ Super Admin & Institute requirement: min 8 characters with letters & numbers.
+                      </span>
+                    </div>
+                  );
+                })()}
+
+                {/* Confirm Password input */}
+                <div style={{ textAlign: "left", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155" }}>
+                    Confirm New Password:
+                  </label>
+                </div>
+                <input
+                  type="password"
+                  placeholder="Re-enter your new password"
+                  value={resetConfirmPassword}
+                  onChange={(e) => setResetConfirmPassword(e.target.value)}
+                  style={inputStyle}
+                  required
+                />
+
+                <button
+                  type="submit"
+                  style={{
+                    ...buttonStyle,
+                    backgroundColor: "#4f46e5",
+                    backgroundImage: "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)",
+                    boxShadow: "0 4px 14px rgba(79, 70, 229, 0.35)",
+                    marginBottom: "8px"
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? "SAVING NEW PASSWORD..." : "UPDATE & SAVE PASSWORD"}
+                </button>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetStep(1);
+                      setError("");
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "7px 10px",
+                      background: "#f1f5f9",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "6px",
+                      fontSize: "11.5px",
+                      fontWeight: "700",
+                      color: "#475569",
+                      cursor: "pointer"
+                    }}
+                  >
+                    ← Search Other Account
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode("login");
+                      setError("");
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "7px 10px",
+                      background: "#ffffff",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "6px",
+                      fontSize: "11.5px",
+                      fontWeight: "700",
+                      color: "#2563eb",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         )}
 
         {/* Windows, macOS, Android, and iOS App Downloads */}
