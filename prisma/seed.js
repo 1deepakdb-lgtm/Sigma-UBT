@@ -32,7 +32,7 @@ const PIC = JSON.stringify([
 ]);
 
 async function main() {
-  console.log('Seeding Sigma UBT database...');
+  console.log('Seeding ExamJK UBT database...');
 
   // 1. Create Super Admin with Strong Credentials
   const adminPassword = await bcrypt.hash('Admin@Sigma2026!', 10);
@@ -43,7 +43,7 @@ async function main() {
       username: 'admin',
       passwordHash: adminPassword,
       role: 'admin',
-      name: 'Sigma Super Admin',
+      name: 'ExamJK Super Admin',
       status: 'Active'
     }
   });
@@ -62,14 +62,14 @@ async function main() {
     where: { username: 'sigma' },
     update: { status: 'Active', expireDate },
     create: {
-      name: 'Sigma Demo Institute',
+      name: 'ExamJK Demo Institute',
       username: 'sigma',
       subscription: '1 Month',
       entryDate,
       expireDate,
       examPackage: 'Full Set UBT',
       status: 'Active',
-      logoUrl: '/sigma-logo.png'
+      logoUrl: '/logo.png'
     }
   });
 
@@ -80,7 +80,7 @@ async function main() {
       username: 'sigma',
       passwordHash: instPassword,
       role: 'institute',
-      name: 'Sigma Demo Institute',
+      name: 'ExamJK Demo Institute',
       instituteId: institute.id,
       status: 'Active'
     }

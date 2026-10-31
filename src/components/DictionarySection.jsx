@@ -522,11 +522,38 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     };
 
     audio.onerror = (err) => {
-      console.warn('Playback error:', err);
+      console.warn('Playback error on URL:', url, err);
+      // Auto-fallback: If an ElevenLabs endpoint had an issue, retry via the standard TTS engine seamlessly
+      if (url && url.includes('/api/elevenlabs/tts')) {
+        const fallbackUrl = url.replace('/api/elevenlabs/tts', '/api/tts');
+        const retryAudio = new Audio();
+        audioRef.current = retryAudio;
+        retryAudio.onplaying = () => {
+          setLoadingAudioId(null);
+          setPlayingAudioId(id);
+        };
+        retryAudio.onended = () => {
+          setPlayingAudioId(null);
+          setLoadingAudioId(null);
+          audioRef.current = null;
+        };
+        retryAudio.onerror = () => {
+          setPlayingAudioId(null);
+          setLoadingAudioId(null);
+          audioRef.current = null;
+        };
+        retryAudio.src = fallbackUrl;
+        retryAudio.play().catch(e => {
+          console.warn('Retry playback failed:', e);
+          setPlayingAudioId(null);
+          setLoadingAudioId(null);
+          audioRef.current = null;
+        });
+        return;
+      }
       setPlayingAudioId(null);
       setLoadingAudioId(null);
       audioRef.current = null;
-      alert('Failed to play audio. Please check network connection.');
     };
 
     audio.src = url;
@@ -2137,10 +2164,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           paddingTop: "9px",
                           borderTop: activeLang === 'ja' ? "1.5px solid #e9d5ff" : "1.5px solid #bfdbfe",
                           display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          flexWrap: "wrap",
-                          gap: "7px",
+                          flexDirection: "column",
+                          gap: "6px",
+                          width: "100%",
                           animation: "popupFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)"
                         }}
                         onClick={(e) => e.stopPropagation()}
@@ -2162,7 +2188,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
-                              gap: "4px"
+                              justifyContent: "center",
+                              gap: "4px",
+                              width: "100%"
                             }}
                           >
                             <span>⭐</span>
@@ -2170,152 +2198,165 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           </button>
                         )}
 
-                        {/* Female Voice Group */}
-                        <div style={{ display: "inline-flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 2px 6px rgba(225, 29, 72, 0.12)" }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (selectedFemaleModel.isCustom && selectedFemaleModel.url) {
-                                handlePlayAudio(selectedFemaleModel.url, `popup-fem-${primaryWord}`);
-                              } else {
-                                const langCode = activeLang === 'ja' ? 'ja' : 'ko';
-                                const textToPlay = spokenWord || primaryWord;
-                                const voiceProfId = selectedFemaleModel.voiceProfileId || selectedFemaleModel.id;
-                                const isAi = selectedFemaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
-                                const url = isAi
-                                  ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`
-                                  : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedFemaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedFemaleModel.id || selectedFemaleModel.name || '')}`;
-                                handlePlayAudio(url, `popup-fem-${primaryWord}`);
-                              }
-                            }}
-                            title={`Play in Female Voice (${selectedFemaleModel.name})`}
-                            style={{
-                              backgroundColor: playingAudioId === `popup-fem-${primaryWord}` ? "#be185d" : "transparent",
-                              color: playingAudioId === `popup-fem-${primaryWord}` ? "#ffffff" : "#be185d",
-                              border: "none",
-                              padding: "6px 10px",
-                              fontSize: "13px",
-                              fontWeight: "700",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              whiteSpace: "nowrap"
-                            }}
-                          >
-                            <FemaleIcon size={22} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
-                            <span>{playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ Female"}</span>
-                          </button>
-                          {canDownloadAudio && (
+                        {/* Both Female & Male Voice Groups side-by-side in ONE line */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", flexWrap: "nowrap" }}>
+                          {/* Female Voice Group */}
+                          <div style={{ flex: 1, minWidth: 0, display: "flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 2px 6px rgba(225, 29, 72, 0.12)" }}>
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onClick={() => {
                                 if (selectedFemaleModel.isCustom && selectedFemaleModel.url) {
-                                  handleDownloadAudio(selectedFemaleModel.url, `${primaryWord}_custom_voice.mp3`);
+                                  handlePlayAudio(selectedFemaleModel.url, `popup-fem-${primaryWord}`);
                                 } else {
                                   const langCode = activeLang === 'ja' ? 'ja' : 'ko';
                                   const textToPlay = spokenWord || primaryWord;
                                   const voiceProfId = selectedFemaleModel.voiceProfileId || selectedFemaleModel.id;
                                   const isAi = selectedFemaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
-                                  const filename = `${romaji || primaryWord}_female_${(selectedFemaleModel.name || 'voice').replace(/\s+/g, '_')}.mp3`;
-                                  const dlUrl = isAi
-                                    ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`
-                                    : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedFemaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedFemaleModel.id || selectedFemaleModel.name || '')}&download=true`;
-                                  handleDownloadAudio(dlUrl, filename);
+                                  const url = isAi
+                                    ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`
+                                    : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedFemaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedFemaleModel.id || selectedFemaleModel.name || '')}`;
+                                  handlePlayAudio(url, `popup-fem-${primaryWord}`);
                                 }
                               }}
-                              title="Download Female Voice (MP3)"
+                              title={`Play in Female Voice (${selectedFemaleModel.name})`}
                               style={{
-                                backgroundColor: "transparent",
-                                color: "#be185d",
+                                flex: 1,
+                                minWidth: 0,
+                                backgroundColor: playingAudioId === `popup-fem-${primaryWord}` ? "#be185d" : "transparent",
+                                color: playingAudioId === `popup-fem-${primaryWord}` ? "#ffffff" : "#be185d",
                                 border: "none",
-                                borderLeft: "1.5px solid #fda4af",
-                                padding: "6px 9px",
-                                fontSize: "13px",
+                                padding: "6px 6px",
+                                fontSize: "12px",
+                                fontWeight: "700",
                                 cursor: "pointer",
                                 display: "flex",
                                 alignItems: "center",
-                                justifyContent: "center"
+                                justifyContent: "center",
+                                gap: "4px",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden"
                               }}
                             >
-                              📥
+                              <FemaleIcon size={20} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ Female"}</span>
                             </button>
-                          )}
-                        </div>
+                            {canDownloadAudio && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (selectedFemaleModel.isCustom && selectedFemaleModel.url) {
+                                    handleDownloadAudio(selectedFemaleModel.url, `${primaryWord}_custom_voice.mp3`);
+                                  } else {
+                                    const langCode = activeLang === 'ja' ? 'ja' : 'ko';
+                                    const textToPlay = spokenWord || primaryWord;
+                                    const voiceProfId = selectedFemaleModel.voiceProfileId || selectedFemaleModel.id;
+                                    const isAi = selectedFemaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
+                                    const filename = `${romaji || primaryWord}_female_${(selectedFemaleModel.name || 'voice').replace(/\s+/g, '_')}.mp3`;
+                                    const dlUrl = isAi
+                                      ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`
+                                      : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedFemaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedFemaleModel.id || selectedFemaleModel.name || '')}&download=true`;
+                                    handleDownloadAudio(dlUrl, filename);
+                                  }
+                                }}
+                                title="Download Female Voice (MP3)"
+                                style={{
+                                  backgroundColor: "transparent",
+                                  color: "#be185d",
+                                  border: "none",
+                                  borderLeft: "1.5px solid #fda4af",
+                                  padding: "6px 8px",
+                                  fontSize: "12px",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0
+                                }}
+                              >
+                                📥
+                              </button>
+                            )}
+                          </div>
 
-                        {/* Male Voice Group */}
-                        <div style={{ display: "inline-flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 2px 6px rgba(2, 132, 199, 0.12)" }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (selectedMaleModel.isCustom && selectedMaleModel.url) {
-                                handlePlayAudio(selectedMaleModel.url, `popup-male-${primaryWord}`);
-                              } else {
-                                const langCode = activeLang === 'ja' ? 'ja' : 'ko';
-                                const textToPlay = spokenWord || primaryWord;
-                                const voiceProfId = selectedMaleModel.voiceProfileId || selectedMaleModel.id;
-                                const isAi = selectedMaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
-                                const url = isAi
-                                  ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`
-                                  : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedMaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedMaleModel.id || selectedMaleModel.name || '')}`;
-                                handlePlayAudio(url, `popup-male-${primaryWord}`);
-                              }
-                            }}
-                            title={`Play in Male Voice (${selectedMaleModel.name})`}
-                            style={{
-                              backgroundColor: playingAudioId === `popup-male-${primaryWord}` ? "#0284c7" : "transparent",
-                              color: playingAudioId === `popup-male-${primaryWord}` ? "#ffffff" : "#0369a1",
-                              border: "none",
-                              padding: "6px 10px",
-                              fontSize: "13px",
-                              fontWeight: "700",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              whiteSpace: "nowrap"
-                            }}
-                          >
-                            <MaleIcon size={22} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
-                            <span>{playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ Male"}</span>
-                          </button>
-                          {canDownloadAudio && (
+                          {/* Male Voice Group */}
+                          <div style={{ flex: 1, minWidth: 0, display: "flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 2px 6px rgba(2, 132, 199, 0.12)" }}>
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onClick={() => {
                                 if (selectedMaleModel.isCustom && selectedMaleModel.url) {
-                                  handleDownloadAudio(selectedMaleModel.url, `${primaryWord}_custom_voice.mp3`);
+                                  handlePlayAudio(selectedMaleModel.url, `popup-male-${primaryWord}`);
                                 } else {
                                   const langCode = activeLang === 'ja' ? 'ja' : 'ko';
                                   const textToPlay = spokenWord || primaryWord;
                                   const voiceProfId = selectedMaleModel.voiceProfileId || selectedMaleModel.id;
                                   const isAi = selectedMaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
-                                  const filename = `${romaji || primaryWord}_male_${(selectedMaleModel.name || 'voice').replace(/\s+/g, '_')}.mp3`;
-                                  const dlUrl = isAi
-                                    ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`
-                                    : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedMaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedMaleModel.id || selectedMaleModel.name || '')}&download=true`;
-                                  handleDownloadAudio(dlUrl, filename);
+                                  const url = isAi
+                                    ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`
+                                    : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedMaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedMaleModel.id || selectedMaleModel.name || '')}`;
+                                  handlePlayAudio(url, `popup-male-${primaryWord}`);
                                 }
                               }}
-                              title="Download Male Voice (MP3)"
+                              title={`Play in Male Voice (${selectedMaleModel.name})`}
                               style={{
-                                backgroundColor: "transparent",
-                                color: "#0369a1",
+                                flex: 1,
+                                minWidth: 0,
+                                backgroundColor: playingAudioId === `popup-male-${primaryWord}` ? "#0284c7" : "transparent",
+                                color: playingAudioId === `popup-male-${primaryWord}` ? "#ffffff" : "#0369a1",
                                 border: "none",
-                                borderLeft: "1.5px solid #7dd3fc",
-                                padding: "6px 9px",
-                                fontSize: "13px",
+                                padding: "6px 6px",
+                                fontSize: "12px",
+                                fontWeight: "700",
                                 cursor: "pointer",
                                 display: "flex",
                                 alignItems: "center",
-                                justifyContent: "center"
+                                justifyContent: "center",
+                                gap: "4px",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden"
                               }}
                             >
-                              📥
+                              <MaleIcon size={20} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ Male"}</span>
                             </button>
-                          )}
+                            {canDownloadAudio && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (selectedMaleModel.isCustom && selectedMaleModel.url) {
+                                    handleDownloadAudio(selectedMaleModel.url, `${primaryWord}_custom_voice.mp3`);
+                                  } else {
+                                    const langCode = activeLang === 'ja' ? 'ja' : 'ko';
+                                    const textToPlay = spokenWord || primaryWord;
+                                    const voiceProfId = selectedMaleModel.voiceProfileId || selectedMaleModel.id;
+                                    const isAi = selectedMaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
+                                    const filename = `${romaji || primaryWord}_male_${(selectedMaleModel.name || 'voice').replace(/\s+/g, '_')}.mp3`;
+                                    const dlUrl = isAi
+                                      ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`
+                                      : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedMaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedMaleModel.id || selectedMaleModel.name || '')}&download=true`;
+                                    handleDownloadAudio(dlUrl, filename);
+                                  }
+                                }}
+                                title="Download Male Voice (MP3)"
+                                style={{
+                                  backgroundColor: "transparent",
+                                  color: "#0369a1",
+                                  border: "none",
+                                  borderLeft: "1.5px solid #7dd3fc",
+                                  padding: "6px 8px",
+                                  fontSize: "12px",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0
+                                }}
+                              >
+                                📥
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                       </div>

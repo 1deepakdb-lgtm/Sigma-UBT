@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { getSessionUser } from '@/lib/auth';
 
 // Permitted audio MIME types for user speech uploads and custom voice library
 const ALLOWED_AUDIO_TYPES = new Set([
@@ -30,6 +31,15 @@ const MAX_AUDIO_SIZE = 15 * 1024 * 1024; // 15 MB max for speech audio sample
 
 export async function POST(req) {
   try {
+    // 1. Require a valid session — prevent unauthenticated file uploads
+    const session = await getSessionUser(req);
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Please log in to upload voice files.' },
+        { status: 401 }
+      );
+    }
+
     const data = await req.formData();
     const file = data.get('file');
     const wordKey = data.get('word') || 'general';
@@ -74,6 +84,10 @@ export async function POST(req) {
     await mkdir(uploadDir, { recursive: true });
 
     const targetFilePath = path.join(uploadDir, uniqueFileName);
+    // Prevent path traversal attack
+    if (!targetFilePath.startsWith(path.resolve(uploadDir))) {
+      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
+    }
     await writeFile(targetFilePath, buffer);
 
     const publicUrl = `/uploads/voices/${uniqueFileName}`;

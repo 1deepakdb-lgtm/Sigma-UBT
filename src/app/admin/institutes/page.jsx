@@ -324,7 +324,7 @@ export default function AdminInstitutesPage() {
                   disabled={!!editId}
                   required
                   style={inputStyle}
-                  placeholder="e.g. sigma or phone number"
+                  placeholder="e.g. institute_id or phone number"
                 />
               </div>
               {!editId && (
@@ -452,18 +452,19 @@ export default function AdminInstitutesPage() {
 
         <div style={cardStyle}>
           <h3 style={{ marginTop: 0, color: "#1e293b", marginBottom: "15px" }}>Registered Institutes</h3>
-          <table style={tableStyle}>
-            <thead>
-              <tr style={{ backgroundColor: "#f8fafc" }}>
-                <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Institute Name</th>
-                <th style={thStyle}>Username</th>
-                <th style={thStyle}>Language Track</th>
-                <th style={thStyle}>Total Students</th>
-                <th style={thStyle}>Package & Expiry</th>
-                <th style={thStyle}>Status</th>
-                <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
-              </tr>
-            </thead>
+          <div style={{ overflowX: "auto" }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr style={{ backgroundColor: "#f8fafc" }}>
+                  <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Institute Name</th>
+                  <th style={thStyle}>Username</th>
+                  <th style={thStyle}>Language Track</th>
+                  <th style={thStyle}>Total Students</th>
+                  <th style={thStyle}>Package & Expiry</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={{ ...thStyle, borderTopRightRadius: "8px", whiteSpace: "nowrap" }}>Actions</th>
+                </tr>
+              </thead>
             <tbody>
               {institutes.length === 0 ? (
                 <tr>
@@ -534,66 +535,70 @@ export default function AdminInstitutesPage() {
                         {inst.status}
                       </span>
                     </td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={() => handleEdit(inst)}
-                        style={{
-                          backgroundColor: "#2563eb",
-                          color: "white",
-                          border: "none",
-                          padding: "6px 14px",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                          fontWeight: "bold"
-                        }}
-                      >
-                        Update
-                      </button>
-                      <button
-                        onClick={() => {
-                          window.open(`/institute?tab=billing&superadmin=true&institute=${encodeURIComponent(inst.name)}&instId=${inst.id}`, '_blank');
-                        }}
-                        style={{
-                          backgroundColor: "#0d9488",
-                          color: "white",
-                          border: "none",
-                          padding: "6px 12px",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                          marginLeft: "6px"
-                        }}
-                        title="Configure Google Sheet & Drive Cloud Setup for this institute (Super Admin Unrestricted)"
-                      >
-                        📊 Cloud Setup
-                      </button>
-                      <button
-                        onClick={() => handleDelete(inst)}
-                        disabled={deletingId === inst.id}
-                        style={{
-                          backgroundColor: deletingId === inst.id ? "#fca5a5" : "#ef4444",
-                          color: "white",
-                          border: "none",
-                          padding: "6px 12px",
-                          borderRadius: "4px",
-                          cursor: deletingId === inst.id ? "not-allowed" : "pointer",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                          marginLeft: "6px",
-                          transition: "background 0.15s"
-                        }}
-                        title="Permanently delete this institute and all its data"
-                      >
-                        {deletingId === inst.id ? "Deleting..." : "🗑️ Delete"}
-                      </button>
+                    <td style={{ ...tdStyle, whiteSpace: "nowrap" }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "nowrap" }}>
+                        <button
+                          onClick={() => handleEdit(inst)}
+                          style={{
+                            backgroundColor: "#2563eb",
+                            color: "white",
+                            border: "none",
+                            padding: "6px 14px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            whiteSpace: "nowrap"
+                          }}
+                        >
+                          Update
+                        </button>
+                        <button
+                          onClick={() => {
+                            window.open(`/institute?tab=billing&superadmin=true&institute=${encodeURIComponent(inst.name)}&instId=${inst.id}`, '_blank');
+                          }}
+                          style={{
+                            backgroundColor: "#0d9488",
+                            color: "white",
+                            border: "none",
+                            padding: "6px 12px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            whiteSpace: "nowrap"
+                          }}
+                          title="Configure Google Sheet & Drive Cloud Setup for this institute (Super Admin Unrestricted)"
+                        >
+                          📊 Cloud Setup
+                        </button>
+                        <button
+                          onClick={() => handleDelete(inst)}
+                          disabled={deletingId === inst.id}
+                          style={{
+                            backgroundColor: deletingId === inst.id ? "#fca5a5" : "#ef4444",
+                            color: "white",
+                            border: "none",
+                            padding: "6px 12px",
+                            borderRadius: "4px",
+                            cursor: deletingId === inst.id ? "not-allowed" : "pointer",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            whiteSpace: "nowrap",
+                            transition: "background 0.15s"
+                          }}
+                          title="Permanently delete this institute and all its data"
+                        >
+                          {deletingId === inst.id ? "Deleting..." : "🗑️ Delete"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
     </div>

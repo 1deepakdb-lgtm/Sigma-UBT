@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { getVoiceProfile, DEFAULT_MODEL_ID, SPEAKING_STYLES } from './elevenlabsConfig';
-import { naturalizeText } from './phoneticNaturalizer';
+import { getVoiceProfile, DEFAULT_MODEL_ID, SPEAKING_STYLES } from './elevenlabsConfig.js';
+import { naturalizeText } from './phoneticNaturalizer.js';
 
 const CACHE_DIR = path.join(process.cwd(), 'public', 'audio-cache', 'elevenlabs');
 
@@ -42,37 +42,34 @@ function computeCacheKey(text, voiceId, modelId, settings, categoryMeta = {}) {
   return crypto.createHash('sha256').update(payload).digest('hex');
 }
 
+import { synthesizeSpeechBuffer } from './nativeTtsService.js';
+
 /**
  * High-fidelity fallback synthesis when ElevenLabs API key is missing or quota is exhausted
  */
 async function fallbackSynthesis(text, lang, gender, options = {}) {
   try {
-    const params = new URLSearchParams({
+    const result = await synthesizeSpeechBuffer({
       text,
       lang: lang || 'ko',
-      gender: gender || 'female'
+      gender: gender || 'female',
+      ageStyle: options.ageStyle,
+      personality: options.personality,
+      speechMode: options.speechMode,
+      emotion: options.emotion,
+      vocalWeight: options.weight,
+      pitchFactor: options.pitchFactor,
+      model: options.model,
+      pitch: options.pitch,
+      rate: options.rate,
+      voice: options.voice
     });
 
-    if (options.ageStyle) params.set('ageStyle', options.ageStyle);
-    if (options.personality) params.set('personality', options.personality);
-    if (options.speechMode) params.set('speechMode', options.speechMode);
-    if (options.emotion) params.set('emotion', options.emotion);
-    if (options.weight !== null && options.weight !== undefined) params.set('weight', String(options.weight));
-    if (options.pitchFactor !== null && options.pitchFactor !== undefined) params.set('pitchFactor', String(options.pitchFactor));
-    if (options.model) params.set('model', options.model);
-    if (options.pitch) params.set('pitch', options.pitch);
-    if (options.rate) params.set('rate', options.rate);
-    if (options.voice) params.set('voice', options.voice);
-
-    // Use local TTS API route internally
-    const url = `http://localhost:3000/api/tts?${params.toString()}`;
-    const res = await fetch(url);
-    if (res.ok) {
-      const arrayBuf = await res.arrayBuffer();
+    if (result && result.buffer && result.buffer.length > 0) {
       return {
-        buffer: Buffer.from(arrayBuf),
-        contentType: res.headers.get('content-type') || 'audio/mp4',
-        provider: 'fallback-studio',
+        buffer: result.buffer,
+        contentType: result.contentType || 'audio/mpeg',
+        provider: result.provider || 'fallback-studio',
         isFallback: true
       };
     }
@@ -168,6 +165,11 @@ export async function synthesizeElevenLabs({
     console.info('ELEVENLABS_API_KEY not configured. Seamlessly activating local studio audio engine.');
     const fallback = await fallbackSynthesis(naturalized, lang, profile.gender, categoryMeta);
     if (fallback) {
+      try {
+        fs.writeFileSync(cacheFilePath, fallback.buffer);
+      } catch (writeErr) {
+        console.warn('Failed to write audio cache:', writeErr.message);
+      }
       return {
         ...fallback,
         cached: false,

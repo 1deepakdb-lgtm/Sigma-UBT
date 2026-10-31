@@ -99,7 +99,7 @@ const AdminDashboard = () => {
       
       {/* Sidebar Navigation without EPS Result Checker */}
       <div style={sidebarStyle}>
-        <div style={sidebarHeader}>SIGMA ADMIN</div>
+        <div style={sidebarHeader}>EXAMJK ADMIN</div>
         <div style={{ flex: 1, marginTop: "5px" }}>
           <Link href="/admin" style={{ ...linkStyle, backgroundColor: "#2563eb", color: "white" }}>Dashboard</Link>
           <Link href="/admin/institutes" style={linkStyle}>Manage Institutes</Link>
@@ -126,7 +126,7 @@ const AdminDashboard = () => {
 
         {/* Dashboard Statistics */}
         <div style={contentAreaStyle}>
-          <h3 style={{ color: "#475569", marginTop: 0, fontSize: "18px" }}>Welcome to Sigma EPS Master Admin Panel</h3>
+          <h3 style={{ color: "#475569", marginTop: 0, fontSize: "18px" }}>Welcome to ExamJK Master Admin Panel</h3>
           
           <div style={cardContainerStyle}>
             {/* Institute Card */}

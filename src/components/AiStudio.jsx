@@ -76,6 +76,47 @@ export default function AiStudio({
     }
   }, [userRole, activeTab]);
 
+  // Strict check: audio download is only allowed for Admin and Institute, NEVER for students
+  const [canDownloadAudio, setCanDownloadAudio] = useState(() => {
+    if (userRole) {
+      const r = String(userRole).toLowerCase();
+      if (r === 'student' || r === 'staff' || r === 'teacher') return false;
+      if (r === 'admin' || r === 'superadmin' || r === 'institute') return true;
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const pathname = window.location.pathname || '';
+        if (pathname.includes('/student')) return false;
+        if (localStorage.getItem('currentStudentPhone') || localStorage.getItem('studentPhone')) return false;
+
+        const r = (localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
+        if (r === 'student') return false;
+        if (r === 'admin' || r === 'superadmin' || r === 'institute') return true;
+
+        if (pathname.startsWith('/admin') || pathname.startsWith('/institute')) return true;
+      } catch (e) {}
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname || '';
+      if (pathname.includes('/student') || localStorage.getItem('currentStudentPhone') || localStorage.getItem('studentPhone')) {
+        setCanDownloadAudio(false);
+        return;
+      }
+      const r = (userRole || localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
+      if (r === 'student') {
+        setCanDownloadAudio(false);
+      } else if (r === 'admin' || r === 'superadmin' || r === 'institute' || pathname.startsWith('/admin') || pathname.startsWith('/institute')) {
+        setCanDownloadAudio(true);
+      } else {
+        setCanDownloadAudio(false);
+      }
+    }
+  }, [userRole]);
+
   // Determine effective student language ('korean' | 'japanese' | 'both')
   const [effectiveInstLang, setEffectiveInstLang] = useState(() => {
     if (instituteLanguage) return instituteLanguage.toLowerCase();
@@ -956,26 +997,29 @@ export default function AiStudio({
                     ref={audioRef}
                     src={generatedAudioUrl}
                     controls
+                    controlsList={!canDownloadAudio ? "nodownload" : undefined}
                     style={{ height: '44px' }}
                   />
-                  <a
-                    href={generatedAudioUrl}
-                    download={`voice_${selectedProfile.id}_${Date.now()}.mp3`}
-                    style={{
-                      background: '#059669',
-                      color: '#ffffff',
-                      padding: '10px 16px',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      fontSize: '13px',
-                      fontWeight: '800',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    📥 Download MP3
-                  </a>
+                  {canDownloadAudio && (
+                    <a
+                      href={generatedAudioUrl}
+                      download={`voice_${selectedProfile.id}_${Date.now()}.mp3`}
+                      style={{
+                        background: '#059669',
+                        color: '#ffffff',
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontSize: '13px',
+                        fontWeight: '800',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      📥 Download MP3
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -1153,22 +1197,29 @@ export default function AiStudio({
 
               {dialogueAudioUrl && (
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                  <audio src={dialogueAudioUrl} controls style={{ height: '38px' }} />
-                  <a
-                    href={dialogueAudioUrl}
-                    download={`dialogue_${Date.now()}.mp3`}
-                    style={{
-                      background: '#059669',
-                      color: '#ffffff',
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      fontSize: '12px',
-                      fontWeight: '800'
-                    }}
-                  >
-                    📥 Download
-                  </a>
+                  <audio
+                    src={dialogueAudioUrl}
+                    controls
+                    controlsList={!canDownloadAudio ? "nodownload" : undefined}
+                    style={{ height: '38px' }}
+                  />
+                  {canDownloadAudio && (
+                    <a
+                      href={dialogueAudioUrl}
+                      download={`dialogue_${Date.now()}.mp3`}
+                      style={{
+                        background: '#059669',
+                        color: '#ffffff',
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontSize: '12px',
+                        fontWeight: '800'
+                      }}
+                    >
+                      📥 Download
+                    </a>
+                  )}
                 </div>
               )}
             </div>

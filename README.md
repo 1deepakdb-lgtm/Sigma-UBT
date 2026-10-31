@@ -1,4 +1,4 @@
-# Sigma UBT - Fullstack Next.js Examination Platform
+# ExamJK UBT - Fullstack Next.js Examination Platform
 
 A production-grade, fullstack **Ubiquitous-Based Test (UBT)** system for EPS-TOPIK Korean Language examination preparation, featuring multi-institute tenancy, anti-cheat question delivery, persistent Prisma database, and automated scoring.
 

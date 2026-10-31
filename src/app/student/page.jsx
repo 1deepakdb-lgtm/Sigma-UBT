@@ -166,6 +166,14 @@ const StudentDashboard = () => {
     return "both";
   });
 
+  const isJapaneseTrack = Boolean(
+    instituteLanguage === "japanese" ||
+    (typeof window !== "undefined" && (
+      window.location.search.includes("lang=japanese") ||
+      localStorage.getItem("instituteLanguage") === "japanese"
+    ))
+  );
+
   const isGoogleOrFree = Boolean(
     studentPackage?.toLowerCase().includes("google") ||
     studentPackage?.toLowerCase().includes("free") ||
@@ -739,8 +747,6 @@ const StudentDashboard = () => {
 
   // 2. Fetch Packages & Exam Sets (combining LocalStorage and Server DB)
   useEffect(() => {
-    const isJapaneseTrack = instituteLanguage === "japanese";
-
     const defaultPackages = isJapaneseTrack ? [
       { id: "jp-1", name: "Full Mock Test", price: "Rs. 2,500", desc: "Complete access to all JLPT (N5-N2) & JFT-Basic CBT Mock Test Sets." },
       { id: "jp-2", name: "JFT-Basic Mock Test", price: "Rs. 1,500", desc: "Official JFT-Basic SSW mock test sets with audio and real-time evaluation." },

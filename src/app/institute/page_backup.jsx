@@ -578,7 +578,7 @@ const InstituteDashboard = () => {
 
   const handleCopyStudent = (stu) => {
     if (!stu) return;
-    const text = `🎓 SIGMA EPS STUDENT LOGIN DETAILS
+    const text = `🎓 ExamJK EPS STUDENT LOGIN DETAILS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 Name: ${stu.name}
 📱 Phone (Login ID): ${stu.phone}

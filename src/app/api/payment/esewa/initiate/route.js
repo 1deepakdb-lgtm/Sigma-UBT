@@ -14,10 +14,10 @@ export async function POST(req) {
 
     const config = await getEsewaConfig();
 
-    // Unique transaction UUID: e.g. SIGMA-SET-1730274192000-A9X2
+    // Unique transaction UUID: e.g. EJK-SET-1730274192000-A9X2
     const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
     const prefix = itemType === "set" ? "SET" : "PKG";
-    const transactionUuid = `SIGMA-${prefix}-${Date.now()}-${randomSuffix}`;
+    const transactionUuid = `EJK-${prefix}-${Date.now()}-${randomSuffix}`;
 
     // Create a pending transaction record in database
     await prisma.paymentTransaction.create({

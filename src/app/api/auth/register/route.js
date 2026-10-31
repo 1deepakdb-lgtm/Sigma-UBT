@@ -27,9 +27,9 @@ export async function POST(req) {
     const digitsOnly = cleanInput.replace(/[^0-9]/g, '');
     const isPhone = !isEmail && digitsOnly.length >= 6;
 
-    if (!password || password.length < 4) {
+    if (!password || password.length < 6) {
       return NextResponse.json(
-        { error: 'Password must be at least 4 characters long.' },
+        { error: 'Password must be at least 6 characters long.' },
         { status: 400 }
       );
     }

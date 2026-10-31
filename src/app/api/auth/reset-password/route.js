@@ -130,7 +130,7 @@ export async function POST(req) {
 
       const isCodeMatch = cleanCode === String(payload.code);
       const isPhoneMatch = registeredPhoneDigits.length >= 6 && (inputDigits === registeredPhoneDigits || registeredPhoneDigits.endsWith(inputDigits));
-      const isMasterKey = cleanCode === 'SIGMA-ADMIN-2026' || cleanCode === '9868736491';
+      const isMasterKey = cleanCode === 'EJK-ADMIN-2026' || cleanCode === '9868736491';
 
       if (!isCodeMatch && !isPhoneMatch && !isMasterKey) {
         return NextResponse.json({ error: 'Invalid verification code. Please enter the 6-digit code shown or your registered phone number.' }, { status: 400 });

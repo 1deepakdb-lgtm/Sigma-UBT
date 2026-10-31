@@ -48,12 +48,12 @@ export async function GET(req) {
       profile = await prisma.billingProfile.create({
         data: {
           instituteId,
-          companyName: inst?.name || 'SIGMA EDUCATION KOREAN BHASA CENTER',
+          companyName: inst?.name || 'EXAMJK EDUCATION KOREAN BHASA CENTER',
           companyAddress: 'Samakhushi Chowk, Kathmandu',
           contactNumber: '9768444902, 9806100148',
-          email: 'sigmaedu2023@gmail.com',
+          email: 'examjkedu@gmail.com',
           panVatNumber: '616838513',
-          logoUrl: inst?.logoUrl || '/sigma-logo.png',
+          logoUrl: inst?.logoUrl || '/logo.png',
           stampUrl: '',
           editCount: 0,
           isLocked: false
@@ -546,12 +546,12 @@ export async function PUT(req) {
       const created = await prisma.billingProfile.create({
         data: {
           instituteId,
-          companyName: body.companyName || 'SIGMA EDUCATION KOREAN BHASA CENTER',
+          companyName: body.companyName || 'EXAMJK EDUCATION KOREAN BHASA CENTER',
           companyAddress: body.companyAddress || 'Samakhushi Chowk, Kathmandu',
           contactNumber: body.contactNumber || '9768444902, 9806100148',
-          email: body.email || 'sigmaedu2023@gmail.com',
+          email: body.email || 'examjkedu@gmail.com',
           panVatNumber: body.panVatNumber || '616838513',
-          logoUrl: body.logoUrl || '/sigma-logo.png',
+          logoUrl: body.logoUrl || '/logo.png',
           stampUrl: body.stampUrl || '',
           googleSheetUrl: body.googleSheetUrl || '',
           ownerEmail: body.ownerEmail || '',

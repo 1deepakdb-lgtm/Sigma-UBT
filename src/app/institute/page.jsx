@@ -1050,7 +1050,7 @@ const InstituteDashboard = () => {
   const handleCopyStudent = (stu) => {
     if (!stu) return;
     const stuLang = stu.language === "japanese" ? "🇯🇵 Japanese Track" : stu.language === "korean" ? "🇰🇷 Korean Track" : "🌐 Both (Dual Track)";
-    const text = `🎓 SIGMA EPS STUDENT LOGIN DETAILS
+    const text = `🎓 EXAMJK STUDENT LOGIN DETAILS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Student Name: ${stu.name}
 Login ID / Phone: ${stu.phone}

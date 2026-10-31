@@ -414,7 +414,7 @@ function AdminStudentsContent() {
   };
 
   const handleCopyStudent = (stu) => {
-    const text = `Student ID: ${stu.phone}\nPassword: ${stu.password || "123"}\nName: ${stu.name}\nInstitute: ${stu.instituteName || "Sigma"}\nPackage: ${stu.assignedPackage}\nExpiry: ${stu.expiryDate}`;
+    const text = `Student ID: ${stu.phone}\nPassword: ${stu.password || "123"}\nName: ${stu.name}\nInstitute: ${stu.instituteName || "ExamJK"}\nPackage: ${stu.assignedPackage}\nExpiry: ${stu.expiryDate}`;
     navigator.clipboard.writeText(text);
     setCopiedStudentId(stu.id);
     setTimeout(() => setCopiedStudentId(null), 2000);
@@ -964,7 +964,7 @@ function AdminStudentsContent() {
                             fontWeight: "bold"
                           }}
                         >
-                          {isAmb ? "Self-Signup Guest" : (stu.instituteName || "Sigma Education")}
+                          {isAmb ? "Self-Signup Guest" : (stu.instituteName || "ExamJK Education")}
                         </span>
                       </td>
 

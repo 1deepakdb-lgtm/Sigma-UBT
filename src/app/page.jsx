@@ -480,7 +480,7 @@ export default function LoginPage() {
           }}
         />
 
-        {/* Tab Toggle: Login vs Sign Up vs Forgot Password */}
+        {/* Tab Toggle: Login vs Register */}
         <div
           style={{
             display: "flex",
@@ -514,7 +514,7 @@ export default function LoginPage() {
               boxShadow: authMode === "login" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
             }}
           >
-            Sign In
+            Login
           </button>
           <button
             type="button"
@@ -539,31 +539,6 @@ export default function LoginPage() {
             }}
           >
             Register
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode("reset");
-              if (identifier) setResetIdentifier(identifier);
-              setError("");
-              setSuccessMsg("");
-            }}
-            style={{
-              flex: 1.15,
-              padding: "8px 6px",
-              borderRadius: "8px",
-              border: "none",
-              fontSize: "12px",
-              fontWeight: "800",
-              cursor: "pointer",
-              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              backgroundColor: authMode === "reset" ? "#4f46e5" : "transparent",
-              backgroundImage: authMode === "reset" ? "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)" : "none",
-              color: authMode === "reset" ? "#ffffff" : "#64748b",
-              boxShadow: authMode === "reset" ? "0 4px 14px rgba(79, 70, 229, 0.35)" : "none"
-            }}
-          >
-            Forgot Password
           </button>
         </div>
 
@@ -670,12 +645,12 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} autoComplete="off">
             <div style={{ textAlign: "left", marginBottom: "5px" }}>
               <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#334155" }}>
-                Phone Number / Username:
+                User ID:
               </label>
             </div>
             <input
               type="text"
-              placeholder="e.g. 98XXXXXXXX or student"
+              placeholder="Enter email/phone"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               style={inputStyle}
@@ -698,8 +673,7 @@ export default function LoginPage() {
               required
             />
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", marginTop: "-3px" }}>
-              <span style={{ fontSize: "11px", color: "#64748b" }}>Super Admin · Institute · Student</span>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "12px", marginTop: "-3px" }}>
               <button
                 type="button"
                 onClick={() => {
@@ -856,7 +830,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="e.g. admin, sigma, or 98XXXXXXXX"
+                  placeholder="e.g. admin or 98XXXXXXXX"
                   value={resetIdentifier}
                   onChange={(e) => setResetIdentifier(e.target.value)}
                   style={inputStyle}

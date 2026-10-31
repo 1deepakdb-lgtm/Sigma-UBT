@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
 
       {/* MAIN CONTENT AREA */}
       <div style={contentAreaStyle}>
-        <h2 style={{ color: "#1e293b", marginTop: "10px", fontSize: "22px" }}>Welcome to Sigma Education</h2>
+        <h2 style={{ color: "#1e293b", marginTop: "10px", fontSize: "22px" }}>Welcome to ExamJK Super Admin</h2>
 
         <div style={cardContainerStyle}>
           <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #3b82f6, #2563eb)", color: "white", borderLeft: "none" }}>

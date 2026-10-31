@@ -79,7 +79,7 @@ export default function Navbar({
 
   // Derive display title
   const defaultTitle = 
-    role === 'admin' ? 'SIGMA ADMIN PANEL' :
+    role === 'admin' ? 'EXAMJK ADMIN PANEL' :
     role === 'institute' ? 'INSTITUTE PANEL' : 
     'STUDENT PORTAL';
 

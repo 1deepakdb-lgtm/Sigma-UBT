@@ -161,7 +161,7 @@ const AdminSettings = () => {
       
       {/* STICKY TOP NAVIGATION BAR */}
       <div style={topNavStyle}>
-        <div style={{ fontSize: "20px", fontWeight: "bold", letterSpacing: "1px" }}>SIGMA ADMIN PANEL</div>
+        <div style={{ fontSize: "20px", fontWeight: "bold", letterSpacing: "1px" }}>EXAMJK ADMIN PANEL</div>
         
         <div style={menuContainerStyle}>
           <Link href="/admin" style={navLinkStyle}>Dashboard</Link>

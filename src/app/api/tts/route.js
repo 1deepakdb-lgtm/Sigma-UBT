@@ -2,8 +2,30 @@ import { spawn, execSync, execFileSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { synthesizeSpeechBuffer } from '@/lib/nativeTtsService';
 
 export const dynamic = 'force-dynamic';
+
+// ─── TTS Rate Limiter (in-memory, per IP) ────────────────────────────────────
+const TTS_RATE_LIMIT = 60;              // max requests per window
+const TTS_RATE_WINDOW = 60 * 1000;      // 1 minute window
+const TTS_MAX_TEXT_LENGTH = 2000;       // max characters per request
+const ttsRateStore = new Map();
+
+function checkTtsRateLimit(req) {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+  const key = `tts:${ip}`;
+  const now = Date.now();
+  const record = ttsRateStore.get(key) || { calls: [], blocked: false };
+  record.calls = record.calls.filter((t) => now - t < TTS_RATE_WINDOW);
+  if (record.calls.length >= TTS_RATE_LIMIT) {
+    return { limited: true };
+  }
+  record.calls.push(now);
+  ttsRateStore.set(key, record);
+  return { limited: false };
+}
 
 // Verified High-Fidelity Microsoft Neural Voice Configurations
 const VOICE_CONFIG = {
@@ -594,6 +616,15 @@ function generateEdgeTts(text, voice, pitch, rate) {
  * Serves human melodic voices with distinct male and female acoustics.
  */
 export async function GET(request) {
+  // Rate limit check
+  const rateCheck = checkTtsRateLimit(request);
+  if (rateCheck.limited) {
+    return new Response('Too Many Requests. Please slow down.', {
+      status: 429,
+      headers: { 'Retry-After': '60' }
+    });
+  }
+
   const { searchParams } = new URL(request.url);
   const text = searchParams.get('text') || '';
   const lang = searchParams.get('lang') || 'ja';
@@ -601,6 +632,10 @@ export async function GET(request) {
 
   if (!text.trim()) {
     return new Response('Missing text parameter', { status: 400 });
+  }
+  // Cap text length to prevent abuse
+  if (text.length > TTS_MAX_TEXT_LENGTH) {
+    return new Response(`Text too long. Maximum ${TTS_MAX_TEXT_LENGTH} characters allowed.`, { status: 400 });
   }
 
   const isDownload = searchParams.get('download') === 'true';
@@ -624,106 +659,34 @@ export async function GET(request) {
   const rawPitch = searchParams.get('pitchFactor') || searchParams.get('customPitch');
   const explicitPitch = rawPitch !== null ? parseFloat(rawPitch) : null;
 
-  // 1. Primary Engine: Ultra-Realistic Biological Neural Models (Korean & Japanese)
-  // Generates genuine human male & female voices with authentic chest resonance & deep baritone
-  if (lang === 'ja' || lang === 'ko') {
-    const neuralResult = await generateNeuralSpeech(text, lang, gender, {
-      voice: selectedVoice,
-      model: selectedModel,
-      pitch: searchParams.get('pitch') || '',
-      rate: searchParams.get('rate') || '',
-      ageStyle,
-      personality,
-      speechMode,
-      emotion,
-      vocalWeight,
-      pitchFactor: explicitPitch
-    });
-    if (neuralResult && neuralResult.buffer && neuralResult.buffer.length > 0) {
-      return new Response(neuralResult.buffer, {
-        status: 200,
-        headers: {
-          'Content-Type': neuralResult.contentType || 'audio/mpeg',
-          'Cache-Control': 'public, max-age=86400',
-          'Access-Control-Allow-Origin': '*',
-          'Content-Disposition': disposition,
-          'Content-Length': String(neuralResult.buffer.byteLength),
-          'X-Audio-Provider': 'neural-edge'
-        },
-      });
-    }
+  const result = await synthesizeSpeechBuffer({
+    text,
+    lang,
+    gender,
+    voice: selectedVoice,
+    pitch: selectedPitch,
+    rate: selectedRate,
+    model: selectedModel,
+    ageStyle,
+    personality,
+    speechMode,
+    emotion,
+    vocalWeight,
+    pitchFactor: explicitPitch
+  });
 
-    // Secondary Fallback: Melodic DSP Engine
-    const melodicResult = await generateMelodicVoice(text, lang, gender, selectedVoice, selectedPitch, selectedRate, selectedModel, {
-      ageStyle,
-      personality,
-      speechMode,
-      emotion,
-      vocalWeight,
-      pitchFactor: explicitPitch
-    });
-    if (melodicResult && melodicResult.buffer && melodicResult.buffer.length > 0) {
-      return new Response(melodicResult.buffer, {
-        status: 200,
-        headers: {
-          'Content-Type': melodicResult.contentType || 'audio/mp4',
-          'Cache-Control': 'public, max-age=86400',
-          'Access-Control-Allow-Origin': '*',
-          'Content-Disposition': disposition,
-          'Content-Length': String(melodicResult.buffer.byteLength),
-        },
-      });
-    }
-  }
-
-  // 2. Edge TTS synthesis for other languages or fallback
-  try {
-    const audioBuffer = await generateEdgeTts(text, selectedVoice, selectedPitch, selectedRate);
-
-    if (audioBuffer && audioBuffer.length > 0) {
-      return new Response(audioBuffer, {
-        status: 200,
-        headers: {
-          'Content-Type': 'audio/mpeg',
-          'Cache-Control': 'public, max-age=86400',
-          'Access-Control-Allow-Origin': '*',
-          'Content-Disposition': disposition,
-          'Content-Length': String(audioBuffer.byteLength),
-        },
-      });
-    }
-  } catch (edgeErr) {
-    console.warn('Edge TTS synthesis fallback to Google:', edgeErr?.message || edgeErr);
-  }
-
-  // 3. Fallback: Google Translate TTS
-  try {
-    const encoded = encodeURIComponent(text);
-    const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encoded}&tl=${lang}&client=gtx`;
-    const res = await fetch(googleUrl, {
+  if (result && result.buffer && result.buffer.length > 0) {
+    return new Response(result.buffer, {
+      status: 200,
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Referer': 'https://translate.google.com/',
-        'Accept': 'audio/mpeg, audio/mp3, audio/*',
+        'Content-Type': result.contentType || 'audio/mpeg',
+        'Cache-Control': 'public, max-age=86400',
+        'Access-Control-Allow-Origin': '*',
+        'Content-Disposition': disposition,
+        'Content-Length': String(result.buffer.byteLength),
+        'X-Audio-Provider': result.provider || 'neural-edge'
       },
     });
-
-    if (res.ok) {
-      const audioBuffer = await res.arrayBuffer();
-      return new Response(audioBuffer, {
-        status: 200,
-        headers: {
-          'Content-Type': 'audio/mpeg',
-          'Cache-Control': 'public, max-age=86400',
-          'Access-Control-Allow-Origin': '*',
-          'Content-Disposition': disposition,
-          'Content-Length': String(audioBuffer.byteLength),
-        },
-      });
-    }
-  } catch (googleErr) {
-    console.error('Google TTS fallback error:', googleErr);
   }
 
   return new Response('TTS unavailable', { status: 502 });
@@ -731,6 +694,15 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    // Rate limit check (shared with GET)
+    const rateCheck = checkTtsRateLimit(request);
+    if (rateCheck.limited) {
+      return new Response('Too Many Requests. Please slow down.', {
+        status: 429,
+        headers: { 'Retry-After': '60' }
+      });
+    }
+
     const body = await request.json();
     const text = body.text || '';
     const lang = body.lang || 'ja';
@@ -738,6 +710,9 @@ export async function POST(request) {
 
     if (!text.trim()) {
       return new Response('Missing text parameter', { status: 400 });
+    }
+    if (text.length > TTS_MAX_TEXT_LENGTH) {
+      return new Response(`Text too long. Maximum ${TTS_MAX_TEXT_LENGTH} characters allowed.`, { status: 400 });
     }
 
     const url = new URL(request.url);

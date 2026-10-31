@@ -29,7 +29,7 @@ export default function EsewaCheckoutModal({
 
   const esewaNumber = "9768444902";
   const esewaAccountName = "Deepak Bhatt";
-  const esewaOrg = "Sigma Education UBT";
+  const esewaOrg = "ExamJK Education & CBT";
   const whatsappNumber = "9768444902";
 
   useEffect(() => {
