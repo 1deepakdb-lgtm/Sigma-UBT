@@ -6168,11 +6168,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               <div style={{ border: "1.5px solid #cbd5e1", borderRadius: "8px", overflowX: "auto", marginBottom: "16px", backgroundColor: "#ffffff" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
                   <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1.5px solid #cbd5e1", textAlign: "left" }}>
-                      <th style={{ padding: "10px 14px", color: "#334155", fontWeight: "bold", width: "34%" }}>Course Child Package</th>
-                      <th style={{ padding: "10px 12px", color: "#334155", fontWeight: "bold", width: "25%" }}>Gross Fee (NPR)</th>
-                      <th style={{ padding: "10px 12px", color: "#334155", fontWeight: "bold", width: "18%" }}>Discount %</th>
-                      <th style={{ padding: "10px 14px", color: "#334155", fontWeight: "bold", textAlign: "right", width: "23%" }}>Net Payable</th>
+                    <tr style={{ backgroundColor: "#1e3a8a", borderBottom: "1.5px solid #172554", textAlign: "left" }}>
+                      <th style={{ padding: "10px 14px", color: "#ffffff", fontWeight: "bold", width: "34%", borderTopLeftRadius: "6px" }}>Course Child Package</th>
+                      <th style={{ padding: "10px 12px", color: "#ffffff", fontWeight: "bold", width: "25%" }}>Gross Fee (NPR)</th>
+                      <th style={{ padding: "10px 12px", color: "#ffffff", fontWeight: "bold", width: "18%" }}>Discount %</th>
+                      <th style={{ padding: "10px 14px", color: "#ffffff", fontWeight: "bold", textAlign: "right", width: "23%", borderTopRightRadius: "6px" }}>Net Payable</th>
                     </tr>
                   </thead>
                   <tbody>
