@@ -2191,41 +2191,47 @@ const StudentDashboard = () => {
 
         {/* PERFORMANCE / RESULTS TAB */}
         {activeTab === "results" && (
-          <div style={cardStyle}>
-            <h3 style={{ marginTop: 0, color: "#0f172a", marginBottom: "16px", fontSize: "18px" }}>My Exam Results & Performance Logs</h3>
-            <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff" }}>
-                    <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Exam Set</th>
-                    <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Score</th>
-                    <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Percentage</th>
-                    <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Status</th>
-                  </tr>
-                </thead>
-              <tbody>
-                {results.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}>
-                      No exam results recorded yet. Start a UBT exam to view your scores here.
-                    </td>
-                  </tr>
-                ) : (
-                  results.map((res, idx) => (
-                    <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#ffffff" }}>
-                      <td style={{ padding: "14px 16px", fontWeight: "700", color: "#0f172a" }}>{res.examName || "UBT Set"}</td>
-                      <td style={{ padding: "14px 16px", fontWeight: "700", color: "#2563eb" }}>{res.score} / {res.total || 40}</td>
-                      <td style={{ padding: "14px 16px", color: "#334155", fontWeight: "600" }}>{res.percentage || Math.round((Number(res.score) / (Number(res.total) || 40)) * 100)}%</td>
-                      <td style={{ padding: "14px 16px" }}>
-                        <span style={{ backgroundColor: res.passed ? "#dcfce7" : "#fee2e2", color: res.passed ? "#166534" : "#991b1b", padding: "4px 10px", borderRadius: "10px", fontSize: "12px", fontWeight: "700" }}>
-                          {res.passed ? "Passed" : "Failed"}
-                        </span>
-                      </td>
+          <div style={{ ...cardStyle, padding: 0, overflow: "hidden", border: "1px solid #cbd5e1" }}>
+            <div style={{ backgroundColor: "#1e3a8a", padding: "16px 22px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h3 style={{ margin: 0, color: "#ffffff", fontSize: "18px", fontWeight: "700" }}>
+                My Exam Results &amp; Performance Logs
+              </h3>
+            </div>
+            <div style={{ padding: "20px" }}>
+              <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff" }}>
+                      <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Exam Set</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Score</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Percentage</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Status</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {results.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}>
+                          No exam results recorded yet. Start a UBT exam to view your scores here.
+                        </td>
+                      </tr>
+                    ) : (
+                      results.map((res, idx) => (
+                        <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#ffffff" }}>
+                          <td style={{ padding: "14px 16px", fontWeight: "700", color: "#0f172a" }}>{res.examName || "UBT Set"}</td>
+                          <td style={{ padding: "14px 16px", fontWeight: "700", color: "#2563eb" }}>{res.score} / {res.total || 40}</td>
+                          <td style={{ padding: "14px 16px", color: "#334155", fontWeight: "600" }}>{res.percentage || Math.round((Number(res.score) / (Number(res.total) || 40)) * 100)}%</td>
+                          <td style={{ padding: "14px 16px" }}>
+                            <span style={{ backgroundColor: res.passed ? "#dcfce7" : "#fee2e2", color: res.passed ? "#166534" : "#991b1b", padding: "4px 10px", borderRadius: "10px", fontSize: "12px", fontWeight: "700" }}>
+                              {res.passed ? "Passed" : "Failed"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
