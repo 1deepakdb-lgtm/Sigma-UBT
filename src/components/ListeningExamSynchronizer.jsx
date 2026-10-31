@@ -238,27 +238,6 @@ const SAMPLE_EPS_LISTENING_DATA = [
 ];
 
 export default function ListeningExamSynchronizer({ instituteLanguage = 'korean' }) {
-  // Super Admin Verification (EPS Listening Studio is for Super Admin only)
-  const [isSuperAdmin] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      const role = (localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
-      if (role === 'admin' || role === 'superadmin') return true;
-      const userStr = localStorage.getItem('sigma_current_user') || localStorage.getItem('user') || localStorage.getItem('currentUser');
-      if (userStr) {
-        try {
-          const parsed = JSON.parse(userStr);
-          if (parsed?.role === 'admin' || parsed?.role === 'superadmin' || parsed?.isSuperAdmin) return true;
-        } catch (e) {
-          if (typeof userStr === 'string' && (userStr.toLowerCase() === 'admin' || userStr.toLowerCase() === 'super admin')) return true;
-        }
-      }
-      if (window.location.search?.includes('superadmin=true')) return true;
-      if (window.location.pathname?.startsWith('/admin')) return true;
-    } catch (e) {}
-    return false;
-  });
-
   // Questions 21 to 40 state
   const [questions, setQuestions] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -912,17 +891,6 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     const secs = Math.floor(sec % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
-  if (!isSuperAdmin) {
-    return (
-      <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1.5px solid #e2e8f0', padding: '36px 20px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#1e3a8a' }}>Access Restricted</h3>
-        <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-          EPS Listening Studio (Q21–Q40) is restricted to Super Admin only.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1.5px solid #e2e8f0', padding: '20px', boxShadow: '0 4px 16px rgba(15,23,42,0.06)' }}>
