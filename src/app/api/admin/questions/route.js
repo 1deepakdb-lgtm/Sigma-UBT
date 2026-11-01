@@ -6,6 +6,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
   try {
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
+
     const { searchParams } = new URL(req.url);
     const setId = searchParams.get('setId');
     const setName = searchParams.get('setName');

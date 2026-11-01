@@ -162,6 +162,13 @@ export async function POST(req) {
     }
 
     if (existing) {
+      // Prevent cross-tenant IDOR: an institute cannot overwrite a student belonging to another institute
+      if (session?.role !== 'admin' && existing.instituteId && existing.instituteId !== targetInstituteId) {
+        return NextResponse.json({
+          error: 'Forbidden. This student is registered under another institute.'
+        }, { status: 403 });
+      }
+
       const updated = await prisma.user.update({
         where: { id: existing.id },
         data: {

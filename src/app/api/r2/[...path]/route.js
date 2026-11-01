@@ -29,8 +29,16 @@ function getS3Client() {
 
 function resolveKey(params) {
   const segments = params?.path || [];
-  const rawKey = segments.map(s => decodeURIComponent(s)).join('/');
-  return rawKey.replace(/^\/+/, '');
+  const safeSegments = segments
+    .map(s => {
+      try {
+        return decodeURIComponent(s);
+      } catch (e) {
+        return '';
+      }
+    })
+    .filter(s => s && s !== '..' && s !== '.' && !s.includes('\0') && !s.includes('..'));
+  return safeSegments.join('/').replace(/^\/+/, '');
 }
 
 export async function GET(req, { params }) {

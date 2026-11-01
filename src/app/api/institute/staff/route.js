@@ -180,14 +180,14 @@ export async function PUT(req) {
       );
     }
 
-    // Verify current password
+    // Verify current password strictly against passwordHash
     let isCurrentValid = false;
     if (user.passwordHash) {
-      isCurrentValid = await verifyPassword(currentPassword, user.passwordHash);
-    }
-    // Also check standard initial fallbacks if not hashed yet
-    if (!isCurrentValid && (currentPassword === '1234' || currentPassword === 'staff' || currentPassword === user.password)) {
-      isCurrentValid = true;
+      if (user.passwordHash.startsWith('$2')) {
+        isCurrentValid = await verifyPassword(currentPassword, user.passwordHash);
+      } else {
+        isCurrentValid = (user.passwordHash === currentPassword);
+      }
     }
 
     if (!isCurrentValid) {

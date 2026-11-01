@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireInstituteOrAdmin, ROLES } from '@/lib/rbac';
+import { getSessionUser } from '@/lib/auth';
 
 export async function GET(req) {
   try {
+    const session = await getSessionUser(req);
     const { searchParams } = new URL(req.url);
     const instituteId = searchParams.get('instituteId');
     const creatorName = searchParams.get('creatorName');
     const all = searchParams.get('all') === 'true';
     const superadmin = searchParams.get('superadmin') === 'true';
 
-    // If super admin or all=true requested
-    const isSuperAdminView = all || superadmin;
+    // Strictly verify admin role from session — do not trust client query param alone
+    const isSuperAdminView = (session?.role === ROLES.ADMIN) && (all || superadmin);
 
     // Filter sets based on institute isolation
     let setsWhere = {};
@@ -82,7 +84,7 @@ export async function POST(req) {
       description = ''
     } = body;
 
-    const isAdmin = session?.role === ROLES.ADMIN || body.superadmin === true;
+    const isAdmin = session?.role === ROLES.ADMIN;
 
     // 1. CREATE PACKAGE
     if (action === 'create_package') {

@@ -26,6 +26,26 @@ export async function POST(req) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    if (buffer.length < 8) {
+      return NextResponse.json({ error: 'Invalid or corrupted image file' }, { status: 400 });
+    }
+
+    // Verify binary magic bytes
+    const isJpeg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+    const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+    const isWebp = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46;
+    const isGif = buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46;
+
+    if (!isJpeg && !isPng && !isWebp && !isGif) {
+      return NextResponse.json({ error: 'File content does not match a valid image format.' }, { status: 400 });
+    }
+
+    // Prevent polyglot script injection in image headers
+    const textPreview = buffer.slice(0, 512).toString('utf8', 0, 512).toLowerCase();
+    if (textPreview.includes('<?php') || textPreview.includes('<script') || textPreview.includes('eval(')) {
+      return NextResponse.json({ error: 'Malicious content detected in file.' }, { status: 400 });
+    }
+
     const safeBase = path
       .basename(file.name, ext)
       .replace(/[^a-zA-Z0-9_-]/g, '_')
@@ -35,7 +55,14 @@ export async function POST(req) {
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'receipts');
 
     await mkdir(uploadDir, { recursive: true });
-    await writeFile(path.join(uploadDir, fileName), buffer);
+    const targetPath = path.join(uploadDir, fileName);
+
+    // Prevent path traversal
+    if (!targetPath.startsWith(path.resolve(uploadDir))) {
+      return NextResponse.json({ error: 'Invalid file destination path' }, { status: 400 });
+    }
+
+    await writeFile(targetPath, buffer);
 
     const publicUrl = `/uploads/receipts/${fileName}`;
 

@@ -2,9 +2,20 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { hashPassword, signToken } from '@/lib/auth';
 import { getOrCreateOpenInstitute } from '@/lib/openInstitute';
+import { getRateLimitKey, checkRateLimit, recordFailedAttempt } from '@/lib/rateLimiter';
 
 export async function POST(req) {
   try {
+    const rateLimitKey = `reg:${getRateLimitKey(req)}`;
+    const { limited, retryAfterMs } = checkRateLimit(rateLimitKey);
+    if (limited) {
+      const minutesLeft = Math.ceil(retryAfterMs / 60000);
+      return NextResponse.json(
+        { error: `Too many registration requests. Please try again in ${minutesLeft} minute(s).` },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { name, identifier, password, languageTrack = 'both' } = body;
 
@@ -63,6 +74,7 @@ export async function POST(req) {
     });
 
     if (existingUser) {
+      recordFailedAttempt(rateLimitKey);
       return NextResponse.json(
         {
           error: 'An account with this phone or email already exists. Please switch to the Sign In tab.',

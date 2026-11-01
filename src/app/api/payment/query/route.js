@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireInstituteAdmin } from '@/lib/rbac';
+import { getSessionUser } from '@/lib/auth';
 
 export async function POST(req) {
   try {
@@ -70,8 +72,29 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
+    const session = await getSessionUser(req);
+    if (!session) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const phone = searchParams.get('phone');
+
+    // Students can ONLY query their own transactions
+    if (session.role === 'student') {
+      const studentPhone = session.phone || session.username;
+      const list = await prisma.paymentTransaction.findMany({
+        where: {
+          OR: [
+            { studentPhone: studentPhone },
+            { studentName: session.name }
+          ]
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50
+      });
+      return NextResponse.json({ success: true, queries: list });
+    }
 
     const where = {};
     if (phone) {
@@ -92,6 +115,8 @@ export async function GET(req) {
 
 export async function PATCH(req) {
   try {
+    const { session, errorResponse } = await requireInstituteAdmin(req);
+    if (errorResponse) return errorResponse;
     const body = await req.json();
     const { id, txnId, phone, itemId, action = 'release' } = body; // 'release' | 'reject'
 

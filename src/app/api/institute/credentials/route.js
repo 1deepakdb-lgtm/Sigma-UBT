@@ -20,19 +20,24 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Password must be at least 4 characters.' }, { status: 400 });
     }
 
-    // If an institute user/admin is authenticated or instituteName is provided
+    // Prevent IDOR: only Super Admin can target an institute by name/ID; institutes can only update their own
     let targetInst = null;
-    if (session?.instituteId) {
-      targetInst = await prisma.institute.findUnique({ where: { id: session.instituteId } });
-    } else if (instituteName) {
+    if (session?.role === 'admin' && instituteName) {
       targetInst = await prisma.institute.findFirst({
         where: {
           OR: [
             { name: instituteName },
-            { username: instituteName }
+            { username: instituteName },
+            { id: instituteName }
           ]
         }
       });
+    } else if (session?.instituteId) {
+      targetInst = await prisma.institute.findUnique({ where: { id: session.instituteId } });
+    }
+
+    if (!targetInst) {
+      return NextResponse.json({ error: 'Target institute not found or unauthorized' }, { status: 403 });
     }
 
     if (targetInst) {

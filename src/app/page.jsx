@@ -234,6 +234,16 @@ export default function LoginPage() {
       return;
     }
 
+    let recoveryKey = "";
+    if (resetIdentifier.trim().toLowerCase() === "admin") {
+      const inputKey = prompt("Super Admin password recovery is protected.\nPlease enter the Admin Recovery Key:");
+      if (!inputKey || !inputKey.trim()) {
+        setError("Admin Recovery Key is required to recover the Super Admin account.");
+        return;
+      }
+      recoveryKey = inputKey.trim();
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/auth/reset-password", {
@@ -241,7 +251,8 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "lookup",
-          identifier: resetIdentifier.trim()
+          identifier: resetIdentifier.trim(),
+          recoveryKey: recoveryKey || undefined
         })
       });
 
@@ -916,33 +927,51 @@ export default function LoginPage() {
                 </div>
 
                 {/* Security Verification Code Box */}
-                <div style={{
-                  background: "#f0fdf4",
-                  border: "1.5px dashed #86efac",
-                  borderRadius: "10px",
-                  padding: "10px 12px",
-                  marginBottom: "12px",
-                  textAlign: "center"
-                }}>
-                  <div style={{ fontSize: "10.5px", color: "#166534", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Security Verification Code
+                {resetAccountInfo.verificationCode ? (
+                  <div style={{
+                    background: "#f0fdf4",
+                    border: "1.5px dashed #86efac",
+                    borderRadius: "10px",
+                    padding: "10px 12px",
+                    marginBottom: "12px",
+                    textAlign: "center"
+                  }}>
+                    <div style={{ fontSize: "10.5px", color: "#166534", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Security Verification Code
+                    </div>
+                    <div style={{ fontSize: "24px", fontWeight: "900", letterSpacing: "5px", color: "#15803d", margin: "3px 0" }}>
+                      {resetAccountInfo.verificationCode}
+                    </div>
+                    <div style={{ fontSize: "10.5px", color: "#166534" }}>
+                      Enter this code (or your registered phone) below
+                    </div>
                   </div>
-                  <div style={{ fontSize: "24px", fontWeight: "900", letterSpacing: "5px", color: "#15803d", margin: "3px 0" }}>
-                    {resetAccountInfo.verificationCode}
+                ) : (
+                  <div style={{
+                    background: "#fef3c7",
+                    border: "1.5px dashed #f59e0b",
+                    borderRadius: "10px",
+                    padding: "10px 12px",
+                    marginBottom: "12px",
+                    textAlign: "center"
+                  }}>
+                    <div style={{ fontSize: "11px", color: "#92400e", fontWeight: "800", textTransform: "uppercase" }}>
+                      🛡️ Protected Account Recovery
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#b45309", marginTop: "2px" }}>
+                      Enter the Admin Recovery Key below to confirm authorization.
+                    </div>
                   </div>
-                  <div style={{ fontSize: "10.5px", color: "#166534" }}>
-                    Enter this code (or your registered phone) below
-                  </div>
-                </div>
+                )}
 
                 <div style={{ textAlign: "left", marginBottom: "4px" }}>
                   <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155" }}>
-                    Verification Code / Phone:
+                    {resetAccountInfo.role === "admin" ? "Admin Recovery Key:" : "Verification Code / Phone:"}
                   </label>
                 </div>
                 <input
-                  type="text"
-                  placeholder="Enter 6-digit code or registered phone"
+                  type={resetAccountInfo.role === "admin" ? "password" : "text"}
+                  placeholder={resetAccountInfo.role === "admin" ? "Enter Admin Recovery Key" : "Enter 6-digit code or registered phone"}
                   value={resetCodeInput}
                   onChange={(e) => setResetCodeInput(e.target.value)}
                   style={inputStyle}

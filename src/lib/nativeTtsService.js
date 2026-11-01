@@ -287,7 +287,7 @@ export async function generateMelodicVoice(text, lang = 'ja', gender = 'female',
         const arrayBuf = await res.arrayBuffer();
         if (arrayBuf.byteLength > 100) {
           fs.writeFileSync(rawMp3Path, Buffer.from(arrayBuf));
-          execSync(`afconvert "${rawMp3Path}" "${wavPath}" -f WAVE -d LEI16`, { timeout: 6000 });
+          execFileSync('afconvert', [rawMp3Path, wavPath, '-f', 'WAVE', '-d', 'LEI16'], { timeout: 6000 });
           try { fs.unlinkSync(rawMp3Path); } catch {}
           gotAudio = true;
         }
@@ -299,8 +299,8 @@ export async function generateMelodicVoice(text, lang = 'ja', gender = 'female',
     if (!gotAudio && process.platform === 'darwin') {
       const aiffPath = path.join(tmpDir, `${id}.aiff`);
       const macVoice = targetLang === 'ja' ? 'Kyoko' : 'Yuna';
-      execSync(`say -v ${macVoice} -r 150 "${clean.replace(/"/g, '')}" -o "${aiffPath}"`, { timeout: 6000 });
-      execSync(`afconvert "${aiffPath}" "${wavPath}" -f WAVE -d LEI16`, { timeout: 6000 });
+      execFileSync('say', ['-v', macVoice, '-r', '150', clean, '-o', aiffPath], { timeout: 6000 });
+      execFileSync('afconvert', [aiffPath, wavPath, '-f', 'WAVE', '-d', 'LEI16'], { timeout: 6000 });
       try { fs.unlinkSync(aiffPath); } catch {}
       gotAudio = true;
     }
@@ -432,7 +432,7 @@ export async function generateMelodicVoice(text, lang = 'ja', gender = 'female',
 
     const tempProcWav = path.join(tmpDir, `${id}_proc.wav`);
     fs.writeFileSync(tempProcWav, processedWav);
-    execSync(`afconvert "${tempProcWav}" "${m4aPath}" -f m4af -d aac`, { timeout: 6000 });
+    execFileSync('afconvert', [tempProcWav, m4aPath, '-f', 'm4af', '-d', 'aac'], { timeout: 6000 });
     try { fs.unlinkSync(tempProcWav); } catch {}
 
     const m4aBuf = fs.readFileSync(m4aPath);

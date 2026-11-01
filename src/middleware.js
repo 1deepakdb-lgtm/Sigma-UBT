@@ -34,7 +34,7 @@ const BLOCKED_UA_PATTERNS = [
 const ROUTE_PERMISSIONS = [
   // Super-admin-only routes (most sensitive)
   { prefix: '/api/admin/packages', allowedRoles: ['admin', 'institute', 'student'] },
-  { prefix: '/api/admin/questions', allowedRoles: ['admin', 'institute', 'student'] },
+  { prefix: '/api/admin/questions', allowedRoles: ['admin', 'institute'] },
   { prefix: '/admin', allowedRoles: ['admin'] },
   { prefix: '/api/admin', allowedRoles: ['admin'] },
   // Institute-level routes

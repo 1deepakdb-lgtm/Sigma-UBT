@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { hashPassword, signToken, verifyToken } from '@/lib/auth';
-import { clearRateLimit } from '@/lib/rateLimiter';
+import { getRateLimitKey, checkRateLimit, recordFailedAttempt, clearRateLimit } from '@/lib/rateLimiter';
 
 export async function POST(req) {
   try {
+    const rateLimitKey = `reset:${getRateLimitKey(req)}`;
+    const { limited, retryAfterMs } = checkRateLimit(rateLimitKey);
+    if (limited) {
+      const minutesLeft = Math.ceil(retryAfterMs / 60000);
+      return NextResponse.json(
+        { error: `Too many password reset requests. Please try again in ${minutesLeft} minute(s).` },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const { action, identifier, resetToken, code, newPassword } = body;
 
@@ -66,10 +76,24 @@ export async function POST(req) {
       }
 
       if (!user) {
+        recordFailedAttempt(rateLimitKey);
         return NextResponse.json(
           { error: 'No matching account found for this username or phone. Please check and try again.' },
           { status: 404 }
         );
+      }
+
+      // High security: Super Admin accounts cannot be reset via public self-service without Master Recovery Key
+      if (user.role === 'admin') {
+        const recoveryKey = String(body.recoveryKey || body.code || '').trim();
+        const validAdminKey = (process.env.ADMIN_RECOVERY_KEY || 'EJK-ADMIN-2026').trim();
+        if (recoveryKey !== validAdminKey) {
+          recordFailedAttempt(rateLimitKey);
+          return NextResponse.json({
+            error: 'Super Admin password recovery is protected. Please enter the Admin Recovery Key to proceed.',
+            requiresMasterKey: true
+          }, { status: 403 });
+        }
       }
 
       // Generate a secure 6-digit verification code
@@ -102,7 +126,7 @@ export async function POST(req) {
         name: user.name,
         role: user.role,
         maskedPhone,
-        verificationCode: generatedCode,
+        verificationCode: user.role === 'admin' ? null : generatedCode,
         resetToken: signedResetToken,
         isStrongPasswordRequired: user.role === 'admin' || user.role === 'institute'
       });
@@ -120,6 +144,7 @@ export async function POST(req) {
 
       const payload = await verifyToken(resetToken);
       if (!payload || payload.purpose !== 'password_reset') {
+        recordFailedAttempt(rateLimitKey);
         return NextResponse.json({ error: 'Reset session has expired or is invalid. Please request a new code.' }, { status: 400 });
       }
 
@@ -128,11 +153,18 @@ export async function POST(req) {
       const registeredPhoneDigits = (payload.phone || '').replace(/[^0-9]/g, '');
       const inputDigits = cleanCode.replace(/[^0-9]/g, '');
 
-      const isCodeMatch = cleanCode === String(payload.code);
-      const isPhoneMatch = registeredPhoneDigits.length >= 6 && (inputDigits === registeredPhoneDigits || registeredPhoneDigits.endsWith(inputDigits));
-      const isMasterKey = cleanCode === 'EJK-ADMIN-2026' || cleanCode === '9868736491';
+      const validMasterKey = (process.env.ADMIN_RECOVERY_KEY || 'EJK-ADMIN-2026').trim();
+      const isMasterKey = cleanCode === validMasterKey;
+      const isCodeMatch = payload.role !== 'admin' && cleanCode === String(payload.code);
+      const isPhoneMatch = payload.role !== 'admin' && registeredPhoneDigits.length >= 6 && (inputDigits === registeredPhoneDigits || registeredPhoneDigits.endsWith(inputDigits));
+
+      if (payload.role === 'admin' && !isMasterKey) {
+        recordFailedAttempt(rateLimitKey);
+        return NextResponse.json({ error: 'Super Admin reset requires a valid Admin Recovery Key.' }, { status: 403 });
+      }
 
       if (!isCodeMatch && !isPhoneMatch && !isMasterKey) {
+        recordFailedAttempt(rateLimitKey);
         return NextResponse.json({ error: 'Invalid verification code. Please enter the 6-digit code shown or your registered phone number.' }, { status: 400 });
       }
 
@@ -183,6 +215,7 @@ export async function POST(req) {
 
       // Clear any rate-limiting lockouts for this user
       try {
+        clearRateLimit(rateLimitKey);
         clearRateLimit(`admin:ip_fallback`);
         clearRateLimit(`ip_fallback`);
       } catch (e) {}
