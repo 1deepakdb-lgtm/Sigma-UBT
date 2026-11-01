@@ -2309,7 +2309,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
         {/* DICTIONARY TAB */}
         {activeTab === "dictionary" && (
-          <DictionarySection instituteLanguage={instituteLanguage} />
+          <DictionarySection instituteLanguage={instituteLanguage} userRole="institute" />
         )}
 
         {activeTab === "news" && (

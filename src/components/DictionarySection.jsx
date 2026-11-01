@@ -220,37 +220,85 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const [editingVoiceId, setEditingVoiceId] = useState(null);
   const [editingWordValue, setEditingWordValue] = useState('');
 
-  // Role Detection for Audio Downloads (Institute & Admin only; NEVER Student)
+  // Role Detection for Audio Downloads (Strictly Admin and Institute only; NEVER Student)
   const [userRole, setUserRole] = useState(() => {
-    if (propUserRole) return propUserRole.toLowerCase();
+    if (propUserRole) return String(propUserRole).toLowerCase();
     if (typeof window === 'undefined') return 'student';
     try {
-      const r = localStorage.getItem('currentRole') || localStorage.getItem('role');
-      if (r) return r.toLowerCase();
-      const u = localStorage.getItem('user') || localStorage.getItem('currentUser');
-      if (u) {
-        const parsed = JSON.parse(u);
-        if (parsed?.role) return parsed.role.toLowerCase();
+      const pathname = window.location.pathname || '';
+      if (pathname.includes('/student') || pathname.includes('/exam')) return 'student';
+      if (pathname.includes('/admin')) return 'admin';
+      if (pathname.includes('/institute')) return 'institute';
+
+      // Strict student detection from local storage keys
+      if (
+        localStorage.getItem('currentStudentPhone') ||
+        localStorage.getItem('studentPhone') ||
+        localStorage.getItem('currentStudentPackage') ||
+        localStorage.getItem('currentStudentName')
+      ) {
+        return 'student';
       }
-      if (window.location.pathname.includes('/student')) return 'student';
-      if (window.location.pathname.includes('/institute')) return 'institute';
-      if (window.location.pathname.includes('/admin')) return 'admin';
+
+      const r = localStorage.getItem('currentRole') || localStorage.getItem('role') || localStorage.getItem('userType');
+      if (r) return String(r).toLowerCase();
+
+      const sigmaUser = localStorage.getItem('sigma_current_user');
+      if (sigmaUser) {
+        try {
+          const parsed = JSON.parse(sigmaUser);
+          if (parsed?.role) return String(parsed.role).toLowerCase();
+        } catch (e) {}
+      }
+
+      const u = localStorage.getItem('user');
+      if (u) {
+        try {
+          const parsed = JSON.parse(u);
+          if (parsed?.role) return String(parsed.role).toLowerCase();
+        } catch (e) {}
+      }
     } catch (e) {}
     return 'student';
   });
 
-  // Strict check: if user is student or inside student portal, audio download is disabled
+  // Strict check: if user is student or anywhere in student portal, audio download is strictly forbidden
   const isStudent = Boolean(
     propUserRole === 'student' ||
     userRole === 'student' ||
     (typeof window !== 'undefined' && (
       window.location.pathname.includes('/student') ||
+      window.location.pathname.includes('/exam') ||
+      Boolean(localStorage.getItem('currentStudentPhone')) ||
+      Boolean(localStorage.getItem('studentPhone')) ||
+      Boolean(localStorage.getItem('currentStudentPackage')) ||
+      Boolean(localStorage.getItem('currentStudentName')) ||
       localStorage.getItem('currentRole') === 'student' ||
-      localStorage.getItem('role') === 'student'
+      localStorage.getItem('role') === 'student' ||
+      localStorage.getItem('userType') === 'student' ||
+      (userRole !== 'admin' && userRole !== 'institute')
     ))
   );
 
   const canDownloadAudio = !isStudent && (userRole === 'admin' || userRole === 'institute');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname || '';
+      if (
+        propUserRole === 'student' ||
+        pathname.includes('/student') ||
+        pathname.includes('/exam') ||
+        localStorage.getItem('currentStudentPhone') ||
+        localStorage.getItem('studentPhone') ||
+        localStorage.getItem('currentStudentPackage') ||
+        localStorage.getItem('currentRole') === 'student' ||
+        localStorage.getItem('role') === 'student'
+      ) {
+        setUserRole('student');
+      }
+    }
+  }, [propUserRole]);
 
   // Synchronize with Study Track (korean / japanese / both)
   useEffect(() => {
@@ -747,6 +795,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   }
 
   function handleDownloadAudio(url, filename) {
+    if (!canDownloadAudio) {
+      alert("Audio download is restricted for students. You can listen directly in the app!");
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.download = filename || 'voice_sample.mp3';
@@ -1144,8 +1196,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          {/* Active Model Badges & AI Studio Button - All Same Size (Height 42px, radius 24px, 30px icon, 2-line text) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", maxWidth: "100%", paddingBottom: "2px" }}>
+          {/* Active Model Badges & AI Studio Button - All Same Size (Height 42px, radius 24px, 30px icon, 2-line text, strictly ONE line) */}
           <div
             onClick={() => setIsFemaleDropdownOpen(prev => !prev)}
             title="Active Female Voice Model (Click to select model)"
@@ -1159,6 +1211,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               borderRadius: "24px",
               height: "42px",
               minWidth: "160px",
+              flexShrink: 0,
               boxSizing: "border-box",
               cursor: "pointer",
               transition: "all 0.15s ease"
@@ -1184,6 +1237,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               borderRadius: "24px",
               height: "42px",
               minWidth: "160px",
+              flexShrink: 0,
               boxSizing: "border-box",
               cursor: "pointer",
               transition: "all 0.15s ease"
@@ -1402,8 +1456,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </div>
         )}
 
-        {/* 2. 👩 FEMALE VOICE GROUP WITH DROPDOWN ARROW (Minimum 10 Models + Uploaded Voice Library) */}
-        <div ref={femaleDropdownRef} style={{ position: "relative", display: "inline-flex" }}>
+        {/* 2 & 3. 👩 FEMALE & 👨 MALE VOICE GROUPS - ALWAYS IN ONE HORIZONTAL LINE FOR ALL */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "nowrap", flexShrink: 0 }}>
+          {/* 2. 👩 FEMALE VOICE GROUP WITH DROPDOWN ARROW (Minimum 10 Models + Uploaded Voice Library) */}
+          <div ref={femaleDropdownRef} style={{ position: "relative", display: "inline-flex" }}>
           <div style={{ display: "inline-flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 2px 6px rgba(225, 29, 72, 0.1)" }}>
             {/* Play Button */}
             <button
@@ -1895,6 +1951,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             </div>
           )}
         </div>
+      </div>
 
 
 
@@ -2198,10 +2255,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           </button>
                         )}
 
-                        {/* Both Female & Male Voice Groups side-by-side in ONE line */}
+                        {/* Both Female & Male Voice Groups side-by-side in ONE horizontal line */}
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", flexWrap: "nowrap" }}>
                           {/* Female Voice Group */}
-                          <div style={{ flex: 1, minWidth: 0, display: "flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 2px 6px rgba(225, 29, 72, 0.12)" }}>
+                          <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 2px 6px rgba(225, 29, 72, 0.12)" }}>
                             <button
                               type="button"
                               onClick={() => {
@@ -2220,12 +2277,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               }}
                               title={`Play in Female Voice (${selectedFemaleModel.name})`}
                               style={{
-                                flex: 1,
+                                flex: "1 1 0",
                                 minWidth: 0,
                                 backgroundColor: playingAudioId === `popup-fem-${primaryWord}` ? "#be185d" : "transparent",
                                 color: playingAudioId === `popup-fem-${primaryWord}` ? "#ffffff" : "#be185d",
                                 border: "none",
-                                padding: "6px 6px",
+                                padding: "6px 5px",
                                 fontSize: "12px",
                                 fontWeight: "700",
                                 cursor: "pointer",
@@ -2237,8 +2294,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 overflow: "hidden"
                               }}
                             >
-                              <FemaleIcon size={20} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
-                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ Female"}</span>
+                              <FemaleIcon size={18} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ Female"}
+                              </span>
                             </button>
                             {canDownloadAudio && (
                               <button
@@ -2265,7 +2324,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   color: "#be185d",
                                   border: "none",
                                   borderLeft: "1.5px solid #fda4af",
-                                  padding: "6px 8px",
+                                  padding: "6px 7px",
                                   fontSize: "12px",
                                   cursor: "pointer",
                                   display: "flex",
@@ -2280,7 +2339,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           </div>
 
                           {/* Male Voice Group */}
-                          <div style={{ flex: 1, minWidth: 0, display: "flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 2px 6px rgba(2, 132, 199, 0.12)" }}>
+                          <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 2px 6px rgba(2, 132, 199, 0.12)" }}>
                             <button
                               type="button"
                               onClick={() => {
@@ -2299,12 +2358,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               }}
                               title={`Play in Male Voice (${selectedMaleModel.name})`}
                               style={{
-                                flex: 1,
+                                flex: "1 1 0",
                                 minWidth: 0,
                                 backgroundColor: playingAudioId === `popup-male-${primaryWord}` ? "#0284c7" : "transparent",
                                 color: playingAudioId === `popup-male-${primaryWord}` ? "#ffffff" : "#0369a1",
                                 border: "none",
-                                padding: "6px 6px",
+                                padding: "6px 5px",
                                 fontSize: "12px",
                                 fontWeight: "700",
                                 cursor: "pointer",
@@ -2316,8 +2375,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 overflow: "hidden"
                               }}
                             >
-                              <MaleIcon size={20} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
-                              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ Male"}</span>
+                              <MaleIcon size={18} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ Male"}
+                              </span>
                             </button>
                             {canDownloadAudio && (
                               <button
@@ -2344,7 +2405,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   color: "#0369a1",
                                   border: "none",
                                   borderLeft: "1.5px solid #7dd3fc",
-                                  padding: "6px 8px",
+                                  padding: "6px 7px",
                                   fontSize: "12px",
                                   cursor: "pointer",
                                   display: "flex",
