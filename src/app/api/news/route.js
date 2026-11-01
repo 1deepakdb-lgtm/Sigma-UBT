@@ -73,6 +73,11 @@ export async function GET(req) {
   }
 }
 
+function sanitizeText(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim();
+}
+
 // POST: Publish a new notice (Superadmin for all or specific institute; Institute for own students; Korean / Japanese / All tracks)
 export async function POST(req) {
   try {
@@ -111,8 +116,8 @@ export async function POST(req) {
     const newItem = {
       id: Date.now(),
       category: category === 'news' ? 'news' : 'notice',
-      title: String(title).trim(),
-      content: String(content).trim(),
+      title: sanitizeText(title),
+      content: sanitizeText(content),
       isPopup: Boolean(isPopup),
       fileUrl: fileUrl || null,
       fileName: fileName || '',
@@ -135,6 +140,54 @@ export async function POST(req) {
   } catch (err) {
     console.error('POST /api/news error:', err);
     return NextResponse.json({ error: 'Failed to publish notice' }, { status: 500 });
+  }
+}
+
+// PUT: Update an existing notice by ID (Admin or publishing Institute)
+export async function PUT(req) {
+  try {
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
+
+    const body = await req.json();
+    const { id, title, content, isPopup, category, language } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Notice ID is required' }, { status: 400 });
+    }
+
+    const currentNotices = await getStoredNotices();
+    const index = currentNotices.findIndex((n) => String(n.id) === String(id));
+    if (index === -1) {
+      return NextResponse.json({ error: 'Notice not found' }, { status: 404 });
+    }
+
+    const existing = currentNotices[index];
+
+    // IDOR Ownership check: non-admins can only update notices belonging to their own institute
+    if (session.role !== 'admin') {
+      if (existing.instituteId && existing.instituteId !== session.instituteId) {
+        return NextResponse.json({ error: 'Forbidden: You can only update your own institute notices.' }, { status: 403 });
+      }
+    }
+
+    const updatedItem = {
+      ...existing,
+      title: title ? sanitizeText(title) : existing.title,
+      content: content ? sanitizeText(content) : existing.content,
+      isPopup: isPopup !== undefined ? Boolean(isPopup) : existing.isPopup,
+      category: category ? (category === 'news' ? 'news' : 'notice') : existing.category,
+      language: language ? (language || 'all').trim().toLowerCase() : existing.language,
+      updatedAt: new Date().toISOString()
+    };
+
+    currentNotices[index] = updatedItem;
+    await saveNotices(currentNotices);
+
+    return NextResponse.json({ success: true, notice: updatedItem, notices: currentNotices }, { status: 200 });
+  } catch (err) {
+    console.error('PUT /api/news error:', err);
+    return NextResponse.json({ error: 'Failed to update notice' }, { status: 500 });
   }
 }
 

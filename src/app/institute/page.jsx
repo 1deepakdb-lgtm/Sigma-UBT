@@ -285,14 +285,19 @@ const InstituteDashboard = () => {
       return;
     }
 
-    // Admin: can update both User ID and Password
+    // Admin: can update both User ID and Password (with mandatory current credential verification)
+    if (!credCurrentPassword || credCurrentPassword.trim().length === 0) {
+      setCredMsg("Please enter your current Password or PIN to authorize changes.");
+      return;
+    }
+
     if (!newCredUserId || newCredUserId.trim().length < 3) {
       setCredMsg("User ID must be at least 3 characters.");
       return;
     }
 
-    if (!newCredPassword || newCredPassword.trim().length < 4) {
-      setCredMsg("Password must be at least 4 characters/digits.");
+    if (!newCredPassword || newCredPassword.trim().length < 6) {
+      setCredMsg("New password must be at least 6 characters for security.");
       return;
     }
 
@@ -303,8 +308,9 @@ const InstituteDashboard = () => {
 
     setCredLoading(true);
     const res = await updateSharedGateCredentials({
-      newUserId: newCredUserId,
-      newPassword: newCredPassword,
+      currentPassword: credCurrentPassword.trim(),
+      newUserId: newCredUserId.trim(),
+      newPassword: newCredPassword.trim(),
       instituteName,
       currentRole: "admin"
     });
@@ -315,6 +321,7 @@ const InstituteDashboard = () => {
       setTimeout(() => {
         setShowCredModal(false);
         setCredMsg("");
+        setCredCurrentPassword("");
         setNewCredPassword("");
         setConfirmCredPassword("");
       }, 1500);
@@ -2696,32 +2703,30 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 )}
               </div>
 
-              {(unlockedRole === "staff" || userRole === "staff") && (
-                <div style={{ marginBottom: "14px" }}>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
-                    Current Password *
-                  </label>
-                  <input
-                    type="password"
-                    value={credCurrentPassword}
-                    onChange={(e) => setCredCurrentPassword(e.target.value)}
-                    placeholder="Enter your current password"
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: "6px",
-                      border: "1px solid #cbd5e1",
-                      fontSize: "14px",
-                      boxSizing: "border-box"
-                    }}
-                  />
-                </div>
-              )}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                  {(unlockedRole === "staff" || userRole === "staff") ? "Current Password *" : "Current Password / Admin PIN *"}
+                </label>
+                <input
+                  type="password"
+                  value={credCurrentPassword}
+                  onChange={(e) => setCredCurrentPassword(e.target.value)}
+                  placeholder={(unlockedRole === "staff" || userRole === "staff") ? "Enter your current password" : "Enter current admin password or PIN"}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "14px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
 
               <div style={{ marginBottom: "14px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
-                  New Password (Min 4 chars) *
+                  New Password (Min 6 chars) *
                 </label>
                 <input
                   type="password"

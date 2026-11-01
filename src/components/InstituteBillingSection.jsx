@@ -6793,10 +6793,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               ? "#1d4ed8"
                               : "#166534",
                           border: `1px solid ${(testStatus.state === "error" || (syncStatus && syncStatus.startsWith("")))
-                              ? "#fecaca"
-                              : (testStatus.state === "testing" || isSyncing)
-                                ? "#bfdbfe"
-                                : "#bbf7d0"
+                            ? "#fecaca"
+                            : (testStatus.state === "testing" || isSyncing)
+                              ? "#bfdbfe"
+                              : "#bbf7d0"
                             }`,
                           borderRadius: "6px",
                           padding: "10px 14px",
@@ -9977,3 +9977,4 @@ function doPost(e) {
     </div>
   );
 }
+\\

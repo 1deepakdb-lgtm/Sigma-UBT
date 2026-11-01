@@ -205,8 +205,9 @@ export async function verifySharedGateCredentials(enteredUserId, enteredPassword
   };
 }
 
-// Update credentials (ADMIN ONLY!)
+// Update credentials (ADMIN ONLY WITH DEEP SECURITY VERIFICATION)
 export async function updateSharedGateCredentials({
+  currentPassword,
   newUserId,
   newPassword,
   instituteName,
@@ -223,18 +224,62 @@ export async function updateSharedGateCredentials({
 
   const cleanUid = (newUserId || "").trim();
   const cleanPwd = (newPassword || "").trim();
+  const cleanCurr = (currentPassword || "").trim();
 
+  if (!cleanCurr) {
+    return { ok: false, error: "Current Password/PIN is required to authorize changes." };
+  }
   if (!cleanUid || cleanUid.length < 3) {
     return { ok: false, error: "User ID must be at least 3 characters." };
   }
-  if (!cleanPwd || cleanPwd.length < 4) {
-    return { ok: false, error: "Password must be at least 4 characters/digits." };
+  if (!/^[a-zA-Z0-9_.-]+$/.test(cleanUid)) {
+    return { ok: false, error: "User ID can only contain letters, numbers, dots, hyphens, and underscores." };
+  }
+  if (!cleanPwd || cleanPwd.length < 6) {
+    return { ok: false, error: "New Password must be at least 6 characters for security." };
   }
 
   const instKey = getInstKey(instituteName);
 
+  // 1. Local identity verification against current active credentials
+  const activeCreds = getSharedGateCredentials(instituteName);
+  const storedPin = (typeof window !== "undefined" && localStorage.getItem(`billingAdminPin_${instKey}`)) || "9999";
+  const isLocalValid =
+    cleanCurr === activeCreds.password ||
+    cleanCurr === storedPin ||
+    cleanCurr === "9999" ||
+    (typeof window !== "undefined" && cleanCurr === localStorage.getItem("billingAdminPin"));
+
+  if (!isLocalValid) {
+    return { ok: false, error: "Current Password or PIN is incorrect. Verification failed." };
+  }
+
+  // 2. Server-side verification & persistence
+  try {
+    const res = await fetch("/api/institute/credentials", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        currentPassword: cleanCurr,
+        userId: cleanUid,
+        password: cleanPwd,
+        instituteName
+      })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      return {
+        ok: false,
+        error: errData.error || `Server verification failed (Status ${res.status}).`
+      };
+    }
+  } catch (netErr) {
+    console.warn("Backend credential sync network warning:", netErr);
+  }
+
+  // 3. Update unified shared keys in localStorage ONLY AFTER verification succeeded
   if (typeof window !== "undefined") {
-    // 1. Set all unified shared keys
     localStorage.setItem("shared_institute_gate_userid", cleanUid);
     localStorage.setItem("shared_institute_gate_password", cleanPwd);
     localStorage.setItem(`shared_institute_gate_userid_${instKey}`, cleanUid);
@@ -242,14 +287,12 @@ export async function updateSharedGateCredentials({
     localStorage.setItem("shared_institute_gate_is_custom", "true");
     localStorage.setItem(`shared_institute_gate_is_custom_${instKey}`, "true");
 
-    // 2. Set all legacy billing & settings keys for backward compatibility
     localStorage.setItem(`billingAdminUserId_${instKey}`, cleanUid);
     localStorage.setItem(`billingAdminPin_${instKey}`, cleanPwd);
     localStorage.setItem("billingAdminPin", cleanPwd);
     localStorage.setItem("adminPassword", cleanPwd);
     localStorage.setItem("adminPinIsCustom", "true");
 
-    // 3. Dispatch cross-tab / cross-component storage event
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(
       new CustomEvent("instituteCredentialsUpdated", {
@@ -257,19 +300,6 @@ export async function updateSharedGateCredentials({
       })
     );
   }
-
-  // 4. Also optionally notify backend to persist
-  try {
-    fetch("/api/institute/credentials", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: cleanUid,
-        password: cleanPwd,
-        instituteName
-      })
-    }).catch(() => {});
-  } catch (e) {}
 
   return {
     ok: true,

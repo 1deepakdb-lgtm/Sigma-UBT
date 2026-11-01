@@ -484,17 +484,19 @@ export async function PUT(req) {
       const editParentLast10 = editParentDigits.length >= 10 ? editParentDigits.slice(-10) : editParentDigits;
       const editParentNumber = editParentLast10 ? `+977-${editParentLast10}` : (body.parentNumber !== undefined ? (body.parentNumber || '').trim() : existing.parentNumber);
 
+      const cleanStr = (val) => (typeof val === 'string' ? val.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim() : val);
+
       const updatedBill = await prisma.billRecord.update({
         where: { id: body.billId },
         data: {
           date: body.date || existing.date,
-          studentName: body.studentName ? body.studentName.trim() : existing.studentName,
-          address: body.address !== undefined ? body.address : existing.address,
+          studentName: body.studentName ? cleanStr(body.studentName) : existing.studentName,
+          address: body.address !== undefined ? cleanStr(body.address) : existing.address,
           contactNumber: editContactNumber,
-          parentName: body.parentName !== undefined ? (body.parentName || '').trim() : existing.parentName,
+          parentName: body.parentName !== undefined ? cleanStr(body.parentName) : existing.parentName,
           parentNumber: editParentNumber,
-          classTime: body.classTime !== undefined ? (body.classTime || '').trim() : existing.classTime,
-          courseDetail: body.courseDetail ? body.courseDetail.trim() : existing.courseDetail,
+          classTime: body.classTime !== undefined ? cleanStr(body.classTime) : existing.classTime,
+          courseDetail: body.courseDetail ? cleanStr(body.courseDetail) : existing.courseDetail,
           coursePackage: body.coursePackage || existing.coursePackage,
           paymentSystem: body.paymentSystem || existing.paymentSystem,
           grossFee: gross,
@@ -503,9 +505,9 @@ export async function PUT(req) {
           totalFee: total,
           paidAmount: paid,
           dueAmount: due,
-          amountInWords: body.amountInWords || existing.amountInWords,
+          amountInWords: body.amountInWords ? cleanStr(body.amountInWords) : existing.amountInWords,
           materialsJson: body.materials ? JSON.stringify(body.materials) : existing.materialsJson,
-          preparedBy: body.preparedBy !== undefined ? body.preparedBy : existing.preparedBy,
+          preparedBy: body.preparedBy !== undefined ? cleanStr(body.preparedBy) : existing.preparedBy,
           parentBillNumber: (body.paymentMethod && body.paymentMethod.trim()) ? body.paymentMethod.trim() : (existing.parentBillNumber || 'Cash')
         }
       });

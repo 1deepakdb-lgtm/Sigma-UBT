@@ -67,6 +67,11 @@ export async function GET(req) {
   }
 }
 
+function sanitizeText(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim();
+}
+
 export async function POST(req) {
   try {
     const { session, errorResponse } = await requireInstituteOrAdmin(req);
@@ -78,6 +83,13 @@ export async function POST(req) {
     if (body.bulkQuestions && Array.isArray(body.bulkQuestions)) {
       const { examSetId, bulkQuestions } = body;
       if (!examSetId) return NextResponse.json({ error: 'examSetId is required' }, { status: 400 });
+
+      // Ownership verification
+      const targetExamSet = await prisma.examSet.findUnique({ where: { id: examSetId } });
+      if (!targetExamSet) return NextResponse.json({ error: 'Exam Set not found' }, { status: 404 });
+      if (session.role !== 'admin' && targetExamSet.creatorInstituteId && targetExamSet.creatorInstituteId !== session.instituteId) {
+        return NextResponse.json({ error: 'Forbidden: You do not have permission to manage questions for this Exam Set.' }, { status: 403 });
+      }
 
       // Clean existing questions in this set if requested
       if (body.overwrite) {
@@ -91,13 +103,13 @@ export async function POST(req) {
             examSetId,
             qIndex: Number(q.qIndex || q.index || 1),
             type: q.type || (Number(q.qIndex || q.index || 1) <= 20 ? 'Reading' : 'Listening'),
-            mainHeading: q.mainHeading || '',
-            questionHeading: String(q.questionHeading || q.qIndex || ''),
-            description: q.description || '',
+            mainHeading: sanitizeText(q.mainHeading || ''),
+            questionHeading: sanitizeText(String(q.questionHeading || q.qIndex || '')),
+            description: sanitizeText(q.description || ''),
             image: q.image || '',
             audio: q.audio || '',
             optionsJson: JSON.stringify(q.options || []),
-            answer: Number(q.answer !== undefined ? q.answer : 0)
+            answer: Math.max(0, Math.min(3, Number(q.answer !== undefined ? q.answer : 0)))
           }
         });
         createdList.push({
@@ -131,18 +143,25 @@ export async function POST(req) {
       return NextResponse.json({ error: 'examSetId is required' }, { status: 400 });
     }
 
+    // Ownership verification
+    const targetExamSet = await prisma.examSet.findUnique({ where: { id: examSetId } });
+    if (!targetExamSet) return NextResponse.json({ error: 'Exam Set not found' }, { status: 404 });
+    if (session.role !== 'admin' && targetExamSet.creatorInstituteId && targetExamSet.creatorInstituteId !== session.instituteId) {
+      return NextResponse.json({ error: 'Forbidden: You do not have permission to add questions to this Exam Set.' }, { status: 403 });
+    }
+
     const created = await prisma.question.create({
       data: {
         examSetId,
         qIndex: Number(qIndex),
-        type,
-        mainHeading,
-        questionHeading: String(questionHeading || qIndex),
-        description,
-        image,
-        audio,
+        type: type === 'Listening' ? 'Listening' : 'Reading',
+        mainHeading: sanitizeText(mainHeading),
+        questionHeading: sanitizeText(String(questionHeading || qIndex)),
+        description: sanitizeText(description),
+        image: image || '',
+        audio: audio || '',
         optionsJson: JSON.stringify(options),
-        answer: Number(answer)
+        answer: Math.max(0, Math.min(3, Number(answer)))
       }
     });
 
@@ -179,16 +198,31 @@ export async function PUT(req) {
 
     if (!id) return NextResponse.json({ error: 'Question ID is required' }, { status: 400 });
 
+    // IDOR Protection: verify target question and exam set ownership
+    const existing = await prisma.question.findUnique({
+      where: { id },
+      include: { examSet: true }
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Question not found' }, { status: 404 });
+    }
+
+    if (session.role !== 'admin' && existing.examSet?.creatorInstituteId && existing.examSet.creatorInstituteId !== session.instituteId) {
+      return NextResponse.json({
+        error: 'Forbidden: You do not have authorization to edit questions in this Exam Set.'
+      }, { status: 403 });
+    }
+
     const updateData = {};
     if (qIndex !== undefined) updateData.qIndex = Number(qIndex);
-    if (type !== undefined) updateData.type = type;
-    if (mainHeading !== undefined) updateData.mainHeading = mainHeading;
-    if (questionHeading !== undefined) updateData.questionHeading = String(questionHeading);
-    if (description !== undefined) updateData.description = description;
+    if (type !== undefined) updateData.type = type === 'Listening' ? 'Listening' : 'Reading';
+    if (mainHeading !== undefined) updateData.mainHeading = sanitizeText(mainHeading);
+    if (questionHeading !== undefined) updateData.questionHeading = sanitizeText(String(questionHeading));
+    if (description !== undefined) updateData.description = sanitizeText(description);
     if (image !== undefined) updateData.image = image;
     if (audio !== undefined) updateData.audio = audio;
     if (options !== undefined) updateData.optionsJson = JSON.stringify(options);
-    if (answer !== undefined) updateData.answer = Number(answer);
+    if (answer !== undefined) updateData.answer = Math.max(0, Math.min(3, Number(answer)));
 
     const updated = await prisma.question.update({
       where: { id },
@@ -217,6 +251,21 @@ export async function DELETE(req) {
     const id = searchParams.get('id');
 
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+
+    // IDOR Protection: verify target question and exam set ownership before deletion
+    const existing = await prisma.question.findUnique({
+      where: { id },
+      include: { examSet: true }
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Question not found' }, { status: 404 });
+    }
+
+    if (session.role !== 'admin' && existing.examSet?.creatorInstituteId && existing.examSet.creatorInstituteId !== session.instituteId) {
+      return NextResponse.json({
+        error: 'Forbidden: You do not have authorization to delete questions from this Exam Set.'
+      }, { status: 403 });
+    }
 
     await prisma.question.delete({ where: { id } });
     return NextResponse.json({ success: true, message: 'Question deleted' });
