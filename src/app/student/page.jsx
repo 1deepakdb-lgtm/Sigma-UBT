@@ -1553,11 +1553,11 @@ const StudentDashboard = () => {
                 </p>
               </div>
 
-              <div onClick={() => setActiveTab("vocab")} style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #ddd6fe", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
+              <div onClick={() => setActiveTab("vocab")} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <BookOpenIcon size={28} color="#7c3aed" />
+                  <BookOpenIcon size={28} color="#2563eb" />
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>Dictionary</h3>
+                <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>Dictionary</h3>
                 <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
                   {instituteLanguage === "japanese" ? "Japanese, Nepali, and English vocabulary lookup" : instituteLanguage === "korean" ? "Korean, Nepali, and English vocabulary lookup" : "Korean & Japanese vocabulary lookup with pronunciation"}
                 </p>
@@ -1774,7 +1774,7 @@ const StudentDashboard = () => {
                   : "Available Exam Sets & Mock Tests"}
               </h3>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "12px", fontWeight: "700", color: (isPureJapaneseStudent || examCategoryFilter === "mock") ? "#7c3aed" : "#2563eb", backgroundColor: (isPureJapaneseStudent || examCategoryFilter === "mock") ? "#faf5ff" : "#eff6ff", padding: "4px 10px", borderRadius: "6px" }}>
+                <span style={{ fontSize: "12px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "4px 10px", borderRadius: "6px" }}>
                   {filteredSets.length} Sets Ready
                 </span>
                 <input
@@ -2165,7 +2165,7 @@ const StudentDashboard = () => {
                       <span>📢</span> Notices & Announcements
                     </h3>
                     <p style={{ margin: "3px 0 0 0", fontSize: "12px", color: "#64748b" }}>
-                      Active Category: <strong style={{ color: effectiveFilter === "japanese" ? "#9333ea" : effectiveFilter === "korean" ? "#2563eb" : "#0f172a" }}>
+                      Active Category: <strong style={{ color: "#2563eb" }}>
                         {effectiveFilter === "all" ? "All Announcements" : "Notice"}
                       </strong>
                     </p>
@@ -2179,7 +2179,7 @@ const StudentDashboard = () => {
                         type="button"
                         onClick={() => setNoticeFilterTrack(tab.key)}
                         style={{
-                          backgroundColor: (effectiveFilter === tab.key) ? (tab.key === "japanese" ? "#9333ea" : tab.key === "korean" ? "#2563eb" : "#1e293b") : "transparent",
+                          backgroundColor: (effectiveFilter === tab.key) ? (tab.key === "all" ? "#1e293b" : "#2563eb") : "transparent",
                           color: (effectiveFilter === tab.key) ? "#ffffff" : "#475569",
                           border: "none",
                           borderRadius: "7px",
@@ -2401,7 +2401,7 @@ const StudentDashboard = () => {
                   return (
                     <div key={pkg.id || idx} style={{ backgroundColor: "#ffffff", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                       <div>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: isMock ? "#7e22ce" : "#2563eb", background: isMock ? "#faf5ff" : "#eff6ff", border: isMock ? "1px solid #e9d5ff" : "1px solid #bfdbfe", padding: "3px 8px", borderRadius: "4px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", padding: "3px 8px", borderRadius: "4px" }}>
                           {isMock ? "🇯🇵 MOCK TEST PACKAGE" : "🇰🇷 UBT PACKAGE"}
                         </span>
                         <h4 style={{ margin: "14px 0 8px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>{pkg.name}</h4>

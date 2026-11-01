@@ -377,7 +377,7 @@ export default function OfficialPortalButtons({
               fontSize: '12px',
               fontWeight: '800',
               cursor: 'pointer',
-              backgroundColor: activeTab === 'japanese' ? '#9333ea' : 'transparent',
+              backgroundColor: activeTab === 'japanese' ? '#2563eb' : 'transparent',
               color: activeTab === 'japanese' ? '#ffffff' : '#475569',
               transition: 'all 0.15s ease'
             }}
