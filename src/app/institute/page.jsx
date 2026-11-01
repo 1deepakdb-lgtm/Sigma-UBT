@@ -24,7 +24,15 @@ import { JLPT_MOCK_SETS_META } from "@/data/jlptMockTestData";
 
 const InstituteDashboard = () => {
   const router = useRouter();
-  const [instituteName, setInstituteName] = useState("Language Institute");
+  const [instituteName, setInstituteName] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlInst = params.get("institute");
+      if (urlInst) return decodeURIComponent(urlInst);
+      return localStorage.getItem("currentInstitute") || "Language Institute";
+    }
+    return "Language Institute";
+  });
 
   const [instId, setInstId] = useState(null);
 
@@ -1103,8 +1111,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     backgroundPosition: "center",
     backgroundSize: "350px",
     backgroundBlendMode: "overlay",
-    overflowY: "scroll",
-    scrollbarGutter: "stable",
     ...protectedStyle
   };
 
@@ -1116,24 +1122,58 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     minHeight: "64px",
     maxHeight: "64px",
     display: "flex", 
-    justifyContent: "space-between", 
     alignItems: "center", 
     boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
     flexWrap: "nowrap",
-    gap: "16px",
-    position: "sticky",
+    position: "fixed",
     top: 0,
-    zIndex: 1000,
+    left: 0,
+    right: 0,
+    width: "100%",
+    zIndex: 9999,
     boxSizing: "border-box",
     overflowX: "auto",
     WebkitOverflowScrolling: "touch"
   };
 
+  const navInnerStyle = {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minWidth: "960px",
+    height: "100%"
+  };
+
+  const navLeftSlotStyle = {
+    flex: "1 1 0",
+    minWidth: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexShrink: 0,
+    whiteSpace: "nowrap",
+    fontSize: "17px",
+    fontWeight: "800"
+  };
+
   const menuContainerStyle = { 
+    flex: "0 0 auto",
     display: "flex", 
-    gap: "6px", 
+    gap: "8px", 
     flexWrap: "nowrap", 
     alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    whiteSpace: "nowrap"
+  };
+
+  const navRightSlotStyle = {
+    flex: "1 1 0",
+    minWidth: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
     flexShrink: 0,
     whiteSpace: "nowrap"
   };
@@ -1167,6 +1207,10 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
   return (
     <div style={containerStyle} onContextMenu={(e) => e.preventDefault()}>
       <style>{`
+        html, body {
+          overflow-y: scroll !important;
+          scrollbar-gutter: stable !important;
+        }
         .dynamic-card {
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
@@ -1267,63 +1311,69 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       )}
 
       <div style={topNavStyle}>
-        <div style={{ fontSize: "17px", fontWeight: "800", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, whiteSpace: "nowrap" }}>
-          <span>INSTITUTE PANEL ({instituteName || "sig"})</span>
-          {userRole === "staff" && (
-            <span style={{ fontSize: "11px", backgroundColor: "#10b981", color: "white", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold", flexShrink: 0, whiteSpace: "nowrap" }}>
-              👤 Staff Cashier
-            </span>
-          )}
-        </div>
-        
-        <div style={menuContainerStyle}>
-          <button onClick={() => handleTabChange("billing")} style={getNavBtnStyle("billing")}>
-            Billing
-          </button>
+        <div style={navInnerStyle}>
+          <div style={navLeftSlotStyle}>
+            <span>INSTITUTE PANEL ({instituteName || "sig"})</span>
+            {userRole === "staff" && (
+              <span style={{ fontSize: "11px", backgroundColor: "#10b981", color: "white", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold", flexShrink: 0, whiteSpace: "nowrap" }}>
+                👤 Staff Cashier
+              </span>
+            )}
+          </div>
           
-          <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>
-            Study Materials
-          </button>
-          
-          <button onClick={() => handleTabChange("dictionary")} style={getNavBtnStyle("dictionary")}>
-            Dictionary
-          </button>
-          
-          <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>
-            Notice
-          </button>
-          
-          {userRole !== "staff" && (
-            <button onClick={() => handleTabChange("students")} style={getNavBtnStyle("students")}>
-              Manage Students
+          <div style={menuContainerStyle}>
+            <button onClick={() => handleTabChange("billing")} style={getNavBtnStyle("billing")}>
+              Billing
             </button>
-          )}
-        </div>
+            
+            <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>
+              Study Materials
+            </button>
+            
+            <button onClick={() => handleTabChange("dictionary")} style={getNavBtnStyle("dictionary")}>
+              Dictionary
+            </button>
+            
+            <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>
+              Notice
+            </button>
+            
+            {userRole !== "staff" && (
+              <button onClick={() => handleTabChange("students")} style={getNavBtnStyle("students")}>
+                Manage Students
+              </button>
+            )}
+          </div>
 
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-          <button 
-            onClick={handleLogout} 
-            style={{ 
-              backgroundColor: "#ef4444", 
-              color: "white", 
-              border: "none", 
-              padding: "8px 18px", 
-              borderRadius: "6px", 
-              cursor: "pointer", 
-              fontWeight: "700", 
-              fontSize: "13px",
-              flexShrink: 0,
-              whiteSpace: "nowrap",
-              minHeight: "38px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            Logout
-          </button>
+          <div style={navRightSlotStyle}>
+            <button 
+              onClick={handleLogout} 
+              style={{ 
+                backgroundColor: "#ef4444", 
+                color: "white", 
+                border: "none", 
+                padding: "8px 18px", 
+                borderRadius: "6px", 
+                cursor: "pointer", 
+                fontWeight: "700", 
+                fontSize: "13px",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
+                minHeight: "38px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background-color 0.15s ease"
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Fixed Navbar Spacer: Keeps page content exactly in place without overlap */}
+      <div style={{ height: "64px", minHeight: "64px", flexShrink: 0 }} aria-hidden="true" />
 
       <div style={contentAreaStyle}>
         
