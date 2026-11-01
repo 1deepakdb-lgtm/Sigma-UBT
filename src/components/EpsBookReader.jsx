@@ -681,7 +681,13 @@ export default function EpsBookReader({
   purchasedPackages = [],
   onNavigateTab = null,
   instituteLanguage: propInstituteLanguage,
-  initialFolder = null
+  initialFolder = null,
+  onOpenEsewaModal = null,
+  unlockedSets = [],
+  pendingQueries = [],
+  isPackageExpired = false,
+  effectiveExpiryDate = null,
+  activeStudentPackages = []
 }) {
   const router = useRouter();
   const isInstitute = mode === "institute";
@@ -6280,10 +6286,33 @@ export default function EpsBookReader({
                       flexWrap: "wrap",
                       gap: "14px"
                     }}>
-                      <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                         <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "#5b21b6" }}>
-                          Mock Test
+                          Japanese CBT Mock Test
                         </h2>
+                        {onNavigateTab && (
+                          <button
+                            type="button"
+                            onClick={() => onNavigateTab("buyExam")}
+                            style={{
+                              padding: "6px 14px",
+                              borderRadius: "8px",
+                              backgroundColor: "#7c3aed",
+                              color: "#ffffff",
+                              border: "none",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              boxShadow: "0 2px 6px rgba(124, 58, 237, 0.25)"
+                            }}
+                          >
+                            <span>📦</span>
+                            <span>View Mock Test Packages</span>
+                          </button>
+                        )}
                       </div>
 
                       {/* Level Filters for N5, N4, N3, N2, N1 & JFT */}
@@ -6377,6 +6406,46 @@ export default function EpsBookReader({
                     }}>
                       {filteredJlptSets.map((set) => {
                         const pastScore = jlptPastResults[set.id];
+                        const isFree = Boolean(
+                          set.isFree ||
+                          set.setType === "FREE" ||
+                          set.setNumber === 1 ||
+                          (set.id && String(set.id).endsWith("-01")) ||
+                          (set.title && set.title.toLowerCase().includes("free demo"))
+                        );
+                        const setId = set.id?.toString();
+                        const setTitle = (set.title || set.name)?.toString();
+                        const individuallyUnlocked = unlockedSets.some((id) => id?.toString() === setId || id?.toString() === setTitle);
+
+                        const norm = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                        const packageCovered = !isPackageExpired && (
+                          activeStudentPackages.some((pkgName) => {
+                            const pNorm = norm(pkgName);
+                            if (pNorm.includes("full") || pNorm.includes("mock")) return true;
+                            if (set.level && pNorm.includes(norm(set.level))) return true;
+                            return false;
+                          }) ||
+                          purchasedPackages.some((pkgName) => {
+                            const pNorm = norm(pkgName);
+                            if (pNorm.includes("full") || pNorm.includes("mock")) return true;
+                            if (set.level && pNorm.includes(norm(set.level))) return true;
+                            return false;
+                          }) ||
+                          norm(studentPackage).includes("full") ||
+                          norm(studentPackage).includes("mock") ||
+                          (set.level && norm(studentPackage).includes(norm(set.level)))
+                        );
+
+                        const pending = pendingQueries.some((q) =>
+                          (q.status === "Pending" || q.status === "PENDING") &&
+                          q.itemType !== "package" &&
+                          (
+                            (q.itemId && q.itemId.toString() === setId) ||
+                            (q.itemName && q.itemName.toString() === setTitle)
+                          )
+                        );
+
+                        const unlocked = isFree || individuallyUnlocked || packageCovered;
 
                         return (
                           <div
@@ -6384,7 +6453,7 @@ export default function EpsBookReader({
                             style={{
                               backgroundColor: "#ffffff",
                               borderRadius: "16px",
-                              border: "1.5px solid #e2e8f0",
+                              border: isFree ? "1.5px solid #6ee7b7" : "1.5px solid #e2e8f0",
                               padding: "20px",
                               display: "flex",
                               flexDirection: "column",
@@ -6393,19 +6462,44 @@ export default function EpsBookReader({
                               transition: "transform 0.15s ease, box-shadow 0.15s ease"
                             }}
                           >
-                            {/* Card Top: Level Badge & CBT Badge */}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{
-                                padding: "4px 10px",
-                                borderRadius: "8px",
-                                fontSize: "11px",
-                                fontWeight: "800",
-                                backgroundColor: "#faf5ff",
-                                color: "#7c3aed",
-                                border: "1px solid #ddd6fe"
-                              }}>
-                                {set.level}
-                              </span>
+                            {/* Card Top: Level Badge, Status Badge & CBT Duration */}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{
+                                  padding: "4px 10px",
+                                  borderRadius: "8px",
+                                  fontSize: "11px",
+                                  fontWeight: "800",
+                                  backgroundColor: "#faf5ff",
+                                  color: "#7c3aed",
+                                  border: "1px solid #ddd6fe"
+                                }}>
+                                  {set.level}
+                                </span>
+                                {mode === "student" && (
+                                  isFree ? (
+                                    <span style={{ fontSize: "10px", fontWeight: "800", color: "#065f46", backgroundColor: "#d1fae5", border: "1px solid #6ee7b7", padding: "2px 6px", borderRadius: "4px" }}>
+                                      🎁 FREE DEMO
+                                    </span>
+                                  ) : individuallyUnlocked ? (
+                                    <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 6px", borderRadius: "4px" }}>
+                                      ✓ UNLOCKED (Rs. 40)
+                                    </span>
+                                  ) : packageCovered ? (
+                                    <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 6px", borderRadius: "4px" }}>
+                                      ✓ PACKAGE UNLOCKED
+                                    </span>
+                                  ) : pending ? (
+                                    <span style={{ fontSize: "10px", fontWeight: "800", color: "#0369a1", backgroundColor: "#e0f2fe", border: "1px solid #bae6fd", padding: "2px 6px", borderRadius: "4px" }}>
+                                      ⏳ PENDING
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: "10px", fontWeight: "800", color: "#b45309", backgroundColor: "#fef3c7", border: "1px solid #fde68a", padding: "2px 6px", borderRadius: "4px" }}>
+                                      🔒 LOCKED · Rs. 40
+                                    </span>
+                                  )
+                                )}
+                              </div>
 
                               <span style={{
                                 padding: "4px 10px",
@@ -6512,33 +6606,102 @@ export default function EpsBookReader({
                             {/* Action Buttons */}
                             <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
                               {mode === "student" ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const fullSet = getMockExamSetById(set.id);
-                                    setActiveJlptExamSet(fullSet);
-                                    setJlptExamMode("student");
-                                  }}
-                                  style={{
-                                    width: "100%",
-                                    padding: "11px 16px",
-                                    borderRadius: "10px",
-                                    border: "none",
-                                    backgroundColor: "#7c3aed",
-                                    backgroundImage: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
-                                    color: "#ffffff",
-                                    fontSize: "13px",
-                                    fontWeight: "800",
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    boxShadow: "0 4px 12px rgba(124, 58, 237, 0.28)",
-                                    transition: "all 0.15s ease"
-                                  }}
-                                >
-                                  <span>{pastScore ? "Retake CBT Mock Exam" : "Start CBT Mock Exam"}</span>
-                                </button>
+                                unlocked ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (isPackageExpired && !individuallyUnlocked && !isFree) {
+                                        alert(`Your package expired on ${effectiveExpiryDate}. Please renew your package to take mock exam sets.`);
+                                        return;
+                                      }
+                                      const fullSet = getMockExamSetById(set.id);
+                                      setActiveJlptExamSet(fullSet);
+                                      setJlptExamMode("student");
+                                    }}
+                                    style={{
+                                      width: "100%",
+                                      padding: "11px 16px",
+                                      borderRadius: "10px",
+                                      border: "none",
+                                      backgroundColor: isFree ? "#059669" : "#16a34a",
+                                      backgroundImage: isFree
+                                        ? "linear-gradient(135deg, #059669 0%, #047857 100%)"
+                                        : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                                      color: "#ffffff",
+                                      fontSize: "13px",
+                                      fontWeight: "800",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: "6px",
+                                      boxShadow: isFree ? "0 4px 12px rgba(5, 150, 105, 0.28)" : "0 4px 12px rgba(22, 163, 74, 0.28)",
+                                      transition: "all 0.15s ease"
+                                    }}
+                                  >
+                                    <span>{pastScore ? "Retake CBT Mock Exam ▶" : isFree ? "Start Free Demo Exam ▶" : "Start CBT Mock Exam ▶"}</span>
+                                  </button>
+                                ) : pending ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      alert(`Your payment query for "${set.title}" (Rs. 40) is currently pending review by Admin.\n\nYour payment screenshot and transaction details were submitted. Once Admin verifies and confirms the payment, your set will unlock automatically.`);
+                                    }}
+                                    style={{
+                                      width: "100%",
+                                      padding: "11px 16px",
+                                      borderRadius: "10px",
+                                      border: "none",
+                                      background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+                                      color: "#ffffff",
+                                      fontSize: "13px",
+                                      fontWeight: "800",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: "6px",
+                                      boxShadow: "0 4px 12px rgba(2, 132, 199, 0.28)"
+                                    }}
+                                  >
+                                    <span>⏳ PENDING CONFIRMATION</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (onOpenEsewaModal) {
+                                        onOpenEsewaModal({
+                                          id: set.id,
+                                          name: set.title || set.name,
+                                          price: 40,
+                                          type: "set",
+                                          packageName: set.level || "Japanese Mock Test"
+                                        });
+                                      } else {
+                                        alert("Please navigate to the Packages tab to purchase or unlock this Mock Test set.");
+                                      }
+                                    }}
+                                    style={{
+                                      width: "100%",
+                                      padding: "11px 16px",
+                                      borderRadius: "10px",
+                                      border: "none",
+                                      background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                                      color: "#ffffff",
+                                      fontSize: "13px",
+                                      fontWeight: "800",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      gap: "6px",
+                                      boxShadow: "0 4px 12px rgba(217, 119, 6, 0.28)"
+                                    }}
+                                  >
+                                    <span>🔒 BUY TO UNLOCK ▶ (Rs. 40)</span>
+                                  </button>
+                                )
                               ) : (
                                 <div style={{ display: "flex", gap: "8px" }}>
                                   <button
