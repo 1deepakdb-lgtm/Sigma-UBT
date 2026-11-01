@@ -1417,8 +1417,8 @@ const StudentDashboard = () => {
                 setExamSetsPage(1);
               }}
               style={activeTab === "exams" && examCategoryFilter === "mock"
-                ? { ...getNavBtnStyle("exams"), backgroundColor: "#7c3aed", color: "#ffffff", fontWeight: "800" }
-                : { ...getNavBtnStyle("exams"), color: activeTab === "exams" && examCategoryFilter === "mock" ? "#ffffff" : "#c4b5fd" }}
+                ? { ...getNavBtnStyle("exams"), backgroundColor: "#2563eb", color: "#ffffff", fontWeight: "800" }
+                : getNavBtnStyle("exams")}
             >
               Mock Test
             </button>
@@ -1522,12 +1522,12 @@ const StudentDashboard = () => {
                   setActiveTab("exams");
                   setExamCategoryFilter("mock");
                   setExamSetsPage(1);
-                }} style={{ background: "linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #ddd6fe", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
+                }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
                   <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                    <LaptopExamIcon size={28} color="#7c3aed" />
+                    <LaptopExamIcon size={28} color="#2563eb" />
                   </div>
-                  <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>
-                    CBT Mock Test (JLPT &amp; JFT)
+                  <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
+                    Mock Test
                   </h3>
                   <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
                     JLPT (N5–N2), JFT-Basic &amp; NAT-TEST mock exams · Individual sets Rs. 40 or full package
@@ -1750,13 +1750,13 @@ const StudentDashboard = () => {
                   style={{
                     padding: "8px 18px",
                     borderRadius: "20px",
-                    border: examCategoryFilter === "mock" ? "1.5px solid #7c3aed" : "1px solid #cbd5e1",
-                    backgroundColor: examCategoryFilter === "mock" ? "#7c3aed" : "#ffffff",
+                    border: examCategoryFilter === "mock" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                    backgroundColor: examCategoryFilter === "mock" ? "#2563eb" : "#ffffff",
                     color: examCategoryFilter === "mock" ? "#ffffff" : "#334155",
                     fontSize: "13px",
                     fontWeight: "800",
                     cursor: "pointer",
-                    boxShadow: examCategoryFilter === "mock" ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
+                    boxShadow: examCategoryFilter === "mock" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
                     transition: "all 0.15s ease"
                   }}
                 >
@@ -1849,13 +1849,13 @@ const StudentDashboard = () => {
                       style={{
                         padding: "6px 14px",
                         borderRadius: "20px",
-                        border: isActive ? "1.5px solid #7c3aed" : "1px solid #cbd5e1",
-                        backgroundColor: isActive ? "#7c3aed" : "#ffffff",
+                        border: isActive ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                        backgroundColor: isActive ? "#2563eb" : "#ffffff",
                         color: isActive ? "#ffffff" : "#334155",
                         fontSize: "12px",
                         fontWeight: "700",
                         cursor: "pointer",
-                        boxShadow: isActive ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
+                        boxShadow: isActive ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
                         transition: "all 0.15s ease"
                       }}
                     >
@@ -2379,13 +2379,13 @@ const StudentDashboard = () => {
                     style={{
                       padding: "8px 18px",
                       borderRadius: "20px",
-                      border: packageCategoryFilter === "mock" ? "1.5px solid #7c3aed" : "1px solid #cbd5e1",
-                      backgroundColor: packageCategoryFilter === "mock" ? "#7c3aed" : "#ffffff",
+                      border: packageCategoryFilter === "mock" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                      backgroundColor: packageCategoryFilter === "mock" ? "#2563eb" : "#ffffff",
                       color: packageCategoryFilter === "mock" ? "#ffffff" : "#334155",
                       fontSize: "13px",
                       fontWeight: "800",
                       cursor: "pointer",
-                      boxShadow: packageCategoryFilter === "mock" ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
+                      boxShadow: packageCategoryFilter === "mock" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
                       transition: "all 0.15s ease"
                     }}
                   >
