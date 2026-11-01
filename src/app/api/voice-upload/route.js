@@ -72,6 +72,19 @@ export async function POST(req) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Block polyglot script attacks (PHP/ASP/JS embedded in audio)
+    const textPreview = buffer.slice(0, 512).toString('utf8', 0, 512);
+    const DANGEROUS_MARKERS = [
+      '<?php', '<?=', '<asp', '<%@', '<script', 'eval(', 'exec(',
+      'system(', 'passthru(', 'shell_exec(', 'base64_decode('
+    ];
+    if (DANGEROUS_MARKERS.some((m) => textPreview.toLowerCase().includes(m.toLowerCase()))) {
+      return NextResponse.json(
+        { error: 'Security alert: Dangerous script content detected in audio upload.' },
+        { status: 400 }
+      );
+    }
+
     const safeBaseName = path
       .basename(file.name || 'user_voice', ext)
       .replace(/[^a-zA-Z0-9_-]/g, '_')

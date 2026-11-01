@@ -40,6 +40,25 @@ export async function GET(req) {
       return NextResponse.redirect(`${origin}/student?payment_status=failed&reason=missing_uuid`);
     }
 
+    // Require transaction to exist in database
+    const tx = await prisma.paymentTransaction.findUnique({
+      where: { transactionUuid: transaction_uuid }
+    });
+
+    if (!tx) {
+      console.warn("[eSewa Verify] Unregistered transaction callback rejected:", transaction_uuid);
+      return NextResponse.redirect(`${origin}/student?payment_status=failed&reason=invalid_transaction`);
+    }
+
+    // Replay attack prevention: if transaction was already marked complete, do not duplicate release
+    if (tx.status === "COMPLETE") {
+      const redirectUrl = new URL(`${origin}/student`);
+      redirectUrl.searchParams.set("payment_status", "success");
+      redirectUrl.searchParams.set("item_id", tx.itemId);
+      redirectUrl.searchParams.set("already_verified", "true");
+      return NextResponse.redirect(redirectUrl.toString());
+    }
+
     const config = await getEsewaConfig();
 
     // 1. Verify HMAC-SHA256 signature
@@ -53,47 +72,46 @@ export async function GET(req) {
       serverStatus.success ||
       serverStatus.status === "COMPLETE";
 
-    if (!isConfirmed) {
-      console.warn("[eSewa Verify] Payment not confirmed:", {
+    // 3. Verify amount paid matches or exceeds the initiated bill amount
+    const paidAmountNum = Number(total_amount);
+    const expectedAmountNum = Number(tx.amount);
+    const isAmountCorrect = !isNaN(paidAmountNum) && paidAmountNum >= expectedAmountNum;
+
+    if (!isConfirmed || !isAmountCorrect) {
+      console.warn("[eSewa Verify] Payment verification failed:", {
         isSignatureValid,
         status,
-        serverStatus
+        serverStatus,
+        paidAmountNum,
+        expectedAmountNum
       });
 
-      // Mark transaction failed if exists
-      await prisma.paymentTransaction.updateMany({
-        where: { transactionUuid: transaction_uuid },
+      await prisma.paymentTransaction.update({
+        where: { id: tx.id },
         data: {
           status: "FAILED",
           rawResponse: JSON.stringify(decodedData)
         }
       });
 
-      return NextResponse.redirect(`${origin}/student?payment_status=failed&reason=unverified`);
+      return NextResponse.redirect(`${origin}/student?payment_status=failed&reason=unverified_or_amount_mismatch`);
     }
-
-    // Find and update the pending transaction
-    const tx = await prisma.paymentTransaction.findUnique({
-      where: { transactionUuid: transaction_uuid }
-    });
 
     const txCode = transaction_code || serverStatus.refId || "ESEWA_VERIFIED";
 
-    if (tx) {
-      await prisma.paymentTransaction.update({
-        where: { id: tx.id },
-        data: {
-          status: "COMPLETE",
-          transactionCode: txCode,
-          rawResponse: JSON.stringify(decodedData)
-        }
-      });
-    }
+    await prisma.paymentTransaction.update({
+      where: { id: tx.id },
+      data: {
+        status: "COMPLETE",
+        transactionCode: txCode,
+        rawResponse: JSON.stringify(decodedData)
+      }
+    });
 
-    const itemId = tx?.itemId || "set-1";
-    const itemName = tx?.itemName || "UBT Exam Set";
-    const itemType = tx?.itemType || "set";
-    const amount = tx?.amount || total_amount || "40";
+    const itemId = tx.itemId;
+    const itemName = tx.itemName;
+    const itemType = tx.itemType;
+    const amount = tx.amount;
 
     const redirectUrl = new URL(`${origin}/student`);
     redirectUrl.searchParams.set("payment_status", "success");

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { requireInstituteOrAdmin } from '@/lib/rbac';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const NOTICES_FILE = path.join(DATA_DIR, 'notices.json');
@@ -75,6 +76,9 @@ export async function GET(req) {
 // POST: Publish a new notice (Superadmin for all or specific institute; Institute for own students; Korean / Japanese / All tracks)
 export async function POST(req) {
   try {
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
+
     const body = await req.json();
     const {
       title,
@@ -88,7 +92,6 @@ export async function POST(req) {
       instituteName = null,
       instituteId = null,
       targetAudience = 'all',
-      publishedBy = 'institute',
       language = 'all'
     } = body;
 
@@ -98,9 +101,11 @@ export async function POST(req) {
 
     const currentNotices = await getStoredNotices();
 
-    const isGlobal = targetAudience === 'all' && (!instituteName || publishedBy === 'admin');
-    const chosenTarget = isGlobal ? 'all' : (targetAudience || instituteName || 'all');
-    const assignedInst = isGlobal ? null : (instituteName || (targetAudience !== 'all' ? targetAudience : null));
+    const isAdmin = session.role === 'admin';
+    const isGlobal = isAdmin && targetAudience === 'all';
+    const assignedInst = isGlobal ? null : (isAdmin ? (instituteName || targetAudience || null) : (session.name || session.instituteName || session.username));
+    const assignedInstId = isGlobal ? null : (isAdmin ? (instituteId || null) : (session.instituteId || null));
+    const chosenTarget = isGlobal ? 'all' : (assignedInst || 'all');
     const targetLanguage = (language || body.track || 'all').trim().toLowerCase();
 
     const newItem = {
@@ -115,8 +120,8 @@ export async function POST(req) {
       fileSize: Number(fileSize) || 0,
       targetAudience: chosenTarget,
       instituteName: assignedInst,
-      instituteId: instituteId || null,
-      publishedBy: publishedBy || (assignedInst ? 'institute' : 'admin'),
+      instituteId: assignedInstId,
+      publishedBy: isAdmin ? 'admin' : 'institute',
       language: targetLanguage, // 'all' | 'korean' | 'japanese'
       track: targetLanguage,
       date: new Date().toISOString().split('T')[0],
@@ -133,9 +138,12 @@ export async function POST(req) {
   }
 }
 
-// DELETE: Delete a notice by ID
+// DELETE: Delete a notice by ID (Admin or publishing Institute)
 export async function DELETE(req) {
   try {
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
@@ -144,6 +152,19 @@ export async function DELETE(req) {
     }
 
     const currentNotices = await getStoredNotices();
+    const noticeToDelete = currentNotices.find((n) => String(n.id) === String(id));
+
+    if (!noticeToDelete) {
+      return NextResponse.json({ success: true, notices: currentNotices });
+    }
+
+    // Ownership check: non-admins can only delete notices that belong to their own institute
+    if (session.role !== 'admin') {
+      if (noticeToDelete.instituteId && noticeToDelete.instituteId !== session.instituteId) {
+        return NextResponse.json({ error: 'Forbidden: You can only delete your own institute notices.' }, { status: 403 });
+      }
+    }
+
     const updated = currentNotices.filter((n) => String(n.id) !== String(id));
     await saveNotices(updated);
 

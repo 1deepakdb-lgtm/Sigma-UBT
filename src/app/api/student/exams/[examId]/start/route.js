@@ -56,7 +56,7 @@ export async function POST(req, { params }) {
       }
     });
 
-    // Strip answers to prevent cheating
+    // Strip answers completely to prevent exam cheating
     const questionsWithoutAnswers = examSet.questions.map(q => {
       let parsedOptions = [];
       try {
@@ -74,8 +74,9 @@ export async function POST(req, { params }) {
         description: q.description,
         image: q.image,
         audio: q.audio,
-        options: parsedOptions,
-        answer: q.answer
+        options: parsedOptions
+        // SECURITY: answer key is strictly stripped during active exam.
+        // Grading and correct answer review is returned only by the server submit endpoint.
       };
     });
 

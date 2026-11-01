@@ -1,9 +1,35 @@
 import { synthesizeElevenLabs } from '@/lib/elevenlabsService';
+import { getSessionUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
+// ─── Rate Limiter (in-memory, per IP) ─────────────────────────────────────────
+const ELEVENLABS_RATE_LIMIT = 45; // max requests per minute
+const ELEVENLABS_RATE_WINDOW = 60 * 1000;
+const rateStore = new Map();
+
+function checkRateLimit(req) {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+  const key = `el:${ip}`;
+  const now = Date.now();
+  const record = rateStore.get(key) || { calls: [] };
+  record.calls = record.calls.filter((t) => now - t < ELEVENLABS_RATE_WINDOW);
+  if (record.calls.length >= ELEVENLABS_RATE_LIMIT) {
+    return { limited: true };
+  }
+  record.calls.push(now);
+  rateStore.set(key, record);
+  return { limited: false };
+}
+
 export async function GET(request) {
   try {
+    if (checkRateLimit(request).limited) {
+      return new Response('Too many requests. Please wait a moment before generating more speech.', { status: 429 });
+    }
+
+    const session = await getSessionUser(request);
     const { searchParams } = new URL(request.url);
     const text = searchParams.get('text') || '';
     const voiceProfileId = searchParams.get('voiceProfileId') || 'ko-female-1';
@@ -21,6 +47,9 @@ export async function GET(request) {
     if (!text.trim()) {
       return new Response('Text parameter is required.', { status: 400 });
     }
+    if (text.length > 2500) {
+      return new Response('Text exceeds maximum character limit of 2,500.', { status: 400 });
+    }
 
     const result = await synthesizeElevenLabs({
       text,
@@ -36,7 +65,9 @@ export async function GET(request) {
       speed
     });
 
-    const isDownload = searchParams.get('download') === 'true';
+    // Students are not permitted download option (audio must play inline only)
+    const isStudent = session?.role === 'student';
+    const isDownload = !isStudent && searchParams.get('download') === 'true';
     const filename = searchParams.get('filename') || `elevenlabs_${voiceProfileId}.mp3`;
     const disposition = isDownload ? `attachment; filename="${encodeURIComponent(filename)}"` : 'inline';
 
@@ -59,6 +90,14 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    if (checkRateLimit(request).limited) {
+      return new Response(JSON.stringify({ error: 'Too many requests. Please wait a moment before generating more speech.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const session = await getSessionUser(request);
     const body = await request.json();
     const {
       text,
@@ -84,6 +123,12 @@ export async function POST(request) {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+    if (text.length > 2500) {
+      return new Response(JSON.stringify({ error: 'Text exceeds maximum character limit of 2,500.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const result = await synthesizeElevenLabs({
       text,
@@ -101,7 +146,10 @@ export async function POST(request) {
       speed
     });
 
-    const disposition = download 
+    // Students are not permitted download option (audio must play inline only)
+    const isStudent = session?.role === 'student';
+    const isDownload = !isStudent && Boolean(download);
+    const disposition = isDownload 
       ? `attachment; filename="${encodeURIComponent(filename || `elevenlabs_${voiceProfileId}.mp3`)}"` 
       : 'inline';
 

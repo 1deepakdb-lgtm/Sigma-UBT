@@ -406,16 +406,36 @@ const StudentExam = () => {
         selectedAnswers: formattedSelectedAnswers
       };
 
-      // Submit to backend in background (fire and forget)
+      // Submit to backend and retrieve verified server scores and breakdown
       if (backendSessionId) {
-        fetch(`/api/student/exams/${examId || "set-1-demo"}/submit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sessionId: backendSessionId,
-            selectedAnswers: formattedSelectedAnswers
-          })
-        }).catch(e => console.warn("Background submit failed:", e));
+        try {
+          const submitRes = await fetch(`/api/student/exams/${examId || "set-1-demo"}/submit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId: backendSessionId,
+              selectedAnswers: formattedSelectedAnswers
+            })
+          });
+          if (submitRes.ok) {
+            const submitData = await submitRes.json();
+            if (submitData.result) {
+              const resObj = submitData.result;
+              examResultData.score = resObj.correctAnswers !== undefined ? resObj.correctAnswers : score;
+              examResultData.total = resObj.totalQuestions || totalQ;
+              examResultData.passed = Boolean(resObj.passed);
+              examResultData.percentage = Math.round(((examResultData.score) / (examResultData.total)) * 100);
+              if (Array.isArray(resObj.breakdown)) {
+                examResultData.questions = questions.map((q, qIdx) => {
+                  const bd = resObj.breakdown.find(b => b.qIndex === q.qIndex || b.qIndex === (qIdx + 1));
+                  return bd ? { ...q, answer: bd.correctAnswer } : q;
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Submit API network notice:", e);
+        }
       }
       
       localStorage.setItem("lastExamResult", JSON.stringify(examResultData));

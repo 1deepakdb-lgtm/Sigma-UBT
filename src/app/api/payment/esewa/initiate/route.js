@@ -7,7 +7,16 @@ export async function POST(req) {
     const body = await req.json();
     const { itemId, itemName, itemType = "set", amount, studentPhone, studentName } = body;
 
-    const parsedAmount = Number(amount) || (itemType === "set" ? 40 : 1000);
+    let parsedAmount = Number(amount);
+    if (itemType === "set") {
+      parsedAmount = 40; // Strictly enforced official set price (prevents price manipulation)
+    } else {
+      // Package price cannot be tampered below minimum threshold
+      if (isNaN(parsedAmount) || parsedAmount < 100) {
+        parsedAmount = 1000;
+      }
+    }
+
     if (!itemName) {
       return NextResponse.json({ error: "Item name is required" }, { status: 400 });
     }

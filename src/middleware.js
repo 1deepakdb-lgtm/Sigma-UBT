@@ -45,6 +45,8 @@ const ROUTE_PERMISSIONS = [
   { prefix: '/api/student', allowedRoles: ['student', 'admin', 'institute'] },
   // Upload: admin and institute only (not staff)
   { prefix: '/api/upload', allowedRoles: ['admin', 'institute'] },
+  // Voice Upload: authenticated users only
+  { prefix: '/api/voice-upload', allowedRoles: ['admin', 'institute', 'staff', 'student'] },
 ];
 
 /**
@@ -233,7 +235,18 @@ export async function middleware(req) {
     });
   }
 
-  return NextResponse.next();
+  // Sanitize identity headers for all other routes so external callers cannot spoof claims
+  const sanitizedHeaders = new Headers(req.headers);
+  sanitizedHeaders.delete('x-user-id');
+  sanitizedHeaders.delete('x-user-role');
+  sanitizedHeaders.delete('x-user-name');
+  sanitizedHeaders.delete('x-institute-id');
+
+  return NextResponse.next({
+    request: {
+      headers: sanitizedHeaders
+    }
+  });
 }
 
 export const config = {

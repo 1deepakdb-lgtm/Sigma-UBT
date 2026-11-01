@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { requireInstituteOrAdmin, requireInstituteAdmin } from '@/lib/rbac';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products-stock.json');
@@ -28,8 +29,11 @@ async function saveProducts(products) {
 }
 
 // GET: Returns current product stock list
-export async function GET() {
+export async function GET(req) {
   try {
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
+
     const products = await getStoredProducts();
     return NextResponse.json({ success: true, products });
   } catch (err) {
@@ -38,19 +42,14 @@ export async function GET() {
   }
 }
 
-// POST: Add new product or Restock existing product (ADMIN ONLY)
+// POST: Add new product or Restock existing product (ADMIN & INSTITUTE ADMIN ONLY)
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { action, role, name, price, stock, unit, productId, addQty } = body;
+    const { session, errorResponse } = await requireInstituteAdmin(req);
+    if (errorResponse) return errorResponse;
 
-    // Enforce Admin Only for adding products or adding stock
-    if (role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Permission Denied: Stock can only be added or modified by Admin.' },
-        { status: 403 }
-      );
-    }
+    const body = await req.json();
+    const { action, name, price, stock, unit, productId, addQty } = body;
 
     const products = await getStoredProducts();
 
@@ -162,9 +161,12 @@ export async function reduceStockInternal(items) {
   return updated;
 }
 
-// PUT: Auto-reduce stock when product is sold in billing (Accessible to any billing user)
+// PUT: Auto-reduce stock when product is sold in billing (Accessible to authorized billing users)
 export async function PUT(req) {
   try {
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
+    if (errorResponse) return errorResponse;
+
     const body = await req.json();
     const { action, items } = body;
 
@@ -183,13 +185,11 @@ export async function PUT(req) {
 // DELETE: Admin removes a product
 export async function DELETE(req) {
   try {
+    const { session, errorResponse } = await requireInstituteAdmin(req);
+    if (errorResponse) return errorResponse;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-    const role = searchParams.get('role');
-
-    if (role !== 'admin') {
-      return NextResponse.json({ error: 'Permission Denied: Only Admin can delete products.' }, { status: 403 });
-    }
 
     if (!id) {
       return NextResponse.json({ error: 'Product ID is required.' }, { status: 400 });

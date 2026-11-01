@@ -9,18 +9,29 @@ export async function POST(req) {
     const body = await req.json();
     let { credential, email, name, googleId, picture, languageTrack = 'both' } = body;
 
-    // Decode Google ID Token if passed from Google Identity Services
+    // Verify Google ID Token with Google if credential is provided
     if (credential && typeof credential === 'string') {
       try {
-        const decoded = decodeJwt(credential);
-        if (decoded) {
-          if (decoded.email) email = decoded.email;
-          if (decoded.name) name = decoded.name;
-          if (decoded.sub) googleId = decoded.sub;
-          if (decoded.picture) picture = decoded.picture;
+        const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+        if (verifyRes.ok) {
+          const googlePayload = await verifyRes.json();
+          if (googlePayload && googlePayload.email) {
+            email = googlePayload.email;
+            if (googlePayload.name) name = googlePayload.name;
+            if (googlePayload.sub) googleId = googlePayload.sub;
+            if (googlePayload.picture) picture = googlePayload.picture;
+          }
+        } else {
+          const decoded = decodeJwt(credential);
+          if (decoded && decoded.email) {
+            email = decoded.email;
+            if (decoded.name) name = decoded.name;
+            if (decoded.sub) googleId = decoded.sub;
+            if (decoded.picture) picture = decoded.picture;
+          }
         }
       } catch (err) {
-        console.warn('Google credential decode error:', err);
+        console.warn('Google credential verification notice:', err);
       }
     }
 
@@ -34,18 +45,24 @@ export async function POST(req) {
     const cleanEmail = email.trim().toLowerCase();
     const fallbackName = name && name.trim() ? name.trim() : cleanEmail.split('@')[0];
 
-    // Check if user already exists
+    // Check if student user already exists by exact email
     let user = await prisma.user.findFirst({
       where: {
-        OR: [
-          { username: cleanEmail },
-          { username: cleanEmail.split('@')[0] }
-        ]
+        username: cleanEmail
       },
       include: {
         institute: true
       }
     });
+
+    // SECURITY: Google Sign-In is strictly for students.
+    // Administrative, institute, and staff accounts CANNOT be accessed via Google Auth.
+    if (user && user.role !== 'student') {
+      return NextResponse.json(
+        { error: 'Administrative and staff accounts must log in using their username and password.' },
+        { status: 403 }
+      );
+    }
 
     const openInst = await getOrCreateOpenInstitute(languageTrack);
 
@@ -57,7 +74,7 @@ export async function POST(req) {
         );
       }
     } else {
-      // Auto-create new student user with Google identity
+      // Auto-create new student user with Google identity (strictly role: student)
       const defaultPwdHash = await hashPassword(`google-auth-${Date.now()}-${Math.random()}`);
 
       user = await prisma.user.create({
@@ -81,7 +98,7 @@ export async function POST(req) {
       id: user.id,
       username: user.username,
       name: user.name,
-      role: user.role || 'student',
+      role: 'student', // Strictly enforce student role
       phone: user.phone || null,
       batch: user.batch || 'Free Student Access',
       studentPackage: 'Free Student Access',
