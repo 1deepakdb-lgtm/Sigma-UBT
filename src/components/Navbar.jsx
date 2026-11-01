@@ -64,12 +64,15 @@ export default function Navbar({
     { id: 'students', label: 'Manage Students' },
   ];
 
+  const isPureJapanese = currentLang === 'japanese';
+  const isPureKorean = currentLang === 'korean';
+  const isBoth = !isPureJapanese && !isPureKorean;
+
   const studentTabs = [
     { id: 'home', label: 'Dashboard' },
-    ...(currentLang !== 'japanese' ? [
-      { id: 'exams', label: 'Start UBT Exam' },
-      { id: 'buyExam', label: 'Packages' }
-    ] : []),
+    ...((isBoth || isPureKorean) ? [{ id: 'exams', label: 'Start UBT Exam' }] : []),
+    ...((isBoth || isPureJapanese) ? [{ id: 'mock', label: 'Mock Test' }] : []),
+    { id: 'buyExam', label: 'Packages' },
     { id: 'vocab', label: 'Dictionary' },
     { id: 'listening', label: 'Study Materials' },
     { id: 'news', label: 'Notice' },

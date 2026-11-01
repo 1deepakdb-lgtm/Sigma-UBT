@@ -145,9 +145,24 @@ const StudentDashboard = () => {
   const [paidAccessTrigger, setPaidAccessTrigger] = useState(0);
 
   // Student profile & institute info
-  const [studentName, setStudentName] = useState("");
-  const [currentStudentPhone, setCurrentStudentPhone] = useState(null);
-  const [studentInstitute, setStudentInstitute] = useState(null);
+  const [studentName, setStudentName] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("currentUser") || localStorage.getItem("currentStudentName") || "";
+    }
+    return "";
+  });
+  const [currentStudentPhone, setCurrentStudentPhone] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone") || null;
+    }
+    return null;
+  });
+  const [studentInstitute, setStudentInstitute] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("currentInstitute") || null;
+    }
+    return null;
+  });
   const [studentBatch, setStudentBatch] = useState(null);
   const [studentPackage, setStudentPackage] = useState(() => (
     typeof window !== "undefined" && (
@@ -166,16 +181,43 @@ const StudentDashboard = () => {
     return "both";
   });
 
-  const isJapaneseTrack = Boolean(
-    instituteLanguage === "japanese" ||
-    (typeof window !== "undefined" && (
-      window.location.search.includes("lang=japanese") ||
-      localStorage.getItem("instituteLanguage") === "japanese"
-    ))
+  const effectiveLang = (
+    (typeof window !== "undefined" && window.location.search.includes("lang=japanese")) ? "japanese" :
+    (typeof window !== "undefined" && window.location.search.includes("lang=korean")) ? "korean" :
+    (instituteLanguage || (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : "both") || "both")
   );
 
-  const [examCategoryFilter, setExamCategoryFilter] = useState(() => (isJapaneseTrack ? "mock" : "all"));
-  const [packageCategoryFilter, setPackageCategoryFilter] = useState("all");
+  const isPureJapaneseStudent = effectiveLang === "japanese";
+  const isPureKoreanStudent = effectiveLang === "korean";
+  const isBothTrack = !isPureJapaneseStudent && !isPureKoreanStudent;
+  const isJapaneseTrack = isPureJapaneseStudent;
+
+  // Strict track visibility:
+  // Korean students: show Start UBT Exam ONLY (Mock Test is NEVER shown)
+  // Japanese students: show Mock Test ONLY (Start UBT Exam is NEVER shown)
+  // Both: show BOTH Start UBT Exam and Mock Test
+  const showUbtExam = isBothTrack || isPureKoreanStudent;
+  const showMockTest = isBothTrack || isPureJapaneseStudent;
+
+  const [examCategoryFilter, setExamCategoryFilter] = useState(() => (
+    isPureJapaneseStudent ? "mock" : isPureKoreanStudent ? "ubt" : "all"
+  ));
+  const [packageCategoryFilter, setPackageCategoryFilter] = useState(() => (
+    isPureJapaneseStudent ? "mock" : isPureKoreanStudent ? "ubt" : "all"
+  ));
+
+  useEffect(() => {
+    if (isPureJapaneseStudent) {
+      setExamCategoryFilter("mock");
+      setPackageCategoryFilter("mock");
+    } else if (isPureKoreanStudent) {
+      setExamCategoryFilter("ubt");
+      setPackageCategoryFilter("ubt");
+    } else {
+      setExamCategoryFilter("all");
+      setPackageCategoryFilter("all");
+    }
+  }, [instituteLanguage, isPureJapaneseStudent, isPureKoreanStudent]);
 
   const isGoogleOrFree = Boolean(
     studentPackage?.toLowerCase().includes("google") ||
@@ -1163,6 +1205,12 @@ const StudentDashboard = () => {
       const isKorean = s.track === "korean" || sType === "UBT" || sType === "CHAPTERWISE" || name.includes("ubt") || name.includes("eps") || name.includes("chapter") || name.includes("topik") || name.includes("reading") || name.includes("listening");
       const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat") || (s.packageName && s.packageName.toLowerCase().includes("mock"));
 
+      if (isPureKoreanStudent) {
+        return !isJp || isKorean;
+      }
+      if (isPureJapaneseStudent) {
+        return isJp && !isKorean;
+      }
       if (examCategoryFilter === "ubt") {
         return !isJp || isKorean;
       }
@@ -1225,29 +1273,34 @@ const StudentDashboard = () => {
   const topNavStyle = {
     backgroundColor: "#1e3a8a",
     color: "#ffffff",
-    padding: "14px 28px",
+    padding: "8px 16px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-    flexWrap: "wrap",
-    gap: "14px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+    flexWrap: "nowrap",
+    gap: "10px",
     position: "sticky",
     top: 0,
-    zIndex: 1000
+    zIndex: 1000,
+    width: "100%",
+    boxSizing: "border-box"
   };
 
   const getNavBtnStyle = (tabName) => ({
     backgroundColor: activeTab === tabName ? "#2563eb" : "transparent",
     color: "#ffffff",
     border: "none",
-    padding: "9px 16px",
-    borderRadius: "7px",
+    padding: "6px 9px",
+    borderRadius: "5px",
     fontWeight: "700",
     cursor: "pointer",
-    fontSize: "15px",
-    letterSpacing: "0.2px",
-    transition: "0.2s"
+    fontSize: "12.5px",
+    letterSpacing: "0.1px",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+    transition: "0.15s ease",
+    lineHeight: "1.2"
   });
 
   const contentAreaStyle = { padding: "28px", maxWidth: "1200px", margin: "0 auto" };
@@ -1317,46 +1370,59 @@ const StudentDashboard = () => {
 
       {/* Top Navbar */}
       <div style={topNavStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, minWidth: "150px", maxWidth: "220px" }}>
           {logoWatermark && (
-            <img src={logoWatermark} alt="Institute Logo" style={{ height: "32px", borderRadius: "4px", backgroundColor: "#ffffff", padding: "2px" }} />
+            <img src={logoWatermark} alt="Institute Logo" style={{ height: "28px", borderRadius: "4px", backgroundColor: "#ffffff", padding: "2px", flexShrink: 0 }} />
           )}
-          <div>
-            <div style={{ fontSize: "16px", fontWeight: "800", color: "#ffffff" }}>
+          <div style={{ overflow: "hidden" }}>
+            <div style={{ fontSize: "14px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", letterSpacing: "0.2px", lineHeight: "1.2" }}>
               STUDENT PORTAL
             </div>
-            <div style={{ fontSize: "12px", color: "#93c5fd" }}>
-              {studentName} {studentInstitute ? `• ${studentInstitute}` : ""}
+            <div style={{ fontSize: "11px", color: "#93c5fd", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden", minHeight: "14px", lineHeight: "1.2" }}>
+              {studentName ? `${studentName}${studentInstitute ? ` • ${studentInstitute}` : ""}` : "Student Portal"}
             </div>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{
+          display: "flex",
+          gap: "4px",
+          flexWrap: "nowrap",
+          alignItems: "center",
+          flexShrink: 0,
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none"
+        }}>
           <button onClick={() => setActiveTab("home")} style={getNavBtnStyle("home")}>Dashboard</button>
-          <button
-            onClick={() => {
-              setActiveTab("exams");
-              setExamCategoryFilter("ubt");
-              setExamSetsPage(1);
-            }}
-            style={activeTab === "exams" && examCategoryFilter === "ubt"
-              ? { ...getNavBtnStyle("exams"), backgroundColor: "#2563eb", color: "#ffffff", fontWeight: "800" }
-              : getNavBtnStyle("exams")}
-          >
-            Start UBT Exam
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab("exams");
-              setExamCategoryFilter("mock");
-              setExamSetsPage(1);
-            }}
-            style={activeTab === "exams" && examCategoryFilter === "mock"
-              ? { ...getNavBtnStyle("exams"), backgroundColor: "#7c3aed", color: "#ffffff", fontWeight: "800" }
-              : { ...getNavBtnStyle("exams"), color: activeTab === "exams" && examCategoryFilter === "mock" ? "#ffffff" : "#c4b5fd" }}
-          >
-            Mock Test
-          </button>
+          {showUbtExam && (
+            <button
+              onClick={() => {
+                setActiveTab("exams");
+                setExamCategoryFilter("ubt");
+                setExamSetsPage(1);
+              }}
+              style={activeTab === "exams" && examCategoryFilter === "ubt"
+                ? { ...getNavBtnStyle("exams"), backgroundColor: "#2563eb", color: "#ffffff", fontWeight: "800" }
+                : getNavBtnStyle("exams")}
+            >
+              Start UBT Exam
+            </button>
+          )}
+          {showMockTest && (
+            <button
+              onClick={() => {
+                setActiveTab("exams");
+                setExamCategoryFilter("mock");
+                setExamSetsPage(1);
+              }}
+              style={activeTab === "exams" && examCategoryFilter === "mock"
+                ? { ...getNavBtnStyle("exams"), backgroundColor: "#7c3aed", color: "#ffffff", fontWeight: "800" }
+                : { ...getNavBtnStyle("exams"), color: activeTab === "exams" && examCategoryFilter === "mock" ? "#ffffff" : "#c4b5fd" }}
+            >
+              Mock Test
+            </button>
+          )}
           <button onClick={() => setActiveTab("buyExam")} style={getNavBtnStyle("buyExam")}>
             Packages
           </button>
@@ -1373,11 +1439,13 @@ const StudentDashboard = () => {
             backgroundColor: "#dc2626",
             color: "#ffffff",
             border: "none",
-            padding: "9px 18px",
-            borderRadius: "7px",
+            padding: "6px 14px",
+            borderRadius: "6px",
             cursor: "pointer",
             fontWeight: "700",
-            fontSize: "14px"
+            fontSize: "12.5px",
+            whiteSpace: "nowrap",
+            flexShrink: 0
           }}
         >
           Logout
@@ -1430,38 +1498,42 @@ const StudentDashboard = () => {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", maxWidth: "1050px", margin: "0 auto" }}>
               {/* UBT EXAMS CARD */}
-              <div onClick={() => {
-                setActiveTab("exams");
-                setExamCategoryFilter("ubt");
-                setExamSetsPage(1);
-              }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <LaptopExamIcon size={28} color="#2563eb" />
+              {showUbtExam && (
+                <div onClick={() => {
+                  setActiveTab("exams");
+                  setExamCategoryFilter("ubt");
+                  setExamSetsPage(1);
+                }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
+                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                    <LaptopExamIcon size={28} color="#2563eb" />
+                  </div>
+                  <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
+                    Start UBT Exam
+                  </h3>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                    Take 40-question EPS-TOPIK Korean tests · Individual sets Rs. 40 or full package
+                  </p>
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
-                  Start UBT Exam
-                </h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                  Take 40-question EPS-TOPIK Korean tests · Individual sets Rs. 40 or full package
-                </p>
-              </div>
+              )}
 
               {/* JAPANESE CBT MOCK TEST CARD */}
-              <div onClick={() => {
-                setActiveTab("exams");
-                setExamCategoryFilter("mock");
-                setExamSetsPage(1);
-              }} style={{ background: "linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #ddd6fe", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <LaptopExamIcon size={28} color="#7c3aed" />
+              {showMockTest && (
+                <div onClick={() => {
+                  setActiveTab("exams");
+                  setExamCategoryFilter("mock");
+                  setExamSetsPage(1);
+                }} style={{ background: "linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #ddd6fe", boxShadow: "0 4px 12px rgba(124,58,237,0.08)" }}>
+                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
+                    <LaptopExamIcon size={28} color="#7c3aed" />
+                  </div>
+                  <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>
+                    CBT Mock Test (JLPT &amp; JFT)
+                  </h3>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                    JLPT (N5–N2), JFT-Basic &amp; NAT-TEST mock exams · Individual sets Rs. 40 or full package
+                  </p>
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#5b21b6", fontSize: "18px", fontWeight: "700" }}>
-                  CBT Mock Test (JLPT &amp; JFT)
-                </h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                  JLPT (N5–N2), JFT-Basic &amp; NAT-TEST mock exams · Individual sets Rs. 40 or full package
-                </p>
-              </div>
+              )}
 
               <div onClick={() => setActiveTab("results")} style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bbf7d0", boxShadow: "0 4px 12px rgba(22,163,74,0.08)" }}>
                 <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
@@ -1631,81 +1703,83 @@ const StudentDashboard = () => {
               </div>
             )}
 
-            {/* Exam Category Switcher: All Sets | UBT Exam Sets | Mock Tests */}
-            <div style={{ display: "flex", gap: "10px", marginBottom: "18px", flexWrap: "wrap", alignItems: "center" }}>
-              <button
-                type="button"
-                onClick={() => { setExamCategoryFilter("all"); setExamSetsPage(1); }}
-                style={{
-                  padding: "8px 18px",
-                  borderRadius: "20px",
-                  border: examCategoryFilter === "all" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
-                  backgroundColor: examCategoryFilter === "all" ? "#2563eb" : "#ffffff",
-                  color: examCategoryFilter === "all" ? "#ffffff" : "#334155",
-                  fontSize: "13px",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                  boxShadow: examCategoryFilter === "all" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
-                  transition: "all 0.15s ease"
-                }}
-              >
-                🌐 All Exam Sets ({examSets.length})
-              </button>
+            {/* Exam Category Switcher: All Sets | UBT Exam Sets | Mock Tests (Only for students with both tracks) */}
+            {isBothTrack && (
+              <div style={{ display: "flex", gap: "10px", marginBottom: "18px", flexWrap: "wrap", alignItems: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => { setExamCategoryFilter("all"); setExamSetsPage(1); }}
+                  style={{
+                    padding: "8px 18px",
+                    borderRadius: "20px",
+                    border: examCategoryFilter === "all" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                    backgroundColor: examCategoryFilter === "all" ? "#2563eb" : "#ffffff",
+                    color: examCategoryFilter === "all" ? "#ffffff" : "#334155",
+                    fontSize: "13px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    boxShadow: examCategoryFilter === "all" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  🌐 All Exam Sets ({examSets.length})
+                </button>
 
-              <button
-                type="button"
-                onClick={() => { setExamCategoryFilter("ubt"); setExamSetsPage(1); }}
-                style={{
-                  padding: "8px 18px",
-                  borderRadius: "20px",
-                  border: examCategoryFilter === "ubt" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
-                  backgroundColor: examCategoryFilter === "ubt" ? "#2563eb" : "#ffffff",
-                  color: examCategoryFilter === "ubt" ? "#ffffff" : "#334155",
-                  fontSize: "13px",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                  boxShadow: examCategoryFilter === "ubt" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
-                  transition: "all 0.15s ease"
-                }}
-              >
-                🇰🇷 EPS-TOPIK UBT Sets ({ubtSetsCount})
-              </button>
+                <button
+                  type="button"
+                  onClick={() => { setExamCategoryFilter("ubt"); setExamSetsPage(1); }}
+                  style={{
+                    padding: "8px 18px",
+                    borderRadius: "20px",
+                    border: examCategoryFilter === "ubt" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                    backgroundColor: examCategoryFilter === "ubt" ? "#2563eb" : "#ffffff",
+                    color: examCategoryFilter === "ubt" ? "#ffffff" : "#334155",
+                    fontSize: "13px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    boxShadow: examCategoryFilter === "ubt" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  🇰🇷 EPS-TOPIK UBT Sets ({ubtSetsCount})
+                </button>
 
-              <button
-                type="button"
-                onClick={() => { setExamCategoryFilter("mock"); setExamSetsPage(1); }}
-                style={{
-                  padding: "8px 18px",
-                  borderRadius: "20px",
-                  border: examCategoryFilter === "mock" ? "1.5px solid #7c3aed" : "1px solid #cbd5e1",
-                  backgroundColor: examCategoryFilter === "mock" ? "#7c3aed" : "#ffffff",
-                  color: examCategoryFilter === "mock" ? "#ffffff" : "#334155",
-                  fontSize: "13px",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                  boxShadow: examCategoryFilter === "mock" ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
-                  transition: "all 0.15s ease"
-                }}
-              >
-                🇯🇵 Japanese CBT Mock Tests ({mockSetsCount})
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => { setExamCategoryFilter("mock"); setExamSetsPage(1); }}
+                  style={{
+                    padding: "8px 18px",
+                    borderRadius: "20px",
+                    border: examCategoryFilter === "mock" ? "1.5px solid #7c3aed" : "1px solid #cbd5e1",
+                    backgroundColor: examCategoryFilter === "mock" ? "#7c3aed" : "#ffffff",
+                    color: examCategoryFilter === "mock" ? "#ffffff" : "#334155",
+                    fontSize: "13px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    boxShadow: examCategoryFilter === "mock" ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  🇯🇵 Japanese CBT Mock Tests ({mockSetsCount})
+                </button>
+              </div>
+            )}
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
               <h3 style={{ color: "#0f172a", margin: 0, fontSize: "20px", fontWeight: "800" }}>
-                {examCategoryFilter === "mock"
+                {isPureJapaneseStudent || examCategoryFilter === "mock"
                   ? "Available Japanese CBT Mock Tests"
-                  : examCategoryFilter === "ubt"
+                  : isPureKoreanStudent || examCategoryFilter === "ubt"
                   ? "Available EPS-TOPIK UBT Exam Sets"
                   : "Available Exam Sets & Mock Tests"}
               </h3>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "12px", fontWeight: "700", color: examCategoryFilter === "mock" ? "#7c3aed" : "#2563eb", backgroundColor: examCategoryFilter === "mock" ? "#faf5ff" : "#eff6ff", padding: "4px 10px", borderRadius: "6px" }}>
+                <span style={{ fontSize: "12px", fontWeight: "700", color: (isPureJapaneseStudent || examCategoryFilter === "mock") ? "#7c3aed" : "#2563eb", backgroundColor: (isPureJapaneseStudent || examCategoryFilter === "mock") ? "#faf5ff" : "#eff6ff", padding: "4px 10px", borderRadius: "6px" }}>
                   {filteredSets.length} Sets Ready
                 </span>
                 <input
                   type="text"
-                  placeholder={examCategoryFilter === "mock" ? "Search mock test (e.g. N5, JFT, SET 01)" : "Search set (e.g. SET 05)"}
+                  placeholder={isPureJapaneseStudent || examCategoryFilter === "mock" ? "Search mock test (e.g. N5, JFT, SET 01)" : "Search set (e.g. SET 05)"}
                   value={examSetsSearch}
                   onChange={(e) => { setExamSetsSearch(e.target.value); setExamSetsPage(1); }}
                   style={{ padding: "6px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", outline: "none", width: "220px" }}
@@ -1754,8 +1828,8 @@ const StudentDashboard = () => {
               </div>
             )}
 
-            {/* Japanese Mock Test Level & Model Selection Pills */}
-            {(examCategoryFilter === "mock" || examCategoryFilter === "all") && mockSetsCount > 0 && (
+            {/* Japanese Mock Test Level & Model Selection Pills (Only if mock tests are enabled for student) */}
+            {showMockTest && (examCategoryFilter === "mock" || examCategoryFilter === "all") && mockSetsCount > 0 && (
               <div style={{ display: "flex", gap: "8px", marginBottom: "18px", flexWrap: "wrap", alignItems: "center" }}>
                 {[
                   { id: "all", label: `⛩️ All Mock Sets (${mockSetsCount})` },
@@ -2236,6 +2310,8 @@ const StudentDashboard = () => {
           const displayedPackages = examPackages.filter((pkg) => {
             const name = (pkg.name || "").toLowerCase();
             const isMock = pkg.track === "japanese" || name.includes("mock") || name.includes("jft") || name.includes("jlpt") || name.includes("nat");
+            if (isPureKoreanStudent) return !isMock;
+            if (isPureJapaneseStudent) return isMock;
             if (packageCategoryFilter === "ubt") return !isMock;
             if (packageCategoryFilter === "mock") return isMock;
             return true;
@@ -2248,73 +2324,75 @@ const StudentDashboard = () => {
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
                 <h3 style={{ color: "#0f172a", margin: 0, fontSize: "20px", fontWeight: "800" }}>
-                  {packageCategoryFilter === "mock"
+                  {isPureJapaneseStudent || packageCategoryFilter === "mock"
                     ? "Available Japanese Mock Test Packages"
-                    : packageCategoryFilter === "ubt"
+                    : isPureKoreanStudent || packageCategoryFilter === "ubt"
                     ? "Available EPS-TOPIK UBT Packages"
                     : "Available Exam Packages (UBT & Mock Tests)"}
                 </h3>
               </div>
 
-              {/* Package Category Filter Pills */}
-              <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap", alignItems: "center" }}>
-                <button
-                  type="button"
-                  onClick={() => setPackageCategoryFilter("all")}
-                  style={{
-                    padding: "8px 18px",
-                    borderRadius: "20px",
-                    border: packageCategoryFilter === "all" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
-                    backgroundColor: packageCategoryFilter === "all" ? "#2563eb" : "#ffffff",
-                    color: packageCategoryFilter === "all" ? "#ffffff" : "#334155",
-                    fontSize: "13px",
-                    fontWeight: "800",
-                    cursor: "pointer",
-                    boxShadow: packageCategoryFilter === "all" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
-                    transition: "all 0.15s ease"
-                  }}
-                >
-                  🌐 All Packages ({examPackages.length})
-                </button>
+              {/* Package Category Filter Pills (Only for students with both tracks) */}
+              {isBothTrack && (
+                <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap", alignItems: "center" }}>
+                  <button
+                    type="button"
+                    onClick={() => setPackageCategoryFilter("all")}
+                    style={{
+                      padding: "8px 18px",
+                      borderRadius: "20px",
+                      border: packageCategoryFilter === "all" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                      backgroundColor: packageCategoryFilter === "all" ? "#2563eb" : "#ffffff",
+                      color: packageCategoryFilter === "all" ? "#ffffff" : "#334155",
+                      fontSize: "13px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      boxShadow: packageCategoryFilter === "all" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    🌐 All Packages ({examPackages.length})
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setPackageCategoryFilter("ubt")}
-                  style={{
-                    padding: "8px 18px",
-                    borderRadius: "20px",
-                    border: packageCategoryFilter === "ubt" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
-                    backgroundColor: packageCategoryFilter === "ubt" ? "#2563eb" : "#ffffff",
-                    color: packageCategoryFilter === "ubt" ? "#ffffff" : "#334155",
-                    fontSize: "13px",
-                    fontWeight: "800",
-                    cursor: "pointer",
-                    boxShadow: packageCategoryFilter === "ubt" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
-                    transition: "all 0.15s ease"
-                  }}
-                >
-                  🇰🇷 UBT Packages ({ubtPkgsCount})
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setPackageCategoryFilter("ubt")}
+                    style={{
+                      padding: "8px 18px",
+                      borderRadius: "20px",
+                      border: packageCategoryFilter === "ubt" ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                      backgroundColor: packageCategoryFilter === "ubt" ? "#2563eb" : "#ffffff",
+                      color: packageCategoryFilter === "ubt" ? "#ffffff" : "#334155",
+                      fontSize: "13px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      boxShadow: packageCategoryFilter === "ubt" ? "0 2px 8px rgba(37,99,235,0.25)" : "none",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    🇰🇷 UBT Packages ({ubtPkgsCount})
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setPackageCategoryFilter("mock")}
-                  style={{
-                    padding: "8px 18px",
-                    borderRadius: "20px",
-                    border: packageCategoryFilter === "mock" ? "1.5px solid #7c3aed" : "1px solid #cbd5e1",
-                    backgroundColor: packageCategoryFilter === "mock" ? "#7c3aed" : "#ffffff",
-                    color: packageCategoryFilter === "mock" ? "#ffffff" : "#334155",
-                    fontSize: "13px",
-                    fontWeight: "800",
-                    cursor: "pointer",
-                    boxShadow: packageCategoryFilter === "mock" ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
-                    transition: "all 0.15s ease"
-                  }}
-                >
-                  🇯🇵 Mock Test Packages ({mockPkgsCount})
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setPackageCategoryFilter("mock")}
+                    style={{
+                      padding: "8px 18px",
+                      borderRadius: "20px",
+                      border: packageCategoryFilter === "mock" ? "1.5px solid #7c3aed" : "1px solid #cbd5e1",
+                      backgroundColor: packageCategoryFilter === "mock" ? "#7c3aed" : "#ffffff",
+                      color: packageCategoryFilter === "mock" ? "#ffffff" : "#334155",
+                      fontSize: "13px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      boxShadow: packageCategoryFilter === "mock" ? "0 2px 8px rgba(124,58,237,0.25)" : "none",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    🇯🇵 Mock Test Packages ({mockPkgsCount})
+                  </button>
+                </div>
+              )}
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
                 {displayedPackages.map((pkg, idx) => {
