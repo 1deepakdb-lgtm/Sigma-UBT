@@ -61,7 +61,7 @@ export async function POST(req) {
       if (instUser?.passwordHash) {
         const isMatch = instUser.passwordHash.startsWith('$2')
           ? await verifyPassword(cleanCurr, instUser.passwordHash)
-          : (instUser.passwordHash === cleanCurr || cleanCurr === '9999');
+          : (instUser.passwordHash === cleanCurr);
 
         if (!isMatch) {
           return NextResponse.json({ error: 'Current password or PIN is incorrect.' }, { status: 401 });

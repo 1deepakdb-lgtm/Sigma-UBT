@@ -19,18 +19,17 @@ export async function GET(req) {
     let setsWhere = {};
     let packagesWhere = {};
 
-    if (!isSuperAdminView && (instituteId || creatorName)) {
-      // Institutes can ONLY see global published sets OR their own private sets
+    if (!isSuperAdminView) {
+      // Non-superadmin callers can ONLY see global published sets OR their own institute's sets
+      const effectiveInstId = session?.instituteId || instituteId;
       const orConditions = [{ isPublished: true }];
-      if (instituteId) orConditions.push({ creatorInstituteId: instituteId });
-      if (creatorName) orConditions.push({ creatorInstituteName: creatorName });
+      if (effectiveInstId) orConditions.push({ creatorInstituteId: effectiveInstId });
 
       setsWhere = { OR: orConditions };
       packagesWhere = {
         OR: [
           { isPublished: true },
-          ...(instituteId ? [{ creatorInstituteId: instituteId }] : []),
-          ...(creatorName ? [{ creatorInstituteName: creatorName }] : [])
+          ...(effectiveInstId ? [{ creatorInstituteId: effectiveInstId }] : [])
         ]
       };
     }
@@ -93,12 +92,16 @@ export async function POST(req) {
       const finalIsPrivate = isPrivate !== null ? isPrivate : !isAdmin;
       const finalIsPublished = isPublished !== null ? isPublished : isAdmin;
 
+      // Anti-spoofing: Non-admins can only create packages for their own institute
+      const finalInstId = isAdmin ? (creatorInstituteId || null) : (session?.instituteId || null);
+      const finalInstName = isAdmin ? (creatorInstituteName || 'Super Admin') : (session?.name || 'Institute');
+
       const created = await prisma.examPackage.create({
         data: {
           name: packageName,
           description: description || null,
-          creatorInstituteId: creatorInstituteId || session?.instituteId || null,
-          creatorInstituteName: creatorInstituteName || (isAdmin ? 'Super Admin' : null),
+          creatorInstituteId: finalInstId,
+          creatorInstituteName: finalInstName,
           isPrivate: finalIsPrivate,
           isPublished: finalIsPublished
         }
@@ -114,6 +117,10 @@ export async function POST(req) {
       const finalIsPublished = isPublished !== null ? isPublished : isAdmin;
       const finalIsFree = Boolean(body.isFree);
 
+      // Anti-spoofing: Non-admins can only create sets for their own institute
+      const finalInstId = isAdmin ? (creatorInstituteId || null) : (session?.instituteId || null);
+      const finalInstName = isAdmin ? (creatorInstituteName || 'Super Admin') : (session?.name || 'Institute');
+
       const created = await prisma.examSet.create({
         data: {
           name: setName.trim().toUpperCase(),
@@ -121,8 +128,8 @@ export async function POST(req) {
           packageId: packageId || null,
           duration: Number(duration) || 3000,
           setType: setType || 'UBT',
-          creatorInstituteId: creatorInstituteId || session?.instituteId || null,
-          creatorInstituteName: creatorInstituteName || (isAdmin ? 'Super Admin' : 'Institute'),
+          creatorInstituteId: finalInstId,
+          creatorInstituteName: finalInstName,
           isPrivate: finalIsPrivate,
           isPublished: finalIsPublished,
           isFree: finalIsFree
@@ -248,16 +255,42 @@ export async function POST(req) {
       });
     }
 
-    // 4. DELETE SET
+    // 4. DELETE SET (IDOR Protected)
     if (action === 'delete_set') {
       if (!setId) return NextResponse.json({ error: 'Set ID is required' }, { status: 400 });
+
+      const targetSet = await prisma.examSet.findUnique({ where: { id: setId } });
+      if (!targetSet) {
+        return NextResponse.json({ error: 'Exam Set not found' }, { status: 404 });
+      }
+
+      // Non-admins can ONLY delete exam sets that belong to their own institute
+      if (!isAdmin && (!targetSet.creatorInstituteId || targetSet.creatorInstituteId !== session?.instituteId)) {
+        return NextResponse.json({
+          error: 'Forbidden: You do not have permission to delete this Exam Set.'
+        }, { status: 403 });
+      }
+
       await prisma.examSet.delete({ where: { id: setId } });
       return NextResponse.json({ success: true, message: 'Exam set deleted successfully' });
     }
 
-    // 5. DELETE PACKAGE
+    // 5. DELETE PACKAGE (IDOR Protected)
     if (action === 'delete_package') {
       if (!packageId) return NextResponse.json({ error: 'Package ID is required' }, { status: 400 });
+
+      const targetPkg = await prisma.examPackage.findUnique({ where: { id: packageId } });
+      if (!targetPkg) {
+        return NextResponse.json({ error: 'Package not found' }, { status: 404 });
+      }
+
+      // Non-admins can ONLY delete packages that belong to their own institute
+      if (!isAdmin && (!targetPkg.creatorInstituteId || targetPkg.creatorInstituteId !== session?.instituteId)) {
+        return NextResponse.json({
+          error: 'Forbidden: You do not have permission to delete this Package.'
+        }, { status: 403 });
+      }
+
       await prisma.examPackage.delete({ where: { id: packageId } });
       return NextResponse.json({ success: true, message: 'Package deleted successfully' });
     }

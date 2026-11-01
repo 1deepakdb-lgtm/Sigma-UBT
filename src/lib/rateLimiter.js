@@ -23,8 +23,10 @@ const store = new Map();
  * @returns {string}
  */
 export function getRateLimitKey(req) {
+  const cfIp = req.headers.get('cf-connecting-ip');
+  const realIp = req.headers.get('x-real-ip');
   const forwarded = req.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+  const ip = (cfIp || realIp || (forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1')).trim();
   return `login:${ip}`;
 }
 

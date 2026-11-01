@@ -83,14 +83,14 @@ export async function POST(req) {
         );
       }
 
-      // High security: Super Admin accounts cannot be reset via public self-service without Master Recovery Key
+      // High security: Super Admin accounts cannot be reset via public self-service without configured Master Recovery Key
       if (user.role === 'admin') {
         const recoveryKey = String(body.recoveryKey || body.code || '').trim();
-        const validAdminKey = (process.env.ADMIN_RECOVERY_KEY || 'EJK-ADMIN-2026').trim();
-        if (recoveryKey !== validAdminKey) {
+        const validAdminKey = (process.env.ADMIN_RECOVERY_KEY || '').trim();
+        if (!validAdminKey || recoveryKey !== validAdminKey) {
           recordFailedAttempt(rateLimitKey);
           return NextResponse.json({
-            error: 'Super Admin password recovery is protected. Please enter the Admin Recovery Key to proceed.',
+            error: 'Super Admin password recovery is strictly protected. Please configure and provide the Admin Recovery Key.',
             requiresMasterKey: true
           }, { status: 403 });
         }
@@ -120,15 +120,18 @@ export async function POST(req) {
         }
       }
 
+      // Security: Only students receive on-screen verification code. Privileged accounts (admin/institute) do NOT.
+      const isPrivileged = user.role === 'admin' || user.role === 'institute';
+
       return NextResponse.json({
         found: true,
         username: user.username,
         name: user.name,
         role: user.role,
         maskedPhone,
-        verificationCode: user.role === 'admin' ? null : generatedCode,
+        verificationCode: isPrivileged ? null : generatedCode,
         resetToken: signedResetToken,
-        isStrongPasswordRequired: user.role === 'admin' || user.role === 'institute'
+        isStrongPasswordRequired: isPrivileged
       });
     }
 
@@ -153,19 +156,24 @@ export async function POST(req) {
       const registeredPhoneDigits = (payload.phone || '').replace(/[^0-9]/g, '');
       const inputDigits = cleanCode.replace(/[^0-9]/g, '');
 
-      const validMasterKey = (process.env.ADMIN_RECOVERY_KEY || 'EJK-ADMIN-2026').trim();
-      const isMasterKey = cleanCode === validMasterKey;
-      const isCodeMatch = payload.role !== 'admin' && cleanCode === String(payload.code);
-      const isPhoneMatch = payload.role !== 'admin' && registeredPhoneDigits.length >= 6 && (inputDigits === registeredPhoneDigits || registeredPhoneDigits.endsWith(inputDigits));
+      const validMasterKey = (process.env.ADMIN_RECOVERY_KEY || '').trim();
+      const isMasterKey = Boolean(validMasterKey && cleanCode === validMasterKey);
+      const isCodeMatch = payload.role === 'student' && cleanCode === String(payload.code);
+      const isPhoneMatch = registeredPhoneDigits.length >= 6 && (inputDigits === registeredPhoneDigits || registeredPhoneDigits.endsWith(inputDigits));
 
       if (payload.role === 'admin' && !isMasterKey) {
         recordFailedAttempt(rateLimitKey);
         return NextResponse.json({ error: 'Super Admin reset requires a valid Admin Recovery Key.' }, { status: 403 });
       }
 
+      if (payload.role === 'institute' && !isPhoneMatch && !isMasterKey) {
+        recordFailedAttempt(rateLimitKey);
+        return NextResponse.json({ error: 'Institute password reset requires verifying your full registered phone number or Admin Recovery Key.' }, { status: 403 });
+      }
+
       if (!isCodeMatch && !isPhoneMatch && !isMasterKey) {
         recordFailedAttempt(rateLimitKey);
-        return NextResponse.json({ error: 'Invalid verification code. Please enter the 6-digit code shown or your registered phone number.' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid verification code or phone number.' }, { status: 400 });
       }
 
       // Enforce strong password for Super Admin and Institute

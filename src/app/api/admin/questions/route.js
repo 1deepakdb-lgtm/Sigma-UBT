@@ -24,8 +24,18 @@ export async function GET(req) {
     }
     if (type) where.type = type;
 
-    // Check institute isolation if specific institute requested
-    if (!all && (instituteId || creatorName)) {
+    // Check institute isolation: non-superadmins can only access their own sets or published sets
+    const isSuperAdmin = session.role === ROLES.ADMIN;
+    if (!isSuperAdmin) {
+      const callerInstId = session.instituteId || instituteId;
+      where.examSet = {
+        ...(where.examSet || {}),
+        OR: [
+          { isPublished: true },
+          ...(callerInstId ? [{ creatorInstituteId: callerInstId }] : [])
+        ]
+      };
+    } else if (!all && (instituteId || creatorName)) {
       where.examSet = {
         ...(where.examSet || {}),
         OR: [
@@ -87,7 +97,7 @@ export async function POST(req) {
       // Ownership verification
       const targetExamSet = await prisma.examSet.findUnique({ where: { id: examSetId } });
       if (!targetExamSet) return NextResponse.json({ error: 'Exam Set not found' }, { status: 404 });
-      if (session.role !== 'admin' && targetExamSet.creatorInstituteId && targetExamSet.creatorInstituteId !== session.instituteId) {
+      if (session.role !== 'admin' && (!targetExamSet.creatorInstituteId || targetExamSet.creatorInstituteId !== session.instituteId)) {
         return NextResponse.json({ error: 'Forbidden: You do not have permission to manage questions for this Exam Set.' }, { status: 403 });
       }
 
@@ -146,7 +156,7 @@ export async function POST(req) {
     // Ownership verification
     const targetExamSet = await prisma.examSet.findUnique({ where: { id: examSetId } });
     if (!targetExamSet) return NextResponse.json({ error: 'Exam Set not found' }, { status: 404 });
-    if (session.role !== 'admin' && targetExamSet.creatorInstituteId && targetExamSet.creatorInstituteId !== session.instituteId) {
+    if (session.role !== 'admin' && (!targetExamSet.creatorInstituteId || targetExamSet.creatorInstituteId !== session.instituteId)) {
       return NextResponse.json({ error: 'Forbidden: You do not have permission to add questions to this Exam Set.' }, { status: 403 });
     }
 
@@ -207,7 +217,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: 'Question not found' }, { status: 404 });
     }
 
-    if (session.role !== 'admin' && existing.examSet?.creatorInstituteId && existing.examSet.creatorInstituteId !== session.instituteId) {
+    if (session.role !== 'admin' && (!existing.examSet?.creatorInstituteId || existing.examSet.creatorInstituteId !== session.instituteId)) {
       return NextResponse.json({
         error: 'Forbidden: You do not have authorization to edit questions in this Exam Set.'
       }, { status: 403 });
@@ -261,7 +271,7 @@ export async function DELETE(req) {
       return NextResponse.json({ error: 'Question not found' }, { status: 404 });
     }
 
-    if (session.role !== 'admin' && existing.examSet?.creatorInstituteId && existing.examSet.creatorInstituteId !== session.instituteId) {
+    if (session.role !== 'admin' && (!existing.examSet?.creatorInstituteId || existing.examSet.creatorInstituteId !== session.instituteId)) {
       return NextResponse.json({
         error: 'Forbidden: You do not have authorization to delete questions from this Exam Set.'
       }, { status: 403 });

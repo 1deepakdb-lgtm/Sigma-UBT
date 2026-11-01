@@ -2,9 +2,13 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'sigma-ubt-production-secret-key-2026'
-);
+const JWT_SECRET_VALUE = (process.env.JWT_SECRET || 'sigma-ubt-production-secret-key-2026').trim();
+
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'sigma-ubt-production-secret-key-2026')) {
+  console.warn('[SECURITY CRITICAL] JWT_SECRET is not configured with a secure random key. Generate one with `openssl rand -hex 32` and set it in your production .env file.');
+}
+
+const SECRET = new TextEncoder().encode(JWT_SECRET_VALUE);
 
 export async function hashPassword(password) {
   return await bcrypt.hash(password, 10);

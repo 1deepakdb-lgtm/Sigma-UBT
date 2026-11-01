@@ -29,10 +29,11 @@ export async function GET(req) {
       }
     } else {
       // Institutes and staff can ONLY query their own students
-      targetInstId = session.instituteId;
+      targetInstId = session.instituteId || 'unassigned';
+      where.instituteId = targetInstId;
     }
 
-    if (targetInstId) {
+    if (session.role === 'admin' && targetInstId) {
       where.instituteId = targetInstId;
     }
 

@@ -216,6 +216,7 @@ export async function middleware(req) {
       let redirectPath = '/student';
       if (userPayload.role === 'admin') redirectPath = '/admin';
       else if (userPayload.role === 'institute') redirectPath = '/institute';
+      else if (userPayload.role === 'staff') redirectPath = '/institute?tab=billing';
 
       return NextResponse.redirect(new URL(redirectPath, req.url));
     }
