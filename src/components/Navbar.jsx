@@ -34,6 +34,26 @@ export default function Navbar({
     }
   }, [instituteLanguage]);
 
+  // Super Admin security validation: continuously verify active admin JWT session on mount
+  useEffect(() => {
+    if (role === 'admin') {
+      fetch('/api/auth/me')
+        .then((res) => {
+          if (!res.ok) {
+            performLogout();
+            return null;
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (data && (!data.authenticated || data.user?.role !== 'admin')) {
+            performLogout();
+          }
+        })
+        .catch(() => {});
+    }
+  }, [role]);
+
   const handleLogout = async () => {
     if (loggingOut) return;
     setLoggingOut(true);
@@ -106,9 +126,34 @@ export default function Navbar({
     lineHeight: 1.2
   };
 
+  // Compact, shrink-proof styling specifically for Super Admin links
+  const getAdminItemStyle = (isActive, itemKey) => {
+    const isHovered = hoveredItem === itemKey;
+    return {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '7px 11px',
+      fontSize: '13px',
+      fontWeight: 700,
+      borderRadius: '6px',
+      border: 'none',
+      cursor: 'pointer',
+      textDecoration: 'none',
+      whiteSpace: 'nowrap',
+      transition: 'background-color 0.15s ease, color 0.15s ease',
+      flexShrink: 0,
+      minHeight: '34px',
+      boxSizing: 'border-box',
+      lineHeight: 1.2,
+      backgroundColor: isActive ? '#2563eb' : isHovered ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
+      color: '#ffffff',
+      boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.2)' : 'none'
+    };
+  };
+
   const getItemStyle = (isActive, itemKey) => {
     const isHovered = hoveredItem === itemKey;
-
 
     if (isActive) {
       return {
@@ -135,20 +180,22 @@ export default function Navbar({
         color: '#ffffff',
         width: '100%',
         minWidth: '100%',
-        height: '66px',
-        minHeight: '66px',
-        maxHeight: '66px',
-        padding: '0 24px',
+        height: '64px',
+        minHeight: '64px',
+        maxHeight: '64px',
+        padding: '0 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'sticky',
         top: 0,
-        zIndex: 1000,
-        boxShadow: '0 4px 15px rgba(30, 58, 138, 0.25)',
+        zIndex: 9999,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
         boxSizing: 'border-box',
         borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
-        flexShrink: 0
+        flexShrink: 0,
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch'
       }}
     >
       {/* Left Section: Brand / Logo Section */}
@@ -158,7 +205,7 @@ export default function Navbar({
           alignItems: 'center',
           gap: '12px',
           flexShrink: 0,
-          marginRight: '24px'
+          marginRight: '20px'
         }}
       >
         <div
@@ -214,13 +261,12 @@ export default function Navbar({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-end',
-          gap: '14px',
+          gap: role === 'admin' ? '10px' : '14px',
           marginLeft: 'auto',
           flex: 1,
           minWidth: 0,
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
+          flexShrink: 0,
+          whiteSpace: 'nowrap'
         }}
       >
         {/* Navigation Options Menu */}
@@ -229,10 +275,10 @@ export default function Navbar({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
-            gap: '6px',
+            gap: role === 'admin' ? '4px' : '6px',
             flexShrink: 0,
             whiteSpace: 'nowrap',
-            padding: '4px 0'
+            padding: '2px 0'
           }}
         >
           {role === 'admin' &&
@@ -242,7 +288,7 @@ export default function Navbar({
                 <Link
                   key={link.href}
                   href={link.href}
-                  style={getItemStyle(isActive, link.href)}
+                  style={getAdminItemStyle(isActive, link.href)}
                   onMouseEnter={() => setHoveredItem(link.href)}
                   onMouseLeave={() => setHoveredItem(null)}
                 >
@@ -252,12 +298,12 @@ export default function Navbar({
                       style={{
                         backgroundColor: '#ef4444',
                         color: '#ffffff',
-                        fontSize: '11px',
+                        fontSize: '10px',
                         fontWeight: 700,
-                        padding: '1px 6px',
+                        padding: '1px 5px',
                         borderRadius: '10px',
-                        lineHeight: '14px',
-                        marginLeft: '4px'
+                        lineHeight: '13px',
+                        marginLeft: '3px'
                       }}
                     >
                       {link.badge}
@@ -319,12 +365,16 @@ export default function Navbar({
             backgroundColor: '#ef4444',
             color: '#ffffff',
             border: 'none',
-            padding: '8px 16px',
+            padding: '7px 15px',
             borderRadius: '6px',
             cursor: 'pointer',
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: '13px',
             lineHeight: 1.2,
+            minHeight: '34px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             transition: 'background-color 0.15s ease',
             boxShadow: '0 2px 4px rgba(239, 68, 68, 0.25)',
             whiteSpace: 'nowrap',
