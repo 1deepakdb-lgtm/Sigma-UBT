@@ -1103,36 +1103,58 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     backgroundPosition: "center",
     backgroundSize: "350px",
     backgroundBlendMode: "overlay",
+    overflowY: "scroll",
+    scrollbarGutter: "stable",
     ...protectedStyle
   };
 
   const topNavStyle = { 
     backgroundColor: "#1e3a8a", 
     color: "white", 
-    padding: "15px 30px", 
+    padding: "0 28px", 
+    height: "64px",
+    minHeight: "64px",
+    maxHeight: "64px",
     display: "flex", 
     justifyContent: "space-between", 
     alignItems: "center", 
-    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-    flexWrap: "wrap",
-    gap: "15px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+    flexWrap: "nowrap",
+    gap: "16px",
     position: "sticky",
     top: 0,
-    zIndex: 1000
+    zIndex: 1000,
+    boxSizing: "border-box",
+    overflowX: "auto",
+    WebkitOverflowScrolling: "touch"
   };
 
-  const menuContainerStyle = { display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" };
+  const menuContainerStyle = { 
+    display: "flex", 
+    gap: "6px", 
+    flexWrap: "nowrap", 
+    alignItems: "center",
+    flexShrink: 0,
+    whiteSpace: "nowrap"
+  };
   
   const getNavBtnStyle = (tabName) => ({
     backgroundColor: activeTab === tabName ? "#2563eb" : "transparent",
     color: "#ffffff",
     border: "none",
-    padding: "8px 14px",
+    padding: "8px 16px",
     borderRadius: "6px",
-    fontWeight: "bold",
+    fontWeight: "700",
     cursor: "pointer",
     fontSize: "14px",
-    transition: "0.2s"
+    transition: "background-color 0.15s ease",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "38px",
+    boxSizing: "border-box"
   });
 
   const contentAreaStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto", userSelect: "text" };
@@ -1245,10 +1267,10 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       )}
 
       <div style={topNavStyle}>
-        <div style={{ fontSize: "18px", fontWeight: "bold", display: "flex", alignItems: "center", gap: "10px" }}>
-          <span>INSTITUTE PANEL ({instituteName})</span>
+        <div style={{ fontSize: "17px", fontWeight: "800", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, whiteSpace: "nowrap" }}>
+          <span>INSTITUTE PANEL ({instituteName || "sig"})</span>
           {userRole === "staff" && (
-            <span style={{ fontSize: "11px", backgroundColor: "#10b981", color: "white", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold" }}>
+            <span style={{ fontSize: "11px", backgroundColor: "#10b981", color: "white", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold", flexShrink: 0, whiteSpace: "nowrap" }}>
               👤 Staff Cashier
             </span>
           )}
@@ -1259,9 +1281,18 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             Billing
           </button>
           
-          <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
-          <button onClick={() => handleTabChange("dictionary")} style={getNavBtnStyle("dictionary")}>Dictionary</button>
-          <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>Notice</button>
+          <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>
+            Study Materials
+          </button>
+          
+          <button onClick={() => handleTabChange("dictionary")} style={getNavBtnStyle("dictionary")}>
+            Dictionary
+          </button>
+          
+          <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>
+            Notice
+          </button>
+          
           {userRole !== "staff" && (
             <button onClick={() => handleTabChange("students")} style={getNavBtnStyle("students")}>
               Manage Students
@@ -1269,8 +1300,28 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           )}
         </div>
 
-        <div>
-          <button onClick={handleLogout} style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>Logout</button>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+          <button 
+            onClick={handleLogout} 
+            style={{ 
+              backgroundColor: "#ef4444", 
+              color: "white", 
+              border: "none", 
+              padding: "8px 18px", 
+              borderRadius: "6px", 
+              cursor: "pointer", 
+              fontWeight: "700", 
+              fontSize: "13px",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+              minHeight: "38px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            Logout
+          </button>
         </div>
       </div>
 
