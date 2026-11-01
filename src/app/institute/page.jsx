@@ -1123,33 +1123,17 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
   const menuContainerStyle = { display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" };
   
-  const getNavBtnStyle = (tabName) => {
-    if (tabName === "students") {
-      return {
-        backgroundColor: "transparent",
-        color: "#ffffff",
-        border: "none",
-        padding: "8px 14px",
-        borderRadius: "6px",
-        fontWeight: "bold",
-        cursor: "pointer",
-        fontSize: "14px",
-        transition: "0.2s"
-      };
-    }
-
-    return {
-      backgroundColor: activeTab === tabName ? "#2563eb" : "transparent",
-      color: "#ffffff",
-      border: "none",
-      padding: "8px 14px",
-      borderRadius: "6px",
-      fontWeight: "bold",
-      cursor: "pointer",
-      fontSize: "14px",
-      transition: "0.2s"
-    };
-  };
+  const getNavBtnStyle = (tabName) => ({
+    backgroundColor: activeTab === tabName ? "#2563eb" : "transparent",
+    color: "#ffffff",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "6px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    fontSize: "14px",
+    transition: "0.2s"
+  });
 
   const contentAreaStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto", userSelect: "text" };
   const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "20px", border: "1px solid #e2e8f0" };
@@ -1311,12 +1295,12 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 maxWidth: "420px",
                 backgroundColor: "#ffffff",
                 borderRadius: "14px",
-                boxShadow: "0 10px 25px rgba(5, 150, 105, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05)",
-                border: "1px solid #cbd5e1",
+                boxShadow: "0 12px 30px rgba(5, 150, 105, 0.22), 0 4px 10px rgba(0, 0, 0, 0.05)",
+                border: "1.5px solid #a7f3d0",
                 overflow: "hidden",
                 flexShrink: 0
               }}>
-                {/* Header: Manage Students Emerald Green Theme */}
+                {/* Header: Manage Students Distinct Emerald Green Theme */}
                 <div style={{
                   backgroundColor: "#059669",
                   backgroundImage: "linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)",
@@ -1328,8 +1312,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     width: "56px",
                     height: "56px",
                     borderRadius: "50%",
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    border: "2px solid rgba(255, 255, 255, 0.45)",
+                    backgroundColor: "rgba(255, 255, 255, 0.22)",
+                    border: "2px solid rgba(255, 255, 255, 0.6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1345,6 +1329,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                   <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "bold", color: "#ffffff", letterSpacing: "0.5px" }}>
                     Login
                   </h2>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "rgba(255, 255, 255, 0.9)", fontWeight: "600" }}>
+                    Manage Students Access
+                  </p>
                 </div>
 
                 {/* Form: White Background */}
@@ -1369,7 +1356,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
                   <form onSubmit={handleUnlockStudentsWithBilling} style={{ textAlign: "left" }}>
                     <div style={{ marginBottom: "16px" }}>
-                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#047857", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#065f46", marginBottom: "6px" }}>
                         User ID / Username *
                       </label>
                       <input
@@ -1387,13 +1374,24 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                           backgroundColor: "#f8fafc",
                           fontSize: "14px",
                           boxSizing: "border-box",
-                          outline: "none"
+                          outline: "none",
+                          transition: "border-color 0.2s, box-shadow 0.2s, background-color 0.2s"
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = "#059669";
+                          e.target.style.backgroundColor = "#ffffff";
+                          e.target.style.boxShadow = "0 0 0 3px rgba(16, 185, 129, 0.2)";
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = "#cbd5e1";
+                          e.target.style.backgroundColor = "#f8fafc";
+                          e.target.style.boxShadow = "none";
                         }}
                       />
                     </div>
 
                     <div style={{ marginBottom: "22px" }}>
-                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#047857", marginBottom: "6px" }}>
+                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#065f46", marginBottom: "6px" }}>
                         Password *
                       </label>
                       <input
@@ -1410,7 +1408,18 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                           backgroundColor: "#f8fafc",
                           fontSize: "14px",
                           boxSizing: "border-box",
-                          outline: "none"
+                          outline: "none",
+                          transition: "border-color 0.2s, box-shadow 0.2s, background-color 0.2s"
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = "#059669";
+                          e.target.style.backgroundColor = "#ffffff";
+                          e.target.style.boxShadow = "0 0 0 3px rgba(16, 185, 129, 0.2)";
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = "#cbd5e1";
+                          e.target.style.backgroundColor = "#f8fafc";
+                          e.target.style.boxShadow = "none";
                         }}
                       />
                     </div>
@@ -1421,7 +1430,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       style={{
                         width: "100%",
                         backgroundColor: "#059669",
-                        backgroundImage: "linear-gradient(135deg, #047857 0%, #10b981 100%)",
+                        backgroundImage: "linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)",
                         color: "#ffffff",
                         border: "none",
                         padding: "13px 20px",
