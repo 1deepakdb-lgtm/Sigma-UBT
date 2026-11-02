@@ -1,0 +1,12 @@
+# Himalaa Hosting — cPanel/Passenger configuration
+# This file tells Apache/LiteSpeed to route all requests through Passenger (Node.js)
+
+PassengerNodejs /usr/local/bin/node
+PassengerStartupFile app.js
+PassengerAppType node
+PassengerRestartDir tmp
+
+# Route all traffic through Node.js app
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ app.js [QSA,L]

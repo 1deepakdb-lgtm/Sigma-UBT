@@ -3,10 +3,13 @@ import { parse } from 'url';
 import next from 'next';
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = '0.0.0.0';
-const port = parseInt(process.env.PORT, 10) || 3000;
 
-// Initialize Next.js app in production mode by default for cPanel Passenger
+// cPanel Passenger assigns PORT dynamically via environment variable
+// NEVER hardcode the port — Passenger will set it automatically
+const port = parseInt(process.env.PORT, 10) || 3000;
+const hostname = 'localhost';
+
+// Initialize Next.js app
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
@@ -26,7 +29,7 @@ app.prepare()
         console.error('Server error:', err);
         process.exit(1);
       })
-      .listen(port, () => {
+      .listen(port, hostname, () => {
         console.log(`> ExamJK Server ready on http://${hostname}:${port}`);
       });
   })
