@@ -733,20 +733,26 @@ export default function EpsBookReader({
   const [editNotes, setEditNotes] = useState("");
   const [isSavingChapterInfo, setIsSavingChapterInfo] = useState(false);
 
-  // Primary Language Track State: "korean" | "japanese"
+  // Primary Language Track State: "both" | "korean" | "japanese"
   const effectiveInstLang = (
     propInstituteLanguage ||
     (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
     "both"
   ).toLowerCase();
 
-  const [studyLanguage, setStudyLanguage] = useState(() => (effectiveInstLang === "japanese" ? "japanese" : "korean"));
+  const [studyLanguage, setStudyLanguage] = useState(() => {
+    if (effectiveInstLang === "japanese") return "japanese";
+    if (effectiveInstLang === "korean") return "korean";
+    return "both";
+  });
 
   useEffect(() => {
     if (effectiveInstLang === "japanese") {
       setStudyLanguage("japanese");
     } else if (effectiveInstLang === "korean") {
       setStudyLanguage("korean");
+    } else if (effectiveInstLang === "both") {
+      setStudyLanguage("both");
     }
   }, [effectiveInstLang]);
 
@@ -3394,8 +3400,51 @@ export default function EpsBookReader({
           border: "1.5px solid #cbd5e1",
           boxShadow: "0 2px 10px rgba(15, 23, 42, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.02)",
           margin: "0 auto",
-          flexWrap: "wrap"
+          flexWrap: "wrap",
+          maxWidth: "100%",
+          boxSizing: "border-box"
         }}>
+          {/* BOTH KOREAN & JAPANESE */}
+          {effectiveInstLang === "both" && (
+            <button
+              type="button"
+              onClick={() => setStudyLanguage("both")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                padding: "10px 20px",
+                borderRadius: "12px",
+                border: "none",
+                backgroundColor: studyLanguage === "both" ? "#2563eb" : "transparent",
+                backgroundImage: studyLanguage === "both" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
+                color: studyLanguage === "both" ? "#ffffff" : "#475569",
+                fontSize: "14px",
+                fontWeight: "800",
+                cursor: "pointer",
+                transition: "all 0.18s ease-in-out",
+                boxShadow: studyLanguage === "both" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none",
+                whiteSpace: "nowrap"
+              }}
+              onMouseEnter={(e) => {
+                if (studyLanguage !== "both") {
+                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (studyLanguage !== "both") {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#475569";
+                }
+              }}
+            >
+              <span style={{ fontSize: "18px", lineHeight: "1" }}>🇰🇷 🇯🇵</span>
+              <span>All Materials (Both)</span>
+            </button>
+          )}
+
           {/* KOREAN STUDY MATERIALS */}
           {(effectiveInstLang === "both" || effectiveInstLang === "korean") && (
             <button
@@ -3405,18 +3454,19 @@ export default function EpsBookReader({
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "10px",
-                padding: "11px 28px",
+                gap: "8px",
+                padding: "10px 20px",
                 borderRadius: "12px",
                 border: "none",
                 backgroundColor: studyLanguage === "korean" ? "#2563eb" : "transparent",
                 backgroundImage: studyLanguage === "korean" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
                 color: studyLanguage === "korean" ? "#ffffff" : "#475569",
-                fontSize: "15px",
+                fontSize: "14px",
                 fontWeight: "800",
                 cursor: "pointer",
                 transition: "all 0.18s ease-in-out",
-                boxShadow: studyLanguage === "korean" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
+                boxShadow: studyLanguage === "korean" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none",
+                whiteSpace: "nowrap"
               }}
               onMouseEnter={(e) => {
                 if (studyLanguage !== "korean") {
@@ -3431,8 +3481,8 @@ export default function EpsBookReader({
                 }
               }}
             >
-              <span style={{ fontSize: "22px", lineHeight: "1" }}>🇰🇷</span>
-              <span>{effectiveInstLang === "both" ? "Korean" : "Study Materials"}</span>
+              <span style={{ fontSize: "18px", lineHeight: "1" }}>🇰🇷</span>
+              <span>Korean Only</span>
             </button>
           )}
 
@@ -3445,18 +3495,19 @@ export default function EpsBookReader({
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "10px",
-                padding: "11px 28px",
+                gap: "8px",
+                padding: "10px 20px",
                 borderRadius: "12px",
                 border: "none",
                 backgroundColor: studyLanguage === "japanese" ? "#2563eb" : "transparent",
                 backgroundImage: studyLanguage === "japanese" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
                 color: studyLanguage === "japanese" ? "#ffffff" : "#475569",
-                fontSize: "15px",
+                fontSize: "14px",
                 fontWeight: "800",
                 cursor: "pointer",
                 transition: "all 0.18s ease-in-out",
-                boxShadow: studyLanguage === "japanese" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none"
+                boxShadow: studyLanguage === "japanese" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none",
+                whiteSpace: "nowrap"
               }}
               onMouseEnter={(e) => {
                 if (studyLanguage !== "japanese") {
@@ -3471,8 +3522,8 @@ export default function EpsBookReader({
                 }
               }}
             >
-              <span style={{ fontSize: "22px", lineHeight: "1" }}>🇯🇵</span>
-              <span>{effectiveInstLang === "both" ? "Japanese" : "Study Materials"}</span>
+              <span style={{ fontSize: "18px", lineHeight: "1" }}>🇯🇵</span>
+              <span>Japanese Only</span>
             </button>
           )}
         </div>
@@ -3543,7 +3594,7 @@ export default function EpsBookReader({
             </button>
 
             {/* Edit Chapter if Admin on Korean EPS Book */}
-            {studyLanguage === "korean" && activeFolder === "EPS Book" && (
+            {(studyLanguage === "korean" || studyLanguage === "both") && activeFolder === "EPS Book" && (
               <button
                 type="button"
                 onClick={() => openUploadModal(chapters[0] || { chapter: 1 })}
@@ -3576,8 +3627,31 @@ export default function EpsBookReader({
       {/* ============================================================== */}
       {/* 1. KOREAN STUDY MATERIALS SECTION */}
       {/* ============================================================== */}
-      {studyLanguage === "korean" && (
-        <>
+      {(studyLanguage === "korean" || studyLanguage === "both") && (
+        <div style={{ marginBottom: studyLanguage === "both" ? "40px" : "0" }}>
+          {studyLanguage === "both" && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "16px",
+              padding: "12px 18px",
+              backgroundColor: "#eff6ff",
+              borderRadius: "14px",
+              border: "1.5px solid #bfdbfe",
+              boxShadow: "0 2px 8px rgba(37, 99, 235, 0.06)"
+            }}>
+              <span style={{ fontSize: "26px", lineHeight: "1" }}>🇰🇷</span>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#1e3a8a" }}>
+                  Korean Study Materials
+                </h3>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  EPS-TOPIK Book 1 &amp; 2 (60 Chapters), Meaning Book, Question Bank, and Grammar Guide
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* LARGE FOLDER NAVIGATION TABS */}
           <style>{`
@@ -4705,14 +4779,38 @@ export default function EpsBookReader({
               </div>
             );
           })()}
-        </>
+        </div>
       )}
 
       {/* ============================================================== */}
       {/* 2. JAPANESE STUDY MATERIALS SECTION */}
       {/* ============================================================== */}
-      {studyLanguage === "japanese" && (
-        <>
+      {(studyLanguage === "japanese" || studyLanguage === "both") && (
+        <div style={{ marginTop: studyLanguage === "both" ? "40px" : "0" }}>
+          {studyLanguage === "both" && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "16px",
+              padding: "12px 18px",
+              backgroundColor: "#fef2f2",
+              borderRadius: "14px",
+              border: "1.5px solid #fecaca",
+              boxShadow: "0 2px 8px rgba(220, 38, 38, 0.06)"
+            }}>
+              <span style={{ fontSize: "26px", lineHeight: "1" }}>🇯🇵</span>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#991b1b" }}>
+                  Japanese Study Materials
+                </h3>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  JLPT N5・N4 (Minna no Nihongo), JLPT N3・N2・N1, Kanji &amp; Meaning, and Mock Tests
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Japanese Folder Selection Tabs */}
           <div className="book-tabs-container">
             <div className="book-tabs-grid">
@@ -6946,7 +7044,7 @@ export default function EpsBookReader({
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* =========================================================================
