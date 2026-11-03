@@ -794,8 +794,21 @@ export default function EpsBookReader({
   const [kanjiVisibleLimit, setKanjiVisibleLimit] = useState(60);
   const [japaneseR2Data, setJapaneseR2Data] = useState(null);
 
-  const handlePlayJpAudio = (id, text) => {
-    if (!text || typeof window === "undefined") return;
+  const handlePlayJpAudio = (arg1, arg2, arg3) => {
+    if (typeof window === "undefined") return;
+    let id = arg1;
+    let text = arg2;
+    if (typeof arg1 === 'string' && (arg1.startsWith('/api') || arg1.startsWith('http'))) {
+      id = arg2;
+      text = arg3;
+      if (!text) {
+        try {
+          const parsed = new URL(arg1, 'http://localhost');
+          text = parsed.searchParams.get('text') || '';
+        } catch (e) {}
+      }
+    }
+    if (!text) return;
 
     if (playingJpAudioId === id) {
       if (jpAudioPlayerRef.current) {
@@ -816,6 +829,27 @@ export default function EpsBookReader({
     let cleanText = String(text).trim().replace(/[#*`_~]/g, '');
     setPlayingJpAudioId(id);
 
+    // Instant client-side speech synthesis (< 5ms response)
+    if ('speechSynthesis' in window) {
+      try {
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = /[\uAC00-\uD7AF]/.test(cleanText) ? 'ko-KR' : 'ja-JP';
+        utterance.rate = 0.95;
+        window.__activeJpUtt = utterance;
+        utterance.onend = () => {
+          window.__activeJpUtt = null;
+          setPlayingJpAudioId(null);
+        };
+        utterance.onerror = () => {
+          window.__activeJpUtt = null;
+          setPlayingJpAudioId(null);
+        };
+        window.speechSynthesis.speak(utterance);
+        return;
+      } catch (err) {}
+    }
+
     try {
       const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ja&voice=ja-JP-NanamiNeural&gender=female&model=ja-female-1`;
       const audio = new Audio(ttsUrl);
@@ -827,43 +861,14 @@ export default function EpsBookReader({
       };
 
       audio.onerror = () => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'ja-JP';
-          utterance.rate = 0.88;
-          utterance.onend = () => setPlayingJpAudioId(null);
-          utterance.onerror = () => setPlayingJpAudioId(null);
-          window.speechSynthesis.speak(utterance);
-        } else {
-          setPlayingJpAudioId(null);
-        }
+        setPlayingJpAudioId(null);
       };
 
       audio.play().catch(() => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'ja-JP';
-          utterance.rate = 0.88;
-          utterance.onend = () => setPlayingJpAudioId(null);
-          utterance.onerror = () => setPlayingJpAudioId(null);
-          window.speechSynthesis.speak(utterance);
-        } else {
-          setPlayingJpAudioId(null);
-        }
+        setPlayingJpAudioId(null);
       });
     } catch (err) {
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'ja-JP';
-        utterance.rate = 0.88;
-        utterance.onend = () => setPlayingJpAudioId(null);
-        utterance.onerror = () => setPlayingJpAudioId(null);
-        window.speechSynthesis.speak(utterance);
-      } else {
-        setPlayingJpAudioId(null);
-      }
+      setPlayingJpAudioId(null);
     }
   };
 

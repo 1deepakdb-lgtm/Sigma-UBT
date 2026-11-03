@@ -309,7 +309,17 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
 
   function playSample(text, id) {
     const url = `/api/tts?text=${encodeURIComponent(text)}&lang=ja&gender=female&voice=ja-JP-NanamiNeural`;
-    handlePlayAudio(url, id);
+    if (handlePlayAudio) {
+      handlePlayAudio(url, id, text, 'ja', 'female');
+    } else if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.lang = 'ja-JP';
+        window.speechSynthesis.speak(utt);
+      } catch (e) {}
+    }
   }
 
   return (

@@ -359,6 +359,21 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const onPlayClick = (audioUrl, audioId, spokenText, writtenText) => {
+    const textToSpeak = spokenText || writtenText;
+    if (handlePlayAudio) {
+      handlePlayAudio(audioUrl, audioId, textToSpeak, 'ko', 'female');
+    } else if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+        const utt = new SpeechSynthesisUtterance(textToSpeak);
+        utt.lang = 'ko-KR';
+        window.speechSynthesis.speak(utt);
+      } catch (e) {}
+    }
+  };
+
   const filteredRules = ALL_BATCHIM_RULES.filter(rule => {
     const matchesCat = activeCategory === 'all' || rule.category === activeCategory || rule.id === activeCategory;
     if (!matchesCat) return false;
@@ -580,7 +595,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                           </div>
                           <button
                             type="button"
-                            onClick={() => handlePlayAudio && handlePlayAudio(audioUrl, audioId)}
+                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                             style={{
                               backgroundColor: isPlaying ? "#be185d" : "#e11d48",
                               color: "white",
@@ -725,7 +740,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                             <td style={{ padding: "8px 12px", textAlign: "center" }}>
                               <button
                                 type="button"
-                                onClick={() => handlePlayAudio && handlePlayAudio(audioUrl, audioId)}
+                                onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                                 style={{
                                   backgroundColor: isPlaying ? "#be185d" : "#e11d48",
                                   color: "white",

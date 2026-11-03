@@ -545,6 +545,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     if (typeof window === 'undefined' || !window.speechSynthesis) return false;
     try {
       window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
       const clean = (text || '').replace(/[（(][^）)]*[）)]/g, '').replace(/[\/\\]+/g, ', ').trim();
       if (!clean) return false;
 
@@ -608,6 +611,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
     }
     if (playingAudioId === id || loadingAudioId === id) {
       setPlayingAudioId(null);
@@ -615,9 +621,22 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       return;
     }
 
+    // Auto-extract text, lang, gender from url if not explicitly provided!
+    if (!text && url) {
+      try {
+        const parsed = new URL(url, 'https://localhost');
+        text = parsed.searchParams.get('text') || '';
+        if (!lang) lang = parsed.searchParams.get('lang') || '';
+        if (!gender) gender = parsed.searchParams.get('gender') || '';
+      } catch (e) {
+        const m = url.match(/[?&]text=([^&]+)/);
+        if (m) text = decodeURIComponent(m[1]);
+      }
+    }
+
     // Try client-side speech first for INSTANT 0ms playback!
     if (text) {
-      const targetGender = gender || (id.includes('fem') ? 'female' : 'male');
+      const targetGender = gender || (id && id.includes('fem') ? 'female' : 'male');
       const targetLang = lang || activeLang;
       const didSpeak = speakTextNative(text, targetLang, targetGender, id);
       if (didSpeak) return;
@@ -1530,7 +1549,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               }}
             >
               <FemaleIcon size={24} isPlaying={playingAudioId === 'search-female'} />
-              <span>{loadingAudioId === 'search-female' ? "⏳ Loading..." : playingAudioId === 'search-female' ? "⏹ Stop" : "▶ Female"}</span>
+              <span>{loadingAudioId === 'search-female' ? "⏳ Loading..." : playingAudioId === 'search-female' ? "⏹ Stop" : "▶ F"}</span>
             </button>
 
             {/* Dropdown Arrow Button */}
@@ -1777,7 +1796,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               }}
             >
               <MaleIcon size={24} isPlaying={playingAudioId === 'search-male'} />
-              <span>{loadingAudioId === 'search-male' ? "⏳ Loading..." : playingAudioId === 'search-male' ? "⏹ Stop" : "▶ Male"}</span>
+              <span>{loadingAudioId === 'search-male' ? "⏳ Loading..." : playingAudioId === 'search-male' ? "⏹ Stop" : "▶ M"}</span>
             </button>
 
             {/* Dropdown Arrow Button */}
@@ -2340,7 +2359,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             >
                               <FemaleIcon size={18} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
                               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ Female"}
+                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ F"}
                               </span>
                             </button>
                             {canDownloadAudio && (
@@ -2418,7 +2437,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             >
                               <MaleIcon size={18} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
                               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ Male"}
+                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ M"}
                               </span>
                             </button>
                             {canDownloadAudio && (
