@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [regName, setRegName] = useState("");
   const [regIdentifier, setRegIdentifier] = useState("");
   const [regPassword, setRegPassword] = useState("");
-  const [regLanguage, setRegLanguage] = useState("both");
+  const [regLanguage, setRegLanguage] = useState(""); // No auto-select: student must choose Korean, Japanese, or Both
 
   // Reset password form fields (Super Admin, Institute, Student, Staff)
   const [resetIdentifier, setResetIdentifier] = useState("");
@@ -72,6 +72,7 @@ export default function LoginPage() {
     let redirectUrl = "/";
     if (userData.role === "admin") {
       localStorage.setItem("billingRole", "admin");
+      localStorage.setItem("instituteLanguage", "both");
       redirectUrl = "/admin";
     } else if (userData.role === "institute") {
       localStorage.setItem("currentInstitute", userData.instituteName || userData.name);
@@ -168,6 +169,11 @@ export default function LoginPage() {
 
     if (!regPassword || regPassword.length < 4) {
       setError("Password must be at least 4 characters.");
+      return;
+    }
+
+    if (!regLanguage) {
+      setError("Please select your study course (Korean or Japanese).");
       return;
     }
 
@@ -381,6 +387,11 @@ export default function LoginPage() {
 
     if (!googleEmail || !googleEmail.includes("@")) {
       setError("Please enter a valid Google email address.");
+      return;
+    }
+
+    if (!regLanguage) {
+      setError("Please select your study course (Korean or Japanese) below to continue.");
       return;
     }
 
@@ -759,36 +770,52 @@ export default function LoginPage() {
               required
             />
 
-            <div style={{ textAlign: "left", marginBottom: "5px" }}>
+            <div style={{ textAlign: "left", marginBottom: "6px" }}>
               <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#334155" }}>
-                Select Study Language:
+                Select Study Course (अध्ययन कोर्स रोज्नुहोस्):
+                {!regLanguage ? (
+                  <span style={{ color: "#dc2626", fontSize: "11px", fontWeight: "600", marginLeft: "6px" }}>
+                    * Required (Choose One)
+                  </span>
+                ) : (
+                  <span style={{ color: "#16a34a", fontSize: "11px", fontWeight: "700", marginLeft: "6px" }}>
+                    ✓ Selected
+                  </span>
+                )}
               </label>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "14px" }}>
               {[
-                { key: "korean", label: "🇰🇷 Korean" },
-                { key: "japanese", label: "🇯🇵 Japanese" },
-                { key: "both", label: "🌐 Both" }
+                { key: "korean", label: "🇰🇷 Korean", sub: "EPS-TOPIK" },
+                { key: "japanese", label: "🇯🇵 Japanese", sub: "JLPT / JFT" },
+                { key: "both", label: "🌐 Both", sub: "All Courses" }
               ].map((opt) => (
                 <button
                   key={opt.key}
                   type="button"
-                  onClick={() => setRegLanguage(opt.key)}
+                  onClick={() => { setRegLanguage(opt.key); setError(""); }}
                   style={{
-                    padding: "9px 6px",
-                    borderRadius: "8px",
-                    border: regLanguage === opt.key ? "1.5px solid #16a34a" : "1px solid #cbd5e1",
+                    padding: "10px 4px",
+                    borderRadius: "10px",
+                    border: regLanguage === opt.key ? "2px solid #16a34a" : "1.5px solid #cbd5e1",
                     backgroundColor: regLanguage === opt.key ? "#16a34a" : "#ffffff",
                     backgroundImage: regLanguage === opt.key ? "linear-gradient(135deg, #16a34a 0%, #15803d 100%)" : "none",
                     color: regLanguage === opt.key ? "#ffffff" : "#475569",
                     fontWeight: "800",
-                    fontSize: "12.5px",
+                    fontSize: "12px",
                     cursor: "pointer",
                     boxShadow: regLanguage === opt.key ? "0 4px 12px rgba(22, 163, 74, 0.35)" : "none",
-                    transition: "all 0.18s ease"
+                    transition: "all 0.18s ease",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "2px"
                   }}
                 >
-                  {opt.label}
+                  <span style={{ fontSize: "13px" }}>{opt.label}</span>
+                  <span style={{ fontSize: "10px", opacity: regLanguage === opt.key ? 0.9 : 0.65, fontWeight: "600" }}>
+                    {opt.sub}
+                  </span>
                 </button>
               ))}
             </div>
@@ -1186,33 +1213,49 @@ export default function LoginPage() {
               {/* Study Track Selection at Sign-up */}
               <div style={{ marginBottom: "18px", textAlign: "left" }}>
                 <label style={{ display: "block", fontSize: "12.5px", fontWeight: "700", color: "#334155", marginBottom: "6px" }}>
-                  Select Study Track (अध्ययन ट्र्याक):
+                  Select Study Course (अध्ययन कोर्स रोज्नुहोस्):
+                  {!regLanguage ? (
+                    <span style={{ color: "#dc2626", fontSize: "11px", fontWeight: "600", marginLeft: "6px" }}>
+                      * Required (Choose One)
+                    </span>
+                  ) : (
+                    <span style={{ color: "#2563eb", fontSize: "11px", fontWeight: "700", marginLeft: "6px" }}>
+                      ✓ Selected
+                    </span>
+                  )}
                 </label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px" }}>
                   {[
-                    { key: "korean", label: "🇰🇷 Korean" },
-                    { key: "japanese", label: "🇯🇵 Japanese" },
-                    { key: "both", label: "🌐 Both" }
+                    { key: "korean", label: "🇰🇷 Korean", sub: "EPS-TOPIK" },
+                    { key: "japanese", label: "🇯🇵 Japanese", sub: "JLPT / JFT" },
+                    { key: "both", label: "🌐 Both", sub: "All Courses" }
                   ].map((opt) => (
                     <button
                       key={opt.key}
                       type="button"
-                      onClick={() => setRegLanguage(opt.key)}
+                      onClick={() => { setRegLanguage(opt.key); setError(""); }}
                       style={{
-                        padding: "9px 6px",
-                        borderRadius: "8px",
-                        border: regLanguage === opt.key ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                        padding: "10px 4px",
+                        borderRadius: "10px",
+                        border: regLanguage === opt.key ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
                         backgroundColor: regLanguage === opt.key ? "#2563eb" : "#ffffff",
                         backgroundImage: regLanguage === opt.key ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
                         color: regLanguage === opt.key ? "#ffffff" : "#475569",
                         fontWeight: "800",
-                        fontSize: "12.5px",
+                        fontSize: "12px",
                         cursor: "pointer",
                         boxShadow: regLanguage === opt.key ? "0 4px 12px rgba(37, 99, 235, 0.35)" : "none",
-                        transition: "all 0.18s ease"
+                        transition: "all 0.18s ease",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "2px"
                       }}
                     >
-                      {opt.label}
+                      <span style={{ fontSize: "13px" }}>{opt.label}</span>
+                      <span style={{ fontSize: "10px", opacity: regLanguage === opt.key ? 0.9 : 0.65, fontWeight: "600" }}>
+                        {opt.sub}
+                      </span>
                     </button>
                   ))}
                 </div>

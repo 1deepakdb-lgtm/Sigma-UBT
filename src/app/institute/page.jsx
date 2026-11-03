@@ -51,6 +51,7 @@ const InstituteDashboard = () => {
     }
     return "both";
   });
+  const [studentLangFilter, setStudentLangFilter] = useState("all"); // "all" | "korean" | "japanese"
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -74,6 +75,10 @@ const InstituteDashboard = () => {
           const lang = data.user.instituteLanguage || data.user.institute?.language || "both";
           setInstituteLanguage(lang);
           localStorage.setItem("instituteLanguage", lang);
+          if (lang === "korean" || lang === "japanese") {
+            setFormData(prev => ({ ...prev, language: lang }));
+            setNoticeTargetTrack(lang);
+          }
         }
       })
       .catch(() => {});
@@ -86,7 +91,7 @@ const InstituteDashboard = () => {
     password: "", 
     assignedPackage: typeof window !== "undefined" && (localStorage.getItem("instituteLanguage") === "japanese" || (typeof window !== "undefined" && window.location.search.includes("lang=japanese"))) ? "Full Mock Test" : "Full Set UBT",
     expiryDuration: "1 Month",
-    language: "both"
+    language: typeof window !== "undefined" && localStorage.getItem("instituteLanguage") === "japanese" ? "japanese" : (typeof window !== "undefined" && localStorage.getItem("instituteLanguage") === "korean" ? "korean" : "both")
   });
   const [copiedStudentId, setCopiedStudentId] = useState(null);
   const [copiedAllStudents, setCopiedAllStudents] = useState(false);
@@ -715,6 +720,13 @@ const InstituteDashboard = () => {
       .then((data) => {
         if (data.success && Array.isArray(data.notices)) {
           const myNotices = data.notices.filter(n => {
+            if (instituteLanguage === "korean") {
+              const nTrack = (n.language || n.track || "all").toLowerCase();
+              if (nTrack !== "all" && nTrack !== "korean") return false;
+            } else if (instituteLanguage === "japanese") {
+              const nTrack = (n.language || n.track || "all").toLowerCase();
+              if (nTrack !== "all" && nTrack !== "japanese") return false;
+            }
             if (!n.instituteName) return true; // Global admin notice
             if (!currentInst) return false;
             return n.instituteName.trim().toLowerCase() === currentInst.trim().toLowerCase();
@@ -828,8 +840,8 @@ const InstituteDashboard = () => {
       instituteName: instituteName || "Language Institute",
       instituteId: instId || null,
       publishedBy: "institute",
-      language: noticeTargetTrack,
-      track: noticeTargetTrack
+      language: instituteLanguage === "korean" ? "korean" : (instituteLanguage === "japanese" ? "japanese" : noticeTargetTrack),
+      track: instituteLanguage === "korean" ? "korean" : (instituteLanguage === "japanese" ? "japanese" : noticeTargetTrack)
     };
 
     try {
@@ -1783,23 +1795,53 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
                     <div>
                       <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "700", color: "#334155" }}>
-                        Select Study Language:
+                        Study Language:
                       </label>
-                      <select
-                        name="language"
-                        value={formData.language || (instituteLanguage === "both" ? "both" : instituteLanguage)}
-                        onChange={handleInputChange}
-                        style={{
+                      {instituteLanguage === "korean" ? (
+                        <div style={{
                           ...inputStyle,
-                          fontWeight: "700",
-                          backgroundColor: "#f8fafc",
-                          border: "1.5px solid #cbd5e1"
-                        }}
-                      >
-                        <option value="korean">🇰🇷 Korean</option>
-                        <option value="japanese">🇯🇵 Japanese</option>
-                        <option value="both">🌐 Both</option>
-                      </select>
+                          fontWeight: "800",
+                          backgroundColor: "#eff6ff",
+                          border: "1.5px solid #bfdbfe",
+                          color: "#1d4ed8",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px"
+                        }}>
+                          <span>🇰🇷 Korean</span>
+                          <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>(Locked to Korean Institute)</span>
+                        </div>
+                      ) : instituteLanguage === "japanese" ? (
+                        <div style={{
+                          ...inputStyle,
+                          fontWeight: "800",
+                          backgroundColor: "#fdf4ff",
+                          border: "1.5px solid #f5d0fe",
+                          color: "#9333ea",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px"
+                        }}>
+                          <span>🇯🇵 Japanese</span>
+                          <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>(Locked to Japanese Institute)</span>
+                        </div>
+                      ) : (
+                        <select
+                          name="language"
+                          value={formData.language || "both"}
+                          onChange={handleInputChange}
+                          style={{
+                            ...inputStyle,
+                            fontWeight: "700",
+                            backgroundColor: "#f8fafc",
+                            border: "1.5px solid #cbd5e1"
+                          }}
+                        >
+                          <option value="korean">🇰🇷 Korean</option>
+                          <option value="japanese">🇯🇵 Japanese</option>
+                          <option value="both">🌐 Both</option>
+                        </select>
+                      )}
                     </div>
 
                     <div>
@@ -1820,22 +1862,138 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 </div>
               )}
 
-              <table style={tableStyle}>
-                <thead>
-                  <tr style={{ backgroundColor: "#f8fafc" }}>
-                    <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
-                    <th style={thStyle}>Phone Number</th>
-                    <th style={thStyle}>Study Language</th>
-                    <th style={thStyle}>Package & Expiry</th>
-                    <th style={thStyle}>Status</th>
-                    <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.length === 0 ? (
-                    <tr><td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>No students registered yet.</td></tr>
-                  ) : (
-                    students.map((stu) => (
+              {/* Language Filter Tabs for Both Institute or Header Banner */}
+              {(() => {
+                const koreanCount = students.filter(s => (s.language || "korean").toLowerCase() === "korean").length;
+                const japaneseCount = students.filter(s => (s.language || "").toLowerCase() === "japanese").length;
+                const bothCount = students.filter(s => (s.language || "").toLowerCase() === "both").length;
+
+                const displayedStudents = students.filter((stu) => {
+                  const sLang = (stu.language || "korean").toLowerCase();
+                  if (instituteLanguage === "korean") {
+                    return sLang === "korean" || sLang === "both";
+                  }
+                  if (instituteLanguage === "japanese") {
+                    return sLang === "japanese" || sLang === "both";
+                  }
+                  if (studentLangFilter === "korean") return sLang === "korean";
+                  if (studentLangFilter === "japanese") return sLang === "japanese";
+                  return true;
+                });
+
+                return (
+                  <div>
+                    {instituteLanguage === "both" && (
+                      <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center" }}>
+                        <span style={{ fontSize: "13px", fontWeight: "700", color: "#64748b", marginRight: "4px" }}>Filter:</span>
+                        <button
+                          type="button"
+                          onClick={() => setStudentLangFilter("all")}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: "10px",
+                            border: studentLangFilter === "all" ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
+                            backgroundColor: studentLangFilter === "all" ? "#2563eb" : "#ffffff",
+                            color: studentLangFilter === "all" ? "#ffffff" : "#475569",
+                            fontWeight: "800",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            boxShadow: studentLangFilter === "all" ? "0 4px 12px rgba(37,99,235,0.25)" : "none"
+                          }}
+                        >
+                          🌐 All Students ({students.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStudentLangFilter("korean")}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: "10px",
+                            border: studentLangFilter === "korean" ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
+                            backgroundColor: studentLangFilter === "korean" ? "#eff6ff" : "#ffffff",
+                            color: studentLangFilter === "korean" ? "#1d4ed8" : "#475569",
+                            fontWeight: "800",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            boxShadow: studentLangFilter === "korean" ? "0 4px 12px rgba(37,99,235,0.25)" : "none"
+                          }}
+                        >
+                          🇰🇷 Korean ({koreanCount})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStudentLangFilter("japanese")}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: "10px",
+                            border: studentLangFilter === "japanese" ? "2px solid #9333ea" : "1.5px solid #cbd5e1",
+                            backgroundColor: studentLangFilter === "japanese" ? "#fdf4ff" : "#ffffff",
+                            color: studentLangFilter === "japanese" ? "#9333ea" : "#475569",
+                            fontWeight: "800",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            boxShadow: studentLangFilter === "japanese" ? "0 4px 12px rgba(147,51,234,0.25)" : "none"
+                          }}
+                        >
+                          🇯🇵 Japanese ({japaneseCount})
+                        </button>
+                      </div>
+                    )}
+
+                    {instituteLanguage === "korean" && (
+                      <div style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "6px 14px",
+                        borderRadius: "10px",
+                        backgroundColor: "#eff6ff",
+                        border: "1px solid #bfdbfe",
+                        color: "#1d4ed8",
+                        fontWeight: "800",
+                        fontSize: "13px",
+                        marginBottom: "14px"
+                      }}>
+                        <span>🇰🇷</span>
+                        <span>Korean Student Management ({displayedStudents.length} Students)</span>
+                      </div>
+                    )}
+
+                    {instituteLanguage === "japanese" && (
+                      <div style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "6px 14px",
+                        borderRadius: "10px",
+                        backgroundColor: "#fdf4ff",
+                        border: "1px solid #f5d0fe",
+                        color: "#9333ea",
+                        fontWeight: "800",
+                        fontSize: "13px",
+                        marginBottom: "14px"
+                      }}>
+                        <span>🇯🇵</span>
+                        <span>Japanese Student Management ({displayedStudents.length} Students)</span>
+                      </div>
+                    )}
+
+                    <table style={tableStyle}>
+                      <thead>
+                        <tr style={{ backgroundColor: "#f8fafc" }}>
+                          <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
+                          <th style={thStyle}>Phone Number</th>
+                          <th style={thStyle}>Study Language</th>
+                          <th style={thStyle}>Package & Expiry</th>
+                          <th style={thStyle}>Status</th>
+                          <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {displayedStudents.length === 0 ? (
+                          <tr><td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>No students registered under this track yet.</td></tr>
+                        ) : (
+                          displayedStudents.map((stu) => (
                       <tr key={stu.id}>
                         <td style={{ ...tdStyle, fontWeight: "bold" }}>{stu.name}</td>
                         <td style={tdStyle}>{stu.phone}</td>
@@ -1868,6 +2026,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                   )}
                 </tbody>
               </table>
+            </div>
+          );
+        })()}
 
               {/* UBT PACKAGES & PRICING MANAGEMENT (CREATED BY OWN CHOICE & CUSTOM PRICE) */}
         {true && (

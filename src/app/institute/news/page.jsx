@@ -35,9 +35,29 @@ const InstituteNews = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
-  // Study Track state for notices (all / korean / japanese)
-  const [targetTrack, setTargetTrack] = useState("all");
-  const [filterTrack, setFilterTrack] = useState("all");
+  // Institute Language & Study Track state
+  const [instituteLanguage, setInstituteLanguage] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("instituteLanguage") || "both";
+    }
+    return "both";
+  });
+  const [targetTrack, setTargetTrack] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("instituteLanguage");
+      if (saved === "korean") return "korean";
+      if (saved === "japanese") return "japanese";
+    }
+    return "all";
+  });
+  const [filterTrack, setFilterTrack] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("instituteLanguage");
+      if (saved === "korean") return "korean";
+      if (saved === "japanese") return "japanese";
+    }
+    return "all";
+  });
 
   // Filter state for announcements
   const [activeFilter, setActiveFilter] = useState("all");
@@ -45,16 +65,24 @@ const InstituteNews = () => {
   const institutes = typeof window !== 'undefined' ? (JSON.parse(localStorage.getItem("institutes")) || []) : [];
   const logoWatermark = institutes[0]?.logoUrl || "";
 
-  const fetchNotices = async (instName) => {
+  const fetchNotices = async (instName, currentLang) => {
+    const effLang = currentLang || instituteLanguage || "both";
     const currentInst = instName || (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : "") || "";
+    const langQuery = (effLang && effLang !== "both") ? `&language=${encodeURIComponent(effLang)}` : "";
     try {
-      const query = currentInst ? `?role=institute&institute=${encodeURIComponent(currentInst)}` : "?role=institute";
+      const query = currentInst ? `?role=institute&institute=${encodeURIComponent(currentInst)}${langQuery}` : `?role=institute${langQuery}`;
       const res = await fetch(`/api/news${query}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.notices)) {
-        setNewsList(data.notices);
+        let list = data.notices;
+        if (effLang === "korean") {
+          list = list.filter(n => (n.language || n.track || "all").toLowerCase() === "korean" || (n.language || n.track || "all").toLowerCase() === "all");
+        } else if (effLang === "japanese") {
+          list = list.filter(n => (n.language || n.track || "all").toLowerCase() === "japanese" || (n.language || n.track || "all").toLowerCase() === "all");
+        }
+        setNewsList(list);
         try {
-          localStorage.setItem("epsNewsList", JSON.stringify(data.notices));
+          localStorage.setItem("epsNewsList", JSON.stringify(list));
         } catch (e) {}
         return;
       }
@@ -72,7 +100,29 @@ const InstituteNews = () => {
   useEffect(() => {
     const instName = (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : "") || "Language Institute";
     setMyInstituteName(instName);
-    fetchNotices(instName);
+
+    fetch("/api/auth/me")
+      .then(res => res.json())
+      .then(data => {
+        if (data?.user) {
+          const lang = data.user.instituteLanguage || data.user.institute?.language || "both";
+          setInstituteLanguage(lang);
+          if (typeof window !== "undefined") localStorage.setItem("instituteLanguage", lang);
+          if (lang === "korean") {
+            setTargetTrack("korean");
+            setFilterTrack("korean");
+          } else if (lang === "japanese") {
+            setTargetTrack("japanese");
+            setFilterTrack("japanese");
+          }
+          fetchNotices(instName, lang);
+        } else {
+          fetchNotices(instName);
+        }
+      })
+      .catch(() => {
+        fetchNotices(instName);
+      });
   }, []);
 
   const handleLogout = () => {
@@ -315,7 +365,7 @@ const InstituteNews = () => {
     <div style={containerStyle} onContextMenu={(e) => e.preventDefault()}>
       
       {/* STICKY TOP NAVIGATION BAR */}
-      <Navbar role="institute" />
+      <Navbar role="institute" activeTab="news" instituteLanguage={instituteLanguage} />
 
       <div style={contentStyle}>
         <div style={{ textAlign: "center", marginBottom: "25px" }}>
@@ -329,7 +379,7 @@ const InstituteNews = () => {
 
         {/* OFFICIAL PORTALS GRAPHIC CARDS SECTION (SIMPLE, ATTRACTIVE, LARGER ICONS) */}
         <div style={{ marginBottom: "35px" }}>
-          <OfficialPortalButtons track="both" showTrackTabs={true} />
+          <OfficialPortalButtons track={instituteLanguage || "both"} showTrackTabs={instituteLanguage === "both"} />
         </div>
 
         {/* PUBLISH FORM CARD */}
@@ -527,40 +577,50 @@ const InstituteNews = () => {
               <label style={{ fontWeight: "bold", fontSize: "13px", color: "#1e3a8a", display: "block", marginBottom: "8px" }}>
                 🎯 Target Study Track (लक्षित भाषा ट्र्याक)
               </label>
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                {[
-                  { key: "all", label: "🌐 All Students (Korean & Japanese)" },
-                  { key: "korean", label: "🇰🇷 Korean Track Only (EPS-TOPIK)" },
-                  { key: "japanese", label: "🇯🇵 Japanese Track Only (SSW / JLPT)" }
-                ].map((opt) => (
-                  <label
-                    key={opt.key}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "8px 14px",
-                      borderRadius: "8px",
-                      border: targetTrack === opt.key ? "2px solid #2563eb" : "1px solid #cbd5e1",
-                      backgroundColor: targetTrack === opt.key ? "#eff6ff" : "#ffffff",
-                      cursor: "pointer",
-                      fontWeight: targetTrack === opt.key ? "700" : "500",
-                      fontSize: "13px",
-                      color: targetTrack === opt.key ? "#1d4ed8" : "#334155"
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="targetTrack"
-                      value={opt.key}
-                      checked={targetTrack === opt.key}
-                      onChange={(e) => setTargetTrack(e.target.value)}
-                      style={{ cursor: "pointer" }}
-                    />
-                    <span>{opt.label}</span>
-                  </label>
-                ))}
-              </div>
+              {instituteLanguage === "korean" ? (
+                <div style={{ padding: "8px 14px", borderRadius: "8px", backgroundColor: "#eff6ff", border: "1.5px solid #bfdbfe", color: "#1d4ed8", fontWeight: "700", fontSize: "13px" }}>
+                  🇰🇷 Korean Track Only (Automatic for Korean Institute)
+                </div>
+              ) : instituteLanguage === "japanese" ? (
+                <div style={{ padding: "8px 14px", borderRadius: "8px", backgroundColor: "#fdf4ff", border: "1.5px solid #f5d0fe", color: "#9333ea", fontWeight: "700", fontSize: "13px" }}>
+                  🇯🇵 Japanese Track Only (Automatic for Japanese Institute)
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  {[
+                    { key: "all", label: "🌐 All Students (Korean & Japanese)" },
+                    { key: "korean", label: "🇰🇷 Korean Track Only (EPS-TOPIK)" },
+                    { key: "japanese", label: "🇯🇵 Japanese Track Only (SSW / JLPT)" }
+                  ].map((opt) => (
+                    <label
+                      key={opt.key}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "8px 14px",
+                        borderRadius: "8px",
+                        border: targetTrack === opt.key ? "2px solid #2563eb" : "1px solid #cbd5e1",
+                        backgroundColor: targetTrack === opt.key ? "#eff6ff" : "#ffffff",
+                        cursor: "pointer",
+                        fontWeight: targetTrack === opt.key ? "700" : "500",
+                        fontSize: "13px",
+                        color: targetTrack === opt.key ? "#1d4ed8" : "#334155"
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="targetTrack"
+                        value={opt.key}
+                        checked={targetTrack === opt.key}
+                        onChange={(e) => setTargetTrack(e.target.value)}
+                        style={{ cursor: "pointer" }}
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Checkbox for Pop-up Flex Banner */}
@@ -685,32 +745,49 @@ const InstituteNews = () => {
             </div>
 
             {/* Language Track Filter Pills */}
-            <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
-              <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", paddingLeft: "6px" }}>Track:</span>
-              {[
-                { key: "all", label: "🌐 All Tracks" },
-                { key: "korean", label: "🇰🇷 Korean" },
-                { key: "japanese", label: "🇯🇵 Japanese" }
-              ].map(opt => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setFilterTrack(opt.key)}
-                  style={{
-                    backgroundColor: filterTrack === opt.key ? (opt.key === "japanese" ? "#9333ea" : opt.key === "korean" ? "#2563eb" : "#1e293b") : "transparent",
-                    color: filterTrack === opt.key ? "#ffffff" : "#475569",
-                    border: "none",
-                    borderRadius: "6px",
-                    padding: "4px 10px",
-                    fontSize: "11.5px",
-                    fontWeight: 700,
-                    cursor: "pointer"
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            {instituteLanguage === "both" ? (
+              <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", paddingLeft: "6px" }}>Track:</span>
+                {[
+                  { key: "all", label: "🌐 All Tracks" },
+                  { key: "korean", label: "🇰🇷 Korean" },
+                  { key: "japanese", label: "🇯🇵 Japanese" }
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setFilterTrack(opt.key)}
+                    style={{
+                      backgroundColor: filterTrack === opt.key ? (opt.key === "japanese" ? "#9333ea" : opt.key === "korean" ? "#2563eb" : "#1e293b") : "transparent",
+                      color: filterTrack === opt.key ? "#ffffff" : "#475569",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "4px 10px",
+                      fontSize: "11.5px",
+                      fontWeight: 700,
+                      cursor: "pointer"
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "4px 12px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: 800,
+                backgroundColor: instituteLanguage === "japanese" ? "#fdf4ff" : "#eff6ff",
+                color: instituteLanguage === "japanese" ? "#9333ea" : "#1d4ed8",
+                border: `1px solid ${instituteLanguage === "japanese" ? "#f5d0fe" : "#bfdbfe"}`
+              }}>
+                {instituteLanguage === "japanese" ? "🇯🇵 Japanese Notices Only" : "🇰🇷 Korean Notices Only"}
+              </div>
+            )}
           </div>
 
           {filteredNewsList.length === 0 ? (

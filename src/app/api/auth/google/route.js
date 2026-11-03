@@ -64,7 +64,8 @@ export async function POST(req) {
       );
     }
 
-    const openInst = await getOrCreateOpenInstitute(languageTrack);
+    const finalTrack = ['korean', 'japanese', 'both'].includes(languageTrack) ? languageTrack : (user?.language || 'both');
+    const openInst = await getOrCreateOpenInstitute(finalTrack);
 
     if (user) {
       if (user.status === 'Blocked') {
@@ -84,8 +85,9 @@ export async function POST(req) {
           role: 'student',
           name: fallbackName,
           phone: null,
-          batch: 'Student',
+          batch: finalTrack === 'japanese' ? 'Japanese Student' : finalTrack === 'korean' ? 'Korean Student' : 'Free Student Access',
           status: 'Active',
+          language: finalTrack,
           instituteId: openInst?.id || null
         },
         include: {
@@ -106,7 +108,7 @@ export async function POST(req) {
       accountValidity: 'Lifetime',
       instituteId: user.instituteId || openInst?.id || null,
       instituteName: user.institute?.name || openInst?.name || 'ExamJK Open Academy',
-      instituteLanguage: languageTrack || user.institute?.language || 'both',
+      instituteLanguage: user.language || finalTrack || user.institute?.language || 'both',
       isGoogleAuth: true,
       isFreeStudent: true,
       picture: picture || null

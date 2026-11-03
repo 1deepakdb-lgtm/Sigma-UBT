@@ -735,9 +735,13 @@ export default function EpsBookReader({
 
   // Primary Language Track State: "both" | "korean" | "japanese"
   const effectiveInstLang = (
-    propInstituteLanguage ||
-    (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
-    "both"
+    mode === "admin"
+      ? "both"
+      : (
+          propInstituteLanguage ||
+          (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
+          "both"
+        )
   ).toLowerCase();
 
   const [studyLanguage, setStudyLanguage] = useState(() => {

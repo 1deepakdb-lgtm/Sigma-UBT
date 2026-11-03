@@ -72,6 +72,7 @@ function AdminStudentsContent() {
   // Institutes & Students states
   const [institutes, setInstitutes] = useState([]);
   const [selectedInstituteFilter, setSelectedInstituteFilter] = useState("All");
+  const [languageFilter, setLanguageFilter] = useState("all"); // "all" | "korean" | "japanese" | "both"
   const [students, setStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -136,6 +137,7 @@ function AdminStudentsContent() {
                 username: dbStu.username,
                 assignedPackage: dbStu.batch || "Full Set UBT",
                 batch: dbStu.batch || "Full Set UBT",
+                language: dbStu.language || dbStu.institute?.language || "both",
                 instituteName: dbStu.institute?.name || "ExamJK Open Academy",
                 status: dbStu.status || "Active",
                 createdAt: dbStu.createdAt,
@@ -448,8 +450,14 @@ function AdminStudentsContent() {
       ? allBuyerStudents
       : students;
 
-  // Search and Institute Filter
+  // Search, Institute and Language Filter
   const displayList = currentFolderList.filter((stu) => {
+    const sLang = (stu.language || "korean").toLowerCase();
+    const matchesLanguage =
+      languageFilter === "all" ||
+      (languageFilter === "korean" && (sLang === "korean" || sLang === "both")) ||
+      (languageFilter === "japanese" && (sLang === "japanese" || sLang === "both")) ||
+      (languageFilter === "both" && sLang === "both");
     const matchesInstitute =
       selectedInstituteFilter === "All" || stu.instituteName === selectedInstituteFilter;
     const q = searchQuery.toLowerCase().trim();
@@ -460,7 +468,7 @@ function AdminStudentsContent() {
       stu.username?.toLowerCase().includes(q) ||
       stu.assignedPackage?.toLowerCase().includes(q) ||
       stu.instituteName?.toLowerCase().includes(q);
-    return matchesInstitute && matchesSearch;
+    return matchesLanguage && matchesInstitute && matchesSearch;
   });
 
   // Filter sets
@@ -885,25 +893,53 @@ function AdminStudentsContent() {
         )}
 
         {/* SEARCH & INSTITUTE FILTER */}
-        <div style={{ display: "flex", gap: "15px", marginBottom: "15px", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", gap: "12px", marginBottom: "15px", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", flex: 1 }}>
             <input
               type="text"
               placeholder={folderTab === "ambiguous" ? "🔍 Search ambiguous guest name or institute..." : "🔍 Search student name, phone, package..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ ...inputStyle, marginBottom: 0, maxWidth: "380px" }}
+              style={{ ...inputStyle, marginBottom: 0, maxWidth: "340px" }}
             />
             <select
               value={selectedInstituteFilter}
               onChange={(e) => setSelectedInstituteFilter(e.target.value)}
-              style={{ ...inputStyle, marginBottom: 0, width: "auto", minWidth: "180px" }}
+              style={{ ...inputStyle, marginBottom: 0, width: "auto", minWidth: "170px" }}
             >
               <option value="All">All Institutes</option>
               {institutes.map((inst, idx) => (
                 <option key={idx} value={inst.name}>{inst.name}</option>
               ))}
             </select>
+
+            {/* Super Admin Track Filter: All, Korean, Japanese, Both */}
+            <div style={{ display: "inline-flex", gap: "4px", backgroundColor: "#f1f5f9", padding: "3px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+              {[
+                { key: "all", label: "🌐 All Tracks" },
+                { key: "korean", label: "🇰🇷 Korean" },
+                { key: "japanese", label: "🇯🇵 Japanese" },
+                { key: "both", label: "🌐 Both" }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setLanguageFilter(opt.key)}
+                  style={{
+                    backgroundColor: languageFilter === opt.key ? (opt.key === "japanese" ? "#9333ea" : opt.key === "korean" ? "#2563eb" : "#0f172a") : "transparent",
+                    color: languageFilter === opt.key ? "#ffffff" : "#475569",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "5px 11px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div style={{ fontSize: "14px", color: "#64748b", fontWeight: "bold" }}>

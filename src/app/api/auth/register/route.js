@@ -17,7 +17,15 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { name, identifier, password, languageTrack = 'both' } = body;
+    const { name, identifier, password, languageTrack } = body;
+
+    const validTrack = ['korean', 'japanese', 'both'].includes(languageTrack) ? languageTrack : null;
+    if (!validTrack) {
+      return NextResponse.json(
+        { error: 'Please select your study course (Korean or Japanese).' },
+        { status: 400 }
+      );
+    }
 
     if (!name || !name.trim()) {
       return NextResponse.json(
@@ -85,7 +93,7 @@ export async function POST(req) {
     }
 
     // Ensure open institute with free materials exists
-    const openInst = await getOrCreateOpenInstitute(languageTrack);
+    const openInst = await getOrCreateOpenInstitute(validTrack);
 
     // Hash password
     const passwordHash = await hashPassword(password);
@@ -98,8 +106,9 @@ export async function POST(req) {
         role: 'student',
         name: name.trim(),
         phone: isPhone ? digitsOnly : (isEmail ? null : cleanInput),
-        batch: 'Free Student Access',
+        batch: validTrack === 'japanese' ? 'Japanese Student' : validTrack === 'korean' ? 'Korean Student' : 'Free Student Access',
         status: 'Active',
+        language: validTrack,
         instituteId: openInst?.id || null
       },
       include: {
@@ -113,13 +122,13 @@ export async function POST(req) {
       name: user.name,
       role: 'student',
       phone: user.phone || null,
-      batch: 'Free Student Access',
+      batch: user.batch || 'Free Student Access',
       studentPackage: 'Free Student Access',
       expiryDate: null,
       accountValidity: 'Lifetime',
       instituteId: user.instituteId,
-      instituteName: user.institute?.name || 'ExamJK Open Academy',
-      instituteLanguage: languageTrack || 'both',
+      instituteName: user.institute?.name || (validTrack === 'japanese' ? 'ExamJK Japanese Academy' : validTrack === 'korean' ? 'ExamJK Korean Academy' : 'ExamJK Open Academy'),
+      instituteLanguage: validTrack,
       isFreeStudent: true
     };
 
