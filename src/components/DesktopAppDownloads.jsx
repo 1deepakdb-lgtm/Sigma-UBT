@@ -336,16 +336,25 @@ IconFile=https://raw.githubusercontent.com/favicon.ico
               )}
 
               {/* App Icon with Emoji Badge */}
-              <div style={{ position: 'relative', marginBottom: '3px' }}>
+              <div
+                style={{
+                  position: 'relative',
+                  marginBottom: '3px',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '6px',
+                  padding: '2px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                }}
+              >
                 <img
                   src="/icon-192.png"
                   alt="ExamJK Logo"
                   style={{
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: '6px',
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '4px',
                     display: 'block',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    objectFit: 'contain'
                   }}
                 />
                 <span
@@ -420,16 +429,26 @@ IconFile=https://raw.githubusercontent.com/favicon.ico
             {/* Modal Header & OS Switcher */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ position: 'relative' }}>
+                <div
+                  style={{
+                    position: 'relative',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    padding: '3px',
+                    boxShadow: '0 3px 10px rgba(0,0,0,0.12)',
+                    border: '1.5px solid #e2e8f0'
+                  }}
+                >
                   <img
                     src="/icon-192.png"
                     alt="ExamJK App Icon"
                     style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '12px',
-                      boxShadow: '0 3px 10px rgba(0,0,0,0.15)',
-                      display: 'block'
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '9px',
+                      boxShadow: 'none',
+                      display: 'block',
+                      objectFit: 'contain'
                     }}
                   />
                   <span

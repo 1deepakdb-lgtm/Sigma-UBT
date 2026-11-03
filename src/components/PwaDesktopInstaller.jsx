@@ -116,11 +116,26 @@ export default function PwaDesktopInstaller() {
             e.currentTarget.style.boxShadow = '0 8px 24px rgba(79, 70, 229, 0.35)';
           }}
         >
-          <img
-            src="/icon-192.png"
-            alt="ExamJK Logo"
-            style={{ width: '20px', height: '20px', borderRadius: '4px', display: 'block' }}
-          />
+          <div
+            style={{
+              width: '24px',
+              height: '24px',
+              backgroundColor: '#ffffff',
+              borderRadius: '6px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+              flexShrink: 0
+            }}
+          >
+            <img
+              src="/icon-192.png"
+              alt="ExamJK Logo"
+              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+            />
+          </div>
           <span>Install {osName} Desktop App</span>
         </button>
       </div>
@@ -155,11 +170,27 @@ export default function PwaDesktopInstaller() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <img
-                  src="/icon-192.png"
-                  alt="ExamJK Icon"
-                  style={{ width: '44px', height: '44px', borderRadius: '10px', boxShadow: '0 3px 8px rgba(0,0,0,0.12)' }}
-                />
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px',
+                    boxShadow: '0 3px 8px rgba(0,0,0,0.12)',
+                    border: '1.5px solid #e2e8f0',
+                    flexShrink: 0
+                  }}
+                >
+                  <img
+                    src="/icon-192.png"
+                    alt="ExamJK Icon"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                  />
+                </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>
                     Install ExamJK App
