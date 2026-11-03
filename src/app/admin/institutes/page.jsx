@@ -386,9 +386,9 @@ export default function AdminInstitutesPage() {
                   onChange={handleInputChange} 
                   style={{ ...inputStyle, border: "2px solid #3b82f6", fontWeight: "600", backgroundColor: "#f8fafc" }}
                 >
-                  <option value="both">🌐 Both (Korean & Japanese Dual Track)</option>
-                  <option value="korean">🇰🇷 Korean Only (EPS-TOPIK)</option>
-                  <option value="japanese">🇯🇵 Japanese Only (JFT / JLPT)</option>
+                  <option value="both">🌐 Both Korean & Japanese (Dual Track)</option>
+                  <option value="korean">🇰🇷 Korean (EPS-TOPIK)</option>
+                  <option value="japanese">🇯🇵 Japanese (JFT / JLPT)</option>
                 </select>
                 <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#64748b" }}>
                   Controls whether study materials, dictionary, and billing separate or include both languages.

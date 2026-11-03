@@ -3445,7 +3445,7 @@ export default function EpsBookReader({
               }}
             >
               <span style={{ fontSize: "18px", lineHeight: "1" }}>🇰🇷 🇯🇵</span>
-              <span>All Materials (Both)</span>
+              <span>Both Korean and Japanese</span>
             </button>
           )}
 
@@ -3486,7 +3486,7 @@ export default function EpsBookReader({
               }}
             >
               <span style={{ fontSize: "18px", lineHeight: "1" }}>🇰🇷</span>
-              <span>Korean Only</span>
+              <span>Korean</span>
             </button>
           )}
 
@@ -3527,7 +3527,7 @@ export default function EpsBookReader({
               }}
             >
               <span style={{ fontSize: "18px", lineHeight: "1" }}>🇯🇵</span>
-              <span>Japanese Only</span>
+              <span>Japanese</span>
             </button>
           )}
         </div>
