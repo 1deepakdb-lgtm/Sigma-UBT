@@ -22,28 +22,11 @@ import { performLogout } from "@/lib/clientAuth";
 
 const InstituteDashboard = () => {
   const router = useRouter();
-  const [instituteName, setInstituteName] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("currentInstitute") || "Language Institute";
-    }
-    return "Language Institute";
-  });
+  const [instituteName, setInstituteName] = useState("Language Institute");
 
-  const [userRole, setUserRole] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("role") || "institute";
-    }
-    return "institute";
-  });
+  const [userRole, setUserRole] = useState("institute");
 
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("tab")) return params.get("tab");
-      if (localStorage.getItem("role") === "staff") return "billing";
-    }
-    return "billing";
-  }); 
+  const [activeTab, setActiveTab] = useState("billing"); 
   const [students, setStudents] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null); 
@@ -57,13 +40,20 @@ const InstituteDashboard = () => {
   const [copiedStudentId, setCopiedStudentId] = useState(null);
   const [copiedAllStudents, setCopiedAllStudents] = useState(false);
 
-  // Lock state for Manage Students protected by Billing User ID & PW (with 20s auto-lock)
-  const [isStudentsUnlocked, setIsStudentsUnlocked] = useState(() => {
-    if (typeof window !== "undefined") {
-      return sessionStorage.getItem("instituteStudentsUnlocked") === "true";
+  // Restore client-only values from localStorage on mount (avoids SSR hydration mismatch)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('institute')) setInstituteName(decodeURIComponent(params.get('institute')));
+      else setInstituteName(localStorage.getItem('currentInstitute') || 'Language Institute');
+      setUserRole(localStorage.getItem('role') || 'institute');
+      if (params.get('tab')) setActiveTab(params.get('tab'));
+      else if (localStorage.getItem('role') === 'staff' || params.get('superadmin') === 'true') setActiveTab('billing');
     }
-    return false;
-  });
+  }, []);
+
+  // Lock state for Manage Students protected by Billing User ID & PW (with 20s auto-lock)
+  const [isStudentsUnlocked, setIsStudentsUnlocked] = useState(false);
   const [billingLoginUserId, setBillingLoginUserId] = useState("");
   const [billingLoginPassword, setBillingLoginPassword] = useState("");
   const [unlockError, setUnlockError] = useState("");

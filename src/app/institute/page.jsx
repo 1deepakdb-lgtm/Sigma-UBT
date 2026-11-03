@@ -24,33 +24,15 @@ import { JLPT_MOCK_SETS_META } from "@/data/jlptMockTestData";
 
 const InstituteDashboard = () => {
   const router = useRouter();
-  const [instituteName, setInstituteName] = useState(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const urlInst = params.get("institute");
-      if (urlInst) return decodeURIComponent(urlInst);
-      return localStorage.getItem("currentInstitute") || "Language Institute";
-    }
-    return "Language Institute";
-  });
+  const [instituteName, setInstituteName] = useState("Language Institute");
 
   const [instId, setInstId] = useState(null);
 
-  const [userRole, setUserRole] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("role") || "institute";
-    }
-    return "institute";
-  });
+  const [userRole, setUserRole] = useState("institute");
 
   const [activeTab, setActiveTab] = useState("billing"); 
   const [students, setStudents] = useState([]);
-  const [instituteLanguage, setInstituteLanguage] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("instituteLanguage") || "both";
-    }
-    return "both";
-  });
+  const [instituteLanguage, setInstituteLanguage] = useState("both");
   const [studentLangFilter, setStudentLangFilter] = useState("all"); // "all" | "korean" | "japanese"
 
   useEffect(() => {
@@ -59,6 +41,21 @@ const InstituteDashboard = () => {
       if (params.get("institute")) setInstituteName(decodeURIComponent(params.get("institute")));
       else setInstituteName(localStorage.getItem("currentInstitute") || "Language Institute");
       
+      // Set role from localStorage on client mount
+      setUserRole(localStorage.getItem("role") || "institute");
+      
+      // Set instituteLanguage from localStorage on client mount
+      const storedLang = localStorage.getItem("instituteLanguage") || "both";
+      setInstituteLanguage(storedLang);
+      
+      // Update formData based on stored language
+      const isJapanese = storedLang === "japanese" || window.location.search.includes("lang=japanese");
+      setFormData(prev => ({
+        ...prev,
+        assignedPackage: isJapanese ? "Full Mock Test" : "Full Set UBT",
+        language: storedLang === "japanese" ? "japanese" : storedLang === "korean" ? "korean" : "both"
+      }));
+
       if (params.get("instId")) setInstId(params.get("instId"));
       
       if (params.get("tab")) setActiveTab(params.get("tab"));
@@ -89,9 +86,9 @@ const InstituteDashboard = () => {
     name: "", 
     phone: "", 
     password: "", 
-    assignedPackage: typeof window !== "undefined" && (localStorage.getItem("instituteLanguage") === "japanese" || (typeof window !== "undefined" && window.location.search.includes("lang=japanese"))) ? "Full Mock Test" : "Full Set UBT",
+    assignedPackage: "Full Set UBT",
     expiryDuration: "1 Month",
-    language: typeof window !== "undefined" && localStorage.getItem("instituteLanguage") === "japanese" ? "japanese" : (typeof window !== "undefined" && localStorage.getItem("instituteLanguage") === "korean" ? "korean" : "both")
+    language: "both"
   });
   const [copiedStudentId, setCopiedStudentId] = useState(null);
   const [copiedAllStudents, setCopiedAllStudents] = useState(false);
@@ -1325,7 +1322,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       <div style={topNavStyle}>
         <div style={navInnerStyle}>
           <div style={navLeftSlotStyle}>
-            <span>INSTITUTE PANEL ({instituteName || "sig"})</span>
+            <span suppressHydrationWarning={true}>INSTITUTE PANEL ({instituteName || "sig"})</span>
             {userRole === "staff" && (
               <span style={{ fontSize: "11px", backgroundColor: "#10b981", color: "white", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold", flexShrink: 0, whiteSpace: "nowrap" }}>
                 👤 Staff Cashier

@@ -1,5 +1,15 @@
 {
-  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/institute/billing/products/route": "app/api/institute/billing/products/route.js",
+  "/api/institute/staff/route": "app/api/institute/staff/route.js",
+  "/api/institute/students/route": "app/api/institute/students/route.js",
+  "/api/auth/me/route": "app/api/auth/me/route.js",
+  "/api/institute/billing/route": "app/api/institute/billing/route.js",
+  "/api/news/route": "app/api/news/route.js",
+  "/api/eps-book/route": "app/api/eps-book/route.js",
+  "/api/books/route": "app/api/books/route.js",
+  "/api/dictionary/route": "app/api/dictionary/route.js",
+  "/api/tts/route": "app/api/tts/route.js",
   "/institute/page": "app/institute/page.js",
-  "/page": "app/page.js"
+  "/api/books/japanese-r2/route": "app/api/books/japanese-r2/route.js",
+  "/_not-found/page": "app/_not-found/page.js"
 }

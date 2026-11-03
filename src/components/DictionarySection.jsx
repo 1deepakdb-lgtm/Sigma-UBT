@@ -397,6 +397,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const isInstituteOrAdmin = userRole === 'institute' || userRole === 'admin';
 
   const audioRef = useRef(null);
+  const audioBlobCacheRef = useRef(new Map()); // Map<url, string (blobUrl)> for millisecond playback
   const femaleDropdownRef = useRef(null);
   const maleDropdownRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -404,6 +405,22 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const audioChunksRef = useRef([]);
   const timerIntervalRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Prefetch AI Studio model audio in background for instant response
+  const prefetchAudio = (url) => {
+    if (!url || typeof window === 'undefined') return;
+    if (audioBlobCacheRef.current.has(url)) return;
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('Fetch failed');
+        return res.blob();
+      })
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        audioBlobCacheRef.current.set(url, blobUrl);
+      })
+      .catch(() => {});
+  };
 
   // Load Voice Library from LocalStorage on mount
   useEffect(() => {
@@ -555,6 +572,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         setResults(data.results);
         if (!selectedWord || q) {
           setSelectedWord(data.results[0]);
+        }
+        // Background prefetch audio for top items so first click plays within milliseconds
+        if (typeof window !== 'undefined' && Array.isArray(data.results)) {
+          data.results.slice(0, 8).forEach(item => {
+            const wordText = item.japanese || item.korean || '';
+            if (wordText) {
+              const langCode = targetLang === 'ja' ? 'ja' : 'ko';
+              const fUrl = `/api/tts?text=${encodeURIComponent(wordText)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(selectedFemaleModel?.voice || (langCode === 'ja' ? 'ja-JP-NanamiNeural' : 'ko-KR-SunHiNeural'))}`;
+              prefetchAudio(fUrl);
+            }
+          });
         }
       } else {
         setResults([]);
@@ -723,67 +751,81 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       return;
     }
 
-    // 2. INSTANT WORD SPEECH (< 5ms response): Zero-delay speech synthesis directly on client
-    if (text && typeof window !== 'undefined' && window.speechSynthesis) {
-      const started = speakTextNative(text, targetLang, targetGender, id);
-      if (started) {
-        return;
+    // 2. AI Studio Model Audio Playback with Millisecond Blob Cache & Preloading
+    if (url) {
+      setLoadingAudioId(id);
+      setPlayingAudioId(null);
+
+      const cachedBlobUrl = audioBlobCacheRef.current.get(url);
+      const audioSrc = cachedBlobUrl || url;
+      const audio = new Audio(audioSrc);
+      audioRef.current = audio;
+
+      // Asynchronously cache blob if not yet cached for instant subsequent plays
+      if (!cachedBlobUrl && typeof window !== 'undefined') {
+        fetch(url)
+          .then(res => {
+            if (!res.ok) throw new Error('Fetch status ' + res.status);
+            return res.blob();
+          })
+          .then(blob => {
+            const bUrl = URL.createObjectURL(blob);
+            audioBlobCacheRef.current.set(url, bUrl);
+          })
+          .catch(() => {});
       }
+
+      audio.onplay = () => {
+        setLoadingAudioId(null);
+        setPlayingAudioId(id);
+      };
+
+      audio.onplaying = () => {
+        setLoadingAudioId(null);
+        setPlayingAudioId(id);
+      };
+
+      audio.onended = () => {
+        setPlayingAudioId(null);
+        setLoadingAudioId(null);
+        audioRef.current = null;
+      };
+
+      audio.onerror = (err) => {
+        console.warn('Playback error, falling back to client speech:', url, err);
+        if (text) {
+          speakTextNative(text, targetLang, targetGender, id);
+          return;
+        }
+        setPlayingAudioId(null);
+        setLoadingAudioId(null);
+        audioRef.current = null;
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setLoadingAudioId(null);
+            setPlayingAudioId(id);
+          })
+          .catch(err => {
+            console.warn('Playback promise error:', err);
+            if (text) {
+              speakTextNative(text, targetLang, targetGender, id);
+            } else {
+              setPlayingAudioId(null);
+              setLoadingAudioId(null);
+              audioRef.current = null;
+            }
+          });
+      }
+      return;
     }
 
-    // 3. Fallback to server audio if client speech synthesis is not supported
-    if (!url) return;
-
-    setLoadingAudioId(id);
-    setPlayingAudioId(null);
-
-    const audio = new Audio(url);
-    audioRef.current = audio;
-
-    audio.onplay = () => {
-      setLoadingAudioId(null);
-      setPlayingAudioId(id);
-    };
-
-    audio.onplaying = () => {
-      setLoadingAudioId(null);
-      setPlayingAudioId(id);
-    };
-
-    audio.onended = () => {
-      setPlayingAudioId(null);
-      setLoadingAudioId(null);
-      audioRef.current = null;
-    };
-
-    audio.onerror = (err) => {
-      console.warn('Playback error, falling back to client speech:', url, err);
-      if (text) {
-        speakTextNative(text, targetLang, targetGender, id);
-        return;
-      }
-      setPlayingAudioId(null);
-      setLoadingAudioId(null);
-      audioRef.current = null;
-    };
-
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          setLoadingAudioId(null);
-          setPlayingAudioId(id);
-        })
-        .catch(err => {
-          console.warn('Playback promise error:', err);
-          if (text) {
-            speakTextNative(text, targetLang, targetGender, id);
-          } else {
-            setPlayingAudioId(null);
-            setLoadingAudioId(null);
-            audioRef.current = null;
-          }
-        });
+    // 3. Fallback to client speech synthesis if no URL is provided
+    if (text && typeof window !== 'undefined' && window.speechSynthesis) {
+      speakTextNative(text, targetLang, targetGender, id);
     }
   }
 
@@ -2469,9 +2511,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                         )}
 
                         {/* Both Female & Male Voice Groups side-by-side closely in ONE horizontal line */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", flexWrap: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%", flexWrap: "nowrap" }}>
                           {/* Female Voice Group (Compact & Shrunk) */}
-                          <div style={{ display: "inline-flex", alignItems: "center", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 1px 3px rgba(225, 29, 72, 0.08)", flexShrink: 0 }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 1px 3px rgba(225, 29, 72, 0.08)", flex: "1", minWidth: 0 }}>
                             <button
                               type="button"
                               onClick={() => {
@@ -2499,7 +2541,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 alignItems: "center",
                                 justifyContent: "center",
                                 gap: "4px",
-                                whiteSpace: "nowrap"
+                                whiteSpace: "nowrap",
+                                flex: "1"
                               }}
                             >
                               <FemaleIcon size={14} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
@@ -2548,7 +2591,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           </div>
 
                           {/* Male Voice Group (Compact & Shrunk) */}
-                          <div style={{ display: "inline-flex", alignItems: "center", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 1px 3px rgba(2, 132, 199, 0.08)", flexShrink: 0 }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 1px 3px rgba(2, 132, 199, 0.08)", flex: "1", minWidth: 0 }}>
                             <button
                               type="button"
                               onClick={() => {
@@ -2576,7 +2619,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 alignItems: "center",
                                 justifyContent: "center",
                                 gap: "4px",
-                                whiteSpace: "nowrap"
+                                whiteSpace: "nowrap",
+                                flex: "1"
                               }}
                             >
                               <MaleIcon size={14} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
