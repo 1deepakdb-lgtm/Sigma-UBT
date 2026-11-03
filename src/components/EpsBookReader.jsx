@@ -805,7 +805,7 @@ export default function EpsBookReader({
         try {
           const parsed = new URL(arg1, 'http://localhost');
           text = parsed.searchParams.get('text') || '';
-        } catch (e) {}
+        } catch (e) { }
       }
     }
     if (!text) return;
@@ -847,7 +847,7 @@ export default function EpsBookReader({
         };
         window.speechSynthesis.speak(utterance);
         return;
-      } catch (err) {}
+      } catch (err) { }
     }
 
     try {
@@ -1025,7 +1025,7 @@ export default function EpsBookReader({
     { id: "eps-book", name: "EPS Book", icon: "", coverImage: "/images/books/eps-book-cover.jpg", description: "Official 60-Chapter Korean EPS-TOPIK Textbook with Audio & PDFs" },
     { id: "meaning-book", name: "Meaning Book", icon: "", coverImage: "/images/books/meaning-book-cover.jpg", description: "Chapter-wise Korean Vocabulary & Word Meanings (Chapters 1 to 60)" },
     { id: "model-question-bank", name: "Model Question Bank", icon: "", coverImage: "/images/books/model-bank-cover.png", description: "UBT Exam Practice Question Sets (Reading 20 + Listening 20) with Time and Audio" },
-    { id: "grammar-book", name: "Grammar Book", icon: "", coverImage: "/images/books/grammar-book-cover.jpg", description: "Comprehensive Korean Grammar Rules, Patterns & Examples" }
+    { id: "grammar-book", name: "Grammar Book", icon: "", coverImage: "/images/books/grammar-book-cover.png", description: "Comprehensive Korean Grammar Rules, Patterns & Examples" }
   ];
 
   const getFolderCover = (folder) => {
@@ -1034,7 +1034,7 @@ export default function EpsBookReader({
     if (name.includes("eps")) return "/images/books/eps-book-cover.jpg";
     if (name.includes("meaning")) return "/images/books/meaning-book-cover.jpg";
     if (name.includes("model") || name.includes("question") || name.includes("bank")) return "/images/books/model-bank-cover.png";
-    if (name.includes("grammar")) return "/images/books/grammar-book-cover.jpg";
+    if (name.includes("grammar")) return "/images/books/grammar-book-cover.png";
     return "/images/books/eps-book-cover.jpg";
   };
 
@@ -1328,8 +1328,8 @@ export default function EpsBookReader({
       }
 
       const normAllowed = allowedList.map(norm);
-      return normAllowed.some(pkg => 
-        pkg.includes("modelquestion") || 
+      return normAllowed.some(pkg =>
+        pkg.includes("modelquestion") ||
         pkg.includes("modelbank") ||
         pkg === norm("Model Question Bank")
       );
@@ -1345,7 +1345,7 @@ export default function EpsBookReader({
         if (currentInstPkg) instAllowedList.push(currentInstPkg);
 
         const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
-        const foundInst = institutes.find(i => 
+        const foundInst = institutes.find(i =>
           (i.name && currentInst && i.name.toLowerCase() === currentInst.toLowerCase()) ||
           (i.username && currentInst && i.username.toLowerCase() === currentInst.toLowerCase())
         );
@@ -1363,8 +1363,8 @@ export default function EpsBookReader({
       }
 
       const normAllowed = instAllowedList.map(norm);
-      return normAllowed.some(pkg => 
-        pkg.includes("modelquestion") || 
+      return normAllowed.some(pkg =>
+        pkg.includes("modelquestion") ||
         pkg.includes("modelbank") ||
         pkg === norm("Model Question Bank")
       );
@@ -1375,7 +1375,7 @@ export default function EpsBookReader({
 
   const isSetUnlocked = (set) => {
     // If set is inside Model Question Bank:
-    const isModelBankSet = 
+    const isModelBankSet =
       activeFolder === "Model Question Bank" ||
       set.folder === "Model Question Bank" ||
       set.source === "model_question_bank" ||
@@ -1476,7 +1476,7 @@ export default function EpsBookReader({
         if (mapSaved) {
           try {
             combinedMap = { ...JSON.parse(mapSaved) };
-          } catch (e) {}
+          } catch (e) { }
         }
         const savedJlptResults = JSON.parse(localStorage.getItem("jlptExamResults") || "[]");
         if (Array.isArray(savedJlptResults)) {
@@ -1489,7 +1489,7 @@ export default function EpsBookReader({
         if (Object.keys(combinedMap).length > 0) {
           setJlptPastResults(combinedMap);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // 2. Fetch fresh persistent chapters from server so student, institute & admin are synchronized
@@ -2680,7 +2680,7 @@ export default function EpsBookReader({
                         fontWeight: "700"
                       }}
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" /></svg>
                       <span style={{ maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {activeTrack?.name || `Track ${currentTrackIndex + 1}`}
                       </span>
@@ -3579,10 +3579,29 @@ export default function EpsBookReader({
       {studyLanguage === "korean" && (
         <>
 
-      {/* LARGE FOLDER NAVIGATION TABS */}
-      <style>{`
+          {/* LARGE FOLDER NAVIGATION TABS */}
+          <style>{`
+        .book-tabs-container {
+          background-color: #ffffff;
+          padding: 16px;
+          border-radius: 18px;
+          border: 1.5px solid #e2e8f0;
+          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+          margin-bottom: 24px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .book-tabs-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          width: 100%;
+          box-sizing: border-box;
+        }
         .book-library-tab-card {
           transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease !important;
+          box-sizing: border-box !important;
+          width: 100% !important;
         }
         .book-library-tab-card:hover {
           transform: translateY(-2px) !important;
@@ -3593,268 +3612,229 @@ export default function EpsBookReader({
         .book-library-tab-card:focus {
           outline: none !important;
         }
-      `}</style>
-      {/* Korean Folder Selection Tabs */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: "18px",
-        marginBottom: "24px",
-        backgroundColor: "#ffffff",
-        padding: "20px",
-        borderRadius: "18px",
-        border: "1.5px solid #e2e8f0",
-        boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
-      }}>
-        {folders.map(folder => {
-          let badgeText = "";
-
-          if (folder.name === "EPS Book") {
-            badgeText = "60 Chapters";
-          } else if (folder.name === "Meaning Book") {
-            badgeText = "60 Chapters";
-          } else if (folder.name === "Model Question Bank") {
-            const countSets = (ubtSets && ubtSets.length) || 6;
-            badgeText = `${countSets} Sets`;
-          } else if (folder.name === "Grammar Book") {
-            badgeText = "Grammar Guide";
-          } else {
-            const count = materials.filter(m => m.folder === folder.name).length;
-            badgeText = `${count} ${count === 1 ? 'Material' : 'Materials'}`;
+        @media (max-width: 1024px) {
+          .book-tabs-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
           }
+          .book-tabs-container {
+            padding: 14px;
+          }
+        }
+        @media (max-width: 540px) {
+          .book-tabs-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+          }
+          .book-tabs-container {
+            padding: 8px;
+            border-radius: 14px;
+          }
+          .book-library-tab-card {
+            padding: 10px 8px 14px 8px !important;
+            border-radius: 12px !important;
+          }
+          .book-tab-title {
+            font-size: 13px !important;
+          }
+          .book-tab-badge {
+            font-size: 10px !important;
+            padding: 3px 8px !important;
+          }
+        }
+      `}</style>
+          {/* Korean Folder Selection Tabs */}
+          <div className="book-tabs-container">
+            <div className="book-tabs-grid">
+            {folders.map(folder => {
+              let badgeText = "";
 
-          const theme = {
-            primary: "#2563eb",
-            activeBorder: "#2563eb",
-            activeBg: "#ffffff",
-            activeShadow: "0 8px 22px rgba(37, 99, 235, 0.12)",
-            titleActive: "#0f172a",
-            badgeActiveBg: "#2563eb",
-            badgeActiveColor: "#ffffff",
-            badgeActiveBorder: "1px solid #2563eb",
-            badgeActiveShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
-            badgeInactiveBg: "#f1f5f9",
-            badgeInactiveColor: "#475569",
-            badgeInactiveBorder: "1px solid #e2e8f0",
-            hoverBorder: "#cbd5e1"
-          };
+              if (folder.name === "EPS Book") {
+                badgeText = "60 Chapters";
+              } else if (folder.name === "Meaning Book") {
+                badgeText = "60 Chapters";
+              } else if (folder.name === "Model Question Bank") {
+                const countSets = (ubtSets && ubtSets.length) || 6;
+                badgeText = `${countSets} Sets`;
+              } else if (folder.name === "Grammar Book") {
+                badgeText = "Grammar Guide";
+              } else {
+                const count = materials.filter(m => m.folder === folder.name).length;
+                badgeText = `${count} ${count === 1 ? 'Material' : 'Materials'}`;
+              }
 
-          const isActive = activeFolder === folder.name;
-          const coverImage = getFolderCover(folder);
+              const theme = {
+                primary: "#2563eb",
+                activeBorder: "#2563eb",
+                activeBg: "#ffffff",
+                activeShadow: "0 8px 22px rgba(37, 99, 235, 0.12)",
+                titleActive: "#0f172a",
+                badgeActiveBg: "#2563eb",
+                badgeActiveColor: "#ffffff",
+                badgeActiveBorder: "1px solid #2563eb",
+                badgeActiveShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
+                badgeInactiveBg: "#f1f5f9",
+                badgeInactiveColor: "#475569",
+                badgeInactiveBorder: "1px solid #e2e8f0",
+                hoverBorder: "#cbd5e1"
+              };
 
-          return (
-            <button
-              key={folder.id || folder.name}
-              type="button"
-              className="book-library-tab-card"
-              onClick={() => {
-                setActiveFolder(folder.name);
-                setIsKoreanFolderOpen(true);
-              }}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                textAlign: "center",
-                padding: "14px 14px 18px 14px",
-                borderRadius: "16px",
-                border: "3px solid",
-                borderColor: isActive ? theme.activeBorder : "#e2e8f0",
-                background: isActive ? theme.activeBg : "#ffffff",
-                cursor: "pointer",
-                position: "relative",
-                outline: "none",
-                userSelect: "none",
-                boxSizing: "border-box",
-                width: "100%",
-                boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
-                flexShrink: 0
-              }}
-            >
-              {/* BOOK COVER PHOTO CONTAINER - FULL IMAGE WITH UNCLIPPED BORDERS */}
-              <div style={{
-                width: "100%",
-                aspectRatio: "1 / 1",
-                maxHeight: "260px",
-                borderRadius: "12px",
-                overflow: "hidden",
-                backgroundColor: "#ffffff",
-                padding: "6px",
-                boxSizing: "border-box",
-                position: "relative",
-                boxShadow: isActive ? theme.activeShadow : "0 4px 12px rgba(15, 23, 42, 0.08)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0
-              }}>
-                <img
-                  src={coverImage}
-                  alt={folder.name}
+              const isActive = activeFolder === folder.name;
+              const coverImage = getFolderCover(folder);
+
+              return (
+                <button
+                  key={folder.id || folder.name}
+                  type="button"
+                  className="book-library-tab-card"
+                  onClick={() => {
+                    setActiveFolder(folder.name);
+                    setIsKoreanFolderOpen(true);
+                  }}
                   style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    width: "auto",
-                    height: "auto",
-                    objectFit: "contain",
-                    display: "block"
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    padding: "14px 14px 18px 14px",
+                    borderRadius: "16px",
+                    border: "3px solid",
+                    borderColor: isActive ? theme.activeBorder : "#e2e8f0",
+                    background: isActive ? theme.activeBg : "#ffffff",
+                    cursor: "pointer",
+                    position: "relative",
+                    outline: "none",
+                    userSelect: "none",
+                    boxSizing: "border-box",
+                    width: "100%",
+                    boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
+                    flexShrink: 0
                   }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/books/eps-book-cover.svg";
-                  }}
-                />
-              </div>
+                >
+                  {/* BOOK COVER PHOTO CONTAINER - FULL IMAGE WITH UNCLIPPED BORDERS */}
+                  <div style={{
+                    width: "100%",
+                    aspectRatio: "1 / 1",
+                    maxHeight: "260px",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    backgroundColor: "#ffffff",
+                    padding: "6px",
+                    boxSizing: "border-box",
+                    position: "relative",
+                    boxShadow: isActive ? theme.activeShadow : "0 4px 12px rgba(15, 23, 42, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>
+                    <img
+                      src={coverImage}
+                      alt={folder.name}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "100%",
+                        width: "auto",
+                        height: "auto",
+                        objectFit: "contain",
+                        display: "block"
+                      }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/images/books/eps-book-cover.jpg";
+                      }}
+                    />
+                  </div>
 
-              {/* TEXT BELOW COVERS */}
-              <div style={{
-                marginTop: "14px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                gap: "6px"
-              }}>
-                <span style={{
-                  fontSize: "16px",
-                  fontWeight: "800",
-                  color: isActive ? theme.titleActive : "#0f172a",
-                  lineHeight: "1.3"
-                }}>
-                  {folder.name}
-                </span>
+                  {/* TEXT BELOW COVERS */}
+                  <div style={{
+                    marginTop: "14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    gap: "6px"
+                  }}>
+                    <span className="book-tab-title" style={{
+                      fontSize: "16px",
+                      fontWeight: "800",
+                      color: isActive ? theme.titleActive : "#0f172a",
+                      lineHeight: "1.3"
+                    }}>
+                      {folder.name}
+                    </span>
 
-                <span style={{
-                  background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
-                  color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
-                  border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
-                  boxShadow: isActive ? theme.badgeActiveShadow : "none",
-                  fontSize: "12px",
-                  padding: "4px 14px",
-                  borderRadius: "16px",
-                  fontWeight: "800",
-                  letterSpacing: "0.2px",
-                  whiteSpace: "nowrap",
-                  display: "inline-block"
-                }}>
-                  {badgeText}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* RENDER EPS BOOK SECTION IF ACTIVE AND OPEN */}
-      {isKoreanFolderOpen && activeFolder === "EPS Book" && (
-        <>
-          {/* SEARCH BAR (CLEAN & SIMPLE) */}
-          <div style={{
-            backgroundColor: "white",
-            padding: "14px 18px",
-            borderRadius: "12px",
-            border: "1px solid #e2e8f0",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
-            marginBottom: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px"
-          }}>
-            <div style={{ position: "relative", flex: 1 }}>
-              <span style={{ position: "absolute", left: "12px", top: "11px", color: "#64748b" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Search by chapter number or topic (e.g. 14, 비빔밥, खाना, नमस्ते)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px 9px 38px",
-                  borderRadius: "8px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
-                  outline: "none",
-                  backgroundColor: "#f8fafc"
-                }}
-              />
+                    <span className="book-tab-badge" style={{
+                      background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
+                      color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
+                      border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
+                      boxShadow: isActive ? theme.badgeActiveShadow : "none",
+                      fontSize: "12px",
+                      padding: "4px 14px",
+                      borderRadius: "16px",
+                      fontWeight: "800",
+                      letterSpacing: "0.2px",
+                      whiteSpace: "nowrap",
+                      display: "inline-block"
+                    }}>
+                      {badgeText}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
             </div>
           </div>
 
-          {/* 60 CHAPTERS CLEAN GRID WITH PRELIMINARY FIRST & APPENDIX LAST */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "16px",
-            marginBottom: "40px"
-          }}>
-            {/* 🔰 PRELIMINARY (예비편) CARD - FIRST AS CHAPTER 1 */}
-            {(!searchQuery || "preliminary 예비편 한글 인사말 0".includes(searchQuery.toLowerCase())) && (
-              <div
-                onClick={() => {
-                  const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
-                    chapter: "Preliminary",
-                    titleKo: "예비편 (한글과 인사말)",
-                    titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
-                    titleEn: "Preliminary - Hangeul and Greetings",
-                    pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
-                    audioTracks: []
-                  };
-                  openChapterFullScreen(prelim);
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-3px)";
-                  e.currentTarget.style.boxShadow = "0 10px 25px rgba(16, 185, 129, 0.18)";
-                  e.currentTarget.style.borderColor = "#10b981";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-                  e.currentTarget.style.borderColor = "#e2e8f0";
-                }}
-                title="Click to open Preliminary (예비편) in Full Screen"
-                style={{
-                  backgroundColor: "white",
-                  borderRadius: "12px",
-                  border: "1.5px solid #d1fae5",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                  padding: "18px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                  cursor: "pointer",
-                  userSelect: "none"
-                }}
-              >
-                <div>
-                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
-                    <span style={{
-                      backgroundColor: "#d1fae5",
-                      color: "#065f46",
-                      padding: "4px 14px",
-                      borderRadius: "12px",
-                      fontSize: "12px",
-                      fontWeight: "800",
-                      display: "inline-block"
-                    }}>
-                      🔰 Preliminary (예비편)
-                    </span>
-                  </div>
+          {/* RENDER EPS BOOK SECTION IF ACTIVE AND OPEN */}
+          {isKoreanFolderOpen && activeFolder === "EPS Book" && (
+            <>
+              {/* SEARCH BAR (CLEAN & SIMPLE) */}
+              <div style={{
+                backgroundColor: "white",
+                padding: "14px 18px",
+                borderRadius: "12px",
+                border: "1px solid #e2e8f0",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px"
+              }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <span style={{ position: "absolute", left: "12px", top: "11px", color: "#64748b" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search by chapter number or topic (e.g. 14, 비빔밥, खाना, नमस्ते)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "9px 12px 9px 38px",
+                      borderRadius: "8px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "14px",
+                      outline: "none",
+                      backgroundColor: "#f8fafc"
+                    }}
+                  />
+                </div>
+              </div>
 
-                  <ChapterCover
-                    chapter="0"
-                    titleKo="예비편 (한글과 인사말)"
-                    titleNe="प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)"
-                    coverImage="/uploads/eps-chapters/covers/cover_00.jpg"
-                    pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
-                    bookPart={1}
-                    height="195px"
-                    margin="10px 0 12px 0"
-                    onClick={(e) => {
-                      if (e && e.stopPropagation) e.stopPropagation();
+              {/* 60 CHAPTERS CLEAN GRID WITH PRELIMINARY FIRST & APPENDIX LAST */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: "16px",
+                marginBottom: "40px"
+              }}>
+                {/* 🔰 PRELIMINARY (예비편) CARD - FIRST AS CHAPTER 1 */}
+                {(!searchQuery || "preliminary 예비편 한글 인사말 0".includes(searchQuery.toLowerCase())) && (
+                  <div
+                    onClick={() => {
                       const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
                         chapter: "Preliminary",
                         titleKo: "예비편 (한글과 인사말)",
@@ -3865,805 +3845,866 @@ export default function EpsBookReader({
                       };
                       openChapterFullScreen(prelim);
                     }}
-                  />
-
-                  <div style={{ textAlign: "center", marginTop: "6px" }}>
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
-                      예비편 (한글과 인사말)
-                    </h3>
-                    <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" }}>
-                      प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-        {filteredChapters.map((c) => {
-          return (
-            <div
-              key={c.id || c.chapter}
-              onClick={() => openChapterFullScreen(c)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-3px)";
-                e.currentTarget.style.boxShadow = "0 10px 25px rgba(2, 132, 199, 0.15)";
-                e.currentTarget.style.borderColor = "#38bdf8";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "none";
-                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-                e.currentTarget.style.borderColor = "#e2e8f0";
-              }}
-              title={`Click to open Chapter ${c.chapter} in Full Screen`}
-              style={{
-                backgroundColor: "white",
-                borderRadius: "12px",
-                border: "1px solid #e2e8f0",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                padding: "18px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                cursor: "pointer",
-                userSelect: "none"
-              }}
-            >
-              <div>
-                {/* CHAPTER HEADER: Centered for all roles, PDF and Audio badges removed */}
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
-                  <span style={{
-                    backgroundColor: c.chapter <= 30 ? "#dbeafe" : "#fef3c7",
-                    color: c.chapter <= 30 ? "#1d4ed8" : "#b45309",
-                    padding: "5px 20px",
-                    borderRadius: "16px",
-                    fontSize: "13px",
-                    fontWeight: "800",
-                    letterSpacing: "0.5px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                    border: c.chapter <= 30 ? "1px solid #bfdbfe" : "1px solid #fde68a"
-                  }}>
-                    Chapter {c.chapter}
-                  </span>
-                </div>
-
-                {/* CHAPTER COVER / FIRST PAGE PREVIEW */}
-                <ChapterCover
-                  chapter={c.chapter}
-                  titleKo={c.titleKo}
-                  titleNe={c.titleNe}
-                  pdfUrl={c.pdfUrl}
-                  coverImage={c.coverImage}
-                  bookPart={c.chapter <= 30 ? 1 : 2}
-                  height="195px"
-                  margin="10px 0 12px 0"
-                  onClick={(e) => {
-                    if (e && e.stopPropagation) e.stopPropagation();
-                    openChapterFullScreen(c);
-                  }}
-                />
-
-                <div style={{ textAlign: "center", marginTop: "6px" }}>
-                  <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a", textAlign: "center" }}>
-                    {c.titleKo}
-                  </h3>
-                  <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4", textAlign: "center" }}>
-                    {c.titleNe}
-                  </p>
-                </div>
-              </div>
-
-            </div>
-          );
-        })}
-
-        {/* 📑 APPENDIX (부록) CARD - LAST IN CHAPTER GRID */}
-        {(!searchQuery || "appendix 부록 answers vocabulary index 정답 색인 61".includes(searchQuery.toLowerCase())) && (
-          <div
-            onClick={() => {
-              const appendix = r2Folders.find(f => f.folder === "Appendix") || {
-                chapter: "Appendix",
-                titleKo: "부록",
-                titleNe: "परिशिष्ट",
-                titleEn: "Appendix",
-                pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
-                audioTracks: []
-              };
-              openChapterFullScreen(appendix);
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-3px)";
-              e.currentTarget.style.boxShadow = "0 10px 25px rgba(139, 92, 246, 0.18)";
-              e.currentTarget.style.borderColor = "#8b5cf6";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "none";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-              e.currentTarget.style.borderColor = "#e2e8f0";
-            }}
-            title="Click to open Appendix (부록) in Full Screen"
-            style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              border: "1.5px solid #ede9fe",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              padding: "18px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              cursor: "pointer",
-              userSelect: "none"
-            }}
-          >
-            <div>
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
-                <span style={{
-                  backgroundColor: "#ede9fe",
-                  color: "#5b21b6",
-                  padding: "4px 14px",
-                  borderRadius: "12px",
-                  fontSize: "12px",
-                  fontWeight: "800",
-                  display: "inline-block"
-                }}>
-                  Appendix
-                </span>
-              </div>
-
-              <ChapterCover
-                chapter="App"
-                titleKo="부록"
-                titleNe="परिशिष्ट"
-                coverImage="/uploads/eps-chapters/covers/cover_61.jpg"
-                pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
-                bookPart={2}
-                height="195px"
-                margin="10px 0 12px 0"
-                onClick={(e) => {
-                  if (e && e.stopPropagation) e.stopPropagation();
-                  const appendix = r2Folders.find(f => f.folder === "Appendix") || {
-                    chapter: "Appendix",
-                    titleKo: "부록",
-                    titleNe: "परिशिष्ट",
-                    titleEn: "Appendix",
-                    pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
-                    audioTracks: []
-                  };
-                  openChapterFullScreen(appendix);
-                }}
-              />
-
-              <div style={{ textAlign: "center", marginTop: "6px" }}>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
-                  부록
-                </h3>
-                <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" }}>
-                  परिशिष्ट
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-        </>
-      )}
-
-      {/* ============================================================== */}
-      {/* 2. RENDER MEANING BOOK SECTION (CHAPTER 1 TO 60 CHAPTERWISE)   */}
-      {/* ============================================================== */}
-      {isKoreanFolderOpen && activeFolder === "Meaning Book" && (
-        <KoreanMeaningBookView
-          meaningChapters={meaningChapters}
-          isAdmin={isAdmin}
-          onOpenEditModal={(c) => {
-            setEditMeaningModalChapter(c);
-            setEditMeaningPdf(c.meaningPdfUrl || "");
-            setEditMeaningAudio(c.meaningAudioUrl || "");
-            setEditMeaningNotes(c.notes || "");
-            setEditMeaningTitleKo(c.titleKo || "");
-            setEditMeaningTitleNe(c.titleNe || "");
-          }}
-          getCleanPdfUrl={getCleanPdfUrl}
-        />
-      )}
-
-      {/* ============================================================== */}
-      {/* 3. RENDER MODEL QUESTION BANK SECTION      {/* ============================================================== */}
-      {/* 3. RENDER MODEL QUESTION BANK SECTION (UBT SETS, NO PDFS)     */}
-      {/* ============================================================== */}
-      {isKoreanFolderOpen && activeFolder === "Model Question Bank" && (() => {
-        // STRICTLY FILTER OUT CHAPTERWISE SETS
-        const filteredUbtSets = ubtSets.filter((s) => {
-          const combined = `${s.name || ''} ${s.packageName || ''}`.toLowerCase();
-          if (combined.includes('chapter') || combined.includes('chapterwise')) return false;
-          if (ubtSearchQuery.trim()) {
-            const q = ubtSearchQuery.toLowerCase().trim();
-            const matchName = (s.name || "").toLowerCase().includes(q);
-            const matchPkg = (s.packageName || "").toLowerCase().includes(q);
-            return matchName || matchPkg;
-          }
-          return true;
-        });
-
-        return (
-          <div style={{ marginBottom: "40px" }}>
-            {/* BANNER */}
-            <div style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "14px",
-              padding: "24px 28px",
-              marginBottom: "24px",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "16px"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "44px",
-                  height: "44px",
-                  borderRadius: "12px",
-                  backgroundColor: "#fff7ed",
-                  color: "#ea580c"
-                }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                </span>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <h3 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#0f172a" }}>
-                    Model Question Bank
-                  </h3>
-                  <span style={{
-                    backgroundColor: "#eff6ff",
-                    color: "#2563eb",
-                    border: "1px solid #dbeafe",
-                    fontSize: "12px",
-                    fontWeight: "800",
-                    padding: "3px 10px",
-                    borderRadius: "12px"
-                  }}>
-                    {filteredUbtSets.length} Sets
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* SEARCH BAR */}
-            <div style={{
-              backgroundColor: "white",
-              padding: "14px 20px",
-              borderRadius: "12px",
-              border: "1px solid #e2e8f0",
-              marginBottom: "22px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px"
-            }}>
-              <div style={{ position: "relative", flex: 1 }}>
-                <input
-                  type="text"
-                  placeholder="Search UBT sets (e.g. Set 01, Model Set 02, Full Set)..."
-                  value={ubtSearchQuery}
-                  onChange={(e) => setUbtSearchQuery(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px 9px 36px",
-                    borderRadius: "8px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "14px",
-                    outline: "none",
-                    backgroundColor: "#f8fafc"
-                  }}
-                />
-                <span style={{ position: "absolute", left: "12px", top: "10px", color: "#64748b" }}>🔍</span>
-              </div>
-              <span style={{ fontSize: "13px", fontWeight: "bold", color: "#64748b" }}>
-                Total: {filteredUbtSets.length} Sets
-              </span>
-            </div>
-
-            {/* UBT SETS GRID (STRICTLY NO PDFS) */}
-            {filteredUbtSets.length === 0 ? (
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                padding: "60px 20px",
-                textAlign: "center",
-                border: "2px dashed #fed7aa"
-              }}>
-                <div style={{ fontSize: "44px", marginBottom: "12px" }}>📙</div>
-                <h4 style={{ margin: "0 0 6px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>
-                  No UBT Model Sets Found
-                </h4>
-                <p style={{ margin: 0, fontSize: "14px", color: "#64748b" }}>
-                  Super Admin द्वारा सिर्जना गरिएका UBT Exam सेटहरू यहाँ प्रत्यक्ष देखिनेछन्।
-                </p>
-              </div>
-            ) : (
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
-                gap: "20px"
-              }}>
-                {filteredUbtSets.map((set, idx) => {
-                  const unlocked = isSetUnlocked(set);
-
-                  return (
-                    <div
-                      key={set.id || idx}
-                      style={{
-                        backgroundColor: "#ffffff",
-                        borderRadius: "14px",
-                        border: unlocked ? "1px solid #cbd5e1" : "1px solid #fed7aa",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                        padding: "22px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        position: "relative",
-                        transition: "all 0.2s ease"
-                      }}
-                    >
-                      <div>
-                        {/* Top Header Badge */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                          <span style={{
-                            backgroundColor: "#eff6ff",
-                            color: "#1d4ed8",
-                            padding: "4px 10px",
-                            borderRadius: "8px",
-                            fontSize: "11px",
-                            fontWeight: "800",
-                            textTransform: "uppercase"
-                          }}>
-                            UBT 40 Questions
-                          </span>
-
-                          {mode === "admin" ? (
-                            <span style={{
-                              backgroundColor: "#f0fdf4",
-                              color: "#166534",
-                              padding: "4px 10px",
-                              borderRadius: "8px",
-                              fontSize: "11px",
-                              fontWeight: "800"
-                            }}>
-                              Admin Access
-                            </span>
-                          ) : unlocked ? (
-                            <span style={{
-                              backgroundColor: "#dcfce7",
-                              color: "#15803d",
-                              padding: "4px 10px",
-                              borderRadius: "8px",
-                              fontSize: "11px",
-                              fontWeight: "800",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px"
-                            }}>
-                              ✅ Unlocked
-                            </span>
-                          ) : (
-                            <span style={{
-                              backgroundColor: "#fef3c7",
-                              color: "#b45309",
-                              padding: "4px 10px",
-                              borderRadius: "8px",
-                              fontSize: "11px",
-                              fontWeight: "800",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px"
-                            }}>
-                              🔒 Locked
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Icon & Title */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                          <div style={{
-                            width: "44px",
-                            height: "44px",
-                            borderRadius: "10px",
-                            backgroundColor: unlocked ? "#eff6ff" : "#f1f5f9",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "22px"
-                          }}>
-                            {unlocked ? "💻" : "🔒"}
-                          </div>
-                          <div>
-                            <h4 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#0f172a" }}>
-                              {set.name}
-                            </h4>
-                            <span style={{ fontSize: "12px", color: "#2563eb", fontWeight: "700" }}>
-                              Package: Model Question Bank (Separate Purchase)
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Set Specs */}
-                        <div style={{
-                          backgroundColor: "#f8fafc",
-                          borderRadius: "10px",
-                          padding: "12px",
-                          marginBottom: "16px",
-                          border: "1px solid #f1f5f9",
-                          fontSize: "12px",
-                          color: "#475569",
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "6px"
-                        }}>
-                          <div>⏱️ <strong>50 Min</strong> Time</div>
-                          <div>📝 <strong>20</strong> Reading</div>
-                          <div>🎧 <strong>20</strong> Listening</div>
-                          <div>🎯 <strong>40</strong> Total Qs</div>
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <div>
-                        {unlocked ? (
-                          <button
-                            type="button"
-                            onClick={() => handleStartUbtSet(set)}
-                            style={{
-                              width: "100%",
-                              backgroundColor: "#16a34a",
-                              backgroundImage: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                              color: "#ffffff",
-                              border: "none",
-                              padding: "12px 18px",
-                              borderRadius: "10px",
-                              fontWeight: "800",
-                              fontSize: "14px",
-                              cursor: "pointer",
-                              boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)",
-                              transition: "all 0.15s ease"
-                            }}
-                          >
-                            {mode === "institute" ? "👁️ PREVIEW UBT EXAM" : "▶ START UBT EXAM"}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleStartUbtSet(set)}
-                            style={{
-                              width: "100%",
-                              backgroundColor: "#2563eb",
-                              backgroundImage: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                              color: "#ffffff",
-                              border: "none",
-                              padding: "12px 18px",
-                              borderRadius: "10px",
-                              fontWeight: "800",
-                              fontSize: "13px",
-                              cursor: "pointer",
-                              boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "8px"
-                            }}
-                          >
-                            <span>🔒</span>
-                            <span>{mode === "institute" ? "BUY PRODUCT TO UNLOCK" : "BUY MODEL QUESTION BANK TO UNLOCK"}</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* ============================================================== */}
-      {/* 4. RENDER GRAMMAR BOOK SECTION (BASIC TO ADV, CHAPTERWISE, ETC)*/}
-      {/* ============================================================== */}
-      {isKoreanFolderOpen && activeFolder === "Grammar Book" && (
-        <KoreanGrammarBookView
-          materials={materials}
-          isAdmin={isAdmin}
-          onUploadMaterial={(folderName) => {
-            setMatFolder(folderName || "Grammar Book");
-            setIsUploadMaterialOpen(true);
-          }}
-        />
-      )}
-
-      {/* ============================================================== */}
-      {/* 5. RENDER OTHER MATERIAL FOLDERS (Custom Folders)              */}
-      {/* ============================================================== */}
-      {activeFolder && activeFolder !== "EPS Book" && activeFolder !== "Meaning Book" && activeFolder !== "Model Question Bank" && activeFolder !== "Grammar Book" && (() => {
-        const currentFolderObj = folders.find(f => f.name === activeFolder) || { name: activeFolder, icon: "📁", description: "" };
-        const folderMats = materials.filter(m => m.folder === activeFolder);
-
-        return (
-          <div style={{ marginBottom: "40px" }}>
-            {/* FOLDER INFO BANNER */}
-            <div style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "14px",
-              padding: "22px 26px",
-              marginBottom: "24px",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "14px"
-            }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                  <img
-                    src={getFolderCover(currentFolderObj)}
-                    alt={currentFolderObj.name}
-                    style={{
-                      width: "38px",
-                      height: "50px",
-                      objectFit: "cover",
-                      borderRadius: "6px",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
-                      border: "1px solid rgba(0,0,0,0.06)"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-3px)";
+                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(16, 185, 129, 0.18)";
+                      e.currentTarget.style.borderColor = "#10b981";
                     }}
-                  />
-                  <h3 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>
-                    {currentFolderObj.name}
-                  </h3>
-                  <span style={{
-                    backgroundColor: "#eff6ff",
-                    color: "#2563eb",
-                    fontSize: "12px",
-                    fontWeight: "800",
-                    padding: "3px 10px",
-                    borderRadius: "12px"
-                  }}>
-                    {folderMats.length} Materials
-                  </span>
-                </div>
-                <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#64748b" }}>
-                  {currentFolderObj.description || `Learning materials and study guides for ${currentFolderObj.name}`}
-                </p>
-              </div>
-
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMatFolder(activeFolder);
-                    setIsUploadMaterialOpen(true);
-                  }}
-                  style={{
-                    backgroundColor: "#16a34a",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "10px 18px",
-                    borderRadius: "8px",
-                    fontWeight: "700",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 2px 6px rgba(22,163,74,0.2)"
-                  }}
-                >
-                  <span>+</span> Upload to {activeFolder}
-                </button>
-              )}
-            </div>
-
-            {/* MATERIALS GRID OR EMPTY STATE */}
-            {folderMats.length === 0 ? (
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                padding: "60px 20px",
-                textAlign: "center",
-                border: "2px dashed #cbd5e1"
-              }}>
-                <div style={{ fontSize: "44px", marginBottom: "12px" }}>{currentFolderObj.icon || "📂"}</div>
-                <h4 style={{ margin: "0 0 6px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>
-                  No materials uploaded in {activeFolder} yet
-                </h4>
-                <p style={{ margin: "0 auto 20px auto", fontSize: "14px", color: "#64748b", maxWidth: "460px" }}>
-                  Uploaded materials will automatically appear here for everyone.
-                </p>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMatFolder(activeFolder);
-                      setIsUploadMaterialOpen(true);
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "none";
+                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                      e.currentTarget.style.borderColor = "#e2e8f0";
                     }}
+                    title="Click to open Preliminary (예비편) in Full Screen"
                     style={{
-                      backgroundColor: "#2563eb",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "10px 22px",
-                      borderRadius: "8px",
-                      fontWeight: "700",
-                      fontSize: "14px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    + Upload First Material
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-                gap: "20px"
-              }}>
-                {folderMats.map((mat) => (
-                  <div
-                    key={mat.id}
-                    style={{
-                      backgroundColor: "#ffffff",
-                      borderRadius: "14px",
-                      border: "1px solid #e2e8f0",
+                      backgroundColor: "white",
+                      borderRadius: "12px",
+                      border: "1.5px solid #d1fae5",
                       boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                      padding: "22px",
+                      padding: "18px",
                       display: "flex",
                       flexDirection: "column",
-                      justifyContent: "space-between"
+                      justifyContent: "space-between",
+                      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                      cursor: "pointer",
+                      userSelect: "none"
                     }}
                   >
                     <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
                         <span style={{
-                          backgroundColor: "#eff6ff",
-                          color: "#1d4ed8",
-                          fontSize: "11px",
+                          backgroundColor: "#d1fae5",
+                          color: "#065f46",
+                          padding: "4px 14px",
+                          borderRadius: "12px",
+                          fontSize: "12px",
                           fontWeight: "800",
-                          padding: "3px 8px",
-                          borderRadius: "6px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px"
+                          display: "inline-block"
                         }}>
-                          {mat.fileType ? `${mat.fileType.toUpperCase()} DOCUMENT` : "PDF DOCUMENT"}
+                          🔰 Preliminary (예비편)
                         </span>
-                        <span style={{ fontSize: "12px", color: "#94a3b8" }}>{mat.uploadedAt || "Recent"}</span>
                       </div>
 
-                      <h4 style={{ margin: "0 0 8px 0", fontSize: "17px", fontWeight: "800", color: "#0f172a", lineHeight: "1.3" }}>
-                        {mat.title}
-                      </h4>
+                      <ChapterCover
+                        chapter="0"
+                        titleKo="예비편 (한글과 인사말)"
+                        titleNe="प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)"
+                        coverImage="/uploads/eps-chapters/covers/cover_00.jpg"
+                        pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
+                        bookPart={1}
+                        height="195px"
+                        margin="10px 0 12px 0"
+                        onClick={(e) => {
+                          if (e && e.stopPropagation) e.stopPropagation();
+                          const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
+                            chapter: "Preliminary",
+                            titleKo: "예비편 (한글과 인사말)",
+                            titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
+                            titleEn: "Preliminary - Hangeul and Greetings",
+                            pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
+                            audioTracks: []
+                          };
+                          openChapterFullScreen(prelim);
+                        }}
+                      />
 
-                      {mat.description && (
-                        <p style={{ margin: "0 0 14px 0", fontSize: "13px", color: "#475569", lineHeight: "1.5" }}>
-                          {mat.description}
+                      <div style={{ textAlign: "center", marginTop: "6px" }}>
+                        <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
+                          예비편 (한글과 인사말)
+                        </h3>
+                        <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" }}>
+                          प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)
                         </p>
-                      )}
-
-                      <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        backgroundColor: "#f8fafc",
-                        padding: "8px 12px",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                        color: "#64748b",
-                        marginBottom: "16px",
-                        border: "1px solid #f1f5f9"
-                      }}>
-                        <span>📄</span>
-                        <span style={{ fontWeight: "600", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                          {mat.fileName || "document.pdf"}
-                        </span>
-                        {mat.fileSize && <span>({mat.fileSize})</span>}
                       </div>
-
-                      {mat.audioUrl && (
-                        <div style={{ marginBottom: "16px" }}>
-                          <div style={{ fontSize: "11px", fontWeight: "700", color: "#0284c7", marginBottom: "4px" }}>
-                            🎵 Attached Audio:
-                          </div>
-                          <audio
-                            controls
-                            controlsList="nodownload"
-                            src={mat.audioUrl}
-                            style={{ width: "100%", height: "36px" }}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
-                      {mat.fileUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setViewingMaterial(mat)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: "#2563eb",
-                            color: "#ffffff",
-                            border: "none",
-                            padding: "9px 14px",
-                            borderRadius: "6px",
-                            fontWeight: "700",
-                            fontSize: "13px",
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px",
-                            boxShadow: "0 2px 6px rgba(37,99,235,0.2)"
-                          }}
-                        >
-                          <span>📖</span> View / Read
-                        </button>
-                      )}
-
-                      {mode !== "student" && mat.fileUrl && (
-                        <a
-                          href={mat.fileUrl}
-                          download={mat.fileName || "document.pdf"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            backgroundColor: "#f1f5f9",
-                            color: "#0f172a",
-                            border: "1px solid #cbd5e1",
-                            padding: "9px 14px",
-                            borderRadius: "6px",
-                            fontWeight: "700",
-                            fontSize: "13px",
-                            textDecoration: "none",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px"
-                          }}
-                        >
-                          <span>⬇️</span> Download
-                        </a>
-                      )}
-
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMaterial(mat.id, mat.title)}
-                          title="Delete material"
-                          style={{
-                            backgroundColor: "#fee2e2",
-                            color: "#dc2626",
-                            border: "none",
-                            padding: "9px 12px",
-                            borderRadius: "6px",
-                            fontWeight: "700",
-                            fontSize: "13px",
-                            cursor: "pointer"
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      )}
                     </div>
                   </div>
-                ))}
+                )}
+                {filteredChapters.map((c) => {
+                  return (
+                    <div
+                      key={c.id || c.chapter}
+                      onClick={() => openChapterFullScreen(c)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-3px)";
+                        e.currentTarget.style.boxShadow = "0 10px 25px rgba(2, 132, 199, 0.15)";
+                        e.currentTarget.style.borderColor = "#38bdf8";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "none";
+                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                        e.currentTarget.style.borderColor = "#e2e8f0";
+                      }}
+                      title={`Click to open Chapter ${c.chapter} in Full Screen`}
+                      style={{
+                        backgroundColor: "white",
+                        borderRadius: "12px",
+                        border: "1px solid #e2e8f0",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                        padding: "18px",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        cursor: "pointer",
+                        userSelect: "none"
+                      }}
+                    >
+                      <div>
+                        {/* CHAPTER HEADER: Centered for all roles, PDF and Audio badges removed */}
+                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
+                          <span style={{
+                            backgroundColor: c.chapter <= 30 ? "#dbeafe" : "#fef3c7",
+                            color: c.chapter <= 30 ? "#1d4ed8" : "#b45309",
+                            padding: "5px 20px",
+                            borderRadius: "16px",
+                            fontSize: "13px",
+                            fontWeight: "800",
+                            letterSpacing: "0.5px",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                            border: c.chapter <= 30 ? "1px solid #bfdbfe" : "1px solid #fde68a"
+                          }}>
+                            Chapter {c.chapter}
+                          </span>
+                        </div>
+
+                        {/* CHAPTER COVER / FIRST PAGE PREVIEW */}
+                        <ChapterCover
+                          chapter={c.chapter}
+                          titleKo={c.titleKo}
+                          titleNe={c.titleNe}
+                          pdfUrl={c.pdfUrl}
+                          coverImage={c.coverImage}
+                          bookPart={c.chapter <= 30 ? 1 : 2}
+                          height="195px"
+                          margin="10px 0 12px 0"
+                          onClick={(e) => {
+                            if (e && e.stopPropagation) e.stopPropagation();
+                            openChapterFullScreen(c);
+                          }}
+                        />
+
+                        <div style={{ textAlign: "center", marginTop: "6px" }}>
+                          <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a", textAlign: "center" }}>
+                            {c.titleKo}
+                          </h3>
+                          <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4", textAlign: "center" }}>
+                            {c.titleNe}
+                          </p>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })}
+
+                {/* 📑 APPENDIX (부록) CARD - LAST IN CHAPTER GRID */}
+                {(!searchQuery || "appendix 부록 answers vocabulary index 정답 색인 61".includes(searchQuery.toLowerCase())) && (
+                  <div
+                    onClick={() => {
+                      const appendix = r2Folders.find(f => f.folder === "Appendix") || {
+                        chapter: "Appendix",
+                        titleKo: "부록",
+                        titleNe: "परिशिष्ट",
+                        titleEn: "Appendix",
+                        pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
+                        audioTracks: []
+                      };
+                      openChapterFullScreen(appendix);
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-3px)";
+                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(139, 92, 246, 0.18)";
+                      e.currentTarget.style.borderColor = "#8b5cf6";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "none";
+                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                      e.currentTarget.style.borderColor = "#e2e8f0";
+                    }}
+                    title="Click to open Appendix (부록) in Full Screen"
+                    style={{
+                      backgroundColor: "white",
+                      borderRadius: "12px",
+                      border: "1.5px solid #ede9fe",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                      padding: "18px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                      cursor: "pointer",
+                      userSelect: "none"
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                        <span style={{
+                          backgroundColor: "#ede9fe",
+                          color: "#5b21b6",
+                          padding: "4px 14px",
+                          borderRadius: "12px",
+                          fontSize: "12px",
+                          fontWeight: "800",
+                          display: "inline-block"
+                        }}>
+                          Appendix
+                        </span>
+                      </div>
+
+                      <ChapterCover
+                        chapter="App"
+                        titleKo="부록"
+                        titleNe="परिशिष्ट"
+                        coverImage="/uploads/eps-chapters/covers/cover_61.jpg"
+                        pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
+                        bookPart={2}
+                        height="195px"
+                        margin="10px 0 12px 0"
+                        onClick={(e) => {
+                          if (e && e.stopPropagation) e.stopPropagation();
+                          const appendix = r2Folders.find(f => f.folder === "Appendix") || {
+                            chapter: "Appendix",
+                            titleKo: "부록",
+                            titleNe: "परिशिष्ट",
+                            titleEn: "Appendix",
+                            pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
+                            audioTracks: []
+                          };
+                          openChapterFullScreen(appendix);
+                        }}
+                      />
+
+                      <div style={{ textAlign: "center", marginTop: "6px" }}>
+                        <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
+                          부록
+                        </h3>
+                        <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" }}>
+                          परिशिष्ट
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        );
-      })()}
+            </>
+          )}
+
+          {/* ============================================================== */}
+          {/* 2. RENDER MEANING BOOK SECTION (CHAPTER 1 TO 60 CHAPTERWISE)   */}
+          {/* ============================================================== */}
+          {isKoreanFolderOpen && activeFolder === "Meaning Book" && (
+            <KoreanMeaningBookView
+              meaningChapters={meaningChapters}
+              isAdmin={isAdmin}
+              onOpenEditModal={(c) => {
+                setEditMeaningModalChapter(c);
+                setEditMeaningPdf(c.meaningPdfUrl || "");
+                setEditMeaningAudio(c.meaningAudioUrl || "");
+                setEditMeaningNotes(c.notes || "");
+                setEditMeaningTitleKo(c.titleKo || "");
+                setEditMeaningTitleNe(c.titleNe || "");
+              }}
+              getCleanPdfUrl={getCleanPdfUrl}
+            />
+          )}
+
+          {/* ============================================================== */}
+          {/* 3. RENDER MODEL QUESTION BANK SECTION      {/* ============================================================== */}
+          {/* 3. RENDER MODEL QUESTION BANK SECTION (UBT SETS, NO PDFS)     */}
+          {/* ============================================================== */}
+          {isKoreanFolderOpen && activeFolder === "Model Question Bank" && (() => {
+            // STRICTLY FILTER OUT CHAPTERWISE SETS
+            const filteredUbtSets = ubtSets.filter((s) => {
+              const combined = `${s.name || ''} ${s.packageName || ''}`.toLowerCase();
+              if (combined.includes('chapter') || combined.includes('chapterwise')) return false;
+              if (ubtSearchQuery.trim()) {
+                const q = ubtSearchQuery.toLowerCase().trim();
+                const matchName = (s.name || "").toLowerCase().includes(q);
+                const matchPkg = (s.packageName || "").toLowerCase().includes(q);
+                return matchName || matchPkg;
+              }
+              return true;
+            });
+
+            return (
+              <div style={{ marginBottom: "40px" }}>
+                {/* BANNER */}
+                <div style={{
+                  backgroundColor: "#ffffff",
+                  borderRadius: "14px",
+                  padding: "24px 28px",
+                  marginBottom: "24px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "16px"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <span style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "44px",
+                      height: "44px",
+                      borderRadius: "12px",
+                      backgroundColor: "#fff7ed",
+                      color: "#ea580c"
+                    }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <h3 style={{ margin: 0, fontSize: "22px", fontWeight: "800", color: "#0f172a" }}>
+                        Model Question Bank
+                      </h3>
+                      <span style={{
+                        backgroundColor: "#eff6ff",
+                        color: "#2563eb",
+                        border: "1px solid #dbeafe",
+                        fontSize: "12px",
+                        fontWeight: "800",
+                        padding: "3px 10px",
+                        borderRadius: "12px"
+                      }}>
+                        {filteredUbtSets.length} Sets
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SEARCH BAR */}
+                <div style={{
+                  backgroundColor: "white",
+                  padding: "14px 20px",
+                  borderRadius: "12px",
+                  border: "1px solid #e2e8f0",
+                  marginBottom: "22px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px"
+                }}>
+                  <div style={{ position: "relative", flex: 1 }}>
+                    <input
+                      type="text"
+                      placeholder="Search UBT sets (e.g. Set 01, Model Set 02, Full Set)..."
+                      value={ubtSearchQuery}
+                      onChange={(e) => setUbtSearchQuery(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px 9px 36px",
+                        borderRadius: "8px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "14px",
+                        outline: "none",
+                        backgroundColor: "#f8fafc"
+                      }}
+                    />
+                    <span style={{ position: "absolute", left: "12px", top: "10px", color: "#64748b" }}>🔍</span>
+                  </div>
+                  <span style={{ fontSize: "13px", fontWeight: "bold", color: "#64748b" }}>
+                    Total: {filteredUbtSets.length} Sets
+                  </span>
+                </div>
+
+                {/* UBT SETS GRID (STRICTLY NO PDFS) */}
+                {filteredUbtSets.length === 0 ? (
+                  <div style={{
+                    backgroundColor: "#ffffff",
+                    borderRadius: "14px",
+                    padding: "60px 20px",
+                    textAlign: "center",
+                    border: "2px dashed #fed7aa"
+                  }}>
+                    <div style={{ fontSize: "44px", marginBottom: "12px" }}>📙</div>
+                    <h4 style={{ margin: "0 0 6px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>
+                      No UBT Model Sets Found
+                    </h4>
+                    <p style={{ margin: 0, fontSize: "14px", color: "#64748b" }}>
+                      Super Admin द्वारा सिर्जना गरिएका UBT Exam सेटहरू यहाँ प्रत्यक्ष देखिनेछन्।
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
+                    gap: "20px"
+                  }}>
+                    {filteredUbtSets.map((set, idx) => {
+                      const unlocked = isSetUnlocked(set);
+
+                      return (
+                        <div
+                          key={set.id || idx}
+                          style={{
+                            backgroundColor: "#ffffff",
+                            borderRadius: "14px",
+                            border: unlocked ? "1px solid #cbd5e1" : "1px solid #fed7aa",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                            padding: "22px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            position: "relative",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          <div>
+                            {/* Top Header Badge */}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                              <span style={{
+                                backgroundColor: "#eff6ff",
+                                color: "#1d4ed8",
+                                padding: "4px 10px",
+                                borderRadius: "8px",
+                                fontSize: "11px",
+                                fontWeight: "800",
+                                textTransform: "uppercase"
+                              }}>
+                                UBT 40 Questions
+                              </span>
+
+                              {mode === "admin" ? (
+                                <span style={{
+                                  backgroundColor: "#f0fdf4",
+                                  color: "#166534",
+                                  padding: "4px 10px",
+                                  borderRadius: "8px",
+                                  fontSize: "11px",
+                                  fontWeight: "800"
+                                }}>
+                                  Admin Access
+                                </span>
+                              ) : unlocked ? (
+                                <span style={{
+                                  backgroundColor: "#dcfce7",
+                                  color: "#15803d",
+                                  padding: "4px 10px",
+                                  borderRadius: "8px",
+                                  fontSize: "11px",
+                                  fontWeight: "800",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px"
+                                }}>
+                                  ✅ Unlocked
+                                </span>
+                              ) : (
+                                <span style={{
+                                  backgroundColor: "#fef3c7",
+                                  color: "#b45309",
+                                  padding: "4px 10px",
+                                  borderRadius: "8px",
+                                  fontSize: "11px",
+                                  fontWeight: "800",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px"
+                                }}>
+                                  🔒 Locked
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Icon & Title */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                              <div style={{
+                                width: "44px",
+                                height: "44px",
+                                borderRadius: "10px",
+                                backgroundColor: unlocked ? "#eff6ff" : "#f1f5f9",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "22px"
+                              }}>
+                                {unlocked ? "💻" : "🔒"}
+                              </div>
+                              <div>
+                                <h4 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#0f172a" }}>
+                                  {set.name}
+                                </h4>
+                                <span style={{ fontSize: "12px", color: "#2563eb", fontWeight: "700" }}>
+                                  Package: Model Question Bank (Separate Purchase)
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Set Specs */}
+                            <div style={{
+                              backgroundColor: "#f8fafc",
+                              borderRadius: "10px",
+                              padding: "12px",
+                              marginBottom: "16px",
+                              border: "1px solid #f1f5f9",
+                              fontSize: "12px",
+                              color: "#475569",
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "6px"
+                            }}>
+                              <div>⏱️ <strong>50 Min</strong> Time</div>
+                              <div>📝 <strong>20</strong> Reading</div>
+                              <div>🎧 <strong>20</strong> Listening</div>
+                              <div>🎯 <strong>40</strong> Total Qs</div>
+                            </div>
+                          </div>
+
+                          {/* Action Button */}
+                          <div>
+                            {unlocked ? (
+                              <button
+                                type="button"
+                                onClick={() => handleStartUbtSet(set)}
+                                style={{
+                                  width: "100%",
+                                  backgroundColor: "#16a34a",
+                                  backgroundImage: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                                  color: "#ffffff",
+                                  border: "none",
+                                  padding: "12px 18px",
+                                  borderRadius: "10px",
+                                  fontWeight: "800",
+                                  fontSize: "14px",
+                                  cursor: "pointer",
+                                  boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)",
+                                  transition: "all 0.15s ease"
+                                }}
+                              >
+                                {mode === "institute" ? "👁️ PREVIEW UBT EXAM" : "▶ START UBT EXAM"}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleStartUbtSet(set)}
+                                style={{
+                                  width: "100%",
+                                  backgroundColor: "#2563eb",
+                                  backgroundImage: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                                  color: "#ffffff",
+                                  border: "none",
+                                  padding: "12px 18px",
+                                  borderRadius: "10px",
+                                  fontWeight: "800",
+                                  fontSize: "13px",
+                                  cursor: "pointer",
+                                  boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "8px"
+                                }}
+                              >
+                                <span>🔒</span>
+                                <span>{mode === "institute" ? "BUY PRODUCT TO UNLOCK" : "BUY MODEL QUESTION BANK TO UNLOCK"}</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* ============================================================== */}
+          {/* 4. RENDER GRAMMAR BOOK SECTION (BASIC TO ADV, CHAPTERWISE, ETC)*/}
+          {/* ============================================================== */}
+          {isKoreanFolderOpen && activeFolder === "Grammar Book" && (
+            <KoreanGrammarBookView
+              materials={materials}
+              isAdmin={isAdmin}
+              onUploadMaterial={(folderName) => {
+                setMatFolder(folderName || "Grammar Book");
+                setIsUploadMaterialOpen(true);
+              }}
+            />
+          )}
+
+          {/* ============================================================== */}
+          {/* 5. RENDER OTHER MATERIAL FOLDERS (Custom Folders)              */}
+          {/* ============================================================== */}
+          {activeFolder && activeFolder !== "EPS Book" && activeFolder !== "Meaning Book" && activeFolder !== "Model Question Bank" && activeFolder !== "Grammar Book" && (() => {
+            const currentFolderObj = folders.find(f => f.name === activeFolder) || { name: activeFolder, icon: "📁", description: "" };
+            const folderMats = materials.filter(m => m.folder === activeFolder);
+
+            return (
+              <div style={{ marginBottom: "40px" }}>
+                {/* FOLDER INFO BANNER */}
+                <div style={{
+                  backgroundColor: "#ffffff",
+                  borderRadius: "14px",
+                  padding: "22px 26px",
+                  marginBottom: "24px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "14px"
+                }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                      <img
+                        src={getFolderCover(currentFolderObj)}
+                        alt={currentFolderObj.name}
+                        style={{
+                          width: "38px",
+                          height: "50px",
+                          objectFit: "cover",
+                          borderRadius: "6px",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+                          border: "1px solid rgba(0,0,0,0.06)"
+                        }}
+                      />
+                      <h3 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>
+                        {currentFolderObj.name}
+                      </h3>
+                      <span style={{
+                        backgroundColor: "#eff6ff",
+                        color: "#2563eb",
+                        fontSize: "12px",
+                        fontWeight: "800",
+                        padding: "3px 10px",
+                        borderRadius: "12px"
+                      }}>
+                        {folderMats.length} Materials
+                      </span>
+                    </div>
+                    <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#64748b" }}>
+                      {currentFolderObj.description || `Learning materials and study guides for ${currentFolderObj.name}`}
+                    </p>
+                  </div>
+
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMatFolder(activeFolder);
+                        setIsUploadMaterialOpen(true);
+                      }}
+                      style={{
+                        backgroundColor: "#16a34a",
+                        color: "#ffffff",
+                        border: "none",
+                        padding: "10px 18px",
+                        borderRadius: "8px",
+                        fontWeight: "700",
+                        fontSize: "13px",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 2px 6px rgba(22,163,74,0.2)"
+                      }}
+                    >
+                      <span>+</span> Upload to {activeFolder}
+                    </button>
+                  )}
+                </div>
+
+                {/* MATERIALS GRID OR EMPTY STATE */}
+                {folderMats.length === 0 ? (
+                  <div style={{
+                    backgroundColor: "#ffffff",
+                    borderRadius: "14px",
+                    padding: "60px 20px",
+                    textAlign: "center",
+                    border: "2px dashed #cbd5e1"
+                  }}>
+                    <div style={{ fontSize: "44px", marginBottom: "12px" }}>{currentFolderObj.icon || "📂"}</div>
+                    <h4 style={{ margin: "0 0 6px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>
+                      No materials uploaded in {activeFolder} yet
+                    </h4>
+                    <p style={{ margin: "0 auto 20px auto", fontSize: "14px", color: "#64748b", maxWidth: "460px" }}>
+                      Uploaded materials will automatically appear here for everyone.
+                    </p>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMatFolder(activeFolder);
+                          setIsUploadMaterialOpen(true);
+                        }}
+                        style={{
+                          backgroundColor: "#2563eb",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "10px 22px",
+                          borderRadius: "8px",
+                          fontWeight: "700",
+                          fontSize: "14px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        + Upload First Material
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                    gap: "20px"
+                  }}>
+                    {folderMats.map((mat) => (
+                      <div
+                        key={mat.id}
+                        style={{
+                          backgroundColor: "#ffffff",
+                          borderRadius: "14px",
+                          border: "1px solid #e2e8f0",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                          padding: "22px",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between"
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                            <span style={{
+                              backgroundColor: "#eff6ff",
+                              color: "#1d4ed8",
+                              fontSize: "11px",
+                              fontWeight: "800",
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px"
+                            }}>
+                              {mat.fileType ? `${mat.fileType.toUpperCase()} DOCUMENT` : "PDF DOCUMENT"}
+                            </span>
+                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>{mat.uploadedAt || "Recent"}</span>
+                          </div>
+
+                          <h4 style={{ margin: "0 0 8px 0", fontSize: "17px", fontWeight: "800", color: "#0f172a", lineHeight: "1.3" }}>
+                            {mat.title}
+                          </h4>
+
+                          {mat.description && (
+                            <p style={{ margin: "0 0 14px 0", fontSize: "13px", color: "#475569", lineHeight: "1.5" }}>
+                              {mat.description}
+                            </p>
+                          )}
+
+                          <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            backgroundColor: "#f8fafc",
+                            padding: "8px 12px",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            color: "#64748b",
+                            marginBottom: "16px",
+                            border: "1px solid #f1f5f9"
+                          }}>
+                            <span>📄</span>
+                            <span style={{ fontWeight: "600", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                              {mat.fileName || "document.pdf"}
+                            </span>
+                            {mat.fileSize && <span>({mat.fileSize})</span>}
+                          </div>
+
+                          {mat.audioUrl && (
+                            <div style={{ marginBottom: "16px" }}>
+                              <div style={{ fontSize: "11px", fontWeight: "700", color: "#0284c7", marginBottom: "4px" }}>
+                                🎵 Attached Audio:
+                              </div>
+                              <audio
+                                controls
+                                controlsList="nodownload"
+                                src={mat.audioUrl}
+                                style={{ width: "100%", height: "36px" }}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                          {mat.fileUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setViewingMaterial(mat)}
+                              style={{
+                                flex: 1,
+                                backgroundColor: "#2563eb",
+                                color: "#ffffff",
+                                border: "none",
+                                padding: "9px 14px",
+                                borderRadius: "6px",
+                                fontWeight: "700",
+                                fontSize: "13px",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "6px",
+                                boxShadow: "0 2px 6px rgba(37,99,235,0.2)"
+                              }}
+                            >
+                              <span>📖</span> View / Read
+                            </button>
+                          )}
+
+                          {mode !== "student" && mat.fileUrl && (
+                            <a
+                              href={mat.fileUrl}
+                              download={mat.fileName || "document.pdf"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                backgroundColor: "#f1f5f9",
+                                color: "#0f172a",
+                                border: "1px solid #cbd5e1",
+                                padding: "9px 14px",
+                                borderRadius: "6px",
+                                fontWeight: "700",
+                                fontSize: "13px",
+                                textDecoration: "none",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "6px"
+                              }}
+                            >
+                              <span>⬇️</span> Download
+                            </a>
+                          )}
+
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMaterial(mat.id, mat.title)}
+                              title="Delete material"
+                              style={{
+                                backgroundColor: "#fee2e2",
+                                color: "#dc2626",
+                                border: "none",
+                                padding: "9px 12px",
+                                borderRadius: "6px",
+                                fontWeight: "700",
+                                fontSize: "13px",
+                                cursor: "pointer"
+                              }}
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </>
       )}
 
@@ -4673,17 +4714,8 @@ export default function EpsBookReader({
       {studyLanguage === "japanese" && (
         <>
           {/* Japanese Folder Selection Tabs */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "18px",
-            marginBottom: "24px",
-            backgroundColor: "#ffffff",
-            padding: "20px",
-            borderRadius: "18px",
-            border: "1.5px solid #e2e8f0",
-            boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
-          }}>
+          <div className="book-tabs-container">
+            <div className="book-tabs-grid">
             {JAPANESE_FOLDERS.map((folder) => {
               const isActive = activeJapaneseFolder === folder.name;
               const theme = JAPANESE_FOLDER_THEMES[folder.name] || JAPANESE_FOLDER_THEMES["JLPT N5・N4"];
@@ -4748,7 +4780,7 @@ export default function EpsBookReader({
                       }}
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = "/images/books/minna-nihongo-cover.svg";
+                        e.target.src = "/images/books/jlpt-n5-n4-cover.jpg";
                       }}
                     />
                   </div>
@@ -4763,7 +4795,7 @@ export default function EpsBookReader({
                     width: "100%",
                     gap: "6px"
                   }}>
-                    <span style={{
+                    <span className="book-tab-title" style={{
                       fontSize: "16px",
                       fontWeight: "800",
                       color: isActive ? theme.titleActive : "#0f172a",
@@ -4772,7 +4804,7 @@ export default function EpsBookReader({
                       {folder.name}
                     </span>
 
-                    <span style={{
+                    <span className="book-tab-badge" style={{
                       background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
                       color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
                       border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
@@ -4791,6 +4823,7 @@ export default function EpsBookReader({
                 </button>
               );
             })}
+            </div>
           </div>
 
           {/* ACTIVE JAPANESE FOLDER CONTENT VIEWS - OPENED WHEN isJapaneseFolderOpen IS TRUE */}
@@ -6139,7 +6172,7 @@ export default function EpsBookReader({
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                         {[
                           { id: "all", label: `All Sets (${setsToRender.length})` },
-                          { id: "model", label: `🎯 Model Exam (${setsToRender.filter(s => (s.title||"").toLowerCase().includes("simulation") || (s.title||"").toLowerCase().includes("model") || (s.desc||"").toLowerCase().includes("simulation") || (s.titleJp||"").includes("模試")).length} Sets)` },
+                          { id: "model", label: `🎯 Model Exam (${setsToRender.filter(s => (s.title || "").toLowerCase().includes("simulation") || (s.title || "").toLowerCase().includes("model") || (s.desc || "").toLowerCase().includes("simulation") || (s.titleJp || "").includes("模試")).length} Sets)` },
                           { id: "JLPT N5", label: `JLPT N5 (${setsToRender.filter(s => s.level === "JLPT N5").length} Sets)` },
                           { id: "JLPT N4", label: `JLPT N4 (${setsToRender.filter(s => s.level === "JLPT N4").length} Sets)` },
                           { id: "JLPT N3", label: `JLPT N3 (${setsToRender.filter(s => s.level === "JLPT N3").length} Sets)` },
@@ -7403,7 +7436,7 @@ export default function EpsBookReader({
                       <option key={f.name} value={f.name}>
                         {f.icon || "📁"} {f.name}
                       </option>
-                  ))}
+                    ))}
                 </select>
               </div>
 

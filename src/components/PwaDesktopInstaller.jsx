@@ -6,7 +6,7 @@ export default function PwaDesktopInstaller() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [osName, setOsName] = useState('Desktop');
+  const [osName, setOsName] = useState('');
 
   useEffect(() => {
     // 1. Detect if running inside installed desktop app window
@@ -15,12 +15,18 @@ export default function PwaDesktopInstaller() {
 
     // 2. Detect OS for tailored instructions
     const ua = window.navigator.userAgent.toLowerCase();
-    if (ua.includes('mac')) {
+    if (ua.includes('android')) {
+      setOsName('Android');
+    } else if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod')) {
+      setOsName('iOS');
+    } else if (ua.includes('mac')) {
       setOsName('macOS');
     } else if (ua.includes('win')) {
       setOsName('Windows');
     } else if (ua.includes('linux')) {
       setOsName('Linux');
+    } else {
+      setOsName('');
     }
 
     // 3. Register Service Worker
@@ -91,21 +97,23 @@ export default function PwaDesktopInstaller() {
         <button
           type="button"
           onClick={handleInstallClick}
+          aria-label="Install App"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
             background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)',
             color: '#ffffff',
-            border: '1px solid rgba(255,255,255,0.2)',
-            padding: '10px 16px',
+            border: '1px solid rgba(255,255,255,0.25)',
+            padding: '9px 16px',
             borderRadius: '50px',
             fontSize: '13px',
             fontWeight: '800',
             cursor: 'pointer',
             boxShadow: '0 8px 24px rgba(79, 70, 229, 0.35)',
             transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-            backdropFilter: 'blur(8px)'
+            backdropFilter: 'blur(8px)',
+            maxWidth: '92vw'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
@@ -136,11 +144,11 @@ export default function PwaDesktopInstaller() {
               style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
             />
           </div>
-          <span>Install {osName} Desktop App</span>
+          <span>Install {osName ? `${osName} ` : ''}App</span>
         </button>
       </div>
 
-      {/* Manual Install Guide Modal for Safari / Edge / Chrome if prompt not ready */}
+      {/* Manual Install Guide Modal for Mobile & Desktop */}
       {showModal && (
         <div
           style={{
@@ -152,7 +160,7 @@ export default function PwaDesktopInstaller() {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 10000,
-            padding: '20px'
+            padding: '16px'
           }}
           onClick={() => setShowModal(false)}
         >
@@ -160,11 +168,12 @@ export default function PwaDesktopInstaller() {
             style={{
               background: '#ffffff',
               borderRadius: '16px',
-              maxWidth: '480px',
+              maxWidth: '460px',
               width: '100%',
-              padding: '28px',
+              padding: '24px',
               boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-              position: 'relative'
+              position: 'relative',
+              boxSizing: 'border-box'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -196,7 +205,7 @@ export default function PwaDesktopInstaller() {
                     Install ExamJK App
                   </h3>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>
-                    Run as a standalone desktop program for {osName}
+                    Fast, standalone app for {osName || 'all devices'}
                   </span>
                 </div>
               </div>
@@ -220,9 +229,21 @@ export default function PwaDesktopInstaller() {
 
             <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px', color: '#334155', lineHeight: '1.6' }}>
               <p style={{ margin: '0 0 10px 0', fontWeight: '700', color: '#0f172a' }}>
-                How to install on {osName}:
+                How to install on {osName || 'your device'}:
               </p>
-              {osName === 'macOS' ? (
+              {osName === 'iOS' ? (
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  <li>Tap the <strong>Share</strong> button (📤) at the bottom of Safari.</li>
+                  <li>Scroll down and tap <strong>Add to Home Screen</strong> (➕).</li>
+                  <li>Tap <strong>Add</strong> in the top right corner.</li>
+                </ul>
+              ) : osName === 'Android' ? (
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  <li>Tap the <strong>three dots menu (⋮)</strong> at top right in Chrome.</li>
+                  <li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+                  <li>ExamJK will appear on your home screen like a native app!</li>
+                </ul>
+              ) : osName === 'macOS' ? (
                 <ul style={{ margin: 0, paddingLeft: '20px' }}>
                   <li><strong>In Chrome/Brave/Edge:</strong> Click the <strong>Install</strong> icon (💻 or ⊕) in the browser address bar, then click <em>Install</em>.</li>
                   <li><strong>In Safari:</strong> Click <strong>File &gt; Add to Dock</strong> from the top menu bar.</li>
@@ -230,9 +251,9 @@ export default function PwaDesktopInstaller() {
                 </ul>
               ) : (
                 <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                  <li><strong>In Chrome / Edge / Brave:</strong> Click the <strong>Install</strong> icon (💻 or ⊕) in the browser address bar.</li>
+                  <li><strong>In Chrome / Edge / Brave:</strong> Click the <strong>Install</strong> icon (💻 or ⊕) in the address bar.</li>
                   <li>Click <strong>Install</strong> to add ExamJK to your <strong>Desktop &amp; Start Menu</strong>.</li>
-                  <li>It runs in its own dedicated, distraction-free desktop window!</li>
+                  <li>It runs in its own dedicated, distraction-free window!</li>
                 </ul>
               )}
             </div>

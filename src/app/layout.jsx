@@ -4,6 +4,9 @@ import PwaDesktopInstaller from '@/components/PwaDesktopInstaller';
 
 export const viewport = {
   themeColor: '#003b73',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export const metadata = {
