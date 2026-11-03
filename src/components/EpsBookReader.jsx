@@ -3587,21 +3587,21 @@ export default function EpsBookReader({
         }
         @media (max-width: 1024px) {
           .book-tabs-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 14px !important;
           }
           .book-tabs-container {
-            padding: 14px;
+            padding: 14px !important;
           }
         }
         @media (max-width: 540px) {
           .book-tabs-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 8px !important;
           }
           .book-tabs-container {
-            padding: 8px;
-            border-radius: 14px;
+            padding: 8px !important;
+            border-radius: 14px !important;
           }
           .book-library-tab-card {
             padding: 10px 8px 14px 8px !important;
@@ -3870,8 +3870,29 @@ export default function EpsBookReader({
           )}
 
           {/* Korean Folder Selection Tabs */}
-          <div className="book-tabs-container">
-            <div className="book-tabs-grid">
+          <div
+            className="book-tabs-container"
+            style={{
+              backgroundColor: "#ffffff",
+              padding: "16px",
+              borderRadius: "18px",
+              border: "1.5px solid #e2e8f0",
+              boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)",
+              marginBottom: "24px",
+              width: "100%",
+              boxSizing: "border-box"
+            }}
+          >
+            <div
+              className="book-tabs-grid"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gap: "16px",
+                width: "100%",
+                boxSizing: "border-box"
+              }}
+            >
             {folders.map(folder => {
               let badgeText = "";
 
@@ -4964,11 +4985,31 @@ export default function EpsBookReader({
           )}
 
           {/* Japanese Folder Selection Tabs */}
-          <div className="book-tabs-container">
-            <div className="book-tabs-grid">
+          <div
+            className="book-tabs-container"
+            style={{
+              backgroundColor: "#ffffff",
+              padding: "16px",
+              borderRadius: "18px",
+              border: "1.5px solid #e2e8f0",
+              boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)",
+              marginBottom: "24px",
+              width: "100%",
+              boxSizing: "border-box"
+            }}
+          >
+            <div
+              className="book-tabs-grid"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gap: "16px",
+                width: "100%",
+                boxSizing: "border-box"
+              }}
+            >
             {JAPANESE_FOLDERS.map((folder) => {
               const isActive = activeJapaneseFolder === folder.name;
-              const theme = JAPANESE_FOLDER_THEMES[folder.name] || JAPANESE_FOLDER_THEMES["JLPT N5・N4"];
               const badgeText = folder.badgeText || "Learning Guide";
 
               return (
@@ -4988,15 +5029,15 @@ export default function EpsBookReader({
                     padding: "14px 14px 18px 14px",
                     borderRadius: "16px",
                     border: "3px solid",
-                    borderColor: isActive ? theme.activeBorder : "#e2e8f0",
-                    background: isActive ? theme.activeBg : "#ffffff",
+                    borderColor: isActive ? "#2563eb" : "#e2e8f0",
+                    background: "#ffffff",
                     cursor: "pointer",
                     position: "relative",
                     outline: "none",
                     userSelect: "none",
                     boxSizing: "border-box",
                     width: "100%",
-                    boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
+                    boxShadow: isActive ? "0 8px 22px rgba(37, 99, 235, 0.12)" : "0 2px 8px rgba(15, 23, 42, 0.04)",
                     flexShrink: 0
                   }}
                 >
@@ -5011,7 +5052,7 @@ export default function EpsBookReader({
                     padding: "6px",
                     boxSizing: "border-box",
                     position: "relative",
-                    boxShadow: isActive ? theme.activeShadow : "0 4px 12px rgba(15, 23, 42, 0.08)",
+                    boxShadow: isActive ? "0 4px 12px rgba(37, 99, 235, 0.08)" : "0 4px 12px rgba(15, 23, 42, 0.08)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -5048,17 +5089,17 @@ export default function EpsBookReader({
                     <span className="book-tab-title" style={{
                       fontSize: "16px",
                       fontWeight: "800",
-                      color: isActive ? theme.titleActive : "#0f172a",
+                      color: "#0f172a",
                       lineHeight: "1.3"
                     }}>
                       {folder.name}
                     </span>
 
                     <span className="book-tab-badge" style={{
-                      background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
-                      color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
-                      border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
-                      boxShadow: isActive ? theme.badgeActiveShadow : "none",
+                      background: isActive ? "#2563eb" : "#f1f5f9",
+                      color: isActive ? "#ffffff" : "#475569",
+                      border: isActive ? "1px solid #2563eb" : "1px solid #e2e8f0",
+                      boxShadow: isActive ? "0 2px 8px rgba(37, 99, 235, 0.25)" : "none",
                       fontSize: "12px",
                       padding: "4px 14px",
                       borderRadius: "16px",
