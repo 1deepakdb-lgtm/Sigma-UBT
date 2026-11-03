@@ -1,7 +1,7 @@
 {
-  "/admin/dictionary/page": "app/admin/dictionary/page.js",
-  "/page": "app/page.js",
-  "/admin/institutes/page": "app/admin/institutes/page.js",
   "/_not-found/page": "app/_not-found/page.js",
-  "/api/admin/institutes/route": "app/api/admin/institutes/route.js"
+  "/admin/dictionary/page": "app/admin/dictionary/page.js",
+  "/api/auth/me/route": "app/api/auth/me/route.js",
+  "/api/dictionary/route": "app/api/dictionary/route.js",
+  "/page": "app/page.js"
 }

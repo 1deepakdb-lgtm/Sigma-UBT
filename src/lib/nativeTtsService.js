@@ -499,6 +499,21 @@ export function generateEdgeTts(text, voice, pitch, rate) {
  * Master synthesis function that produces an audio buffer using the best available engine.
  * Never throws connection refused errors, works entirely in-process on any port.
  */
+// High-performance LRU audio buffer cache for millisecond AI Studio playback
+const ttsMemoryCache = new Map();
+const MAX_TTS_CACHE = 2000;
+
+function cacheAndReturn(key, result) {
+  if (result && result.buffer && result.buffer.length > 0) {
+    if (ttsMemoryCache.size >= MAX_TTS_CACHE) {
+      const oldestKey = ttsMemoryCache.keys().next().value;
+      ttsMemoryCache.delete(oldestKey);
+    }
+    ttsMemoryCache.set(key, result);
+  }
+  return result;
+}
+
 export async function synthesizeSpeechBuffer({
   text,
   lang = 'ja',
@@ -526,6 +541,11 @@ export async function synthesizeSpeechBuffer({
   const explicitPitch = pitchFactor !== null ? parseFloat(pitchFactor) : null;
   const numericWeight = vocalWeight !== null ? parseFloat(vocalWeight) : null;
 
+  const cacheKey = `${text.trim()}|${langKey}|${gender}|${selectedVoice}|${selectedPitch}|${selectedRate}|${model}`;
+  if (ttsMemoryCache.has(cacheKey)) {
+    return ttsMemoryCache.get(cacheKey);
+  }
+
   // 1. Primary Engine: Ultra-Realistic Neural Models (Korean, Japanese, Nepali, English)
   if (lang === 'ja' || lang === 'ko' || lang === 'ne' || lang === 'en') {
     const neuralResult = await generateNeuralSpeech(text, lang, gender, {
@@ -541,7 +561,7 @@ export async function synthesizeSpeechBuffer({
       pitchFactor: explicitPitch
     });
     if (neuralResult && neuralResult.buffer && neuralResult.buffer.length > 0) {
-      return neuralResult;
+      return cacheAndReturn(cacheKey, neuralResult);
     }
 
     // Secondary Fallback: Melodic DSP Engine
@@ -554,7 +574,7 @@ export async function synthesizeSpeechBuffer({
       pitchFactor: explicitPitch
     });
     if (melodicResult && melodicResult.buffer && melodicResult.buffer.length > 0) {
-      return melodicResult;
+      return cacheAndReturn(cacheKey, melodicResult);
     }
   }
 
@@ -562,11 +582,11 @@ export async function synthesizeSpeechBuffer({
   try {
     const audioBuffer = await generateEdgeTts(text, selectedVoice, selectedPitch, selectedRate);
     if (audioBuffer && audioBuffer.length > 0) {
-      return {
+      return cacheAndReturn(cacheKey, {
         buffer: audioBuffer,
         contentType: 'audio/mpeg',
         provider: 'edge-tts'
-      };
+      });
     }
   } catch (edgeErr) {
     console.warn('Edge TTS synthesis fallback to Google:', edgeErr?.message || edgeErr);
@@ -587,11 +607,11 @@ export async function synthesizeSpeechBuffer({
 
     if (res.ok) {
       const audioBuffer = await res.arrayBuffer();
-      return {
+      return cacheAndReturn(cacheKey, {
         buffer: Buffer.from(audioBuffer),
         contentType: 'audio/mpeg',
         provider: 'google-tts'
-      };
+      });
     }
   } catch (googleErr) {
     console.error('Google TTS fallback error:', googleErr);

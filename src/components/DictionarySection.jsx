@@ -611,9 +611,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
     }
     if (playingAudioId === id || loadingAudioId === id) {
       setPlayingAudioId(null);
@@ -621,7 +618,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       return;
     }
 
-    // Auto-extract text, lang, gender from url if not explicitly provided!
+    // Auto-extract text, lang, gender from url if not explicitly provided
     if (!text && url) {
       try {
         const parsed = new URL(url, 'https://localhost');
@@ -634,12 +631,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       }
     }
 
-    // Try client-side speech first for INSTANT 0ms playback!
-    if (text) {
-      const targetGender = gender || (id && id.includes('fem') ? 'female' : 'male');
-      const targetLang = lang || activeLang;
-      const didSpeak = speakTextNative(text, targetLang, targetGender, id);
-      if (didSpeak) return;
+    const targetGender = gender || (id && id.includes('fem') ? 'female' : 'male');
+    const targetLang = lang || activeLang;
+
+    // If no URL is provided, fallback to client speech synthesis
+    if (!url && text) {
+      speakTextNative(text, targetLang, targetGender, id);
+      return;
     }
 
     setLoadingAudioId(id);
@@ -647,6 +645,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
     const audio = new Audio();
     audioRef.current = audio;
+
+    audio.onplay = () => {
+      setLoadingAudioId(null);
+      setPlayingAudioId(id);
+    };
 
     audio.onplaying = () => {
       setLoadingAudioId(null);
@@ -660,10 +663,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     };
 
     audio.onerror = (err) => {
-      console.warn('Playback error on URL:', url, err);
+      console.warn('AI Studio model playback error, falling back to client speech:', url, err);
       if (text) {
-        const targetGender = gender || (id.includes('fem') ? 'female' : 'male');
-        const targetLang = lang || activeLang;
         speakTextNative(text, targetLang, targetGender, id);
         return;
       }
@@ -683,8 +684,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         .catch(err => {
           console.warn('Playback promise error:', err);
           if (text) {
-            const targetGender = gender || (id.includes('fem') ? 'female' : 'male');
-            const targetLang = lang || activeLang;
             speakTextNative(text, targetLang, targetGender, id);
           } else {
             setPlayingAudioId(null);

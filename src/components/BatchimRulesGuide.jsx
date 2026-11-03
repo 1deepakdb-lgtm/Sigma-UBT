@@ -359,16 +359,23 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const onPlayClick = (audioUrl, audioId, spokenText, writtenText) => {
+  const onPlayClick = (audioUrl, audioId, spokenText, writtenText, gender = 'female') => {
     const textToSpeak = spokenText || writtenText;
     if (handlePlayAudio) {
-      handlePlayAudio(audioUrl, audioId, textToSpeak, 'ko', 'female');
+      handlePlayAudio(audioUrl, audioId, textToSpeak, 'ko', gender);
     } else if (typeof window !== 'undefined' && window.speechSynthesis) {
       try {
         window.speechSynthesis.cancel();
         if (window.speechSynthesis.paused) window.speechSynthesis.resume();
         const utt = new SpeechSynthesisUtterance(textToSpeak);
         utt.lang = 'ko-KR';
+        if (gender === 'male') {
+          utt.pitch = 0.82;
+          utt.rate = 0.95;
+        } else {
+          utt.pitch = 1.15;
+          utt.rate = 1.0;
+        }
         window.speechSynthesis.speak(utt);
       } catch (e) {}
     }
@@ -571,9 +578,13 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {item.examples.map((ex, exIdx) => {
-                      const audioUrl = `/api/tts?text=${encodeURIComponent(ex.written)}&lang=ko&gender=female`;
-                      const audioId = `dual-${item.symbol}-${ex.written}`;
-                      const isPlaying = playingAudioId === audioId;
+                      const textToSpeak = ex.spoken || ex.written;
+                      const femaleUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&gender=female&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                      const maleUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&gender=male&voice=ko-KR-InJoonNeural&model=ko-male-1`;
+                      const femaleAudioId = `dual-${item.symbol}-${ex.written}-fem`;
+                      const maleAudioId = `dual-${item.symbol}-${ex.written}-male`;
+                      const isFemPlaying = playingAudioId === femaleAudioId;
+                      const isMalePlaying = playingAudioId === maleAudioId;
                       return (
                         <div
                           key={exIdx}
@@ -584,32 +595,60 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                             backgroundColor: "#f8fafc",
                             padding: "6px 10px",
                             borderRadius: "6px",
-                            fontSize: "14px"
+                            fontSize: "14px",
+                            gap: "8px"
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap", flex: "1 1 auto" }}>
                             <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "14px" }}>{ex.written}</span>
                             <span style={{ fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "1px 5px", borderRadius: "4px", fontSize: "14px" }}>[{ex.spoken}]</span>
                             <span style={{ color: "#1e40af", fontSize: "14px", fontWeight: "600" }}>[{koreanToNepaliRomanized(ex.spoken)}]</span>
                             <span style={{ color: "#16a34a", fontSize: "14px", fontWeight: "600" }}>- {ex.nepali}</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
-                            style={{
-                              backgroundColor: isPlaying ? "#be185d" : "#e11d48",
-                              color: "white",
-                              border: "none",
-                              padding: "4px 8px",
-                              borderRadius: "4px",
-                              fontSize: "14px",
-                              fontWeight: "700",
-                              cursor: "pointer",
-                              flexShrink: 0
-                            }}
-                          >
-                            {isPlaying ? "⏹" : "▶"}
-                          </button>
+                          {/* Both Female (F) & Male (M) in ONE single horizontal line */}
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
+                            <button
+                              type="button"
+                              onClick={() => onPlayClick(femaleUrl, femaleAudioId, ex.spoken, ex.written, 'female')}
+                              title="Play Female Voice (AI Studio SunHi)"
+                              style={{
+                                backgroundColor: isFemPlaying ? "#be185d" : "#fff1f2",
+                                color: isFemPlaying ? "#ffffff" : "#be185d",
+                                border: "1.5px solid #fda4af",
+                                padding: "3px 8px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                fontWeight: "800",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px"
+                              }}
+                            >
+                              <span>{isFemPlaying ? "⏹" : "▶ F"}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => onPlayClick(maleUrl, maleAudioId, ex.spoken, ex.written, 'male')}
+                              title="Play Male Voice (AI Studio InJoon)"
+                              style={{
+                                backgroundColor: isMalePlaying ? "#0284c7" : "#f0f9ff",
+                                color: isMalePlaying ? "#ffffff" : "#0369a1",
+                                border: "1.5px solid #7dd3fc",
+                                padding: "3px 8px",
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                fontWeight: "800",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px"
+                              }}
+                            >
+                              <span>{isMalePlaying ? "⏹" : "▶ M"}</span>
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
@@ -712,9 +751,13 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                     </thead>
                     <tbody>
                       {rule.examples.map((ex, exIdx) => {
-                        const audioUrl = `/api/tts?text=${encodeURIComponent(ex.written)}&lang=ko&gender=female`;
-                        const audioId = `rule-${rule.id}-${ex.written}`;
-                        const isPlaying = playingAudioId === audioId;
+                        const textToSpeak = ex.spoken || ex.written;
+                        const femaleUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&gender=female&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                        const maleUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&gender=male&voice=ko-KR-InJoonNeural&model=ko-male-1`;
+                        const femaleAudioId = `rule-${rule.id}-${ex.written}-fem`;
+                        const maleAudioId = `rule-${rule.id}-${ex.written}-male`;
+                        const isFemPlaying = playingAudioId === femaleAudioId;
+                        const isMalePlaying = playingAudioId === maleAudioId;
                         return (
                           <tr
                             key={exIdx}
@@ -738,25 +781,50 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                               {ex.nepali}
                             </td>
                             <td style={{ padding: "8px 12px", textAlign: "center" }}>
-                              <button
-                                type="button"
-                                onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
-                                style={{
-                                  backgroundColor: isPlaying ? "#be185d" : "#e11d48",
-                                  color: "white",
-                                  border: "none",
-                                  padding: "4px 10px",
-                                  borderRadius: "4px",
-                                  fontSize: "14px",
-                                  fontWeight: "700",
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "3px"
-                                }}
-                              >
-                                {isPlaying ? "⏹ 정지" : "▶ 재생"}
-                              </button>
+                              {/* Both Female (F) & Male (M) in ONE single horizontal line */}
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", justifyContent: "center" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => onPlayClick(femaleUrl, femaleAudioId, ex.spoken, ex.written, 'female')}
+                                  title="Play Female Voice (AI Studio SunHi)"
+                                  style={{
+                                    backgroundColor: isFemPlaying ? "#be185d" : "#fff1f2",
+                                    color: isFemPlaying ? "#ffffff" : "#be185d",
+                                    border: "1.5px solid #fda4af",
+                                    padding: "3px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "12px",
+                                    fontWeight: "800",
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "3px"
+                                  }}
+                                >
+                                  <span>{isFemPlaying ? "⏹" : "▶ F"}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => onPlayClick(maleUrl, maleAudioId, ex.spoken, ex.written, 'male')}
+                                  title="Play Male Voice (AI Studio InJoon)"
+                                  style={{
+                                    backgroundColor: isMalePlaying ? "#0284c7" : "#f0f9ff",
+                                    color: isMalePlaying ? "#ffffff" : "#0369a1",
+                                    border: "1.5px solid #7dd3fc",
+                                    padding: "3px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "12px",
+                                    fontWeight: "800",
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "3px"
+                                  }}
+                                >
+                                  <span>{isMalePlaying ? "⏹" : "▶ M"}</span>
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );

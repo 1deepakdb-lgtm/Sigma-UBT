@@ -686,7 +686,7 @@ export async function GET(request) {
       status: 200,
       headers: {
         'Content-Type': result.contentType || 'audio/mpeg',
-        'Cache-Control': 'public, max-age=86400',
+        'Cache-Control': 'public, max-age=604800, immutable',
         'Access-Control-Allow-Origin': '*',
         'Content-Disposition': disposition,
         'Content-Length': String(result.buffer.byteLength),
