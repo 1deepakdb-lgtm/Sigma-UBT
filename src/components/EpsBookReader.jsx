@@ -3408,80 +3408,45 @@ export default function EpsBookReader({
           maxWidth: "100%",
           boxSizing: "border-box"
         }}>
-          {/* BOTH KOREAN & JAPANESE */}
-          {effectiveInstLang === "both" && (
-            <button
-              type="button"
-              onClick={() => setStudyLanguage("both")}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                padding: "10px 20px",
-                borderRadius: "12px",
-                border: "none",
-                backgroundColor: studyLanguage === "both" ? "#2563eb" : "transparent",
-                backgroundImage: studyLanguage === "both" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-                color: studyLanguage === "both" ? "#ffffff" : "#475569",
-                fontSize: "14px",
-                fontWeight: "800",
-                cursor: "pointer",
-                transition: "all 0.18s ease-in-out",
-                boxShadow: studyLanguage === "both" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none",
-                whiteSpace: "nowrap"
-              }}
-              onMouseEnter={(e) => {
-                if (studyLanguage !== "both") {
-                  e.currentTarget.style.backgroundColor = "#f1f5f9";
-                  e.currentTarget.style.color = "#0f172a";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (studyLanguage !== "both") {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#475569";
-                }
-              }}
-            >
-              <span style={{ fontSize: "18px", lineHeight: "1" }}>🇰🇷 🇯🇵</span>
-              <span>Both Korean and Japanese</span>
-            </button>
-          )}
-
           {/* KOREAN STUDY MATERIALS */}
           {(effectiveInstLang === "both" || effectiveInstLang === "korean") && (
             <button
               type="button"
-              onClick={() => setStudyLanguage("korean")}
+              onClick={() => {
+                if (effectiveInstLang === "both") {
+                  setStudyLanguage(studyLanguage === "korean" ? "both" : "korean");
+                } else {
+                  setStudyLanguage("korean");
+                }
+              }}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
-                padding: "10px 20px",
+                padding: "10px 22px",
                 borderRadius: "12px",
                 border: "none",
-                backgroundColor: studyLanguage === "korean" ? "#2563eb" : "transparent",
+                backgroundColor: studyLanguage === "korean" ? "#2563eb" : (studyLanguage === "both" ? "#eff6ff" : "transparent"),
                 backgroundImage: studyLanguage === "korean" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-                color: studyLanguage === "korean" ? "#ffffff" : "#475569",
+                color: studyLanguage === "korean" ? "#ffffff" : (studyLanguage === "both" ? "#1d4ed8" : "#475569"),
                 fontSize: "14px",
                 fontWeight: "800",
                 cursor: "pointer",
                 transition: "all 0.18s ease-in-out",
-                boxShadow: studyLanguage === "korean" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none",
+                boxShadow: studyLanguage === "korean" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : (studyLanguage === "both" ? "0 2px 8px rgba(37, 99, 235, 0.15)" : "none"),
                 whiteSpace: "nowrap"
               }}
               onMouseEnter={(e) => {
                 if (studyLanguage !== "korean") {
-                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.backgroundColor = studyLanguage === "both" ? "#dbeafe" : "#f1f5f9";
                   e.currentTarget.style.color = "#0f172a";
                 }
               }}
               onMouseLeave={(e) => {
                 if (studyLanguage !== "korean") {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#475569";
+                  e.currentTarget.style.backgroundColor = studyLanguage === "both" ? "#eff6ff" : "transparent";
+                  e.currentTarget.style.color = studyLanguage === "both" ? "#1d4ed8" : "#475569";
                 }
               }}
             >
@@ -3494,35 +3459,41 @@ export default function EpsBookReader({
           {(effectiveInstLang === "both" || effectiveInstLang === "japanese") && (
             <button
               type="button"
-              onClick={() => setStudyLanguage("japanese")}
+              onClick={() => {
+                if (effectiveInstLang === "both") {
+                  setStudyLanguage(studyLanguage === "japanese" ? "both" : "japanese");
+                } else {
+                  setStudyLanguage("japanese");
+                }
+              }}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
-                padding: "10px 20px",
+                padding: "10px 22px",
                 borderRadius: "12px",
                 border: "none",
-                backgroundColor: studyLanguage === "japanese" ? "#2563eb" : "transparent",
-                backgroundImage: studyLanguage === "japanese" ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-                color: studyLanguage === "japanese" ? "#ffffff" : "#475569",
+                backgroundColor: studyLanguage === "japanese" ? "#9333ea" : (studyLanguage === "both" ? "#fdf4ff" : "transparent"),
+                backgroundImage: studyLanguage === "japanese" ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "none",
+                color: studyLanguage === "japanese" ? "#ffffff" : (studyLanguage === "both" ? "#9333ea" : "#475569"),
                 fontSize: "14px",
                 fontWeight: "800",
                 cursor: "pointer",
                 transition: "all 0.18s ease-in-out",
-                boxShadow: studyLanguage === "japanese" ? "0 4px 14px rgba(37, 99, 235, 0.35)" : "none",
+                boxShadow: studyLanguage === "japanese" ? "0 4px 14px rgba(147, 51, 234, 0.35)" : (studyLanguage === "both" ? "0 2px 8px rgba(147, 51, 234, 0.15)" : "none"),
                 whiteSpace: "nowrap"
               }}
               onMouseEnter={(e) => {
                 if (studyLanguage !== "japanese") {
-                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.backgroundColor = studyLanguage === "both" ? "#fae8ff" : "#f1f5f9";
                   e.currentTarget.style.color = "#0f172a";
                 }
               }}
               onMouseLeave={(e) => {
                 if (studyLanguage !== "japanese") {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#475569";
+                  e.currentTarget.style.backgroundColor = studyLanguage === "both" ? "#fdf4ff" : "transparent";
+                  e.currentTarget.style.color = studyLanguage === "both" ? "#9333ea" : "#475569";
                 }
               }}
             >
