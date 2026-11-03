@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { verifyPassword, hashPassword, signToken } from '@/lib/auth';
 import { requireAdmin } from '@/lib/rbac';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/superadmin
  * Returns the current super-admin's own profile data.

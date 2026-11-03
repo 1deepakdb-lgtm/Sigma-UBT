@@ -2320,10 +2320,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           </button>
                         )}
 
-                        {/* Both Female & Male Voice Groups side-by-side in ONE horizontal line */}
+                        {/* Both Female & Male Voice Groups side-by-side closely in ONE horizontal line */}
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", flexWrap: "nowrap" }}>
-                          {/* Female Voice Group */}
-                          <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 2px 6px rgba(225, 29, 72, 0.12)" }}>
+                          {/* Female Voice Group (Compact & Shrunk) */}
+                          <div style={{ display: "inline-flex", alignItems: "center", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 1px 3px rgba(225, 29, 72, 0.08)", flexShrink: 0 }}>
                             <button
                               type="button"
                               onClick={() => {
@@ -2337,28 +2337,26 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   handlePlayAudio(url, `popup-fem-${primaryWord}`, textToPlay, langCode, 'female');
                                 }
                               }}
-                              title={`Play in Female Voice (${selectedFemaleModel.name})`}
+                              title={`Play Female Voice (${selectedFemaleModel.name})`}
                               style={{
-                                flex: "1 1 0",
-                                minWidth: 0,
                                 backgroundColor: playingAudioId === `popup-fem-${primaryWord}` ? "#be185d" : "transparent",
                                 color: playingAudioId === `popup-fem-${primaryWord}` ? "#ffffff" : "#be185d",
                                 border: "none",
-                                padding: "6px 5px",
-                                fontSize: "12px",
-                                fontWeight: "700",
+                                padding: "0 8px",
+                                height: "28px",
+                                fontSize: "11px",
+                                fontWeight: "800",
                                 cursor: "pointer",
-                                display: "flex",
+                                display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 gap: "4px",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden"
+                                whiteSpace: "nowrap"
                               }}
                             >
-                              <FemaleIcon size={18} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
-                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹ Stop" : "▶ F"}
+                              <FemaleIcon size={14} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
+                              <span style={{ whiteSpace: "nowrap" }}>
+                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹" : "▶ F"}
                               </span>
                             </button>
                             {canDownloadAudio && (
@@ -2385,11 +2383,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   backgroundColor: "transparent",
                                   color: "#be185d",
                                   border: "none",
-                                  borderLeft: "1.5px solid #fda4af",
-                                  padding: "6px 7px",
-                                  fontSize: "12px",
+                                  borderLeft: "1px solid #fda4af",
+                                  padding: "0 6px",
+                                  height: "28px",
+                                  fontSize: "11px",
                                   cursor: "pointer",
-                                  display: "flex",
+                                  display: "inline-flex",
                                   alignItems: "center",
                                   justifyContent: "center",
                                   flexShrink: 0
@@ -2400,8 +2399,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             )}
                           </div>
 
-                          {/* Male Voice Group */}
-                          <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 2px 6px rgba(2, 132, 199, 0.12)" }}>
+                          {/* Male Voice Group (Compact & Shrunk) */}
+                          <div style={{ display: "inline-flex", alignItems: "center", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 1px 3px rgba(2, 132, 199, 0.08)", flexShrink: 0 }}>
                             <button
                               type="button"
                               onClick={() => {
@@ -2415,28 +2414,26 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   handlePlayAudio(url, `popup-male-${primaryWord}`, textToPlay, langCode, 'male');
                                 }
                               }}
-                              title={`Play in Male Voice (${selectedMaleModel.name})`}
+                              title={`Play Male Voice (${selectedMaleModel.name})`}
                               style={{
-                                flex: "1 1 0",
-                                minWidth: 0,
                                 backgroundColor: playingAudioId === `popup-male-${primaryWord}` ? "#0284c7" : "transparent",
                                 color: playingAudioId === `popup-male-${primaryWord}` ? "#ffffff" : "#0369a1",
                                 border: "none",
-                                padding: "6px 5px",
-                                fontSize: "12px",
-                                fontWeight: "700",
+                                padding: "0 8px",
+                                height: "28px",
+                                fontSize: "11px",
+                                fontWeight: "800",
                                 cursor: "pointer",
-                                display: "flex",
+                                display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 gap: "4px",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden"
+                                whiteSpace: "nowrap"
                               }}
                             >
-                              <MaleIcon size={18} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
-                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹ Stop" : "▶ M"}
+                              <MaleIcon size={14} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
+                              <span style={{ whiteSpace: "nowrap" }}>
+                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹" : "▶ M"}
                               </span>
                             </button>
                             {canDownloadAudio && (
@@ -2463,11 +2460,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   backgroundColor: "transparent",
                                   color: "#0369a1",
                                   border: "none",
-                                  borderLeft: "1.5px solid #7dd3fc",
-                                  padding: "6px 7px",
-                                  fontSize: "12px",
+                                  borderLeft: "1px solid #7dd3fc",
+                                  padding: "0 6px",
+                                  height: "28px",
+                                  fontSize: "11px",
                                   cursor: "pointer",
-                                  display: "flex",
+                                  display: "inline-flex",
                                   alignItems: "center",
                                   justifyContent: "center",
                                   flexShrink: 0

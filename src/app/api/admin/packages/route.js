@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { requireInstituteOrAdmin, ROLES } from '@/lib/rbac';
 import { getSessionUser } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
     const session = await getSessionUser(req);

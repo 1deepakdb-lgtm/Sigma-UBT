@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 import { requireAdmin } from '@/lib/rbac';
 
+export const dynamic = 'force-dynamic';
+
 function addMonths(dateString, months) {
   const d = new Date(dateString + 'T00:00:00');
   d.setMonth(d.getMonth() + Number(months));
