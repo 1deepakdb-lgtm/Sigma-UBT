@@ -2,7 +2,10 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 
-const dev = process.env.NODE_ENV !== 'production';
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'production';
+}
+const dev = process.env.NODE_ENV === 'development';
 
 // cPanel Passenger assigns PORT dynamically via environment variable
 // NEVER hardcode the port — Passenger will set it automatically
