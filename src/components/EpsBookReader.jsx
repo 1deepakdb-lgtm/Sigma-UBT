@@ -215,6 +215,182 @@ function ChapterCover({
   );
 }
 
+/**
+ * JapaneseChapterCover Component
+ * Renders an elegant Japanese textbook cover mockup matching the Korean ChapterCover visual language.
+ */
+function JapaneseChapterCover({
+  lessonNumber,
+  titleJp,
+  titleNe,
+  level = "N5",
+  height = "195px",
+  margin = "10px 0 12px 0",
+  onClick
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isN5 = level === "N5" || (typeof lessonNumber === "number" && lessonNumber <= 25);
+  const lesStr = typeof lessonNumber === "number" && lessonNumber < 10 ? `0${lessonNumber}` : `${lessonNumber}`;
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      title={`Open Lesson ${lesStr}: ${titleJp || ''}`}
+      style={{
+        margin: margin,
+        height: height,
+        borderRadius: "10px",
+        border: isHovered ? (isN5 ? "1.5px solid #7c3aed" : "1.5px solid #e11d48") : "1px solid #e2e8f0",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        cursor: "pointer",
+        overflow: "hidden",
+        boxShadow: isHovered
+          ? (isN5 ? "0 8px 20px rgba(124, 58, 237, 0.18)" : "0 8px 20px rgba(225, 29, 72, 0.18)")
+          : "0 2px 6px rgba(0,0,0,0.03)",
+        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+        transform: isHovered ? "translateY(-2px)" : "none",
+        userSelect: "none"
+      }}
+    >
+      {/* ELEGANT TEXTBOOK BOOK COVER PLACEHOLDER */}
+      <div style={{
+        width: "100%",
+        height: "100%",
+        background: isN5
+          ? "linear-gradient(135deg, #faf5ff 0%, #ede9fe 50%, #ddd6fe 100%)"
+          : "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 50%, #fecdd3 100%)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: "16px 14px",
+        boxSizing: "border-box",
+        position: "relative",
+        textAlign: "center"
+      }}>
+        {/* Book Spine Line */}
+        <div style={{
+          position: "absolute",
+          left: "10px",
+          top: 0,
+          bottom: 0,
+          width: "3px",
+          backgroundColor: isN5 ? "#7c3aed" : "#e11d48",
+          opacity: 0.4
+        }} />
+
+        <div style={{ paddingLeft: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{
+            fontSize: "10px",
+            fontWeight: "900",
+            color: isN5 ? "#6d28d9" : "#be123c",
+            letterSpacing: "0.5px",
+            textTransform: "uppercase"
+          }}>
+            みんなの日本語
+          </div>
+          <span style={{
+            fontSize: "10px",
+            fontWeight: "800",
+            color: isN5 ? "#5b21b6" : "#9f1239",
+            backgroundColor: isN5 ? "rgba(124, 58, 237, 0.14)" : "rgba(225, 29, 72, 0.14)",
+            padding: "2px 7px",
+            borderRadius: "6px"
+          }}>
+            JLPT {isN5 ? "N5" : "N4"}
+          </span>
+        </div>
+
+        <div style={{ padding: "0 10px" }}>
+          <span style={{ fontSize: "28px", display: "block", marginBottom: "4px" }}>
+            {isN5 ? "🌸" : "⛩️"}
+          </span>
+          <div style={{
+            fontSize: "20px",
+            fontWeight: "900",
+            color: "#0f172a",
+            letterSpacing: "0.5px"
+          }}>
+            第{lesStr}課
+          </div>
+          <div style={{
+            fontSize: "12px",
+            fontWeight: "700",
+            color: isN5 ? "#6d28d9" : "#be123c",
+            marginTop: "3px"
+          }}>
+            Lesson {lesStr}
+          </div>
+        </div>
+
+        <div style={{ paddingLeft: "8px" }}>
+          <div style={{
+            fontSize: "12px",
+            fontWeight: "800",
+            color: "#1e293b",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis"
+          }}>
+            {titleJp || `Lesson ${lesStr}`}
+          </div>
+          {titleNe && (
+            <div style={{
+              fontSize: "11px",
+              color: "#64748b",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              marginTop: "2px"
+            }}>
+              {titleNe}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* HOVER OVERLAY */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        backgroundColor: "rgba(15, 23, 42, 0.45)",
+        backdropFilter: "blur(1px)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "6px",
+        color: "white",
+        opacity: isHovered ? 1 : 0,
+        transition: "opacity 0.15s ease",
+        zIndex: 3
+      }}>
+        <div style={{
+          backgroundColor: isN5 ? "#7c3aed" : "#e11d48",
+          color: "white",
+          width: "36px",
+          height: "36px",
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "16px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+        }}>
+          ▶
+        </div>
+        <span style={{ fontSize: "11px", fontWeight: "bold", letterSpacing: "0.3px", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+          Full Screen मा हेर्नुहोस्
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Japanese Study Materials Datasets ─────────────────────────────────────────
 export const MINNA_NO_NIHONGO_LESSONS = [
   { lesson: 1, book: 1, titleJp: "わたしはマイク・ミラーです", titleEn: "Introduction & Self-Introduction", titleNe: "आत्म-परिचय र नाम", grammar: "N1 は N2 です / じゃありません / ですか", vocabCount: 35 },
@@ -5031,206 +5207,279 @@ export default function EpsBookReader({
                   {minnaLessonFilter === "full" ? (
                     <div style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-                      gap: "16px"
+                      gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                      gap: "16px",
+                      marginBottom: "40px"
                     }}>
-                      {fullBooks.map((book, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            backgroundColor: "#ffffff",
-                            borderRadius: "14px",
-                            border: "1.5px solid #ddd6fe",
-                            padding: "20px",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "12px",
-                            boxShadow: "0 4px 12px rgba(124, 58, 237, 0.06)"
-                          }}
-                        >
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{
-                              padding: "4px 10px",
-                              borderRadius: "6px",
-                              fontSize: "11px",
-                              fontWeight: "800",
-                              backgroundColor: "#faf5ff",
-                              color: "#7c3aed",
-                              border: "1px solid #ddd6fe"
-                            }}>
-                              JLPT {book.level}
-                            </span>
+                      {fullBooks.map((book, idx) => {
+                        const isN5 = book.level === "N5";
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => setViewingMaterial({ title: book.title, fileUrl: book.url })}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "translateY(-3px)";
+                              e.currentTarget.style.boxShadow = "0 10px 25px rgba(124, 58, 237, 0.16)";
+                              e.currentTarget.style.borderColor = isN5 ? "#c4b5fd" : "#fca5a5";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "none";
+                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                            title={`Click to read ${book.title}`}
+                            style={{
+                              backgroundColor: "#ffffff",
+                              borderRadius: "12px",
+                              border: "1px solid #e2e8f0",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                              padding: "18px",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              cursor: "pointer",
+                              userSelect: "none"
+                            }}
+                          >
+                            <div>
+                              {/* Pill Badge */}
+                              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
+                                <span style={{
+                                  backgroundColor: isN5 ? "#faf5ff" : "#fff1f2",
+                                  color: isN5 ? "#7c3aed" : "#be123c",
+                                  padding: "5px 20px",
+                                  borderRadius: "16px",
+                                  fontSize: "13px",
+                                  fontWeight: "800",
+                                  border: isN5 ? "1px solid #ddd6fe" : "1px solid #fecdd3"
+                                }}>
+                                  Full Textbook · JLPT {book.level}
+                                </span>
+                              </div>
+
+                              {/* Book Cover */}
+                              <JapaneseChapterCover
+                                lessonNumber={isN5 ? 1 : 2}
+                                titleJp={book.title}
+                                titleNe="पूर्ण जापानीज पाठ्यपुस्तक"
+                                level={book.level}
+                                height="195px"
+                                margin="10px 0 12px 0"
+                                onClick={(e) => {
+                                  if (e && e.stopPropagation) e.stopPropagation();
+                                  setViewingMaterial({ title: book.title, fileUrl: book.url });
+                                }}
+                              />
+
+                              {/* Title */}
+                              <div style={{ textAlign: "center", marginTop: "6px" }}>
+                                <h3 style={{ margin: "0 0 4px 0", fontSize: "16px", fontWeight: "bold", color: "#0f172a", textAlign: "center" }}>
+                                  {book.title}
+                                </h3>
+                                <p style={{ margin: 0, fontSize: "12.5px", color: "#64748b", lineHeight: "1.4", textAlign: "center" }}>
+                                  Complete full-edition textbook ({book.fileSize || "PDF"})
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Action Button */}
+                            <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+                              <button
+                                type="button"
+                                onClick={() => setViewingMaterial({ title: book.title, fileUrl: book.url })}
+                                style={{
+                                  width: "100%",
+                                  padding: "9px 14px",
+                                  borderRadius: "8px",
+                                  border: "none",
+                                  backgroundColor: isN5 ? "#7c3aed" : "#e11d48",
+                                  backgroundImage: isN5 ? "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)" : "linear-gradient(135deg, #e11d48 0%, #be123c 100%)",
+                                  color: "#ffffff",
+                                  fontSize: "13px",
+                                  fontWeight: "700",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "6px",
+                                  boxShadow: isN5 ? "0 2px 8px rgba(124, 58, 237, 0.25)" : "0 2px 8px rgba(225, 29, 72, 0.25)"
+                                }}
+                              >
+                                <span>📖</span>
+                                <span>Read Full Book</span>
+                              </button>
+                            </div>
                           </div>
-
-                          <h3 style={{ margin: "2px 0 0 0", fontSize: "17px", fontWeight: "800", color: "#1e293b" }}>
-                            {book.title}
-                          </h3>
-
-                          <p style={{ margin: 0, fontSize: "12px", color: "#64748b", lineHeight: "1.4" }}>
-                            Complete full-edition Japanese textbook.
-                          </p>
-
-                          <div style={{ marginTop: "auto", display: "flex", gap: "8px", paddingTop: "8px" }}>
-                            <button
-                              type="button"
-                              onClick={() => setViewingMaterial({ title: book.title, fileUrl: book.url })}
-                              style={{
-                                flex: 1,
-                                padding: "10px 14px",
-                                borderRadius: "8px",
-                                border: "none",
-                                backgroundColor: "#7c3aed",
-                                color: "#ffffff",
-                                fontSize: "13px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "6px",
-                                boxShadow: "0 2px 8px rgba(124, 58, 237, 0.25)"
-                              }}
-                            >
-                              <span>Read Full Book</span>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     /* LESSONS GRID */
                     <div style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-                      gap: "14px"
+                      gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                      gap: "16px",
+                      marginBottom: "40px"
                     }}>
                       {filteredMinnaLessons.map((lesson) => {
                         const isPlaying = playingJpAudioId === `minna-${lesson.lesson}`;
                         const r2PdfUrl = getMinnaPdfUrl(lesson.lesson);
+                        const isN5 = lesson.lesson <= 25;
+                        const lesStr = lesson.lesson < 10 ? `0${lesson.lesson}` : `${lesson.lesson}`;
 
                         return (
                           <div
                             key={lesson.lesson}
+                            onClick={() => setViewingMaterial({
+                              title: `Minna no Nihongo Chapter ${lesson.lesson} (${isN5 ? 'N5' : 'N4'})`,
+                              fileUrl: r2PdfUrl
+                            })}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "translateY(-3px)";
+                              e.currentTarget.style.boxShadow = "0 10px 25px rgba(124, 58, 237, 0.16)";
+                              e.currentTarget.style.borderColor = isN5 ? "#c4b5fd" : "#fca5a5";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "none";
+                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                            title={`Click to open Lesson ${lesStr} in Full Screen`}
                             style={{
                               backgroundColor: "#ffffff",
-                              borderRadius: "14px",
+                              borderRadius: "12px",
                               border: "1px solid #e2e8f0",
-                              padding: "16px",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                              padding: "18px",
                               display: "flex",
                               flexDirection: "column",
-                              gap: "11px",
-                              boxShadow: "0 2px 6px rgba(15, 23, 42, 0.04)",
-                              transition: "transform 0.15s ease, box-shadow 0.15s ease"
+                              justifyContent: "space-between",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              cursor: "pointer",
+                              userSelect: "none"
                             }}
                           >
-                            {/* Top Pill Row */}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                            <div>
+                              {/* CHAPTER / LESSON HEADER BADGE (Centered matching Korean cards) */}
+                              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
                                 <span style={{
-                                  padding: "4px 10px",
-                                  borderRadius: "6px",
+                                  backgroundColor: isN5 ? "#faf5ff" : "#fff1f2",
+                                  color: isN5 ? "#7c3aed" : "#be123c",
+                                  padding: "5px 20px",
+                                  borderRadius: "16px",
                                   fontSize: "13px",
                                   fontWeight: "800",
-                                  backgroundColor: "#faf5ff",
-                                  color: "#7c3aed",
-                                  border: "1px solid #ddd6fe"
+                                  letterSpacing: "0.5px",
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                                  border: isN5 ? "1px solid #ddd6fe" : "1px solid #fecdd3"
                                 }}>
-                                  Lesson {lesson.lesson < 10 ? `0${lesson.lesson}` : lesson.lesson}
-                                </span>
-                                <span style={{
-                                  padding: "4px 9px",
-                                  borderRadius: "6px",
-                                  fontSize: "13px",
-                                  fontWeight: "700",
-                                  backgroundColor: "#faf5ff",
-                                  color: "#7c3aed",
-                                  border: "1px solid #ddd6fe"
-                                }}>
-                                  {lesson.lesson <= 25 ? "JLPT N5" : "JLPT N4"}
+                                  Lesson {lesStr} · JLPT {isN5 ? "N5" : "N4"}
                                 </span>
                               </div>
 
-                              <button
-                                type="button"
-                                onClick={() => handlePlayJpAudio(`minna-${lesson.lesson}`, lesson.titleJp)}
-                                title="Listen to Japanese Title"
-                                style={{
-                                  border: isPlaying ? "1px solid #7c3aed" : "1px solid #ddd6fe",
-                                  backgroundColor: isPlaying ? "#7c3aed" : "#faf5ff",
-                                  color: isPlaying ? "#ffffff" : "#7c3aed",
-                                  borderRadius: "20px",
-                                  padding: "5px 12px",
-                                  fontSize: "12px",
-                                  fontWeight: "700",
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px"
+                              {/* JAPANESE LESSON COVER MOCKUP (ICON & BOOK ART) */}
+                              <JapaneseChapterCover
+                                lessonNumber={lesson.lesson}
+                                titleJp={lesson.titleJp}
+                                titleNe={lesson.titleNe}
+                                level={isN5 ? "N5" : "N4"}
+                                height="195px"
+                                margin="10px 0 12px 0"
+                                onClick={(e) => {
+                                  if (e && e.stopPropagation) e.stopPropagation();
+                                  setViewingMaterial({
+                                    title: `Minna no Nihongo Chapter ${lesson.lesson} (${isN5 ? 'N5' : 'N4'})`,
+                                    fileUrl: r2PdfUrl
+                                  });
                                 }}
-                              >
-                                <span>{isPlaying ? "Playing" : "Audio"}</span>
-                              </button>
-                            </div>
+                              />
 
-                            {/* Titles */}
-                            <div>
-                              <h4 style={{ margin: "2px 0 0 0", fontSize: "17px", fontWeight: "800", color: "#1e293b", fontFamily: "sans-serif" }}>
-                                {lesson.titleJp}
-                              </h4>
-                              <div style={{ fontSize: "14px", fontWeight: "600", color: "#475569", marginTop: "4px" }}>
-                                {lesson.titleEn}
+                              {/* TITLES (Centered matching Korean style) */}
+                              <div style={{ textAlign: "center", marginTop: "6px" }}>
+                                <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a", textAlign: "center" }}>
+                                  {lesson.titleJp}
+                                </h3>
+                                <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4", textAlign: "center" }}>
+                                  {lesson.titleNe} ({lesson.titleEn})
+                                </p>
                               </div>
-                              <div style={{ fontSize: "14px", color: "#7c3aed", fontWeight: "700", marginTop: "4px" }}>
-                                {lesson.titleNe}
+
+                              {/* Key Grammar Rule */}
+                              <div style={{
+                                marginTop: "10px",
+                                padding: "8px 12px",
+                                borderRadius: "8px",
+                                backgroundColor: isN5 ? "#faf5ff" : "#fff1f2",
+                                border: isN5 ? "1px solid #ede9fe" : "1px solid #ffe4e6",
+                                fontSize: "12px",
+                                color: "#1e293b",
+                                lineHeight: "1.4",
+                                textAlign: "center"
+                              }}>
+                                <strong style={{ color: isN5 ? "#7c3aed" : "#be123c" }}>Grammar:</strong> {lesson.grammar}
                               </div>
                             </div>
 
-                            {/* Key Grammar Rule */}
-                            <div style={{
-                              padding: "10px 12px",
-                              borderRadius: "8px",
-                              backgroundColor: "#faf5ff",
-                              border: "1px solid #ede9fe",
-                              fontSize: "13.5px",
-                              color: "#1e293b",
-                              lineHeight: "1.5"
-                            }}>
-                              <strong style={{ color: "#7c3aed" }}>Grammar:</strong> {lesson.grammar}
-                            </div>
-
-                            {/* Bottom Row */}
-                            <div style={{
-                              marginTop: "auto",
-                              paddingTop: "8px",
-                              display: "flex",
-                              alignItems: "center",
-                              borderTop: "1px solid #f1f5f9"
-                            }}>
+                            {/* Bottom Action Buttons (Read Chapter & Audio) */}
+                            <div
+                              style={{
+                                marginTop: "14px",
+                                paddingTop: "12px",
+                                display: "flex",
+                                gap: "8px",
+                                alignItems: "center",
+                                borderTop: "1px solid #f1f5f9"
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
                                 type="button"
                                 onClick={() => setViewingMaterial({
-                                  title: `Minna no Nihongo Chapter ${lesson.lesson} (${lesson.lesson <= 25 ? 'N5' : 'N4'})`,
+                                  title: `Minna no Nihongo Chapter ${lesson.lesson} (${isN5 ? 'N5' : 'N4'})`,
                                   fileUrl: r2PdfUrl
                                 })}
                                 style={{
-                                  width: "100%",
+                                  flex: 1,
                                   padding: "8px 12px",
                                   borderRadius: "8px",
                                   border: "none",
-                                  backgroundColor: "#7c3aed",
-                                  backgroundImage: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+                                  backgroundColor: isN5 ? "#7c3aed" : "#e11d48",
+                                  backgroundImage: isN5 ? "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)" : "linear-gradient(135deg, #e11d48 0%, #be123c 100%)",
                                   color: "#ffffff",
-                                  fontSize: "13px",
+                                  fontSize: "12.5px",
                                   fontWeight: "700",
                                   cursor: "pointer",
                                   display: "inline-flex",
                                   alignItems: "center",
                                   justifyContent: "center",
                                   gap: "6px",
-                                  boxShadow: "0 2px 6px rgba(124, 58, 237, 0.25)"
+                                  boxShadow: isN5 ? "0 2px 6px rgba(124, 58, 237, 0.25)" : "0 2px 6px rgba(225, 29, 72, 0.25)"
                                 }}
                               >
-                                <span>Chapter {lesson.lesson}</span>
+                                <span>📖</span>
+                                <span>Read Chapter</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handlePlayJpAudio(`minna-${lesson.lesson}`, lesson.titleJp)}
+                                title="Listen to Japanese Audio"
+                                style={{
+                                  border: isPlaying ? "1px solid #7c3aed" : "1px solid #cbd5e1",
+                                  backgroundColor: isPlaying ? "#7c3aed" : "#ffffff",
+                                  color: isPlaying ? "#ffffff" : "#475569",
+                                  borderRadius: "8px",
+                                  padding: "8px 12px",
+                                  fontSize: "12px",
+                                  fontWeight: "700",
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "5px"
+                                }}
+                              >
+                                <span>{isPlaying ? "⏹️ Stop" : "🔊 Audio"}</span>
                               </button>
                             </div>
                           </div>

@@ -169,9 +169,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const [copiedId, setCopiedId] = useState(null);
 
   // Effective Institute Language ('both' | 'korean' | 'japanese')
-  // Initial state MUST be deterministic for SSR hydration; localStorage is synced in useEffect
+  // Super Admin always has access to 'both' Korean and Japanese dictionaries
+  const isAdminUser = propUserRole === 'admin' || (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
   const [instLang, setInstLang] = useState(
-    propInstituteLanguage ? propInstituteLanguage.toLowerCase() : 'both'
+    isAdminUser
+      ? 'both'
+      : (propInstituteLanguage ? propInstituteLanguage.toLowerCase() : 'both')
   );
 
   const initialLang = instLang === 'japanese' ? 'ja' : 'ko';
@@ -294,11 +297,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
   // Synchronize with Study Track (korean / japanese / both)
   useEffect(() => {
-    const rawTrack = (
-      propInstituteLanguage ||
-      (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
-      "both"
-    ).toLowerCase();
+    const isCurrentAdmin =
+      propUserRole === 'admin' ||
+      userRole === 'admin' ||
+      (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
+
+    const rawTrack = isCurrentAdmin
+      ? 'both'
+      : (
+          propInstituteLanguage ||
+          (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
+          "both"
+        ).toLowerCase();
 
     setInstLang(rawTrack);
 
@@ -315,7 +325,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     } else {
       fetchDictionary('', activeLang, activeLang === 'ja' ? japaneseFilter : 'all');
     }
-  }, [propInstituteLanguage]);
+  }, [propInstituteLanguage, propUserRole, userRole]);
 
   // Listen to window storage events if student switches track in another tab
   useEffect(() => {
@@ -1210,7 +1220,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 }}
               >
                 <span style={{ fontSize: "17px" }}>🇰🇷</span>
-                <span>{instLang === "both" ? "Korean (한국어)" : "Dictionary"}</span>
+                <span>{instLang === "both" ? "Korean (한국어)" : "Korean Dictionary (한국어)"}</span>
                 {instLang === "both" && activeLang === 'ko' && (
                   <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
                     Active
@@ -1242,7 +1252,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 }}
               >
                 <span style={{ fontSize: "17px" }}>🇯🇵</span>
-                <span>{instLang === "both" ? "Japanese (日本語)" : "Dictionary"}</span>
+                <span>{instLang === "both" ? "Japanese (日本語)" : "Japanese Dictionary (日本語)"}</span>
                 {instLang === "both" && activeLang === 'ja' && (
                   <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
                     Active
