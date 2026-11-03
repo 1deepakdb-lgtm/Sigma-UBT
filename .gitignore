@@ -1,11 +1,11 @@
 node_modules
-.next
+# .next
 out
 build
 dist
 .env*.local
 .env
-prisma/*.db
+# prisma/*.db
 prisma/*.db-journal
 prisma/*.db-wal
 prisma/*.db-shm
@@ -17,3 +17,6 @@ android/build
 android/app/build
 android/local.properties
 public/audio-cache
+# Allow pre-built .next for server deployment
+.next/cache/
+*.zip
