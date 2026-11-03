@@ -115,6 +115,7 @@ async function fetchGoogleTranslate(text, sl = 'auto', tl = 'ne') {
     const url = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=${sl}&tl=${tl}&q=${encodeURIComponent(clean)}`;
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(1800),
       next: { revalidate: 86400 }
     });
     if (res.ok) {
@@ -128,7 +129,7 @@ async function fetchGoogleTranslate(text, sl = 'auto', tl = 'ne') {
   // Fallback to MyMemory if Google is unreachable
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(clean)}&langpair=${sl === 'auto' ? 'en' : sl}|${tl}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
     if (res.ok) {
       const data = await res.json();
       const candidate = data?.responseData?.translatedText || '';
@@ -149,7 +150,7 @@ async function fetchRomanizedNepali(text) {
   if (!text || !text.trim()) return '';
   try {
     const url = `https://inputtools.google.com/request?text=${encodeURIComponent(text.trim())}&itc=ne-t-i0-und&num=4`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
     if (res.ok) {
       const data = await res.json();
       const list = data[1]?.[0]?.[1];
@@ -186,7 +187,7 @@ export async function GET(request) {
 
     // 1. Search local Japanese dictionary (Vocabulary + 1,006 Kanji)
     const jaMatches = searchJapaneseDictionary(cleanQuery, filter);
-    if (jaMatches.length > 0 && (jaMatches[0]._searchScore || 0) >= 90) {
+    if (jaMatches.length > 0) {
       const results = jaMatches.slice(0, limit).map(buildJapaneseAudioLinks);
       return NextResponse.json({ success: true, count: results.length, results });
     }
@@ -292,8 +293,8 @@ export async function GET(request) {
   // 1. Search local dictionary
   const matches = searchDictionary(cleanQuery);
 
-  // If top match is high confidence (score >= 100), return local matches
-  if (matches.length > 0 && (matches[0]._searchScore || 0) >= 100) {
+  // If local matches exist, return them IMMEDIATELY (0ms instant response)
+  if (matches.length > 0) {
     const results = matches.slice(0, limit).map(buildAudioLinks);
     return NextResponse.json({ success: true, count: results.length, results });
   }

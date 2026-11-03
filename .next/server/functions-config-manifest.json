@@ -1,1 +1,1 @@
-{"version":1,"functions":{"/api/admin/questions":{},"/api/books/r2-folders":{},"/api/dictionary":{},"/api/books/japanese-r2":{},"/api/elevenlabs/dialogue":{},"/api/elevenlabs/tts":{},"/api/payment/esewa/verify":{},"/api/elevenlabs/voices":{},"/api/tts":{}}}
+{"version":1,"functions":{"/api/admin/questions":{},"/api/books/r2-folders":{},"/api/dictionary":{},"/api/elevenlabs/dialogue":{},"/api/elevenlabs/tts":{},"/api/elevenlabs/voices":{},"/api/payment/esewa/verify":{},"/api/tts":{},"/api/books/japanese-r2":{}}}

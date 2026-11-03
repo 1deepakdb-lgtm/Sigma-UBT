@@ -90,18 +90,24 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   let targetLang = lang;
   if (/[\uAC00-\uD7AF]/.test(text)) targetLang = 'ko';
   else if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(text)) targetLang = 'ja';
+  else if (/[\u0900-\u097F]/.test(text) || lang === 'ne') targetLang = 'ne';
+  else if (lang === 'en') targetLang = 'en';
 
-  const isMale = gender === 'male' || model.includes('male') || voice.includes('male') || voice.includes('InJoon') || voice.includes('Keita') || voice.includes('Daichi') || voice.includes('Hyunsu');
+  const isMale = gender === 'male' || model.includes('male') || voice.includes('male') || voice.includes('InJoon') || voice.includes('Keita') || voice.includes('Daichi') || voice.includes('Hyunsu') || voice.includes('Sagar') || voice.includes('Christopher');
 
   // 1. Resolve Voice Tone Profile for Model
   const matchedTone = MODEL_VOICE_TONES[model];
 
   let neuralVoice = matchedTone?.voice;
   if (!neuralVoice) {
-    if (voice && (voice === 'ko-KR-SunHiNeural' || voice === 'ko-KR-InJoonNeural' || voice === 'ko-KR-HyunsuMultilingualNeural' || voice === 'ja-JP-NanamiNeural' || voice === 'ja-JP-KeitaNeural')) {
+    if (voice && !voice.includes('undefined')) {
       neuralVoice = voice;
     } else if (targetLang === 'ko') {
       neuralVoice = isMale ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural';
+    } else if (targetLang === 'ne') {
+      neuralVoice = isMale ? 'ne-NP-SagarNeural' : 'ne-NP-HemkalaNeural';
+    } else if (targetLang === 'en') {
+      neuralVoice = isMale ? 'en-US-ChristopherNeural' : 'en-US-JennyNeural';
     } else {
       neuralVoice = isMale ? 'ja-JP-KeitaNeural' : 'ja-JP-NanamiNeural';
     }
@@ -520,8 +526,8 @@ export async function synthesizeSpeechBuffer({
   const explicitPitch = pitchFactor !== null ? parseFloat(pitchFactor) : null;
   const numericWeight = vocalWeight !== null ? parseFloat(vocalWeight) : null;
 
-  // 1. Primary Engine: Ultra-Realistic Neural Models (Korean & Japanese)
-  if (lang === 'ja' || lang === 'ko') {
+  // 1. Primary Engine: Ultra-Realistic Neural Models (Korean, Japanese, Nepali, English)
+  if (lang === 'ja' || lang === 'ko' || lang === 'ne' || lang === 'en') {
     const neuralResult = await generateNeuralSpeech(text, lang, gender, {
       voice: selectedVoice,
       model,

@@ -47,12 +47,12 @@ const securityHeaders = [
       "connect-src 'self' https://accounts.google.com https://*.r2.cloudflarestorage.com https://*.r2.dev https://rc-epay.esewa.com.np https://epay.esewa.com.np https://api.elevenlabs.io",
       // Workers (for service worker / offline)
       "worker-src 'self' blob:",
-      // Frames: allow eSewa payment iframe
-      "frame-src 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np https://accounts.google.com",
+      // Frames: allow PDF viewer, blobs, eSewa payment iframe
+      "frame-src 'self' blob: data: https://*.r2.cloudflarestorage.com https://*.r2.dev https://rc-epay.esewa.com.np https://epay.esewa.com.np https://accounts.google.com",
       // Form submissions only to self
       "form-action 'self' https://rc-epay.esewa.com.np https://epay.esewa.com.np",
-      // Block all plugin content (Flash, etc)
-      "object-src 'none'",
+      // Allow browser PDF viewer plugins & objects
+      "object-src 'self' blob: data: https://*.r2.cloudflarestorage.com https://*.r2.dev",
       // Upgrade insecure requests in production
       "upgrade-insecure-requests",
     ].join('; ')

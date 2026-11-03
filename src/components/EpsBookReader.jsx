@@ -1608,7 +1608,7 @@ export default function EpsBookReader({
   const getCleanPdfUrl = (url) => {
     if (!url) return "";
     const trimmed = url.trim();
-    if (trimmed.includes("drive.google.com")) {
+    if (trimmed.startsWith("blob:") || trimmed.startsWith("data:") || trimmed.includes("drive.google.com")) {
       return trimmed;
     }
     const base = trimmed.split("#")[0];
@@ -3218,10 +3218,9 @@ export default function EpsBookReader({
           zIndex: 1
         }}>
           {(activePdfBlobUrl || selectedChapter.pdfUrl) ? (
-            <iframe
-              key={activePdfBlobUrl || selectedChapter.pdfUrl}
-              src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
-              title={`EPS Book Chapter ${selectedChapter.chapter}`}
+            <object
+              data={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
+              type="application/pdf"
               style={{
                 width: "100vw",
                 height: "100vh",
@@ -3232,7 +3231,23 @@ export default function EpsBookReader({
                 backgroundColor: "#ffffff",
                 outline: "none"
               }}
-            />
+            >
+              <iframe
+                key={activePdfBlobUrl || selectedChapter.pdfUrl}
+                src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
+                title={`EPS Book Chapter ${selectedChapter.chapter}`}
+                style={{
+                  width: "100vw",
+                  height: "100vh",
+                  border: "none",
+                  margin: 0,
+                  padding: 0,
+                  display: "block",
+                  backgroundColor: "#ffffff",
+                  outline: "none"
+                }}
+              />
+            </object>
           ) : (
             <div style={{
               width: "100%",
