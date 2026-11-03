@@ -436,7 +436,7 @@ export default function PdfQuestionUploadModal({
                     animation: "spin 1s linear infinite",
                     margin: "0 auto 16px auto"
                   }} />
-                  <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                  <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }` }} />
                   <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#0f172a", margin: "0 0 6px 0" }}>
                     Parsing EPS-TOPIK Question Paper
                   </h3>

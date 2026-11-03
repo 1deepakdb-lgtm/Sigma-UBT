@@ -4566,12 +4566,12 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 msOverflowStyle: "none"
               }}
             >
-              <style>{`
+              <style dangerouslySetInnerHTML={{ __html: `
             .compact-billing-table-wrapper::-webkit-scrollbar {
               display: none;
               height: 0px;
             }
-          `}</style>
+          ` }} />
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "auto" }}>
                 <thead>
                   <tr style={{

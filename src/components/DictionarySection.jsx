@@ -292,6 +292,16 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           } catch (e) {}
         }
       } catch (e) {}
+
+      // Prewarm speech synthesis voices for zero-delay speech playback
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try {
+          window.speechSynthesis.getVoices();
+          window.speechSynthesis.onvoiceschanged = () => {
+            try { window.speechSynthesis.getVoices(); } catch (_) {}
+          };
+        } catch (_) {}
+      }
     }
   }, [propUserRole]);
 
@@ -579,10 +589,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
       utterance.lang = langCode;
       if (gender === 'male') {
-        utterance.pitch = 0.82;
+        utterance.pitch = 0.85;
         utterance.rate = 0.95;
       } else {
-        utterance.pitch = 1.18;
+        utterance.pitch = 1.15;
         utterance.rate = 1.0;
       }
 
@@ -602,16 +612,21 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         }
       }
 
+      // Keep reference to prevent GC cutting speech off
+      window.__activeSpeechUtt = utterance;
+
       if (id) {
         setPlayingAudioId(id);
         setLoadingAudioId(null);
       }
 
       utterance.onend = () => {
+        window.__activeSpeechUtt = null;
         setPlayingAudioId(null);
         setLoadingAudioId(null);
       };
       utterance.onerror = () => {
+        window.__activeSpeechUtt = null;
         setPlayingAudioId(null);
         setLoadingAudioId(null);
       };
@@ -630,6 +645,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
+      window.__activeSpeechUtt = null;
     }
     if (playingAudioId === id || loadingAudioId === id) {
       setPlayingAudioId(null);
@@ -653,16 +669,75 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     const targetGender = gender || (id && id.includes('fem') ? 'female' : 'male');
     const targetLang = lang || activeLang;
 
-    // If no URL is provided, fallback to client speech synthesis
-    if (!url && text) {
-      speakTextNative(text, targetLang, targetGender, id);
+    // Check if it's a user's uploaded custom voice file or recorded blob
+    const isCustomVoiceFile = url && (
+      url.startsWith('blob:') ||
+      url.startsWith('data:') ||
+      url.includes('/uploads/') ||
+      url.includes('/storage/') ||
+      id?.includes('custom') ||
+      id?.includes('my-voice') ||
+      id?.includes('library-')
+    );
+
+    // 1. Direct audio playback for uploaded audio files
+    if (isCustomVoiceFile) {
+      setLoadingAudioId(id);
+      setPlayingAudioId(null);
+
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      audio.onplay = () => {
+        setLoadingAudioId(null);
+        setPlayingAudioId(id);
+      };
+      audio.onplaying = () => {
+        setLoadingAudioId(null);
+        setPlayingAudioId(id);
+      };
+      audio.onended = () => {
+        setPlayingAudioId(null);
+        setLoadingAudioId(null);
+        audioRef.current = null;
+      };
+      audio.onerror = () => {
+        setPlayingAudioId(null);
+        setLoadingAudioId(null);
+        audioRef.current = null;
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setLoadingAudioId(null);
+            setPlayingAudioId(id);
+          })
+          .catch(() => {
+            setPlayingAudioId(null);
+            setLoadingAudioId(null);
+            audioRef.current = null;
+          });
+      }
       return;
     }
+
+    // 2. INSTANT WORD SPEECH (< 5ms response): Zero-delay speech synthesis directly on client
+    if (text && typeof window !== 'undefined' && window.speechSynthesis) {
+      const started = speakTextNative(text, targetLang, targetGender, id);
+      if (started) {
+        return;
+      }
+    }
+
+    // 3. Fallback to server audio if client speech synthesis is not supported
+    if (!url) return;
 
     setLoadingAudioId(id);
     setPlayingAudioId(null);
 
-    const audio = new Audio();
+    const audio = new Audio(url);
     audioRef.current = audio;
 
     audio.onplay = () => {
@@ -682,7 +757,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     };
 
     audio.onerror = (err) => {
-      console.warn('AI Studio model playback error, falling back to client speech:', url, err);
+      console.warn('Playback error, falling back to client speech:', url, err);
       if (text) {
         speakTextNative(text, targetLang, targetGender, id);
         return;
@@ -692,7 +767,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       audioRef.current = null;
     };
 
-    audio.src = url;
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise
@@ -1174,7 +1248,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         msUserSelect: "text"
       }}
     >
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes voicePulse {
           0%, 100% { transform: scale(1); filter: brightness(1); }
           50% { transform: scale(1.16); filter: brightness(1.18); }
@@ -1195,7 +1269,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-      `}</style>
+      ` }} />
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "12px" }}>
@@ -2152,8 +2226,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 const isPlayingMale = playingAudioId === `card-male-${primaryWord}` || playingAudioId === `popup-male-${primaryWord}`;
                 const isPlayingAny = isPlayingFem || isPlayingMale;
 
-                const hasRule = activeLang === 'ja' ? Boolean(word.hasRule || word.pronunciationRule) : Boolean(word.hasBatchimRule);
-                const ruleBadge = activeLang === 'ja' ? (word.isKanji ? "漢字" : "発音 / Rule") : "받침";
+                const hasBatchimRule = activeLang === 'ko' && Boolean(
+                  word.hasBatchimRule ||
+                  word.koreanBatchimRule ||
+                  (word.koreanWritten && word.koreanSpoken && word.koreanWritten !== word.koreanSpoken)
+                );
+                const batchimRuleText = word.koreanBatchimRule || (hasBatchimRule ? '음절끝소리 규칙 (받침 발음 변화)' : '');
+
+                const hasRule = activeLang === 'ja' ? Boolean(word.hasRule || word.pronunciationRule) : hasBatchimRule;
+                const ruleBadge = activeLang === 'ja' ? (word.isKanji ? "漢字" : "発音 / Rule") : "받침 규칙";
 
                 // Check if user has uploaded voice for this word
                 const customVoiceForWord = voiceLibrary.find(v => {
@@ -2261,7 +2342,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               {primaryWord}
                               {hasRule && (
                                 <span
-                                  title={activeLang === 'ja' ? (word.pronunciationRule || 'Japanese Pronunciation Rule') : (word.koreanBatchimRule || 'Batchim Rule')}
+                                  title={activeLang === 'ja' ? (word.pronunciationRule || 'Japanese Pronunciation Rule') : (batchimRuleText || 'Batchim Rule')}
                                   style={{
                                     fontSize: "11px",
                                     backgroundColor: activeLang === 'ja' ? "#f3e8ff" : "#fef3c7",
@@ -2306,6 +2387,44 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                         {word.english}
                       </div>
                     </div>
+
+                    {/* Clear Korean Batchim Rule Display directly on Card */}
+                    {activeLang === 'ko' && hasBatchimRule && (
+                      <div
+                        style={{
+                          marginTop: "8px",
+                          backgroundColor: "#fffbeb",
+                          border: "1.5px solid #fde68a",
+                          borderRadius: "8px",
+                          padding: "7px 10px",
+                          boxShadow: "0 1px 3px rgba(245, 158, 11, 0.08)"
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                            <span style={{ fontSize: "13px", lineHeight: "1" }}>💡</span>
+                            <span style={{ fontWeight: "800", color: "#b45309", fontSize: "12px" }}>
+                              받침 नियम (Batchim Rule)
+                            </span>
+                          </div>
+                          <span style={{
+                            fontSize: "11px",
+                            fontWeight: "800",
+                            backgroundColor: "#fef3c7",
+                            color: "#92400e",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            border: "1px solid #fde68a",
+                            whiteSpace: "nowrap"
+                          }}>
+                            {writtenWord} ➔ [{spokenWord}]
+                          </span>
+                        </div>
+                        <div style={{ fontWeight: "700", color: "#78350f", fontSize: "11.5px", lineHeight: "1.35" }}>
+                          {batchimRuleText || '7종성 끝소리 규칙 (음절끝소리 발음)'}
+                        </div>
+                      </div>
+                    )}
 
                     {/* 🔊 Voice Popup Bar (Appears when this word is selected) */}
                     {isSelected && (
@@ -2614,6 +2733,24 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               <div style={{ marginTop: "4px", fontSize: "13px", color: "#15803d", fontWeight: "600" }}>
                 {currentActiveWord?.nepali || "नेपाली अर्थ"}
               </div>
+              {activeLang === 'ko' && (currentActiveWord?.koreanBatchimRule || currentActiveWord?.hasBatchimRule) && (
+                <div style={{
+                  marginTop: "8px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  backgroundColor: "#fffbeb",
+                  color: "#92400e",
+                  border: "1.5px solid #fde68a",
+                  borderRadius: "8px",
+                  padding: "5px 12px",
+                  fontSize: "12px",
+                  fontWeight: "700"
+                }}>
+                  <span>💡 받침 नियम:</span>
+                  <span>{currentActiveWord.koreanBatchimRule || '음절끝소리 / 받침 발음 변화'}</span>
+                </div>
+              )}
               {uploadWordScope === 'particular' && uploadTargetWord.trim() && (
                 <div style={{ marginTop: "6px", display: "inline-block", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: "20px", padding: "2px 10px", fontSize: "11px", fontWeight: "800" }}>
                   🎯 Voice will speak for &ldquo;{uploadTargetWord.trim()}&rdquo; on search

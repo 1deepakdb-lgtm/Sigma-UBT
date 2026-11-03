@@ -3553,7 +3553,7 @@ export default function EpsBookReader({
   return (
     <div style={{ fontFamily: "Arial, sans-serif", color: "#1e293b", width: "100%" }}>
       {/* GLOBAL BOOK LIBRARY TABS CSS - APPLIED TO BOTH KOREAN & JAPANESE STUDY MATERIALS */}
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .book-tabs-container {
           background-color: #ffffff;
           padding: 16px;
@@ -3615,7 +3615,7 @@ export default function EpsBookReader({
             padding: 3px 8px !important;
           }
         }
-      `}</style>
+      ` }} />
       {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials */}
       {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials */}
       <div style={{

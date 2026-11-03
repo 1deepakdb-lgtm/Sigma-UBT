@@ -665,7 +665,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
 
   return (
     <div style={containerStyle} onContextMenu={(e) => e.preventDefault()}>
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .dynamic-card {
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
@@ -716,7 +716,7 @@ Assigned Package: ${stu.assignedPackage || "Full Set"}
           box-shadow: 10px 10px 20px rgba(0,0,0,0.12), -10px -10px 20px rgba(255,255,255,0.9) !important;
           border-color: #3b82f6 !important;
         }
-      `}</style>
+      ` }} />
       
       {showBannerPopup && popupNotice && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999999 }}>
