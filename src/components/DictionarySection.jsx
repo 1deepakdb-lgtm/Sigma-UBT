@@ -169,13 +169,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const [copiedId, setCopiedId] = useState(null);
 
   // Effective Institute Language ('both' | 'korean' | 'japanese')
-  const [instLang, setInstLang] = useState(() => {
-    if (propInstituteLanguage) return propInstituteLanguage.toLowerCase();
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('instituteLanguage') || 'both').toLowerCase();
-    }
-    return 'both';
-  });
+  // Initial state MUST be deterministic for SSR hydration; localStorage is synced in useEffect
+  const [instLang, setInstLang] = useState(
+    propInstituteLanguage ? propInstituteLanguage.toLowerCase() : 'both'
+  );
 
   const initialLang = instLang === 'japanese' ? 'ja' : 'ko';
 
@@ -221,82 +218,77 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const [editingWordValue, setEditingWordValue] = useState('');
 
   // Role Detection for Audio Downloads (Strictly Admin and Institute only; NEVER Student)
-  const [userRole, setUserRole] = useState(() => {
-    if (propUserRole) return String(propUserRole).toLowerCase();
-    if (typeof window === 'undefined') return 'student';
-    try {
-      const pathname = window.location.pathname || '';
-      if (pathname.includes('/student') || pathname.includes('/exam')) return 'student';
-      if (pathname.includes('/admin')) return 'admin';
-      if (pathname.includes('/institute')) return 'institute';
-
-      // Strict student detection from local storage keys
-      if (
-        localStorage.getItem('currentStudentPhone') ||
-        localStorage.getItem('studentPhone') ||
-        localStorage.getItem('currentStudentPackage') ||
-        localStorage.getItem('currentStudentName')
-      ) {
-        return 'student';
-      }
-
-      const r = localStorage.getItem('currentRole') || localStorage.getItem('role') || localStorage.getItem('userType');
-      if (r) return String(r).toLowerCase();
-
-      const sigmaUser = localStorage.getItem('sigma_current_user');
-      if (sigmaUser) {
-        try {
-          const parsed = JSON.parse(sigmaUser);
-          if (parsed?.role) return String(parsed.role).toLowerCase();
-        } catch (e) {}
-      }
-
-      const u = localStorage.getItem('user');
-      if (u) {
-        try {
-          const parsed = JSON.parse(u);
-          if (parsed?.role) return String(parsed.role).toLowerCase();
-        } catch (e) {}
-      }
-    } catch (e) {}
-    return 'student';
-  });
-
-  // Strict check: if user is student or anywhere in student portal, audio download is strictly forbidden
-  const isStudent = Boolean(
-    propUserRole === 'student' ||
-    userRole === 'student' ||
-    (typeof window !== 'undefined' && (
-      window.location.pathname.includes('/student') ||
-      window.location.pathname.includes('/exam') ||
-      Boolean(localStorage.getItem('currentStudentPhone')) ||
-      Boolean(localStorage.getItem('studentPhone')) ||
-      Boolean(localStorage.getItem('currentStudentPackage')) ||
-      Boolean(localStorage.getItem('currentStudentName')) ||
-      localStorage.getItem('currentRole') === 'student' ||
-      localStorage.getItem('role') === 'student' ||
-      localStorage.getItem('userType') === 'student' ||
-      (userRole !== 'admin' && userRole !== 'institute')
-    ))
+  // Deterministic initial state for SSR hydration; client permissions resolved in useEffect
+  const [userRole, setUserRole] = useState(
+    propUserRole ? String(propUserRole).toLowerCase() : 'student'
   );
 
+  const isStudent = propUserRole === 'student' || userRole === 'student';
   const canDownloadAudio = !isStudent && (userRole === 'admin' || userRole === 'institute');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const pathname = window.location.pathname || '';
-      if (
-        propUserRole === 'student' ||
-        pathname.includes('/student') ||
-        pathname.includes('/exam') ||
-        localStorage.getItem('currentStudentPhone') ||
-        localStorage.getItem('studentPhone') ||
-        localStorage.getItem('currentStudentPackage') ||
-        localStorage.getItem('currentRole') === 'student' ||
-        localStorage.getItem('role') === 'student'
-      ) {
-        setUserRole('student');
-      }
+      try {
+        if (propUserRole) {
+          setUserRole(String(propUserRole).toLowerCase());
+          return;
+        }
+        const pathname = window.location.pathname || '';
+        if (pathname.includes('/student') || pathname.includes('/exam')) {
+          setUserRole('student');
+          return;
+        }
+        if (pathname.includes('/admin')) {
+          setUserRole('admin');
+          return;
+        }
+        if (pathname.includes('/institute')) {
+          setUserRole('institute');
+          return;
+        }
+
+        // Strict student detection from local storage keys
+        if (
+          localStorage.getItem('currentStudentPhone') ||
+          localStorage.getItem('studentPhone') ||
+          localStorage.getItem('currentStudentPackage') ||
+          localStorage.getItem('currentStudentName') ||
+          localStorage.getItem('currentRole') === 'student' ||
+          localStorage.getItem('role') === 'student' ||
+          localStorage.getItem('userType') === 'student'
+        ) {
+          setUserRole('student');
+          return;
+        }
+
+        const r = localStorage.getItem('currentRole') || localStorage.getItem('role') || localStorage.getItem('userType');
+        if (r) {
+          setUserRole(String(r).toLowerCase());
+          return;
+        }
+
+        const sigmaUser = localStorage.getItem('sigma_current_user');
+        if (sigmaUser) {
+          try {
+            const parsed = JSON.parse(sigmaUser);
+            if (parsed?.role) {
+              setUserRole(String(parsed.role).toLowerCase());
+              return;
+            }
+          } catch (e) {}
+        }
+
+        const u = localStorage.getItem('user');
+        if (u) {
+          try {
+            const parsed = JSON.parse(u);
+            if (parsed?.role) {
+              setUserRole(String(parsed.role).toLowerCase());
+              return;
+            }
+          } catch (e) {}
+        }
+      } catch (e) {}
     }
   }, [propUserRole]);
 
