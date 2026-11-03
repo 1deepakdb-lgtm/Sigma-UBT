@@ -758,8 +758,8 @@ export default function EpsBookReader({
       setActiveJapaneseFolder(initialFolder);
     }
   }, [initialFolder]);
-  const [isJapaneseFolderOpen, setIsJapaneseFolderOpen] = useState(false);
-  const [isKoreanFolderOpen, setIsKoreanFolderOpen] = useState(false);
+  const [isJapaneseFolderOpen, setIsJapaneseFolderOpen] = useState(true);
+  const [isKoreanFolderOpen, setIsKoreanFolderOpen] = useState(true);
   const [minnaLessonFilter, setMinnaLessonFilter] = useState("all"); // "all", "n5", "n4", "full"
   const [minnaSearchQuery, setMinnaSearchQuery] = useState("");
   const [viewingMinnaLesson, setViewingMinnaLesson] = useState(null);
@@ -3594,258 +3594,157 @@ export default function EpsBookReader({
           outline: none !important;
         }
       `}</style>
-      {/* Korean Folder Selection Tabs & Opened Header */}
-      {!isKoreanFolderOpen ? (
-        <div>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "18px",
-            marginBottom: "24px",
-            backgroundColor: "#ffffff",
-            padding: "20px",
-            borderRadius: "18px",
-            border: "1.5px solid #e2e8f0",
-            boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
-          }}>
-            {folders.map(folder => {
-              let badgeText = "";
+      {/* Korean Folder Selection Tabs */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: "18px",
+        marginBottom: "24px",
+        backgroundColor: "#ffffff",
+        padding: "20px",
+        borderRadius: "18px",
+        border: "1.5px solid #e2e8f0",
+        boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
+      }}>
+        {folders.map(folder => {
+          let badgeText = "";
 
-              if (folder.name === "EPS Book") {
-                badgeText = "60 Chapters";
-              } else if (folder.name === "Meaning Book") {
-                badgeText = "60 Chapters";
-              } else if (folder.name === "Model Question Bank") {
-                const countSets = (ubtSets && ubtSets.length) || 6;
-                badgeText = `${countSets} Sets`;
-              } else if (folder.name === "Grammar Book") {
-                badgeText = "Grammar Guide";
-              } else {
-                const count = materials.filter(m => m.folder === folder.name).length;
-                badgeText = `${count} ${count === 1 ? 'Material' : 'Materials'}`;
-              }
+          if (folder.name === "EPS Book") {
+            badgeText = "60 Chapters";
+          } else if (folder.name === "Meaning Book") {
+            badgeText = "60 Chapters";
+          } else if (folder.name === "Model Question Bank") {
+            const countSets = (ubtSets && ubtSets.length) || 6;
+            badgeText = `${countSets} Sets`;
+          } else if (folder.name === "Grammar Book") {
+            badgeText = "Grammar Guide";
+          } else {
+            const count = materials.filter(m => m.folder === folder.name).length;
+            badgeText = `${count} ${count === 1 ? 'Material' : 'Materials'}`;
+          }
 
-              const theme = {
-                primary: "#2563eb",
-                activeBorder: "#2563eb",
-                activeBg: "#ffffff",
-                activeShadow: "0 8px 22px rgba(37, 99, 235, 0.12)",
-                titleActive: "#0f172a",
-                badgeActiveBg: "#2563eb",
-                badgeActiveColor: "#ffffff",
-                badgeActiveBorder: "1px solid #2563eb",
-                badgeActiveShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
-                badgeInactiveBg: "#f1f5f9",
-                badgeInactiveColor: "#475569",
-                badgeInactiveBorder: "1px solid #e2e8f0",
-                hoverBorder: "#cbd5e1"
-              };
+          const theme = {
+            primary: "#2563eb",
+            activeBorder: "#2563eb",
+            activeBg: "#ffffff",
+            activeShadow: "0 8px 22px rgba(37, 99, 235, 0.12)",
+            titleActive: "#0f172a",
+            badgeActiveBg: "#2563eb",
+            badgeActiveColor: "#ffffff",
+            badgeActiveBorder: "1px solid #2563eb",
+            badgeActiveShadow: "0 2px 8px rgba(37, 99, 235, 0.25)",
+            badgeInactiveBg: "#f1f5f9",
+            badgeInactiveColor: "#475569",
+            badgeInactiveBorder: "1px solid #e2e8f0",
+            hoverBorder: "#cbd5e1"
+          };
 
-              const isActive = activeFolder === folder.name;
-              const coverImage = getFolderCover(folder);
-
-              return (
-                <button
-                  key={folder.id || folder.name}
-                  type="button"
-                  className="book-library-tab-card"
-                  onClick={() => {
-                    setActiveFolder(folder.name);
-                    setIsKoreanFolderOpen(true);
-                  }}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textAlign: "center",
-                    padding: "14px 14px 18px 14px",
-                    borderRadius: "16px",
-                    border: "3px solid",
-                    borderColor: isActive ? theme.activeBorder : "#e2e8f0",
-                    background: isActive ? theme.activeBg : "#ffffff",
-                    cursor: "pointer",
-                    position: "relative",
-                    outline: "none",
-                    userSelect: "none",
-                    boxSizing: "border-box",
-                    width: "100%",
-                    boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
-                    flexShrink: 0
-                  }}
-                >
-                  {/* BOOK COVER PHOTO CONTAINER */}
-                  <div style={{
-                    width: "100%",
-                    height: "240px",
-                    borderRadius: "10px",
-                    overflow: "hidden",
-                    backgroundColor: "#f1f5f9",
-                    position: "relative",
-                    boxShadow: isActive ? theme.activeShadow : "0 6px 14px rgba(15, 23, 42, 0.1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0
-                  }}>
-                    <img
-                      src={coverImage}
-                      alt={folder.name}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block"
-                      }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "/images/books/eps-book-cover.svg";
-                      }}
-                    />
-                  </div>
-
-                  {/* TEXT BELOW COVERS */}
-                  <div style={{
-                    marginTop: "14px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "100%",
-                    gap: "6px"
-                  }}>
-                    <span style={{
-                      fontSize: "16px",
-                      fontWeight: "800",
-                      color: isActive ? theme.titleActive : "#0f172a",
-                      lineHeight: "1.3"
-                    }}>
-                      {folder.name}
-                    </span>
-
-                    <span style={{
-                      background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
-                      color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
-                      border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
-                      boxShadow: isActive ? theme.badgeActiveShadow : "none",
-                      fontSize: "12px",
-                      padding: "4px 14px",
-                      borderRadius: "16px",
-                      fontWeight: "800",
-                      letterSpacing: "0.2px",
-                      whiteSpace: "nowrap",
-                      display: "inline-block"
-                    }}>
-                      {badgeText}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Helper prompt banner when no folder is clicked yet */}
-          <div style={{
-            textAlign: "center",
-            padding: "32px 20px",
-            backgroundColor: "#f8fafc",
-            borderRadius: "16px",
-            border: "2px dashed #cbd5e1",
-            color: "#64748b",
-            marginBottom: "32px"
-          }}>
-            <div style={{ fontSize: "36px", marginBottom: "8px" }}>🇰🇷 📖</div>
-            <h3 style={{ margin: "0 0 6px 0", fontSize: "18px", fontWeight: "800", color: "#1e293b" }}>
-              Select a Korean Textbook Above
-            </h3>
-            <p style={{ margin: 0, fontSize: "14px", color: "#64748b" }}>
-              Click on any book (EPS Book 60 Chapters, Meaning Book, Question Bank, or Grammar Book) to open all chapters and materials.
-            </p>
-          </div>
-        </div>
-      ) : (
-        /* When isKoreanFolderOpen is TRUE: All other buttons are HIDDEN! Only active folder bar with back button is shown */
-        (() => {
-          const currentFolder = folders.find(f => f.name === activeFolder) || folders[0];
-          const coverImage = getFolderCover(currentFolder);
+          const isActive = activeFolder === folder.name;
+          const coverImage = getFolderCover(folder);
 
           return (
-            <div style={{
-              backgroundColor: "#ffffff",
-              padding: "16px 22px",
-              borderRadius: "18px",
-              border: "2px solid #e2e8f0",
-              marginBottom: "26px",
-              boxShadow: "0 4px 16px rgba(15, 23, 42, 0.05)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "16px"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <div style={{
-                  width: "68px",
-                  height: "68px",
-                  borderRadius: "12px",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
-                  flexShrink: 0,
-                  backgroundColor: "#f8fafc",
-                  border: "2px solid #2563eb"
-                }}>
-                  <img
-                    src={coverImage}
-                    alt={currentFolder.name}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/images/books/eps-book-cover.svg";
-                    }}
-                  />
-                </div>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "#0f172a" }}>
-                    {currentFolder.name}
-                  </h2>
-                </div>
+            <button
+              key={folder.id || folder.name}
+              type="button"
+              className="book-library-tab-card"
+              onClick={() => {
+                setActiveFolder(folder.name);
+                setIsKoreanFolderOpen(true);
+              }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                padding: "14px 14px 18px 14px",
+                borderRadius: "16px",
+                border: "3px solid",
+                borderColor: isActive ? theme.activeBorder : "#e2e8f0",
+                background: isActive ? theme.activeBg : "#ffffff",
+                cursor: "pointer",
+                position: "relative",
+                outline: "none",
+                userSelect: "none",
+                boxSizing: "border-box",
+                width: "100%",
+                boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
+                flexShrink: 0
+              }}
+            >
+              {/* BOOK COVER PHOTO CONTAINER - FULL IMAGE WITH UNCLIPPED BORDERS */}
+              <div style={{
+                width: "100%",
+                aspectRatio: "1 / 1",
+                maxHeight: "260px",
+                borderRadius: "12px",
+                overflow: "hidden",
+                backgroundColor: "#ffffff",
+                padding: "6px",
+                boxSizing: "border-box",
+                position: "relative",
+                boxShadow: isActive ? theme.activeShadow : "0 4px 12px rgba(15, 23, 42, 0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}>
+                <img
+                  src={coverImage}
+                  alt={folder.name}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    width: "auto",
+                    height: "auto",
+                    objectFit: "contain",
+                    display: "block"
+                  }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "/images/books/eps-book-cover.svg";
+                  }}
+                />
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsKoreanFolderOpen(false)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 22px",
-                  borderRadius: "12px",
-                  backgroundColor: "#1e3a8a",
-                  backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)",
-                  color: "#ffffff",
-                  border: "1.5px solid #1e40af",
+              {/* TEXT BELOW COVERS */}
+              <div style={{
+                marginTop: "14px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                gap: "6px"
+              }}>
+                <span style={{
+                  fontSize: "16px",
                   fontWeight: "800",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 14px rgba(30, 58, 138, 0.35)",
-                  transition: "all 0.18s ease"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #172554 0%, #0f172a 100%)";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 6px 18px rgba(30, 58, 138, 0.45)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(30, 58, 138, 0.35)";
-                }}
-              >
-                <span>GO Back</span>
-              </button>
-            </div>
+                  color: isActive ? theme.titleActive : "#0f172a",
+                  lineHeight: "1.3"
+                }}>
+                  {folder.name}
+                </span>
+
+                <span style={{
+                  background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
+                  color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
+                  border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
+                  boxShadow: isActive ? theme.badgeActiveShadow : "none",
+                  fontSize: "12px",
+                  padding: "4px 14px",
+                  borderRadius: "16px",
+                  fontWeight: "800",
+                  letterSpacing: "0.2px",
+                  whiteSpace: "nowrap",
+                  display: "inline-block"
+                }}>
+                  {badgeText}
+                </span>
+              </div>
+            </button>
           );
-        })()
-      )}
+        })}
+      </div>
 
       {/* RENDER EPS BOOK SECTION IF ACTIVE AND OPEN */}
       {isKoreanFolderOpen && activeFolder === "EPS Book" && (
@@ -4773,225 +4672,126 @@ export default function EpsBookReader({
       {/* ============================================================== */}
       {studyLanguage === "japanese" && (
         <>
-          {/* Japanese Folder Selection Tabs & Opened Header */}
-          {!isJapaneseFolderOpen ? (
-            <div>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: "18px",
-                marginBottom: "24px",
-                backgroundColor: "#ffffff",
-                padding: "20px",
-                borderRadius: "18px",
-                border: "1.5px solid #e2e8f0",
-                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
-              }}>
-                {JAPANESE_FOLDERS.map((folder) => {
-                  const isActive = activeJapaneseFolder === folder.name;
-                  const theme = JAPANESE_FOLDER_THEMES[folder.name] || JAPANESE_FOLDER_THEMES["JLPT N5・N4"];
-                  const badgeText = folder.badgeText || "Learning Guide";
-
-                  return (
-                    <button
-                      key={folder.id}
-                      type="button"
-                      className="book-library-tab-card"
-                      onClick={() => {
-                        setActiveJapaneseFolder(folder.name);
-                        setIsJapaneseFolderOpen(true);
-                      }}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        textAlign: "center",
-                        padding: "14px 14px 18px 14px",
-                        borderRadius: "16px",
-                        border: "3px solid",
-                        borderColor: isActive ? theme.activeBorder : "#e2e8f0",
-                        background: isActive ? theme.activeBg : "#ffffff",
-                        cursor: "pointer",
-                        position: "relative",
-                        outline: "none",
-                        userSelect: "none",
-                        boxSizing: "border-box",
-                        width: "100%",
-                        boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
-                        flexShrink: 0
-                      }}
-                    >
-                      {/* BOOK COVER PHOTO CONTAINER - EXACT SAME 240px HEIGHT AS KOREAN */}
-                      <div style={{
-                        width: "100%",
-                        height: "240px",
-                        borderRadius: "10px",
-                        overflow: "hidden",
-                        backgroundColor: "#f1f5f9",
-                        position: "relative",
-                        boxShadow: isActive ? theme.activeShadow : "0 6px 14px rgba(15, 23, 42, 0.1)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0
-                      }}>
-                        <img
-                          src={folder.coverImage}
-                          alt={folder.name}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block"
-                          }}
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/images/books/minna-nihongo-cover.svg";
-                          }}
-                        />
-                      </div>
-
-                      {/* TEXT BELOW COVERS - EXACT SAME SIZE */}
-                      <div style={{
-                        marginTop: "14px",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "100%",
-                        gap: "6px"
-                      }}>
-                        <span style={{
-                          fontSize: "16px",
-                          fontWeight: "800",
-                          color: isActive ? theme.titleActive : "#0f172a",
-                          lineHeight: "1.3"
-                        }}>
-                          {folder.name}
-                        </span>
-
-                        <span style={{
-                          background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
-                          color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
-                          border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
-                          boxShadow: isActive ? theme.badgeActiveShadow : "none",
-                          fontSize: "12px",
-                          padding: "4px 14px",
-                          borderRadius: "16px",
-                          fontWeight: "800",
-                          letterSpacing: "0.2px",
-                          whiteSpace: "nowrap",
-                          display: "inline-block"
-                        }}>
-                          {badgeText}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Helper prompt banner when no folder is clicked yet */}
-              <div style={{
-                textAlign: "center",
-                padding: "32px 20px",
-                backgroundColor: "#f8fafc",
-                borderRadius: "16px",
-                border: "2px dashed #cbd5e1",
-                color: "#64748b",
-                marginBottom: "32px"
-              }}>
-                <div style={{ fontSize: "36px", marginBottom: "8px" }}>🇯🇵 🌸</div>
-                <h3 style={{ margin: "0 0 6px 0", fontSize: "18px", fontWeight: "800", color: "#1e293b" }}>
-                  Select a Japanese Course Folder Above
-                </h3>
-                <p style={{ margin: 0, fontSize: "14px", color: "#64748b" }}>
-                  Click on any course folder (JLPT N5・N4, JLPT N3・N2・N1, Kanji & Meaning, or Mock Test) to open all its lessons, audio, and exams.
-                </p>
-              </div>
-            </div>
-          ) : (
-            /* When isJapaneseFolderOpen is TRUE: All other buttons are HIDDEN! Only active folder bar with back button is shown */
-            (() => {
-              const currentFolder = JAPANESE_FOLDERS.find(f => f.name === activeJapaneseFolder) || JAPANESE_FOLDERS[0];
-              const theme = JAPANESE_FOLDER_THEMES[currentFolder.name] || JAPANESE_FOLDER_THEMES["JLPT N5・N4"];
+          {/* Japanese Folder Selection Tabs */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "18px",
+            marginBottom: "24px",
+            backgroundColor: "#ffffff",
+            padding: "20px",
+            borderRadius: "18px",
+            border: "1.5px solid #e2e8f0",
+            boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)"
+          }}>
+            {JAPANESE_FOLDERS.map((folder) => {
+              const isActive = activeJapaneseFolder === folder.name;
+              const theme = JAPANESE_FOLDER_THEMES[folder.name] || JAPANESE_FOLDER_THEMES["JLPT N5・N4"];
+              const badgeText = folder.badgeText || "Learning Guide";
 
               return (
-                <div style={{
-                  backgroundColor: "#ffffff",
-                  padding: "16px 22px",
-                  borderRadius: "18px",
-                  border: "2px solid #e2e8f0",
-                  marginBottom: "26px",
-                  boxShadow: "0 4px 16px rgba(15, 23, 42, 0.05)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "16px"
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                    <div style={{
-                      width: "68px",
-                      height: "68px",
-                      borderRadius: "12px",
-                      overflow: "hidden",
-                      boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
-                      flexShrink: 0,
-                      backgroundColor: "#f8fafc",
-                      border: `2px solid ${theme.activeBorder}`
-                    }}>
-                      <img
-                        src={currentFolder.coverImage}
-                        alt={currentFolder.name}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    </div>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                        <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "#0f172a" }}>
-                          {currentFolder.name}
-                        </h2>
-                      </div>
-                    </div>
+                <button
+                  key={folder.id}
+                  type="button"
+                  className="book-library-tab-card"
+                  onClick={() => {
+                    setActiveJapaneseFolder(folder.name);
+                    setIsJapaneseFolderOpen(true);
+                  }}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    padding: "14px 14px 18px 14px",
+                    borderRadius: "16px",
+                    border: "3px solid",
+                    borderColor: isActive ? theme.activeBorder : "#e2e8f0",
+                    background: isActive ? theme.activeBg : "#ffffff",
+                    cursor: "pointer",
+                    position: "relative",
+                    outline: "none",
+                    userSelect: "none",
+                    boxSizing: "border-box",
+                    width: "100%",
+                    boxShadow: isActive ? theme.activeShadow : "0 2px 8px rgba(15, 23, 42, 0.04)",
+                    flexShrink: 0
+                  }}
+                >
+                  {/* BOOK COVER PHOTO CONTAINER - FULL IMAGE WITH UNCLIPPED BORDERS */}
+                  <div style={{
+                    width: "100%",
+                    aspectRatio: "1 / 1",
+                    maxHeight: "260px",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    backgroundColor: "#ffffff",
+                    padding: "6px",
+                    boxSizing: "border-box",
+                    position: "relative",
+                    boxShadow: isActive ? theme.activeShadow : "0 4px 12px rgba(15, 23, 42, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>
+                    <img
+                      src={folder.coverImage}
+                      alt={folder.name}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "100%",
+                        width: "auto",
+                        height: "auto",
+                        objectFit: "contain",
+                        display: "block"
+                      }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/images/books/minna-nihongo-cover.svg";
+                      }}
+                    />
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setIsJapaneseFolderOpen(false)}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "10px 22px",
-                      borderRadius: "12px",
-                      backgroundColor: "#1e3a8a",
-                      backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)",
-                      color: "#ffffff",
-                      border: "1.5px solid #1e40af",
+                  {/* TEXT BELOW COVERS */}
+                  <div style={{
+                    marginTop: "14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    gap: "6px"
+                  }}>
+                    <span style={{
+                      fontSize: "16px",
                       fontWeight: "800",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 14px rgba(30, 58, 138, 0.35)",
-                      transition: "all 0.18s ease"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #172554 0%, #0f172a 100%)";
-                      e.currentTarget.style.transform = "translateY(-1px)";
-                      e.currentTarget.style.boxShadow = "0 6px 18px rgba(30, 58, 138, 0.45)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "0 4px 14px rgba(30, 58, 138, 0.35)";
-                    }}
-                  >
-                    <span>GO Back</span>
-                  </button>
-                </div>
+                      color: isActive ? theme.titleActive : "#0f172a",
+                      lineHeight: "1.3"
+                    }}>
+                      {folder.name}
+                    </span>
+
+                    <span style={{
+                      background: isActive ? theme.badgeActiveBg : theme.badgeInactiveBg,
+                      color: isActive ? theme.badgeActiveColor : theme.badgeInactiveColor,
+                      border: isActive ? theme.badgeActiveBorder : theme.badgeInactiveBorder,
+                      boxShadow: isActive ? theme.badgeActiveShadow : "none",
+                      fontSize: "12px",
+                      padding: "4px 14px",
+                      borderRadius: "16px",
+                      fontWeight: "800",
+                      letterSpacing: "0.2px",
+                      whiteSpace: "nowrap",
+                      display: "inline-block"
+                    }}>
+                      {badgeText}
+                    </span>
+                  </div>
+                </button>
               );
-            })()
-          )}
+            })}
+          </div>
 
           {/* ACTIVE JAPANESE FOLDER CONTENT VIEWS - OPENED WHEN isJapaneseFolderOpen IS TRUE */}
           {isJapaneseFolderOpen && (() => {
