@@ -330,6 +330,14 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   // Listen to window storage events if student switches track in another tab
   useEffect(() => {
     const handleStorageChange = (e) => {
+      const isCurrentAdmin =
+        propUserRole === 'admin' ||
+        userRole === 'admin' ||
+        (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
+      if (isCurrentAdmin) {
+        setInstLang("both");
+        return;
+      }
       if (e.key === "instituteLanguage" && e.newValue) {
         const newTrack = e.newValue.toLowerCase();
         setInstLang(newTrack);
@@ -342,14 +350,23 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     };
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, [activeLang]);
+  }, [activeLang, propUserRole, userRole]);
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then(res => res.json())
       .then(data => {
-        if (data?.user?.role) {
-          setUserRole(data.user.role.toLowerCase());
+        const role = data?.user?.role?.toLowerCase();
+        if (role) {
+          setUserRole(role);
+        }
+        const isCurrentAdmin =
+          role === 'admin' ||
+          propUserRole === 'admin' ||
+          (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
+        if (isCurrentAdmin) {
+          setInstLang("both");
+          return;
         }
         const savedTrack = typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null;
         if (!propInstituteLanguage && !savedTrack) {
@@ -365,7 +382,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         }
       })
       .catch(() => {});
-  }, []);
+  }, [propInstituteLanguage, propUserRole]);
 
   const isInstituteOrAdmin = userRole === 'institute' || userRole === 'admin';
 
@@ -1186,81 +1203,91 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           {title && <h2 style={{ margin: 0, color: "#0f172a", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
 
           {/* 🇰🇷 Korean vs 🇯🇵 Japanese Language Switcher Toggle Buttons (Aligned with Study Track) */}
-          <div
-            style={{
-              display: "inline-flex",
-              backgroundColor: "#f1f5f9",
-              padding: "4px",
-              borderRadius: "12px",
-              border: "1.5px solid #cbd5e1",
-              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
-              gap: "6px"
-            }}
-          >
-            {(instLang === "both" || instLang === "korean") && (
-              <button
-                type="button"
-                onClick={() => handleSwitchLanguage('ko')}
-                title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
-                style={{
-                  backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
-                  backgroundImage: activeLang === 'ko' ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-                  color: activeLang === 'ko' ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "7px 16px",
-                  fontSize: "13.5px",
-                  fontWeight: "800",
-                  cursor: instLang === "both" ? "pointer" : "default",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  boxShadow: activeLang === 'ko' ? "0 2px 10px rgba(37,99,235,0.32)" : "none",
-                  transition: "all 0.18s ease"
-                }}
-              >
-                <span style={{ fontSize: "17px" }}>🇰🇷</span>
-                <span>{instLang === "both" ? "Korean (한국어)" : "Korean Dictionary (한국어)"}</span>
-                {instLang === "both" && activeLang === 'ko' && (
-                  <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
-                    Active
-                  </span>
-                )}
-              </button>
-            )}
+          {(() => {
+            const isSuperAdmin =
+              propUserRole === 'admin' ||
+              userRole === 'admin' ||
+              (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
+            const showBothTabs = isSuperAdmin || instLang === "both" || propInstituteLanguage === "both";
 
-            {(instLang === "both" || instLang === "japanese") && (
-              <button
-                type="button"
-                onClick={() => handleSwitchLanguage('ja')}
-                title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
+            return (
+              <div
                 style={{
-                  backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
-                  backgroundImage: activeLang === 'ja' ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "none",
-                  color: activeLang === 'ja' ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "7px 16px",
-                  fontSize: "13.5px",
-                  fontWeight: "800",
-                  cursor: instLang === "both" ? "pointer" : "default",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  boxShadow: activeLang === 'ja' ? "0 2px 10px rgba(147,51,234,0.35)" : "none",
-                  transition: "all 0.18s ease"
+                  display: "inline-flex",
+                  backgroundColor: "#f1f5f9",
+                  padding: "4px",
+                  borderRadius: "12px",
+                  border: "1.5px solid #cbd5e1",
+                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
+                  gap: "6px"
                 }}
               >
-                <span style={{ fontSize: "17px" }}>🇯🇵</span>
-                <span>{instLang === "both" ? "Japanese (日本語)" : "Japanese Dictionary (日本語)"}</span>
-                {instLang === "both" && activeLang === 'ja' && (
-                  <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
-                    Active
-                  </span>
+                {(showBothTabs || instLang === "korean") && (
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchLanguage('ko')}
+                    title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
+                    style={{
+                      backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
+                      backgroundImage: activeLang === 'ko' ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
+                      color: activeLang === 'ko' ? "#ffffff" : "#475569",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "7px 16px",
+                      fontSize: "13.5px",
+                      fontWeight: "800",
+                      cursor: showBothTabs ? "pointer" : "default",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "7px",
+                      boxShadow: activeLang === 'ko' ? "0 2px 10px rgba(37,99,235,0.32)" : "none",
+                      transition: "all 0.18s ease"
+                    }}
+                  >
+                    <span style={{ fontSize: "17px" }}>🇰🇷</span>
+                    <span>{showBothTabs ? "Korean (한국어)" : "Korean Dictionary (한국어)"}</span>
+                    {showBothTabs && activeLang === 'ko' && (
+                      <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
+                        Active
+                      </span>
+                    )}
+                  </button>
                 )}
-              </button>
-            )}
-          </div>
+
+                {(showBothTabs || instLang === "japanese") && (
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchLanguage('ja')}
+                    title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
+                    style={{
+                      backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
+                      backgroundImage: activeLang === 'ja' ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "none",
+                      color: activeLang === 'ja' ? "#ffffff" : "#475569",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "7px 16px",
+                      fontSize: "13.5px",
+                      fontWeight: "800",
+                      cursor: showBothTabs ? "pointer" : "default",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "7px",
+                      boxShadow: activeLang === 'ja' ? "0 2px 10px rgba(147,51,234,0.35)" : "none",
+                      transition: "all 0.18s ease"
+                    }}
+                  >
+                    <span style={{ fontSize: "17px" }}>🇯🇵</span>
+                    <span>{showBothTabs ? "Japanese (日本語)" : "Japanese Dictionary (日本語)"}</span>
+                    {showBothTabs && activeLang === 'ja' && (
+                      <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
+                        Active
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", maxWidth: "100%", paddingBottom: "2px" }}>

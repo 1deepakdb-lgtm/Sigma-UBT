@@ -910,8 +910,9 @@ export default function EpsBookReader({
   const [isSavingChapterInfo, setIsSavingChapterInfo] = useState(false);
 
   // Primary Language Track State: "both" | "korean" | "japanese"
+  const effectiveIsAdmin = mode === "admin" || (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
   const effectiveInstLang = (
-    mode === "admin"
+    effectiveIsAdmin
       ? "both"
       : (
           propInstituteLanguage ||
@@ -3551,6 +3552,70 @@ export default function EpsBookReader({
   // =========================================================================
   return (
     <div style={{ fontFamily: "Arial, sans-serif", color: "#1e293b", width: "100%" }}>
+      {/* GLOBAL BOOK LIBRARY TABS CSS - APPLIED TO BOTH KOREAN & JAPANESE STUDY MATERIALS */}
+      <style>{`
+        .book-tabs-container {
+          background-color: #ffffff;
+          padding: 16px;
+          border-radius: 18px;
+          border: 1.5px solid #e2e8f0;
+          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+          margin-bottom: 24px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .book-tabs-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .book-library-tab-card {
+          transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease !important;
+          box-sizing: border-box !important;
+          width: 100% !important;
+        }
+        .book-library-tab-card:hover {
+          transform: translateY(-2px) !important;
+        }
+        .book-library-tab-card:active {
+          transform: translateY(0px) !important;
+        }
+        .book-library-tab-card:focus {
+          outline: none !important;
+        }
+        @media (max-width: 1024px) {
+          .book-tabs-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+          }
+          .book-tabs-container {
+            padding: 14px;
+          }
+        }
+        @media (max-width: 540px) {
+          .book-tabs-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+          }
+          .book-tabs-container {
+            padding: 8px;
+            border-radius: 14px;
+          }
+          .book-library-tab-card {
+            padding: 10px 8px 14px 8px !important;
+            border-radius: 12px !important;
+          }
+          .book-tab-title {
+            font-size: 13px !important;
+          }
+          .book-tab-badge {
+            font-size: 10px !important;
+            padding: 3px 8px !important;
+          }
+        }
+      `}</style>
       {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials */}
       {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials */}
       <div style={{
@@ -3804,70 +3869,6 @@ export default function EpsBookReader({
             </div>
           )}
 
-          {/* LARGE FOLDER NAVIGATION TABS */}
-          <style>{`
-        .book-tabs-container {
-          background-color: #ffffff;
-          padding: 16px;
-          border-radius: 18px;
-          border: 1.5px solid #e2e8f0;
-          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
-          margin-bottom: 24px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .book-tabs-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .book-library-tab-card {
-          transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease !important;
-          box-sizing: border-box !important;
-          width: 100% !important;
-        }
-        .book-library-tab-card:hover {
-          transform: translateY(-2px) !important;
-        }
-        .book-library-tab-card:active {
-          transform: translateY(0px) !important;
-        }
-        .book-library-tab-card:focus {
-          outline: none !important;
-        }
-        @media (max-width: 1024px) {
-          .book-tabs-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
-          }
-          .book-tabs-container {
-            padding: 14px;
-          }
-        }
-        @media (max-width: 540px) {
-          .book-tabs-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-          }
-          .book-tabs-container {
-            padding: 8px;
-            border-radius: 14px;
-          }
-          .book-library-tab-card {
-            padding: 10px 8px 14px 8px !important;
-            border-radius: 12px !important;
-          }
-          .book-tab-title {
-            font-size: 13px !important;
-          }
-          .book-tab-badge {
-            font-size: 10px !important;
-            padding: 3px 8px !important;
-          }
-        }
-      `}</style>
           {/* Korean Folder Selection Tabs */}
           <div className="book-tabs-container">
             <div className="book-tabs-grid">
