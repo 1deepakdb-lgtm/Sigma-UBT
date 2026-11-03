@@ -1548,7 +1548,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               }}
             >
               <FemaleIcon size={24} isPlaying={playingAudioId === 'search-female'} />
-              <span>{loadingAudioId === 'search-female' ? "⏳ Loading..." : playingAudioId === 'search-female' ? "⏹ Stop" : "▶ F"}</span>
+              <span>{loadingAudioId === 'search-female' ? "⏳ Loading..." : playingAudioId === 'search-female' ? "⏹ Stop" : "▶ Female"}</span>
             </button>
 
             {/* Dropdown Arrow Button */}
@@ -1795,7 +1795,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               }}
             >
               <MaleIcon size={24} isPlaying={playingAudioId === 'search-male'} />
-              <span>{loadingAudioId === 'search-male' ? "⏳ Loading..." : playingAudioId === 'search-male' ? "⏹ Stop" : "▶ M"}</span>
+              <span>{loadingAudioId === 'search-male' ? "⏳ Loading..." : playingAudioId === 'search-male' ? "⏹ Stop" : "▶ Male"}</span>
             </button>
 
             {/* Dropdown Arrow Button */}
@@ -2356,7 +2356,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             >
                               <FemaleIcon size={14} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
                               <span style={{ whiteSpace: "nowrap" }}>
-                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹" : "▶ F"}
+                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹" : "▶ Female"}
                               </span>
                             </button>
                             {canDownloadAudio && (
@@ -2433,7 +2433,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             >
                               <MaleIcon size={14} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
                               <span style={{ whiteSpace: "nowrap" }}>
-                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹" : "▶ M"}
+                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹" : "▶ Male"}
                               </span>
                             </button>
                             {canDownloadAudio && (

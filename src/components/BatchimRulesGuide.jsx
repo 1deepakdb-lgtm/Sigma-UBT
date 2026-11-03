@@ -625,7 +625,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                                 gap: "3px"
                               }}
                             >
-                              <span>{isFemPlaying ? "⏹" : "▶ F"}</span>
+                              <span>{isFemPlaying ? "⏹" : "▶ Female"}</span>
                             </button>
 
                             <button
@@ -646,7 +646,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                                 gap: "3px"
                               }}
                             >
-                              <span>{isMalePlaying ? "⏹" : "▶ M"}</span>
+                              <span>{isMalePlaying ? "⏹" : "▶ Male"}</span>
                             </button>
                           </div>
                         </div>
@@ -801,7 +801,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                                     gap: "3px"
                                   }}
                                 >
-                                  <span>{isFemPlaying ? "⏹" : "▶ F"}</span>
+                                  <span>{isFemPlaying ? "⏹" : "▶ Female"}</span>
                                 </button>
 
                                 <button
@@ -822,7 +822,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                                     gap: "3px"
                                   }}
                                 >
-                                  <span>{isMalePlaying ? "⏹" : "▶ M"}</span>
+                                  <span>{isMalePlaying ? "⏹" : "▶ Male"}</span>
                                 </button>
                               </div>
                             </td>
