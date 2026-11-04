@@ -3992,9 +3992,11 @@ export default function EpsBookReader({
               const coverImage = getFolderCover(folder);
 
               return (
-                <button
+                <a
                   key={folder.id || folder.name}
-                  type="button"
+                  href={getFolderNewTabUrl("korean", folder.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="book-library-tab-card"
                   onClick={() => {
                     setActiveFolder(folder.name);
@@ -4005,6 +4007,7 @@ export default function EpsBookReader({
                     flexDirection: "column",
                     alignItems: "center",
                     textAlign: "center",
+                    textDecoration: "none",
                     padding: "14px 14px 18px 14px",
                     borderRadius: "16px",
                     border: "3px solid",
@@ -4089,43 +4092,8 @@ export default function EpsBookReader({
                     }}>
                       {badgeText}
                     </span>
-
-                    {/* OPEN IN NEW TAB BUTTON */}
-                    <a
-                      href={getFolderNewTabUrl("korean", folder.name)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      title={`Open ${folder.name} in a new tab`}
-                      style={{
-                        marginTop: "6px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        color: "#2563eb",
-                        backgroundColor: "#eff6ff",
-                        padding: "4px 10px",
-                        borderRadius: "8px",
-                        textDecoration: "none",
-                        border: "1px solid #bfdbfe",
-                        transition: "all 0.15s ease"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#2563eb";
-                        e.currentTarget.style.color = "#ffffff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#eff6ff";
-                        e.currentTarget.style.color = "#2563eb";
-                      }}
-                    >
-                      <span>Open in New Tab</span>
-                      <span style={{ fontSize: "11px" }}>↗</span>
-                    </a>
                   </div>
-                </button>
+                </a>
               );
             })}
             </div>
@@ -5110,9 +5078,11 @@ export default function EpsBookReader({
               const badgeText = folder.badgeText || "Learning Guide";
 
               return (
-                <button
+                <a
                   key={folder.id}
-                  type="button"
+                  href={getFolderNewTabUrl("japanese", folder.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="book-library-tab-card"
                   onClick={() => {
                     setActiveJapaneseFolder(folder.name);
@@ -5123,6 +5093,7 @@ export default function EpsBookReader({
                     flexDirection: "column",
                     alignItems: "center",
                     textAlign: "center",
+                    textDecoration: "none",
                     padding: "14px 14px 18px 14px",
                     borderRadius: "16px",
                     border: "3px solid",
@@ -5207,43 +5178,8 @@ export default function EpsBookReader({
                     }}>
                       {badgeText}
                     </span>
-
-                    {/* OPEN IN NEW TAB BUTTON */}
-                    <a
-                      href={getFolderNewTabUrl("japanese", folder.name)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      title={`Open ${folder.name} in a new tab`}
-                      style={{
-                        marginTop: "6px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        color: "#9333ea",
-                        backgroundColor: "#faf5ff",
-                        padding: "4px 10px",
-                        borderRadius: "8px",
-                        textDecoration: "none",
-                        border: "1px solid #e9d5ff",
-                        transition: "all 0.15s ease"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#9333ea";
-                        e.currentTarget.style.color = "#ffffff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#faf5ff";
-                        e.currentTarget.style.color = "#9333ea";
-                      }}
-                    >
-                      <span>Open in New Tab</span>
-                      <span style={{ fontSize: "11px" }}>↗</span>
-                    </a>
                   </div>
-                </button>
+                </a>
               );
             })}
             </div>
