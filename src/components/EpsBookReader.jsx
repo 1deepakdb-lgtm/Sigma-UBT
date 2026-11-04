@@ -3992,11 +3992,9 @@ export default function EpsBookReader({
               const coverImage = getFolderCover(folder);
 
               return (
-                <a
+                <button
                   key={folder.id || folder.name}
-                  href={getFolderNewTabUrl("korean", folder.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  type="button"
                   className="book-library-tab-card"
                   onClick={() => {
                     setActiveFolder(folder.name);
@@ -4007,7 +4005,6 @@ export default function EpsBookReader({
                     flexDirection: "column",
                     alignItems: "center",
                     textAlign: "center",
-                    textDecoration: "none",
                     padding: "14px 14px 18px 14px",
                     borderRadius: "16px",
                     border: "3px solid",
@@ -4093,7 +4090,7 @@ export default function EpsBookReader({
                       {badgeText}
                     </span>
                   </div>
-                </a>
+                </button>
               );
             })}
             </div>
@@ -5078,11 +5075,9 @@ export default function EpsBookReader({
               const badgeText = folder.badgeText || "Learning Guide";
 
               return (
-                <a
+                <button
                   key={folder.id}
-                  href={getFolderNewTabUrl("japanese", folder.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  type="button"
                   className="book-library-tab-card"
                   onClick={() => {
                     setActiveJapaneseFolder(folder.name);
@@ -5093,7 +5088,6 @@ export default function EpsBookReader({
                     flexDirection: "column",
                     alignItems: "center",
                     textAlign: "center",
-                    textDecoration: "none",
                     padding: "14px 14px 18px 14px",
                     borderRadius: "16px",
                     border: "3px solid",
@@ -5179,7 +5173,7 @@ export default function EpsBookReader({
                       {badgeText}
                     </span>
                   </div>
-                </a>
+                </button>
               );
             })}
             </div>
