@@ -937,7 +937,17 @@ export default function EpsBookReader({
     }
   }, [effectiveInstLang]);
 
-  const [activeJapaneseFolder, setActiveJapaneseFolder] = useState(() => initialFolder || "JLPT N5・N4");
+  const [activeJapaneseFolder, setActiveJapaneseFolder] = useState(() => {
+    if (initialFolder) return initialFolder;
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const f = sp.get("folder");
+      if (f && ["JLPT N5・N4", "Minna no Nihongo", "JLPT N3・N2・N1", "Kanji & Meaning", "Mock Test"].includes(f)) {
+        return f;
+      }
+    }
+    return "JLPT N5・N4";
+  });
 
   useEffect(() => {
     if (initialFolder) {
@@ -1215,6 +1225,22 @@ export default function EpsBookReader({
     { id: "grammar-book", name: "Grammar Book", icon: "", coverImage: "/images/books/grammar-book-cover.png", description: "Comprehensive Korean Grammar Rules, Patterns & Examples" }
   ];
 
+  const getFolderNewTabUrl = (lang, folderName) => {
+    let base = "/admin/listening";
+    if (typeof window !== "undefined") {
+      const p = window.location.pathname;
+      if (p.includes("/student")) {
+        base = "/student?tab=listening";
+      } else if (p.includes("/institute")) {
+        base = "/institute?tab=listening";
+      } else if (p.includes("/admin")) {
+        base = "/admin/listening";
+      }
+    }
+    const sep = base.includes("?") ? "&" : "?";
+    return `${base}${sep}lang=${encodeURIComponent(lang)}&folder=${encodeURIComponent(folderName)}`;
+  };
+
   const getFolderCover = (folder) => {
     if (folder?.coverImage) return folder.coverImage;
     const name = (folder?.name || "").toLowerCase();
@@ -1226,11 +1252,47 @@ export default function EpsBookReader({
   };
 
   const [folders, setFolders] = useState(DEFAULT_FOLDERS);
-  const [activeFolder, setActiveFolder] = useState("EPS Book");
+  const [activeFolder, setActiveFolder] = useState(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const f = sp.get("folder");
+      if (f && ["EPS Book", "Meaning Book", "Model Question Bank", "Grammar Book"].includes(f)) {
+        return f;
+      }
+    }
+    return "EPS Book";
+  });
   const [materials, setMaterials] = useState([]);
   const [viewingMaterial, setViewingMaterial] = useState(null);
   const [r2Folders, setR2Folders] = useState([]);
   const [r2FullBooks, setR2FullBooks] = useState([]);
+
+  // Read language and folder from URL search params on mount & popstate
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncFromUrl = () => {
+      const sp = new URLSearchParams(window.location.search);
+      const langParam = sp.get("lang");
+      const folderParam = sp.get("folder");
+      if (langParam === "korean" || langParam === "japanese" || langParam === "both") {
+        setStudyLanguage(langParam);
+      }
+      if (folderParam) {
+        if (["EPS Book", "Meaning Book", "Model Question Bank", "Grammar Book"].includes(folderParam)) {
+          setActiveFolder(folderParam);
+          setIsKoreanFolderOpen(true);
+          setStudyLanguage("korean");
+        } else if (["JLPT N5・N4", "Minna no Nihongo", "JLPT N3・N2・N1", "Kanji & Meaning", "Mock Test"].includes(folderParam)) {
+          setActiveJapaneseFolder(folderParam);
+          setIsJapaneseFolderOpen(true);
+          setStudyLanguage("japanese");
+        }
+      }
+    };
+    syncFromUrl();
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
 
   // Chapter-wise Meaning Book State (Chapters 1 to 60)
   const [meaningChapters, setMeaningChapters] = useState([]);
@@ -4027,6 +4089,41 @@ export default function EpsBookReader({
                     }}>
                       {badgeText}
                     </span>
+
+                    {/* OPEN IN NEW TAB BUTTON */}
+                    <a
+                      href={getFolderNewTabUrl("korean", folder.name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      title={`Open ${folder.name} in a new tab`}
+                      style={{
+                        marginTop: "6px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#2563eb",
+                        backgroundColor: "#eff6ff",
+                        padding: "4px 10px",
+                        borderRadius: "8px",
+                        textDecoration: "none",
+                        border: "1px solid #bfdbfe",
+                        transition: "all 0.15s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#2563eb";
+                        e.currentTarget.style.color = "#ffffff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#eff6ff";
+                        e.currentTarget.style.color = "#2563eb";
+                      }}
+                    >
+                      <span>Open in New Tab</span>
+                      <span style={{ fontSize: "11px" }}>↗</span>
+                    </a>
                   </div>
                 </button>
               );
@@ -5110,6 +5207,41 @@ export default function EpsBookReader({
                     }}>
                       {badgeText}
                     </span>
+
+                    {/* OPEN IN NEW TAB BUTTON */}
+                    <a
+                      href={getFolderNewTabUrl("japanese", folder.name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      title={`Open ${folder.name} in a new tab`}
+                      style={{
+                        marginTop: "6px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#9333ea",
+                        backgroundColor: "#faf5ff",
+                        padding: "4px 10px",
+                        borderRadius: "8px",
+                        textDecoration: "none",
+                        border: "1px solid #e9d5ff",
+                        transition: "all 0.15s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#9333ea";
+                        e.currentTarget.style.color = "#ffffff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#faf5ff";
+                        e.currentTarget.style.color = "#9333ea";
+                      }}
+                    >
+                      <span>Open in New Tab</span>
+                      <span style={{ fontSize: "11px" }}>↗</span>
+                    </a>
                   </div>
                 </button>
               );
