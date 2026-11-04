@@ -955,8 +955,27 @@ export default function EpsBookReader({
       setActiveJapaneseFolder(initialFolder);
     }
   }, [initialFolder]);
-  const [isJapaneseFolderOpen, setIsJapaneseFolderOpen] = useState(true);
-  const [isKoreanFolderOpen, setIsKoreanFolderOpen] = useState(true);
+  const [isJapaneseFolderOpen, setIsJapaneseFolderOpen] = useState(() => {
+    if (initialFolder) return true;
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const f = sp.get("folder");
+      if (f && ["JLPT N5・N4", "Minna no Nihongo", "JLPT N3・N2・N1", "Kanji & Meaning", "Mock Test"].includes(f)) {
+        return true;
+      }
+    }
+    return false;
+  });
+  const [isKoreanFolderOpen, setIsKoreanFolderOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const f = sp.get("folder");
+      if (f && ["EPS Book", "Meaning Book", "Model Question Bank", "Grammar Book"].includes(f)) {
+        return true;
+      }
+    }
+    return false;
+  });
   const [minnaLessonFilter, setMinnaLessonFilter] = useState("all"); // "all", "n5", "n4", "full"
   const [minnaSearchQuery, setMinnaSearchQuery] = useState("");
   const [viewingMinnaLesson, setViewingMinnaLesson] = useState(null);
@@ -3931,7 +3950,8 @@ export default function EpsBookReader({
             </div>
           )}
 
-          {/* Korean Folder Selection Tabs */}
+          {/* Korean Folder Selection Tabs (Shown when NO folder is entered) */}
+          {!isKoreanFolderOpen && (
           <div
             className="book-tabs-container"
             style={{
@@ -4095,6 +4115,78 @@ export default function EpsBookReader({
             })}
             </div>
           </div>
+          )}
+
+          {/* ACTIVE KOREAN BOOK TOP BAR (Visible when entered inside a specific book) */}
+          {isKoreanFolderOpen && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              padding: "12px 18px",
+              backgroundColor: "#ffffff",
+              borderRadius: "14px",
+              border: "1.5px solid #dbeafe",
+              boxShadow: "0 2px 10px rgba(37, 99, 235, 0.06)",
+              marginBottom: "20px",
+              flexWrap: "wrap"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsKoreanFolderOpen(false)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 16px",
+                    backgroundColor: "#eff6ff",
+                    color: "#1d4ed8",
+                    border: "1.5px solid #bfdbfe",
+                    borderRadius: "10px",
+                    fontWeight: "800",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                    boxShadow: "0 2px 6px rgba(37, 99, 235, 0.08)"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#dbeafe";
+                    e.currentTarget.style.transform = "translateX(-2px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#eff6ff";
+                    e.currentTarget.style.transform = "none";
+                  }}
+                >
+                  <span style={{ fontSize: "16px", fontWeight: "900" }}>←</span>
+                  <span>Back to Study Materials</span>
+                </button>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "18px" }}>🇰🇷</span>
+                  <span style={{ fontSize: "16px", fontWeight: "900", color: "#0f172a" }}>
+                    {activeFolder}
+                  </span>
+                  <span style={{
+                    backgroundColor: "#2563eb",
+                    color: "#ffffff",
+                    fontSize: "11px",
+                    fontWeight: "800",
+                    padding: "2px 10px",
+                    borderRadius: "12px"
+                  }}>
+                    Opened
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                Click &ldquo;Back to Study Materials&rdquo; to switch books
+              </div>
+            </div>
+          )}
 
           {/* RENDER EPS BOOK SECTION IF ACTIVE AND OPEN */}
           {isKoreanFolderOpen && activeFolder === "EPS Book" && (
@@ -4737,7 +4829,7 @@ export default function EpsBookReader({
           {/* ============================================================== */}
           {/* 5. RENDER OTHER MATERIAL FOLDERS (Custom Folders)              */}
           {/* ============================================================== */}
-          {activeFolder && activeFolder !== "EPS Book" && activeFolder !== "Meaning Book" && activeFolder !== "Model Question Bank" && activeFolder !== "Grammar Book" && (() => {
+          {isKoreanFolderOpen && activeFolder && activeFolder !== "EPS Book" && activeFolder !== "Meaning Book" && activeFolder !== "Model Question Bank" && activeFolder !== "Grammar Book" && (() => {
             const currentFolderObj = folders.find(f => f.name === activeFolder) || { name: activeFolder, icon: "📁", description: "" };
             const folderMats = materials.filter(m => m.folder === activeFolder);
 
@@ -5046,7 +5138,8 @@ export default function EpsBookReader({
             </div>
           )}
 
-          {/* Japanese Folder Selection Tabs */}
+          {/* Japanese Folder Selection Tabs (Shown when NO folder is entered) */}
+          {!isJapaneseFolderOpen && (
           <div
             className="book-tabs-container"
             style={{
@@ -5178,6 +5271,78 @@ export default function EpsBookReader({
             })}
             </div>
           </div>
+          )}
+
+          {/* ACTIVE JAPANESE BOOK TOP BAR (Visible when entered inside a specific Japanese book) */}
+          {isJapaneseFolderOpen && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              padding: "12px 18px",
+              backgroundColor: "#ffffff",
+              borderRadius: "14px",
+              border: "1.5px solid #fecaca",
+              boxShadow: "0 2px 10px rgba(220, 38, 38, 0.06)",
+              marginBottom: "20px",
+              flexWrap: "wrap"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsJapaneseFolderOpen(false)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 16px",
+                    backgroundColor: "#fef2f2",
+                    color: "#991b1b",
+                    border: "1.5px solid #fecaca",
+                    borderRadius: "10px",
+                    fontWeight: "800",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                    boxShadow: "0 2px 6px rgba(220, 38, 38, 0.08)"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fee2e2";
+                    e.currentTarget.style.transform = "translateX(-2px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fef2f2";
+                    e.currentTarget.style.transform = "none";
+                  }}
+                >
+                  <span style={{ fontSize: "16px", fontWeight: "900" }}>←</span>
+                  <span>Back to Study Materials</span>
+                </button>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "18px" }}>🇯🇵</span>
+                  <span style={{ fontSize: "16px", fontWeight: "900", color: "#0f172a" }}>
+                    {activeJapaneseFolder}
+                  </span>
+                  <span style={{
+                    backgroundColor: "#dc2626",
+                    color: "#ffffff",
+                    fontSize: "11px",
+                    fontWeight: "800",
+                    padding: "2px 10px",
+                    borderRadius: "12px"
+                  }}>
+                    Opened
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                Click &ldquo;Back to Study Materials&rdquo; to switch books
+              </div>
+            </div>
+          )}
 
           {/* ACTIVE JAPANESE FOLDER CONTENT VIEWS - OPENED WHEN isJapaneseFolderOpen IS TRUE */}
           {isJapaneseFolderOpen && (() => {
