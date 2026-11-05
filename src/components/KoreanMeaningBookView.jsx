@@ -1591,7 +1591,7 @@ export default function KoreanMeaningBookView({
                 <div style={{ borderRadius: "12px", overflow: "hidden", border: "1.5px solid #e2e8f0" }}>
                   <iframe
                     src={getCleanPdfUrl ? getCleanPdfUrl(currentChapterObj.meaningPdfUrl) : currentChapterObj.meaningPdfUrl}
-                    title=""
+                    title={`Chapter ${currentChapterObj.chapter} PDF`}
                     style={{ width: "100%", height: "700px", border: "none" }}
                   />
                 </div>

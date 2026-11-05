@@ -887,9 +887,9 @@ export default function EpsBookReader({
   const [showTrackDropdown, setShowTrackDropdown] = useState(false);
   const [showBottomDropdown, setShowBottomDropdown] = useState(false);
 
-  // Floating Popup Player State (Single Gesture FAB Trigger, Responsive Sheet)
+  // Floating Popup Player State (Draggable, Minimizable, Removable)
   const [popupPos, setPopupPos] = useState({ x: 20, y: 20 });
-  const [popupMode, setPopupMode] = useState("collapsed"); // Default "collapsed" (1-gesture FAB trigger mode)
+  const [popupMode, setPopupMode] = useState("hidden"); // Default "hidden" for 100% clean full-screen view without blocking audio bar
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, initialX: 20, initialY: 20, moved: false });
   const popupContainerRef = useRef(null);
@@ -1900,7 +1900,7 @@ export default function EpsBookReader({
     setCurrentTime(0);
     setDuration(0);
     setShowTrackDropdown(false);
-    setPopupMode("collapsed"); // Start in collapsed single-gesture FAB mode: 100% clean fullscreen PDF
+    setPopupMode("hidden"); // Start in hidden mode: fullscreen PDF, no toolbar
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
     const pdfTarget = chapter.pdfUrl || chapter.pdf?.url || "";
@@ -2766,119 +2766,178 @@ export default function EpsBookReader({
           fontFamily: "Arial, sans-serif"
         }}
       >
-        {/* ================= 1. FLOATING GESTURE TRIGGER (FAB) (DEFAULT / COLLAPSED) ================= */}
-        {/* Clean, unobtrusive single-touch button at bottom-right */}
-        {hasAudio && popupMode !== "open" && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPopupMode("open");
-            }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-              setPopupMode("open");
-            }}
-            title="Touch to open Audio Player"
+        {/* ================= 1. DRAGGABLE FLOATING POPUP AUDIO PLAYER (FULL FORMAT) ================= */}
+        {popupMode === "full" && (
+          <div
+            ref={popupContainerRef}
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
             style={{
               position: "fixed",
-              bottom: "22px",
-              right: "20px",
+              left: `${popupPos.x}px`,
+              top: `${popupPos.y}px`,
               zIndex: 100005,
-              width: "52px",
-              height: "52px",
-              borderRadius: "50%",
-              background: isPlaying
-                ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)"
-                : "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-              color: "#ffffff",
-              border: isPlaying ? "2.5px solid #60a5fa" : "2px solid rgba(255, 255, 255, 0.4)",
-              boxShadow: isPlaying
-                ? "0 0 0 4px rgba(37, 99, 235, 0.35), 0 8px 24px rgba(37, 99, 235, 0.5)"
-                : "0 6px 20px rgba(0, 0, 0, 0.35)",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              padding: 0,
+              gap: "10px",
+              backgroundColor: "#ffffff",
+              border: "2px solid #2563eb",
+              borderRadius: "16px",
+              padding: "8px 14px",
+              boxShadow: "0 10px 35px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(37, 99, 235, 0.25)",
+              cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
-              transition: "all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)"
+              maxWidth: "calc(100vw - 20px)",
+              boxSizing: "border-box"
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: "20px", lineHeight: 1 }}>{isPlaying ? "❚❚" : "🎧"}</span>
-              <span style={{ fontSize: "8px", fontWeight: "800", letterSpacing: "0.5px", marginTop: "2px", color: isPlaying ? "#bfdbfe" : "#94a3b8" }}>
-                {isPlaying ? "PLAY" : "AUDIO"}
-              </span>
-            </div>
-          </button>
-        )}
-
-        {/* ================= 2. EXPANDED AUDIO PLAYER (TOUCH GARDA KHULNE) ================= */}
-        {hasAudio && popupMode === "open" && (
-          <div
-            style={{
-              position: "fixed",
-              bottom: "0px",
-              left: "0px",
-              right: "0px",
-              zIndex: 100005,
-              display: "flex",
-              justifyContent: "center",
-              padding: "0 10px 14px 10px",
-              pointerEvents: "none"
-            }}
-          >
+            {/* DRAG HANDLE */}
             <div
+              title="Drag to move anywhere on screen"
               style={{
-                pointerEvents: "auto",
-                width: "100%",
-                maxWidth: "560px",
-                backgroundColor: "rgba(15, 23, 42, 0.96)",
-                backdropFilter: "blur(14px)",
-                WebkitBackdropFilter: "blur(14px)",
-                border: "1.5px solid rgba(56, 189, 248, 0.4)",
-                borderRadius: "18px",
-                padding: "10px 14px",
-                boxShadow: "0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+                cursor: isDragging ? "grabbing" : "grab",
+                color: "#94a3b8",
                 display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                color: "#ffffff"
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "2px 2px",
+                fontSize: "14px",
+                userSelect: "none",
+                flexShrink: 0
               }}
             >
-              {/* ROW 1: TRACK SELECTION + PREV/NEXT + SPEED + UPLOAD + CLOSE */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                {/* Track selector with Prev & Next buttons */}
-                <div style={{ display: "flex", alignItems: "center", gap: "4px", minWidth: 0 }}>
-                  {/* Prev Track button */}
+              ⠿
+            </div>
+
+            {/* BACK BUTTON */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeFullScreen();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              title="Return to Chapter List"
+              style={{
+                background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+                color: "#ffffff",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "8px",
+                fontWeight: "bold",
+                fontSize: "13px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                boxShadow: "0 2px 8px rgba(29, 78, 216, 0.35)",
+                flexShrink: 0
+              }}
+            >
+              <span>⬅</span> Back
+            </button>
+
+            {/* CHAPTER TITLE & CRISP BADGE */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                minWidth: 0,
+                maxWidth: "260px"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span
+                  style={{
+                    backgroundColor: "#2563eb",
+                    color: "#ffffff",
+                    fontSize: "11px",
+                    fontWeight: "800",
+                    padding: "2px 8px",
+                    borderRadius: "10px",
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  Ch {selectedChapter.chapter}
+                </span>
+                <span
+                  style={{
+                    fontWeight: "800",
+                    fontSize: "14px",
+                    color: "#0f172a",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  {selectedChapter.titleKo}
+                </span>
+              </div>
+              <div
+                style={{
+                  fontSize: "11px",
+                  color: "#1d4ed8",
+                  fontWeight: "600",
+                  marginTop: "2px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                {selectedChapter.titleNe}
+              </div>
+            </div>
+
+            {/* AUDIO CONTROLS (PILL WITH PLAY + DROPDOWN, SEEKBAR, TIME, SPEED) */}
+            {hasAudio && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", flexShrink: 0 }}>
+                {/* UPPER: BLUE PILL (PLAY/PAUSE + TRACK DROPDOWN) */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+                    color: "#ffffff",
+                    border: "1.5px solid #93c5fd",
+                    borderRadius: "24px",
+                    padding: "3px 8px 3px 4px",
+                    boxShadow: "0 2px 10px rgba(29, 78, 216, 0.3)"
+                  }}
+                >
+                  {/* PLAY / PAUSE BUTTON */}
                   <button
                     type="button"
-                    disabled={currentTrackIndex <= 0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (currentTrackIndex > 0) handleSelectTrack(currentTrackIndex - 1);
-                    }}
-                    title="Previous Track"
+                    onClick={togglePlayPause}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    title={isPlaying ? "Click to Pause Audio" : "Click to Play Audio"}
                     style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "8px",
-                      background: currentTrackIndex > 0 ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                      color: currentTrackIndex > 0 ? "#ffffff" : "#64748b",
+                      width: "30px",
+                      height: "30px",
+                      borderRadius: "50%",
+                      background: "#ffffff",
+                      color: "#1d4ed8",
                       border: "none",
-                      cursor: currentTrackIndex > 0 ? "pointer" : "default",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "12px",
-                      flexShrink: 0
+                      cursor: "pointer",
+                      fontSize: isPlaying ? "12px" : "14px",
+                      fontWeight: "900",
+                      boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+                      flexShrink: 0,
+                      transition: "transform 0.15s ease"
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
                   >
-                    ◀
+                    {isPlaying ? "❚❚" : "▶"}
                   </button>
 
-                  {/* Active Track Dropdown trigger */}
+                  {/* TRACK DROPDOWN */}
                   <div style={{ position: "relative" }} ref={dropdownRef}>
                     <button
                       type="button"
@@ -2886,246 +2945,165 @@ export default function EpsBookReader({
                         e.stopPropagation();
                         setShowTrackDropdown(!showTrackDropdown);
                       }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
                       title="Select Audio Track"
                       style={{
-                        background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+                        background: "rgba(255, 255, 255, 0.15)",
                         color: "#ffffff",
-                        border: "1px solid rgba(147, 197, 253, 0.5)",
-                        borderRadius: "14px",
-                        padding: "4px 10px",
+                        border: "1px solid rgba(255, 255, 255, 0.35)",
+                        borderRadius: "16px",
+                        padding: "4px 9px",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         gap: "5px",
-                        fontSize: "12px",
-                        fontWeight: "700",
-                        maxWidth: "180px"
+                        fontSize: "11px",
+                        fontWeight: "700"
                       }}
                     >
-                      <span style={{ fontSize: "11px" }}>🎧</span>
-                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" /></svg>
+                      <span style={{ maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {activeTrack?.name || `Track ${currentTrackIndex + 1}`}
                       </span>
                       <span style={{ fontSize: "9px", color: "#bfdbfe" }}>{showTrackDropdown ? "▲" : "▼"}</span>
                     </button>
 
-                    {/* Dropdown Menu */}
+                    {/* DROPDOWN MENU */}
                     {showTrackDropdown && (
                       <>
+                        {/* BACKDROP TO AUTO-HIDE ON OUTSIDE CLICK */}
                         <div
-                          onClick={(e) => { e.stopPropagation(); setShowTrackDropdown(false); }}
-                          style={{ position: "fixed", inset: 0, zIndex: 100010, background: "transparent" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowTrackDropdown(false);
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            setShowTrackDropdown(false);
+                          }}
+                          onTouchStart={(e) => {
+                            e.stopPropagation();
+                            setShowTrackDropdown(false);
+                          }}
+                          style={{
+                            position: "fixed",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            zIndex: 100005,
+                            background: "transparent"
+                          }}
                         />
                         <div
                           onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
                           style={{
                             position: "absolute",
-                            bottom: "36px",
-                            left: 0,
-                            width: "260px",
-                            maxHeight: "220px",
-                            overflowY: "auto",
-                            backgroundColor: "#1e293b",
-                            border: "1.5px solid #38bdf8",
+                            top: "34px",
+                            right: 0,
+                            width: "280px",
+                            backgroundColor: "#ffffff",
+                            border: "2px solid #2563eb",
                             borderRadius: "12px",
-                            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
-                            zIndex: 100015,
-                            padding: "4px 0"
+                            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
+                            zIndex: 100010,
+                            overflow: "hidden"
                           }}
                         >
-                          <div style={{ padding: "6px 10px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", fontSize: "11px", fontWeight: "700", color: "#38bdf8" }}>
-                            Select Audio Track:
-                          </div>
-                          {selectedChapter.audioTracks.map((track, idx) => {
-                            const isCurrent = idx === currentTrackIndex;
-                            return (
-                              <div
-                                key={track.id || idx}
+                          <div style={{
+                            padding: "8px 12px",
+                            background: "#eff6ff",
+                            borderBottom: "1px solid #bfdbfe",
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            color: "#1d4ed8",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between"
+                          }}>
+                            <span>Chapter {selectedChapter.chapter} Audio Tracks:</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontSize: "10px", color: "#2563eb" }}>Auto-play</span>
+                              <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setShowTrackDropdown(false);
-                                  handleSelectTrack(idx);
                                 }}
                                 style={{
-                                  padding: "8px 10px",
-                                  background: isCurrent ? "rgba(56, 189, 248, 0.2)" : "transparent",
-                                  color: isCurrent ? "#38bdf8" : "#f1f5f9",
-                                  fontSize: "12px",
+                                  background: "transparent",
+                                  border: "none",
+                                  color: "#64748b",
                                   cursor: "pointer",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  fontWeight: isCurrent ? "700" : "500",
-                                  borderBottom: "1px solid rgba(255, 255, 255, 0.05)"
+                                  fontSize: "14px",
+                                  fontWeight: "bold",
+                                  padding: "0 2px",
+                                  lineHeight: 1
                                 }}
+                                title="Close"
                               >
-                                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "170px" }}>
-                                  {isCurrent ? "▶ " : ""}{track.name}
-                                </span>
-                                <span style={{ fontSize: "10px", color: isCurrent ? "#38bdf8" : "#94a3b8" }}>
-                                  #{idx + 1}
-                                </span>
-                              </div>
-                            );
-                          })}
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                          <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                            {selectedChapter.audioTracks.map((track, idx) => {
+                              const isCurrent = idx === currentTrackIndex;
+                              return (
+                                <div
+                                  key={track.id || idx}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowTrackDropdown(false);
+                                    handleSelectTrack(idx);
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                    setShowTrackDropdown(false);
+                                    handleSelectTrack(idx);
+                                  }}
+                                  style={{
+                                    padding: "8px 10px",
+                                    background: isCurrent ? "#dbeafe" : "transparent",
+                                    color: isCurrent ? "#1d4ed8" : "#1e293b",
+                                    fontSize: "12px",
+                                    cursor: "pointer",
+                                    borderBottom: "1px solid #f1f5f9",
+                                    borderLeft: isCurrent ? "3px solid #1d4ed8" : "3px solid transparent",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    fontWeight: isCurrent ? "700" : "500"
+                                  }}
+                                >
+                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "180px" }}>
+                                    {isCurrent ? "▶ " : ""}{track.name}
+                                  </span>
+                                  <span style={{
+                                    fontSize: "10px",
+                                    padding: "2px 5px",
+                                    borderRadius: "4px",
+                                    background: isCurrent ? "#1d4ed8" : "#f1f5f9",
+                                    color: isCurrent ? "#ffffff" : "#64748b",
+                                    fontWeight: "bold"
+                                  }}>
+                                    {isCurrent ? "Playing" : `Track ${idx + 1}`}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </>
                     )}
                   </div>
-
-                  {/* Next Track button */}
-                  <button
-                    type="button"
-                    disabled={currentTrackIndex >= selectedChapter.audioTracks.length - 1}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (currentTrackIndex < selectedChapter.audioTracks.length - 1) {
-                        handleSelectTrack(currentTrackIndex + 1);
-                      }
-                    }}
-                    title="Next Track"
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "8px",
-                      background: currentTrackIndex < selectedChapter.audioTracks.length - 1 ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                      color: currentTrackIndex < selectedChapter.audioTracks.length - 1 ? "#ffffff" : "#64748b",
-                      border: "none",
-                      cursor: currentTrackIndex < selectedChapter.audioTracks.length - 1 ? "pointer" : "default",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "12px",
-                      flexShrink: 0
-                    }}
-                  >
-                    ▶
-                  </button>
                 </div>
 
-                {/* Right side controls: Speed, Upload, Minimize/Close */}
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                  {/* Speed Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      cyclePlaybackRate(e);
-                    }}
-                    title="Playback Speed"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      color: "#38bdf8",
-                      border: "1px solid rgba(56, 189, 248, 0.4)",
-                      borderRadius: "8px",
-                      padding: "4px 8px",
-                      fontSize: "11px",
-                      fontWeight: "700",
-                      cursor: "pointer"
-                    }}
-                  >
-                    {playbackRate}x
-                  </button>
-
-                  {/* Admin Upload button */}
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openUploadModal(selectedChapter);
-                      }}
-                      title="Upload Audio"
-                      style={{
-                        backgroundColor: "#f59e0b",
-                        color: "#0f172a",
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "4px 8px",
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        cursor: "pointer"
-                      }}
-                    >
-                      📤
-                    </button>
-                  )}
-
-                  {/* Minimize / Close into 1-Gesture FAB */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPopupMode("collapsed");
-                    }}
-                    title="Minimize to gesture icon"
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "50%",
-                      background: "rgba(255, 255, 255, 0.15)",
-                      color: "#cbd5e1",
-                      border: "1px solid rgba(255, 255, 255, 0.25)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "13px",
-                      fontWeight: "bold",
-                      cursor: "pointer"
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-
-              {/* ROW 2: PLAY/PAUSE + SEEK SLIDER + TIME + REWIND/FORWARD */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                {/* Play / Pause Large Touch Button */}
-                <button
-                  type="button"
-                  onClick={togglePlayPause}
-                  title={isPlaying ? "Pause Audio" : "Play Audio"}
-                  style={{
-                    width: "38px",
-                    height: "38px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)",
-                    color: "#ffffff",
-                    border: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: isPlaying ? "13px" : "15px",
-                    fontWeight: "900",
-                    cursor: "pointer",
-                    flexShrink: 0,
-                    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.45)"
-                  }}
-                >
-                  {isPlaying ? "❚❚" : "▶"}
-                </button>
-
-                {/* Rewind 5s */}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); seekBy(-5); }}
-                  title="Rewind 5s"
-                  style={{
-                    background: "transparent",
-                    color: "#94a3b8",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    padding: "2px",
-                    flexShrink: 0
-                  }}
-                >
-                  ⏪
-                </button>
-
-                {/* Seek Bar Slider */}
-                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                {/* LOWER: SEEKBAR + TIME + SKIP BUTTONS + SPEED */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <input
                     type="range"
                     min={0}
@@ -3136,39 +3114,323 @@ export default function EpsBookReader({
                       setCurrentTime(newTime);
                       if (audioRef.current) audioRef.current.currentTime = newTime;
                     }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                     style={{
-                      width: "100%",
-                      accentColor: "#38bdf8",
+                      width: "80px",
                       cursor: "pointer",
+                      accentColor: "#2563eb",
                       height: "4px"
                     }}
                   />
+                  <span style={{ fontSize: "10px", color: "#64748b", fontFamily: "monospace", minWidth: "30px", fontWeight: "600" }}>
+                    {formatTime(currentTime)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      seekBy(-5);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    title="Rewind 5s"
+                    style={{
+                      background: "#f1f5f9",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontSize: "10px",
+                      padding: "2px 5px",
+                      color: "#475569",
+                      fontWeight: "bold"
+                    }}
+                  >
+                    ⏪
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      seekBy(5);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    title="Forward 5s"
+                    style={{
+                      background: "#f1f5f9",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontSize: "10px",
+                      padding: "2px 5px",
+                      color: "#475569",
+                      fontWeight: "bold"
+                    }}
+                  >
+                    ⏩
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cyclePlaybackRate(e);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    title="Playback Speed"
+                    style={{
+                      background: "#eff6ff",
+                      color: "#1d4ed8",
+                      border: "1px solid #bfdbfe",
+                      padding: "2px 6px",
+                      borderRadius: "6px",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      cursor: "pointer"
+                    }}
+                  >
+                    {playbackRate}x
+                  </button>
                 </div>
-
-                {/* Forward 5s */}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); seekBy(5); }}
-                  title="Forward 5s"
-                  style={{
-                    background: "transparent",
-                    color: "#94a3b8",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    padding: "2px",
-                    flexShrink: 0
-                  }}
-                >
-                  ⏩
-                </button>
-
-                {/* Time display: 00:15 / 02:40 */}
-                <span style={{ fontSize: "11px", color: "#94a3b8", fontFamily: "monospace", fontWeight: "600", flexShrink: 0, whiteSpace: "nowrap" }}>
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
               </div>
+            )}
+
+            {/* ADMIN / INSTITUTE UPLOAD BUTTON */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openUploadModal(selectedChapter);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                title="Upload Chapter Audio / PDF"
+                style={{
+                  backgroundColor: "#f59e0b",
+                  color: "#0f172a",
+                  border: "none",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  fontWeight: "bold",
+                  fontSize: "11px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  flexShrink: 0
+                }}
+              >
+                📤 Upload
+              </button>
+            )}
+
+            {/* WINDOW ACTIONS: MINIMIZE TO PLAY BUTTON ONLY & CLOSE/REMOVE */}
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0, marginLeft: "4px" }}>
+              {/* MINIMIZE TO FLOATING PLAY BUTTON ONLY ("play button matra rakhnus") */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPopupMode("mini");
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                title="Minimize to Play Button Only"
+                style={{
+                  background: "#f1f5f9",
+                  color: "#475569",
+                  border: "1px solid #cbd5e1",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  cursor: "pointer"
+                }}
+              >
+                ─
+              </button>
+
+              {/* REMOVE / CLOSE ("any if dont want remove hune gari") */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPopupMode("hidden");
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                title="Close / Remove Player from Screen"
+                style={{
+                  background: "#fee2e2",
+                  color: "#dc2626",
+                  border: "1px solid #fca5a5",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  cursor: "pointer"
+                }}
+              >
+                ✕
+              </button>
             </div>
+          </div>
+        )}
+
+        {/* ================= 2. MINI FLOATING PLAY BUTTON MODE ("PLAY BUTTON MATRA RAKHNUS", DRAGGABLE ANYWHERE) ================= */}
+        {popupMode === "mini" && (
+          <div
+            ref={popupContainerRef}
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+            style={{
+              position: "fixed",
+              left: `${popupPos.x}px`,
+              top: `${popupPos.y}px`,
+              zIndex: 100005,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+              color: "#ffffff",
+              border: "2px solid #93c5fd",
+              borderRadius: "32px",
+              padding: "4px 8px 4px 6px",
+              boxShadow: "0 8px 25px rgba(29, 78, 216, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2)",
+              cursor: isDragging ? "grabbing" : "grab",
+              userSelect: "none"
+            }}
+          >
+            {/* DRAG HANDLE */}
+            <span
+              title="Drag anywhere"
+              style={{
+                cursor: isDragging ? "grabbing" : "grab",
+                color: "#bfdbfe",
+                fontSize: "12px",
+                paddingRight: "2px"
+              }}
+            >
+              ⠿
+            </span>
+
+            {/* BACK BUTTON */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeFullScreen();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              title="Exit to Chapters"
+              style={{
+                background: "rgba(255, 255, 255, 0.2)",
+                color: "#ffffff",
+                border: "1px solid rgba(255, 255, 255, 0.35)",
+                borderRadius: "14px",
+                padding: "4px 8px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                cursor: "pointer"
+              }}
+            >
+              ⬅
+            </button>
+
+            {/* PURE PLAY / PAUSE BUTTON */}
+            {hasAudio && (
+              <button
+                type="button"
+                onClick={togglePlayPause}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                title={isPlaying ? "Click to Pause Audio" : "Click to Play Audio"}
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "50%",
+                  background: "#ffffff",
+                  color: "#1d4ed8",
+                  border: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  fontSize: isPlaying ? "13px" : "15px",
+                  fontWeight: "900",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                  flexShrink: 0
+                }}
+              >
+                {isPlaying ? "❚❚" : "▶"}
+              </button>
+            )}
+
+            {/* EXPAND BUTTON TO RESTORE FULL FORMAT */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPopupMode("full");
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              title="Expand Full Player"
+              style={{
+                background: "rgba(255, 255, 255, 0.2)",
+                color: "#ffffff",
+                border: "1px solid rgba(255, 255, 255, 0.35)",
+                borderRadius: "14px",
+                padding: "4px 8px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
+              }}
+            >
+              <span>⛶</span> Full
+            </button>
+
+            {/* REMOVE / CLOSE BUTTON */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPopupMode("hidden");
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              title="Remove Player from Screen"
+              style={{
+                background: "rgba(239, 68, 68, 0.8)",
+                color: "#ffffff",
+                border: "none",
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                fontSize: "10px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -3205,6 +3467,40 @@ export default function EpsBookReader({
           <span>Back</span>
         </button>
 
+        {/* Optional discrete Audio Player toggle at top-right if chapter has audio tracks */}
+        {hasAudio && popupMode !== "full" && (
+          <button
+            type="button"
+            onClick={() => setPopupMode("full")}
+            title="Open Audio Player"
+            style={{
+              position: "fixed",
+              top: "14px",
+              right: "14px",
+              zIndex: 100010,
+              background: "rgba(15, 23, 42, 0.85)",
+              color: "#38bdf8",
+              border: "1px solid rgba(56, 189, 248, 0.4)",
+              backdropFilter: "blur(8px)",
+              padding: "6px 14px",
+              borderRadius: "20px",
+              fontSize: "12px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+              transition: "all 0.15s ease"
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; e.currentTarget.style.color = "#ffffff"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; e.currentTarget.style.color = "#38bdf8"; }}
+          >
+            <span>🎧</span>
+            <span>Audio Player</span>
+          </button>
+        )}
+
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
         <div style={{
           position: "absolute",
@@ -3212,7 +3508,7 @@ export default function EpsBookReader({
           left: 0,
           width: "100vw",
           height: "100vh",
-          backgroundColor: "#0b0f19",
+          backgroundColor: "#0f172a",
           overflow: "hidden",
           margin: 0,
           padding: 0,
@@ -3228,7 +3524,7 @@ export default function EpsBookReader({
               <iframe
                 key={activePdfBlobUrl || selectedChapter.pdfUrl}
                 src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
-                title=""
+                title={`EPS Book Chapter ${selectedChapter.chapter}`}
                 style={{
                   position: "absolute",
                   top: 0,
@@ -3239,7 +3535,7 @@ export default function EpsBookReader({
                   margin: 0,
                   padding: 0,
                   display: "block",
-                  backgroundColor: "#0b0f19",
+                  backgroundColor: "#0f172a",
                   outline: "none"
                 }}
               />
