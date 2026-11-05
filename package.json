@@ -63,8 +63,6 @@
     "uuid": "^14.0.3"
   },
   "devDependencies": {
-    "electron": "^45.1.0",
-    "electron-builder": "^26.18.0",
     "prisma": "^5.22.0"
   }
 }
