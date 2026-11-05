@@ -6,19 +6,30 @@ const globalForPrisma = globalThis;
 
 function getResolvedDatabaseUrl() {
   const envUrl = process.env.DATABASE_URL;
-  if (!envUrl) return undefined;
+  
+  // Explicit known cPanel production path fallback
+  const cpanelProdDb = '/home/examjkco/sigma-ubt/prisma/dev.db';
+  if (fs.existsSync(cpanelProdDb)) {
+    return `file:${cpanelProdDb}`;
+  }
+
+  if (!envUrl) {
+    const defaultLocal = path.resolve(process.cwd(), 'prisma', 'dev.db');
+    return `file:${defaultLocal}`;
+  }
+
   if (envUrl.startsWith('file:')) {
     const rawPath = envUrl.slice(5);
+    if (fs.existsSync(rawPath)) {
+      return `file:${rawPath}`;
+    }
     if (!path.isAbsolute(rawPath)) {
-      // Check candidate locations for SQLite file
       const inPrisma = path.resolve(process.cwd(), 'prisma', path.basename(rawPath));
       const inCwd = path.resolve(process.cwd(), rawPath);
       if (fs.existsSync(inPrisma)) {
         return `file:${inPrisma}`;
       } else if (fs.existsSync(inCwd)) {
         return `file:${inCwd}`;
-      } else {
-        return `file:${inPrisma}`;
       }
     }
   }

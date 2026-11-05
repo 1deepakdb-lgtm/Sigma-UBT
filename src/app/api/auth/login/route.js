@@ -400,6 +400,6 @@ export async function POST(req) {
     return response;
   } catch (err) {
     console.error('Login error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error', details: err?.message || String(err) }, { status: 500 });
   }
 }
