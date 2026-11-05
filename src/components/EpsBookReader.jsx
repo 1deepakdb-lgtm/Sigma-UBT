@@ -1896,7 +1896,7 @@ export default function EpsBookReader({
     setCurrentTime(0);
     setDuration(0);
     setShowTrackDropdown(false);
-    setPopupMode("full");
+    setPopupMode("hidden"); // Start in hidden mode: fullscreen PDF, no toolbar
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
     const pdfTarget = chapter.pdfUrl || chapter.pdf?.url || "";
@@ -3420,61 +3420,9 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 3. HIDDEN MODE ("ANY IF DONT WANT REMOVE HUNE GARI") ================= */}
+        {/* ================= 3. HIDDEN MODE - PDF ONLY, NO BUTTONS ================= */}
         {popupMode === "hidden" && (
-          <>
-            {/* Discrete Back button at top-left so user is never trapped */}
-            <button
-              type="button"
-              onClick={closeFullScreen}
-              title="Return to Chapter List"
-              style={{
-                position: "fixed",
-                top: "14px",
-                left: "14px",
-                zIndex: 100005,
-                background: "rgba(15, 23, 42, 0.85)",
-                color: "#ffffff",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-                backdropFilter: "blur(8px)",
-                padding: "6px 14px",
-                borderRadius: "8px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)"
-              }}
-            >
-              ⬅ Back
-            </button>
-
-            {/* Discrete Restore button at top-right */}
-            <button
-              type="button"
-              onClick={() => setPopupMode("full")}
-              title="Show Audio Player"
-              style={{
-                position: "fixed",
-                top: "14px",
-                right: "14px",
-                zIndex: 100005,
-                background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
-                color: "#ffffff",
-                border: "1px solid #93c5fd",
-                padding: "6px 14px",
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                boxShadow: "0 4px 14px rgba(29, 78, 216, 0.35)"
-              }}
-            >
-              Show Player
-            </button>
-          </>
+          <></>
         )}
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
@@ -3491,27 +3439,23 @@ export default function EpsBookReader({
           zIndex: 1
         }}>
           {(activePdfBlobUrl || selectedChapter.pdfUrl) ? (
-            <object
-              data={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
-              type="application/pdf"
-              style={{
-                width: "100vw",
-                height: "100vh",
-                border: "none",
-                margin: 0,
-                padding: 0,
-                display: "block",
-                backgroundColor: "#ffffff",
-                outline: "none"
-              }}
-            >
+            <div style={{
+              position: "relative",
+              width: "100vw",
+              height: "100vh",
+              overflow: "hidden"
+            }}>
+              {/* iframe shifted up to hide browser's native PDF toolbar (~40px) */}
               <iframe
                 key={activePdfBlobUrl || selectedChapter.pdfUrl}
                 src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
                 style={{
+                  position: "absolute",
+                  top: "-40px",
+                  left: 0,
                   width: "100vw",
-                  height: "100vh",
+                  height: "calc(100vh + 40px)",
                   border: "none",
                   margin: 0,
                   padding: 0,
@@ -3520,7 +3464,7 @@ export default function EpsBookReader({
                   outline: "none"
                 }}
               />
-            </object>
+            </div>
           ) : (
             <div style={{
               width: "100%",

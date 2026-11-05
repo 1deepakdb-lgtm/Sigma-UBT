@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node ./node_modules/prisma/build/index.js generate && next build",
-    "postinstall": "prisma generate",
+    "postinstall": "node ./node_modules/prisma/build/index.js generate --schema=prisma/schema.prisma || true",
     "start": "node server.js",
     "prisma:push": "prisma db push",
     "prisma:seed": "node prisma/seed.js",
