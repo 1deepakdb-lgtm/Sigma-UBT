@@ -6,7 +6,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push && next build",
+    "build": "npx prisma generate && npx next build",
     "postinstall": "prisma generate",
     "start": "node server.js",
     "prisma:push": "prisma db push",
