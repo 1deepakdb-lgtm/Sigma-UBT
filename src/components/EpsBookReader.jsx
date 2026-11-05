@@ -889,7 +889,7 @@ export default function EpsBookReader({
 
   // Floating Popup Player State (Draggable, Minimizable, Removable)
   const [popupPos, setPopupPos] = useState({ x: 20, y: 20 });
-  const [popupMode, setPopupMode] = useState("full"); // "full" = format in image, "mini" = play button only, "hidden" = completely closed
+  const [popupMode, setPopupMode] = useState("hidden"); // Default "hidden" for 100% clean full-screen view without blocking audio bar
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, initialX: 20, initialY: 20, moved: false });
   const popupContainerRef = useRef(null);
@@ -1877,15 +1877,19 @@ export default function EpsBookReader({
     window.addEventListener("touchend", onEnd);
   };
 
-  // Clean PDF URL without browser toolbar, page count or buttons - fit maximum screen
+  // Custom PDF viewer URL - no toolbar, no controls, fullscreen clean
   const getCleanPdfUrl = (url) => {
     if (!url) return "";
     const trimmed = url.trim();
-    if (trimmed.startsWith("blob:") || trimmed.startsWith("data:") || trimmed.includes("drive.google.com")) {
+    if (trimmed.startsWith("blob:") || trimmed.startsWith("data:")) {
+      // For blob URLs use custom viewer
+      return `/pdfviewer.html?url=${encodeURIComponent(trimmed)}`;
+    }
+    if (trimmed.includes("drive.google.com")) {
       return trimmed;
     }
-    const base = trimmed.split("#")[0];
-    return `${base}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&pagemode=none&view=FitH&zoom=page-width`;
+    // Use custom PDF.js viewer — zero browser toolbar
+    return `/pdfviewer.html?url=${encodeURIComponent(trimmed)}`;
   };
 
   // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Background Auto-Save Offline)
@@ -1972,6 +1976,16 @@ export default function EpsBookReader({
     setCurrentTime(0);
     setShowTrackDropdown(false);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && selectedChapter) {
+        closeFullScreen();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedChapter]);
 
   // Playable audio URL (checks offline cached blob first, then direct URL or TTS fallback)
   const getPlayableAudioUrl = (track) => {
@@ -3420,9 +3434,71 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 3. HIDDEN MODE - PDF ONLY, NO BUTTONS ================= */}
-        {popupMode === "hidden" && (
-          <></>
+        {/* ================= 3. FLOATING DISCRETE CONTROLS (NON-INTRUSIVE) ================= */}
+        {/* Sleek Floating Back button at top-left */}
+        <button
+          type="button"
+          onClick={closeFullScreen}
+          title="Exit Fullscreen (Esc)"
+          style={{
+            position: "fixed",
+            top: "14px",
+            left: "14px",
+            zIndex: 100010,
+            background: "rgba(15, 23, 42, 0.85)",
+            color: "#ffffff",
+            border: "1px solid rgba(255, 255, 255, 0.25)",
+            backdropFilter: "blur(8px)",
+            padding: "6px 14px",
+            borderRadius: "20px",
+            fontSize: "12px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+            transition: "all 0.15s ease"
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; }}
+        >
+          <span>⬅</span>
+          <span>Back</span>
+        </button>
+
+        {/* Optional discrete Audio Player toggle at top-right if chapter has audio tracks */}
+        {hasAudio && popupMode !== "full" && (
+          <button
+            type="button"
+            onClick={() => setPopupMode("full")}
+            title="Open Audio Player"
+            style={{
+              position: "fixed",
+              top: "14px",
+              right: "14px",
+              zIndex: 100010,
+              background: "rgba(15, 23, 42, 0.85)",
+              color: "#38bdf8",
+              border: "1px solid rgba(56, 189, 248, 0.4)",
+              backdropFilter: "blur(8px)",
+              padding: "6px 14px",
+              borderRadius: "20px",
+              fontSize: "12px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+              transition: "all 0.15s ease"
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; e.currentTarget.style.color = "#ffffff"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; e.currentTarget.style.color = "#38bdf8"; }}
+          >
+            <span>🎧</span>
+            <span>Audio Player</span>
+          </button>
         )}
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
@@ -3432,7 +3508,7 @@ export default function EpsBookReader({
           left: 0,
           width: "100vw",
           height: "100vh",
-          backgroundColor: "#ffffff",
+          backgroundColor: "#0f172a",
           overflow: "hidden",
           margin: 0,
           padding: 0,
@@ -3445,22 +3521,21 @@ export default function EpsBookReader({
               height: "100vh",
               overflow: "hidden"
             }}>
-              {/* iframe shifted up to hide browser's native PDF toolbar (~40px) */}
               <iframe
                 key={activePdfBlobUrl || selectedChapter.pdfUrl}
                 src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
                 style={{
                   position: "absolute",
-                  top: "-40px",
+                  top: 0,
                   left: 0,
                   width: "100vw",
-                  height: "calc(100vh + 40px)",
+                  height: "100vh",
                   border: "none",
                   margin: 0,
                   padding: 0,
                   display: "block",
-                  backgroundColor: "#ffffff",
+                  backgroundColor: "#0f172a",
                   outline: "none"
                 }}
               />

@@ -617,26 +617,39 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
       utterance.lang = langCode;
       if (gender === 'male') {
-        utterance.pitch = 0.85;
-        utterance.rate = 0.95;
+        utterance.pitch = 0.75;
+        utterance.rate = 0.92;
       } else {
-        utterance.pitch = 1.15;
-        utterance.rate = 1.0;
+        utterance.pitch = 1.05;
+        utterance.rate = 0.98;
       }
 
-      // Try finding an installed voice matching gender and language
+      // Strictly resolve genuine male or female voice matching language
       const voices = window.speechSynthesis.getVoices();
       if (voices && voices.length > 0) {
         const langVoices = voices.filter(v => v.lang && (v.lang.startsWith(langCode.slice(0, 2)) || v.lang.toLowerCase().includes(langCode.slice(0, 2))));
         if (langVoices.length > 0) {
-          const genderMatch = langVoices.find(v => {
-            const vName = (v.name || '').toLowerCase();
-            return gender === 'male'
-              ? (vName.includes('male') || vName.includes('david') || vName.includes('keita') || vName.includes('injoon') || vName.includes('george') || vName.includes('sagar'))
-              : (vName.includes('female') || vName.includes('zira') || vName.includes('nanami') || vName.includes('sunhi') || vName.includes('susan') || vName.includes('hemkala') || vName.includes('yuna'));
-          });
-          if (genderMatch) utterance.voice = genderMatch;
-          else utterance.voice = langVoices[0];
+          if (gender === 'male') {
+            const maleMatch = langVoices.find(v => {
+              const vName = (v.name || '').toLowerCase();
+              return vName.includes('male') || vName.includes('david') || vName.includes('keita') || vName.includes('injoon') || vName.includes('george') || vName.includes('sagar') || vName.includes('minho') || vName.includes('sin-ji') || vName.includes('otoya') || vName.includes('guy') || vName.includes('ichiro') || vName.includes('kenji');
+            }) || langVoices.find(v => {
+              const vName = (v.name || '').toLowerCase();
+              return !vName.includes('female') && !vName.includes('zira') && !vName.includes('nanami') && !vName.includes('sunhi') && !vName.includes('susan') && !vName.includes('hemkala') && !vName.includes('yuna') && !vName.includes('kyoko') && !vName.includes('ayumi');
+            });
+            if (maleMatch) {
+              utterance.voice = maleMatch;
+            } else {
+              // Deepen pitch to ensure authentic low masculine timbre
+              utterance.pitch = 0.65;
+            }
+          } else {
+            const femaleMatch = langVoices.find(v => {
+              const vName = (v.name || '').toLowerCase();
+              return vName.includes('female') || vName.includes('zira') || vName.includes('nanami') || vName.includes('sunhi') || vName.includes('susan') || vName.includes('hemkala') || vName.includes('yuna') || vName.includes('kyoko') || vName.includes('ayumi') || vName.includes('heami');
+            }) || langVoices[0];
+            if (femaleMatch) utterance.voice = femaleMatch;
+          }
         }
       }
 
@@ -909,15 +922,14 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       }
     }
 
-    const defaultVoice = activeLang === 'ja'
-      ? (gender === 'male' ? 'ja-JP-KeitaNeural' : 'ja-JP-NanamiNeural')
-      : (gender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural');
-
-    const voiceName = activeModel?.voice || defaultVoice;
-    const pitchVal = activeModel?.pitch || '+0Hz';
-    const rateVal = activeModel?.rate || '-5%';
-
-    const url = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${lang}&gender=${gender}&voice=${encodeURIComponent(voiceName)}&pitch=${encodeURIComponent(pitchVal)}&rate=${encodeURIComponent(rateVal)}&model=${encodeURIComponent(activeModel?.id || activeModel?.name || '')}`;
+    const isMale = gender === 'male';
+    const voiceProfId = activeModel?.voiceProfileId || (
+      lang === 'ja'
+        ? (isMale ? 'ja-male-1' : 'ja-female-1')
+        : (isMale ? 'ko-male-1' : 'ko-female-1')
+    );
+    // Take authentic human voice from AI Studio with exact male/female profile
+    const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`;
     handlePlayAudio(url, audioId, textToSpeak, lang, gender);
   }
 
@@ -1693,7 +1705,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               }}
             >
               <FemaleIcon size={24} isPlaying={playingAudioId === 'search-female'} />
-              <span>{loadingAudioId === 'search-female' ? "⏳ Loading..." : playingAudioId === 'search-female' ? "⏹ Stop" : "▶ Female"}</span>
+              <span>{loadingAudioId === 'search-female' ? "⏳ Loading..." : playingAudioId === 'search-female' ? "⏹ Stop" : "▶ Female Voice"}</span>
             </button>
 
             {/* Dropdown Arrow Button */}
@@ -1940,7 +1952,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               }}
             >
               <MaleIcon size={24} isPlaying={playingAudioId === 'search-male'} />
-              <span>{loadingAudioId === 'search-male' ? "⏳ Loading..." : playingAudioId === 'search-male' ? "⏹ Stop" : "▶ Male"}</span>
+              <span>{loadingAudioId === 'search-male' ? "⏳ Loading..." : playingAudioId === 'search-male' ? "⏹ Stop" : "▶ Male Voice"}</span>
             </button>
 
             {/* Dropdown Arrow Button */}
@@ -2522,8 +2534,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 } else {
                                   const langCode = activeLang === 'ja' ? 'ja' : 'ko';
                                   const textToPlay = spokenWord || primaryWord;
-                                  const voiceName = selectedFemaleModel.voice || (langCode === 'ja' ? 'ja-JP-NanamiNeural' : 'ko-KR-SunHiNeural');
-                                  const url = `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(voiceName)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedFemaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedFemaleModel.id || '')}`;
+                                  const voiceProfId = selectedFemaleModel.voiceProfileId || (langCode === 'ja' ? 'ja-female-1' : 'ko-female-1');
+                                  const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`;
                                   handlePlayAudio(url, `popup-fem-${primaryWord}`, textToPlay, langCode, 'female');
                                 }
                               }}
@@ -2547,7 +2559,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             >
                               <FemaleIcon size={14} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
                               <span style={{ whiteSpace: "nowrap" }}>
-                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹" : "▶ Female"}
+                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹" : "▶ Female Voice"}
                               </span>
                             </button>
                             {canDownloadAudio && (
@@ -2600,8 +2612,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 } else {
                                   const langCode = activeLang === 'ja' ? 'ja' : 'ko';
                                   const textToPlay = spokenWord || primaryWord;
-                                  const voiceName = selectedMaleModel.voice || (langCode === 'ja' ? 'ja-JP-KeitaNeural' : 'ko-KR-InJoonNeural');
-                                  const url = `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=male&voice=${encodeURIComponent(voiceName)}&pitch=${encodeURIComponent(selectedMaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedMaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedMaleModel.id || '')}`;
+                                  const voiceProfId = selectedMaleModel.voiceProfileId || (langCode === 'ja' ? 'ja-male-1' : 'ko-male-1');
+                                  const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`;
                                   handlePlayAudio(url, `popup-male-${primaryWord}`, textToPlay, langCode, 'male');
                                 }
                               }}
@@ -2625,7 +2637,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             >
                               <MaleIcon size={14} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
                               <span style={{ whiteSpace: "nowrap" }}>
-                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹" : "▶ Male"}
+                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹" : "▶ Male Voice"}
                               </span>
                             </button>
                             {canDownloadAudio && (

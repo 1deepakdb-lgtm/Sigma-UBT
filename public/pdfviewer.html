@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+<title>Document Viewer</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    background-color: #0f172a;
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #viewer-scroll-container {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  .pdf-page-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+    background-color: #1e293b;
+    min-height: 200px;
+  }
+  @media (min-width: 768px) {
+    .pdf-page-wrapper {
+      margin-bottom: 14px;
+    }
+  }
+  canvas {
+    display: block;
+    max-width: 100%;
+    height: auto !important;
+    background-color: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  }
+  #loading-view {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background-color: #0f172a;
+    z-index: 100;
+  }
+  .spinner {
+    width: 44px;
+    height: 44px;
+    border: 3.5px solid rgba(255, 255, 255, 0.15);
+    border-top-color: #38bdf8;
+    border-radius: 50%;
+    animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .loading-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #94a3b8;
+    letter-spacing: 0.3px;
+  }
+  #error-view {
+    display: none;
+    position: fixed;
+    inset: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    text-align: center;
+    background-color: #0f172a;
+    z-index: 100;
+  }
+  .error-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f87171;
+  }
+  .error-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+  .retry-btn {
+    margin-top: 8px;
+    background-color: #38bdf8;
+    color: #0f172a;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="loading-view">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-progress">Opening Document...</div>
+</div>
+
+<div id="error-view">
+  <div class="error-title">Unable to load document</div>
+  <div class="error-desc" id="error-message">The requested PDF could not be displayed.</div>
+  <button class="retry-btn" onclick="location.reload()">Retry</button>
+</div>
+
+<div id="viewer-scroll-container"></div>
+
+<script src="/pdf.min.js"></script>
+<script>
+  // Strictly prevent right-click context menu (no save/download)
+  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  // Disable common keyboard shortcuts for save / print
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'p' || e.key === 'u')) {
+      e.preventDefault();
+    }
+  });
+
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var rawUrl = params.get('url');
+
+    var loadingView = document.getElementById('loading-view');
+    var loadingProgress = document.getElementById('loading-progress');
+    var errorView = document.getElementById('error-view');
+    var errorMessage = document.getElementById('error-message');
+    var container = document.getElementById('viewer-scroll-container');
+
+    if (!rawUrl) {
+      showError('No document URL specified.');
+      return;
+    }
+
+    var pdfDoc = null;
+    var renderedPages = new Set();
+    var renderingPages = new Set();
+    var resizeTimer = null;
+
+    if (typeof pdfjsLib === 'undefined') {
+      showError('PDF viewer engine failed to initialize.');
+      return;
+    }
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+
+    function showError(msg) {
+      if (loadingView) loadingView.style.display = 'none';
+      if (errorView) {
+        errorView.style.display = 'flex';
+        if (errorMessage) errorMessage.textContent = msg || 'Failed to display document.';
+      }
+    }
+
+    function getTargetWidth() {
+      var w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+      if (w < 640) {
+        return w; // 100% full width on mobile devices
+      } else if (w < 1024) {
+        return Math.min(w - 24, 850);
+      } else {
+        return Math.min(w - 48, 1050);
+      }
+    }
+
+    async function renderPage(pageNum, wrapper, targetWidth) {
+      if (renderingPages.has(pageNum)) return;
+      renderingPages.add(pageNum);
+
+      try {
+        var page = await pdfDoc.getPage(pageNum);
+        var baseViewport = page.getViewport({ scale: 1.0 });
+        var scale = targetWidth / baseViewport.width;
+        var viewport = page.getViewport({ scale: scale });
+
+        var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d', { alpha: false });
+
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
+
+        canvas.style.width = Math.floor(viewport.width) + 'px';
+        canvas.style.height = Math.floor(viewport.height) + 'px';
+
+        ctx.scale(dpr, dpr);
+
+        await page.render({
+          canvasContext: ctx,
+          viewport: viewport,
+          intent: 'display'
+        }).promise;
+
+        wrapper.innerHTML = '';
+        wrapper.style.minHeight = Math.floor(viewport.height) + 'px';
+        wrapper.appendChild(canvas);
+
+        renderedPages.add(pageNum);
+      } catch (err) {
+        console.warn('Page render error page ' + pageNum + ':', err);
+      } finally {
+        renderingPages.delete(pageNum);
+      }
+    }
+
+    async function initViewer() {
+      try {
+        var loadingTask = pdfjsLib.getDocument({
+          url: rawUrl,
+          withCredentials: false,
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+          cMapPacked: true
+        });
+
+        loadingTask.onProgress = function(p) {
+          if (p.total > 0) {
+            var pct = Math.round((p.loaded / p.total) * 100);
+            if (loadingProgress) loadingProgress.textContent = 'Opening Document... ' + pct + '%';
+          }
+        };
+
+        pdfDoc = await loadingTask.promise;
+        if (loadingView) loadingView.style.display = 'none';
+
+        var totalPages = pdfDoc.numPages;
+        var currentWidth = getTargetWidth();
+
+        // Create placeholders for all pages for instantaneous smooth layout
+        for (var i = 1; i <= totalPages; i++) {
+          var wrapper = document.createElement('div');
+          wrapper.className = 'pdf-page-wrapper';
+          wrapper.id = 'page-wrapper-' + i;
+          wrapper.setAttribute('data-page-num', String(i));
+          container.appendChild(wrapper);
+        }
+
+        // Render first 2 pages immediately for instant visibility
+        for (var j = 1; j <= Math.min(totalPages, 2); j++) {
+          var initialWrap = document.getElementById('page-wrapper-' + j);
+          if (initialWrap) renderPage(j, initialWrap, currentWidth);
+        }
+
+        // Set up IntersectionObserver for progressive rendering on remaining pages
+        if ('IntersectionObserver' in window) {
+          var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                var pageNum = parseInt(entry.target.getAttribute('data-page-num'), 10);
+                if (!renderedPages.has(pageNum)) {
+                  renderPage(pageNum, entry.target, getTargetWidth());
+                }
+              }
+            });
+          }, {
+            root: container,
+            rootMargin: '400px 0px 400px 0px'
+          });
+
+          for (var k = 1; k <= totalPages; k++) {
+            var wrapEl = document.getElementById('page-wrapper-' + k);
+            if (wrapEl) observer.observe(wrapEl);
+          }
+        } else {
+          // Fallback sequential rendering
+          for (var m = 3; m <= totalPages; m++) {
+            var w = document.getElementById('page-wrapper-' + m);
+            if (w) await renderPage(m, w, currentWidth);
+          }
+        }
+
+        // Handle responsive resize & orientation change
+        window.addEventListener('resize', function() {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(function() {
+            var newWidth = getTargetWidth();
+            renderedPages.clear();
+            for (var p = 1; p <= totalPages; p++) {
+              var el = document.getElementById('page-wrapper-' + p);
+              if (el) {
+                var rect = el.getBoundingClientRect();
+                // Re-render pages visible or close to viewport
+                if (rect.top < window.innerHeight + 600 && rect.bottom > -600) {
+                  renderPage(p, el, newWidth);
+                }
+              }
+            }
+          }, 250);
+        });
+
+      } catch (err) {
+        console.error('Failed to load PDF document:', err);
+        showError('Could not load the requested document. ' + (err.message || ''));
+      }
+    }
+
+    initViewer();
+  })();
+</script>
+</body>
+</html>
