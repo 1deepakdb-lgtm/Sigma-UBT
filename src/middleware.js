@@ -32,21 +32,27 @@ const BLOCKED_UA_PATTERNS = [
 
 // Define protected route prefixes and the roles permitted to access them
 const ROUTE_PERMISSIONS = [
-  // Super-admin-only routes (most sensitive)
+  // Super-admin-only routes & tools (most sensitive)
   { prefix: '/api/admin/packages', allowedRoles: ['admin', 'institute', 'student'] },
   { prefix: '/api/admin/questions', allowedRoles: ['admin', 'institute'] },
   { prefix: '/admin', allowedRoles: ['admin'] },
   { prefix: '/api/admin', allowedRoles: ['admin'] },
-  // Institute-level routes
+  { prefix: '/voice-studio', allowedRoles: ['admin'] },
+  { prefix: '/api/diagnostic', allowedRoles: ['admin'] },
+  { prefix: '/api/elevenlabs/dialogue', allowedRoles: ['admin'] },
+  // Institute-level routes & subpaths
   { prefix: '/institute', allowedRoles: ['institute', 'admin', 'staff'] },
   { prefix: '/api/institute', allowedRoles: ['institute', 'admin', 'staff'] },
-  // Student-level routes
+  // Student-level routes & subpaths
   { prefix: '/student', allowedRoles: ['student', 'admin', 'institute'] },
   { prefix: '/api/student', allowedRoles: ['student', 'admin', 'institute'] },
-  // Upload: admin and institute only (not staff)
+  // File uploads: admin and institute only (not staff/students)
   { prefix: '/api/upload', allowedRoles: ['admin', 'institute'] },
   // Voice Upload: authenticated users only
   { prefix: '/api/voice-upload', allowedRoles: ['admin', 'institute', 'staff', 'student'] },
+  // Payment operations: authenticated users only
+  { prefix: '/api/payment/upload-screenshot', allowedRoles: ['student', 'admin', 'institute'] },
+  { prefix: '/api/payment/query', allowedRoles: ['admin', 'institute', 'staff'] },
 ];
 
 /**
@@ -136,7 +142,8 @@ export async function middleware(req) {
   }
 
   // ─── 5. Admin Route Extra Hardening ───────────────────────────────────────
-  if (pathname.startsWith('/api/admin') || pathname.startsWith('/admin')) {
+  const isExceptedAdminApi = pathname.startsWith('/api/admin/packages') || pathname.startsWith('/api/admin/questions');
+  if ((pathname.startsWith('/api/admin') || pathname.startsWith('/admin') || pathname.startsWith('/voice-studio')) && !isExceptedAdminApi) {
     // Block if authenticated but role is not strictly 'admin'
     if (userPayload && userPayload.role !== 'admin') {
       return NextResponse.json(

@@ -61,6 +61,16 @@ export default function LoginPage() {
     } catch (err) {}
   }, []);
 
+  // Check URL query parameters for authorization / session errors
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("error") === "unauthorized") {
+        setError("Session expired or authentication required. Please log in to continue.");
+      }
+    }
+  }, []);
+
   // Save session state to localStorage and redirect
   const handleAuthSuccess = (userData) => {
     localStorage.setItem("currentUser", userData.name || userData.username);
