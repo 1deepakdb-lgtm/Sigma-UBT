@@ -3666,23 +3666,31 @@ export default function EpsBookReader({
         .book-library-tab-card:focus {
           outline: none !important;
         }
-        @media (max-width: 1024px) {
+
+        /* ── RESPONSIVE ADAPTATIONS FOR ALL DEVICES ── */
+        @media (max-width: 1200px) {
           .book-tabs-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 14px !important;
-          }
-          .book-tabs-container {
-            padding: 14px !important;
+            gap: 12px !important;
           }
         }
-        @media (max-width: 540px) {
+        @media (max-width: 900px) {
+          .book-tabs-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+          }
+          .book-tabs-container {
+            padding: 12px !important;
+          }
+        }
+        @media (max-width: 600px) {
           .book-tabs-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             gap: 8px !important;
           }
           .book-tabs-container {
-            padding: 8px !important;
+            padding: 10px !important;
             border-radius: 14px !important;
+            margin-bottom: 16px !important;
           }
           .book-library-tab-card {
             padding: 10px 8px 14px 8px !important;
@@ -3694,6 +3702,12 @@ export default function EpsBookReader({
           .book-tab-badge {
             font-size: 10px !important;
             padding: 3px 8px !important;
+          }
+        }
+        @media (max-width: 380px) {
+          .book-tabs-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
           }
         }
       ` }} />

@@ -272,7 +272,7 @@ export default function JlptMockExamModal({
   const flaggedCount = Object.values(flaggedQuestions).filter(Boolean).length;
 
   return (
-    <div style={{
+    <div className="jlpt-exam-overlay" style={{
       position: "fixed",
       top: 0,
       left: 0,
@@ -285,22 +285,76 @@ export default function JlptMockExamModal({
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      padding: "16px",
+      padding: "12px",
       boxSizing: "border-box"
     }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .jlpt-exam-modal {
+          width: 100%;
+          max-width: 1140px;
+          height: 94vh;
+          border-radius: 18px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          background-color: #ffffff;
+          box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+          position: relative;
+        }
+        .jlpt-exam-body {
+          flex: 1;
+          display: flex;
+          overflow: hidden;
+        }
+        .jlpt-exam-question-area {
+          flex: 1;
+          padding: 24px 30px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+        }
+        .jlpt-exam-sidebar {
+          width: 280px;
+          background-color: #f8fafc;
+          border-left: 1.5px solid #e2e8f0;
+          padding: 18px;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+        }
+        @media (max-width: 860px) {
+          .jlpt-exam-overlay {
+            padding: 0 !important;
+          }
+          .jlpt-exam-modal {
+            height: 100vh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            border: none !important;
+          }
+          .jlpt-exam-body {
+            flex-direction: column !important;
+          }
+          .jlpt-exam-question-area {
+            padding: 16px 14px !important;
+          }
+          .jlpt-exam-sidebar {
+            width: 100% !important;
+            border-left: none !important;
+            border-top: 1.5px solid #e2e8f0 !important;
+            max-height: 220px !important;
+            padding: 12px 14px !important;
+          }
+        }
+        @media (max-width: 540px) {
+          .jlpt-exam-question-area {
+            padding: 12px 10px !important;
+          }
+        }
+      ` }} />
       {/* MAIN EXAM CONTAINER */}
-      <div style={{
-        backgroundColor: "#ffffff",
-        width: "100%",
-        maxWidth: "1140px",
-        height: "94vh",
-        borderRadius: "18px",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        boxShadow: "0 25px 60px rgba(0,0,0,0.3)",
-        border: `2px solid ${levelTheme.border}`,
-        position: "relative"
+      <div className="jlpt-exam-modal" style={{
+        border: `2px solid ${levelTheme.border}`
       }}>
         {/* ============================================================== */}
         {/* HEADER BAR                                                     */}
@@ -759,13 +813,13 @@ export default function JlptMockExamModal({
           /* ============================================================== */
           /* ACTIVE EXAM RUNNER WORKSPACE                                   */
           /* ============================================================== */
-          <div style={{
+          <div className="jlpt-exam-body" style={{
             flex: 1,
             display: "flex",
             overflow: "hidden"
           }}>
             {/* ── LEFT: QUESTION & PASSAGE AREA ── */}
-            <div style={{
+            <div className="jlpt-exam-question-area" style={{
               flex: 1,
               padding: "24px 30px",
               overflowY: "auto",
@@ -1079,7 +1133,7 @@ export default function JlptMockExamModal({
             </div>
 
             {/* ── RIGHT: QUESTION PALETTE SIDEBAR ── */}
-            <div style={{
+            <div className="jlpt-exam-sidebar" style={{
               width: "280px",
               backgroundColor: "#f8fafc",
               borderLeft: "1.5px solid #e2e8f0",
