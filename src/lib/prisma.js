@@ -5,35 +5,28 @@ import fs from 'fs';
 const globalForPrisma = globalThis;
 
 function getResolvedDatabaseUrl() {
+  // 1. Direct cPanel production absolute path check
+  const cpanelPath = '/home/examjkco/sigma-ubt/prisma/dev.db';
+  if (fs.existsSync(cpanelPath)) {
+    return `file:${cpanelPath}`;
+  }
+
+  // 2. Environment variable check
   const envUrl = process.env.DATABASE_URL;
-  
-  // Explicit known cPanel production path fallback
-  const cpanelProdDb = '/home/examjkco/sigma-ubt/prisma/dev.db';
-  if (fs.existsSync(cpanelProdDb)) {
-    return `file:${cpanelProdDb}`;
-  }
-
-  if (!envUrl) {
-    const defaultLocal = path.resolve(process.cwd(), 'prisma', 'dev.db');
-    return `file:${defaultLocal}`;
-  }
-
-  if (envUrl.startsWith('file:')) {
-    const rawPath = envUrl.slice(5);
-    if (fs.existsSync(rawPath)) {
-      return `file:${rawPath}`;
-    }
-    if (!path.isAbsolute(rawPath)) {
-      const inPrisma = path.resolve(process.cwd(), 'prisma', path.basename(rawPath));
-      const inCwd = path.resolve(process.cwd(), rawPath);
-      if (fs.existsSync(inPrisma)) {
-        return `file:${inPrisma}`;
-      } else if (fs.existsSync(inCwd)) {
-        return `file:${inCwd}`;
+  if (envUrl) {
+    if (envUrl.startsWith('file:')) {
+      const cleanPath = envUrl.replace(/^file:(\/\/)?/, '');
+      if (fs.existsSync(cleanPath)) {
+        return `file:${cleanPath}`;
       }
+    } else {
+      return envUrl;
     }
   }
-  return envUrl;
+
+  // 3. Fallback to local prisma/dev.db relative to current directory
+  const localPrisma = path.resolve(process.cwd(), 'prisma', 'dev.db');
+  return `file:${localPrisma}`;
 }
 
 const resolvedDbUrl = getResolvedDatabaseUrl();
@@ -41,20 +34,14 @@ const resolvedDbUrl = getResolvedDatabaseUrl();
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    datasources: resolvedDbUrl ? { db: { url: resolvedDbUrl } } : undefined,
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    datasources: {
+      db: {
+        url: resolvedDbUrl,
+      },
+    },
+    log: ['error'],
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
-
-// Auto-configure SQLite for high concurrency (WAL mode & 10s busy timeout)
-if (typeof window === 'undefined') {
-  prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL;')
-    .then(() => prisma.$queryRawUnsafe('PRAGMA busy_timeout = 10000;'))
-    .then(() => prisma.$queryRawUnsafe('PRAGMA synchronous = NORMAL;'))
-    .catch((err) => {
-      console.warn('SQLite PRAGMA setup notice:', err?.message || err);
-    });
-}
 
 export default prisma;
