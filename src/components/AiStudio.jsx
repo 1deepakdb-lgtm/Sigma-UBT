@@ -6,7 +6,8 @@ import {
   SPEAKING_STYLES, 
   VOICE_CATEGORIES, 
   DIALOGUE_TEMPLATES, 
-  ELEVENLABS_MODELS 
+  ELEVENLABS_MODELS,
+  AVAILABLE_MODELS 
 } from '@/lib/elevenlabsConfig';
 import ListeningExamSynchronizer from './ListeningExamSynchronizer';
 
@@ -161,6 +162,7 @@ export default function AiStudio({
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState(null);
   const [audioProvider, setAudioProvider] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('eleven_multilingual_v2');
   const [previewingVoiceId, setPreviewingVoiceId] = useState(null);
   const [audioError, setAudioError] = useState(null);
   const [apiStatus, setApiStatus] = useState({ hasApiKey: false, ready: false });
@@ -169,9 +171,14 @@ export default function AiStudio({
   const [dialogueLang, setDialogueLang] = useState(getInitialLang());
   const [dialogueSpeakerA, setDialogueSpeakerA] = useState(getInitialLang() === 'ja' ? 'ja-female-1' : 'ko-female-1');
   const [dialogueSpeakerB, setDialogueSpeakerB] = useState(getInitialLang() === 'ja' ? 'ja-male-1' : 'ko-male-2');
+  const [dialogueGenderA, setDialogueGenderA] = useState('female');
+  const [dialogueGenderB, setDialogueGenderB] = useState('male');
+  const [dialogueModelA, setDialogueModelA] = useState('eleven_multilingual_v2');
+  const [dialogueModelB, setDialogueModelB] = useState('eleven_turbo_v2_5');
   const [dialogueTurns, setDialogueTurns] = useState([]);
   const [isGeneratingDialogue, setIsGeneratingDialogue] = useState(false);
   const [dialogueAudioUrl, setDialogueAudioUrl] = useState(null);
+  const [previewingLineIndex, setPreviewingLineIndex] = useState(null);
 
   const audioRef = useRef(null);
   const previewAudioRef = useRef(null);
@@ -264,23 +271,28 @@ export default function AiStudio({
     return langMatch && genderMatch;
   });
 
-  // Handle Voice Preview
-  const handlePlayPreview = async (voice) => {
+  // Handle Voice Preview with Model Selection
+  const handlePlayPreview = async (voice, modelOverride = null) => {
+    if (!voice) return;
+    const effectiveModel = modelOverride || selectedModel;
+    const previewKey = `${voice.id}_${effectiveModel}`;
+
     if (previewAudioRef.current) {
       previewAudioRef.current.pause();
-      if (previewingVoiceId === voice.id) {
+      if (previewingVoiceId === previewKey) {
         setPreviewingVoiceId(null);
         return;
       }
     }
 
-    setPreviewingVoiceId(voice.id);
+    setPreviewingVoiceId(previewKey);
     setAudioError(null);
 
     try {
       const params = new URLSearchParams({
         text: voice.sampleSentence,
         voiceProfileId: voice.id,
+        modelId: effectiveModel,
         speechMode: voice.defaultSpeechMode || 'teacher',
         ageStyle: voice.ageStyle || '',
         personality: voice.personality || '',
@@ -293,6 +305,17 @@ export default function AiStudio({
       const audio = new Audio(url);
       previewAudioRef.current = audio;
 
+      const isMale = voice.gender === 'male' || voice.id?.includes('male') || (voice.role || '').toLowerCase().includes('male');
+      if (isMale) {
+        audio.preservesPitch = false;
+        audio.mozPreservesPitch = false;
+        audio.webkitPreservesPitch = false;
+        audio.playbackRate = 0.82;
+      } else {
+        audio.preservesPitch = true;
+        audio.playbackRate = 1.0;
+      }
+
       audio.onended = () => setPreviewingVoiceId(null);
       audio.onerror = () => {
         setPreviewingVoiceId(null);
@@ -303,6 +326,66 @@ export default function AiStudio({
     } catch (err) {
       setPreviewingVoiceId(null);
       setAudioError(err.message || 'Audio playback error');
+    }
+  };
+
+  // Preview Individual Dialogue Line
+  const handlePreviewDialogueLine = async (turn, index) => {
+    if (!turn.text || !turn.text.trim()) return;
+
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      if (previewingLineIndex === index) {
+        setPreviewingLineIndex(null);
+        return;
+      }
+    }
+
+    setPreviewingLineIndex(index);
+    setAudioError(null);
+
+    try {
+      const voiceId = turn.voiceProfileId || (turn.speaker === 'A' ? dialogueSpeakerA : dialogueSpeakerB);
+      const modelId = turn.modelId || (turn.speaker === 'A' ? dialogueModelA : dialogueModelB);
+      const voice = VOICE_PROFILES.find(v => v.id === voiceId) || VOICE_PROFILES[0];
+
+      const params = new URLSearchParams({
+        text: turn.text.trim(),
+        voiceProfileId: voice.id,
+        modelId,
+        speechMode: voice.defaultSpeechMode || 'natural_conversation',
+        ageStyle: voice.ageStyle || '',
+        personality: voice.personality || '',
+        emotion: voice.defaultEmotion || 'reassuring',
+        weight: String(voice.baseVocalWeight !== undefined ? voice.baseVocalWeight : 0.40),
+        pitchFactor: String(voice.basePitchFactor !== undefined ? voice.basePitchFactor : 1.00),
+        speed: String(voice.settings?.speed || 0.96)
+      });
+      const url = `/api/elevenlabs/tts?${params.toString()}`;
+      const audio = new Audio(url);
+      previewAudioRef.current = audio;
+
+      const isMale = voice.gender === 'male' || voice.id?.includes('male') || (voice.role || '').toLowerCase().includes('male');
+      if (isMale) {
+        audio.preservesPitch = false;
+        audio.mozPreservesPitch = false;
+        audio.webkitPreservesPitch = false;
+        audio.playbackRate = 0.82;
+      } else {
+        audio.preservesPitch = true;
+        audio.playbackRate = 1.0;
+      }
+
+      audio.onended = () => setPreviewingLineIndex(null);
+      audio.onerror = () => {
+        setPreviewingLineIndex(null);
+        setAudioError('Failed to play dialogue line preview.');
+      };
+
+      await audio.play();
+    } catch (err) {
+      setPreviewingLineIndex(null);
+      setAudioError(err.message || 'Dialogue line preview failed');
     }
   };
 
@@ -323,6 +406,7 @@ export default function AiStudio({
         body: JSON.stringify({
           text: inputText.trim(),
           voiceProfileId: selectedProfile.id,
+          modelId: selectedModel,
           style: selectedSpeechMode,
           speechMode: selectedSpeechMode,
           ageStyle: selectedAgeStyle,
@@ -354,7 +438,16 @@ export default function AiStudio({
 
       if (audioRef.current) {
         audioRef.current.src = url;
-        audioRef.current.playbackRate = speakingSpeed;
+        const isMale = selectedProfile.gender === 'male' || selectedProfile.id?.includes('male') || (selectedProfile.role || '').toLowerCase().includes('male');
+        if (isMale) {
+          audioRef.current.preservesPitch = false;
+          audioRef.current.mozPreservesPitch = false;
+          audioRef.current.webkitPreservesPitch = false;
+          audioRef.current.playbackRate = speakingSpeed * 0.82;
+        } else {
+          audioRef.current.preservesPitch = true;
+          audioRef.current.playbackRate = speakingSpeed;
+        }
         await audioRef.current.play();
         setIsPlaying(true);
       }
@@ -369,14 +462,20 @@ export default function AiStudio({
   const handleLoadTemplate = (template) => {
     setDialogueSpeakerA(template.speakers.A.id);
     setDialogueSpeakerB(template.speakers.B.id);
+    const spkA = VOICE_PROFILES.find(v => v.id === template.speakers.A.id);
+    const spkB = VOICE_PROFILES.find(v => v.id === template.speakers.B.id);
+    if (spkA) setDialogueGenderA(spkA.gender);
+    if (spkB) setDialogueGenderB(spkB.gender);
+
     setDialogueTurns(template.turns.map(t => ({
       speaker: t.speaker,
       text: t.text,
-      voiceProfileId: t.speaker === 'A' ? template.speakers.A.id : template.speakers.B.id
+      voiceProfileId: t.speaker === 'A' ? template.speakers.A.id : template.speakers.B.id,
+      modelId: t.speaker === 'A' ? dialogueModelA : dialogueModelB
     })));
   };
 
-  // Handle Dialogue Generation
+  // Handle Dialogue Generation with Per-Speaker / Per-Turn Models
   const handleGenerateDialogue = async () => {
     if (dialogueTurns.length === 0) {
       setAudioError('Please add at least one dialogue turn.');
@@ -387,11 +486,19 @@ export default function AiStudio({
     setAudioError(null);
 
     try {
+      const enrichedTurns = dialogueTurns.map(t => ({
+        speaker: t.speaker,
+        text: t.text,
+        voiceProfileId: t.voiceProfileId || (t.speaker === 'A' ? dialogueSpeakerA : dialogueSpeakerB),
+        modelId: t.modelId || (t.speaker === 'A' ? dialogueModelA : dialogueModelB),
+        style: 'natural_conversation'
+      }));
+
       const response = await fetch('/api/elevenlabs/dialogue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          turns: dialogueTurns,
+          turns: enrichedTurns,
           style: 'natural_conversation'
         })
       });
@@ -619,9 +726,88 @@ export default function AiStudio({
                     textTransform: 'capitalize'
                   }}
                 >
-                  {g === 'all' ? 'All Genders' : g === 'female' ? '👩 Female Only' : '👨 Male Only'}
+                  {g === 'all' ? '🌐 All Voices' : g === 'female' ? '👩 Female Voice Mode' : '👨 Male Voice Mode'}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* AI Model Selector & Instant Preview Bar */}
+          <div style={{
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+            border: '1.5px solid #e0e7ff',
+            borderRadius: '14px',
+            padding: '14px 18px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            boxShadow: '0 2px 8px rgba(79, 70, 229, 0.06)'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '900', color: '#1e1b4b' }}>
+                  ⚡ AI Voice Model:
+                </span>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: '800',
+                  background: '#e0e7ff',
+                  color: '#4338ca',
+                  padding: '2px 8px',
+                  borderRadius: '12px'
+                }}>
+                  {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.tag || 'Active Engine'}
+                </span>
+              </div>
+              <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#64748b' }}>
+                {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.desc}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #6366f1',
+                  fontSize: '13px',
+                  fontWeight: '800',
+                  color: '#1e1b4b',
+                  background: '#ffffff',
+                  cursor: 'pointer'
+                }}
+              >
+                {AVAILABLE_MODELS.map(m => (
+                  <option key={m.id} value={m.id}>{m.name} ({m.shortName})</option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={() => handlePlayPreview(selectedProfile, selectedModel)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: previewingVoiceId === `${selectedProfile.id}_${selectedModel}` ? '#ef4444' : 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {previewingVoiceId === `${selectedProfile.id}_${selectedModel}` ? '⏹ Stop Audio' : `▶ Play ${selectedProfile.name} (${AVAILABLE_MODELS.find(m => m.id === selectedModel)?.shortName || 'Model'})`}
+              </button>
             </div>
           </div>
 
@@ -629,7 +815,7 @@ export default function AiStudio({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '28px' }}>
             {filteredVoices.map(voice => {
               const isSelected = selectedProfile.id === voice.id;
-              const isPreviewing = previewingVoiceId === voice.id;
+              const isPreviewing = previewingVoiceId === `${voice.id}_${selectedModel}`;
 
               return (
                 <div
@@ -668,9 +854,9 @@ export default function AiStudio({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePlayPreview(voice);
+                        handlePlayPreview(voice, selectedModel);
                       }}
-                      title="Preview this human voice"
+                      title="Preview this human voice with selected model"
                       style={{
                         background: isPreviewing ? '#ef4444' : '#4f46e5',
                         color: '#ffffff',
@@ -686,7 +872,7 @@ export default function AiStudio({
                         boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                       }}
                     >
-                      {isPreviewing ? '⏹ Stop' : '▶ Preview'}
+                      {isPreviewing ? '⏹ Stop' : '▶ Play Voice'}
                     </button>
                   </div>
 
@@ -1031,12 +1217,286 @@ export default function AiStudio({
       {activeTab === 'dialogue' && (
         <div style={{ background: '#ffffff', borderRadius: '16px', border: '1.5px solid #e2e8f0', padding: '24px', boxShadow: '0 4px 18px rgba(0,0,0,0.04)' }}>
           <div style={{ marginBottom: '18px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: '900', margin: '0 0 4px 0' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a' }}>
               💬 Multi-Speaker Human Conversation Studio
             </h2>
             <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-              Simulate authentic Korean & Japanese conversations with natural turn-taking and distinct male/female speaker personalities.
+              Select distinct male & female voice modes, assign different AI models for each speaker, and preview/play authentic dialogue turn-taking.
             </p>
+          </div>
+
+          {/* ── SPEAKERS & INDEPENDENT AI MODELS CONFIGURATION ── */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+            gap: '16px',
+            marginBottom: '22px'
+          }}>
+            {/* SPEAKER A CARD */}
+            <div style={{
+              background: '#f0fdf4',
+              border: '2px solid #86efac',
+              borderRadius: '14px',
+              padding: '16px',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.08)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '900', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  👩 Speaker A (Lead Role)
+                </span>
+                {/* Voice Gender Mode Switcher for Speaker A */}
+                <div style={{ display: 'flex', gap: '4px', background: '#dcfce7', padding: '3px', borderRadius: '8px' }}>
+                  {['female', 'male'].map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => {
+                        setDialogueGenderA(g);
+                        const match = VOICE_PROFILES.find(v => (v.language === dialogueLang || v.language === selectedLang) && v.gender === g);
+                        if (match) {
+                          setDialogueSpeakerA(match.id);
+                          setDialogueTurns(prev => prev.map(t => t.speaker === 'A' ? { ...t, voiceProfileId: match.id } : t));
+                        }
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '11px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        background: dialogueGenderA === g ? '#ffffff' : 'transparent',
+                        color: dialogueGenderA === g ? '#166534' : '#4b5563',
+                        boxShadow: dialogueGenderA === g ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                      }}
+                    >
+                      {g === 'female' ? '👩 Female' : '👨 Male'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Speaker A Voice Profile */}
+              <label style={{ fontSize: '11px', fontWeight: '800', color: '#166534', display: 'block', marginBottom: '4px' }}>
+                Voice Profile:
+              </label>
+              <select
+                value={dialogueSpeakerA}
+                onChange={(e) => {
+                  const newVoiceId = e.target.value;
+                  setDialogueSpeakerA(newVoiceId);
+                  setDialogueTurns(prev => prev.map(t => t.speaker === 'A' ? { ...t, voiceProfileId: newVoiceId } : t));
+                }}
+                style={{
+                  width: '100%',
+                  padding: '7px 10px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #86efac',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  background: '#ffffff',
+                  marginBottom: '10px'
+                }}
+              >
+                {VOICE_PROFILES.filter(v => {
+                  const lMatch = v.language === dialogueLang || v.language === selectedLang;
+                  const gMatch = !dialogueGenderA || v.gender === dialogueGenderA;
+                  return lMatch && gMatch;
+                }).map(v => (
+                  <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
+                ))}
+              </select>
+
+              {/* Speaker A Model Selection */}
+              <label style={{ fontSize: '11px', fontWeight: '800', color: '#166534', display: 'block', marginBottom: '4px' }}>
+                ⚡ AI Voice Model for Speaker A:
+              </label>
+              <select
+                value={dialogueModelA}
+                onChange={(e) => {
+                  const newModel = e.target.value;
+                  setDialogueModelA(newModel);
+                  setDialogueTurns(prev => prev.map(t => t.speaker === 'A' ? { ...t, modelId: newModel } : t));
+                }}
+                style={{
+                  width: '100%',
+                  padding: '7px 10px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #86efac',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  background: '#ffffff',
+                  marginBottom: '12px'
+                }}
+              >
+                {AVAILABLE_MODELS.map(m => (
+                  <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
+                ))}
+              </select>
+
+              {/* Play / Test Speaker A */}
+              <button
+                type="button"
+                onClick={() => {
+                  const voice = VOICE_PROFILES.find(v => v.id === dialogueSpeakerA) || VOICE_PROFILES[0];
+                  handlePlayPreview(voice, dialogueModelA);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: previewingVoiceId === `${dialogueSpeakerA}_${dialogueModelA}` ? '#ef4444' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {previewingVoiceId === `${dialogueSpeakerA}_${dialogueModelA}` ? '⏹ Stop Speaker A' : '▶ Play Speaker A Voice'}
+              </button>
+            </div>
+
+            {/* SPEAKER B CARD (DIFFERENT MODEL!) */}
+            <div style={{
+              background: '#eff6ff',
+              border: '2px solid #93c5fd',
+              borderRadius: '14px',
+              padding: '16px',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontSize: '14px', fontWeight: '900', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  👨 Speaker B (Response Role)
+                </span>
+                {/* Voice Gender Mode Switcher for Speaker B */}
+                <div style={{ display: 'flex', gap: '4px', background: '#dbeafe', padding: '3px', borderRadius: '8px' }}>
+                  {['male', 'female'].map(g => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => {
+                        setDialogueGenderB(g);
+                        const match = VOICE_PROFILES.find(v => (v.language === dialogueLang || v.language === selectedLang) && v.gender === g);
+                        if (match) {
+                          setDialogueSpeakerB(match.id);
+                          setDialogueTurns(prev => prev.map(t => t.speaker === 'B' ? { ...t, voiceProfileId: match.id } : t));
+                        }
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '11px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        background: dialogueGenderB === g ? '#ffffff' : 'transparent',
+                        color: dialogueGenderB === g ? '#1e40af' : '#4b5563',
+                        boxShadow: dialogueGenderB === g ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                      }}
+                    >
+                      {g === 'male' ? '👨 Male' : '👩 Female'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Speaker B Voice Profile */}
+              <label style={{ fontSize: '11px', fontWeight: '800', color: '#1e40af', display: 'block', marginBottom: '4px' }}>
+                Voice Profile:
+              </label>
+              <select
+                value={dialogueSpeakerB}
+                onChange={(e) => {
+                  const newVoiceId = e.target.value;
+                  setDialogueSpeakerB(newVoiceId);
+                  setDialogueTurns(prev => prev.map(t => t.speaker === 'B' ? { ...t, voiceProfileId: newVoiceId } : t));
+                }}
+                style={{
+                  width: '100%',
+                  padding: '7px 10px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #93c5fd',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  background: '#ffffff',
+                  marginBottom: '10px'
+                }}
+              >
+                {VOICE_PROFILES.filter(v => {
+                  const lMatch = v.language === dialogueLang || v.language === selectedLang;
+                  const gMatch = !dialogueGenderB || v.gender === dialogueGenderB;
+                  return lMatch && gMatch;
+                }).map(v => (
+                  <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
+                ))}
+              </select>
+
+              {/* Speaker B Model Selection (DIFFERENT MODEL) */}
+              <label style={{ fontSize: '11px', fontWeight: '800', color: '#1e40af', display: 'block', marginBottom: '4px' }}>
+                ⚡ AI Voice Model for Speaker B (Different Model):
+              </label>
+              <select
+                value={dialogueModelB}
+                onChange={(e) => {
+                  const newModel = e.target.value;
+                  setDialogueModelB(newModel);
+                  setDialogueTurns(prev => prev.map(t => t.speaker === 'B' ? { ...t, modelId: newModel } : t));
+                }}
+                style={{
+                  width: '100%',
+                  padding: '7px 10px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #93c5fd',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  background: '#ffffff',
+                  marginBottom: '12px'
+                }}
+              >
+                {AVAILABLE_MODELS.map(m => (
+                  <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
+                ))}
+              </select>
+
+              {/* Play / Test Speaker B */}
+              <button
+                type="button"
+                onClick={() => {
+                  const voice = VOICE_PROFILES.find(v => v.id === dialogueSpeakerB) || VOICE_PROFILES[1];
+                  handlePlayPreview(voice, dialogueModelB);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: previewingVoiceId === `${dialogueSpeakerB}_${dialogueModelB}` ? '#ef4444' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {previewingVoiceId === `${dialogueSpeakerB}_${dialogueModelB}` ? '⏹ Stop Speaker B' : '▶ Play Speaker B Voice'}
+              </button>
+            </div>
           </div>
 
           {/* Template Selector Bar */}
@@ -1076,49 +1536,68 @@ export default function AiStudio({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
             {dialogueTurns.map((turn, index) => {
               const isSpeakerA = turn.speaker === 'A';
+              const assignedVoiceId = turn.voiceProfileId || (isSpeakerA ? dialogueSpeakerA : dialogueSpeakerB);
+              const assignedModelId = turn.modelId || (isSpeakerA ? dialogueModelA : dialogueModelB);
+              const assignedVoice = VOICE_PROFILES.find(v => v.id === assignedVoiceId);
+              const assignedModel = AVAILABLE_MODELS.find(m => m.id === assignedModelId);
+              const isLinePlaying = previewingLineIndex === index;
+
               return (
                 <div
                   key={index}
                   style={{
                     display: 'flex',
                     gap: '10px',
-                    alignItems: 'flex-start',
+                    alignItems: 'center',
                     background: isSpeakerA ? '#f0fdf4' : '#eff6ff',
-                    padding: '12px',
+                    padding: '12px 14px',
                     borderRadius: '10px',
-                    border: isSpeakerA ? '1px solid #bbf7d0' : '1px solid #bfdbfe'
+                    border: isSpeakerA ? '1.5px solid #86efac' : '1.5px solid #93c5fd',
+                    flexWrap: 'wrap'
                   }}
                 >
-                  <div style={{ width: '130px', flexShrink: 0 }}>
-                    <span style={{
-                      display: 'inline-block',
-                      fontSize: '11px',
-                      fontWeight: '800',
-                      color: isSpeakerA ? '#15803d' : '#1d4ed8',
-                      marginBottom: '2px'
-                    }}>
-                      Speaker {turn.speaker}
-                    </span>
-                    <select
-                      value={turn.voiceProfileId}
-                      onChange={(e) => {
+                  {/* Speaker Badge & Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '170px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextSpk = isSpeakerA ? 'B' : 'A';
                         const updated = [...dialogueTurns];
-                        updated[index].voiceProfileId = e.target.value;
+                        updated[index].speaker = nextSpk;
+                        updated[index].voiceProfileId = nextSpk === 'A' ? dialogueSpeakerA : dialogueSpeakerB;
+                        updated[index].modelId = nextSpk === 'A' ? dialogueModelA : dialogueModelB;
                         setDialogueTurns(updated);
                       }}
-                      style={{ width: '100%', fontSize: '11px', padding: '5px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                      title="Click to toggle speaker between A and B"
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: isSpeakerA ? '#16a34a' : '#2563eb',
+                        color: '#ffffff',
+                        fontSize: '11px',
+                        fontWeight: '800',
+                        cursor: 'pointer'
+                      }}
                     >
-                      {VOICE_PROFILES.filter(v => {
-                        if (effectiveInstLang === 'korean') return v.language === 'ko';
-                        if (effectiveInstLang === 'japanese') return v.language === 'ja';
-                        return true;
-                      }).map(v => (
-                        <option key={v.id} value={v.id}>{v.name}</option>
-                      ))}
-                    </select>
+                      {isSpeakerA ? '👩 Speaker A' : '👨 Speaker B'}
+                    </button>
+
+                    <span style={{
+                      fontSize: '10px',
+                      background: '#ffffff',
+                      color: isSpeakerA ? '#15803d' : '#1d4ed8',
+                      padding: '3px 6px',
+                      borderRadius: '4px',
+                      fontWeight: '700',
+                      border: '1px solid #cbd5e1'
+                    }}>
+                      {assignedModel?.shortName || 'Model'}
+                    </span>
                   </div>
 
-                  <div style={{ flex: 1 }}>
+                  {/* Dialogue Line Input */}
+                  <div style={{ flex: 1, minWidth: '220px' }}>
                     <input
                       type="text"
                       value={turn.text}
@@ -1127,11 +1606,41 @@ export default function AiStudio({
                         updated[index].text = e.target.value;
                         setDialogueTurns(updated);
                       }}
-                      placeholder="Enter dialogue line..."
-                      style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                      placeholder={`Enter line for ${isSpeakerA ? 'Speaker A' : 'Speaker B'}...`}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        background: '#ffffff'
+                      }}
                     />
                   </div>
 
+                  {/* Play Line Button */}
+                  <button
+                    type="button"
+                    onClick={() => handlePreviewDialogueLine(turn, index)}
+                    title="Play this specific line with its assigned model"
+                    style={{
+                      background: isLinePlaying ? '#ef4444' : isSpeakerA ? '#16a34a' : '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '7px 12px',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    {isLinePlaying ? '⏹ Stop' : '▶ Play Line'}
+                  </button>
+
+                  {/* Remove Turn */}
                   <button
                     type="button"
                     onClick={() => {
@@ -1139,7 +1648,16 @@ export default function AiStudio({
                       setDialogueTurns(updated);
                     }}
                     title="Remove turn"
-                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '16px', padding: '4px' }}
+                    style={{
+                      background: '#fee2e2',
+                      border: 'none',
+                      color: '#dc2626',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      padding: '6px 8px',
+                      borderRadius: '6px',
+                      fontWeight: '800'
+                    }}
                   >
                     ✕
                   </button>
@@ -1156,7 +1674,12 @@ export default function AiStudio({
                 const nextSpeaker = dialogueTurns.length % 2 === 0 ? 'A' : 'B';
                 setDialogueTurns([
                   ...dialogueTurns,
-                  { speaker: nextSpeaker, text: '', voiceProfileId: nextSpeaker === 'A' ? 'ko-female-1' : 'ko-male-2' }
+                  {
+                    speaker: nextSpeaker,
+                    text: '',
+                    voiceProfileId: nextSpeaker === 'A' ? dialogueSpeakerA : dialogueSpeakerB,
+                    modelId: nextSpeaker === 'A' ? dialogueModelA : dialogueModelB
+                  }
                 ]);
               }}
               style={{

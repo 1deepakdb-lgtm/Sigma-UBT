@@ -86,6 +86,7 @@ async function fallbackSynthesis(text, lang, gender, options = {}) {
 export async function synthesizeElevenLabs({
   text,
   voiceProfileId = 'ko-female-1',
+  gender = null,
   customVoiceId = null,
   modelId = DEFAULT_MODEL_ID,
   style = 'natural_conversation',
@@ -107,7 +108,15 @@ export async function synthesizeElevenLabs({
     throw new Error('Text exceeds 2500 character limit for single generation.');
   }
 
-  const profile = getVoiceProfile(voiceProfileId);
+  // Strictly enforce male vs female separation
+  let resolvedVoiceProfileId = voiceProfileId;
+  if (gender === 'male' && resolvedVoiceProfileId.includes('female')) {
+    resolvedVoiceProfileId = resolvedVoiceProfileId.replace('female', 'male');
+  } else if (gender === 'female' && resolvedVoiceProfileId.includes('male')) {
+    resolvedVoiceProfileId = resolvedVoiceProfileId.replace('male', 'female');
+  }
+
+  const profile = getVoiceProfile(resolvedVoiceProfileId);
   const voiceId = customVoiceId || profile.defaultVoiceId;
   const lang = profile.language || 'ko';
   const effectiveMode = speechMode || style || 'natural_conversation';
@@ -159,10 +168,12 @@ export async function synthesizeElevenLabs({
     }
   }
 
-  // 4. Check for ElevenLabs API Key
+  // 4. Check for Neural Studio HD override or ElevenLabs API Key
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey || apiKey === 'YOUR_ELEVENLABS_API_KEY') {
-    console.info('ELEVENLABS_API_KEY not configured. Seamlessly activating local studio audio engine.');
+  if (modelId === 'neural_studio_hd' || !apiKey || apiKey === 'YOUR_ELEVENLABS_API_KEY') {
+    if (modelId !== 'neural_studio_hd') {
+      console.info('ELEVENLABS_API_KEY not configured. Seamlessly activating local studio audio engine.');
+    }
     const fallback = await fallbackSynthesis(naturalized, lang, profile.gender, categoryMeta);
     if (fallback) {
       try {
@@ -173,10 +184,10 @@ export async function synthesizeElevenLabs({
       return {
         ...fallback,
         cached: false,
-        warning: 'ELEVENLABS_API_KEY is not set in .env. Served via native high-fidelity audio engine.'
+        warning: modelId === 'neural_studio_hd' ? null : 'ELEVENLABS_API_KEY is not set in .env. Served via native high-fidelity audio engine.'
       };
     }
-    throw new Error('ELEVENLABS_API_KEY not configured and fallback unavailable.');
+    throw new Error('Audio engine unavailable. Please try again.');
   }
 
   // 5. Call ElevenLabs API
@@ -264,7 +275,7 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
     const res = await synthesizeElevenLabs({
       text: turn.text,
       voiceProfileId: turn.voiceProfileId || (turn.speaker === 'B' ? 'ko-male-2' : 'ko-female-1'),
-      modelId,
+      modelId: turn.modelId || modelId,
       style: turn.style || style
     });
 

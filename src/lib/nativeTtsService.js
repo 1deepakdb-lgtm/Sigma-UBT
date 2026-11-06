@@ -564,7 +564,21 @@ export async function synthesizeSpeechBuffer({
       return cacheAndReturn(cacheKey, neuralResult);
     }
 
-    // Secondary Fallback: Melodic DSP Engine
+    // Secondary Engine: Direct Node edge-tts-universal (High-fidelity neural voice)
+    try {
+      const edgeBuf = await generateEdgeTts(text, selectedVoice, selectedPitch, selectedRate);
+      if (edgeBuf && edgeBuf.length > 0) {
+        return cacheAndReturn(cacheKey, {
+          buffer: edgeBuf,
+          contentType: 'audio/mpeg',
+          provider: 'edge-tts'
+        });
+      }
+    } catch (e) {
+      // Fall through to melodic or web synthesis
+    }
+
+    // Tertiary Fallback: Melodic DSP Engine
     const melodicResult = await generateMelodicVoice(text, lang, gender, selectedVoice, selectedPitch, selectedRate, model, {
       ageStyle,
       personality,

@@ -1,0 +1,1 @@
+{"status":"ok","cpanelDbExists":false,"dbStatus":"connected","userCount":17,"dbError":null,"env":{"NODE_ENV":"production","DATABASE_URL":"file:./dev.db","HAS_JWT":true}}

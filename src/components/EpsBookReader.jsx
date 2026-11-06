@@ -889,10 +889,17 @@ export default function EpsBookReader({
 
   // Floating Popup Player State (Draggable, Minimizable, Removable)
   const [popupPos, setPopupPos] = useState({ x: 20, y: 20 });
-  const [popupMode, setPopupMode] = useState("full"); // "full" = format in image, "mini" = play button only, "hidden" = completely closed
+  const [popupMode, setPopupMode] = useState("gesture"); // Default "gesture" (one-touch trigger) so chapter PDF opens in 100% clean full screen
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, initialX: 20, initialY: 20, moved: false });
   const popupContainerRef = useRef(null);
+  const playerOpenTimeRef = useRef(0);
+
+  // Movable Mini Circular AUDIO Button State (Default below Back button: x: 14, y: 58)
+  const [miniAudioPos, setMiniAudioPos] = useState({ x: 14, y: 58 });
+  const [isMiniDragging, setIsMiniDragging] = useState(false);
+  const miniDragRef = useRef({ startX: 0, startY: 0, initialX: 14, initialY: 58, moved: false });
+  const miniAudioBtnRef = useRef(null);
 
   // Admin/Institute Upload & Edit Modal State
   const [isAdmin, setIsAdmin] = useState(false);
@@ -1826,6 +1833,7 @@ export default function EpsBookReader({
   const handleDragStart = (e) => {
     // Only drag with left mouse button or touch
     if (e.type === "mousedown" && e.button !== 0) return;
+    if (e.target.closest("button") || e.target.closest("input") || e.target.closest("select")) return;
 
     const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
     const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
@@ -1840,6 +1848,7 @@ export default function EpsBookReader({
     setIsDragging(true);
 
     const onMove = (moveEvt) => {
+      if (moveEvt.cancelable) moveEvt.preventDefault();
       const curX = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientX : moveEvt.clientX;
       const curY = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientY : moveEvt.clientY;
       const dx = curX - dragRef.current.startX;
@@ -1877,18 +1886,71 @@ export default function EpsBookReader({
     window.addEventListener("touchend", onEnd);
   };
 
-  // Clean PDF URL without browser toolbar, page count or buttons - fit maximum screen
+  // Drag handler for Movable Circular AUDIO Button
+  const handleMiniDragStart = (e) => {
+    e.stopPropagation();
+    if (e.type === "mousedown" && e.button !== 0) return;
+    const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+
+    miniDragRef.current = {
+      startX: clientX,
+      startY: clientY,
+      initialX: miniAudioPos.x,
+      initialY: miniAudioPos.y,
+      moved: false,
+    };
+    setIsMiniDragging(true);
+
+    const onMove = (moveEvt) => {
+      if (moveEvt.cancelable) moveEvt.preventDefault();
+      const curX = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientX : moveEvt.clientX;
+      const curY = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientY : moveEvt.clientY;
+      const dx = curX - miniDragRef.current.startX;
+      const dy = curY - miniDragRef.current.startY;
+
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        miniDragRef.current.moved = true;
+      }
+
+      const btnSize = 60;
+      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+      const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+
+      const maxX = Math.max(0, winW - btnSize);
+      const maxY = Math.max(0, winH - btnSize);
+
+      const nextX = Math.max(6, Math.min(maxX - 6, miniDragRef.current.initialX + dx));
+      const nextY = Math.max(6, Math.min(maxY - 6, miniDragRef.current.initialY + dy));
+
+      setMiniAudioPos({ x: nextX, y: nextY });
+    };
+
+    const onEnd = () => {
+      setIsMiniDragging(false);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onEnd);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onEnd);
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchend", onEnd);
+  };
+
+  // Clean PDF URL without browser toolbar, page count or buttons - fit maximum screen universally
   const getCleanPdfUrl = (url) => {
     if (!url) return "";
     const trimmed = url.trim();
-    if (trimmed.startsWith("blob:") || trimmed.startsWith("data:") || trimmed.includes("drive.google.com")) {
+    if (trimmed.includes("drive.google.com")) {
       return trimmed;
     }
-    const base = trimmed.split("#")[0];
-    return `${base}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&pagemode=none&view=FitH&zoom=page-width`;
+    return `/pdfviewer.html?url=${encodeURIComponent(trimmed)}`;
   };
 
-  // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Background Auto-Save Offline)
+  // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Universal Smartboard/Mobile Compatibility)
   const openChapterFullScreen = (chapter) => {
     setSelectedChapter(chapter);
     setCurrentTrackIndex(0);
@@ -1896,25 +1958,15 @@ export default function EpsBookReader({
     setCurrentTime(0);
     setDuration(0);
     setShowTrackDropdown(false);
-    setPopupMode("full");
+    setPopupMode("gesture");
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
     const pdfTarget = chapter.pdfUrl || chapter.pdf?.url || "";
 
-    // 1. Instant PDF Check: Synchronous Memory Cache lookup first (0ms!)
-    const syncBlob = getCachedBlobSync(pdfTarget);
-    if (syncBlob) {
-      setActivePdfBlobUrl(syncBlob);
-    } else {
-      // Show streaming target immediately with 0 delay
-      setActivePdfBlobUrl(pdfTarget);
-      // Asynchronously query IndexedDB in case it wasn't preloaded
-      getCachedFileBlob(pdfTarget).then((blobUrl) => {
-        if (blobUrl) setActivePdfBlobUrl(blobUrl);
-      });
-    }
+    // Set official streamable server PDF URL immediately for 100% universal loading on Smartboards & Mobile
+    setActivePdfBlobUrl(pdfTarget);
 
-    // 2. Pre-check audio tracks in memory cache
+    // Pre-check audio tracks in memory cache
     if (chapter.audioTracks && chapter.audioTracks.length > 0) {
       const audioBlobMap = {};
       chapter.audioTracks.forEach((tr) => {
@@ -1928,33 +1980,21 @@ export default function EpsBookReader({
       }
     }
 
-    // 3. Check if already marked offline
-    const isAlreadyOffline = isChapterOfflineReadySync(chId) || Boolean(offlineChaptersMap[chId]);
-    if (!isAlreadyOffline) {
-      setIsChapterSavingOffline(true);
-    } else {
-      setIsChapterSavingOffline(false);
-    }
-
-    // 4. Automatically save offline in background (NO DOWNLOAD BUTTONS NEEDED!)
+    // Background offline cache sync (keeps server URL active for flawless rendering)
     autoSaveChapterOffline(chapter, (progress) => {
-      if (progress.type === "pdf" && progress.blobUrl) {
-        setActivePdfBlobUrl(progress.blobUrl);
-      }
       if (progress.type === "audio" && progress.blobUrl && progress.trackUrl) {
         setCachedAudioUrls((prev) => ({ ...prev, [progress.trackUrl]: progress.blobUrl }));
       }
       if (progress.type === "completed") {
-        setIsChapterSavingOffline(false);
         setOfflineChaptersMap((prev) => ({ ...prev, [chId]: true }));
       }
     });
 
-    // Automatically trigger browser full screen mode
-    if (typeof document !== "undefined" && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.().catch((err) => {
-        console.warn("Auto fullscreen trigger:", err);
-      });
+    // Safely attempt fullscreen without throwing on unsupported devices (e.g. smartboard Android TV / iOS)
+    if (typeof document !== "undefined" && !document.fullscreenElement && document.documentElement?.requestFullscreen) {
+      try {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } catch (e) {}
     }
   };
 
@@ -1972,6 +2012,16 @@ export default function EpsBookReader({
     setCurrentTime(0);
     setShowTrackDropdown(false);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && selectedChapter) {
+        closeFullScreen();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedChapter]);
 
   // Playable audio URL (checks offline cached blob first, then direct URL or TTS fallback)
   const getPlayableAudioUrl = (track) => {
@@ -2003,6 +2053,37 @@ export default function EpsBookReader({
       });
     }
   }, [currentTrackIndex]);
+
+  // Auto-shrink audio player to gesture trigger button when clicking outside or when PDF iframe gains focus
+  useEffect(() => {
+    if (popupMode !== "full") return;
+
+    const handleOutsideClick = (e) => {
+      // Ignore if opened within last 350ms to avoid mobile tap-through ghost clicks
+      if (Date.now() - playerOpenTimeRef.current < 350) return;
+      if (popupContainerRef.current && !popupContainerRef.current.contains(e.target)) {
+        setPopupMode("gesture");
+        setShowTrackDropdown(false);
+      }
+    };
+
+    const handleBlur = () => {
+      // When user clicks into the PDF iframe, window blurs
+      if (Date.now() - playerOpenTimeRef.current < 450) return;
+      setPopupMode("gesture");
+      setShowTrackDropdown(false);
+    };
+
+    window.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("touchstart", handleOutsideClick);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      window.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("touchstart", handleOutsideClick);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, [popupMode]);
 
   // Direct Track Selection with Instant Auto-Play & Auto-Hide Dialog
   const handleSelectTrack = (idx) => {
@@ -2752,7 +2833,35 @@ export default function EpsBookReader({
           fontFamily: "Arial, sans-serif"
         }}
       >
-        {/* ================= 1. DRAGGABLE FLOATING POPUP AUDIO PLAYER (FULL FORMAT) ================= */}
+        {/* ================= 0. TRANSPARENT BACKDROP TO SHRINK AUDIO PLAYER ON OUTSIDE CLICK ================= */}
+        {popupMode === "full" && (
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              if (Date.now() - playerOpenTimeRef.current < 350) return;
+              setPopupMode("gesture");
+              setShowTrackDropdown(false);
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              if (Date.now() - playerOpenTimeRef.current < 350) return;
+              setPopupMode("gesture");
+              setShowTrackDropdown(false);
+            }}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 100004,
+              background: "transparent",
+              cursor: "default"
+            }}
+          />
+        )}
+
+        {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (FULL FORMAT) ================= */}
         {popupMode === "full" && (
           <div
             ref={popupContainerRef}
@@ -2765,16 +2874,19 @@ export default function EpsBookReader({
               zIndex: 100005,
               display: "flex",
               alignItems: "center",
-              gap: "10px",
+              gap: "8px",
               backgroundColor: "#ffffff",
-              border: "2px solid #2563eb",
+              border: isPlaying ? "2px solid #10b981" : "2px solid #2563eb",
               borderRadius: "16px",
-              padding: "8px 14px",
-              boxShadow: "0 10px 35px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(37, 99, 235, 0.25)",
+              padding: "8px 12px",
+              boxShadow: isPlaying
+                ? "0 10px 35px rgba(0, 0, 0, 0.25), 0 2px 14px rgba(16, 185, 129, 0.35)"
+                : "0 10px 35px rgba(0, 0, 0, 0.25), 0 2px 10px rgba(37, 99, 235, 0.25)",
               cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
               maxWidth: "calc(100vw - 20px)",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
+              flexWrap: "wrap"
             }}
           >
             {/* DRAG HANDLE */}
@@ -2806,7 +2918,7 @@ export default function EpsBookReader({
               onTouchStart={(e) => e.stopPropagation()}
               title="Return to Chapter List"
               style={{
-                background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+                background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                 color: "#ffffff",
                 border: "none",
                 padding: "6px 12px",
@@ -2817,7 +2929,7 @@ export default function EpsBookReader({
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
-                boxShadow: "0 2px 8px rgba(29, 78, 216, 0.35)",
+                boxShadow: "0 2px 8px rgba(220, 38, 38, 0.35)",
                 flexShrink: 0
               }}
             >
@@ -2831,7 +2943,7 @@ export default function EpsBookReader({
                 flexDirection: "column",
                 justifyContent: "center",
                 minWidth: 0,
-                maxWidth: "260px"
+                maxWidth: "220px"
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -2851,7 +2963,7 @@ export default function EpsBookReader({
                 <span
                   style={{
                     fontWeight: "800",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     color: "#0f172a",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -2866,7 +2978,7 @@ export default function EpsBookReader({
                   fontSize: "11px",
                   color: "#1d4ed8",
                   fontWeight: "600",
-                  marginTop: "2px",
+                  marginTop: "1px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap"
@@ -3212,18 +3324,18 @@ export default function EpsBookReader({
               </button>
             )}
 
-            {/* WINDOW ACTIONS: MINIMIZE TO PLAY BUTTON ONLY & CLOSE/REMOVE */}
+            {/* WINDOW ACTIONS: MINIMIZE TO GESTURE TRIGGER & CLOSE/REMOVE */}
             <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0, marginLeft: "4px" }}>
-              {/* MINIMIZE TO FLOATING PLAY BUTTON ONLY ("play button matra rakhnus") */}
+              {/* MINIMIZE TO GESTURE TRIGGER ("one gesture ko under ma rakhnu") */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPopupMode("mini");
+                  setPopupMode("gesture");
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                title="Minimize to Play Button Only"
+                title="Minimize Audio Player to Gesture Trigger"
                 style={{
                   background: "#f1f5f9",
                   color: "#475569",
@@ -3242,16 +3354,16 @@ export default function EpsBookReader({
                 ─
               </button>
 
-              {/* REMOVE / CLOSE ("any if dont want remove hune gari") */}
+              {/* CLOSE TO GESTURE TRIGGER */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPopupMode("hidden");
+                  setPopupMode("gesture");
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                title="Close / Remove Player from Screen"
+                title="Close Player to Gesture Trigger"
                 style={{
                   background: "#fee2e2",
                   color: "#dc2626",
@@ -3273,209 +3385,200 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 2. MINI FLOATING PLAY BUTTON MODE ("PLAY BUTTON MATRA RAKHNUS", DRAGGABLE ANYWHERE) ================= */}
-        {popupMode === "mini" && (
+        {/* CSS KEYFRAMES FOR AUDIO PULSING GLOW WHEN PLAYING */}
+        <style>{`
+          @keyframes pulseAudioGlow {
+            0% {
+              box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
+            }
+            50% {
+              box-shadow: 0 0 28px rgba(16, 185, 129, 0.95), 0 6px 18px rgba(0, 0, 0, 0.4);
+            }
+            100% {
+              box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
+            }
+          }
+          @keyframes audioPulseRing {
+            0% {
+              transform: scale(0.92);
+              opacity: 0.9;
+            }
+            50% {
+              transform: scale(1.22);
+              opacity: 0.35;
+            }
+            100% {
+              transform: scale(1.4);
+              opacity: 0;
+            }
+          }
+          @keyframes audioWaveBar1 {
+            0% { height: 2px; }
+            100% { height: 8px; }
+          }
+          @keyframes audioWaveBar2 {
+            0% { height: 8px; }
+            100% { height: 3px; }
+          }
+          @keyframes audioWaveBar3 {
+            0% { height: 4px; }
+            100% { height: 9px; }
+          }
+        `}</style>
+
+        {/* ================= 2. MOVABLE CIRCULAR AUDIO BUTTON (DEFAULT BELOW BACK BUTTON) ================= */}
+        {hasAudio && popupMode !== "full" && (
           <div
-            ref={popupContainerRef}
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
+            ref={miniAudioBtnRef}
+            onMouseDown={handleMiniDragStart}
+            onTouchStart={handleMiniDragStart}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!miniDragRef.current.moved) {
+                playerOpenTimeRef.current = Date.now();
+                const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+                const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
+                const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
+                setPopupPos({ x: targetX, y: targetY });
+                setPopupMode("full");
+              }
+            }}
+            onTouchEnd={() => {
+              if (!miniDragRef.current.moved) {
+                playerOpenTimeRef.current = Date.now();
+                const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+                const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
+                const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
+                setPopupPos({ x: targetX, y: targetY });
+                setPopupMode("full");
+              }
+            }}
+            title={isPlaying ? "Audio is Playing (Click to Open Controls, Drag to Move)" : "Audio (Click to Open Player, Drag to Move)"}
             style={{
               position: "fixed",
-              left: `${popupPos.x}px`,
-              top: `${popupPos.y}px`,
-              zIndex: 100005,
+              left: `${miniAudioPos.x}px`,
+              top: `${miniAudioPos.y}px`,
+              zIndex: 100015,
+              width: "58px",
+              height: "58px",
+              borderRadius: "50%",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              gap: "6px",
-              background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+              justifyContent: "center",
+              background: isPlaying
+                ? "linear-gradient(135deg, #059669 0%, #10b981 100%)" // Vibrant Emerald Green when playing!
+                : "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)", // Crisp Royal Blue by default!
               color: "#ffffff",
-              border: "2px solid #93c5fd",
-              borderRadius: "32px",
-              padding: "4px 8px 4px 6px",
-              boxShadow: "0 8px 25px rgba(29, 78, 216, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2)",
-              cursor: isDragging ? "grabbing" : "grab",
-              userSelect: "none"
+              border: isPlaying ? "3px solid #6ee7b7" : "3px solid #93c5fd",
+              boxShadow: isPlaying
+                ? "0 0 24px rgba(16, 185, 129, 0.8), 0 6px 16px rgba(0, 0, 0, 0.4)"
+                : "0 8px 24px rgba(37, 99, 235, 0.45), 0 4px 10px rgba(0, 0, 0, 0.3)",
+              cursor: isMiniDragging ? "grabbing" : "grab",
+              userSelect: "none",
+              touchAction: "none",
+              transition: isMiniDragging ? "none" : "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
+              animation: isPlaying ? "pulseAudioGlow 2s infinite ease-in-out" : "none"
             }}
           >
-            {/* DRAG HANDLE */}
-            <span
-              title="Drag anywhere"
-              style={{
-                cursor: isDragging ? "grabbing" : "grab",
-                color: "#bfdbfe",
-                fontSize: "12px",
-                paddingRight: "2px"
-              }}
-            >
-              ⠿
-            </span>
-
-            {/* BACK BUTTON */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                closeFullScreen();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              title="Exit to Chapters"
-              style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                color: "#ffffff",
-                border: "1px solid rgba(255, 255, 255, 0.35)",
-                borderRadius: "14px",
-                padding: "4px 8px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer"
-              }}
-            >
-              ⬅
-            </button>
-
-            {/* PURE PLAY / PAUSE BUTTON */}
-            {hasAudio && (
-              <button
-                type="button"
-                onClick={togglePlayPause}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                title={isPlaying ? "Click to Pause Audio" : "Click to Play Audio"}
+            {/* Pulsing ring while playing */}
+            {isPlaying && (
+              <div
                 style={{
-                  width: "34px",
-                  height: "34px",
+                  position: "absolute",
+                  inset: "-5px",
                   borderRadius: "50%",
-                  background: "#ffffff",
-                  color: "#1d4ed8",
-                  border: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  fontSize: isPlaying ? "13px" : "15px",
-                  fontWeight: "900",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-                  flexShrink: 0
+                  border: "2.5px solid #10b981",
+                  animation: "audioPulseRing 1.8s infinite ease-out",
+                  pointerEvents: "none"
                 }}
-              >
-                {isPlaying ? "❚❚" : "▶"}
-              </button>
+              />
             )}
 
-            {/* EXPAND BUTTON TO RESTORE FULL FORMAT */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPopupMode("full");
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              title="Expand Full Player"
+            {/* Headphone SVG icon matching user mockup */}
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="2.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                color: "#ffffff",
-                border: "1px solid rgba(255, 255, 255, 0.35)",
-                borderRadius: "14px",
-                padding: "4px 8px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
+                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
+                transform: isPlaying ? "scale(1.05)" : "scale(1)",
+                transition: "transform 0.2s ease",
+                pointerEvents: "none"
               }}
             >
-              <span>⛶</span> Full
-            </button>
-
-            {/* REMOVE / CLOSE BUTTON */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPopupMode("hidden");
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              title="Remove Player from Screen"
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+            </svg>
+            {/* Text: AUDIO + Live equalizer wave bars when playing */}
+            <div
               style={{
-                background: "rgba(239, 68, 68, 0.8)",
-                color: "#ffffff",
-                border: "none",
-                width: "20px",
-                height: "20px",
-                borderRadius: "50%",
-                fontSize: "10px",
-                fontWeight: "bold",
-                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center"
+                gap: "2px",
+                marginTop: "1px",
+                pointerEvents: "none"
               }}
             >
-              ✕
-            </button>
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: "900",
+                  letterSpacing: "0.8px",
+                  lineHeight: 1,
+                  fontFamily: "system-ui, -apple-system, sans-serif",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.4)"
+                }}
+              >
+                AUDIO
+              </span>
+              {isPlaying && (
+                <span style={{ display: "inline-flex", alignItems: "flex-end", gap: "1.5px", height: "8px" }}>
+                  <span style={{ width: "2px", height: "4px", background: "#ffffff", borderRadius: "1px", animation: "audioWaveBar1 0.6s infinite alternate" }} />
+                  <span style={{ width: "2px", height: "7px", background: "#ffffff", borderRadius: "1px", animation: "audioWaveBar2 0.8s infinite alternate" }} />
+                  <span style={{ width: "2px", height: "5px", background: "#ffffff", borderRadius: "1px", animation: "audioWaveBar3 0.5s infinite alternate" }} />
+                </span>
+              )}
+            </div>
           </div>
         )}
 
-        {/* ================= 3. HIDDEN MODE ("ANY IF DONT WANT REMOVE HUNE GARI") ================= */}
-        {popupMode === "hidden" && (
-          <>
-            {/* Discrete Back button at top-left so user is never trapped */}
-            <button
-              type="button"
-              onClick={closeFullScreen}
-              title="Return to Chapter List"
-              style={{
-                position: "fixed",
-                top: "14px",
-                left: "14px",
-                zIndex: 100005,
-                background: "rgba(15, 23, 42, 0.85)",
-                color: "#ffffff",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-                backdropFilter: "blur(8px)",
-                padding: "6px 14px",
-                borderRadius: "8px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)"
-              }}
-            >
-              ⬅ Back
-            </button>
-
-            {/* Discrete Restore button at top-right */}
-            <button
-              type="button"
-              onClick={() => setPopupMode("full")}
-              title="Show Audio Player"
-              style={{
-                position: "fixed",
-                top: "14px",
-                right: "14px",
-                zIndex: 100005,
-                background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
-                color: "#ffffff",
-                border: "1px solid #93c5fd",
-                padding: "6px 14px",
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                boxShadow: "0 4px 14px rgba(29, 78, 216, 0.35)"
-              }}
-            >
-              Show Player
-            </button>
-          </>
-        )}
+        {/* ================= 3. FLOATING DISCRETE BACK BUTTON (TOP-LEFT) ================= */}
+        <button
+          type="button"
+          onClick={closeFullScreen}
+          title="Exit Fullscreen (Esc)"
+          style={{
+            position: "fixed",
+            top: "14px",
+            left: "14px",
+            zIndex: 100010,
+            background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+            color: "#ffffff",
+            border: "1px solid rgba(255, 255, 255, 0.35)",
+            backdropFilter: "blur(8px)",
+            padding: "6px 14px",
+            borderRadius: "20px",
+            fontSize: "12px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            boxShadow: "0 4px 14px rgba(220, 38, 38, 0.45)",
+            transition: "all 0.15s ease"
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#b91c1c"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"; }}
+        >
+          <span>⬅</span>
+          <span>Back</span>
+        </button>
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
         <div style={{
@@ -3491,25 +3594,20 @@ export default function EpsBookReader({
           zIndex: 1
         }}>
           {(activePdfBlobUrl || selectedChapter.pdfUrl) ? (
-            <object
-              data={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
-              type="application/pdf"
-              style={{
-                width: "100vw",
-                height: "100vh",
-                border: "none",
-                margin: 0,
-                padding: 0,
-                display: "block",
-                backgroundColor: "#ffffff",
-                outline: "none"
-              }}
-            >
+            <div style={{
+              position: "relative",
+              width: "100vw",
+              height: "100vh",
+              overflow: "hidden"
+            }}>
               <iframe
                 key={activePdfBlobUrl || selectedChapter.pdfUrl}
                 src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
                 style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
                   width: "100vw",
                   height: "100vh",
                   border: "none",
@@ -3520,7 +3618,7 @@ export default function EpsBookReader({
                   outline: "none"
                 }}
               />
-            </object>
+            </div>
           ) : (
             <div style={{
               width: "100%",
@@ -3708,6 +3806,106 @@ export default function EpsBookReader({
           .book-tabs-grid {
             grid-template-columns: 1fr !important;
             gap: 10px !important;
+          }
+        }
+        /* Mobile Unit in a Row Display */
+        @media (max-width: 768px) {
+          .chapter-unit-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            width: 100% !important;
+            margin-bottom: 30px !important;
+          }
+          .chapter-unit-card {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justifyContent: space-between !important;
+            padding: 12px 14px !important;
+            border-radius: 14px !important;
+            border: 1.5px solid #e2e8f0 !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            gap: 12px !important;
+            min-height: auto !important;
+            cursor: pointer !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+          .chapter-unit-card:active {
+            background-color: #f1f5f9 !important;
+            transform: scale(0.99) !important;
+          }
+          .chapter-unit-card-inner {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 12px !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+          }
+          .chapter-unit-badge-wrap {
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+          }
+          .chapter-unit-badge {
+            font-size: 11px !important;
+            padding: 5px 10px !important;
+            border-radius: 10px !important;
+            display: inline-block !important;
+            min-width: 62px !important;
+            text-align: center !important;
+          }
+          .chapter-unit-cover-desktop {
+            display: none !important;
+          }
+          .chapter-unit-info {
+            text-align: left !important;
+            margin: 0 !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+          }
+          .chapter-unit-info h3 {
+            text-align: left !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            color: #0f172a !important;
+            margin: 0 0 2px 0 !important;
+            line-height: 1.3 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          .chapter-unit-info p {
+            text-align: left !important;
+            font-size: 13px !important;
+            color: #64748b !important;
+            margin: 0 !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          .chapter-unit-arrow {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 50% !important;
+            background-color: #f8fafc !important;
+            color: #2563eb !important;
+            font-size: 18px !important;
+            font-weight: 900 !important;
+            flex-shrink: 0 !important;
+            border: 1px solid #e2e8f0 !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .chapter-unit-arrow {
+            display: none !important;
           }
         }
       ` }} />
@@ -3940,30 +4138,6 @@ export default function EpsBookReader({
       {/* ============================================================== */}
       {(studyLanguage === "korean" || studyLanguage === "both") && (
         <div style={{ marginBottom: studyLanguage === "both" ? "40px" : "0" }}>
-          {studyLanguage === "both" && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "16px",
-              padding: "12px 18px",
-              backgroundColor: "#eff6ff",
-              borderRadius: "14px",
-              border: "1.5px solid #bfdbfe",
-              boxShadow: "0 2px 8px rgba(37, 99, 235, 0.06)"
-            }}>
-              <span style={{ fontSize: "26px", lineHeight: "1" }}>🇰🇷</span>
-              <div>
-                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#1e3a8a" }}>
-                  Korean Study Materials
-                </h3>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>
-                  EPS-TOPIK Book 1 &amp; 2 (60 Chapters), Meaning Book, Question Bank, and Grammar Guide
-                </span>
-              </div>
-            </div>
-          )}
-
           {/* Korean Folder Selection Tabs (Shown when NO folder is entered) */}
           {!isKoreanFolderOpen && (
           <div
@@ -4239,13 +4413,16 @@ export default function EpsBookReader({
                 </div>
               </div>
 
-              {/* 60 CHAPTERS CLEAN GRID WITH PRELIMINARY FIRST & APPENDIX LAST */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "16px",
-                marginBottom: "40px"
-              }}>
+              {/* 60 CHAPTERS CLEAN GRID / MOBILE IN-A-ROW DISPLAY */}
+              <div
+                className="chapter-unit-grid"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: "16px",
+                  marginBottom: "40px"
+                }}
+              >
                 {/* 🔰 PRELIMINARY (예비편) CARD - FIRST AS CHAPTER 1 */}
                 {(!searchQuery || "preliminary 예비편 한글 인사말 0".includes(searchQuery.toLowerCase())) && (
                   <div
@@ -4271,6 +4448,7 @@ export default function EpsBookReader({
                       e.currentTarget.style.borderColor = "#e2e8f0";
                     }}
                     title="Click to open Preliminary (예비편) in Full Screen"
+                    className="chapter-unit-card"
                     style={{
                       backgroundColor: "white",
                       borderRadius: "12px",
@@ -4285,9 +4463,9 @@ export default function EpsBookReader({
                       userSelect: "none"
                     }}
                   >
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
-                        <span style={{
+                    <div className="chapter-unit-card-inner">
+                      <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                        <span className="chapter-unit-badge" style={{
                           backgroundColor: "#d1fae5",
                           color: "#065f46",
                           padding: "4px 14px",
@@ -4296,34 +4474,36 @@ export default function EpsBookReader({
                           fontWeight: "800",
                           display: "inline-block"
                         }}>
-                          🔰 Preliminary (예비편)
+                          🔰 Preliminary
                         </span>
                       </div>
 
-                      <ChapterCover
-                        chapter="0"
-                        titleKo="예비편 (한글과 인사말)"
-                        titleNe="प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)"
-                        coverImage="/uploads/eps-chapters/covers/cover_00.jpg"
-                        pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
-                        bookPart={1}
-                        height="195px"
-                        margin="10px 0 12px 0"
-                        onClick={(e) => {
-                          if (e && e.stopPropagation) e.stopPropagation();
-                          const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
-                            chapter: "Preliminary",
-                            titleKo: "예비편 (한글과 인사말)",
-                            titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
-                            titleEn: "Preliminary - Hangeul and Greetings",
-                            pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
-                            audioTracks: []
-                          };
-                          openChapterFullScreen(prelim);
-                        }}
-                      />
+                      <div className="chapter-unit-cover-desktop">
+                        <ChapterCover
+                          chapter="0"
+                          titleKo="예비편 (한글과 인사말)"
+                          titleNe="प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)"
+                          coverImage="/uploads/eps-chapters/covers/cover_00.jpg"
+                          pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
+                          bookPart={1}
+                          height="195px"
+                          margin="10px 0 12px 0"
+                          onClick={(e) => {
+                            if (e && e.stopPropagation) e.stopPropagation();
+                            const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
+                              chapter: "Preliminary",
+                              titleKo: "예비편 (한글과 인사말)",
+                              titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
+                              titleEn: "Preliminary - Hangeul and Greetings",
+                              pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
+                              audioTracks: []
+                            };
+                            openChapterFullScreen(prelim);
+                          }}
+                        />
+                      </div>
 
-                      <div style={{ textAlign: "center", marginTop: "6px" }}>
+                      <div className="chapter-unit-info" style={{ textAlign: "center", marginTop: "6px" }}>
                         <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
                           예비편 (한글과 인사말)
                         </h3>
@@ -4332,6 +4512,8 @@ export default function EpsBookReader({
                         </p>
                       </div>
                     </div>
+
+                    <div className="chapter-unit-arrow">›</div>
                   </div>
                 )}
                 {filteredChapters.map((c) => {
@@ -4350,6 +4532,7 @@ export default function EpsBookReader({
                         e.currentTarget.style.borderColor = "#e2e8f0";
                       }}
                       title={`Click to open Chapter ${c.chapter} in Full Screen`}
+                      className="chapter-unit-card"
                       style={{
                         backgroundColor: "white",
                         borderRadius: "12px",
@@ -4364,10 +4547,10 @@ export default function EpsBookReader({
                         userSelect: "none"
                       }}
                     >
-                      <div>
-                        {/* CHAPTER HEADER: Centered for all roles, PDF and Audio badges removed */}
-                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
-                          <span style={{
+                      <div className="chapter-unit-card-inner">
+                        {/* CHAPTER HEADER */}
+                        <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
+                          <span className="chapter-unit-badge" style={{
                             backgroundColor: c.chapter <= 30 ? "#dbeafe" : "#fef3c7",
                             color: c.chapter <= 30 ? "#1d4ed8" : "#b45309",
                             padding: "5px 20px",
@@ -4382,32 +4565,35 @@ export default function EpsBookReader({
                           </span>
                         </div>
 
-                        {/* CHAPTER COVER / FIRST PAGE PREVIEW */}
-                        <ChapterCover
-                          chapter={c.chapter}
-                          titleKo={c.titleKo}
-                          titleNe={c.titleNe}
-                          pdfUrl={c.pdfUrl}
-                          coverImage={c.coverImage}
-                          bookPart={c.chapter <= 30 ? 1 : 2}
-                          height="195px"
-                          margin="10px 0 12px 0"
-                          onClick={(e) => {
-                            if (e && e.stopPropagation) e.stopPropagation();
-                            openChapterFullScreen(c);
-                          }}
-                        />
+                        {/* CHAPTER COVER / FIRST PAGE PREVIEW (DESKTOP ONLY) */}
+                        <div className="chapter-unit-cover-desktop">
+                          <ChapterCover
+                            chapter={c.chapter}
+                            titleKo={c.titleKo}
+                            titleNe={c.titleNe}
+                            pdfUrl={c.pdfUrl}
+                            coverImage={c.coverImage}
+                            bookPart={c.chapter <= 30 ? 1 : 2}
+                            height="195px"
+                            margin="10px 0 12px 0"
+                            onClick={(e) => {
+                              if (e && e.stopPropagation) e.stopPropagation();
+                              openChapterFullScreen(c);
+                            }}
+                          />
+                        </div>
 
-                        <div style={{ textAlign: "center", marginTop: "6px" }}>
-                          <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a", textAlign: "center" }}>
+                        <div className="chapter-unit-info" style={{ textAlign: "center", marginTop: "6px" }}>
+                          <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
                             {c.titleKo}
                           </h3>
-                          <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4", textAlign: "center" }}>
+                          <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" }}>
                             {c.titleNe}
                           </p>
                         </div>
                       </div>
 
+                      <div className="chapter-unit-arrow">›</div>
                     </div>
                   );
                 })}
@@ -4437,6 +4623,7 @@ export default function EpsBookReader({
                       e.currentTarget.style.borderColor = "#e2e8f0";
                     }}
                     title="Click to open Appendix (부록) in Full Screen"
+                    className="chapter-unit-card"
                     style={{
                       backgroundColor: "white",
                       borderRadius: "12px",
@@ -4451,9 +4638,9 @@ export default function EpsBookReader({
                       userSelect: "none"
                     }}
                   >
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
-                        <span style={{
+                    <div className="chapter-unit-card-inner">
+                      <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                        <span className="chapter-unit-badge" style={{
                           backgroundColor: "#ede9fe",
                           color: "#5b21b6",
                           padding: "4px 14px",
@@ -4466,30 +4653,32 @@ export default function EpsBookReader({
                         </span>
                       </div>
 
-                      <ChapterCover
-                        chapter="App"
-                        titleKo="부록"
-                        titleNe="परिशिष्ट"
-                        coverImage="/uploads/eps-chapters/covers/cover_61.jpg"
-                        pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
-                        bookPart={2}
-                        height="195px"
-                        margin="10px 0 12px 0"
-                        onClick={(e) => {
-                          if (e && e.stopPropagation) e.stopPropagation();
-                          const appendix = r2Folders.find(f => f.folder === "Appendix") || {
-                            chapter: "Appendix",
-                            titleKo: "부록",
-                            titleNe: "परिशिष्ट",
-                            titleEn: "Appendix",
-                            pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
-                            audioTracks: []
-                          };
-                          openChapterFullScreen(appendix);
-                        }}
-                      />
+                      <div className="chapter-unit-cover-desktop">
+                        <ChapterCover
+                          chapter="App"
+                          titleKo="부록"
+                          titleNe="परिशिष्ट"
+                          coverImage="/uploads/eps-chapters/covers/cover_61.jpg"
+                          pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
+                          bookPart={2}
+                          height="195px"
+                          margin="10px 0 12px 0"
+                          onClick={(e) => {
+                            if (e && e.stopPropagation) e.stopPropagation();
+                            const appendix = r2Folders.find(f => f.folder === "Appendix") || {
+                              chapter: "Appendix",
+                              titleKo: "부록",
+                              titleNe: "परिशिष्ट",
+                              titleEn: "Appendix",
+                              pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
+                              audioTracks: []
+                            };
+                            openChapterFullScreen(appendix);
+                          }}
+                        />
+                      </div>
 
-                      <div style={{ textAlign: "center", marginTop: "6px" }}>
+                      <div className="chapter-unit-info" style={{ textAlign: "center", marginTop: "6px" }}>
                         <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
                           부록
                         </h3>
@@ -4498,6 +4687,8 @@ export default function EpsBookReader({
                         </p>
                       </div>
                     </div>
+
+                    <div className="chapter-unit-arrow">›</div>
                   </div>
                 )}
               </div>

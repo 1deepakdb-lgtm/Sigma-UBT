@@ -5,24 +5,28 @@ import fs from 'fs';
 const globalForPrisma = globalThis;
 
 function getResolvedDatabaseUrl() {
+  // 1. Direct cPanel production absolute path check
+  const cpanelPath = '/home/examjkco/sigma-ubt/prisma/dev.db';
+  if (fs.existsSync(cpanelPath)) {
+    return `file:${cpanelPath}`;
+  }
+
+  // 2. Environment variable check
   const envUrl = process.env.DATABASE_URL;
-  if (!envUrl) return undefined;
-  if (envUrl.startsWith('file:')) {
-    const rawPath = envUrl.slice(5);
-    if (!path.isAbsolute(rawPath)) {
-      // Check candidate locations for SQLite file
-      const inPrisma = path.resolve(process.cwd(), 'prisma', path.basename(rawPath));
-      const inCwd = path.resolve(process.cwd(), rawPath);
-      if (fs.existsSync(inPrisma)) {
-        return `file:${inPrisma}`;
-      } else if (fs.existsSync(inCwd)) {
-        return `file:${inCwd}`;
-      } else {
-        return `file:${inPrisma}`;
+  if (envUrl) {
+    if (envUrl.startsWith('file:')) {
+      const cleanPath = envUrl.replace(/^file:(\/\/)?/, '');
+      if (fs.existsSync(cleanPath)) {
+        return `file:${cleanPath}`;
       }
+    } else {
+      return envUrl;
     }
   }
-  return envUrl;
+
+  // 3. Fallback to local prisma/dev.db relative to current directory
+  const localPrisma = path.resolve(process.cwd(), 'prisma', 'dev.db');
+  return `file:${localPrisma}`;
 }
 
 const resolvedDbUrl = getResolvedDatabaseUrl();
@@ -30,20 +34,14 @@ const resolvedDbUrl = getResolvedDatabaseUrl();
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    datasources: resolvedDbUrl ? { db: { url: resolvedDbUrl } } : undefined,
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    datasources: {
+      db: {
+        url: resolvedDbUrl,
+      },
+    },
+    log: ['error'],
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
-
-// Auto-configure SQLite for high concurrency (WAL mode & 10s busy timeout)
-if (typeof window === 'undefined') {
-  prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL;')
-    .then(() => prisma.$queryRawUnsafe('PRAGMA busy_timeout = 10000;'))
-    .then(() => prisma.$queryRawUnsafe('PRAGMA synchronous = NORMAL;'))
-    .catch((err) => {
-      console.warn('SQLite PRAGMA setup notice:', err?.message || err);
-    });
-}
 
 export default prisma;

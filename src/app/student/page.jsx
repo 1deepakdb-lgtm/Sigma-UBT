@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import DictionarySection from "@/components/DictionarySection";
@@ -8,6 +8,7 @@ import EpsBookReader from "@/components/EpsBookReader";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import EsewaCheckoutModal from "@/components/EsewaCheckoutModal";
 import JlptMockExamModal from "@/components/JlptMockExamModal";
+import ColorVisionSection from "@/components/ColorVisionSection";
 import { JLPT_MOCK_SETS_META, getMockExamSetById } from "@/data/jlptMockTestData";
 import { performLogout } from "@/lib/clientAuth";
 
@@ -449,15 +450,36 @@ const StudentDashboard = () => {
   };
 
   // Strict Set Unlock Rule:
-  // An exam set is ONLY unlocked if:
+  // An exam set is unlocked if:
   // 1) Super Admin designated it as FREE DEMO (set.isFree || set.setType === "FREE" || name includes "free demo"), OR
-  // 2) It was individually purchased & released for this student, OR
-  // 3) The student has an active package that covers this specific set!
+  // 2) The Institute granted Free distribution for this package/set, OR
+  // 3) It was individually purchased & released for this student, OR
+  // 4) The student has an active package that covers this specific set!
   const isSetUnlocked = (set) => {
     if (!set) return false;
     if (set.isFree === true || set.setType === "FREE" || (set.name && set.name.toLowerCase().includes("free demo"))) {
       return true;
     }
+
+    // Institute Free Distribution check:
+    const pkg = examPackages.find(p => (p.name || "").toLowerCase() === (set.packageName || "").toLowerCase());
+    if (pkg && (pkg.distributionMode === "free" || pkg.isFreeForInstituteStudents || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0")) {
+      return true;
+    }
+    if (set.distributionMode === "free" || set.isFreeForInstituteStudents || (set.price || "").toLowerCase().includes("free") || set.price === "Rs. 0") {
+      return true;
+    }
+
+    // Check institute-specific distribution map in localStorage
+    if (typeof window !== "undefined" && studentInstitute) {
+      try {
+        const instDist = JSON.parse(localStorage.getItem(`instituteDistribution_${studentInstitute}`) || "{}");
+        if (instDist[set.packageName] === "free" || instDist[set.name] === "free" || instDist[set.id] === "free") {
+          return true;
+        }
+      } catch (e) {}
+    }
+
     return Boolean(isSetIndividuallyUnlocked(set) || isSetCoveredByStudentPackage(set));
   };
 
@@ -497,6 +519,8 @@ const StudentDashboard = () => {
     setSelectedEsewaItem(item);
     setEsewaModalOpen(true);
   };
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleEsewaSuccessUnlock = (res) => {
     try {
@@ -1217,6 +1241,9 @@ const StudentDashboard = () => {
       if (examCategoryFilter === "mock") {
         return isJp && !isKorean;
       }
+      if (examCategoryFilter === "free") {
+        return s.isFree === true || s.setType === "FREE" || (s.name && s.name.toLowerCase().includes("free demo")) || isSetUnlocked(s);
+      }
       return true;
     })
     .sort((a, b) => {
@@ -1257,6 +1284,60 @@ const StudentDashboard = () => {
 
   const totalExamPages = Math.ceil(filteredSets.length / SETS_PER_PAGE);
   const paginatedSets = filteredSets.slice((examSetsPage - 1) * SETS_PER_PAGE, examSetsPage * SETS_PER_PAGE);
+
+  const accessibleSetsList = useMemo(() => {
+    const standardChapterSets = [
+      { id: "ch-01-02", name: "Chapterwise 01~02", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
+      { id: "ch-03-04", name: "Chapterwise 03~04", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
+      { id: "ch-05-06", name: "Chapterwise 05~06", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
+      { id: "ch-07-08", name: "Chapterwise 07~08", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
+      { id: "ch-09-10", name: "Chapterwise 09~10", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
+    ];
+
+    const unlocked = examSets.filter(s => isSetUnlocked(s));
+    let combined = [...unlocked];
+    standardChapterSets.forEach(cs => {
+      if (!combined.some(s => (s.name || "").toLowerCase() === cs.name.toLowerCase())) {
+        combined.push(cs);
+      }
+    });
+
+    return combined.sort((a, b) => {
+      const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
+      const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
+      return numA - numB;
+    });
+  }, [examSets, unlockedSets, activeStudentPackages, examPackages]);
+
+  const handleStartExam = (set) => {
+    const isJlptSet = Boolean(
+      set.track === "japanese" ||
+      set.level ||
+      (set.id && (String(set.id).startsWith("jlpt-") || String(set.id).startsWith("jft-")))
+    );
+
+    const start = () => {
+      if (isJlptSet) {
+        const fullSet = getMockExamSetById(set.id);
+        setActiveJlptExamSet(fullSet);
+      } else {
+        router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
+      }
+    };
+
+    if (isSetUnlocked(set)) {
+      start();
+      return;
+    }
+
+    handleOpenEsewaModal({
+      id: set.id,
+      name: set.name,
+      price: 40,
+      type: "set",
+      packageName: set.packageName || (instituteLanguage === "japanese" ? "Japanese Mock Test" : "UBT Set")
+    });
+  };
 
   const containerStyle = {
     minHeight: "100vh",
@@ -1303,7 +1384,13 @@ const StudentDashboard = () => {
     lineHeight: "1.2"
   });
 
-  const contentAreaStyle = { padding: "28px", maxWidth: "1200px", margin: "0 auto" };
+  const contentAreaStyle = {
+    padding: "20px 16px",
+    paddingBottom: "85px",
+    maxWidth: "1200px",
+    margin: "0 auto",
+    boxSizing: "border-box"
+  };
   const cardStyle = {
     backgroundColor: "#ffffff",
     padding: "24px",
@@ -1384,16 +1471,20 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        <div style={{
-          display: "flex",
-          gap: "4px",
-          flexWrap: "nowrap",
-          alignItems: "center",
-          flexShrink: 0,
-          overflowX: "auto",
-          scrollbarWidth: "none",
-          msOverflowStyle: "none"
-        }}>
+        {/* Desktop Tabs (Visible on screens > 768px) */}
+        <div
+          className="student-desktop-tabs"
+          style={{
+            display: "flex",
+            gap: "4px",
+            flexWrap: "nowrap",
+            alignItems: "center",
+            flexShrink: 0,
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none"
+          }}
+        >
           <button onClick={() => setActiveTab("home")} style={getNavBtnStyle("home")}>Dashboard</button>
           {showUbtExam && (
             <button
@@ -1433,7 +1524,9 @@ const StudentDashboard = () => {
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
         </div>
 
+        {/* Desktop Logout Button */}
         <button
+          className="student-desktop-logout"
           onClick={handleLogout}
           style={{
             backgroundColor: "#dc2626",
@@ -1450,133 +1543,480 @@ const StudentDashboard = () => {
         >
           Logout
         </button>
+
+        {/* Mobile 3-line Dotted Hamburger Button */}
+        <button
+          type="button"
+          className="student-mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Student Navigation Menu"
+          title="Toggle Navigation Menu"
+          style={{
+            display: "none",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "38px",
+            height: "38px",
+            borderRadius: "8px",
+            backgroundColor: mobileMenuOpen ? "#2563eb" : "rgba(255, 255, 255, 0.15)",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            color: "#ffffff",
+            cursor: "pointer",
+            flexShrink: 0,
+            padding: "4px"
+          }}
+        >
+          {mobileMenuOpen ? (
+            <span style={{ fontSize: "18px", fontWeight: "bold", lineHeight: 1 }}>✕</span>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "3.5px", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
+              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
+              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
+            </div>
+          )}
+        </button>
       </div>
 
-      <div style={contentAreaStyle}>
-        {/* DASHBOARD TAB */}
-        {activeTab === "home" && (
-          <div>
-            <div style={{ textAlign: "center", marginBottom: "26px" }}>
-              <h2 style={{ color: "#0f172a", margin: "0", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px" }}>
-                Welcome, {studentName}
-              </h2>
-              {!hasPaidExamAccess ? (
-                <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginTop: "12px", padding: "6px 18px", backgroundColor: "#f0fdf4", borderRadius: "20px", border: "1px solid #bbf7d0" }}>
-                  <span style={{ fontSize: "12px", color: "#166534", fontWeight: "700" }}>
-                    Account Validity: <strong style={{ color: "#15803d" }}>Lifetime</strong>
-                  </span>
-                  <span style={{ color: "#cbd5e1" }}>•</span>
-                  <span style={{ fontSize: "12px", color: "#b45309", fontWeight: "700" }}>
-                    {instituteLanguage === "japanese" ? "Mock Tests: " : "UBT & Mock Tests: "}
-                    <strong style={{ color: "#d97706" }}>Purchase Required</strong>
-                  </span>
-                </div>
-              ) : (
-                effectiveExpiryDate && (
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginTop: "12px", padding: "6px 16px", backgroundColor: isPackageExpired ? "#fee2e2" : "#f8fafc", borderRadius: "20px", border: isPackageExpired ? "1px solid #fca5a5" : "1px solid #e2e8f0" }}>
-                    <span style={{ fontSize: "12px", color: isPackageExpired ? "#991b1b" : "#475569", fontWeight: "600" }}>
-                      Package: <strong style={{ color: isPackageExpired ? "#dc2626" : "#1e3a8a" }}>{effectivePackageName}</strong>
-                    </span>
-                    <span style={{ color: "#cbd5e1" }}>•</span>
-                    <span style={{ fontSize: "12px", color: isPackageExpired ? "#991b1b" : "#475569", fontWeight: "600" }}>
-                      Package Expiry Date: <strong style={{ color: isPackageExpired ? "#dc2626" : "#047857" }}>{effectiveExpiryDate}</strong>
-                    </span>
-                    <span style={{
-                      fontSize: "11px",
-                      fontWeight: "700",
-                      color: isPackageExpired ? "#b91c1c" : "#166534",
-                      backgroundColor: isPackageExpired ? "#fecaca" : "#dcfce7",
-                      padding: "2px 8px",
-                      borderRadius: "10px"
-                    }}>
-                      {isPackageExpired ? "Expired" : "Active"}
-                    </span>
-                  </div>
-                )
-              )}
+      {/* Mobile Drawer Menu for Student Portal */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.65)",
+              backdropFilter: "blur(4px)",
+              zIndex: 99998
+            }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "56px",
+              left: 0,
+              right: 0,
+              backgroundColor: "#0f172a",
+              borderBottom: "3px solid #2563eb",
+              boxShadow: "0 12px 35px rgba(0, 0, 0, 0.5)",
+              zIndex: 99999,
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              maxHeight: "calc(100vh - 65px)",
+              overflowY: "auto"
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+              Student Menu
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", maxWidth: "1050px", margin: "0 auto" }}>
-              {/* UBT EXAMS CARD */}
-              {showUbtExam && (
-                <div onClick={() => {
+            <button
+              onClick={() => { setActiveTab("home"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "home" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "home" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📊</span>
+              <span>Dashboard</span>
+            </button>
+
+            {showUbtExam && (
+              <button
+                onClick={() => {
                   setActiveTab("exams");
                   setExamCategoryFilter("ubt");
                   setExamSetsPage(1);
-                }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
-                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                    <LaptopExamIcon size={28} color="#2563eb" />
-                  </div>
-                  <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
-                    Start UBT Exam
-                  </h3>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                    Take 40-question EPS-TOPIK Korean tests · Individual sets Rs. 40 or full package
-                  </p>
-                </div>
-              )}
+                  setMobileMenuOpen(false);
+                }}
+                style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "exams" && examCategoryFilter === "ubt" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "exams" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span>📝</span>
+                <span>Start UBT Exam</span>
+              </button>
+            )}
 
-              {/* JAPANESE CBT MOCK TEST CARD */}
-              {showMockTest && (
-                <div onClick={() => {
+            {showMockTest && (
+              <button
+                onClick={() => {
                   setActiveTab("exams");
                   setExamCategoryFilter("mock");
                   setExamSetsPage(1);
-                }} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
-                  <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                    <LaptopExamIcon size={28} color="#2563eb" />
+                  setMobileMenuOpen(false);
+                }}
+                style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "exams" && examCategoryFilter === "mock" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "exams" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span>🎯</span>
+                <span>Mock Test</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => { setActiveTab("buyExam"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "buyExam" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "buyExam" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>💎</span>
+              <span>Packages</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("vocab"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "vocab" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "vocab" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📖</span>
+              <span>Dictionary</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("listening"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "listening" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "listening" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>🎧</span>
+              <span>Study Materials</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("news"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "news" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "news" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📢</span>
+              <span>Notice</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("notify"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "notify" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "notify" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>💬</span>
+              <span>Messages</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("results"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "results" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "results" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📈</span>
+              <span>Performance</span>
+            </button>
+
+            <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
+              <button
+                onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                style={{ width: "100%", backgroundColor: "#ef4444", color: "#ffffff", border: "none", padding: "11px", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+              >
+                <span>🚪</span>
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Global Responsive Styles for Student Portal */}
+      <style jsx>{`
+        @media (max-width: 1024px) {
+          :global(.student-desktop-tabs) {
+            display: none !important;
+          }
+          :global(.student-desktop-logout) {
+            display: none !important;
+          }
+          :global(.student-mobile-menu-btn) {
+            display: inline-flex !important;
+          }
+          :global(.student-bottom-nav) {
+            display: flex !important;
+          }
+        }
+        @media (min-width: 1025px) {
+          :global(.student-bottom-nav) {
+            display: none !important;
+          }
+        }
+        :global(.student-bottom-nav button) {
+          -webkit-tap-highlight-color: transparent;
+          transition: transform 0.1s ease, color 0.15s ease;
+        }
+        :global(.student-bottom-nav button:active) {
+          transform: scale(0.92);
+        }
+      `}</style>
+
+      <div style={contentAreaStyle}>
+        {/* DASHBOARD / HOME TAB */}
+        {activeTab === "home" && (
+          <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+            {/* Screen Title */}
+            <div style={{ textAlign: "center", marginBottom: "16px" }}>
+              <h1 style={{ color: "#111827", margin: "0 0 12px 0", fontSize: "24px", fontWeight: "800", letterSpacing: "-0.3px" }}>
+                Home
+              </h1>
+
+              {/* User Welcome & Validity Badge */}
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "4px 14px", backgroundColor: "#f1f5f9", borderRadius: "20px", border: "1px solid #e2e8f0" }}>
+                <span style={{ fontSize: "12px", color: "#334155", fontWeight: "600" }}>
+                  Welcome, <strong style={{ color: "#0f3b82" }}>{studentName}</strong>
+                </span>
+                {effectivePackageName && (
+                  <>
+                    <span style={{ color: "#cbd5e1" }}>•</span>
+                    <span style={{ fontSize: "11px", color: isPackageExpired ? "#dc2626" : "#059669", fontWeight: "700" }}>
+                      {effectivePackageName} {effectiveExpiryDate ? `(${effectiveExpiryDate})` : ""}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Section 1: Our Services */}
+            <div style={{ marginBottom: "28px" }}>
+              <h2 style={{ color: "#111827", fontSize: "18px", fontWeight: "800", textAlign: "center", margin: "0 0 16px 0", letterSpacing: "-0.2px" }}>
+                Our Services
+              </h2>
+
+              {/* 5-Card Grid: Row 1 has 3 cards, Row 2 has 2 cards centered */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {/* Row 1: 3 cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                  {/* Card 1: Book Services */}
+                  <div
+                    onClick={() => setActiveTab("listening")}
+                    style={{
+                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
+                      borderRadius: "14px",
+                      padding: "14px 8px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.7)",
+                      minHeight: "100px",
+                      transition: "transform 0.15s, box-shadow 0.15s"
+                    }}
+                  >
+                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
+                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+                        <rect x="8" y="28" width="32" height="10" rx="3" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="2"/>
+                        <rect x="8" y="18" width="32" height="10" rx="3" fill="#f59e0b" stroke="#d97706" strokeWidth="2"/>
+                        <rect x="8" y="8" width="32" height="10" rx="3" fill="#10b981" stroke="#059669" strokeWidth="2"/>
+                        <line x1="16" y1="8" x2="16" y2="38" stroke="#ffffff" strokeWidth="2"/>
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
+                      Book Services
+                    </span>
                   </div>
-                  <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>
-                    Mock Test
-                  </h3>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                    JLPT (N5–N2), JFT-Basic &amp; NAT-TEST mock exams · Individual sets Rs. 40 or full package
-                  </p>
-                </div>
-              )}
 
-              <div onClick={() => setActiveTab("results")} style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bbf7d0", boxShadow: "0 4px 12px rgba(22,163,74,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <BarChartIcon size={28} color="#16a34a" />
+                  {/* Card 2: Modal Bank */}
+                  <div
+                    onClick={() => {
+                      setActiveTab("exams");
+                      setExamCategoryFilter("mock");
+                      setExamSetsPage(1);
+                    }}
+                    style={{
+                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
+                      borderRadius: "14px",
+                      padding: "14px 8px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.7)",
+                      minHeight: "100px",
+                      transition: "transform 0.15s, box-shadow 0.15s"
+                    }}
+                  >
+                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
+                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+                        <rect x="10" y="24" width="28" height="12" rx="3" fill="#10b981" stroke="#047857" strokeWidth="2"/>
+                        <rect x="10" y="14" width="28" height="10" rx="3" fill="#ef4444" stroke="#b91c1c" strokeWidth="2"/>
+                        <path d="M26 8v8a3 3 0 1 1-3-3h3" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
+                        <path d="M34 6v8a3 3 0 1 1-3-3h3" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
+                        <line x1="26" y1="8" x2="34" y2="6" stroke="#8b5cf6" strokeWidth="2.5"/>
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
+                      Modal Bank
+                    </span>
+                  </div>
+
+                  {/* Card 3: EPS-TOPIK S... */}
+                  <div
+                    onClick={() => {
+                      setActiveTab("exams");
+                      setExamCategoryFilter("ubt");
+                      setExamSetsPage(1);
+                    }}
+                    style={{
+                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
+                      borderRadius: "14px",
+                      padding: "14px 8px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.7)",
+                      minHeight: "100px",
+                      transition: "transform 0.15s, box-shadow 0.15s"
+                    }}
+                  >
+                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
+                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+                        <rect x="10" y="8" width="28" height="34" rx="4" fill="#ffffff" stroke="#ef4444" strokeWidth="2"/>
+                        <rect x="16" y="4" width="16" height="6" rx="2" fill="#ef4444"/>
+                        <rect x="14" y="18" width="20" height="20" rx="2" fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.5"/>
+                        <line x1="14" y1="24" x2="34" y2="24" stroke="#3b82f6" strokeWidth="1.5"/>
+                        <line x1="14" y1="30" x2="34" y2="30" stroke="#3b82f6" strokeWidth="1.5"/>
+                        <line x1="20" y1="18" x2="20" y2="38" stroke="#3b82f6" strokeWidth="1.5"/>
+                        <line x1="28" y1="18" x2="28" y2="38" stroke="#3b82f6" strokeWidth="1.5"/>
+                        <text x="24" y="15" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#ef4444">SCORE</text>
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
+                      EPS-TOPIK S...
+                    </span>
+                  </div>
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#166534", fontSize: "18px", fontWeight: "700" }}>Your Performance</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Inspect past scores, accuracy, and logs</p>
+
+                {/* Row 2: 2 cards centered */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", maxWidth: "420px", margin: "0 auto", width: "100%" }}>
+                  {/* Card 4: Free exams */}
+                  <div
+                    onClick={() => {
+                      setActiveTab("exams");
+                      setExamCategoryFilter("free");
+                      setExamSetsPage(1);
+                    }}
+                    style={{
+                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
+                      borderRadius: "14px",
+                      padding: "14px 8px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.7)",
+                      minHeight: "100px",
+                      transition: "transform 0.15s, box-shadow 0.15s"
+                    }}
+                  >
+                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
+                      <svg width="36" height="36" viewBox="0 0 48 48">
+                        <path d="M24 4l3.5 4.5 5.5-1.5 2 5.5 5.5 1-0.5 5.5 4.5 3.5-3 5 3 5-4.5 3.5 0.5 5.5-5.5 1-2 5.5-5.5-1.5L24 44l-3.5-4.5-5.5 1.5-2-5.5-5.5-1 0.5-5.5-4.5-3.5 3-5-3-5 4.5-3.5-0.5-5.5 5.5-1 2-5.5 5.5 1.5z" fill="#dc2626"/>
+                        <text x="24" y="27" textAnchor="middle" fontSize="9" fontWeight="900" fill="#ffffff" letterSpacing="0.5">FREE</text>
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
+                      Free exams
+                    </span>
+                  </div>
+
+                  {/* Card 5: Buy Exam */}
+                  <div
+                    onClick={() => setActiveTab("buyExam")}
+                    style={{
+                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
+                      borderRadius: "14px",
+                      padding: "14px 8px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.7)",
+                      minHeight: "100px",
+                      transition: "transform 0.15s, box-shadow 0.15s"
+                    }}
+                  >
+                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
+                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+                        <circle cx="18" cy="38" r="3" fill="#64748b"/>
+                        <circle cx="34" cy="38" r="3" fill="#64748b"/>
+                        <path d="M10 14h6l4 18h16l4-14H18" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <rect x="22" y="8" width="16" height="20" rx="2" fill="#ffffff" stroke="#3b82f6" strokeWidth="1.5"/>
+                        <circle cx="30" cy="15" r="4" fill="#10b981"/>
+                        <text x="30" y="17.5" textAnchor="middle" fontSize="6.5" fontWeight="bold" fill="#ffffff">$</text>
+                        <line x1="25" y1="22" x2="35" y2="22" stroke="#94a3b8" strokeWidth="1.5"/>
+                        <line x1="25" y1="25" x2="31" y2="25" stroke="#94a3b8" strokeWidth="1.5"/>
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
+                      Buy Exam
+                    </span>
+                  </div>
+                </div>
               </div>
+            </div>
 
-              <div onClick={() => setActiveTab("listening")} style={{ background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fcd34d", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <BookStackIcon size={28} color="#d97706" />
-                </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#92400e", fontSize: "18px", fontWeight: "700" }}>Study Materials</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                  {instituteLanguage === "japanese" ? "Japanese Textbooks, Question Banks & Grammar" : instituteLanguage === "korean" ? "Korean Textbooks, Question Banks & Grammar" : "Korean & Japanese Textbooks, Question Banks & Grammar"}
-                </p>
-              </div>
+            {/* Section 2: Exam you have Access */}
+            <div>
+              <h2 style={{ color: "#111827", fontSize: "20px", fontWeight: "800", textAlign: "center", margin: "0 0 16px 0", letterSpacing: "-0.2px" }}>
+                Exam you have Access
+              </h2>
 
-              <div onClick={() => setActiveTab("vocab")} style={{ background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #bfdbfe", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <BookOpenIcon size={28} color="#2563eb" />
-                </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "700" }}>Dictionary</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                  {instituteLanguage === "japanese" ? "Japanese, Nepali, and English vocabulary lookup" : instituteLanguage === "korean" ? "Korean, Nepali, and English vocabulary lookup" : "Korean & Japanese vocabulary lookup with pronunciation"}
-                </p>
-              </div>
-
-              <div onClick={() => setActiveTab("buyExam")} style={{ background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #fed7aa", boxShadow: "0 4px 12px rgba(234,88,12,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <CartIcon size={28} color="#ea580c" />
-                </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#9a3412", fontSize: "18px", fontWeight: "700" }}>Packages</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Explore and purchase UBT &amp; Mock Test packages via eSewa</p>
-              </div>
-
-              <div onClick={() => setActiveTab("notify")} style={{ background: "linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)", borderRadius: "16px", padding: "30px 20px", textAlign: "center", cursor: "pointer", border: "1px solid #99f6e4", boxShadow: "0 4px 12px rgba(13,148,136,0.08)" }}>
-                <div style={{ width: "64px", height: "64px", background: "#ffffff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px auto", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}>
-                  <BellIcon size={28} color="#0d9488" />
-                </div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#115e59", fontSize: "18px", fontWeight: "700" }}>Notify Admin</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Send inquiries directly to institute administration</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {accessibleSetsList.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "24px", backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                    <p style={{ color: "#64748b", margin: 0, fontSize: "14px" }}>No unlocked exams available currently.</p>
+                  </div>
+                ) : (
+                  accessibleSetsList.map((set, idx) => {
+                    const isBlue = idx % 2 === 0;
+                    const bg = isBlue ? "#dbeafe" : "#ffedd5";
+                    const border = isBlue ? "#bfdbfe" : "#fed7aa";
+                    return (
+                      <div
+                        key={set.id || idx}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          backgroundColor: bg,
+                          border: `1.5px solid ${border}`,
+                          borderRadius: "14px",
+                          padding: "14px 18px",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
+                        }}
+                      >
+                        <div style={{ fontSize: "16px", fontWeight: "700", color: "#1e293b", letterSpacing: "0.2px" }}>
+                          {set.name}
+                        </div>
+                        <button
+                          onClick={() => handleStartExam(set)}
+                          style={{
+                            backgroundColor: "#0f3b82",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "10px",
+                            padding: "9px 24px",
+                            fontSize: "14px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(15, 59, 130, 0.3)",
+                            transition: "all 0.15s"
+                          }}
+                        >
+                          Start
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -2616,7 +3056,209 @@ const StudentDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* COLOR VISION TAB */}
+        {activeTab === "colorVision" && (
+          <ColorVisionSection onBackToHome={() => setActiveTab("home")} />
+        )}
+
+        {/* PROFILE TAB */}
+        {activeTab === "profile" && (
+          <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+            <div style={{ backgroundColor: "#ffffff", borderRadius: "16px", padding: "26px", border: "1px solid #e2e8f0", boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "22px", paddingBottom: "18px", borderBottom: "1px solid #f1f5f9" }}>
+                <div style={{ width: "64px", height: "64px", borderRadius: "50%", backgroundColor: "#0f3b82", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", fontWeight: "800", boxShadow: "0 4px 10px rgba(15, 59, 130, 0.25)" }}>
+                  {(studentName || "S").charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 style={{ margin: "0 0 4px 0", fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>{studentName || "Student"}</h3>
+                  <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>{currentStudentPhone || "Online Student"}</p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", backgroundColor: "#f8fafc", borderRadius: "10px", border: "1px solid #f1f5f9" }}>
+                  <span style={{ fontSize: "13.5px", color: "#64748b", fontWeight: "600" }}>Institute:</span>
+                  <span style={{ fontSize: "13.5px", color: "#0f172a", fontWeight: "700" }}>{studentInstitute || "Default Institute"}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", backgroundColor: "#f0fdf4", borderRadius: "10px", border: "1px solid #bbf7d0" }}>
+                  <span style={{ fontSize: "13.5px", color: "#166534", fontWeight: "600" }}>Account Validity:</span>
+                  <span style={{ fontSize: "13.5px", color: "#15803d", fontWeight: "800" }}>Lifetime Free Access</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", backgroundColor: "#f8fafc", borderRadius: "10px", border: "1px solid #f1f5f9" }}>
+                  <span style={{ fontSize: "13.5px", color: "#64748b", fontWeight: "600" }}>Active Package:</span>
+                  <span style={{ fontSize: "13.5px", color: "#1e3a8a", fontWeight: "700" }}>{effectivePackageName}</span>
+                </div>
+                {effectiveExpiryDate && (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", backgroundColor: isPackageExpired ? "#fee2e2" : "#f8fafc", borderRadius: "10px", border: isPackageExpired ? "1px solid #fca5a5" : "1px solid #f1f5f9" }}>
+                    <span style={{ fontSize: "13.5px", color: isPackageExpired ? "#991b1b" : "#64748b", fontWeight: "600" }}>Package Expiry:</span>
+                    <span style={{ fontSize: "13.5px", color: isPackageExpired ? "#dc2626" : "#059669", fontWeight: "700" }}>{effectiveExpiryDate}</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <button
+                  onClick={() => setActiveTab("colorVision")}
+                  style={{ width: "100%", backgroundColor: "#f8fafc", color: "#1e293b", border: "1px solid #cbd5e1", padding: "12px", borderRadius: "10px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                >
+                  <span>👁️</span> Test Color Vision (Ishihara)
+                </button>
+                <button
+                  onClick={() => setActiveTab("results")}
+                  style={{ width: "100%", backgroundColor: "#f8fafc", color: "#1e293b", border: "1px solid #cbd5e1", padding: "12px", borderRadius: "10px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                >
+                  <span>📊</span> View Exam Performance History
+                </button>
+                <button
+                  onClick={handleLogout}
+                  style={{ width: "100%", backgroundColor: "#ef4444", color: "#ffffff", border: "none", padding: "12px", borderRadius: "10px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "6px" }}
+                >
+                  <span>🚪</span> Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Fixed Bottom Navigation Bar for Mobile, Tablet, iPad & App View */}
+      <nav
+        className="student-bottom-nav"
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "64px",
+          backgroundColor: "#ffffff",
+          borderTop: "1px solid #e2e8f0",
+          display: "flex",
+          justifyContent: "space-around",
+          alignItems: "center",
+          zIndex: 9999,
+          boxShadow: "0 -2px 10px rgba(0,0,0,0.06)",
+          padding: "4px 8px"
+        }}
+      >
+        {/* Home */}
+        <button
+          onClick={() => setActiveTab("home")}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px 0",
+            color: activeTab === "home" ? "#1e40af" : "#64748b"
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill={activeTab === "home" ? "#1e40af" : "none"} stroke={activeTab === "home" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "home" ? 800 : 500, marginTop: "2px" }}>Home</span>
+        </button>
+
+        {/* Color Vision */}
+        <button
+          onClick={() => setActiveTab("colorVision")}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px 0",
+            color: activeTab === "colorVision" ? "#1e40af" : "#64748b"
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={activeTab === "colorVision" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "colorVision" ? 800 : 500, marginTop: "2px" }}>Color Vision</span>
+        </button>
+
+        {/* Notice */}
+        <button
+          onClick={() => setActiveTab("news")}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px 0",
+            color: activeTab === "news" ? "#1e40af" : "#64748b"
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={activeTab === "news" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "news" ? 800 : 500, marginTop: "2px" }}>Notice</span>
+        </button>
+
+        {/* Results */}
+        <button
+          onClick={() => setActiveTab("results")}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px 0",
+            color: activeTab === "results" ? "#1e40af" : "#64748b"
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={activeTab === "results" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "results" ? 800 : 500, marginTop: "2px" }}>Results</span>
+        </button>
+
+        {/* Profile */}
+        <button
+          onClick={() => setActiveTab("profile")}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px 0",
+            color: activeTab === "profile" ? "#1e40af" : "#64748b"
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={activeTab === "profile" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "profile" ? 800 : 500, marginTop: "2px" }}>Profile</span>
+        </button>
+      </nav>
 
       {/* eSewa Instant Payment & Auto-Unlock Modal */}
       <EsewaCheckoutModal
