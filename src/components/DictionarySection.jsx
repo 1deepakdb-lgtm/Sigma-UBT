@@ -2286,8 +2286,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 );
                 const batchimRuleText = word.koreanBatchimRule || (hasBatchimRule ? '음절끝소리 규칙 (받침 발음 변화)' : '');
 
-                const hasRule = activeLang === 'ja' ? Boolean(word.hasRule || word.pronunciationRule) : hasBatchimRule;
-                const ruleBadge = activeLang === 'ja' ? (word.isKanji ? "漢字" : "発音 / Rule") : "받침 규칙";
+                const hasRule = activeLang === 'ja' && Boolean(word.hasRule || word.pronunciationRule);
+                const ruleBadge = word.isKanji ? "漢字" : "発音 / Rule";
 
                 // Check if user has uploaded voice for this word
                 const customVoiceForWord = voiceLibrary.find(v => {
