@@ -337,6 +337,7 @@ export default function AiStudio({
       const params = new URLSearchParams({
         text: voice.sampleSentence,
         voiceProfileId: voice.id,
+        gender: voice.gender || (voice.id?.includes('male') ? 'male' : 'female'),
         modelId: effectiveModel,
         speechMode: voice.defaultSpeechMode || 'teacher',
         ageStyle: voice.ageStyle || '',
@@ -395,6 +396,7 @@ export default function AiStudio({
       const params = new URLSearchParams({
         text: turn.text.trim(),
         voiceProfileId: voice.id,
+        gender: voice.gender || (turn.speaker === 'B' ? 'male' : 'female'),
         modelId,
         speechMode: voice.defaultSpeechMode || 'natural_conversation',
         ageStyle: voice.ageStyle || '',
@@ -447,6 +449,7 @@ export default function AiStudio({
         body: JSON.stringify({
           text: inputText.trim(),
           voiceProfileId: selectedProfile.id,
+          gender: selectedProfile.gender || (selectedProfile.id?.includes('male') ? 'male' : 'female'),
           modelId: selectedModel,
           style: selectedSpeechMode,
           speechMode: selectedSpeechMode,

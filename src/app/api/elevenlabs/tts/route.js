@@ -106,6 +106,7 @@ export async function POST(request) {
     const {
       text,
       voiceProfileId = 'ko-female-1',
+      gender = null,
       customVoiceId = null,
       modelId,
       style = 'natural_conversation',
@@ -137,6 +138,7 @@ export async function POST(request) {
     const result = await synthesizeElevenLabs({
       text,
       voiceProfileId,
+      gender,
       customVoiceId,
       modelId,
       style: speechMode || style,

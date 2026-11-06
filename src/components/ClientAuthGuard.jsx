@@ -12,13 +12,17 @@ import { useRouter } from 'next/navigation';
 export default function ClientAuthGuard({ allowedRoles = [], children }) {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
+  const [showRetry, setShowRetry] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
+    const retryTimer = setTimeout(() => {
+      if (isMounted && !authorized) setShowRetry(true);
+    }, 3500);
 
     async function checkAuth() {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 7000);
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
 
       try {
         const res = await fetch('/api/auth/me', {
@@ -30,7 +34,8 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
 
         if (!res.ok) {
           if (isMounted) {
-            router.replace('/?error=unauthorized');
+            try { router.replace('/?error=unauthorized'); } catch (e) {}
+            window.location.href = '/?error=unauthorized';
           }
           return;
         }
@@ -38,7 +43,8 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
         const data = await res.json();
         if (!data.authenticated || !data.user) {
           if (isMounted) {
-            router.replace('/?error=unauthorized');
+            try { router.replace('/?error=unauthorized'); } catch (e) {}
+            window.location.href = '/?error=unauthorized';
           }
           return;
         }
@@ -50,7 +56,8 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
             if (role === 'admin') target = '/admin';
             else if (role === 'institute') target = '/institute';
             else if (role === 'staff') target = '/institute?tab=billing';
-            router.replace(target);
+            try { router.replace(target); } catch (e) {}
+            window.location.href = target;
           }
           return;
         }
@@ -60,7 +67,8 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
         }
       } catch (err) {
         if (isMounted) {
-          router.replace('/?error=unauthorized');
+          try { router.replace('/?error=unauthorized'); } catch (e) {}
+          window.location.href = '/?error=unauthorized';
         }
       }
     }
@@ -69,6 +77,7 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
 
     return () => {
       isMounted = false;
+      clearTimeout(retryTimer);
     };
   }, [allowedRoles, router]);
 
@@ -83,7 +92,8 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
         justifyContent: 'center',
         backgroundColor: '#0f172a',
         color: '#f8fafc',
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        padding: '20px'
       }}>
         <div style={{
           width: '40px',
@@ -97,6 +107,40 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
         <p style={{ marginTop: '16px', fontSize: '14px', fontWeight: '600', color: '#94a3b8' }}>
           Verifying security session...
         </p>
+        {showRetry && (
+          <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => { window.location.href = '/'; }}
+              style={{
+                background: '#ef4444',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              ← Back to Sign In
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                background: '#334155',
+                color: '#f8fafc',
+                border: '1px solid #475569',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
       </div>
     );
   }

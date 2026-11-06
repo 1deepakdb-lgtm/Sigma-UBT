@@ -400,6 +400,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const audioBlobCacheRef = useRef(new Map()); // Map<url, string (blobUrl)> for millisecond playback
   const femaleDropdownRef = useRef(null);
   const maleDropdownRef = useRef(null);
+  const femaleBadgeRef = useRef(null);
+  const maleBadgeRef = useRef(null);
   const recognitionRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -494,10 +496,16 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   // Click outside to close dropdowns
   useEffect(() => {
     function handleClickOutside(e) {
-      if (femaleDropdownRef.current && !femaleDropdownRef.current.contains(e.target)) {
+      if (
+        femaleDropdownRef.current && !femaleDropdownRef.current.contains(e.target) &&
+        femaleBadgeRef.current && !femaleBadgeRef.current.contains(e.target)
+      ) {
         setIsFemaleDropdownOpen(false);
       }
-      if (maleDropdownRef.current && !maleDropdownRef.current.contains(e.target)) {
+      if (
+        maleDropdownRef.current && !maleDropdownRef.current.contains(e.target) &&
+        maleBadgeRef.current && !maleBadgeRef.current.contains(e.target)
+      ) {
         setIsMaleDropdownOpen(false);
       }
     }
@@ -616,10 +624,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
       utterance.lang = langCode;
       if (gender === 'male') {
-        utterance.pitch = 0.85;
-        utterance.rate = 1.0;
+        utterance.pitch = 0.65;
+        utterance.rate = 0.95;
       } else {
-        utterance.pitch = 1.05;
+        utterance.pitch = 1.10;
         utterance.rate = 1.0;
       }
 
@@ -763,13 +771,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       return;
     }
 
-    // 2. Crystal-Clear Native Speech Synthesis (Neat, Crisp, Zero-Lag, Natural Pacing)
-    if (text && typeof window !== 'undefined' && window.speechSynthesis) {
-      const spoke = speakTextNative(text, targetLang, targetGender, id);
-      if (spoke) return;
-    }
-
-    // 3. Audio Playback with Pristine 1.0x Rate
+    // 2. Play high-fidelity synthesized audio from server URL (Distinct Male & Female Voice Models)
     if (url) {
       setLoadingAudioId(id);
       setPlayingAudioId(null);
@@ -1429,6 +1431,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", maxWidth: "100%", paddingBottom: "2px" }}>
           {/* Active Model Badges & AI Studio Button - All Same Size (Height 42px, radius 24px, 30px icon, 2-line text, strictly ONE line) */}
           <div
+            ref={femaleBadgeRef}
             onClick={() => setIsFemaleDropdownOpen(prev => !prev)}
             title="Active Female Voice Model (Click to select model)"
             style={{
@@ -1455,6 +1458,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </div>
 
           <div
+            ref={maleBadgeRef}
             onClick={() => setIsMaleDropdownOpen(prev => !prev)}
             title="Active Male Voice Model (Click to select model)"
             style={{
@@ -1869,6 +1873,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       onClick={() => {
                         setSelectedFemaleModel(model);
                         setIsFemaleDropdownOpen(false);
+                        handlePlaySearchWord('female', model, `preview-${model.id}`);
                       }}
                       style={{
                         padding: "7px 10px",
@@ -2116,6 +2121,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       onClick={() => {
                         setSelectedMaleModel(model);
                         setIsMaleDropdownOpen(false);
+                        handlePlaySearchWord('male', model, `preview-${model.id}`);
                       }}
                       style={{
                         padding: "7px 10px",
@@ -2505,7 +2511,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   const langCode = activeLang === 'ja' ? 'ja' : 'ko';
                                   const textToPlay = spokenWord || primaryWord;
                                   const voiceProfId = selectedFemaleModel.voiceProfileId || (langCode === 'ja' ? 'ja-female-1' : 'ko-female-1');
-                                  const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`;
+                                  const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=female`;
                                   handlePlayAudio(url, `popup-fem-${primaryWord}`, textToPlay, langCode, 'female');
                                 }
                               }}
@@ -2586,7 +2592,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   const langCode = activeLang === 'ja' ? 'ja' : 'ko';
                                   const textToPlay = spokenWord || primaryWord;
                                   const voiceProfId = selectedMaleModel.voiceProfileId || (langCode === 'ja' ? 'ja-male-1' : 'ko-male-1');
-                                  const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`;
+                                  const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=male`;
                                   handlePlayAudio(url, `popup-male-${primaryWord}`, textToPlay, langCode, 'male');
                                 }
                               }}
