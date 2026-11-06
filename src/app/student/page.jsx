@@ -498,6 +498,8 @@ const StudentDashboard = () => {
     setEsewaModalOpen(true);
   };
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const handleEsewaSuccessUnlock = (res) => {
     try {
       const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
@@ -1384,16 +1386,20 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        <div style={{
-          display: "flex",
-          gap: "4px",
-          flexWrap: "nowrap",
-          alignItems: "center",
-          flexShrink: 0,
-          overflowX: "auto",
-          scrollbarWidth: "none",
-          msOverflowStyle: "none"
-        }}>
+        {/* Desktop Tabs (Visible on screens > 768px) */}
+        <div
+          className="student-desktop-tabs"
+          style={{
+            display: "flex",
+            gap: "4px",
+            flexWrap: "nowrap",
+            alignItems: "center",
+            flexShrink: 0,
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none"
+          }}
+        >
           <button onClick={() => setActiveTab("home")} style={getNavBtnStyle("home")}>Dashboard</button>
           {showUbtExam && (
             <button
@@ -1433,7 +1439,9 @@ const StudentDashboard = () => {
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
         </div>
 
+        {/* Desktop Logout Button */}
         <button
+          className="student-desktop-logout"
           onClick={handleLogout}
           style={{
             backgroundColor: "#dc2626",
@@ -1450,7 +1458,189 @@ const StudentDashboard = () => {
         >
           Logout
         </button>
+
+        {/* Mobile 3-line Dotted Hamburger Button */}
+        <button
+          type="button"
+          className="student-mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Student Navigation Menu"
+          title="Toggle Navigation Menu"
+          style={{
+            display: "none",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "38px",
+            height: "38px",
+            borderRadius: "8px",
+            backgroundColor: mobileMenuOpen ? "#2563eb" : "rgba(255, 255, 255, 0.15)",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            color: "#ffffff",
+            cursor: "pointer",
+            flexShrink: 0,
+            padding: "4px"
+          }}
+        >
+          {mobileMenuOpen ? (
+            <span style={{ fontSize: "18px", fontWeight: "bold", lineHeight: 1 }}>✕</span>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "3.5px", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
+              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
+              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
+            </div>
+          )}
+        </button>
       </div>
+
+      {/* Mobile Drawer Menu for Student Portal */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.65)",
+              backdropFilter: "blur(4px)",
+              zIndex: 99998
+            }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "56px",
+              left: 0,
+              right: 0,
+              backgroundColor: "#0f172a",
+              borderBottom: "3px solid #2563eb",
+              boxShadow: "0 12px 35px rgba(0, 0, 0, 0.5)",
+              zIndex: 99999,
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              maxHeight: "calc(100vh - 65px)",
+              overflowY: "auto"
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+              Student Menu
+            </div>
+
+            <button
+              onClick={() => { setActiveTab("home"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "home" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "home" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📊</span>
+              <span>Dashboard</span>
+            </button>
+
+            {showUbtExam && (
+              <button
+                onClick={() => {
+                  setActiveTab("exams");
+                  setExamCategoryFilter("ubt");
+                  setExamSetsPage(1);
+                  setMobileMenuOpen(false);
+                }}
+                style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "exams" && examCategoryFilter === "ubt" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "exams" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span>📝</span>
+                <span>Start UBT Exam</span>
+              </button>
+            )}
+
+            {showMockTest && (
+              <button
+                onClick={() => {
+                  setActiveTab("exams");
+                  setExamCategoryFilter("mock");
+                  setExamSetsPage(1);
+                  setMobileMenuOpen(false);
+                }}
+                style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "exams" && examCategoryFilter === "mock" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "exams" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span>🎯</span>
+                <span>Mock Test</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => { setActiveTab("buyExam"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "buyExam" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "buyExam" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>💎</span>
+              <span>Packages</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("vocab"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "vocab" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "vocab" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📖</span>
+              <span>Dictionary</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("listening"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "listening" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "listening" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>🎧</span>
+              <span>Study Materials</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("news"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "news" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "news" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📢</span>
+              <span>Notice</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("notify"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "notify" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "notify" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>💬</span>
+              <span>Messages</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("results"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "results" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "results" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📈</span>
+              <span>Performance</span>
+            </button>
+
+            <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
+              <button
+                onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                style={{ width: "100%", backgroundColor: "#ef4444", color: "#ffffff", border: "none", padding: "11px", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+              >
+                <span>🚪</span>
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Global Responsive Styles for Student Portal */}
+      <style jsx>{`
+        @media (max-width: 768px) {
+          :global(.student-desktop-tabs) {
+            display: none !important;
+          }
+          :global(.student-desktop-logout) {
+            display: none !important;
+          }
+          :global(.student-mobile-menu-btn) {
+            display: inline-flex !important;
+          }
+        }
+      `}</style>
 
       <div style={contentAreaStyle}>
         {/* DASHBOARD TAB */}

@@ -889,7 +889,7 @@ export default function EpsBookReader({
 
   // Floating Popup Player State (Draggable, Minimizable, Removable)
   const [popupPos, setPopupPos] = useState({ x: 20, y: 20 });
-  const [popupMode, setPopupMode] = useState("hidden"); // Default "hidden" for 100% clean full-screen view without blocking audio bar
+  const [popupMode, setPopupMode] = useState("gesture"); // Default "gesture" (one-touch trigger) so chapter PDF opens in 100% clean full screen
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, initialX: 20, initialY: 20, moved: false });
   const popupContainerRef = useRef(null);
@@ -1877,22 +1877,17 @@ export default function EpsBookReader({
     window.addEventListener("touchend", onEnd);
   };
 
-  // Custom PDF viewer URL - no toolbar, no controls, fullscreen clean
+  // Clean PDF URL without browser toolbar, page count or buttons - fit maximum screen universally
   const getCleanPdfUrl = (url) => {
     if (!url) return "";
     const trimmed = url.trim();
-    if (trimmed.startsWith("blob:") || trimmed.startsWith("data:")) {
-      // For blob URLs use custom viewer
-      return `/pdfviewer.html?url=${encodeURIComponent(trimmed)}`;
-    }
     if (trimmed.includes("drive.google.com")) {
       return trimmed;
     }
-    // Use custom PDF.js viewer — zero browser toolbar
     return `/pdfviewer.html?url=${encodeURIComponent(trimmed)}`;
   };
 
-  // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Background Auto-Save Offline)
+  // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Universal Smartboard/Mobile Compatibility)
   const openChapterFullScreen = (chapter) => {
     setSelectedChapter(chapter);
     setCurrentTrackIndex(0);
@@ -1900,25 +1895,15 @@ export default function EpsBookReader({
     setCurrentTime(0);
     setDuration(0);
     setShowTrackDropdown(false);
-    setPopupMode("hidden"); // Start in hidden mode: fullscreen PDF, no toolbar
+    setPopupMode("gesture");
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
     const pdfTarget = chapter.pdfUrl || chapter.pdf?.url || "";
 
-    // 1. Instant PDF Check: Synchronous Memory Cache lookup first (0ms!)
-    const syncBlob = getCachedBlobSync(pdfTarget);
-    if (syncBlob) {
-      setActivePdfBlobUrl(syncBlob);
-    } else {
-      // Show streaming target immediately with 0 delay
-      setActivePdfBlobUrl(pdfTarget);
-      // Asynchronously query IndexedDB in case it wasn't preloaded
-      getCachedFileBlob(pdfTarget).then((blobUrl) => {
-        if (blobUrl) setActivePdfBlobUrl(blobUrl);
-      });
-    }
+    // Set official streamable server PDF URL immediately for 100% universal loading on Smartboards & Mobile
+    setActivePdfBlobUrl(pdfTarget);
 
-    // 2. Pre-check audio tracks in memory cache
+    // Pre-check audio tracks in memory cache
     if (chapter.audioTracks && chapter.audioTracks.length > 0) {
       const audioBlobMap = {};
       chapter.audioTracks.forEach((tr) => {
@@ -1932,33 +1917,21 @@ export default function EpsBookReader({
       }
     }
 
-    // 3. Check if already marked offline
-    const isAlreadyOffline = isChapterOfflineReadySync(chId) || Boolean(offlineChaptersMap[chId]);
-    if (!isAlreadyOffline) {
-      setIsChapterSavingOffline(true);
-    } else {
-      setIsChapterSavingOffline(false);
-    }
-
-    // 4. Automatically save offline in background (NO DOWNLOAD BUTTONS NEEDED!)
+    // Background offline cache sync (keeps server URL active for flawless rendering)
     autoSaveChapterOffline(chapter, (progress) => {
-      if (progress.type === "pdf" && progress.blobUrl) {
-        setActivePdfBlobUrl(progress.blobUrl);
-      }
       if (progress.type === "audio" && progress.blobUrl && progress.trackUrl) {
         setCachedAudioUrls((prev) => ({ ...prev, [progress.trackUrl]: progress.blobUrl }));
       }
       if (progress.type === "completed") {
-        setIsChapterSavingOffline(false);
         setOfflineChaptersMap((prev) => ({ ...prev, [chId]: true }));
       }
     });
 
-    // Automatically trigger browser full screen mode
-    if (typeof document !== "undefined" && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.().catch((err) => {
-        console.warn("Auto fullscreen trigger:", err);
-      });
+    // Safely attempt fullscreen without throwing on unsupported devices (e.g. smartboard Android TV / iOS)
+    if (typeof document !== "undefined" && !document.fullscreenElement && document.documentElement?.requestFullscreen) {
+      try {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } catch (e) {}
     }
   };
 
@@ -2766,7 +2739,7 @@ export default function EpsBookReader({
           fontFamily: "Arial, sans-serif"
         }}
       >
-        {/* ================= 1. DRAGGABLE FLOATING POPUP AUDIO PLAYER (FULL FORMAT) ================= */}
+        {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (FULL FORMAT) ================= */}
         {popupMode === "full" && (
           <div
             ref={popupContainerRef}
@@ -2779,16 +2752,17 @@ export default function EpsBookReader({
               zIndex: 100005,
               display: "flex",
               alignItems: "center",
-              gap: "10px",
+              gap: "8px",
               backgroundColor: "#ffffff",
               border: "2px solid #2563eb",
               borderRadius: "16px",
-              padding: "8px 14px",
-              boxShadow: "0 10px 35px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(37, 99, 235, 0.25)",
+              padding: "8px 12px",
+              boxShadow: "0 10px 35px rgba(0, 0, 0, 0.25), 0 2px 10px rgba(37, 99, 235, 0.25)",
               cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
               maxWidth: "calc(100vw - 20px)",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
+              flexWrap: "wrap"
             }}
           >
             {/* DRAG HANDLE */}
@@ -2845,7 +2819,7 @@ export default function EpsBookReader({
                 flexDirection: "column",
                 justifyContent: "center",
                 minWidth: 0,
-                maxWidth: "260px"
+                maxWidth: "220px"
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -2865,7 +2839,7 @@ export default function EpsBookReader({
                 <span
                   style={{
                     fontWeight: "800",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     color: "#0f172a",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -2880,7 +2854,7 @@ export default function EpsBookReader({
                   fontSize: "11px",
                   color: "#1d4ed8",
                   fontWeight: "600",
-                  marginTop: "2px",
+                  marginTop: "1px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap"
@@ -3226,18 +3200,18 @@ export default function EpsBookReader({
               </button>
             )}
 
-            {/* WINDOW ACTIONS: MINIMIZE TO PLAY BUTTON ONLY & CLOSE/REMOVE */}
+            {/* WINDOW ACTIONS: MINIMIZE TO GESTURE TRIGGER & CLOSE/REMOVE */}
             <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0, marginLeft: "4px" }}>
-              {/* MINIMIZE TO FLOATING PLAY BUTTON ONLY ("play button matra rakhnus") */}
+              {/* MINIMIZE TO GESTURE TRIGGER ("one gesture ko under ma rakhnu") */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPopupMode("mini");
+                  setPopupMode("gesture");
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                title="Minimize to Play Button Only"
+                title="Minimize Audio Player to Gesture Trigger"
                 style={{
                   background: "#f1f5f9",
                   color: "#475569",
@@ -3256,16 +3230,16 @@ export default function EpsBookReader({
                 ─
               </button>
 
-              {/* REMOVE / CLOSE ("any if dont want remove hune gari") */}
+              {/* CLOSE TO GESTURE TRIGGER */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPopupMode("hidden");
+                  setPopupMode("gesture");
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                title="Close / Remove Player from Screen"
+                title="Close Player to Gesture Trigger"
                 style={{
                   background: "#fee2e2",
                   color: "#dc2626",
@@ -3287,149 +3261,75 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 2. MINI FLOATING PLAY BUTTON MODE ("PLAY BUTTON MATRA RAKHNUS", DRAGGABLE ANYWHERE) ================= */}
-        {popupMode === "mini" && (
+        {/* ================= 2. ONE-TOUCH GESTURE AUDIO TRIGGER (TOUCH TO OPEN) ================= */}
+        {hasAudio && popupMode !== "full" && (
           <div
             ref={popupContainerRef}
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
+            onClick={() => setPopupMode("full")}
+            onTouchEnd={() => {
+              if (!dragRef.current.moved) {
+                setPopupMode("full");
+              }
+            }}
+            title="Touch or click to open Audio Player"
             style={{
               position: "fixed",
-              left: `${popupPos.x}px`,
-              top: `${popupPos.y}px`,
-              zIndex: 100005,
+              right: "20px",
+              bottom: "22px",
+              zIndex: 100015,
               display: "flex",
               alignItems: "center",
-              gap: "6px",
-              background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+              gap: "8px",
+              background: "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",
               color: "#ffffff",
-              border: "2px solid #93c5fd",
+              border: "2px solid rgba(255, 255, 255, 0.45)",
               borderRadius: "32px",
-              padding: "4px 8px 4px 6px",
-              boxShadow: "0 8px 25px rgba(29, 78, 216, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2)",
-              cursor: isDragging ? "grabbing" : "grab",
-              userSelect: "none"
+              padding: "7px 14px 7px 12px",
+              boxShadow: "0 8px 30px rgba(2, 132, 199, 0.55), 0 2px 10px rgba(0, 0, 0, 0.3)",
+              cursor: "pointer",
+              userSelect: "none",
+              transition: "transform 0.15s ease"
             }}
           >
-            {/* DRAG HANDLE */}
-            <span
-              title="Drag anywhere"
-              style={{
-                cursor: isDragging ? "grabbing" : "grab",
-                color: "#bfdbfe",
-                fontSize: "12px",
-                paddingRight: "2px"
-              }}
-            >
-              ⠿
-            </span>
+            <span style={{ fontSize: "18px" }}>🎧</span>
+            <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
+              <span style={{ fontSize: "12px", fontWeight: "800", whiteSpace: "nowrap" }}>
+                {isPlaying ? "Audio Playing..." : "Audio Player"}
+              </span>
+              <span style={{ fontSize: "10px", opacity: 0.9, whiteSpace: "nowrap" }}>
+                {activeTrack?.name || `Track ${currentTrackIndex + 1}`} (Touch to Open)
+              </span>
+            </div>
 
-            {/* BACK BUTTON */}
+            {/* Quick Play/Pause on the gesture pill */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                closeFullScreen();
+                togglePlayPause();
               }}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              title="Exit to Chapters"
+              title={isPlaying ? "Pause Audio" : "Play Audio"}
               style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                color: "#ffffff",
-                border: "1px solid rgba(255, 255, 255, 0.35)",
-                borderRadius: "14px",
-                padding: "4px 8px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer"
-              }}
-            >
-              ⬅
-            </button>
-
-            {/* PURE PLAY / PAUSE BUTTON */}
-            {hasAudio && (
-              <button
-                type="button"
-                onClick={togglePlayPause}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                title={isPlaying ? "Click to Pause Audio" : "Click to Play Audio"}
-                style={{
-                  width: "34px",
-                  height: "34px",
-                  borderRadius: "50%",
-                  background: "#ffffff",
-                  color: "#1d4ed8",
-                  border: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  fontSize: isPlaying ? "13px" : "15px",
-                  fontWeight: "900",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-                  flexShrink: 0
-                }}
-              >
-                {isPlaying ? "❚❚" : "▶"}
-              </button>
-            )}
-
-            {/* EXPAND BUTTON TO RESTORE FULL FORMAT */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPopupMode("full");
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              title="Expand Full Player"
-              style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                color: "#ffffff",
-                border: "1px solid rgba(255, 255, 255, 0.35)",
-                borderRadius: "14px",
-                padding: "4px 8px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
-            >
-              <span>⛶</span> Full
-            </button>
-
-            {/* REMOVE / CLOSE BUTTON */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setPopupMode("hidden");
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              title="Remove Player from Screen"
-              style={{
-                background: "rgba(239, 68, 68, 0.8)",
-                color: "#ffffff",
-                border: "none",
-                width: "20px",
-                height: "20px",
+                width: "30px",
+                height: "30px",
                 borderRadius: "50%",
-                fontSize: "10px",
-                fontWeight: "bold",
-                cursor: "pointer",
+                background: "#ffffff",
+                color: "#0284c7",
+                border: "none",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center"
+                justifyContent: "center",
+                cursor: "pointer",
+                fontSize: isPlaying ? "11px" : "13px",
+                fontWeight: "900",
+                boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+                marginLeft: "4px",
+                flexShrink: 0
               }}
             >
-              ✕
+              {isPlaying ? "❚❚" : "▶"}
             </button>
           </div>
         )}
@@ -3466,40 +3366,6 @@ export default function EpsBookReader({
           <span>⬅</span>
           <span>Back</span>
         </button>
-
-        {/* Optional discrete Audio Player toggle at top-right if chapter has audio tracks */}
-        {hasAudio && popupMode !== "full" && (
-          <button
-            type="button"
-            onClick={() => setPopupMode("full")}
-            title="Open Audio Player"
-            style={{
-              position: "fixed",
-              top: "14px",
-              right: "14px",
-              zIndex: 100010,
-              background: "rgba(15, 23, 42, 0.85)",
-              color: "#38bdf8",
-              border: "1px solid rgba(56, 189, 248, 0.4)",
-              backdropFilter: "blur(8px)",
-              padding: "6px 14px",
-              borderRadius: "20px",
-              fontSize: "12px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
-              transition: "all 0.15s ease"
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; e.currentTarget.style.color = "#ffffff"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; e.currentTarget.style.color = "#38bdf8"; }}
-          >
-            <span>🎧</span>
-            <span>Audio Player</span>
-          </button>
-        )}
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
         <div style={{

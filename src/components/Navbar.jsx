@@ -19,6 +19,7 @@ export default function Navbar({
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [currentLang, setCurrentLang] = useState(() => {
     if (instituteLanguage) return instituteLanguage;
@@ -255,7 +256,7 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Right Section: Navigation Menu Links aligned to the RIGHT SIDE + Logout */}
+      {/* Right Section: Desktop Navigation & Mobile 3-line Menu Button */}
       <div
         style={{
           display: 'flex',
@@ -265,12 +266,12 @@ export default function Navbar({
           marginLeft: 'auto',
           flex: 1,
           minWidth: 0,
-          flexShrink: 0,
-          whiteSpace: 'nowrap'
+          flexShrink: 0
         }}
       >
-        {/* Navigation Options Menu */}
+        {/* DESKTOP NAVIGATION (Visible on screen width > 768px) */}
         <nav
+          className="desktop-nav-menu"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -348,8 +349,9 @@ export default function Navbar({
             })}
         </nav>
 
-        {/* Subtle vertical divider between right-side menu and Logout */}
+        {/* Subtle vertical divider on desktop */}
         <div
+          className="desktop-divider"
           style={{
             width: '1px',
             height: '24px',
@@ -358,8 +360,9 @@ export default function Navbar({
           }}
         />
 
-        {/* Logout button */}
+        {/* Desktop Logout button */}
         <button
+          className="desktop-logout-btn"
           onClick={handleLogout}
           style={{
             backgroundColor: '#ef4444',
@@ -389,7 +392,223 @@ export default function Navbar({
         >
           Logout
         </button>
+
+        {/* MOBILE 3-LINE DOTTED HAMBURGER / KEBAB BUTTON */}
+        <button
+          type="button"
+          className="mobile-hamburger-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Navigation Menu"
+          title="Toggle Navigation Menu"
+          style={{
+            display: 'none',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '3px',
+            width: '42px',
+            height: '42px',
+            borderRadius: '8px',
+            backgroundColor: mobileMenuOpen ? '#2563eb' : 'rgba(255, 255, 255, 0.12)',
+            border: '1.5px solid rgba(255, 255, 255, 0.3)',
+            color: '#ffffff',
+            cursor: 'pointer',
+            flexShrink: 0,
+            transition: 'all 0.2s ease',
+            padding: '4px'
+          }}
+        >
+          {mobileMenuOpen ? (
+            <span style={{ fontSize: '20px', fontWeight: 'bold', lineHeight: 1 }}>✕</span>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ width: '20px', height: '2.5px', backgroundColor: '#ffffff', borderRadius: '2px' }}></span>
+              <span style={{ width: '20px', height: '2.5px', backgroundColor: '#ffffff', borderRadius: '2px' }}></span>
+              <span style={{ width: '20px', height: '2.5px', backgroundColor: '#ffffff', borderRadius: '2px' }}></span>
+            </div>
+          )}
+        </button>
       </div>
+
+      {/* MOBILE SLIDE-DOWN DRAWER MENU (On mobile application screen) */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.65)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 99998
+            }}
+          />
+          <div
+            style={{
+              position: 'fixed',
+              top: '64px',
+              left: 0,
+              right: 0,
+              backgroundColor: '#0f172a',
+              borderBottom: '3px solid #2563eb',
+              boxShadow: '0 12px 35px rgba(0, 0, 0, 0.5)',
+              zIndex: 99999,
+              padding: '14px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              maxHeight: 'calc(100vh - 75px)',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 'bold', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px' }}>
+              Navigation Menu
+            </div>
+
+            {role === 'admin' &&
+              adminLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      padding: '11px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: isActive ? '#2563eb' : 'rgba(255, 255, 255, 0.06)',
+                      color: '#ffffff',
+                      fontWeight: isActive ? 800 : 600,
+                      fontSize: '14px',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderLeft: isActive ? '3px solid #60a5fa' : '3px solid transparent'
+                    }}
+                  >
+                    <span>{link.label}</span>
+                    {link.badge != null && (
+                      <span style={{ backgroundColor: '#ef4444', color: '#fff', fontSize: '11px', fontWeight: 800, padding: '2px 7px', borderRadius: '10px' }}>
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+
+            {role === 'institute' &&
+              instituteTabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onTabChange ? onTabChange(tab.id) : router.push(`/institute?tab=${tab.id}`);
+                    }}
+                    style={{
+                      padding: '11px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: isActive ? '#2563eb' : 'rgba(255, 255, 255, 0.06)',
+                      color: '#ffffff',
+                      fontWeight: isActive ? 800 : 600,
+                      fontSize: '14px',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderLeft: isActive ? '3px solid #60a5fa' : '3px solid transparent'
+                    }}
+                  >
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+
+            {role === 'student' &&
+              studentTabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      if (onTabChange) onTabChange(tab.id);
+                    }}
+                    style={{
+                      padding: '11px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: isActive ? '#2563eb' : 'rgba(255, 255, 255, 0.06)',
+                      color: '#ffffff',
+                      fontWeight: isActive ? 800 : 600,
+                      fontSize: '14px',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderLeft: isActive ? '3px solid #60a5fa' : '3px solid transparent'
+                    }}
+                  >
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+
+            {/* Logout button in mobile drawer */}
+            <div style={{ marginTop: '8px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#ef4444',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>🚪</span>
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Global Responsive Styles for Navbar */}
+      <style jsx>{`
+        @media (max-width: 768px) {
+          :global(.desktop-nav-menu) {
+            display: none !important;
+          }
+          :global(.desktop-divider) {
+            display: none !important;
+          }
+          :global(.desktop-logout-btn) {
+            display: none !important;
+          }
+          :global(.mobile-hamburger-btn) {
+            display: inline-flex !important;
+          }
+        }
+      `}</style>
     </header>
   );
 }

@@ -477,7 +477,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       setSelectedMaleModel(customModelObj);
     } else {
       setSelectedFemaleModel(customModelObj);
-      setSelectedMaleModel(customModelObj);
     }
   }
 
@@ -487,8 +486,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     saveVoiceLibrary(updated);
     if (activeCustomVoice?.id === voiceId) {
       setActiveCustomVoice(null);
-      setSelectedFemaleModel(FEMALE_VOICE_MODELS[0]);
-      setSelectedMaleModel(MALE_VOICE_MODELS[0]);
+      setSelectedFemaleModel(activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS[0] : KOREAN_FEMALE_VOICE_MODELS[0]);
+      setSelectedMaleModel(activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS[0] : KOREAN_MALE_VOICE_MODELS[0]);
     }
   }
 
@@ -929,8 +928,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         : (isMale ? 'ko-male-1' : 'ko-female-1')
     );
     // Take authentic human voice from AI Studio with exact male/female profile
-    const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}`;
-    handlePlayAudio(url, audioId, textToSpeak, lang, gender);
+    const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=${isMale ? 'male' : 'female'}`;
+    handlePlayAudio(url, audioId, textToSpeak, lang, isMale ? 'male' : 'female');
   }
 
   function handleDownloadSearchWord(gender = 'female', customModel = null) {

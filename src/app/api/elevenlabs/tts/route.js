@@ -33,6 +33,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const text = searchParams.get('text') || '';
     const voiceProfileId = searchParams.get('voiceProfileId') || 'ko-female-1';
+    const reqGender = searchParams.get('gender') || null;
     const style = searchParams.get('style') || 'natural_conversation';
     const speed = parseFloat(searchParams.get('speed') || '1.0');
     const customVoiceId = searchParams.get('voiceId') || null;
@@ -54,6 +55,7 @@ export async function GET(request) {
     const result = await synthesizeElevenLabs({
       text,
       voiceProfileId,
+      gender: reqGender,
       customVoiceId,
       style: speechMode || style,
       speechMode,

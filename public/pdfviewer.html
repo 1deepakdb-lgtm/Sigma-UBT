@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
-<title>Document Viewer</title>
+<title></title>
 <style>
   * {
     margin: 0;
@@ -20,6 +20,8 @@
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: pan-y pinch-zoom;
+    -webkit-text-size-adjust: 100%;
   }
   #viewer-scroll-container {
     width: 100%;
@@ -30,8 +32,10 @@
     flex-direction: column;
     align-items: center;
     padding: 0;
+    margin: 0;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    touch-action: pan-y pinch-zoom;
   }
   .pdf-page-wrapper {
     position: relative;
@@ -39,13 +43,13 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 8px;
-    background-color: #1e293b;
+    margin-bottom: 6px;
+    background-color: #0f172a;
     min-height: 200px;
   }
   @media (min-width: 768px) {
     .pdf-page-wrapper {
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
   }
   canvas {
@@ -182,13 +186,13 @@
     }
 
     function getTargetWidth() {
-      var w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-      if (w < 640) {
+      var w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
+      if (w < 768) {
         return w; // 100% full width on mobile devices
-      } else if (w < 1024) {
-        return Math.min(w - 24, 850);
+      } else if (w < 1200) {
+        return Math.min(w, 950);
       } else {
-        return Math.min(w - 48, 1050);
+        return Math.min(w - 40, 1300);
       }
     }
 
@@ -237,9 +241,7 @@
       try {
         var loadingTask = pdfjsLib.getDocument({
           url: rawUrl,
-          withCredentials: false,
-          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
-          cMapPacked: true
+          withCredentials: false
         });
 
         loadingTask.onProgress = function(p) {
@@ -318,8 +320,11 @@
         });
 
       } catch (err) {
-        console.error('Failed to load PDF document:', err);
-        showError('Could not load the requested document. ' + (err.message || ''));
+        console.warn('PDF.js failed, switching to native fallback:', err);
+        // Automatic universal fallback: render native viewer so document ALWAYS opens on all devices/smartboards
+        if (loadingView) loadingView.style.display = 'none';
+        if (errorView) errorView.style.display = 'none';
+        container.innerHTML = '<iframe src="' + rawUrl + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH" style="position:fixed;inset:0;width:100vw;height:100vh;border:none;background:#ffffff;"></iframe>';
       }
     }
 

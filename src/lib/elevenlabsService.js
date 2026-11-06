@@ -86,6 +86,7 @@ async function fallbackSynthesis(text, lang, gender, options = {}) {
 export async function synthesizeElevenLabs({
   text,
   voiceProfileId = 'ko-female-1',
+  gender = null,
   customVoiceId = null,
   modelId = DEFAULT_MODEL_ID,
   style = 'natural_conversation',
@@ -107,7 +108,15 @@ export async function synthesizeElevenLabs({
     throw new Error('Text exceeds 2500 character limit for single generation.');
   }
 
-  const profile = getVoiceProfile(voiceProfileId);
+  // Strictly enforce male vs female separation
+  let resolvedVoiceProfileId = voiceProfileId;
+  if (gender === 'male' && resolvedVoiceProfileId.includes('female')) {
+    resolvedVoiceProfileId = resolvedVoiceProfileId.replace('female', 'male');
+  } else if (gender === 'female' && resolvedVoiceProfileId.includes('male')) {
+    resolvedVoiceProfileId = resolvedVoiceProfileId.replace('male', 'female');
+  }
+
+  const profile = getVoiceProfile(resolvedVoiceProfileId);
   const voiceId = customVoiceId || profile.defaultVoiceId;
   const lang = profile.language || 'ko';
   const effectiveMode = speechMode || style || 'natural_conversation';
