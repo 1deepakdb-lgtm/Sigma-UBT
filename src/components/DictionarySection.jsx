@@ -773,6 +773,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       const audio = new Audio(audioSrc);
       audioRef.current = audio;
 
+      const isMale = targetGender === 'male' || String(id || '').toLowerCase().includes('male') || String(url || '').toLowerCase().includes('gender=male') || String(url || '').toLowerCase().includes('ko-male') || String(url || '').toLowerCase().includes('ja-male');
+      if (isMale) {
+        audio.preservesPitch = false;
+        audio.mozPreservesPitch = false;
+        audio.webkitPreservesPitch = false;
+        audio.playbackRate = 0.82;
+      } else {
+        audio.preservesPitch = true;
+        audio.playbackRate = 1.0;
+      }
+
       // Asynchronously cache blob if not yet cached for instant subsequent plays
       if (!cachedBlobUrl && typeof window !== 'undefined') {
         fetch(url)

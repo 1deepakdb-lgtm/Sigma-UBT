@@ -17,11 +17,16 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
     let isMounted = true;
 
     async function checkAuth() {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000);
+
       try {
         const res = await fetch('/api/auth/me', {
           cache: 'no-store',
+          signal: controller.signal,
           headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
         });
+        clearTimeout(timeoutId);
 
         if (!res.ok) {
           if (isMounted) {

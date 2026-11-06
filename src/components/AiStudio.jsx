@@ -305,6 +305,17 @@ export default function AiStudio({
       const audio = new Audio(url);
       previewAudioRef.current = audio;
 
+      const isMale = voice.gender === 'male' || voice.id?.includes('male') || (voice.role || '').toLowerCase().includes('male');
+      if (isMale) {
+        audio.preservesPitch = false;
+        audio.mozPreservesPitch = false;
+        audio.webkitPreservesPitch = false;
+        audio.playbackRate = 0.82;
+      } else {
+        audio.preservesPitch = true;
+        audio.playbackRate = 1.0;
+      }
+
       audio.onended = () => setPreviewingVoiceId(null);
       audio.onerror = () => {
         setPreviewingVoiceId(null);
@@ -353,6 +364,17 @@ export default function AiStudio({
       const url = `/api/elevenlabs/tts?${params.toString()}`;
       const audio = new Audio(url);
       previewAudioRef.current = audio;
+
+      const isMale = voice.gender === 'male' || voice.id?.includes('male') || (voice.role || '').toLowerCase().includes('male');
+      if (isMale) {
+        audio.preservesPitch = false;
+        audio.mozPreservesPitch = false;
+        audio.webkitPreservesPitch = false;
+        audio.playbackRate = 0.82;
+      } else {
+        audio.preservesPitch = true;
+        audio.playbackRate = 1.0;
+      }
 
       audio.onended = () => setPreviewingLineIndex(null);
       audio.onerror = () => {
@@ -416,7 +438,16 @@ export default function AiStudio({
 
       if (audioRef.current) {
         audioRef.current.src = url;
-        audioRef.current.playbackRate = speakingSpeed;
+        const isMale = selectedProfile.gender === 'male' || selectedProfile.id?.includes('male') || (selectedProfile.role || '').toLowerCase().includes('male');
+        if (isMale) {
+          audioRef.current.preservesPitch = false;
+          audioRef.current.mozPreservesPitch = false;
+          audioRef.current.webkitPreservesPitch = false;
+          audioRef.current.playbackRate = speakingSpeed * 0.82;
+        } else {
+          audioRef.current.preservesPitch = true;
+          audioRef.current.playbackRate = speakingSpeed;
+        }
         await audioRef.current.play();
         setIsPlaying(true);
       }
