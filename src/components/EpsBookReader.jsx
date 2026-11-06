@@ -3808,6 +3808,106 @@ export default function EpsBookReader({
             gap: 10px !important;
           }
         }
+        /* Mobile Unit in a Row Display */
+        @media (max-width: 768px) {
+          .chapter-unit-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            width: 100% !important;
+            margin-bottom: 30px !important;
+          }
+          .chapter-unit-card {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justifyContent: space-between !important;
+            padding: 12px 14px !important;
+            border-radius: 14px !important;
+            border: 1.5px solid #e2e8f0 !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            gap: 12px !important;
+            min-height: auto !important;
+            cursor: pointer !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+          .chapter-unit-card:active {
+            background-color: #f1f5f9 !important;
+            transform: scale(0.99) !important;
+          }
+          .chapter-unit-card-inner {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 12px !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+          }
+          .chapter-unit-badge-wrap {
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+          }
+          .chapter-unit-badge {
+            font-size: 11px !important;
+            padding: 5px 10px !important;
+            border-radius: 10px !important;
+            display: inline-block !important;
+            min-width: 62px !important;
+            text-align: center !important;
+          }
+          .chapter-unit-cover-desktop {
+            display: none !important;
+          }
+          .chapter-unit-info {
+            text-align: left !important;
+            margin: 0 !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+          }
+          .chapter-unit-info h3 {
+            text-align: left !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            color: #0f172a !important;
+            margin: 0 0 2px 0 !important;
+            line-height: 1.3 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          .chapter-unit-info p {
+            text-align: left !important;
+            font-size: 13px !important;
+            color: #64748b !important;
+            margin: 0 !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          .chapter-unit-arrow {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 50% !important;
+            background-color: #f8fafc !important;
+            color: #2563eb !important;
+            font-size: 18px !important;
+            font-weight: 900 !important;
+            flex-shrink: 0 !important;
+            border: 1px solid #e2e8f0 !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .chapter-unit-arrow {
+            display: none !important;
+          }
+        }
       ` }} />
       {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials */}
       {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials */}
@@ -4038,30 +4138,6 @@ export default function EpsBookReader({
       {/* ============================================================== */}
       {(studyLanguage === "korean" || studyLanguage === "both") && (
         <div style={{ marginBottom: studyLanguage === "both" ? "40px" : "0" }}>
-          {studyLanguage === "both" && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "16px",
-              padding: "12px 18px",
-              backgroundColor: "#eff6ff",
-              borderRadius: "14px",
-              border: "1.5px solid #bfdbfe",
-              boxShadow: "0 2px 8px rgba(37, 99, 235, 0.06)"
-            }}>
-              <span style={{ fontSize: "26px", lineHeight: "1" }}>🇰🇷</span>
-              <div>
-                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#1e3a8a" }}>
-                  Korean Study Materials
-                </h3>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>
-                  EPS-TOPIK Book 1 &amp; 2 (60 Chapters), Meaning Book, Question Bank, and Grammar Guide
-                </span>
-              </div>
-            </div>
-          )}
-
           {/* Korean Folder Selection Tabs (Shown when NO folder is entered) */}
           {!isKoreanFolderOpen && (
           <div
@@ -4337,13 +4413,16 @@ export default function EpsBookReader({
                 </div>
               </div>
 
-              {/* 60 CHAPTERS CLEAN GRID WITH PRELIMINARY FIRST & APPENDIX LAST */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "16px",
-                marginBottom: "40px"
-              }}>
+              {/* 60 CHAPTERS CLEAN GRID / MOBILE IN-A-ROW DISPLAY */}
+              <div
+                className="chapter-unit-grid"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: "16px",
+                  marginBottom: "40px"
+                }}
+              >
                 {/* 🔰 PRELIMINARY (예비편) CARD - FIRST AS CHAPTER 1 */}
                 {(!searchQuery || "preliminary 예비편 한글 인사말 0".includes(searchQuery.toLowerCase())) && (
                   <div
@@ -4369,6 +4448,7 @@ export default function EpsBookReader({
                       e.currentTarget.style.borderColor = "#e2e8f0";
                     }}
                     title="Click to open Preliminary (예비편) in Full Screen"
+                    className="chapter-unit-card"
                     style={{
                       backgroundColor: "white",
                       borderRadius: "12px",
@@ -4383,9 +4463,9 @@ export default function EpsBookReader({
                       userSelect: "none"
                     }}
                   >
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
-                        <span style={{
+                    <div className="chapter-unit-card-inner">
+                      <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                        <span className="chapter-unit-badge" style={{
                           backgroundColor: "#d1fae5",
                           color: "#065f46",
                           padding: "4px 14px",
@@ -4394,34 +4474,36 @@ export default function EpsBookReader({
                           fontWeight: "800",
                           display: "inline-block"
                         }}>
-                          🔰 Preliminary (예비편)
+                          🔰 Preliminary
                         </span>
                       </div>
 
-                      <ChapterCover
-                        chapter="0"
-                        titleKo="예비편 (한글과 인사말)"
-                        titleNe="प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)"
-                        coverImage="/uploads/eps-chapters/covers/cover_00.jpg"
-                        pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
-                        bookPart={1}
-                        height="195px"
-                        margin="10px 0 12px 0"
-                        onClick={(e) => {
-                          if (e && e.stopPropagation) e.stopPropagation();
-                          const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
-                            chapter: "Preliminary",
-                            titleKo: "예비편 (한글과 인사말)",
-                            titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
-                            titleEn: "Preliminary - Hangeul and Greetings",
-                            pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
-                            audioTracks: []
-                          };
-                          openChapterFullScreen(prelim);
-                        }}
-                      />
+                      <div className="chapter-unit-cover-desktop">
+                        <ChapterCover
+                          chapter="0"
+                          titleKo="예비편 (한글과 인사말)"
+                          titleNe="प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)"
+                          coverImage="/uploads/eps-chapters/covers/cover_00.jpg"
+                          pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
+                          bookPart={1}
+                          height="195px"
+                          margin="10px 0 12px 0"
+                          onClick={(e) => {
+                            if (e && e.stopPropagation) e.stopPropagation();
+                            const prelim = r2Folders.find(f => f.folder === "Preliminary") || {
+                              chapter: "Preliminary",
+                              titleKo: "예비편 (한글과 인사말)",
+                              titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
+                              titleEn: "Preliminary - Hangeul and Greetings",
+                              pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
+                              audioTracks: []
+                            };
+                            openChapterFullScreen(prelim);
+                          }}
+                        />
+                      </div>
 
-                      <div style={{ textAlign: "center", marginTop: "6px" }}>
+                      <div className="chapter-unit-info" style={{ textAlign: "center", marginTop: "6px" }}>
                         <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
                           예비편 (한글과 인사말)
                         </h3>
@@ -4430,6 +4512,8 @@ export default function EpsBookReader({
                         </p>
                       </div>
                     </div>
+
+                    <div className="chapter-unit-arrow">›</div>
                   </div>
                 )}
                 {filteredChapters.map((c) => {
@@ -4448,6 +4532,7 @@ export default function EpsBookReader({
                         e.currentTarget.style.borderColor = "#e2e8f0";
                       }}
                       title={`Click to open Chapter ${c.chapter} in Full Screen`}
+                      className="chapter-unit-card"
                       style={{
                         backgroundColor: "white",
                         borderRadius: "12px",
@@ -4462,10 +4547,10 @@ export default function EpsBookReader({
                         userSelect: "none"
                       }}
                     >
-                      <div>
-                        {/* CHAPTER HEADER: Centered for all roles, PDF and Audio badges removed */}
-                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
-                          <span style={{
+                      <div className="chapter-unit-card-inner">
+                        {/* CHAPTER HEADER */}
+                        <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
+                          <span className="chapter-unit-badge" style={{
                             backgroundColor: c.chapter <= 30 ? "#dbeafe" : "#fef3c7",
                             color: c.chapter <= 30 ? "#1d4ed8" : "#b45309",
                             padding: "5px 20px",
@@ -4480,32 +4565,35 @@ export default function EpsBookReader({
                           </span>
                         </div>
 
-                        {/* CHAPTER COVER / FIRST PAGE PREVIEW */}
-                        <ChapterCover
-                          chapter={c.chapter}
-                          titleKo={c.titleKo}
-                          titleNe={c.titleNe}
-                          pdfUrl={c.pdfUrl}
-                          coverImage={c.coverImage}
-                          bookPart={c.chapter <= 30 ? 1 : 2}
-                          height="195px"
-                          margin="10px 0 12px 0"
-                          onClick={(e) => {
-                            if (e && e.stopPropagation) e.stopPropagation();
-                            openChapterFullScreen(c);
-                          }}
-                        />
+                        {/* CHAPTER COVER / FIRST PAGE PREVIEW (DESKTOP ONLY) */}
+                        <div className="chapter-unit-cover-desktop">
+                          <ChapterCover
+                            chapter={c.chapter}
+                            titleKo={c.titleKo}
+                            titleNe={c.titleNe}
+                            pdfUrl={c.pdfUrl}
+                            coverImage={c.coverImage}
+                            bookPart={c.chapter <= 30 ? 1 : 2}
+                            height="195px"
+                            margin="10px 0 12px 0"
+                            onClick={(e) => {
+                              if (e && e.stopPropagation) e.stopPropagation();
+                              openChapterFullScreen(c);
+                            }}
+                          />
+                        </div>
 
-                        <div style={{ textAlign: "center", marginTop: "6px" }}>
-                          <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a", textAlign: "center" }}>
+                        <div className="chapter-unit-info" style={{ textAlign: "center", marginTop: "6px" }}>
+                          <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
                             {c.titleKo}
                           </h3>
-                          <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4", textAlign: "center" }}>
+                          <p style={{ margin: 0, fontSize: "13px", color: "#64748b", lineHeight: "1.4" }}>
                             {c.titleNe}
                           </p>
                         </div>
                       </div>
 
+                      <div className="chapter-unit-arrow">›</div>
                     </div>
                   );
                 })}
@@ -4535,6 +4623,7 @@ export default function EpsBookReader({
                       e.currentTarget.style.borderColor = "#e2e8f0";
                     }}
                     title="Click to open Appendix (부록) in Full Screen"
+                    className="chapter-unit-card"
                     style={{
                       backgroundColor: "white",
                       borderRadius: "12px",
@@ -4549,9 +4638,9 @@ export default function EpsBookReader({
                       userSelect: "none"
                     }}
                   >
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
-                        <span style={{
+                    <div className="chapter-unit-card-inner">
+                      <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                        <span className="chapter-unit-badge" style={{
                           backgroundColor: "#ede9fe",
                           color: "#5b21b6",
                           padding: "4px 14px",
@@ -4564,30 +4653,32 @@ export default function EpsBookReader({
                         </span>
                       </div>
 
-                      <ChapterCover
-                        chapter="App"
-                        titleKo="부록"
-                        titleNe="परिशिष्ट"
-                        coverImage="/uploads/eps-chapters/covers/cover_61.jpg"
-                        pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
-                        bookPart={2}
-                        height="195px"
-                        margin="10px 0 12px 0"
-                        onClick={(e) => {
-                          if (e && e.stopPropagation) e.stopPropagation();
-                          const appendix = r2Folders.find(f => f.folder === "Appendix") || {
-                            chapter: "Appendix",
-                            titleKo: "부록",
-                            titleNe: "परिशिष्ट",
-                            titleEn: "Appendix",
-                            pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
-                            audioTracks: []
-                          };
-                          openChapterFullScreen(appendix);
-                        }}
-                      />
+                      <div className="chapter-unit-cover-desktop">
+                        <ChapterCover
+                          chapter="App"
+                          titleKo="부록"
+                          titleNe="परिशिष्ट"
+                          coverImage="/uploads/eps-chapters/covers/cover_61.jpg"
+                          pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
+                          bookPart={2}
+                          height="195px"
+                          margin="10px 0 12px 0"
+                          onClick={(e) => {
+                            if (e && e.stopPropagation) e.stopPropagation();
+                            const appendix = r2Folders.find(f => f.folder === "Appendix") || {
+                              chapter: "Appendix",
+                              titleKo: "부록",
+                              titleNe: "परिशिष्ट",
+                              titleEn: "Appendix",
+                              pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
+                              audioTracks: []
+                            };
+                            openChapterFullScreen(appendix);
+                          }}
+                        />
+                      </div>
 
-                      <div style={{ textAlign: "center", marginTop: "6px" }}>
+                      <div className="chapter-unit-info" style={{ textAlign: "center", marginTop: "6px" }}>
                         <h3 style={{ margin: "0 0 4px 0", fontSize: "17px", fontWeight: "bold", color: "#0f172a" }}>
                           부록
                         </h3>
@@ -4596,6 +4687,8 @@ export default function EpsBookReader({
                         </p>
                       </div>
                     </div>
+
+                    <div className="chapter-unit-arrow">›</div>
                   </div>
                 )}
               </div>
