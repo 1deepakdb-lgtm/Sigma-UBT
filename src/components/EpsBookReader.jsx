@@ -893,6 +893,7 @@ export default function EpsBookReader({
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, initialX: 20, initialY: 20, moved: false });
   const popupContainerRef = useRef(null);
+  const playerOpenTimeRef = useRef(0);
 
   // Movable Mini Circular AUDIO Button State (Default below Back button: x: 14, y: 58)
   const [miniAudioPos, setMiniAudioPos] = useState({ x: 14, y: 58 });
@@ -1832,6 +1833,7 @@ export default function EpsBookReader({
   const handleDragStart = (e) => {
     // Only drag with left mouse button or touch
     if (e.type === "mousedown" && e.button !== 0) return;
+    if (e.target.closest("button") || e.target.closest("input") || e.target.closest("select")) return;
 
     const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
     const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
@@ -1846,6 +1848,7 @@ export default function EpsBookReader({
     setIsDragging(true);
 
     const onMove = (moveEvt) => {
+      if (moveEvt.cancelable) moveEvt.preventDefault();
       const curX = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientX : moveEvt.clientX;
       const curY = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientY : moveEvt.clientY;
       const dx = curX - dragRef.current.startX;
@@ -1886,6 +1889,7 @@ export default function EpsBookReader({
   // Drag handler for Movable Circular AUDIO Button
   const handleMiniDragStart = (e) => {
     e.stopPropagation();
+    if (e.type === "mousedown" && e.button !== 0) return;
     const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
     const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
 
@@ -1899,6 +1903,7 @@ export default function EpsBookReader({
     setIsMiniDragging(true);
 
     const onMove = (moveEvt) => {
+      if (moveEvt.cancelable) moveEvt.preventDefault();
       const curX = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientX : moveEvt.clientX;
       const curY = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientY : moveEvt.clientY;
       const dx = curX - miniDragRef.current.startX;
@@ -2054,6 +2059,8 @@ export default function EpsBookReader({
     if (popupMode !== "full") return;
 
     const handleOutsideClick = (e) => {
+      // Ignore if opened within last 350ms to avoid mobile tap-through ghost clicks
+      if (Date.now() - playerOpenTimeRef.current < 350) return;
       if (popupContainerRef.current && !popupContainerRef.current.contains(e.target)) {
         setPopupMode("gesture");
         setShowTrackDropdown(false);
@@ -2062,6 +2069,7 @@ export default function EpsBookReader({
 
     const handleBlur = () => {
       // When user clicks into the PDF iframe, window blurs
+      if (Date.now() - playerOpenTimeRef.current < 450) return;
       setPopupMode("gesture");
       setShowTrackDropdown(false);
     };
@@ -2830,11 +2838,13 @@ export default function EpsBookReader({
           <div
             onClick={(e) => {
               e.stopPropagation();
+              if (Date.now() - playerOpenTimeRef.current < 350) return;
               setPopupMode("gesture");
               setShowTrackDropdown(false);
             }}
             onTouchStart={(e) => {
               e.stopPropagation();
+              if (Date.now() - playerOpenTimeRef.current < 350) return;
               setPopupMode("gesture");
               setShowTrackDropdown(false);
             }}
@@ -2866,10 +2876,12 @@ export default function EpsBookReader({
               alignItems: "center",
               gap: "8px",
               backgroundColor: "#ffffff",
-              border: "2px solid #2563eb",
+              border: isPlaying ? "2px solid #10b981" : "2px solid #2563eb",
               borderRadius: "16px",
               padding: "8px 12px",
-              boxShadow: "0 10px 35px rgba(0, 0, 0, 0.25), 0 2px 10px rgba(37, 99, 235, 0.25)",
+              boxShadow: isPlaying
+                ? "0 10px 35px rgba(0, 0, 0, 0.25), 0 2px 14px rgba(16, 185, 129, 0.35)"
+                : "0 10px 35px rgba(0, 0, 0, 0.25), 0 2px 10px rgba(37, 99, 235, 0.25)",
               cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
               maxWidth: "calc(100vw - 20px)",
@@ -3378,16 +3390,39 @@ export default function EpsBookReader({
           @keyframes pulseAudioGlow {
             0% {
               box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
-              transform: scale(1);
             }
             50% {
               box-shadow: 0 0 28px rgba(16, 185, 129, 0.95), 0 6px 18px rgba(0, 0, 0, 0.4);
-              transform: scale(1.05);
             }
             100% {
               box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
-              transform: scale(1);
             }
+          }
+          @keyframes audioPulseRing {
+            0% {
+              transform: scale(0.92);
+              opacity: 0.9;
+            }
+            50% {
+              transform: scale(1.22);
+              opacity: 0.35;
+            }
+            100% {
+              transform: scale(1.4);
+              opacity: 0;
+            }
+          }
+          @keyframes audioWaveBar1 {
+            0% { height: 2px; }
+            100% { height: 8px; }
+          }
+          @keyframes audioWaveBar2 {
+            0% { height: 8px; }
+            100% { height: 3px; }
+          }
+          @keyframes audioWaveBar3 {
+            0% { height: 4px; }
+            100% { height: 9px; }
           }
         `}</style>
 
@@ -3400,6 +3435,7 @@ export default function EpsBookReader({
             onClick={(e) => {
               e.stopPropagation();
               if (!miniDragRef.current.moved) {
+                playerOpenTimeRef.current = Date.now();
                 const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
                 const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
                 const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
@@ -3409,6 +3445,7 @@ export default function EpsBookReader({
             }}
             onTouchEnd={() => {
               if (!miniDragRef.current.moved) {
+                playerOpenTimeRef.current = Date.now();
                 const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
                 const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
                 const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
@@ -3435,15 +3472,29 @@ export default function EpsBookReader({
               color: "#ffffff",
               border: isPlaying ? "3px solid #6ee7b7" : "3px solid #93c5fd",
               boxShadow: isPlaying
-                ? "0 0 24px rgba(16, 185, 129, 0.75), 0 6px 16px rgba(0, 0, 0, 0.4)"
-                : "0 8px 24px rgba(37, 99, 235, 0.5), 0 4px 10px rgba(0, 0, 0, 0.3)",
+                ? "0 0 24px rgba(16, 185, 129, 0.8), 0 6px 16px rgba(0, 0, 0, 0.4)"
+                : "0 8px 24px rgba(37, 99, 235, 0.45), 0 4px 10px rgba(0, 0, 0, 0.3)",
               cursor: isMiniDragging ? "grabbing" : "grab",
               userSelect: "none",
               touchAction: "none",
-              transition: isMiniDragging ? "none" : "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease",
+              transition: isMiniDragging ? "none" : "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
               animation: isPlaying ? "pulseAudioGlow 2s infinite ease-in-out" : "none"
             }}
           >
+            {/* Pulsing ring while playing */}
+            {isPlaying && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: "-5px",
+                  borderRadius: "50%",
+                  border: "2.5px solid #10b981",
+                  animation: "audioPulseRing 1.8s infinite ease-out",
+                  pointerEvents: "none"
+                }}
+              />
+            )}
+
             {/* Headphone SVG icon matching user mockup */}
             <svg
               width="24"
@@ -3457,26 +3508,43 @@ export default function EpsBookReader({
               style={{
                 filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
                 transform: isPlaying ? "scale(1.05)" : "scale(1)",
-                transition: "transform 0.2s ease"
+                transition: "transform 0.2s ease",
+                pointerEvents: "none"
               }}
             >
               <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
               <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
             </svg>
-            {/* Text: AUDIO */}
-            <span
+            {/* Text: AUDIO + Live equalizer wave bars when playing */}
+            <div
               style={{
-                fontSize: "10px",
-                fontWeight: "900",
-                letterSpacing: "0.8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "2px",
                 marginTop: "1px",
-                lineHeight: 1,
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                textShadow: "0 1px 2px rgba(0,0,0,0.4)"
+                pointerEvents: "none"
               }}
             >
-              AUDIO
-            </span>
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: "900",
+                  letterSpacing: "0.8px",
+                  lineHeight: 1,
+                  fontFamily: "system-ui, -apple-system, sans-serif",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.4)"
+                }}
+              >
+                AUDIO
+              </span>
+              {isPlaying && (
+                <span style={{ display: "inline-flex", alignItems: "flex-end", gap: "1.5px", height: "8px" }}>
+                  <span style={{ width: "2px", height: "4px", background: "#ffffff", borderRadius: "1px", animation: "audioWaveBar1 0.6s infinite alternate" }} />
+                  <span style={{ width: "2px", height: "7px", background: "#ffffff", borderRadius: "1px", animation: "audioWaveBar2 0.8s infinite alternate" }} />
+                  <span style={{ width: "2px", height: "5px", background: "#ffffff", borderRadius: "1px", animation: "audioWaveBar3 0.5s infinite alternate" }} />
+                </span>
+              )}
+            </div>
           </div>
         )}
 

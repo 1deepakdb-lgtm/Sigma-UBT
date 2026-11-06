@@ -1,9 +1,9 @@
 {
   "pages": {
-    "/admin/dictionary/page": [
+    "/admin/listening/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/dictionary/page.js"
+      "static/chunks/app/admin/listening/page.js"
     ],
     "/admin/layout": [
       "static/chunks/webpack.js",
@@ -20,16 +20,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/not-found.js"
-    ],
-    "/admin/listening/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/listening/page.js"
-    ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
     ]
   }
 }
