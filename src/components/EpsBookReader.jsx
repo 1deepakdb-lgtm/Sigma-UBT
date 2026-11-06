@@ -1991,6 +1991,34 @@ export default function EpsBookReader({
     }
   }, [currentTrackIndex]);
 
+  // Auto-shrink audio player to gesture trigger button when clicking outside or when PDF iframe gains focus
+  useEffect(() => {
+    if (popupMode !== "full") return;
+
+    const handleOutsideClick = (e) => {
+      if (popupContainerRef.current && !popupContainerRef.current.contains(e.target)) {
+        setPopupMode("gesture");
+        setShowTrackDropdown(false);
+      }
+    };
+
+    const handleBlur = () => {
+      // When user clicks into the PDF iframe, window blurs
+      setPopupMode("gesture");
+      setShowTrackDropdown(false);
+    };
+
+    window.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("touchstart", handleOutsideClick);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      window.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("touchstart", handleOutsideClick);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, [popupMode]);
+
   // Direct Track Selection with Instant Auto-Play & Auto-Hide Dialog
   const handleSelectTrack = (idx) => {
     setCurrentTrackIndex(idx);
@@ -2739,6 +2767,32 @@ export default function EpsBookReader({
           fontFamily: "Arial, sans-serif"
         }}
       >
+        {/* ================= 0. TRANSPARENT BACKDROP TO SHRINK AUDIO PLAYER ON OUTSIDE CLICK ================= */}
+        {popupMode === "full" && (
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setPopupMode("gesture");
+              setShowTrackDropdown(false);
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              setPopupMode("gesture");
+              setShowTrackDropdown(false);
+            }}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              zIndex: 100004,
+              background: "transparent",
+              cursor: "default"
+            }}
+          />
+        )}
+
         {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (FULL FORMAT) ================= */}
         {popupMode === "full" && (
           <div
@@ -3261,111 +3315,116 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 2. ONE-TOUCH GESTURE AUDIO TRIGGER (TOUCH TO OPEN) ================= */}
-        {hasAudio && popupMode !== "full" && (
-          <div
-            ref={popupContainerRef}
-            onClick={() => setPopupMode("full")}
-            onTouchEnd={() => {
-              if (!dragRef.current.moved) {
-                setPopupMode("full");
-              }
-            }}
-            title="Touch or click to open Audio Player"
-            style={{
-              position: "fixed",
-              right: "20px",
-              bottom: "22px",
-              zIndex: 100015,
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",
-              color: "#ffffff",
-              border: "2px solid rgba(255, 255, 255, 0.45)",
-              borderRadius: "32px",
-              padding: "7px 14px 7px 12px",
-              boxShadow: "0 8px 30px rgba(2, 132, 199, 0.55), 0 2px 10px rgba(0, 0, 0, 0.3)",
-              cursor: "pointer",
-              userSelect: "none",
-              transition: "transform 0.15s ease"
-            }}
-          >
-            <span style={{ fontSize: "18px" }}>🎧</span>
-            <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
-              <span style={{ fontSize: "12px", fontWeight: "800", whiteSpace: "nowrap" }}>
-                {isPlaying ? "Audio Playing..." : "Audio Player"}
-              </span>
-              <span style={{ fontSize: "10px", opacity: 0.9, whiteSpace: "nowrap" }}>
-                {activeTrack?.name || `Track ${currentTrackIndex + 1}`} (Touch to Open)
-              </span>
-            </div>
-
-            {/* Quick Play/Pause on the gesture pill */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlayPause();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              title={isPlaying ? "Pause Audio" : "Play Audio"}
-              style={{
-                width: "30px",
-                height: "30px",
-                borderRadius: "50%",
-                background: "#ffffff",
-                color: "#0284c7",
-                border: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                fontSize: isPlaying ? "11px" : "13px",
-                fontWeight: "900",
-                boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
-                marginLeft: "4px",
-                flexShrink: 0
-              }}
-            >
-              {isPlaying ? "❚❚" : "▶"}
-            </button>
-          </div>
-        )}
-
-        {/* ================= 3. FLOATING DISCRETE CONTROLS (NON-INTRUSIVE) ================= */}
-        {/* Sleek Floating Back button at top-left */}
-        <button
-          type="button"
-          onClick={closeFullScreen}
-          title="Exit Fullscreen (Esc)"
+        {/* ================= 2 & 3. TOP-LEFT CONTROLS: BACK BUTTON & AUDIO PLAYER TOGETHER ================= */}
+        <div
           style={{
             position: "fixed",
             top: "14px",
             left: "14px",
             zIndex: 100010,
-            background: "rgba(15, 23, 42, 0.85)",
-            color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.25)",
-            backdropFilter: "blur(8px)",
-            padding: "6px 14px",
-            borderRadius: "20px",
-            fontSize: "12px",
-            fontWeight: "bold",
-            cursor: "pointer",
             display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
-            transition: "all 0.15s ease"
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: "8px",
+            pointerEvents: "none"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; }}
         >
-          <span>⬅</span>
-          <span>Back</span>
-        </button>
+          {/* Sleek Floating Back button */}
+          <button
+            type="button"
+            onClick={closeFullScreen}
+            title="Exit Fullscreen (Esc)"
+            style={{
+              pointerEvents: "auto",
+              background: "rgba(15, 23, 42, 0.85)",
+              color: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.25)",
+              backdropFilter: "blur(8px)",
+              padding: "6px 14px",
+              borderRadius: "20px",
+              fontSize: "12px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+              transition: "all 0.15s ease"
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; }}
+          >
+            <span>⬅</span>
+            <span>Back</span>
+          </button>
+
+          {/* ================= SHRUNK AUDIO PLAYER BUTTON (DEFAULT: BELOW BACK BUTTON TOGETHER) ================= */}
+          {hasAudio && popupMode !== "full" && (
+            <div
+              onClick={() => setPopupMode("full")}
+              onTouchEnd={() => setPopupMode("full")}
+              title="Click or touch to open full Audio Player"
+              style={{
+                pointerEvents: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                background: isPlaying ? "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)" : "rgba(15, 23, 42, 0.88)",
+                color: "#ffffff",
+                border: isPlaying ? "1.5px solid #93c5fd" : "1px solid rgba(255, 255, 255, 0.25)",
+                borderRadius: "24px",
+                padding: "6px 14px 6px 12px",
+                boxShadow: isPlaying ? "0 4px 18px rgba(2, 132, 199, 0.55)" : "0 4px 14px rgba(0, 0, 0, 0.35)",
+                cursor: "pointer",
+                userSelect: "none",
+                backdropFilter: "blur(10px)",
+                transition: "all 0.2s ease",
+                maxWidth: "calc(100vw - 32px)"
+              }}
+            >
+              <span style={{ fontSize: "16px", lineHeight: 1 }}>🎧</span>
+              <div style={{ display: "flex", flexDirection: "column", textAlign: "left", maxWidth: "160px" }}>
+                <span style={{ fontSize: "11.5px", fontWeight: "800", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {isPlaying ? "Playing..." : (activeTrack?.name || "Audio Player")}
+                </span>
+                <span style={{ fontSize: "9.5px", opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {activeTrack?.name || `Track ${currentTrackIndex + 1}`} (Click to Open)
+                </span>
+              </div>
+
+              {/* Quick Play/Pause button on the shrunk pill */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePlayPause();
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                title={isPlaying ? "Pause Audio" : "Play Audio"}
+                style={{
+                  width: "26px",
+                  height: "26px",
+                  borderRadius: "50%",
+                  background: "#ffffff",
+                  color: "#0284c7",
+                  border: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  fontSize: isPlaying ? "10px" : "12px",
+                  fontWeight: "900",
+                  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.25)",
+                  marginLeft: "4px",
+                  flexShrink: 0
+                }}
+              >
+                {isPlaying ? "❚❚" : "▶"}
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
         <div style={{
