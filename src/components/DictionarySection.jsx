@@ -2441,44 +2441,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       </div>
                     </div>
 
-                    {/* Clear Korean Batchim Rule Display directly on Card */}
-                    {activeLang === 'ko' && hasBatchimRule && (
-                      <div
-                        style={{
-                          marginTop: "8px",
-                          backgroundColor: "#fffbeb",
-                          border: "1.5px solid #fde68a",
-                          borderRadius: "8px",
-                          padding: "7px 10px",
-                          boxShadow: "0 1px 3px rgba(245, 158, 11, 0.08)"
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                            <span style={{ fontSize: "13px", lineHeight: "1" }}>💡</span>
-                            <span style={{ fontWeight: "800", color: "#b45309", fontSize: "12px" }}>
-                              받침 नियम (Batchim Rule)
-                            </span>
-                          </div>
-                          <span style={{
-                            fontSize: "11px",
-                            fontWeight: "800",
-                            backgroundColor: "#fef3c7",
-                            color: "#92400e",
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                            border: "1px solid #fde68a",
-                            whiteSpace: "nowrap"
-                          }}>
-                            {writtenWord} ➔ [{spokenWord}]
-                          </span>
-                        </div>
-                        <div style={{ fontWeight: "700", color: "#78350f", fontSize: "11.5px", lineHeight: "1.35" }}>
-                          {batchimRuleText || '7종성 끝소리 규칙 (음절끝소리 발음)'}
-                        </div>
-                      </div>
-                    )}
-
                     {/* 🔊 Voice Popup Bar (Appears when this word is selected) */}
                     {isSelected && (
                       <div
@@ -2788,24 +2750,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               <div style={{ marginTop: "4px", fontSize: "13px", color: "#15803d", fontWeight: "600" }}>
                 {currentActiveWord?.nepali || "नेपाली अर्थ"}
               </div>
-              {activeLang === 'ko' && (currentActiveWord?.koreanBatchimRule || currentActiveWord?.hasBatchimRule) && (
-                <div style={{
-                  marginTop: "8px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  backgroundColor: "#fffbeb",
-                  color: "#92400e",
-                  border: "1.5px solid #fde68a",
-                  borderRadius: "8px",
-                  padding: "5px 12px",
-                  fontSize: "12px",
-                  fontWeight: "700"
-                }}>
-                  <span>💡 받침 नियम:</span>
-                  <span>{currentActiveWord.koreanBatchimRule || '음절끝소리 / 받침 발음 변화'}</span>
-                </div>
-              )}
               {uploadWordScope === 'particular' && uploadTargetWord.trim() && (
                 <div style={{ marginTop: "6px", display: "inline-block", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: "20px", padding: "2px 10px", fontSize: "11px", fontWeight: "800" }}>
                   🎯 Voice will speak for &ldquo;{uploadTargetWord.trim()}&rdquo; on search
