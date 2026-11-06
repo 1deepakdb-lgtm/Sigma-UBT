@@ -182,6 +182,8 @@ export default function AiStudio({
 
   const audioRef = useRef(null);
   const previewAudioRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const sourceNodeRef = useRef(null);
 
   // Synchronize effective student instituteLanguage
   useEffect(() => {
@@ -316,6 +318,107 @@ export default function AiStudio({
     }
   };
 
+  // High-performance granular pitch shifter for genuine masculine formants and dialogue separation
+  const shiftPitchBuffer = (ctx, inBuffer, pitchFactor = 0.74) => {
+    const numChannels = inBuffer.numberOfChannels;
+    const sampleRate = inBuffer.sampleRate;
+    const length = inBuffer.length;
+    const outBuffer = ctx.createBuffer(numChannels, length, sampleRate);
+
+    const grainSize = 1024;
+    const hopSize = 256;
+    const window = new Float32Array(grainSize);
+    for (let k = 0; k < grainSize; k++) {
+      window[k] = 0.5 * (1.0 - Math.cos((2.0 * Math.PI * k) / (grainSize - 1)));
+    }
+
+    for (let c = 0; c < numChannels; c++) {
+      const src = inBuffer.getChannelData(c);
+      const dst = outBuffer.getChannelData(c);
+      const maxHops = Math.floor((length - grainSize) / hopSize);
+
+      for (let h = 0; h < maxHops; h++) {
+        const outPos = h * hopSize;
+        const srcStart = Math.max(0, Math.min(length - grainSize, Math.round(outPos)));
+
+        for (let i = 0; i < grainSize; i++) {
+          const grainIdx = (i - grainSize / 2) * pitchFactor + grainSize / 2;
+          if (grainIdx >= 0 && grainIdx < grainSize - 1) {
+            const i0 = Math.floor(grainIdx);
+            const frac = grainIdx - i0;
+            const s0 = src[srcStart + i0] || 0;
+            const s1 = src[srcStart + i0 + 1] || 0;
+            dst[outPos + i] += (s0 + frac * (s1 - s0)) * window[i];
+          }
+        }
+      }
+    }
+    return outBuffer;
+  };
+
+  const playWebAudioStudio = async (url, targetGender, onEnd, onError) => {
+    if (typeof window === 'undefined') return false;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return false;
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioCtx();
+    }
+    const ctx = audioContextRef.current;
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch (e) {}
+      sourceNodeRef.current = null;
+    }
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const arrayBuf = await res.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
+
+      const isMale = targetGender === 'male';
+      const pitchFactor = isMale ? 0.74 : 1.00;
+      const lowShelfGain = isMale ? 4.5 : 0;
+
+      let finalBuf = decoded;
+      if (Math.abs(pitchFactor - 1.0) > 0.03) {
+        finalBuf = shiftPitchBuffer(ctx, decoded, pitchFactor);
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = finalBuf;
+
+      let lastNode = source;
+      if (lowShelfGain > 0) {
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowshelf';
+        filter.frequency.value = 240;
+        filter.gain.value = lowShelfGain;
+        source.connect(filter);
+        lastNode = filter;
+      }
+
+      lastNode.connect(ctx.destination);
+      sourceNodeRef.current = source;
+
+      source.onended = () => {
+        sourceNodeRef.current = null;
+        if (onEnd) onEnd();
+      };
+
+      source.start(0);
+      return true;
+    } catch (err) {
+      console.warn('Web Audio studio play error:', err);
+      if (onError) onError(err);
+      return false;
+    }
+  };
+
   // Handle Voice Preview with Model Selection
   const handlePlayPreview = async (voice, modelOverride = null) => {
     if (!voice) return;
@@ -324,20 +427,28 @@ export default function AiStudio({
 
     if (previewAudioRef.current) {
       previewAudioRef.current.pause();
-      if (previewingVoiceId === previewKey) {
-        setPreviewingVoiceId(null);
-        return;
-      }
+    }
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch (e) {}
+      sourceNodeRef.current = null;
+    }
+
+    if (previewingVoiceId === previewKey) {
+      setPreviewingVoiceId(null);
+      return;
     }
 
     setPreviewingVoiceId(previewKey);
     setAudioError(null);
 
+    const isMale = voice.gender === 'male' || voice.id?.includes('male');
+    const targetGender = isMale ? 'male' : 'female';
+
     try {
       const params = new URLSearchParams({
         text: voice.sampleSentence,
         voiceProfileId: voice.id,
-        gender: voice.gender || (voice.id?.includes('male') ? 'male' : 'female'),
+        gender: targetGender,
         modelId: effectiveModel,
         speechMode: voice.defaultSpeechMode || 'teacher',
         ageStyle: voice.ageStyle || '',
@@ -348,24 +459,37 @@ export default function AiStudio({
         speed: String(voice.settings?.speed || 0.96)
       });
       const url = `/api/elevenlabs/tts?${params.toString()}`;
-      const audio = new Audio(url);
-      previewAudioRef.current = audio;
 
-      audio.preservesPitch = true;
-      audio.playbackRate = 1.0;
-
-      audio.onended = () => setPreviewingVoiceId(null);
-      audio.onerror = () => {
-        const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', voice.gender, () => setPreviewingVoiceId(null));
-        if (!spoke) {
-          setPreviewingVoiceId(null);
-          setAudioError('Failed to play voice preview. Please verify your connection.');
+      const played = await playWebAudioStudio(
+        url,
+        targetGender,
+        () => setPreviewingVoiceId(null),
+        () => {
+          const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
+          if (!spoke) {
+            setPreviewingVoiceId(null);
+            setAudioError('Failed to play voice preview. Please check your connection.');
+          }
         }
-      };
+      );
 
-      await audio.play();
+      if (!played) {
+        const audio = new Audio(url);
+        previewAudioRef.current = audio;
+        audio.preservesPitch = true;
+        audio.playbackRate = 1.0;
+        audio.onended = () => setPreviewingVoiceId(null);
+        audio.onerror = () => {
+          const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
+          if (!spoke) {
+            setPreviewingVoiceId(null);
+            setAudioError('Failed to play voice preview.');
+          }
+        };
+        await audio.play();
+      }
     } catch (err) {
-      const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', voice.gender, () => setPreviewingVoiceId(null));
+      const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
       if (!spoke) {
         setPreviewingVoiceId(null);
         setAudioError(err.message || 'Audio playback error');
@@ -379,10 +503,15 @@ export default function AiStudio({
 
     if (previewAudioRef.current) {
       previewAudioRef.current.pause();
-      if (previewingLineIndex === index) {
-        setPreviewingLineIndex(null);
-        return;
-      }
+    }
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch (e) {}
+      sourceNodeRef.current = null;
+    }
+
+    if (previewingLineIndex === index) {
+      setPreviewingLineIndex(null);
+      return;
     }
 
     setPreviewingLineIndex(index);
@@ -392,11 +521,12 @@ export default function AiStudio({
       const voiceId = turn.voiceProfileId || (turn.speaker === 'A' ? dialogueSpeakerA : dialogueSpeakerB);
       const modelId = turn.modelId || (turn.speaker === 'A' ? dialogueModelA : dialogueModelB);
       const voice = VOICE_PROFILES.find(v => v.id === voiceId) || VOICE_PROFILES[0];
+      const lineGender = voice.gender || (turn.speaker === 'B' ? 'male' : 'female');
 
       const params = new URLSearchParams({
         text: turn.text.trim(),
         voiceProfileId: voice.id,
-        gender: voice.gender || (turn.speaker === 'B' ? 'male' : 'female'),
+        gender: lineGender,
         modelId,
         speechMode: voice.defaultSpeechMode || 'natural_conversation',
         ageStyle: voice.ageStyle || '',
@@ -407,24 +537,38 @@ export default function AiStudio({
         speed: String(voice.settings?.speed || 0.96)
       });
       const url = `/api/elevenlabs/tts?${params.toString()}`;
-      const audio = new Audio(url);
-      previewAudioRef.current = audio;
 
-      audio.preservesPitch = true;
-      audio.playbackRate = 1.0;
-
-      audio.onended = () => setPreviewingLineIndex(null);
-      audio.onerror = () => {
-        const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', voice.gender, () => setPreviewingLineIndex(null));
-        if (!spoke) {
-          setPreviewingLineIndex(null);
-          setAudioError('Failed to play dialogue line preview.');
+      const played = await playWebAudioStudio(
+        url,
+        lineGender,
+        () => setPreviewingLineIndex(null),
+        () => {
+          const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', lineGender, () => setPreviewingLineIndex(null));
+          if (!spoke) {
+            setPreviewingLineIndex(null);
+            setAudioError('Failed to play dialogue line preview.');
+          }
         }
-      };
+      );
 
-      await audio.play();
+      if (!played) {
+        const audio = new Audio(url);
+        previewAudioRef.current = audio;
+        audio.preservesPitch = true;
+        audio.playbackRate = 1.0;
+        audio.onended = () => setPreviewingLineIndex(null);
+        audio.onerror = () => {
+          const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', lineGender, () => setPreviewingLineIndex(null));
+          if (!spoke) {
+            setPreviewingLineIndex(null);
+            setAudioError('Failed to play dialogue line preview.');
+          }
+        };
+        await audio.play();
+      }
     } catch (err) {
-      const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', voice.gender, () => setPreviewingLineIndex(null));
+      const lineGender = turn.speaker === 'B' ? 'male' : 'female';
+      const spoke = speakStudioNative(turn.text.trim(), 'ko-KR', lineGender, () => setPreviewingLineIndex(null));
       if (!spoke) {
         setPreviewingLineIndex(null);
         setAudioError(err.message || 'Dialogue line preview failed');

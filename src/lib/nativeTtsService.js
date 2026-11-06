@@ -292,10 +292,16 @@ export async function generateMelodicVoice(text, lang = 'ja', gender = 'female',
       if (res.ok) {
         const arrayBuf = await res.arrayBuffer();
         if (arrayBuf.byteLength > 100) {
-          fs.writeFileSync(rawMp3Path, Buffer.from(arrayBuf));
-          execFileSync('afconvert', [rawMp3Path, wavPath, '-f', 'WAVE', '-d', 'LEI16'], { timeout: 6000 });
-          try { fs.unlinkSync(rawMp3Path); } catch {}
-          gotAudio = true;
+          try {
+            fs.writeFileSync(rawMp3Path, Buffer.from(arrayBuf));
+            execFileSync('afconvert', [rawMp3Path, wavPath, '-f', 'WAVE', '-d', 'LEI16'], { timeout: 6000 });
+            try { fs.unlinkSync(rawMp3Path); } catch {}
+            gotAudio = true;
+          } catch (afErr) {
+            // afconvert not available on Linux/cPanel; return raw MP3 directly
+            try { if (fs.existsSync(rawMp3Path)) fs.unlinkSync(rawMp3Path); } catch {}
+            return { buffer: Buffer.from(arrayBuf), contentType: 'audio/mpeg', provider: 'google-tts' };
+          }
         }
       }
     } catch (fetchErr) {
@@ -438,13 +444,16 @@ export async function generateMelodicVoice(text, lang = 'ja', gender = 'female',
 
     const tempProcWav = path.join(tmpDir, `${id}_proc.wav`);
     fs.writeFileSync(tempProcWav, processedWav);
-    execFileSync('afconvert', [tempProcWav, m4aPath, '-f', 'm4af', '-d', 'aac'], { timeout: 6000 });
-    try { fs.unlinkSync(tempProcWav); } catch {}
-
-    const m4aBuf = fs.readFileSync(m4aPath);
-    try { fs.unlinkSync(m4aPath); } catch {}
-
-    return { buffer: m4aBuf, contentType: 'audio/mp4' };
+    try {
+      execFileSync('afconvert', [tempProcWav, m4aPath, '-f', 'm4af', '-d', 'aac'], { timeout: 6000 });
+      try { fs.unlinkSync(tempProcWav); } catch {}
+      const m4aBuf = fs.readFileSync(m4aPath);
+      try { fs.unlinkSync(m4aPath); } catch {}
+      return { buffer: m4aBuf, contentType: 'audio/mp4' };
+    } catch {
+      try { if (fs.existsSync(tempProcWav)) fs.unlinkSync(tempProcWav); } catch {}
+      return { buffer: processedWav, contentType: 'audio/wav', provider: 'dsp-wav' };
+    }
   } catch (err) {
     console.warn(`Melodic voice error (${lang}):`, err?.message || err);
     return null;

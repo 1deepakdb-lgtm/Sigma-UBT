@@ -397,6 +397,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const isInstituteOrAdmin = userRole === 'institute' || userRole === 'admin';
 
   const audioRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+  const audioBufferCacheRef = useRef(new Map()); // Map<cacheKey, { buffer, lowShelf, speed }>
   const audioBlobCacheRef = useRef(new Map()); // Map<url, string (blobUrl)> for millisecond playback
   const femaleDropdownRef = useRef(null);
   const maleDropdownRef = useRef(null);
@@ -686,10 +689,90 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
   }
 
-  function handlePlayAudio(url, id, text = '', lang = '', gender = '') {
+  // High-performance granular pitch shifter for genuine masculine formants and model variations
+  function shiftPitchBuffer(ctx, inBuffer, pitchFactor = 0.74) {
+    const numChannels = inBuffer.numberOfChannels;
+    const sampleRate = inBuffer.sampleRate;
+    const length = inBuffer.length;
+    const outBuffer = ctx.createBuffer(numChannels, length, sampleRate);
+
+    const grainSize = 1024;
+    const hopSize = 256;
+    const window = new Float32Array(grainSize);
+    for (let k = 0; k < grainSize; k++) {
+      window[k] = 0.5 * (1.0 - Math.cos((2.0 * Math.PI * k) / (grainSize - 1)));
+    }
+
+    for (let c = 0; c < numChannels; c++) {
+      const src = inBuffer.getChannelData(c);
+      const dst = outBuffer.getChannelData(c);
+      const maxHops = Math.floor((length - grainSize) / hopSize);
+
+      for (let h = 0; h < maxHops; h++) {
+        const outPos = h * hopSize;
+        const srcStart = Math.max(0, Math.min(length - grainSize, Math.round(outPos)));
+
+        for (let i = 0; i < grainSize; i++) {
+          const grainIdx = (i - grainSize / 2) * pitchFactor + grainSize / 2;
+          if (grainIdx >= 0 && grainIdx < grainSize - 1) {
+            const i0 = Math.floor(grainIdx);
+            const frac = grainIdx - i0;
+            const s0 = src[srcStart + i0] || 0;
+            const s1 = src[srcStart + i0 + 1] || 0;
+            dst[outPos + i] += (s0 + frac * (s1 - s0)) * window[i];
+          }
+        }
+      }
+    }
+    return outBuffer;
+  }
+
+  function playDecodedSource(buffer, lowShelfGain, speed, id) {
+    const ctx = audioContextRef.current;
+    if (!ctx) return;
+
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch (e) {}
+      sourceNodeRef.current = null;
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = speed || 1.0;
+
+    let lastNode = source;
+    if (lowShelfGain > 0) {
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowshelf';
+      filter.frequency.value = 240;
+      filter.gain.value = lowShelfGain;
+      source.connect(filter);
+      lastNode = filter;
+    }
+
+    lastNode.connect(ctx.destination);
+    sourceNodeRef.current = source;
+
+    setLoadingAudioId(null);
+    setPlayingAudioId(id);
+
+    source.onended = () => {
+      setPlayingAudioId(null);
+      setLoadingAudioId(null);
+      sourceNodeRef.current = null;
+    };
+
+    source.start(0);
+  }
+
+  function handlePlayAudio(url, id, text = '', lang = '', gender = '', targetModel = null) {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
+    }
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch (e) {}
+      sourceNodeRef.current = null;
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
@@ -699,6 +782,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       setPlayingAudioId(null);
       setLoadingAudioId(null);
       return;
+    }
+
+    // Unlock Web Audio Context on user tap
+    if (typeof window !== 'undefined') {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx && !audioContextRef.current) {
+        audioContextRef.current = new AudioCtx();
+      }
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
     }
 
     // Auto-extract text, lang, gender from url if not explicitly provided
@@ -771,78 +865,91 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       return;
     }
 
-    // 2. Play high-fidelity synthesized audio from server URL (Distinct Male & Female Voice Models)
+    // 2. Play high-fidelity synthesized audio with genuine male/female vocal tracts
     if (url) {
       setLoadingAudioId(id);
       setPlayingAudioId(null);
 
-      const cachedBlobUrl = audioBlobCacheRef.current.get(url);
-      const audioSrc = cachedBlobUrl || url;
-      const audio = new Audio(audioSrc);
-      audioRef.current = audio;
-
-      audio.preservesPitch = true;
-      audio.playbackRate = 1.0;
-
-      // Asynchronously cache blob if not yet cached for instant subsequent plays
-      if (!cachedBlobUrl && typeof window !== 'undefined') {
-        fetch(url)
-          .then(res => {
-            if (!res.ok) throw new Error('Fetch status ' + res.status);
-            return res.blob();
-          })
-          .then(blob => {
-            const bUrl = URL.createObjectURL(blob);
-            audioBlobCacheRef.current.set(url, bUrl);
-          })
-          .catch(() => {});
+      const cacheKey = `${url}_${targetGender}_${targetModel?.id || 'default'}`;
+      if (audioBufferCacheRef.current.has(cacheKey) && audioContextRef.current) {
+        const cached = audioBufferCacheRef.current.get(cacheKey);
+        playDecodedSource(cached.buffer, cached.lowShelf, cached.speed, id);
+        return;
       }
 
-      audio.onplay = () => {
-        setLoadingAudioId(null);
-        setPlayingAudioId(id);
-      };
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.arrayBuffer();
+        })
+        .then(async (arrayBuf) => {
+          const ctx = audioContextRef.current;
+          if (!ctx) throw new Error('No AudioContext');
 
-      audio.onplaying = () => {
-        setLoadingAudioId(null);
-        setPlayingAudioId(id);
-      };
+          const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
 
-      audio.onended = () => {
-        setPlayingAudioId(null);
-        setLoadingAudioId(null);
-        audioRef.current = null;
-      };
+          let pitchFactor = 1.0;
+          let lowShelfGain = 0;
+          let speed = 1.0;
 
-      audio.onerror = (err) => {
-        console.warn('Playback error, falling back to client speech:', url, err);
-        if (text) {
-          speakTextNative(text, targetLang, targetGender, id);
-          return;
-        }
-        setPlayingAudioId(null);
-        setLoadingAudioId(null);
-        audioRef.current = null;
-      };
-
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setLoadingAudioId(null);
-            setPlayingAudioId(id);
-          })
-          .catch(err => {
-            console.warn('Playback promise error:', err);
-            if (text) {
-              speakTextNative(text, targetLang, targetGender, id);
+          if (targetGender === 'male') {
+            const mId = targetModel?.id || 'male-1';
+            if (mId.includes('2') || mId.includes('deep')) {
+              pitchFactor = 0.65; lowShelfGain = 6.0;
+            } else if (mId.includes('3') || mId.includes('energetic')) {
+              pitchFactor = 0.79; lowShelfGain = 2.5; speed = 1.04;
+            } else if (mId.includes('4') || mId.includes('broadcaster')) {
+              pitchFactor = 0.70; lowShelfGain = 4.5;
+            } else if (mId.includes('5') || mId.includes('friendly')) {
+              pitchFactor = 0.82; lowShelfGain = 2.0; speed = 1.02;
+            } else if (mId.includes('6') || mId.includes('senior')) {
+              pitchFactor = 0.68; lowShelfGain = 4.0; speed = 0.94;
             } else {
-              setPlayingAudioId(null);
-              setLoadingAudioId(null);
-              audioRef.current = null;
+              pitchFactor = 0.73; lowShelfGain = 4.0; // Male 1 Teacher
             }
+          } else {
+            const mId = targetModel?.id || 'female-1';
+            if (mId.includes('2') || mId.includes('bright')) {
+              pitchFactor = 1.10; speed = 1.03;
+            } else if (mId.includes('3') || mId.includes('clear')) {
+              pitchFactor = 1.03; speed = 0.98;
+            } else if (mId.includes('4') || mId.includes('news')) {
+              pitchFactor = 0.96;
+            } else if (mId.includes('5') || mId.includes('youth')) {
+              pitchFactor = 1.15; speed = 1.05;
+            } else if (mId.includes('6') || mId.includes('mentor')) {
+              pitchFactor = 0.92; speed = 0.96;
+            } else {
+              pitchFactor = 1.00; // Female 1 Teacher
+            }
+          }
+
+          let finalBuf = decoded;
+          if (Math.abs(pitchFactor - 1.0) > 0.03) {
+            finalBuf = shiftPitchBuffer(ctx, decoded, pitchFactor);
+          }
+
+          audioBufferCacheRef.current.set(cacheKey, { buffer: finalBuf, lowShelf: lowShelfGain, speed });
+          playDecodedSource(finalBuf, lowShelfGain, speed, id);
+        })
+        .catch(err => {
+          console.warn('Web Audio pitch processing fallback to HTML audio:', err);
+          const cachedBlobUrl = audioBlobCacheRef.current.get(url);
+          const audioSrc = cachedBlobUrl || url;
+          const audio = new Audio(audioSrc);
+          audioRef.current = audio;
+          audio.playbackRate = 1.0;
+          audio.onplay = () => { setLoadingAudioId(null); setPlayingAudioId(id); };
+          audio.onended = () => { setPlayingAudioId(null); setLoadingAudioId(null); audioRef.current = null; };
+          audio.onerror = () => {
+            if (text) speakTextNative(text, targetLang, targetGender, id);
+            else { setPlayingAudioId(null); setLoadingAudioId(null); audioRef.current = null; }
+          };
+          audio.play().catch(() => {
+            if (text) speakTextNative(text, targetLang, targetGender, id);
+            else { setPlayingAudioId(null); setLoadingAudioId(null); audioRef.current = null; }
           });
-      }
+        });
       return;
     }
 
@@ -940,7 +1047,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     );
     // Take authentic human voice from AI Studio with exact male/female profile
     const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=${isMale ? 'male' : 'female'}`;
-    handlePlayAudio(url, audioId, textToSpeak, lang, isMale ? 'male' : 'female');
+    handlePlayAudio(url, audioId, textToSpeak, lang, isMale ? 'male' : 'female', activeModel);
   }
 
   function handleDownloadSearchWord(gender = 'female', customModel = null) {
@@ -2512,7 +2619,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   const textToPlay = spokenWord || primaryWord;
                                   const voiceProfId = selectedFemaleModel.voiceProfileId || (langCode === 'ja' ? 'ja-female-1' : 'ko-female-1');
                                   const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=female`;
-                                  handlePlayAudio(url, `popup-fem-${primaryWord}`, textToPlay, langCode, 'female');
+                                  handlePlayAudio(url, `popup-fem-${primaryWord}`, textToPlay, langCode, 'female', selectedFemaleModel);
                                 }
                               }}
                               title={`Play Female Voice (${selectedFemaleModel.name})`}
@@ -2593,7 +2700,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   const textToPlay = spokenWord || primaryWord;
                                   const voiceProfId = selectedMaleModel.voiceProfileId || (langCode === 'ja' ? 'ja-male-1' : 'ko-male-1');
                                   const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=male`;
-                                  handlePlayAudio(url, `popup-male-${primaryWord}`, textToPlay, langCode, 'male');
+                                  handlePlayAudio(url, `popup-male-${primaryWord}`, textToPlay, langCode, 'male', selectedMaleModel);
                                 }
                               }}
                               title={`Play Male Voice (${selectedMaleModel.name})`}
