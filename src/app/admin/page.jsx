@@ -4,12 +4,10 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import AppDownloadModal from "@/components/AppDownloadModal";
 import { performLogout } from "@/lib/clientAuth";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [appDownloadModalOpen, setAppDownloadModalOpen] = useState(false);
 
   const [totalInstitutes, setTotalInstitutes] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
@@ -288,32 +286,8 @@ export default function AdminDashboardPage() {
               <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", color: "#3730a3", fontWeight: "700" }}>Dictionary &amp; AI Studio</h4>
               <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Master Korean &amp; Japanese vocabulary and speech generator</p>
             </Link>
-
-            <div
-              onClick={() => setAppDownloadModalOpen(true)}
-              style={{
-                backgroundColor: "#f0fdf4",
-                padding: "18px",
-                borderRadius: "10px",
-                border: "1.5px solid #86efac",
-                boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-                cursor: "pointer",
-                display: "block",
-                transition: "transform 0.15s ease, box-shadow 0.15s ease"
-              }}
-            >
-              <div style={{ fontSize: "24px", marginBottom: "6px" }}>📲</div>
-              <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", color: "#166534", fontWeight: "700" }}>Mobile App &amp; APK</h4>
-              <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>ExamJK Android APK (6.1 MB), iOS, and PC download links</p>
-            </div>
           </div>
         </div>
-
-        {/* App Download Modal */}
-        <AppDownloadModal
-          isOpen={appDownloadModalOpen}
-          onClose={() => setAppDownloadModalOpen(false)}
-        />
 
 
       </div>
