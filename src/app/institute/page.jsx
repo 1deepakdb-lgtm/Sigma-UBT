@@ -522,6 +522,41 @@ const InstituteDashboard = () => {
     alert(`✅ Price for "${pkgName}" updated to ${formattedPrice}!`);
   };
 
+  const handleTogglePackageDistribution = (pkgName) => {
+    const currentPkgs = JSON.parse(localStorage.getItem("examPackages")) || examPackages;
+    const target = currentPkgs.find(p => p.name === pkgName);
+    if (!target) return;
+
+    const isCurrentlyFree = target.distributionMode === "free" || target.isFreeForInstituteStudents || (target.price || "").toLowerCase().includes("free") || target.price === "Rs. 0";
+    const nextMode = isCurrentlyFree ? "paid" : "free";
+
+    const updatedPkgs = currentPkgs.map(p => {
+      if (p.name === pkgName) {
+        return {
+          ...p,
+          distributionMode: nextMode,
+          isFreeForInstituteStudents: nextMode === "free",
+          price: nextMode === "free" ? "Free" : (p.previousPrice || "Rs. 1,500"),
+          previousPrice: nextMode === "free" ? p.price : p.previousPrice
+        };
+      }
+      return p;
+    });
+
+    setExamPackages(updatedPkgs);
+    localStorage.setItem("examPackages", JSON.stringify(updatedPkgs));
+
+    const instDist = JSON.parse(localStorage.getItem(`instituteDistribution_${instituteName}`) || "{}");
+    instDist[pkgName] = nextMode;
+    localStorage.setItem(`instituteDistribution_${instituteName}`, JSON.stringify(instDist));
+
+    alert(
+      nextMode === "free"
+        ? `🎁 Package "${pkgName}" is now FREE for all enrolled students of ${instituteName}!\n\nYour students can now start all sets in this package directly with zero payment.`
+        : `💳 Package "${pkgName}" is now set to PURCHASE REQUIRED.\n\nStudents will see package fee and can purchase access.`
+    );
+  };
+
   const handleDeleteCustomPackage = (pkgId, pkgName) => {
     if (window.confirm(`Are you sure you want to delete custom package "${pkgName}"?`)) {
       const currentPkgs = JSON.parse(localStorage.getItem("examPackages")) || examPackages;
@@ -2427,11 +2462,51 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
                       {/* Pricing Section with Instant Price Modifier */}
                       <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                           <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>Package Price:</span>
-                          <span style={{ fontSize: "20px", fontWeight: "800", color: "#16a34a" }}>
+                          <span style={{ fontSize: "20px", fontWeight: "800", color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#16a34a" : "#1e40af" }}>
                             {pkg.price || "Rs. 1,500"}
                           </span>
+                        </div>
+
+                        {/* Distribution Mode Badge & Quick Toggle */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", backgroundColor: "#f8fafc", padding: "6px 10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: "#475569" }}>Student Access:</span>
+                          <span style={{
+                            fontSize: "11px",
+                            fontWeight: "800",
+                            padding: "2px 8px",
+                            borderRadius: "10px",
+                            backgroundColor: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#dcfce7" : "#ffedd5",
+                            color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#15803d" : "#c2410c"
+                          }}>
+                            {(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "🎁 FREE FOR ENROLLED STUDENTS" : "💳 PURCHASE REQUIRED"}
+                          </span>
+                        </div>
+
+                        {/* Distribution Toggle Button */}
+                        <div style={{ marginBottom: "10px" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePackageDistribution(pkg.name)}
+                            style={{
+                              width: "100%",
+                              backgroundColor: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#fef2f2" : "#f0fdf4",
+                              color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#b91c1c" : "#166534",
+                              border: `1.5px solid ${(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#fca5a5" : "#86efac"}`,
+                              padding: "7px 10px",
+                              borderRadius: "6px",
+                              fontWeight: "700",
+                              fontSize: "12px",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "6px"
+                            }}
+                          >
+                            <span>{(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "💳 Switch to Purchase Required" : "🎁 Distribute Free to Our Students"}</span>
+                          </button>
                         </div>
 
                         {/* Price editing toggle */}
@@ -2441,7 +2516,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                               type="text"
                               value={editingPriceValue}
                               onChange={(e) => setEditingPriceValue(e.target.value)}
-                              placeholder="New Price (e.g. Rs. 2,000)"
+                              placeholder="New Price (e.g. Free or Rs. 2,000)"
                               style={{ ...inputStyle, marginBottom: 0, padding: "8px 10px", fontSize: "13px", flex: 1 }}
                               autoFocus
                             />
@@ -2557,8 +2632,42 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                           <span style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", background: "#cbd5e1", padding: "2px 6px", borderRadius: "4px" }}>{set.packageName || (instituteLanguage === "japanese" ? "Mock Test" : "UBT-TEST")}</span>
                           <h4 style={{ margin: "10px 0", fontSize: "16px", color: "#1e293b" }}>{set.name}</h4>
                         </div>
-                        <div style={{ marginTop: "15px" }}>
-                          <button onClick={() => router.push(`/institute/exam-preview/${set.id}`)} style={{ width: "100%", backgroundColor: "#2563eb", color: "white", border: "none", padding: "9px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", fontSize: "12px" }}>PREVIEW EXAM</button>
+                        <div style={{ marginTop: "15px", display: "flex", gap: "8px" }}>
+                          <button onClick={() => router.push(`/institute/exam-preview/${set.id}`)} style={{ flex: 1, backgroundColor: "#2563eb", color: "white", border: "none", padding: "9px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", fontSize: "12px" }}>PREVIEW EXAM</button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const isFree = Boolean(set.isFree || set.distributionMode === "free");
+                              const nextFree = !isFree;
+                              const allSets = JSON.parse(localStorage.getItem("examSets") || "[]");
+                              const updated = allSets.map(s => (s.id === set.id || s.name === set.name) ? { ...s, isFree: nextFree, distributionMode: nextFree ? "free" : "paid" } : s);
+                              setExamSets(updated);
+                              localStorage.setItem("examSets", JSON.stringify(updated));
+
+                              try {
+                                const instDist = JSON.parse(localStorage.getItem(`instituteDistribution_${instituteName}`) || "{}");
+                                instDist[set.id] = nextFree ? "free" : "paid";
+                                instDist[set.name] = nextFree ? "free" : "paid";
+                                localStorage.setItem(`instituteDistribution_${instituteName}`, JSON.stringify(instDist));
+                              } catch (e) {}
+
+                              alert(nextFree ? `✅ Set "${set.name}" is now FREE for your students!` : `Set "${set.name}" now set to Purchase Required.`);
+                            }}
+                            title={set.isFree ? "Click to require purchase" : "Click to distribute free to your students"}
+                            style={{
+                              backgroundColor: (set.isFree || set.distributionMode === "free") ? "#dcfce7" : "#fff7ed",
+                              color: (set.isFree || set.distributionMode === "free") ? "#15803d" : "#c2410c",
+                              border: `1.5px solid ${(set.isFree || set.distributionMode === "free") ? "#86efac" : "#fed7aa"}`,
+                              padding: "9px 12px",
+                              borderRadius: "4px",
+                              fontWeight: "700",
+                              fontSize: "11px",
+                              cursor: "pointer",
+                              whiteSpace: "nowrap"
+                            }}
+                          >
+                            {(set.isFree || set.distributionMode === "free") ? "🎁 Free" : "💳 Paid"}
+                          </button>
                         </div>
                       </div>
                     ))
