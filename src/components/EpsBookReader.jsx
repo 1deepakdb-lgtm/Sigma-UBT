@@ -894,6 +894,12 @@ export default function EpsBookReader({
   const dragRef = useRef({ startX: 0, startY: 0, initialX: 20, initialY: 20, moved: false });
   const popupContainerRef = useRef(null);
 
+  // Movable Mini Circular AUDIO Button State (Default below Back button: x: 14, y: 58)
+  const [miniAudioPos, setMiniAudioPos] = useState({ x: 14, y: 58 });
+  const [isMiniDragging, setIsMiniDragging] = useState(false);
+  const miniDragRef = useRef({ startX: 0, startY: 0, initialX: 14, initialY: 58, moved: false });
+  const miniAudioBtnRef = useRef(null);
+
   // Admin/Institute Upload & Edit Modal State
   const [isAdmin, setIsAdmin] = useState(false);
   const [uploadModalChapter, setUploadModalChapter] = useState(null);
@@ -1865,6 +1871,58 @@ export default function EpsBookReader({
 
     const onEnd = () => {
       setIsDragging(false);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onEnd);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onEnd);
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchend", onEnd);
+  };
+
+  // Drag handler for Movable Circular AUDIO Button
+  const handleMiniDragStart = (e) => {
+    e.stopPropagation();
+    const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+
+    miniDragRef.current = {
+      startX: clientX,
+      startY: clientY,
+      initialX: miniAudioPos.x,
+      initialY: miniAudioPos.y,
+      moved: false,
+    };
+    setIsMiniDragging(true);
+
+    const onMove = (moveEvt) => {
+      const curX = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientX : moveEvt.clientX;
+      const curY = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientY : moveEvt.clientY;
+      const dx = curX - miniDragRef.current.startX;
+      const dy = curY - miniDragRef.current.startY;
+
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        miniDragRef.current.moved = true;
+      }
+
+      const btnSize = 60;
+      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+      const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+
+      const maxX = Math.max(0, winW - btnSize);
+      const maxY = Math.max(0, winH - btnSize);
+
+      const nextX = Math.max(6, Math.min(maxX - 6, miniDragRef.current.initialX + dx));
+      const nextY = Math.max(6, Math.min(maxY - 6, miniDragRef.current.initialY + dy));
+
+      setMiniAudioPos({ x: nextX, y: nextY });
+    };
+
+    const onEnd = () => {
+      setIsMiniDragging(false);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onEnd);
       window.removeEventListener("touchmove", onMove);
@@ -3315,116 +3373,144 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 2 & 3. TOP-LEFT CONTROLS: BACK BUTTON & AUDIO PLAYER TOGETHER ================= */}
-        <div
+        {/* CSS KEYFRAMES FOR AUDIO PULSING GLOW WHEN PLAYING */}
+        <style>{`
+          @keyframes pulseAudioGlow {
+            0% {
+              box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
+              transform: scale(1);
+            }
+            50% {
+              box-shadow: 0 0 28px rgba(16, 185, 129, 0.95), 0 6px 18px rgba(0, 0, 0, 0.4);
+              transform: scale(1.05);
+            }
+            100% {
+              box-shadow: 0 0 14px rgba(16, 185, 129, 0.6), 0 4px 10px rgba(0, 0, 0, 0.3);
+              transform: scale(1);
+            }
+          }
+        `}</style>
+
+        {/* ================= 2. MOVABLE CIRCULAR AUDIO BUTTON (DEFAULT BELOW BACK BUTTON) ================= */}
+        {hasAudio && popupMode !== "full" && (
+          <div
+            ref={miniAudioBtnRef}
+            onMouseDown={handleMiniDragStart}
+            onTouchStart={handleMiniDragStart}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!miniDragRef.current.moved) {
+                const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+                const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
+                const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
+                setPopupPos({ x: targetX, y: targetY });
+                setPopupMode("full");
+              }
+            }}
+            onTouchEnd={() => {
+              if (!miniDragRef.current.moved) {
+                const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+                const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
+                const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
+                setPopupPos({ x: targetX, y: targetY });
+                setPopupMode("full");
+              }
+            }}
+            title={isPlaying ? "Audio is Playing (Click to Open Controls, Drag to Move)" : "Audio (Click to Open Player, Drag to Move)"}
+            style={{
+              position: "fixed",
+              left: `${miniAudioPos.x}px`,
+              top: `${miniAudioPos.y}px`,
+              zIndex: 100015,
+              width: "58px",
+              height: "58px",
+              borderRadius: "50%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              background: isPlaying
+                ? "linear-gradient(135deg, #059669 0%, #10b981 100%)" // Vibrant Emerald Green when playing!
+                : "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)", // Crisp Royal Blue by default!
+              color: "#ffffff",
+              border: isPlaying ? "3px solid #6ee7b7" : "3px solid #93c5fd",
+              boxShadow: isPlaying
+                ? "0 0 24px rgba(16, 185, 129, 0.75), 0 6px 16px rgba(0, 0, 0, 0.4)"
+                : "0 8px 24px rgba(37, 99, 235, 0.5), 0 4px 10px rgba(0, 0, 0, 0.3)",
+              cursor: isMiniDragging ? "grabbing" : "grab",
+              userSelect: "none",
+              touchAction: "none",
+              transition: isMiniDragging ? "none" : "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease",
+              animation: isPlaying ? "pulseAudioGlow 2s infinite ease-in-out" : "none"
+            }}
+          >
+            {/* Headphone SVG icon matching user mockup */}
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="2.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
+                transform: isPlaying ? "scale(1.05)" : "scale(1)",
+                transition: "transform 0.2s ease"
+              }}
+            >
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+            </svg>
+            {/* Text: AUDIO */}
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: "900",
+                letterSpacing: "0.8px",
+                marginTop: "1px",
+                lineHeight: 1,
+                fontFamily: "system-ui, -apple-system, sans-serif",
+                textShadow: "0 1px 2px rgba(0,0,0,0.4)"
+              }}
+            >
+              AUDIO
+            </span>
+          </div>
+        )}
+
+        {/* ================= 3. FLOATING DISCRETE BACK BUTTON (TOP-LEFT) ================= */}
+        <button
+          type="button"
+          onClick={closeFullScreen}
+          title="Exit Fullscreen (Esc)"
           style={{
             position: "fixed",
             top: "14px",
             left: "14px",
             zIndex: 100010,
+            background: "rgba(15, 23, 42, 0.85)",
+            color: "#ffffff",
+            border: "1px solid rgba(255, 255, 255, 0.25)",
+            backdropFilter: "blur(8px)",
+            padding: "6px 14px",
+            borderRadius: "20px",
+            fontSize: "12px",
+            fontWeight: "bold",
+            cursor: "pointer",
             display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: "8px",
-            pointerEvents: "none"
+            alignItems: "center",
+            gap: "6px",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+            transition: "all 0.15s ease"
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; }}
         >
-          {/* Sleek Floating Back button */}
-          <button
-            type="button"
-            onClick={closeFullScreen}
-            title="Exit Fullscreen (Esc)"
-            style={{
-              pointerEvents: "auto",
-              background: "rgba(15, 23, 42, 0.85)",
-              color: "#ffffff",
-              border: "1px solid rgba(255, 255, 255, 0.25)",
-              backdropFilter: "blur(8px)",
-              padding: "6px 14px",
-              borderRadius: "20px",
-              fontSize: "12px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
-              transition: "all 0.15s ease"
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; }}
-          >
-            <span>⬅</span>
-            <span>Back</span>
-          </button>
-
-          {/* ================= SHRUNK AUDIO PLAYER BUTTON (DEFAULT: BELOW BACK BUTTON TOGETHER) ================= */}
-          {hasAudio && popupMode !== "full" && (
-            <div
-              onClick={() => setPopupMode("full")}
-              onTouchEnd={() => setPopupMode("full")}
-              title="Click or touch to open full Audio Player"
-              style={{
-                pointerEvents: "auto",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                background: isPlaying ? "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)" : "rgba(15, 23, 42, 0.88)",
-                color: "#ffffff",
-                border: isPlaying ? "1.5px solid #93c5fd" : "1px solid rgba(255, 255, 255, 0.25)",
-                borderRadius: "24px",
-                padding: "6px 14px 6px 12px",
-                boxShadow: isPlaying ? "0 4px 18px rgba(2, 132, 199, 0.55)" : "0 4px 14px rgba(0, 0, 0, 0.35)",
-                cursor: "pointer",
-                userSelect: "none",
-                backdropFilter: "blur(10px)",
-                transition: "all 0.2s ease",
-                maxWidth: "calc(100vw - 32px)"
-              }}
-            >
-              <span style={{ fontSize: "16px", lineHeight: 1 }}>🎧</span>
-              <div style={{ display: "flex", flexDirection: "column", textAlign: "left", maxWidth: "160px" }}>
-                <span style={{ fontSize: "11.5px", fontWeight: "800", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {isPlaying ? "Playing..." : (activeTrack?.name || "Audio Player")}
-                </span>
-                <span style={{ fontSize: "9.5px", opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {activeTrack?.name || `Track ${currentTrackIndex + 1}`} (Click to Open)
-                </span>
-              </div>
-
-              {/* Quick Play/Pause button on the shrunk pill */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePlayPause();
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                title={isPlaying ? "Pause Audio" : "Play Audio"}
-                style={{
-                  width: "26px",
-                  height: "26px",
-                  borderRadius: "50%",
-                  background: "#ffffff",
-                  color: "#0284c7",
-                  border: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  fontSize: isPlaying ? "10px" : "12px",
-                  fontWeight: "900",
-                  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.25)",
-                  marginLeft: "4px",
-                  flexShrink: 0
-                }}
-              >
-                {isPlaying ? "❚❚" : "▶"}
-              </button>
-            </div>
-          )}
-        </div>
+          <span>⬅</span>
+          <span>Back</span>
+        </button>
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
         <div style={{
