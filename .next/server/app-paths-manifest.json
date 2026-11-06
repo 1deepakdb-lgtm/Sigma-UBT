@@ -1,7 +1,7 @@
 {
+  "/api/eps-book/route": "app/api/eps-book/route.js",
   "/api/books/route": "app/api/books/route.js",
   "/api/books/japanese-r2/route": "app/api/books/japanese-r2/route.js",
-  "/api/eps-book/route": "app/api/eps-book/route.js",
-  "/admin/dictionary/page": "app/admin/dictionary/page.js",
-  "/admin/listening/page": "app/admin/listening/page.js"
+  "/admin/listening/page": "app/admin/listening/page.js",
+  "/admin/dictionary/page": "app/admin/dictionary/page.js"
 }

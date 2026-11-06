@@ -3519,7 +3519,7 @@ export default function EpsBookReader({
           left: 0,
           width: "100vw",
           height: "100vh",
-          backgroundColor: "#0f172a",
+          backgroundColor: "#ffffff",
           overflow: "hidden",
           margin: 0,
           padding: 0,
@@ -3546,7 +3546,7 @@ export default function EpsBookReader({
                   margin: 0,
                   padding: 0,
                   display: "block",
-                  backgroundColor: "#0f172a",
+                  backgroundColor: "#ffffff",
                   outline: "none"
                 }}
               />
