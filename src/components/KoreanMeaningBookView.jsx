@@ -471,8 +471,10 @@ export default function KoreanMeaningBookView({
           {/* Grid of Chapter Folders */}
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "16px"
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))",
+            gap: "16px",
+            width: "100%",
+            boxSizing: "border-box"
           }}>
             {filteredChapters.map(c => {
               const hasPdf = Boolean(c.meaningPdfUrl);
@@ -592,7 +594,7 @@ export default function KoreanMeaningBookView({
             marginBottom: "20px"
           }}>
             {/* View Mode Buttons */}
-            <div style={{ display: "flex", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "10px", gap: "4px", flexWrap: "wrap", border: "1px solid #e2e8f0" }}>
+            <div style={{ display: "flex", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "10px", gap: "4px", flexWrap: "wrap", border: "1px solid #e2e8f0", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
               <button
                 type="button"
                 onClick={() => setChapterViewMode("book")}
@@ -774,8 +776,8 @@ export default function KoreanMeaningBookView({
                   </h3>
                 </div>
 
-                <div style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "10px", border: "1px solid #e2e8f0", width: "100%" }}>
+                  <table style={{ width: "100%", minWidth: "460px", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
                     <thead>
                       <tr style={{ backgroundColor: "#1e40af", borderBottom: "2px solid #1d4ed8" }}>
                         <th style={{ padding: "12px 16px", color: "#ffffff", fontWeight: "800", width: "35%" }}>Korean शब्द</th>
@@ -847,8 +849,8 @@ export default function KoreanMeaningBookView({
                 <h3 style={{ margin: "0 0 16px 0", fontSize: "19px", fontWeight: "900", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px", paddingBottom: "12px", borderBottom: "1.5px solid #e2e8f0" }}>
                   <span style={{ color: "#0284c7" }}>२. 기본 표현</span> — आधारभूत वाक्य तथा नेपाली अर्थ
                 </h3>
-                <div style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "10px", border: "1px solid #e2e8f0", width: "100%" }}>
+                  <table style={{ width: "100%", minWidth: "460px", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
                     <thead>
                       <tr style={{ backgroundColor: "#1e40af", borderBottom: "2px solid #1d4ed8" }}>
                         <th style={{ padding: "12px 16px", color: "#ffffff", fontWeight: "800", width: "55%" }}>Korean वाक्य</th>
@@ -1365,7 +1367,7 @@ export default function KoreanMeaningBookView({
                       }}
                     >
                       {/* Left: Korean Word & Audio */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "14px", minWidth: "220px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: "150px", flex: "1 1 auto" }}>
                         <button
                           type="button"
                           onClick={() => handleSpeak(w.korean, w.id)}
@@ -1380,13 +1382,14 @@ export default function KoreanMeaningBookView({
                             alignItems: "center",
                             justifyContent: "center",
                             cursor: "pointer",
-                            fontSize: "15px"
+                            fontSize: "15px",
+                            flexShrink: 0
                           }}
                           title="Play Korean pronunciation"
                         >
                           🔊
                         </button>
-                        <div>
+                        <div style={{ wordBreak: "break-word" }}>
                           <div style={{ fontSize: "19px", fontWeight: "900", color: "#0f172a", letterSpacing: "0.2px" }}>
                             {w.korean}
                           </div>
@@ -1397,7 +1400,7 @@ export default function KoreanMeaningBookView({
                       </div>
 
                       {/* Middle: Nepali Meaning & English */}
-                      <div style={{ flex: 1, minWidth: "220px" }}>
+                      <div style={{ flex: "2 1 auto", minWidth: "150px", wordBreak: "break-word" }}>
                         <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
                           {w.nepali}
                         </div>
