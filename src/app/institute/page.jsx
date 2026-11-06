@@ -18,6 +18,7 @@ import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
 import InstituteBillingSection from "@/components/InstituteBillingSection";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
+import AppDownloadModal from "@/components/AppDownloadModal";
 import { performLogout } from "@/lib/clientAuth";
 import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from "@/lib/instituteGateAuth";
 import { JLPT_MOCK_SETS_META } from "@/data/jlptMockTestData";
@@ -27,6 +28,7 @@ const InstituteDashboard = () => {
   const [instituteName, setInstituteName] = useState("Language Institute");
 
   const [instId, setInstId] = useState(null);
+  const [appDownloadModalOpen, setAppDownloadModalOpen] = useState(false);
 
   const [userRole, setUserRole] = useState("institute");
 
@@ -1390,6 +1392,33 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           </div>
 
           <div style={navRightSlotStyle}>
+            <button
+              type="button"
+              onClick={() => setAppDownloadModalOpen(true)}
+              style={{
+                backgroundColor: "#16a34a",
+                color: "white",
+                border: "none",
+                padding: "8px 14px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "700",
+                fontSize: "12.5px",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
+                minHeight: "38px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: "0 2px 6px rgba(22, 163, 74, 0.35)",
+                transition: "background-color 0.15s ease"
+              }}
+              title="Share or download Mobile App APK & Links for Students"
+            >
+              <span>📲</span>
+              <span>Student App Links</span>
+            </button>
+
             <button 
               onClick={handleLogout} 
               style={{ 
@@ -3195,6 +3224,12 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           </div>
         </div>
       )}
+
+      {/* App Download Modal for Student APK & Direct Links */}
+      <AppDownloadModal
+        isOpen={appDownloadModalOpen}
+        onClose={() => setAppDownloadModalOpen(false)}
+      />
 
       </div>
     </div>

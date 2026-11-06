@@ -9,6 +9,7 @@ import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import EsewaCheckoutModal from "@/components/EsewaCheckoutModal";
 import JlptMockExamModal from "@/components/JlptMockExamModal";
 import ColorVisionSection from "@/components/ColorVisionSection";
+import AppDownloadModal from "@/components/AppDownloadModal";
 import { JLPT_MOCK_SETS_META, getMockExamSetById } from "@/data/jlptMockTestData";
 import { performLogout } from "@/lib/clientAuth";
 
@@ -142,6 +143,7 @@ const StudentDashboard = () => {
     return [];
   });
   const [esewaModalOpen, setEsewaModalOpen] = useState(false);
+  const [appDownloadModalOpen, setAppDownloadModalOpen] = useState(false);
   const [selectedEsewaItem, setSelectedEsewaItem] = useState(null);
   const [paidAccessTrigger, setPaidAccessTrigger] = useState(0);
 
@@ -1524,6 +1526,32 @@ const StudentDashboard = () => {
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
         </div>
 
+        {/* Download App Button (Visible on all screens) */}
+        <button
+          type="button"
+          onClick={() => setAppDownloadModalOpen(true)}
+          title="Download Android APK & iOS App"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            backgroundColor: "#16a34a",
+            color: "#ffffff",
+            border: "none",
+            padding: "6px 12px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontWeight: "800",
+            fontSize: "12px",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+            boxShadow: "0 2px 6px rgba(22, 163, 74, 0.35)"
+          }}
+        >
+          <span>📲</span>
+          <span>App Link</span>
+        </button>
+
         {/* Desktop Logout Button */}
         <button
           className="student-desktop-logout"
@@ -1699,7 +1727,15 @@ const StudentDashboard = () => {
               <span>Performance</span>
             </button>
 
-            <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
+            <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <button
+                onClick={() => { setAppDownloadModalOpen(true); setMobileMenuOpen(false); }}
+                style={{ width: "100%", backgroundColor: "#16a34a", color: "#ffffff", border: "none", padding: "11px", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: "0 2px 6px rgba(22, 163, 74, 0.35)" }}
+              >
+                <span>📲</span>
+                <span>Download App (Android & iOS)</span>
+              </button>
+
               <button
                 onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
                 style={{ width: "100%", backgroundColor: "#ef4444", color: "#ffffff", border: "none", padding: "11px", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
@@ -1960,6 +1996,75 @@ const StudentDashboard = () => {
                     </span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Mobile App Download Banner / APK Link */}
+            <div
+              style={{
+                background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+                borderRadius: "14px",
+                padding: "14px 18px",
+                border: "1.5px solid #86efac",
+                boxShadow: "0 2px 8px rgba(22, 163, 74, 0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "12px",
+                marginBottom: "24px"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ width: "42px", height: "42px", borderRadius: "10px", backgroundColor: "#16a34a", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0, boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)" }}>
+                  📱
+                </div>
+                <div>
+                  <div style={{ fontSize: "14px", fontWeight: "800", color: "#14532d" }}>
+                    Download ExamJK Mobile App
+                  </div>
+                  <div style={{ fontSize: "11.5px", color: "#166534", marginTop: "2px" }}>
+                    Android APK (v2.5) · iOS / iPad Web App · Fast &amp; Offline Ready
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <a
+                  href="/downloads/ExamJK.apk"
+                  download="ExamJK.apk"
+                  style={{
+                    backgroundColor: "#16a34a",
+                    color: "#ffffff",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    fontSize: "12.5px",
+                    fontWeight: "800",
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.35)"
+                  }}
+                >
+                  <span>📥</span>
+                  <span>Download APK</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setAppDownloadModalOpen(true)}
+                  style={{
+                    backgroundColor: "#ffffff",
+                    color: "#166534",
+                    border: "1.5px solid #86efac",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    fontSize: "12.5px",
+                    fontWeight: "700",
+                    cursor: "pointer"
+                  }}
+                >
+                  All Devices (iOS/PC)
+                </button>
               </div>
             </div>
 
@@ -3111,6 +3216,12 @@ const StudentDashboard = () => {
                   <span>📊</span> View Exam Performance History
                 </button>
                 <button
+                  onClick={() => setAppDownloadModalOpen(true)}
+                  style={{ width: "100%", backgroundColor: "#f0fdf4", color: "#166534", border: "1.5px solid #86efac", padding: "12px", borderRadius: "10px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                >
+                  <span>📲</span> Download ExamJK Mobile App (APK &amp; iOS)
+                </button>
+                <button
                   onClick={handleLogout}
                   style={{ width: "100%", backgroundColor: "#ef4444", color: "#ffffff", border: "none", padding: "12px", borderRadius: "10px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "6px" }}
                 >
@@ -3268,6 +3379,12 @@ const StudentDashboard = () => {
         studentName={studentName}
         studentPhone={currentStudentPhone}
         onSuccessUnlock={handleEsewaSuccessUnlock}
+      />
+
+      {/* App Download Modal (Android APK, iOS, Windows, Mac) */}
+      <AppDownloadModal
+        isOpen={appDownloadModalOpen}
+        onClose={() => setAppDownloadModalOpen(false)}
       />
 
       {/* JLPT & JFT Japanese CBT Mock Exam Modal */}
