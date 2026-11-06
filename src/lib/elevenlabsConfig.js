@@ -18,6 +18,37 @@ export const ELEVENLABS_MODELS = {
   FLASH_V2: 'eleven_flash_v2'                // Fast response
 };
 
+export const AVAILABLE_MODELS = [
+  {
+    id: 'eleven_multilingual_v2',
+    name: 'Eleven Multilingual v2',
+    shortName: 'Multilingual v2',
+    tag: 'Ultra Lifelike · Expressive',
+    desc: 'Highest natural intonation, dynamic emotional contour, and authentic human cadence.'
+  },
+  {
+    id: 'eleven_turbo_v2_5',
+    name: 'Eleven Turbo v2.5',
+    shortName: 'Turbo v2.5',
+    tag: 'Low-Latency · Dynamic',
+    desc: 'Fast generation with natural conversational flow, perfect for responsive dialogue.'
+  },
+  {
+    id: 'eleven_flash_v2',
+    name: 'Eleven Flash v2',
+    shortName: 'Flash v2',
+    tag: 'Ultra-Fast · Sharp',
+    desc: 'Instant acoustic response, ideal for rapid vocabulary tests and syllable drills.'
+  },
+  {
+    id: 'neural_studio_hd',
+    name: 'Neural HD Studio',
+    shortName: 'Neural HD',
+    tag: 'Studio Broadcast',
+    desc: 'Pristine broadcast-grade diction with precision pitch, rate, and batchim clarity.'
+  }
+];
+
 export const DEFAULT_MODEL_ID = process.env.ELEVENLABS_MODEL_ID || ELEVENLABS_MODELS.MULTILINGUAL_V2;
 
 // Multi-Dimensional Voice Categories
