@@ -271,6 +271,51 @@ export default function AiStudio({
     return langMatch && genderMatch;
   });
 
+  // Crystal-Clear Native Audio Helper for Neat, Crisp Speech Synthesis
+  const speakStudioNative = (text, langCode = 'ko-KR', gender = 'female', onEnd = null) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return false;
+    try {
+      window.speechSynthesis.cancel();
+      const clean = (text || '').replace(/[（(][^）)]*[）)]/g, '').replace(/[\/\\]+/g, ', ').trim();
+      if (!clean) return false;
+
+      const utt = new SpeechSynthesisUtterance(clean);
+      utt.lang = langCode;
+      utt.pitch = gender === 'male' ? 0.85 : 1.05;
+      utt.rate = 1.0;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const langVoices = voices.filter(v => v.lang && v.lang.toLowerCase().includes(langCode.slice(0, 2).toLowerCase()));
+        if (langVoices.length > 0) {
+          if (gender === 'male') {
+            const m = langVoices.find(v => {
+              const n = (v.name || '').toLowerCase();
+              return n.includes('male') || n.includes('keita') || n.includes('injoon') || n.includes('minho') || n.includes('david') || n.includes('george') || n.includes('sagar');
+            }) || langVoices.find(v => {
+              const n = (v.name || '').toLowerCase();
+              return !n.includes('female') && !n.includes('sunhi') && !n.includes('nanami') && !n.includes('zira') && !n.includes('kyoko');
+            });
+            if (m) utt.voice = m;
+          } else {
+            const f = langVoices.find(v => {
+              const n = (v.name || '').toLowerCase();
+              return n.includes('female') || n.includes('sunhi') || n.includes('nanami') || n.includes('zira') || n.includes('kyoko');
+            }) || langVoices[0];
+            if (f) utt.voice = f;
+          }
+        }
+      }
+
+      utt.onend = () => { if (onEnd) onEnd(); };
+      utt.onerror = () => { if (onEnd) onEnd(); };
+      window.speechSynthesis.speak(utt);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
   // Handle Voice Preview with Model Selection
   const handlePlayPreview = async (voice, modelOverride = null) => {
     if (!voice) return;
@@ -305,27 +350,25 @@ export default function AiStudio({
       const audio = new Audio(url);
       previewAudioRef.current = audio;
 
-      const isMale = voice.gender === 'male' || voice.id?.includes('male') || (voice.role || '').toLowerCase().includes('male');
-      if (isMale) {
-        audio.preservesPitch = false;
-        audio.mozPreservesPitch = false;
-        audio.webkitPreservesPitch = false;
-        audio.playbackRate = 0.82;
-      } else {
-        audio.preservesPitch = true;
-        audio.playbackRate = 1.0;
-      }
+      audio.preservesPitch = true;
+      audio.playbackRate = 1.0;
 
       audio.onended = () => setPreviewingVoiceId(null);
       audio.onerror = () => {
-        setPreviewingVoiceId(null);
-        setAudioError('Failed to play voice preview. Please verify your connection.');
+        const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', voice.gender, () => setPreviewingVoiceId(null));
+        if (!spoke) {
+          setPreviewingVoiceId(null);
+          setAudioError('Failed to play voice preview. Please verify your connection.');
+        }
       };
 
       await audio.play();
     } catch (err) {
-      setPreviewingVoiceId(null);
-      setAudioError(err.message || 'Audio playback error');
+      const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', voice.gender, () => setPreviewingVoiceId(null));
+      if (!spoke) {
+        setPreviewingVoiceId(null);
+        setAudioError(err.message || 'Audio playback error');
+      }
     }
   };
 
@@ -365,27 +408,25 @@ export default function AiStudio({
       const audio = new Audio(url);
       previewAudioRef.current = audio;
 
-      const isMale = voice.gender === 'male' || voice.id?.includes('male') || (voice.role || '').toLowerCase().includes('male');
-      if (isMale) {
-        audio.preservesPitch = false;
-        audio.mozPreservesPitch = false;
-        audio.webkitPreservesPitch = false;
-        audio.playbackRate = 0.82;
-      } else {
-        audio.preservesPitch = true;
-        audio.playbackRate = 1.0;
-      }
+      audio.preservesPitch = true;
+      audio.playbackRate = 1.0;
 
       audio.onended = () => setPreviewingLineIndex(null);
       audio.onerror = () => {
-        setPreviewingLineIndex(null);
-        setAudioError('Failed to play dialogue line preview.');
+        const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', voice.gender, () => setPreviewingLineIndex(null));
+        if (!spoke) {
+          setPreviewingLineIndex(null);
+          setAudioError('Failed to play dialogue line preview.');
+        }
       };
 
       await audio.play();
     } catch (err) {
-      setPreviewingLineIndex(null);
-      setAudioError(err.message || 'Dialogue line preview failed');
+      const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', voice.gender, () => setPreviewingLineIndex(null));
+      if (!spoke) {
+        setPreviewingLineIndex(null);
+        setAudioError(err.message || 'Dialogue line preview failed');
+      }
     }
   };
 
@@ -438,16 +479,8 @@ export default function AiStudio({
 
       if (audioRef.current) {
         audioRef.current.src = url;
-        const isMale = selectedProfile.gender === 'male' || selectedProfile.id?.includes('male') || (selectedProfile.role || '').toLowerCase().includes('male');
-        if (isMale) {
-          audioRef.current.preservesPitch = false;
-          audioRef.current.mozPreservesPitch = false;
-          audioRef.current.webkitPreservesPitch = false;
-          audioRef.current.playbackRate = speakingSpeed * 0.82;
-        } else {
-          audioRef.current.preservesPitch = true;
-          audioRef.current.playbackRate = speakingSpeed;
-        }
+        audioRef.current.preservesPitch = true;
+        audioRef.current.playbackRate = speakingSpeed || 1.0;
         await audioRef.current.play();
         setIsPlaying(true);
       }

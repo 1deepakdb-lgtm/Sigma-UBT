@@ -616,11 +616,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
       utterance.lang = langCode;
       if (gender === 'male') {
-        utterance.pitch = 0.75;
-        utterance.rate = 0.92;
+        utterance.pitch = 0.85;
+        utterance.rate = 1.0;
       } else {
         utterance.pitch = 1.05;
-        utterance.rate = 0.98;
+        utterance.rate = 1.0;
       }
 
       // Strictly resolve genuine male or female voice matching language
@@ -763,7 +763,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       return;
     }
 
-    // 2. AI Studio Model Audio Playback with Millisecond Blob Cache & Preloading
+    // 2. Crystal-Clear Native Speech Synthesis (Neat, Crisp, Zero-Lag, Natural Pacing)
+    if (text && typeof window !== 'undefined' && window.speechSynthesis) {
+      const spoke = speakTextNative(text, targetLang, targetGender, id);
+      if (spoke) return;
+    }
+
+    // 3. Audio Playback with Pristine 1.0x Rate
     if (url) {
       setLoadingAudioId(id);
       setPlayingAudioId(null);
@@ -773,16 +779,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       const audio = new Audio(audioSrc);
       audioRef.current = audio;
 
-      const isMale = targetGender === 'male' || String(id || '').toLowerCase().includes('male') || String(url || '').toLowerCase().includes('gender=male') || String(url || '').toLowerCase().includes('ko-male') || String(url || '').toLowerCase().includes('ja-male');
-      if (isMale) {
-        audio.preservesPitch = false;
-        audio.mozPreservesPitch = false;
-        audio.webkitPreservesPitch = false;
-        audio.playbackRate = 0.82;
-      } else {
-        audio.preservesPitch = true;
-        audio.playbackRate = 1.0;
-      }
+      audio.preservesPitch = true;
+      audio.playbackRate = 1.0;
 
       // Asynchronously cache blob if not yet cached for instant subsequent plays
       if (!cachedBlobUrl && typeof window !== 'undefined') {
