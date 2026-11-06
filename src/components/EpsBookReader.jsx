@@ -2918,7 +2918,7 @@ export default function EpsBookReader({
               onTouchStart={(e) => e.stopPropagation()}
               title="Return to Chapter List"
               style={{
-                background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+                background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                 color: "#ffffff",
                 border: "none",
                 padding: "6px 12px",
@@ -2929,7 +2929,7 @@ export default function EpsBookReader({
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
-                boxShadow: "0 2px 8px rgba(29, 78, 216, 0.35)",
+                boxShadow: "0 2px 8px rgba(220, 38, 38, 0.35)",
                 flexShrink: 0
               }}
             >
@@ -3558,9 +3558,9 @@ export default function EpsBookReader({
             top: "14px",
             left: "14px",
             zIndex: 100010,
-            background: "rgba(15, 23, 42, 0.85)",
+            background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
             color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.25)",
+            border: "1px solid rgba(255, 255, 255, 0.35)",
             backdropFilter: "blur(8px)",
             padding: "6px 14px",
             borderRadius: "20px",
@@ -3570,11 +3570,11 @@ export default function EpsBookReader({
             display: "flex",
             alignItems: "center",
             gap: "6px",
-            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+            boxShadow: "0 4px 14px rgba(220, 38, 38, 0.45)",
             transition: "all 0.15s ease"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#0284c7"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15, 23, 42, 0.85)"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#b91c1c"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"; }}
         >
           <span>⬅</span>
           <span>Back</span>
