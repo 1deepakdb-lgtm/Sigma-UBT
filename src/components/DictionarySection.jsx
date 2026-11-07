@@ -627,11 +627,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
       utterance.lang = langCode;
       if (gender === 'male') {
-        utterance.pitch = 0.65;
+        utterance.pitch = 0.88;
         utterance.rate = 0.95;
       } else {
-        utterance.pitch = 1.10;
-        utterance.rate = 1.0;
+        utterance.pitch = 1.00;
+        utterance.rate = 1.00;
       }
 
       // Strictly resolve genuine male or female voice matching language
@@ -642,7 +642,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           if (gender === 'male') {
             const maleMatch = langVoices.find(v => {
               const vName = (v.name || '').toLowerCase();
-              return vName.includes('male') || vName.includes('david') || vName.includes('keita') || vName.includes('injoon') || vName.includes('george') || vName.includes('sagar') || vName.includes('minho') || vName.includes('sin-ji') || vName.includes('otoya') || vName.includes('guy') || vName.includes('ichiro') || vName.includes('kenji');
+              return vName.includes('male') || vName.includes('david') || vName.includes('keita') || vName.includes('injoon') || vName.includes('george') || vName.includes('sagar') || vName.includes('minho') || vName.includes('sin-ji') || vName.includes('otoya') || vName.includes('guy') || vName.includes('ichiro') || vName.includes('kenji') || vName.includes('x-ism') || vName.includes('x-htm');
             }) || langVoices.find(v => {
               const vName = (v.name || '').toLowerCase();
               return !vName.includes('female') && !vName.includes('zira') && !vName.includes('nanami') && !vName.includes('sunhi') && !vName.includes('susan') && !vName.includes('hemkala') && !vName.includes('yuna') && !vName.includes('kyoko') && !vName.includes('ayumi');
@@ -650,8 +650,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             if (maleMatch) {
               utterance.voice = maleMatch;
             } else {
-              // Deepen pitch to ensure authentic low masculine timbre
-              utterance.pitch = 0.65;
+              utterance.pitch = 0.88;
             }
           } else {
             const femaleMatch = langVoices.find(v => {
@@ -689,45 +688,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
   }
 
-  // High-performance granular pitch shifter for genuine masculine formants and model variations
-  function shiftPitchBuffer(ctx, inBuffer, pitchFactor = 0.74) {
-    const numChannels = inBuffer.numberOfChannels;
-    const sampleRate = inBuffer.sampleRate;
-    const length = inBuffer.length;
-    const outBuffer = ctx.createBuffer(numChannels, length, sampleRate);
-
-    const grainSize = 1024;
-    const hopSize = 256;
-    const window = new Float32Array(grainSize);
-    for (let k = 0; k < grainSize; k++) {
-      window[k] = 0.5 * (1.0 - Math.cos((2.0 * Math.PI * k) / (grainSize - 1)));
-    }
-
-    for (let c = 0; c < numChannels; c++) {
-      const src = inBuffer.getChannelData(c);
-      const dst = outBuffer.getChannelData(c);
-      const maxHops = Math.floor((length - grainSize) / hopSize);
-
-      for (let h = 0; h < maxHops; h++) {
-        const outPos = h * hopSize;
-        const srcStart = Math.max(0, Math.min(length - grainSize, Math.round(outPos)));
-
-        for (let i = 0; i < grainSize; i++) {
-          const grainIdx = (i - grainSize / 2) * pitchFactor + grainSize / 2;
-          if (grainIdx >= 0 && grainIdx < grainSize - 1) {
-            const i0 = Math.floor(grainIdx);
-            const frac = grainIdx - i0;
-            const s0 = src[srcStart + i0] || 0;
-            const s1 = src[srcStart + i0 + 1] || 0;
-            dst[outPos + i] += (s0 + frac * (s1 - s0)) * window[i];
-          }
-        }
-      }
-    }
-    return outBuffer;
-  }
-
-  function playDecodedSource(buffer, lowShelfGain, speed, id) {
+  // Pure Web Audio playback engine with distortion-free biquad formant shaping
+  function playDecodedSource(buffer, targetGender, speed, id) {
     const ctx = audioContextRef.current;
     if (!ctx) return;
 
@@ -738,16 +700,32 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.playbackRate.value = speed || 1.0;
+    source.playbackRate.value = speed || (targetGender === 'male' ? 0.90 : 1.0);
 
     let lastNode = source;
-    if (lowShelfGain > 0) {
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowshelf';
-      filter.frequency.value = 240;
-      filter.gain.value = lowShelfGain;
-      source.connect(filter);
-      lastNode = filter;
+    if (targetGender === 'male') {
+      // 3-Stage Pristine Masculine Resonance Filter (Zero distortion, warm & clear baritone body)
+      const lowFilter = ctx.createBiquadFilter();
+      lowFilter.type = 'lowshelf';
+      lowFilter.frequency.value = 220;
+      lowFilter.gain.value = 4.5;
+
+      const midFilter = ctx.createBiquadFilter();
+      midFilter.type = 'peaking';
+      midFilter.frequency.value = 420;
+      midFilter.Q.value = 1.0;
+      midFilter.gain.value = 2.0;
+
+      const highFilter = ctx.createBiquadFilter();
+      highFilter.type = 'peaking';
+      highFilter.frequency.value = 2800;
+      highFilter.Q.value = 1.0;
+      highFilter.gain.value = -3.5;
+
+      source.connect(lowFilter);
+      lowFilter.connect(midFilter);
+      midFilter.connect(highFilter);
+      lastNode = highFilter;
     }
 
     lastNode.connect(ctx.destination);
@@ -870,10 +848,44 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       setLoadingAudioId(id);
       setPlayingAudioId(null);
 
+      // Model-specific natural speed tuning
+      let speed = 1.0;
+      if (targetGender === 'male') {
+        const mId = targetModel?.id || 'male-1';
+        if (mId.includes('2') || mId.includes('deep')) {
+          speed = 0.84;
+        } else if (mId.includes('3') || mId.includes('energetic')) {
+          speed = 0.94;
+        } else if (mId.includes('4') || mId.includes('broadcaster')) {
+          speed = 0.88;
+        } else if (mId.includes('5') || mId.includes('friendly')) {
+          speed = 0.93;
+        } else if (mId.includes('6') || mId.includes('senior')) {
+          speed = 0.86;
+        } else {
+          speed = 0.90; // Male 1 Teacher
+        }
+      } else {
+        const mId = targetModel?.id || 'female-1';
+        if (mId.includes('2') || mId.includes('bright')) {
+          speed = 1.04;
+        } else if (mId.includes('3') || mId.includes('clear')) {
+          speed = 0.98;
+        } else if (mId.includes('4') || mId.includes('news')) {
+          speed = 1.02;
+        } else if (mId.includes('5') || mId.includes('youth')) {
+          speed = 1.06;
+        } else if (mId.includes('6') || mId.includes('mentor')) {
+          speed = 0.96;
+        } else {
+          speed = 1.00; // Female 1 Teacher
+        }
+      }
+
       const cacheKey = `${url}_${targetGender}_${targetModel?.id || 'default'}`;
       if (audioBufferCacheRef.current.has(cacheKey) && audioContextRef.current) {
         const cached = audioBufferCacheRef.current.get(cacheKey);
-        playDecodedSource(cached.buffer, cached.lowShelf, cached.speed, id);
+        playDecodedSource(cached.buffer, targetGender, cached.speed, id);
         return;
       }
 
@@ -887,58 +899,16 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           if (!ctx) throw new Error('No AudioContext');
 
           const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
-
-          let pitchFactor = 1.0;
-          let lowShelfGain = 0;
-          let speed = 1.0;
-
-          if (targetGender === 'male') {
-            const mId = targetModel?.id || 'male-1';
-            if (mId.includes('2') || mId.includes('deep')) {
-              pitchFactor = 0.65; lowShelfGain = 6.0;
-            } else if (mId.includes('3') || mId.includes('energetic')) {
-              pitchFactor = 0.79; lowShelfGain = 2.5; speed = 1.04;
-            } else if (mId.includes('4') || mId.includes('broadcaster')) {
-              pitchFactor = 0.70; lowShelfGain = 4.5;
-            } else if (mId.includes('5') || mId.includes('friendly')) {
-              pitchFactor = 0.82; lowShelfGain = 2.0; speed = 1.02;
-            } else if (mId.includes('6') || mId.includes('senior')) {
-              pitchFactor = 0.68; lowShelfGain = 4.0; speed = 0.94;
-            } else {
-              pitchFactor = 0.73; lowShelfGain = 4.0; // Male 1 Teacher
-            }
-          } else {
-            const mId = targetModel?.id || 'female-1';
-            if (mId.includes('2') || mId.includes('bright')) {
-              pitchFactor = 1.10; speed = 1.03;
-            } else if (mId.includes('3') || mId.includes('clear')) {
-              pitchFactor = 1.03; speed = 0.98;
-            } else if (mId.includes('4') || mId.includes('news')) {
-              pitchFactor = 0.96;
-            } else if (mId.includes('5') || mId.includes('youth')) {
-              pitchFactor = 1.15; speed = 1.05;
-            } else if (mId.includes('6') || mId.includes('mentor')) {
-              pitchFactor = 0.92; speed = 0.96;
-            } else {
-              pitchFactor = 1.00; // Female 1 Teacher
-            }
-          }
-
-          let finalBuf = decoded;
-          if (Math.abs(pitchFactor - 1.0) > 0.03) {
-            finalBuf = shiftPitchBuffer(ctx, decoded, pitchFactor);
-          }
-
-          audioBufferCacheRef.current.set(cacheKey, { buffer: finalBuf, lowShelf: lowShelfGain, speed });
-          playDecodedSource(finalBuf, lowShelfGain, speed, id);
+          audioBufferCacheRef.current.set(cacheKey, { buffer: decoded, speed });
+          playDecodedSource(decoded, targetGender, speed, id);
         })
         .catch(err => {
-          console.warn('Web Audio pitch processing fallback to HTML audio:', err);
+          console.warn('Web Audio playback fallback to HTML audio:', err);
           const cachedBlobUrl = audioBlobCacheRef.current.get(url);
           const audioSrc = cachedBlobUrl || url;
           const audio = new Audio(audioSrc);
           audioRef.current = audio;
-          audio.playbackRate = 1.0;
+          audio.playbackRate = speed;
           audio.onplay = () => { setLoadingAudioId(null); setPlayingAudioId(id); };
           audio.onended = () => { setPlayingAudioId(null); setLoadingAudioId(null); audioRef.current = null; };
           audio.onerror = () => {

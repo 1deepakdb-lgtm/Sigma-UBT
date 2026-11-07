@@ -283,8 +283,8 @@ export default function AiStudio({
 
       const utt = new SpeechSynthesisUtterance(clean);
       utt.lang = langCode;
-      utt.pitch = gender === 'male' ? 0.85 : 1.05;
-      utt.rate = 1.0;
+      utt.pitch = gender === 'male' ? 0.88 : 1.00;
+      utt.rate = gender === 'male' ? 0.95 : 1.00;
 
       const voices = window.speechSynthesis.getVoices();
       if (voices && voices.length > 0) {
@@ -293,7 +293,7 @@ export default function AiStudio({
           if (gender === 'male') {
             const m = langVoices.find(v => {
               const n = (v.name || '').toLowerCase();
-              return n.includes('male') || n.includes('keita') || n.includes('injoon') || n.includes('minho') || n.includes('david') || n.includes('george') || n.includes('sagar');
+              return n.includes('male') || n.includes('keita') || n.includes('injoon') || n.includes('minho') || n.includes('david') || n.includes('george') || n.includes('sagar') || n.includes('x-ism') || n.includes('x-htm');
             }) || langVoices.find(v => {
               const n = (v.name || '').toLowerCase();
               return !n.includes('female') && !n.includes('sunhi') && !n.includes('nanami') && !n.includes('zira') && !n.includes('kyoko');
@@ -316,44 +316,6 @@ export default function AiStudio({
     } catch (e) {
       return false;
     }
-  };
-
-  // High-performance granular pitch shifter for genuine masculine formants and dialogue separation
-  const shiftPitchBuffer = (ctx, inBuffer, pitchFactor = 0.74) => {
-    const numChannels = inBuffer.numberOfChannels;
-    const sampleRate = inBuffer.sampleRate;
-    const length = inBuffer.length;
-    const outBuffer = ctx.createBuffer(numChannels, length, sampleRate);
-
-    const grainSize = 1024;
-    const hopSize = 256;
-    const window = new Float32Array(grainSize);
-    for (let k = 0; k < grainSize; k++) {
-      window[k] = 0.5 * (1.0 - Math.cos((2.0 * Math.PI * k) / (grainSize - 1)));
-    }
-
-    for (let c = 0; c < numChannels; c++) {
-      const src = inBuffer.getChannelData(c);
-      const dst = outBuffer.getChannelData(c);
-      const maxHops = Math.floor((length - grainSize) / hopSize);
-
-      for (let h = 0; h < maxHops; h++) {
-        const outPos = h * hopSize;
-        const srcStart = Math.max(0, Math.min(length - grainSize, Math.round(outPos)));
-
-        for (let i = 0; i < grainSize; i++) {
-          const grainIdx = (i - grainSize / 2) * pitchFactor + grainSize / 2;
-          if (grainIdx >= 0 && grainIdx < grainSize - 1) {
-            const i0 = Math.floor(grainIdx);
-            const frac = grainIdx - i0;
-            const s0 = src[srcStart + i0] || 0;
-            const s1 = src[srcStart + i0 + 1] || 0;
-            dst[outPos + i] += (s0 + frac * (s1 - s0)) * window[i];
-          }
-        }
-      }
-    }
-    return outBuffer;
   };
 
   const playWebAudioStudio = async (url, targetGender, onEnd, onError) => {
@@ -381,25 +343,36 @@ export default function AiStudio({
       const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
 
       const isMale = targetGender === 'male';
-      const pitchFactor = isMale ? 0.74 : 1.00;
-      const lowShelfGain = isMale ? 4.5 : 0;
-
-      let finalBuf = decoded;
-      if (Math.abs(pitchFactor - 1.0) > 0.03) {
-        finalBuf = shiftPitchBuffer(ctx, decoded, pitchFactor);
-      }
+      const speed = isMale ? 0.90 : 1.00;
 
       const source = ctx.createBufferSource();
-      source.buffer = finalBuf;
+      source.buffer = decoded;
+      source.playbackRate.value = speed;
 
       let lastNode = source;
-      if (lowShelfGain > 0) {
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowshelf';
-        filter.frequency.value = 240;
-        filter.gain.value = lowShelfGain;
-        source.connect(filter);
-        lastNode = filter;
+      if (isMale) {
+        // 3-Stage Pristine Masculine Resonance Filter (Zero distortion, warm & clear baritone body)
+        const lowFilter = ctx.createBiquadFilter();
+        lowFilter.type = 'lowshelf';
+        lowFilter.frequency.value = 220;
+        lowFilter.gain.value = 4.5;
+
+        const midFilter = ctx.createBiquadFilter();
+        midFilter.type = 'peaking';
+        midFilter.frequency.value = 420;
+        midFilter.Q.value = 1.0;
+        midFilter.gain.value = 2.0;
+
+        const highFilter = ctx.createBiquadFilter();
+        highFilter.type = 'peaking';
+        highFilter.frequency.value = 2800;
+        highFilter.Q.value = 1.0;
+        highFilter.gain.value = -3.5;
+
+        source.connect(lowFilter);
+        lowFilter.connect(midFilter);
+        midFilter.connect(highFilter);
+        lastNode = highFilter;
       }
 
       lastNode.connect(ctx.destination);
@@ -476,8 +449,7 @@ export default function AiStudio({
       if (!played) {
         const audio = new Audio(url);
         previewAudioRef.current = audio;
-        audio.preservesPitch = true;
-        audio.playbackRate = 1.0;
+        audio.playbackRate = targetGender === 'male' ? 0.90 : 1.0;
         audio.onended = () => setPreviewingVoiceId(null);
         audio.onerror = () => {
           const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
@@ -554,8 +526,7 @@ export default function AiStudio({
       if (!played) {
         const audio = new Audio(url);
         previewAudioRef.current = audio;
-        audio.preservesPitch = true;
-        audio.playbackRate = 1.0;
+        audio.playbackRate = lineGender === 'male' ? 0.90 : 1.0;
         audio.onended = () => setPreviewingLineIndex(null);
         audio.onerror = () => {
           const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', lineGender, () => setPreviewingLineIndex(null));

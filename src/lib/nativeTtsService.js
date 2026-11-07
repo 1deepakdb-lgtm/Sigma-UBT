@@ -292,16 +292,7 @@ export async function generateMelodicVoice(text, lang = 'ja', gender = 'female',
       if (res.ok) {
         const arrayBuf = await res.arrayBuffer();
         if (arrayBuf.byteLength > 100) {
-          try {
-            fs.writeFileSync(rawMp3Path, Buffer.from(arrayBuf));
-            execFileSync('afconvert', [rawMp3Path, wavPath, '-f', 'WAVE', '-d', 'LEI16'], { timeout: 6000 });
-            try { fs.unlinkSync(rawMp3Path); } catch {}
-            gotAudio = true;
-          } catch (afErr) {
-            // afconvert not available on Linux/cPanel; return raw MP3 directly
-            try { if (fs.existsSync(rawMp3Path)) fs.unlinkSync(rawMp3Path); } catch {}
-            return { buffer: Buffer.from(arrayBuf), contentType: 'audio/mpeg', provider: 'google-tts' };
-          }
+          return { buffer: Buffer.from(arrayBuf), contentType: 'audio/mpeg', provider: 'google-tts' };
         }
       }
     } catch (fetchErr) {
