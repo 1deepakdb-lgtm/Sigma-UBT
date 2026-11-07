@@ -93,59 +93,87 @@ export async function GET(req) {
       orderBy: { createdAt: 'desc' }
     });
 
+    // Check student language track for strict Korean vs Japanese isolation
+    const studentLang = (studentUser?.institute?.language && studentUser.institute.language !== 'both')
+      ? studentUser.institute.language
+      : (studentUser?.language && studentUser.language !== 'both' ? studentUser.language : (studentUser?.institute?.language || studentUser?.language || 'both'));
+
+    const isPureKorean = studentLang === 'korean';
+    const isPureJapanese = studentLang === 'japanese';
+
     // Map sets with unlocked status based on institute packages, ownership, and releases
     const instituteReleasedSetIds = new Set(
       (studentUser?.institute?.examSets || []).map(ies => ies.examSetId)
     );
 
-    const enrichedSets = sets.map(set => {
-      const isFree = Boolean(
-        set.isFree ||
-        set.setType === 'FREE' ||
-        (set.name && set.name.toLowerCase().includes('free demo'))
-      );
+    const enrichedSets = sets
+      .filter(set => {
+        const setNameNorm = (set.name || '').toLowerCase();
+        const setPkgNorm = (set.packageName || set.package?.name || '').toLowerCase();
+        const isJp = Boolean(
+          set.setType === 'MOCK' ||
+          set.track === 'japanese' ||
+          setNameNorm.includes('mock') ||
+          setNameNorm.includes('jlpt') ||
+          setNameNorm.includes('jft') ||
+          setNameNorm.includes('nat') ||
+          setPkgNorm.includes('mock')
+        );
 
-      const isCreatedByMyInstitute = Boolean(
-        instituteId &&
-        set.creatorInstituteId &&
-        set.creatorInstituteId === instituteId
-      );
+        // Korean students NEVER see Japanese sets
+        if (isPureKorean && isJp) return false;
+        // Japanese students NEVER see Korean UBT sets
+        if (isPureJapanese && !isJp) return false;
+        return true;
+      })
+      .map(set => {
+        const isFree = Boolean(
+          set.isFree ||
+          set.setType === 'FREE' ||
+          (set.name && set.name.toLowerCase().includes('free demo'))
+        );
 
-      const isExplicitlyReleasedToInstitute = instituteReleasedSetIds.has(set.id);
+        const isCreatedByMyInstitute = Boolean(
+          instituteId &&
+          set.creatorInstituteId &&
+          set.creatorInstituteId === instituteId
+        );
 
-      const isCoveredByInstitutePkg = Boolean(
-        institutePkg && isSetCoveredByPackage(set, institutePkg)
-      );
+        const isExplicitlyReleasedToInstitute = instituteReleasedSetIds.has(set.id);
 
-      const isCoveredByStudentPkg = Boolean(
-        assignedPkg && isSetCoveredByPackage(set, assignedPkg)
-      );
+        const isCoveredByInstitutePkg = Boolean(
+          institutePkg && isSetCoveredByPackage(set, institutePkg)
+        );
 
-      const isUnlocked = Boolean(
-        isFree ||
-        isCreatedByMyInstitute ||
-        isExplicitlyReleasedToInstitute ||
-        isCoveredByInstitutePkg ||
-        isCoveredByStudentPkg
-      );
+        const isCoveredByStudentPkg = Boolean(
+          assignedPkg && isSetCoveredByPackage(set, assignedPkg)
+        );
 
-      return {
-        id: set.id,
-        name: set.name,
-        packageName: set.packageName || set.package?.name || (set.setType === 'MOCK' ? 'Mock Test' : 'Full Set UBT'),
-        packageId: set.packageId,
-        creatorInstituteId: set.creatorInstituteId,
-        creatorInstituteName: set.creatorInstituteName,
-        isPrivate: set.isPrivate,
-        isPublished: set.isPublished,
-        isFree: set.isFree,
-        setType: set.setType,
-        duration: set.duration,
-        questionsCount: set._count?.questions || 40,
-        isUnlocked,
-        isInstituteSet: isCreatedByMyInstitute || isExplicitlyReleasedToInstitute
-      };
-    });
+        const isUnlocked = Boolean(
+          isFree ||
+          isCreatedByMyInstitute ||
+          isExplicitlyReleasedToInstitute ||
+          isCoveredByInstitutePkg ||
+          isCoveredByStudentPkg
+        );
+
+        return {
+          id: set.id,
+          name: set.name,
+          packageName: set.packageName || set.package?.name || (set.setType === 'MOCK' ? 'Mock Test' : 'Full Set UBT'),
+          packageId: set.packageId,
+          creatorInstituteId: set.creatorInstituteId,
+          creatorInstituteName: set.creatorInstituteName,
+          isPrivate: set.isPrivate,
+          isPublished: set.isPublished,
+          isFree: set.isFree,
+          setType: set.setType,
+          duration: set.duration,
+          questionsCount: set._count?.questions || 40,
+          isUnlocked,
+          isInstituteSet: isCreatedByMyInstitute || isExplicitlyReleasedToInstitute
+        };
+      });
 
     return NextResponse.json({
       sets: enrichedSets,

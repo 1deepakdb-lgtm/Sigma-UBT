@@ -550,6 +550,31 @@ const StudentDashboard = () => {
   // 5) The student has an active package (or institute package) that covers this specific set!
   const isSetUnlocked = (set) => {
     if (!set) return false;
+
+    // Strict Track Isolation:
+    const setName = (set.name || set.title || "").toLowerCase();
+    const sType = (set.setType || "").toUpperCase();
+    const isJpSet = Boolean(
+      set.track === "japanese" ||
+      sType === "MOCK" ||
+      set.isMock === true ||
+      setName.includes("mock") ||
+      setName.includes("jlpt") ||
+      setName.includes("jft") ||
+      setName.includes("nat") ||
+      (set.packageName && set.packageName.toLowerCase().includes("mock"))
+    );
+
+    // Korean students should NEVER unlock or access Japanese sets
+    if (isPureKoreanStudent && isJpSet) {
+      return false;
+    }
+
+    // Japanese students should NEVER unlock or access Korean sets
+    if (isPureJapaneseStudent && !isJpSet) {
+      return false;
+    }
+
     if (set.isFree === true || set.setType === "FREE" || (set.name && set.name.toLowerCase().includes("free demo"))) {
       return true;
     }
@@ -871,7 +896,7 @@ const StudentDashboard = () => {
           const instPkg = data.user.institute?.examPackage || null;
           const instLogo = data.user.institute?.logoUrl || logo;
           const batchName = data.user.batch || null;
-          const instLang = data.user.instituteLanguage || data.user.institute?.language || "both";
+          const instLang = data.user.instituteLanguage || data.user.institute?.language || data.user.language || "both";
           const rawPkg = data.user.studentPackage || data.user.batch || "";
 
           const isEnrolledInstitute = Boolean(instId || instName);
@@ -1040,24 +1065,28 @@ const StudentDashboard = () => {
           });
         }
 
-        // Always merge Japanese Mock Exam Sets so Mock Tests are available for ALL students!
-        const jpSets = buildJapaneseSets();
-        jpSets.forEach((jpSet) => {
-          if (!mergedSets.some((s) => s.id === jpSet.id)) {
-            mergedSets.push(jpSet);
-          }
-        });
+        // Merge Japanese Mock Exam Sets only if not pure Korean track
+        if (effectiveLang !== "korean") {
+          const jpSets = buildJapaneseSets();
+          jpSets.forEach((jpSet) => {
+            if (!mergedSets.some((s) => s.id === jpSet.id)) {
+              mergedSets.push(jpSet);
+            }
+          });
+        }
 
         filterAndSetExamSets(mergedSets, finalPackages);
       })
       .catch(() => {
-        const jpSets = buildJapaneseSets();
         let fallbackSets = [...savedSets];
-        jpSets.forEach((jpSet) => {
-          if (!fallbackSets.some((s) => s.id === jpSet.id)) {
-            fallbackSets.push(jpSet);
-          }
-        });
+        if (effectiveLang !== "korean") {
+          const jpSets = buildJapaneseSets();
+          jpSets.forEach((jpSet) => {
+            if (!fallbackSets.some((s) => s.id === jpSet.id)) {
+              fallbackSets.push(jpSet);
+            }
+          });
+        }
         filterAndSetExamSets(fallbackSets, finalPackages);
       });
 
@@ -1077,6 +1106,10 @@ const StudentDashboard = () => {
           if (data.institute.examPackage) {
             setStudentInstitutePackage(data.institute.examPackage);
             localStorage.setItem("currentInstitutePackage", data.institute.examPackage);
+          }
+          if (data.institute.language) {
+            setInstituteLanguage(data.institute.language);
+            localStorage.setItem("instituteLanguage", data.institute.language);
           }
         }
         if (data.sets && Array.isArray(data.sets) && data.sets.length > 0) {
@@ -1456,6 +1489,24 @@ const StudentDashboard = () => {
   const paginatedSets = filteredSets.slice((examSetsPage - 1) * SETS_PER_PAGE, examSetsPage * SETS_PER_PAGE);
 
   const accessibleSetsList = useMemo(() => {
+    const isJpSet = (s) => {
+      if (!s) return false;
+      const name = (s.name || s.title || "").toLowerCase();
+      const sType = (s.setType || "").toUpperCase();
+      return Boolean(
+        s.track === "japanese" ||
+        sType === "MOCK" ||
+        s.isMock === true ||
+        name.includes("mock") ||
+        name.includes("jlpt") ||
+        name.includes("jft") ||
+        name.includes("nat") ||
+        (s.packageName && s.packageName.toLowerCase().includes("mock"))
+      );
+    };
+
+    const isKoSet = (s) => !isJpSet(s);
+
     const standardChapterSets = [
       { id: "ch-01-02", name: "Chapterwise 01~02", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
       { id: "ch-03-04", name: "Chapterwise 03~04", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
@@ -1464,20 +1515,32 @@ const StudentDashboard = () => {
       { id: "ch-09-10", name: "Chapterwise 09~10", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
     ];
 
-    const unlocked = examSets.filter(s => isSetUnlocked(s));
+    let unlocked = examSets.filter(s => isSetUnlocked(s));
+
+    // STRICT TRACK ISOLATION:
+    if (isPureKoreanStudent) {
+      unlocked = unlocked.filter(s => isKoSet(s));
+    } else if (isPureJapaneseStudent) {
+      unlocked = unlocked.filter(s => isJpSet(s));
+    }
+
     let combined = [...unlocked];
-    standardChapterSets.forEach(cs => {
-      if (!combined.some(s => (s.name || "").toLowerCase() === cs.name.toLowerCase())) {
-        combined.push(cs);
-      }
-    });
+
+    // Only add Korean chapterwise sets if Korean student or Both track
+    if (!isPureJapaneseStudent) {
+      standardChapterSets.forEach(cs => {
+        if (!combined.some(s => (s.name || "").toLowerCase() === cs.name.toLowerCase())) {
+          combined.push(cs);
+        }
+      });
+    }
 
     return combined.sort((a, b) => {
       const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
       const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
       return numA - numB;
     });
-  }, [examSets, unlockedSets, activeStudentPackages, examPackages]);
+  }, [examSets, unlockedSets, activeStudentPackages, examPackages, isPureKoreanStudent, isPureJapaneseStudent]);
 
   const handleStartExam = (set) => {
     const isJlptSet = Boolean(
@@ -1976,15 +2039,15 @@ const StudentDashboard = () => {
                       </svg>
                     </div>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      Book Services
+                      {isPureJapaneseStudent ? "Study Materials" : "Book Services"}
                     </span>
                   </div>
 
-                  {/* Card 2: Modal Bank */}
+                  {/* Card 2: Modal Bank / JFT-Basic CBT */}
                   <div
                     onClick={() => {
                       setActiveTab("exams");
-                      setExamCategoryFilter("mock");
+                      setExamCategoryFilter(isPureJapaneseStudent ? "mock" : "ubt");
                       setExamSetsPage(1);
                     }}
                     style={{
@@ -2013,15 +2076,15 @@ const StudentDashboard = () => {
                       </svg>
                     </div>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      Modal Bank
+                      {isPureJapaneseStudent ? "JFT-Basic CBT" : "Modal Bank"}
                     </span>
                   </div>
 
-                  {/* Card 3: EPS-TOPIK S... */}
+                  {/* Card 3: EPS-TOPIK UBT / JLPT Mock Tests */}
                   <div
                     onClick={() => {
                       setActiveTab("exams");
-                      setExamCategoryFilter("ubt");
+                      setExamCategoryFilter(isPureJapaneseStudent ? "mock" : "ubt");
                       setExamSetsPage(1);
                     }}
                     style={{
@@ -2053,7 +2116,7 @@ const StudentDashboard = () => {
                       </svg>
                     </div>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      EPS-TOPIK S...
+                      {isPureJapaneseStudent ? "JLPT Mock Tests" : "EPS-TOPIK UBT"}
                     </span>
                   </div>
                 </div>
@@ -2090,7 +2153,7 @@ const StudentDashboard = () => {
                       </svg>
                     </div>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      Free exams
+                      {isPureKoreanStudent ? "Free UBT Exams" : isPureJapaneseStudent ? "Free Mock Sets" : "Free exams"}
                     </span>
                   </div>
 
@@ -2126,7 +2189,7 @@ const StudentDashboard = () => {
                       </svg>
                     </div>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      Buy Exam
+                      {isPureKoreanStudent ? "Buy UBT Package" : isPureJapaneseStudent ? "Buy Mock Package" : "Buy Exam"}
                     </span>
                   </div>
                 </div>
@@ -2136,7 +2199,11 @@ const StudentDashboard = () => {
             {/* Section 2: Exam you have Access */}
             <div>
               <h2 style={{ color: "#111827", fontSize: "20px", fontWeight: "800", textAlign: "center", margin: "0 0 16px 0", letterSpacing: "-0.2px" }}>
-                Exam you have Access
+                {isPureKoreanStudent
+                  ? "Korean UBT Exams you have Access"
+                  : isPureJapaneseStudent
+                  ? "Japanese Mock Tests you have Access"
+                  : "Exams you have Access"}
               </h2>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>

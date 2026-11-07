@@ -47,6 +47,47 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'Access denied: This exam set is private to its creator institute.' }, { status: 403 });
     }
 
+    // Fetch student profile including institute details
+    const studentUser = await prisma.user.findUnique({
+      where: { id: session.id },
+      include: {
+        institute: {
+          include: { examSets: true }
+        }
+      }
+    });
+
+    // Check student language track for strict Korean vs Japanese isolation
+    const studentLang = (studentUser?.institute?.language && studentUser.institute.language !== 'both')
+      ? studentUser.institute.language
+      : (studentUser?.language && studentUser.language !== 'both' ? studentUser.language : (studentUser?.institute?.language || studentUser?.language || 'both'));
+
+    const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const setPkgNorm = norm(examSet.packageName || examSet.package?.name || '');
+    const setNameNorm = norm(examSet.name || '');
+    const isJp = Boolean(
+      examSet.setType === 'MOCK' ||
+      examSet.track === 'japanese' ||
+      setNameNorm.includes('mock') ||
+      setNameNorm.includes('jlpt') ||
+      setNameNorm.includes('jft') ||
+      setNameNorm.includes('nat') ||
+      setPkgNorm.includes('mock')
+    );
+
+    // Strict Track Gate
+    if (studentLang === 'korean' && isJp) {
+      return NextResponse.json({
+        error: 'Access denied: Korean track students cannot access Japanese mock tests.'
+      }, { status: 403 });
+    }
+
+    if (studentLang === 'japanese' && !isJp) {
+      return NextResponse.json({
+        error: 'Access denied: Japanese track students cannot access Korean UBT exams.'
+      }, { status: 403 });
+    }
+
     // Access authorization check for student
     const isFree = Boolean(
       examSet.isFree ||
@@ -55,15 +96,6 @@ export async function POST(req, { params }) {
     );
 
     if (!isFree) {
-      const studentUser = await prisma.user.findUnique({
-        where: { id: session.id },
-        include: {
-          institute: {
-            include: { examSets: true }
-          }
-        }
-      });
-
       const instituteId = studentUser?.instituteId || session.instituteId || null;
       const institutePkg = studentUser?.institute?.examPackage || null;
       const studentBatch = studentUser?.batch || null;
@@ -73,17 +105,6 @@ export async function POST(req, { params }) {
       const isMyInstituteSet = Boolean(instituteId && examSet.creatorInstituteId && examSet.creatorInstituteId === instituteId);
       const isExplicitlyReleased = Boolean(
         studentUser?.institute?.examSets?.some(ies => ies.examSetId === examSet.id)
-      );
-
-      const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const setPkgNorm = norm(examSet.packageName || examSet.package?.name || '');
-      const setNameNorm = norm(examSet.name || '');
-      const isJp = Boolean(
-        examSet.setType === 'MOCK' ||
-        setNameNorm.includes('mock') ||
-        setNameNorm.includes('jlpt') ||
-        setNameNorm.includes('jft') ||
-        setNameNorm.includes('nat')
       );
 
       const checkPkg = (pkg) => {
