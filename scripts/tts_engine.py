@@ -2,6 +2,19 @@
 import sys
 import asyncio
 import os
+import glob
+
+# Automatically add user and system site-packages so edge-tts is always found on cPanel & servers
+home = os.path.expanduser("~")
+for p in glob.glob(os.path.join(home, ".local/lib/python*/site-packages")):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+for p in glob.glob(os.path.join(home, "Library/Python/*/lib/python/site-packages")):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+for p in glob.glob("/home/*/.local/lib/python*/site-packages"):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 try:
     import edge_tts

@@ -17,7 +17,10 @@ export default function AiStudio({
   onClose = null,
   embedded = false,
   instituteLanguage = null,
-  userRole = null
+  userRole = null,
+  activeFemaleModelId = null,
+  activeMaleModelId = null,
+  onSelectVoiceModel = null
 }) {
   const [activeTab, setActiveTab] = useState('generator'); // 'generator' | 'dialogue' | 'listeningBuilder'
 
@@ -972,30 +975,66 @@ export default function AiStudio({
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePlayPreview(voice, selectedModel);
-                      }}
-                      title="Preview this human voice with selected model"
-                      style={{
-                        background: isPreviewing ? '#ef4444' : '#4f46e5',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '20px',
-                        padding: '5px 12px',
-                        fontSize: '11px',
-                        fontWeight: '800',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-                      }}
-                    >
-                      {isPreviewing ? '⏹ Stop' : '▶ Play Voice'}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      {onSelectVoiceModel && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectVoiceModel(voice);
+                          }}
+                          title={`Select ${voice.name} as active ${voice.gender} voice for dictionary`}
+                          style={{
+                            background: (voice.gender === 'female' ? activeFemaleModelId === voice.id : activeMaleModelId === voice.id)
+                              ? '#059669'
+                              : '#ffffff',
+                            color: (voice.gender === 'female' ? activeFemaleModelId === voice.id : activeMaleModelId === voice.id)
+                              ? '#ffffff'
+                              : '#059669',
+                            border: '1.5px solid #059669',
+                            borderRadius: '20px',
+                            padding: '5px 11px',
+                            fontSize: '11px',
+                            fontWeight: '800',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 1px 3px rgba(5, 150, 105, 0.15)',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {(voice.gender === 'female' ? activeFemaleModelId === voice.id : activeMaleModelId === voice.id)
+                            ? '✓ Active'
+                            : '+ Select for Dictionary'}
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayPreview(voice, selectedModel);
+                        }}
+                        title="Preview this human voice with selected model"
+                        style={{
+                          background: isPreviewing ? '#ef4444' : '#4f46e5',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '20px',
+                          padding: '5px 12px',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        {isPreviewing ? '⏹ Stop' : '▶ Play Voice'}
+                      </button>
+                    </div>
                   </div>
 
                   <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 10px 0', lineHeight: 1.4 }}>
@@ -1032,23 +1071,54 @@ export default function AiStudio({
                 </div>
               </div>
 
-              {/* Quick Sample Button */}
-              <button
-                type="button"
-                onClick={() => setInputText(selectedProfile.sampleSentence)}
-                style={{
-                  background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  color: '#334155',
-                  cursor: 'pointer'
-                }}
-              >
-                ⚡ Insert Sample Sentence
-              </button>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {onSelectVoiceModel && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectVoiceModel(selectedProfile)}
+                    title={`Set ${selectedProfile.name} as the active voice for dictionary`}
+                    style={{
+                      background: (selectedProfile.gender === 'female' ? activeFemaleModelId === selectedProfile.id : activeMaleModelId === selectedProfile.id)
+                        ? '#059669'
+                        : '#f0fdf4',
+                      color: (selectedProfile.gender === 'female' ? activeFemaleModelId === selectedProfile.id : activeMaleModelId === selectedProfile.id)
+                        ? '#ffffff'
+                        : '#15803d',
+                      border: '1.5px solid #059669',
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    {(selectedProfile.gender === 'female' ? activeFemaleModelId === selectedProfile.id : activeMaleModelId === selectedProfile.id)
+                      ? `✓ Current Active ${selectedProfile.gender === 'female' ? 'Female' : 'Male'} Model`
+                      : `★ Use ${selectedProfile.name} in Dictionary`}
+                  </button>
+                )}
+
+                {/* Quick Sample Button */}
+                <button
+                  type="button"
+                  onClick={() => setInputText(selectedProfile.sampleSentence)}
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: '#334155',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚡ Insert Sample Sentence
+                </button>
+              </div>
             </div>
 
             {/* Text Area */}

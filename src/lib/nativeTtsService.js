@@ -27,49 +27,49 @@ export const VOICE_CONFIG = {
 export const MODEL_VOICE_TONES = {
   // ── Korean Female ──────────────────────────────────────
   'ko-female-1': { voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '+0%' },  // DEFAULT BASELINE
-  'ko-female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+12Hz', rate: '+6%' }, // Bright & Cheerful
-  'ko-female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+4Hz', rate: '-6%' },  // Diction / Clear
-  'ko-female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '+4%' },  // News Announcer
-  'ko-female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+20Hz', rate: '+8%' }, // Youthful Student
-  'ko-female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-12Hz', rate: '-10%' },// Warm Calming Mentor
+  'ko-female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+6Hz', rate: '+4%' },  // Bright & Cheerful
+  'ko-female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+2Hz', rate: '-3%' },  // Diction / Clear
+  'ko-female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-4Hz', rate: '+2%' },  // News Announcer
+  'ko-female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+10Hz', rate: '+5%' }, // Youthful Student
+  'ko-female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '-5%' },  // Warm Calming Mentor
 
   'female-1': { voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '+0%' },
-  'female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+12Hz', rate: '+6%' },
-  'female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+4Hz', rate: '-6%' },
-  'female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '+4%' },
-  'female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+20Hz', rate: '+8%' },
-  'female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-12Hz', rate: '-10%' },
+  'female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+6Hz', rate: '+4%' },
+  'female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+2Hz', rate: '-3%' },
+  'female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-4Hz', rate: '+2%' },
+  'female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+10Hz', rate: '+5%' },
+  'female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '-5%' },
 
   // ── Korean Male ────────────────────────────────────────
   'ko-male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },   // DEFAULT BASELINE
-  'ko-male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-16Hz', rate: '-8%' },  // Deep Bass & Calm
-  'ko-male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+4Hz', rate: '+5%' }, // Energetic Workplace Professional
-  'ko-male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-8Hz', rate: '+3%' },   // Resonant Broadcaster
-  'ko-male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+12Hz', rate: '+8%' }, // Friendly Travel Companion
-  'ko-male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-6Hz', rate: '-12%' },  // Senior Academic Lecturer
+  'ko-male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-10Hz', rate: '-4%' },  // Deep Bass & Calm
+  'ko-male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+0Hz', rate: '+3%' }, // Energetic Workplace Professional
+  'ko-male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-6Hz', rate: '+2%' },   // Resonant Broadcaster
+  'ko-male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+5%' }, // Friendly Travel Companion
+  'ko-male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-4Hz', rate: '-6%' },   // Senior Academic Lecturer
 
   'male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },
-  'male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-16Hz', rate: '-8%' },
-  'male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+4Hz', rate: '+5%' },
-  'male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-8Hz', rate: '+3%' },
-  'male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+12Hz', rate: '+8%' },
-  'male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-6Hz', rate: '-12%' },
+  'male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-10Hz', rate: '-4%' },
+  'male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+0Hz', rate: '+3%' },
+  'male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-6Hz', rate: '+2%' },
+  'male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+5%' },
+  'male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-4Hz', rate: '-6%' },
 
   // ── Japanese Female ────────────────────────────────────
   'ja-female-1': { voice: 'ja-JP-NanamiNeural', pitch: '+0Hz', rate: '+0%' }, // DEFAULT BASELINE
-  'ja-female-2': { voice: 'ja-JP-NanamiNeural', pitch: '+12Hz', rate: '+6%' },// Bright & Friendly
-  'ja-female-3': { voice: 'ja-JP-NanamiNeural', pitch: '+3Hz', rate: '-8%' }, // Soft Pronunciation
-  'ja-female-4': { voice: 'ja-JP-NanamiNeural', pitch: '-6Hz', rate: '+4%' }, // News Announcer
-  'ja-female-5': { voice: 'ja-JP-NanamiNeural', pitch: '+20Hz', rate: '+8%' },// Lively Campus Student
-  'ja-female-6': { voice: 'ja-JP-NanamiNeural', pitch: '-10Hz', rate: '-10%' },// Warm Mentor & Storyteller
+  'ja-female-2': { voice: 'ja-JP-NanamiNeural', pitch: '+6Hz', rate: '+4%' }, // Bright & Friendly
+  'ja-female-3': { voice: 'ja-JP-NanamiNeural', pitch: '+2Hz', rate: '-3%' }, // Soft Pronunciation
+  'ja-female-4': { voice: 'ja-JP-NanamiNeural', pitch: '-4Hz', rate: '+2%' }, // News Announcer
+  'ja-female-5': { voice: 'ja-JP-NanamiNeural', pitch: '+10Hz', rate: '+5%' },// Lively Campus Student
+  'ja-female-6': { voice: 'ja-JP-NanamiNeural', pitch: '-6Hz', rate: '-5%' }, // Warm Mentor & Storyteller
 
   // ── Japanese Male ──────────────────────────────────────
   'ja-male-1': { voice: 'ja-JP-KeitaNeural', pitch: '+0Hz', rate: '+0%' },    // DEFAULT BASELINE
-  'ja-male-2': { voice: 'ja-JP-KeitaNeural', pitch: '-16Hz', rate: '-8%' },   // Deep Calm Baritone
-  'ja-male-3': { voice: 'ja-JP-KeitaNeural', pitch: '+6Hz', rate: '+5%' },    // Energetic Business Keigo
-  'ja-male-4': { voice: 'ja-JP-KeitaNeural', pitch: '-10Hz', rate: '-4%' },   // Resonant Narrator
-  'ja-male-5': { voice: 'ja-JP-KeitaNeural', pitch: '+14Hz', rate: '+8%' },   // Friendly Casual Companion
-  'ja-male-6': { voice: 'ja-JP-KeitaNeural', pitch: '-6Hz', rate: '-12%' }    // Senior Academic Lecturer
+  'ja-male-2': { voice: 'ja-JP-KeitaNeural', pitch: '-10Hz', rate: '-4%' },   // Deep Calm Baritone
+  'ja-male-3': { voice: 'ja-JP-KeitaNeural', pitch: '+4Hz', rate: '+3%' },    // Energetic Business Keigo
+  'ja-male-4': { voice: 'ja-JP-KeitaNeural', pitch: '-6Hz', rate: '+2%' },    // Resonant Narrator
+  'ja-male-5': { voice: 'ja-JP-KeitaNeural', pitch: '+8Hz', rate: '+5%' },    // Friendly Casual Companion
+  'ja-male-6': { voice: 'ja-JP-KeitaNeural', pitch: '-4Hz', rate: '-6%' }     // Senior Academic Lecturer
 };
 
 /**
@@ -157,17 +157,30 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   const tmpOut = path.join(os.tmpdir(), `neural_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.mp3`);
   const scriptPath = path.join(process.cwd(), 'scripts', 'tts_engine.py');
 
-  try {
-    execFileSync('python3', [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], { timeout: 10000 });
-    if (fs.existsSync(tmpOut)) {
-      const buf = fs.readFileSync(tmpOut);
-      try { fs.unlinkSync(tmpOut); } catch {}
-      if (buf.length > 500) {
-        return { buffer: buf, contentType: 'audio/mpeg', provider: 'neural-edge' };
+  const userHome = process.env.HOME || '/home/examjkco';
+  const customEnv = {
+    ...process.env,
+    PATH: `${userHome}/.local/bin:${userHome}/bin:${process.env.PATH || '/usr/local/bin:/usr/bin:/bin'}`,
+    PYTHONUNBUFFERED: '1'
+  };
+
+  const pyCandidates = ['python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3'];
+  for (const py of pyCandidates) {
+    try {
+      execFileSync(py, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {
+        timeout: 12000,
+        env: customEnv
+      });
+      if (fs.existsSync(tmpOut)) {
+        const buf = fs.readFileSync(tmpOut);
+        try { fs.unlinkSync(tmpOut); } catch {}
+        if (buf.length > 500) {
+          return { buffer: buf, contentType: 'audio/mpeg', provider: 'neural-edge' };
+        }
       }
+    } catch (err) {
+      // Try next python candidate
     }
-  } catch (err) {
-    console.warn('Python neural TTS error, falling back:', err.message);
   }
   return null;
 }

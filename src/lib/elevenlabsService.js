@@ -36,7 +36,11 @@ function computeCacheKey(text, voiceId, modelId, settings, categoryMeta = {}) {
       speechMode: categoryMeta.speechMode || '',
       emotion: categoryMeta.emotion || '',
       weight: categoryMeta.weight ?? '',
-      pitchFactor: categoryMeta.pitchFactor ?? ''
+      pitchFactor: categoryMeta.pitchFactor ?? '',
+      model: categoryMeta.model || '',
+      pitch: categoryMeta.pitch || '',
+      rate: categoryMeta.rate || '',
+      voice: categoryMeta.voice || ''
     }
   });
   return crypto.createHash('sha256').update(payload).digest('hex');

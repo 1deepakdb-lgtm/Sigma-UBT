@@ -337,6 +337,22 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
   }, [propInstituteLanguage, propUserRole, userRole]);
 
+  // Restore saved voice model preference from localStorage
+  useEffect(() => {
+    try {
+      const sf = localStorage.getItem(`sigma_selected_female_model_${activeLang}`);
+      if (sf) {
+        const parsed = JSON.parse(sf);
+        if (parsed?.id) setSelectedFemaleModel(parsed);
+      }
+      const sm = localStorage.getItem(`sigma_selected_male_model_${activeLang}`);
+      if (sm) {
+        const parsed = JSON.parse(sm);
+        if (parsed?.id) setSelectedMaleModel(parsed);
+      }
+    } catch (e) {}
+  }, [activeLang]);
+
   // Listen to window storage events if student switches track in another tab
   useEffect(() => {
     const handleStorageChange = (e) => {
@@ -556,12 +572,28 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     setLoadingAudioId(null);
 
     if (newLang === 'ja') {
-      setSelectedFemaleModel(JAPANESE_FEMALE_VOICE_MODELS[0]); // Japanese Female 1: Natural Japanese Teacher
-      setSelectedMaleModel(JAPANESE_MALE_VOICE_MODELS[0]); // Japanese Male 1: Natural Japanese Male Teacher
+      let savedFem = null;
+      let savedMale = null;
+      try {
+        const sf = localStorage.getItem('sigma_selected_female_model_ja');
+        if (sf) savedFem = JSON.parse(sf);
+        const sm = localStorage.getItem('sigma_selected_male_model_ja');
+        if (sm) savedMale = JSON.parse(sm);
+      } catch (e) {}
+      setSelectedFemaleModel(savedFem || JAPANESE_FEMALE_VOICE_MODELS[0]);
+      setSelectedMaleModel(savedMale || JAPANESE_MALE_VOICE_MODELS[0]);
       fetchDictionary('', 'ja', 'all');
     } else {
-      setSelectedFemaleModel(KOREAN_FEMALE_VOICE_MODELS[0]); // Korean Female 1: Natural Female Teacher
-      setSelectedMaleModel(KOREAN_MALE_VOICE_MODELS[0]); // Korean Male 1: Natural Korean Male Teacher
+      let savedFem = null;
+      let savedMale = null;
+      try {
+        const sf = localStorage.getItem('sigma_selected_female_model_ko');
+        if (sf) savedFem = JSON.parse(sf);
+        const sm = localStorage.getItem('sigma_selected_male_model_ko');
+        if (sm) savedMale = JSON.parse(sm);
+      } catch (e) {}
+      setSelectedFemaleModel(savedFem || KOREAN_FEMALE_VOICE_MODELS[0]);
+      setSelectedMaleModel(savedMale || KOREAN_MALE_VOICE_MODELS[0]);
       fetchDictionary('', 'ko', 'all');
     }
   }
@@ -1570,6 +1602,26 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             initialLang={activeLang}
             instituteLanguage={instLang}
             initialText={searchQuery || (activeLang === 'ja' ? selectedWord?.japanese : selectedWord?.korean) || ''}
+            activeFemaleModelId={selectedFemaleModel?.id}
+            activeMaleModelId={selectedMaleModel?.id}
+            onSelectVoiceModel={(voice) => {
+              const isMale = voice.gender === 'male' || voice.id?.includes('male');
+              if (isMale) {
+                const list = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
+                const match = list.find(m => m.id === voice.id) || voice;
+                setSelectedMaleModel(match);
+                try {
+                  localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(match));
+                } catch (e) {}
+              } else {
+                const list = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
+                const match = list.find(m => m.id === voice.id) || voice;
+                setSelectedFemaleModel(match);
+                try {
+                  localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(match));
+                } catch (e) {}
+              }
+            }}
             onClose={() => setShowAiStudio(false)}
           />
         </div>
@@ -1891,6 +1943,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       key={model.id}
                       onClick={() => {
                         setSelectedFemaleModel(model);
+                        try { localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(model)); } catch (e) {}
                         setIsFemaleDropdownOpen(false);
                         handlePlaySearchWord('female', model, `preview-${model.id}`);
                       }}
@@ -2139,6 +2192,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       key={model.id}
                       onClick={() => {
                         setSelectedMaleModel(model);
+                        try { localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(model)); } catch (e) {}
                         setIsMaleDropdownOpen(false);
                         handlePlaySearchWord('male', model, `preview-${model.id}`);
                       }}
