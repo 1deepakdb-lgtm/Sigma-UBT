@@ -345,26 +345,13 @@ const StudentDashboard = () => {
       });
     }
 
-    // 5. Default track package if enrolled under an institute
-    if (studentInstitute && list.length === 0) {
-      if (isJapaneseTrack) {
-        list.push("Full Mock Test");
-      } else if (isPureKoreanStudent) {
-        list.push("Full Set UBT");
-      } else {
-        list.push("Full Set UBT", "Full Mock Test");
-      }
-    }
-
-    // In Japanese Track: Strictly strip out ANY Korean packages from student package list
+    // Strict Track Isolation:
+    // In Japanese Track: Strictly strip out ANY Korean packages
     if (isJapaneseTrack) {
       list = list.filter(pkgName => {
         const lower = (pkgName || "").toLowerCase();
         return !lower.includes("ubt") && !lower.includes("chapter") && !lower.includes("eps") && !lower.includes("topik") && !lower.includes("model question");
       });
-      if (list.length === 0 && (currentBuyer?.hasPurchased || currentBuyer?.isBuyer || studentInstitute)) {
-        list = ["Full Mock Test"];
-      }
     }
 
     // In Pure Korean Track: Strictly strip out Japanese mock packages
@@ -373,9 +360,6 @@ const StudentDashboard = () => {
         const lower = (pkgName || "").toLowerCase();
         return !lower.includes("mock") && !lower.includes("jlpt") && !lower.includes("jft") && !lower.includes("nat");
       });
-      if (list.length === 0 && (currentBuyer?.hasPurchased || currentBuyer?.isBuyer || studentInstitute)) {
-        list = ["Full Set UBT"];
-      }
     }
 
     return list;
@@ -460,12 +444,16 @@ const StudentDashboard = () => {
       return true;
     }
 
-    // Japanese Mock Test package matches
-    if (targetPkgNorm.includes("mock") || targetPkgNorm.includes("jlpt") || targetPkgNorm.includes("jft") || targetPkgNorm.includes("nat")) {
+    // Japanese Full Mock Test package covers all Japanese mock sets
+    if ((targetPkgNorm.includes("full") || targetPkgNorm.includes("all")) && targetPkgNorm.includes("mock")) {
       if (isJapaneseSet) return true;
-      if (setPkgNorm.includes("mock") || setPkgNorm.includes("jlpt") || setPkgNorm.includes("jft") || setPkgNorm.includes("nat")) return true;
-      if (setNameNorm.includes("mock") || setNameNorm.includes("jlpt") || setNameNorm.includes("jft") || setNameNorm.includes("nat")) return true;
     }
+
+    // Specific Japanese Package tracks
+    if (targetPkgNorm.includes("jft") && (setNameNorm.includes("jft") || setPkgNorm.includes("jft"))) return true;
+    if (targetPkgNorm.includes("nat") && (setNameNorm.includes("nat") || setPkgNorm.includes("nat"))) return true;
+    if (targetPkgNorm.includes("jlpt") && (setNameNorm.includes("jlpt") || setPkgNorm.includes("jlpt"))) return true;
+    if (targetPkgNorm.includes("mock") && (setPkgNorm.includes("mock") || setNameNorm.includes("mock"))) return true;
 
     return false;
   };
@@ -594,47 +582,12 @@ const StudentDashboard = () => {
       return true;
     }
 
-    // Institute ownership check: all sets created by the student's institute are unlocked for their students
-    if (studentInstitute && set.creatorInstituteName && set.creatorInstituteName.toLowerCase() === studentInstitute.toLowerCase()) {
-      return true;
-    }
-    if (studentInstituteId && set.creatorInstituteId && set.creatorInstituteId === studentInstituteId) {
-      return true;
-    }
-
     // Explicitly released to student or individually unlocked
     if (isSetIndividuallyUnlocked(set)) {
       return true;
     }
 
-    // Institute Free Distribution check:
-    const pkg = examPackages.find(p => (p.name || "").toLowerCase() === (set.packageName || "").toLowerCase());
-    if (pkg && (pkg.distributionMode === "free" || pkg.isFreeForInstituteStudents || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0")) {
-      return true;
-    }
-    if (set.distributionMode === "free" || set.isFreeForInstituteStudents || (set.price || "").toLowerCase().includes("free") || set.price === "Rs. 0") {
-      return true;
-    }
-
-    // Check institute-specific distribution map and released sets in localStorage
-    if (typeof window !== "undefined" && studentInstitute) {
-      try {
-        const instDist = JSON.parse(localStorage.getItem(`instituteDistribution_${studentInstitute}`) || "{}");
-        if (instDist[set.packageName] === "free" || instDist[set.name] === "free" || instDist[set.id] === "free") {
-          return true;
-        }
-        const instReleased = JSON.parse(localStorage.getItem(`instituteReleasedSets_${studentInstitute}`) || "[]");
-        if (instReleased.some(id => id?.toString() === set.id?.toString() || id?.toString() === set.name?.toString())) {
-          return true;
-        }
-      } catch (e) {}
-    }
-
-    // Server-provided unlock status
-    if (set.isUnlocked === true) {
-      return true;
-    }
-
+    // Must be covered by student's active package or assigned specific exam
     return Boolean(isSetCoveredByStudentPackage(set));
   };
 
@@ -885,18 +838,13 @@ const StudentDashboard = () => {
 
     if (localPkg && !isShift(localPkg)) {
       if (localPkg.toLowerCase().includes("google") || localPkg.toLowerCase().includes("free")) {
-        let defaultPkg = hasPurchasedAccess ? (localBuyer?.package || localBuyer?.packageName || currentBuyer?.package || (isJapaneseTrack ? "Full Mock Test" : "Full Set UBT")) : "Free Student Access";
-        if (isJapaneseTrack && defaultPkg && (defaultPkg.toLowerCase().includes("ubt") || defaultPkg.toLowerCase().includes("chapter") || defaultPkg.toLowerCase().includes("eps"))) {
-          defaultPkg = "Full Mock Test";
-        }
-        setStudentPackage(defaultPkg);
+        let defaultPkg = hasPurchasedAccess ? (localBuyer?.package || localBuyer?.packageName || currentBuyer?.package || null) : "Free Student Access";
+        setStudentPackage(defaultPkg || "Free Student Access");
       } else {
-        let chosenPkg = localPkg;
-        if (isJapaneseTrack && (chosenPkg.toLowerCase().includes("ubt") || chosenPkg.toLowerCase().includes("chapter") || chosenPkg.toLowerCase().includes("eps"))) {
-          chosenPkg = "Full Mock Test";
-        }
-        setStudentPackage(chosenPkg);
+        setStudentPackage(localPkg);
       }
+    } else {
+      setStudentPackage("Free Student Access");
     }
 
     // Fetch verified session from backend
@@ -937,13 +885,11 @@ const StudentDashboard = () => {
           );
 
           let userPkg = userHasPurchased
-            ? (userBuyer?.package || userBuyer?.packageName || currentBuyer?.package || (isJapaneseTrack ? "Full Mock Test" : "Full Set UBT"))
-            : ((!isShift(rawPkg) && !isGoogleOrFreeUser && rawPkg) ||
-               instPkg ||
-               (isJapaneseTrack ? "Full Mock Test" : "Full Set UBT"));
+            ? (userBuyer?.package || userBuyer?.packageName || currentBuyer?.package || null)
+            : ((!isShift(rawPkg) && !isGoogleOrFreeUser && rawPkg) || null);
 
-          if (isJapaneseTrack && userPkg && userPkg !== "Free Student Access" && (userPkg.toLowerCase().includes("ubt") || userPkg.toLowerCase().includes("chapter") || userPkg.toLowerCase().includes("eps"))) {
-            userPkg = "Full Mock Test";
+          if (!userPkg) {
+            userPkg = "Free Student Access";
           }
 
           const userExp = (isGoogleOrFreeUser && !userHasPurchased)
@@ -1315,10 +1261,8 @@ const StudentDashboard = () => {
       : allSets.filter((s) => !s.creatorInstituteName || !myInstName || s.creatorInstituteName.toLowerCase() === myInstName.toLowerCase() || s.isPublished !== false);
 
     setExamSets(finalSets);
-    const defaultPackageName = isJapaneseTrack ? "Full Mock Test" : "Full Set UBT";
-    if (finalSets.length > 0 && (!studentPackage || isShift(studentPackage) || (isJapaneseTrack && (studentPackage.toLowerCase().includes("ubt") || studentPackage.toLowerCase().includes("chapter"))))) {
-      const bestPkg = finalSets.find((s) => s.packageName && !isShift(s.packageName))?.packageName || defaultPackageName;
-      setStudentPackage(bestPkg);
+    if (!studentPackage || isShift(studentPackage)) {
+      setStudentPackage("Free Student Access");
     }
   };
 
@@ -1526,14 +1470,6 @@ const StudentDashboard = () => {
 
     const isKoSet = (s) => !isJpSet(s);
 
-    const standardChapterSets = [
-      { id: "ch-01-02", name: "Chapterwise 01~02", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
-      { id: "ch-03-04", name: "Chapterwise 03~04", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
-      { id: "ch-05-06", name: "Chapterwise 05~06", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
-      { id: "ch-07-08", name: "Chapterwise 07~08", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
-      { id: "ch-09-10", name: "Chapterwise 09~10", packageName: "30 Set Chapter UBT", setType: "Chapterwise", timeMin: 50, totalQs: 40, isFree: true, track: "korean" },
-    ];
-
     let unlocked = examSets.filter(s => isSetUnlocked(s));
 
     // STRICT TRACK ISOLATION:
@@ -1543,18 +1479,7 @@ const StudentDashboard = () => {
       unlocked = unlocked.filter(s => isJpSet(s));
     }
 
-    let combined = [...unlocked];
-
-    // Only add Korean chapterwise sets if Korean student or Both track
-    if (!isPureJapaneseStudent) {
-      standardChapterSets.forEach(cs => {
-        if (!combined.some(s => (s.name || "").toLowerCase() === cs.name.toLowerCase())) {
-          combined.push(cs);
-        }
-      });
-    }
-
-    return combined.sort((a, b) => {
+    return unlocked.sort((a, b) => {
       const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
       const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
       return numA - numB;

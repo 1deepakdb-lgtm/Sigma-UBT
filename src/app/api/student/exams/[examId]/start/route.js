@@ -117,7 +117,11 @@ export async function POST(req, { params }) {
         if (pNorm.includes('100') && (setPkgNorm.includes('100') || setNameNorm.includes('100'))) return true;
         if (pNorm.includes('model') && (setPkgNorm.includes('model') || setNameNorm.includes('model'))) return true;
         if (pNorm.includes('full') && !pNorm.includes('mock') && !isJp && !setPkgNorm.includes('chapter') && !setPkgNorm.includes('model')) return true;
-        if ((pNorm.includes('mock') || pNorm.includes('jlpt') || pNorm.includes('jft') || pNorm.includes('nat')) && isJp) return true;
+        if ((pNorm.includes('full') || pNorm.includes('all')) && pNorm.includes('mock') && isJp) return true;
+        if (pNorm.includes('jft') && (setNameNorm.includes('jft') || setPkgNorm.includes('jft'))) return true;
+        if (pNorm.includes('nat') && (setNameNorm.includes('nat') || setPkgNorm.includes('nat'))) return true;
+        if (pNorm.includes('jlpt') && (setNameNorm.includes('jlpt') || setPkgNorm.includes('jlpt'))) return true;
+        if (pNorm.includes('mock') && (setPkgNorm.includes('mock') || setNameNorm.includes('mock'))) return true;
         return false;
       };
 
@@ -128,9 +132,7 @@ export async function POST(req, { params }) {
       };
 
       const hasAccess = Boolean(
-        isMyInstituteSet ||
         isExplicitlyReleased ||
-        checkPkg(institutePkg) ||
         checkPkg(assignedPkg)
       );
 

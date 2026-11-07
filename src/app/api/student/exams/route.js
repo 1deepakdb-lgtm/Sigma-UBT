@@ -43,11 +43,16 @@ function isSetCoveredBySinglePackage(set, pkgName) {
     return true;
   }
 
-  // Japanese Mock Test packages cover Japanese mock sets
-  if (targetPkgNorm.includes('mock') || targetPkgNorm.includes('jlpt') || targetPkgNorm.includes('jft') || targetPkgNorm.includes('nat')) {
+  // Japanese Full Mock Test package covers all Japanese mock sets
+  if ((targetPkgNorm.includes('full') || targetPkgNorm.includes('all')) && targetPkgNorm.includes('mock')) {
     if (isJp) return true;
-    if (setPkgNorm.includes('mock') || setPkgNorm.includes('jlpt') || setPkgNorm.includes('jft') || setPkgNorm.includes('nat')) return true;
   }
+
+  // Specific Japanese Package tracks
+  if (targetPkgNorm.includes('jft') && (setNameNorm.includes('jft') || setPkgNorm.includes('jft'))) return true;
+  if (targetPkgNorm.includes('nat') && (setNameNorm.includes('nat') || setPkgNorm.includes('nat'))) return true;
+  if (targetPkgNorm.includes('jlpt') && (setNameNorm.includes('jlpt') || setPkgNorm.includes('jlpt'))) return true;
+  if (targetPkgNorm.includes('mock') && (setPkgNorm.includes('mock') || setNameNorm.includes('mock'))) return true;
 
   return false;
 }
@@ -153,19 +158,13 @@ export async function GET(req) {
 
         const isExplicitlyReleasedToInstitute = instituteReleasedSetIds.has(set.id);
 
-        const isCoveredByInstitutePkg = Boolean(
-          institutePkg && isSetCoveredByPackage(set, institutePkg)
-        );
-
         const isCoveredByStudentPkg = Boolean(
           assignedPkg && isSetCoveredByPackage(set, assignedPkg)
         );
 
         const isUnlocked = Boolean(
           isFree ||
-          isCreatedByMyInstitute ||
           isExplicitlyReleasedToInstitute ||
-          isCoveredByInstitutePkg ||
           isCoveredByStudentPkg
         );
 
