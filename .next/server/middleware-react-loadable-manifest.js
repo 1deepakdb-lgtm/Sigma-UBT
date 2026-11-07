@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST='{"app/admin/listening/page.jsx -> @/components/EpsBookReader":{"id":6613,"files":["static/chunks/220-3d78ae8494c43827.js","static/chunks/287-5bddb210856ecae2.js","static/chunks/613-d8cdcea94eb5e74c.js"]},"app/institute/listening/page.jsx -> @/components/EpsBookReader":{"id":6613,"files":["static/chunks/220-3d78ae8494c43827.js","static/chunks/287-5bddb210856ecae2.js","static/chunks/613-d8cdcea94eb5e74c.js"]}}';
+self.__REACT_LOADABLE_MANIFEST="{}";
