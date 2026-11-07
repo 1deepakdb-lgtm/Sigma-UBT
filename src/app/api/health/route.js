@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import fs from 'fs';
+import path from 'path';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const dbPath = '/home/examjkco/sigma-ubt/prisma/dev.db';
-    const dbExists = fs.existsSync(dbPath);
+    const possiblePaths = [
+      path.join(process.cwd(), 'prisma', 'dev.db'),
+      '/home/examjkco/sigma-ubt/prisma/dev.db',
+      path.join(process.cwd(), 'dev.db')
+    ];
+    const existingPath = possiblePaths.find(p => fs.existsSync(p));
     
     let userCount = 0;
     let dbStatus = 'untested';
@@ -21,7 +28,9 @@ export async function GET() {
 
     return NextResponse.json({
       status: 'ok',
-      cpanelDbExists: dbExists,
+      timestamp: new Date().toISOString(),
+      cpanelDbFound: Boolean(existingPath),
+      cpanelDbPath: existingPath || 'not_found',
       dbStatus,
       userCount,
       dbError,
@@ -32,7 +41,10 @@ export async function GET() {
       }
     });
   } catch (err) {
-    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 });
+    return NextResponse.json({ 
+      status: 'error',
+      error: err?.message || String(err) 
+    }, { status: 500 });
   }
 }
 
