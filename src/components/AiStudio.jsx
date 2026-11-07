@@ -512,8 +512,11 @@ export default function AiStudio({
         await audio.play();
       }
     } catch (err) {
-      const lineGender = turn.speaker === 'B' ? 'male' : 'female';
-      const spoke = speakStudioNative(turn.text.trim(), 'ko-KR', lineGender, () => setPreviewingLineIndex(null));
+      const voiceId = turn.voiceProfileId || (turn.speaker === 'A' ? dialogueSpeakerA : dialogueSpeakerB);
+      const voice = VOICE_PROFILES.find(v => v.id === voiceId);
+      const lineGender = voice?.gender || (turn.speaker === 'B' ? 'male' : 'female');
+      const langCode = (voice?.language === 'ja' || dialogueLang === 'ja') ? 'ja-JP' : 'ko-KR';
+      const spoke = speakStudioNative(turn.text.trim(), langCode, lineGender, () => setPreviewingLineIndex(null));
       if (!spoke) {
         setPreviewingLineIndex(null);
         setAudioError(err.message || 'Dialogue line preview failed');
@@ -1555,6 +1558,34 @@ export default function AiStudio({
               >
                 {previewingVoiceId === `${dialogueSpeakerA}_${dialogueModelA}` ? '⏹ Stop Speaker A' : '▶ Play Speaker A Voice'}
               </button>
+
+              {onSelectVoiceModel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const voice = VOICE_PROFILES.find(v => v.id === dialogueSpeakerA);
+                    if (voice) onSelectVoiceModel(voice);
+                  }}
+                  title={`Select Speaker A as active voice in Dictionary`}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #16a34a',
+                    background: (dialogueGenderA === 'female' ? activeFemaleModelId === dialogueSpeakerA : activeMaleModelId === dialogueSpeakerA) ? '#16a34a' : '#ffffff',
+                    color: (dialogueGenderA === 'female' ? activeFemaleModelId === dialogueSpeakerA : activeMaleModelId === dialogueSpeakerA) ? '#ffffff' : '#166534',
+                    fontSize: '11px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {(dialogueGenderA === 'female' ? activeFemaleModelId === dialogueSpeakerA : activeMaleModelId === dialogueSpeakerA)
+                    ? '✓ Speaker A is Active in Dictionary'
+                    : '★ Use Speaker A Model for Dictionary'}
+                </button>
+              )}
             </div>
 
             {/* SPEAKER B CARD (DIFFERENT MODEL!) */}
@@ -1688,6 +1719,34 @@ export default function AiStudio({
               >
                 {previewingVoiceId === `${dialogueSpeakerB}_${dialogueModelB}` ? '⏹ Stop Speaker B' : '▶ Play Speaker B Voice'}
               </button>
+
+              {onSelectVoiceModel && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const voice = VOICE_PROFILES.find(v => v.id === dialogueSpeakerB);
+                    if (voice) onSelectVoiceModel(voice);
+                  }}
+                  title={`Select Speaker B as active voice in Dictionary`}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #2563eb',
+                    background: (dialogueGenderB === 'female' ? activeFemaleModelId === dialogueSpeakerB : activeMaleModelId === dialogueSpeakerB) ? '#2563eb' : '#ffffff',
+                    color: (dialogueGenderB === 'female' ? activeFemaleModelId === dialogueSpeakerB : activeMaleModelId === dialogueSpeakerB) ? '#ffffff' : '#1e40af',
+                    fontSize: '11px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {(dialogueGenderB === 'female' ? activeFemaleModelId === dialogueSpeakerB : activeMaleModelId === dialogueSpeakerB)
+                    ? '✓ Speaker B is Active in Dictionary'
+                    : '★ Use Speaker B Model for Dictionary'}
+                </button>
+              )}
             </div>
           </div>
 

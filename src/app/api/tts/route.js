@@ -185,9 +185,11 @@ async function generateNeuralSpeech(text, lang = 'ja', gender = 'female', option
   const scriptPath = path.join(process.cwd(), 'scripts', 'tts_engine.py');
 
   const userHome = process.env.HOME || '/home/examjkco';
+  const vendorDir = path.join(process.cwd(), 'scripts', 'vendor');
   const customEnv = {
     ...process.env,
     PATH: `${userHome}/.local/bin:${userHome}/bin:${process.env.PATH || '/usr/local/bin:/usr/bin:/bin'}`,
+    PYTHONPATH: `${vendorDir}:${userHome}/.local/lib/python3.11/site-packages:${userHome}/.local/lib/python3.10/site-packages:${userHome}/.local/lib/python3.9/site-packages:${process.env.PYTHONPATH || ''}`,
     PYTHONUNBUFFERED: '1'
   };
 

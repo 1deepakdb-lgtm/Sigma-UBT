@@ -4,7 +4,12 @@ import asyncio
 import os
 import glob
 
-# Automatically add user and system site-packages so edge-tts is always found on cPanel & servers
+# 1. First priority: vendored packages in scripts/vendor
+vendor_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vendor')
+if os.path.exists(vendor_dir) and vendor_dir not in sys.path:
+    sys.path.insert(0, vendor_dir)
+
+# 2. Automatically add user and system site-packages so edge-tts is always found on cPanel & servers
 home = os.path.expanduser("~")
 for p in glob.glob(os.path.join(home, ".local/lib/python*/site-packages")):
     if p not in sys.path:
