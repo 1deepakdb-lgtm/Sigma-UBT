@@ -166,6 +166,79 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
 
   return (
     <div style={{ marginBottom: "50px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .grammar-chapter-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            width: 100% !important;
+            margin-bottom: 30px !important;
+          }
+          .grammar-chapter-card {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justifyContent: space-between !important;
+            padding: 12px 16px !important;
+            border-radius: 14px !important;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            gap: 12px !important;
+            min-height: auto !important;
+            cursor: pointer !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+          .grammar-chapter-card:nth-child(even) {
+            background-color: #ffedd5 !important;
+            border: 1.5px solid #fed7aa !important;
+          }
+          .grammar-chapter-card:nth-child(odd) {
+            background-color: #dbeafe !important;
+            border: 1.5px solid #bfdbfe !important;
+          }
+          .grammar-chapter-card:active {
+            opacity: 0.9 !important;
+            transform: scale(0.99) !important;
+          }
+          .grammar-chapter-inner {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+            text-align: left !important;
+          }
+          .grammar-patterns-box {
+            display: none !important;
+          }
+          .grammar-footer-desktop {
+            display: none !important;
+          }
+          .grammar-chapter-action-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justifyContent: center !important;
+            background-color: #0f3b82 !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 9px 22px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            box-shadow: 0 2px 6px rgba(15, 59, 130, 0.3) !important;
+            flex-shrink: 0 !important;
+            line-height: 1.2 !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .grammar-chapter-action-btn {
+            display: none !important;
+          }
+        }
+      `}</style>
+
       {/* ── TOP HERO HEADER BANNER ────────────────────────────────────────── */}
       <div style={{
         backgroundColor: "#ffffff",
@@ -736,7 +809,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
               </div>
 
               {/* Grid of Chapter Cards */}
-              <div style={{
+              <div className="grammar-chapter-grid" style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
                 gap: "16px"
@@ -749,6 +822,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                     <div
                       key={ch.chapter}
                       onClick={() => setSelectedChapterNum(ch.chapter)}
+                      className="grammar-chapter-card"
                       style={{
                         backgroundColor: "#ffffff",
                         borderRadius: "14px",
@@ -772,7 +846,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                         e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.03)";
                       }}
                     >
-                      <div>
+                      <div className="grammar-chapter-inner">
                         {/* Chapter badge */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                           <span style={{
@@ -800,7 +874,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                         </div>
 
                         {/* Grammar Patterns Preview */}
-                        <div style={{
+                        <div className="grammar-patterns-box" style={{
                           backgroundColor: "#f8fafc",
                           borderRadius: "8px",
                           padding: "8px 10px",
@@ -813,7 +887,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                         </div>
                       </div>
 
-                      <div style={{
+                      <div className="grammar-footer-desktop" style={{
                         marginTop: "14px",
                         paddingTop: "10px",
                         borderTop: "1px solid #f1f5f9",
@@ -828,6 +902,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                           अध्ययन गर्नुहोस् ➔
                         </span>
                       </div>
+                      <button className="grammar-chapter-action-btn" type="button">Study</button>
                     </div>
                   );
                 })}

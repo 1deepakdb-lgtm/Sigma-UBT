@@ -4,7 +4,7 @@
     "files": [
       "static/chunks/220-3d78ae8494c43827.js",
       "static/chunks/287-5bddb210856ecae2.js",
-      "static/chunks/613-c22742f5ed6b5fb9.js"
+      "static/chunks/613-d8cdcea94eb5e74c.js"
     ]
   },
   "app/institute/listening/page.jsx -> @/components/EpsBookReader": {
@@ -12,7 +12,7 @@
     "files": [
       "static/chunks/220-3d78ae8494c43827.js",
       "static/chunks/287-5bddb210856ecae2.js",
-      "static/chunks/613-c22742f5ed6b5fb9.js"
+      "static/chunks/613-d8cdcea94eb5e74c.js"
     ]
   }
 }

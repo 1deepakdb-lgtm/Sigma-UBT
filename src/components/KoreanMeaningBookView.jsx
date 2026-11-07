@@ -422,23 +422,38 @@ export default function KoreanMeaningBookView({
             text-overflow: ellipsis !important;
             font-weight: 700 !important;
           }
-          .meaning-chapter-arrow {
-            display: flex !important;
+          /* Alternating Row Cards: Soft Sky Blue and Soft Peach */
+          .meaning-chapter-card:nth-child(even) {
+            background-color: #ffedd5 !important;
+            border: 1.5px solid #fed7aa !important;
+          }
+          .meaning-chapter-card:nth-child(odd) {
+            background-color: #dbeafe !important;
+            border: 1.5px solid #bfdbfe !important;
+          }
+          .meaning-chapter-card:active {
+            opacity: 0.9 !important;
+            transform: scale(0.99) !important;
+          }
+          .meaning-chapter-action-btn {
+            display: inline-flex !important;
             align-items: center !important;
             justifyContent: center !important;
-            width: 30px !important;
-            height: 30px !important;
-            border-radius: 50% !important;
-            background-color: #f8fafc !important;
-            color: #dc2626 !important;
-            font-size: 18px !important;
-            font-weight: 900 !important;
+            background-color: #0f3b82 !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 9px 22px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            box-shadow: 0 2px 6px rgba(15, 59, 130, 0.3) !important;
             flex-shrink: 0 !important;
-            border: 1px solid #e2e8f0 !important;
+            line-height: 1.2 !important;
           }
         }
         @media (min-width: 769px) {
-          .meaning-chapter-arrow {
+          .meaning-chapter-action-btn {
             display: none !important;
           }
         }
@@ -647,7 +662,7 @@ export default function KoreanMeaningBookView({
                     </div>
                   </div>
 
-                  <div className="meaning-chapter-arrow">›</div>
+                  <button className="meaning-chapter-action-btn" type="button">Read</button>
                 </div>
               );
             })}

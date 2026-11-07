@@ -976,7 +976,7 @@ const StudentDashboard = () => {
     // Build Japanese Mock Exam Sets from JLPT_MOCK_SETS_META
     const buildJapaneseSets = () => {
       return (JLPT_MOCK_SETS_META || []).map((meta) => {
-        const isFree = Boolean(meta.setNumber === 1 || (meta.id && meta.id.endsWith("-01")));
+        const isFree = false; // Strictly require package or assigned specific exam access
         return {
           id: meta.id,
           name: meta.title,
@@ -3311,10 +3311,11 @@ const StudentDashboard = () => {
           alignItems: "center",
           zIndex: 9999,
           boxShadow: "0 -2px 10px rgba(0,0,0,0.06)",
-          padding: "4px 8px"
+          padding: "4px 8px 6px 8px",
+          boxSizing: "border-box"
         }}
       >
-        {/* Home */}
+        {/* 1. Home */}
         <button
           onClick={() => setActiveTab("home")}
           style={{
@@ -3327,19 +3328,23 @@ const StudentDashboard = () => {
             border: "none",
             cursor: "pointer",
             padding: "4px 0",
-            color: activeTab === "home" ? "#1e40af" : "#64748b"
+            color: activeTab === "home" ? "#0f3b82" : "#64748b"
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill={activeTab === "home" ? "#1e40af" : "none"} stroke={activeTab === "home" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill={activeTab === "home" ? "#0f3b82" : "none"} stroke={activeTab === "home" ? "#0f3b82" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             <polyline points="9 22 9 12 15 12 15 22"/>
           </svg>
-          <span style={{ fontSize: "11px", fontWeight: activeTab === "home" ? 800 : 500, marginTop: "2px" }}>Home</span>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "home" ? 800 : 600, marginTop: "2px" }}>Home</span>
         </button>
 
-        {/* Color Vision */}
+        {/* 2. Exams / Mock */}
         <button
-          onClick={() => setActiveTab("colorVision")}
+          onClick={() => {
+            setActiveTab("exams");
+            setExamCategoryFilter(isPureJapaneseStudent ? "mock" : "ubt");
+            setExamSetsPage(1);
+          }}
           style={{
             flex: 1,
             display: "flex",
@@ -3350,19 +3355,22 @@ const StudentDashboard = () => {
             border: "none",
             cursor: "pointer",
             padding: "4px 0",
-            color: activeTab === "colorVision" ? "#1e40af" : "#64748b"
+            color: activeTab === "exams" ? "#0f3b82" : "#64748b"
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={activeTab === "colorVision" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === "exams" ? "#0f3b82" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
           </svg>
-          <span style={{ fontSize: "11px", fontWeight: activeTab === "colorVision" ? 800 : 500, marginTop: "2px" }}>Color Vision</span>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "exams" ? 800 : 600, marginTop: "2px" }}>
+            {isPureJapaneseStudent ? "Mock" : "Exams"}
+          </span>
         </button>
 
-        {/* Notice */}
+        {/* 3. Study / Books (EPS Book, Meaning Book, Grammar Book) */}
         <button
-          onClick={() => setActiveTab("news")}
+          onClick={() => setActiveTab("listening")}
           style={{
             flex: 1,
             display: "flex",
@@ -3373,19 +3381,42 @@ const StudentDashboard = () => {
             border: "none",
             cursor: "pointer",
             padding: "4px 0",
-            color: activeTab === "news" ? "#1e40af" : "#64748b"
+            color: activeTab === "listening" ? "#0f3b82" : "#64748b"
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={activeTab === "news" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <line x1="8" y1="8" x2="16" y2="8"/>
-            <line x1="8" y1="12" x2="16" y2="12"/>
-            <line x1="8" y1="16" x2="12" y2="16"/>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === "listening" ? "#0f3b82" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
           </svg>
-          <span style={{ fontSize: "11px", fontWeight: activeTab === "news" ? 800 : 500, marginTop: "2px" }}>Notice</span>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "listening" ? 800 : 600, marginTop: "2px" }}>Books</span>
         </button>
 
-        {/* Results */}
+        {/* 4. Packages */}
+        <button
+          onClick={() => setActiveTab("buyExam")}
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px 0",
+            color: activeTab === "buyExam" ? "#0f3b82" : "#64748b"
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === "buyExam" ? "#0f3b82" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "buyExam" ? 800 : 600, marginTop: "2px" }}>Packages</span>
+        </button>
+
+        {/* 5. Results */}
         <button
           onClick={() => setActiveTab("results")}
           style={{
@@ -3398,20 +3429,20 @@ const StudentDashboard = () => {
             border: "none",
             cursor: "pointer",
             padding: "4px 0",
-            color: activeTab === "results" ? "#1e40af" : "#64748b"
+            color: activeTab === "results" ? "#0f3b82" : "#64748b"
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={activeTab === "results" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === "results" ? "#0f3b82" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="20" x2="18" y2="10"/>
             <line x1="12" y1="20" x2="12" y2="4"/>
             <line x1="6" y1="20" x2="6" y2="14"/>
           </svg>
-          <span style={{ fontSize: "11px", fontWeight: activeTab === "results" ? 800 : 500, marginTop: "2px" }}>Results</span>
+          <span style={{ fontSize: "11px", fontWeight: activeTab === "results" ? 800 : 600, marginTop: "2px" }}>Scores</span>
         </button>
 
-        {/* Profile */}
+        {/* 6. More / Menu */}
         <button
-          onClick={() => setActiveTab("profile")}
+          onClick={() => setMobileMenuOpen(true)}
           style={{
             flex: 1,
             display: "flex",
@@ -3422,14 +3453,15 @@ const StudentDashboard = () => {
             border: "none",
             cursor: "pointer",
             padding: "4px 0",
-            color: activeTab === "profile" ? "#1e40af" : "#64748b"
+            color: mobileMenuOpen ? "#0f3b82" : "#64748b"
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={activeTab === "profile" ? "#1e40af" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={mobileMenuOpen ? "#0f3b82" : "#64748b"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
-          <span style={{ fontSize: "11px", fontWeight: activeTab === "profile" ? 800 : 500, marginTop: "2px" }}>Profile</span>
+          <span style={{ fontSize: "11px", fontWeight: 600, marginTop: "2px" }}>Menu</span>
         </button>
       </nav>
 

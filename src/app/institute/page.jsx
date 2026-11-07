@@ -1230,20 +1230,22 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       }
     });
 
-    if (instituteLanguage === "korean") {
+    const targetLang = (formData.language && formData.language !== "both") ? formData.language : instituteLanguage;
+    if (targetLang === "korean") {
       return combined.filter(p => !isJpTrackEntity(p));
     }
-    if (instituteLanguage === "japanese") {
+    if (targetLang === "japanese") {
       return combined.filter(p => isJpTrackEntity(p));
     }
     return combined;
-  }, [examPackages, instituteLanguage]);
+  }, [examPackages, instituteLanguage, formData.language]);
 
   const studentFormSpecificSets = useMemo(() => {
     let sets = examSets || [];
-    if (instituteLanguage === "korean") {
+    const targetLang = (formData.language && formData.language !== "both") ? formData.language : instituteLanguage;
+    if (targetLang === "korean") {
       sets = sets.filter(s => !isJpTrackEntity(s));
-    } else if (instituteLanguage === "japanese") {
+    } else if (targetLang === "japanese") {
       sets = sets.filter(s => isJpTrackEntity(s));
     }
     const seen = new Set();

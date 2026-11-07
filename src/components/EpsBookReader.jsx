@@ -3888,23 +3888,38 @@ export default function EpsBookReader({
             overflow: hidden !important;
             text-overflow: ellipsis !important;
           }
-          .chapter-unit-arrow {
-            display: flex !important;
+          /* Alternating Row Cards: Soft Sky Blue and Soft Peach */
+          .chapter-unit-card:nth-child(even) {
+            background-color: #ffedd5 !important;
+            border: 1.5px solid #fed7aa !important;
+          }
+          .chapter-unit-card:nth-child(odd) {
+            background-color: #dbeafe !important;
+            border: 1.5px solid #bfdbfe !important;
+          }
+          .chapter-unit-card:active {
+            opacity: 0.9 !important;
+            transform: scale(0.99) !important;
+          }
+          .chapter-unit-action-btn {
+            display: inline-flex !important;
             align-items: center !important;
-            justify-content: center !important;
-            width: 30px !important;
-            height: 30px !important;
-            border-radius: 50% !important;
-            background-color: #f8fafc !important;
-            color: #2563eb !important;
-            font-size: 18px !important;
-            font-weight: 900 !important;
+            justifyContent: center !important;
+            background-color: #0f3b82 !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 9px 22px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            box-shadow: 0 2px 6px rgba(15, 59, 130, 0.3) !important;
             flex-shrink: 0 !important;
-            border: 1px solid #e2e8f0 !important;
+            line-height: 1.2 !important;
           }
         }
         @media (min-width: 769px) {
-          .chapter-unit-arrow {
+          .chapter-unit-action-btn {
             display: none !important;
           }
         }
@@ -4513,7 +4528,7 @@ export default function EpsBookReader({
                       </div>
                     </div>
 
-                    <div className="chapter-unit-arrow">›</div>
+                    <button className="chapter-unit-action-btn" type="button">Open</button>
                   </div>
                 )}
                 {filteredChapters.map((c) => {
@@ -4593,7 +4608,7 @@ export default function EpsBookReader({
                         </div>
                       </div>
 
-                      <div className="chapter-unit-arrow">›</div>
+                      <button className="chapter-unit-action-btn" type="button">Open</button>
                     </div>
                   );
                 })}
@@ -4688,7 +4703,7 @@ export default function EpsBookReader({
                       </div>
                     </div>
 
-                    <div className="chapter-unit-arrow">›</div>
+                    <button className="chapter-unit-action-btn" type="button">Open</button>
                   </div>
                 )}
               </div>
