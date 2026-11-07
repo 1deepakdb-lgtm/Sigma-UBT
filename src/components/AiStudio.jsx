@@ -342,40 +342,11 @@ export default function AiStudio({
       const arrayBuf = await res.arrayBuffer();
       const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
 
-      const isMale = targetGender === 'male';
-      const speed = isMale ? 0.90 : 1.00;
-
       const source = ctx.createBufferSource();
       source.buffer = decoded;
-      source.playbackRate.value = speed;
+      source.playbackRate.value = 1.0;
 
-      let lastNode = source;
-      if (isMale) {
-        // 3-Stage Pristine Masculine Resonance Filter (Zero distortion, warm & clear baritone body)
-        const lowFilter = ctx.createBiquadFilter();
-        lowFilter.type = 'lowshelf';
-        lowFilter.frequency.value = 220;
-        lowFilter.gain.value = 4.5;
-
-        const midFilter = ctx.createBiquadFilter();
-        midFilter.type = 'peaking';
-        midFilter.frequency.value = 420;
-        midFilter.Q.value = 1.0;
-        midFilter.gain.value = 2.0;
-
-        const highFilter = ctx.createBiquadFilter();
-        highFilter.type = 'peaking';
-        highFilter.frequency.value = 2800;
-        highFilter.Q.value = 1.0;
-        highFilter.gain.value = -3.5;
-
-        source.connect(lowFilter);
-        lowFilter.connect(midFilter);
-        midFilter.connect(highFilter);
-        lastNode = highFilter;
-      }
-
-      lastNode.connect(ctx.destination);
+      source.connect(ctx.destination);
       sourceNodeRef.current = source;
 
       source.onended = () => {
@@ -449,7 +420,7 @@ export default function AiStudio({
       if (!played) {
         const audio = new Audio(url);
         previewAudioRef.current = audio;
-        audio.playbackRate = targetGender === 'male' ? 0.90 : 1.0;
+        audio.playbackRate = 1.0;
         audio.onended = () => setPreviewingVoiceId(null);
         audio.onerror = () => {
           const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
@@ -526,7 +497,7 @@ export default function AiStudio({
       if (!played) {
         const audio = new Audio(url);
         previewAudioRef.current = audio;
-        audio.playbackRate = lineGender === 'male' ? 0.90 : 1.0;
+        audio.playbackRate = 1.0;
         audio.onended = () => setPreviewingLineIndex(null);
         audio.onerror = () => {
           const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', lineGender, () => setPreviewingLineIndex(null));

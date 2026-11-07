@@ -688,7 +688,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
   }
 
-  // Pure Web Audio playback engine with distortion-free biquad formant shaping
+  // Direct Web Audio playback engine with 100% transparent studio clarity
   function playDecodedSource(buffer, targetGender, speed, id) {
     const ctx = audioContextRef.current;
     if (!ctx) return;
@@ -700,35 +700,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.playbackRate.value = speed || (targetGender === 'male' ? 0.90 : 1.0);
+    source.playbackRate.value = 1.0;
 
-    let lastNode = source;
-    if (targetGender === 'male') {
-      // 3-Stage Pristine Masculine Resonance Filter (Zero distortion, warm & clear baritone body)
-      const lowFilter = ctx.createBiquadFilter();
-      lowFilter.type = 'lowshelf';
-      lowFilter.frequency.value = 220;
-      lowFilter.gain.value = 4.5;
-
-      const midFilter = ctx.createBiquadFilter();
-      midFilter.type = 'peaking';
-      midFilter.frequency.value = 420;
-      midFilter.Q.value = 1.0;
-      midFilter.gain.value = 2.0;
-
-      const highFilter = ctx.createBiquadFilter();
-      highFilter.type = 'peaking';
-      highFilter.frequency.value = 2800;
-      highFilter.Q.value = 1.0;
-      highFilter.gain.value = -3.5;
-
-      source.connect(lowFilter);
-      lowFilter.connect(midFilter);
-      midFilter.connect(highFilter);
-      lastNode = highFilter;
-    }
-
-    lastNode.connect(ctx.destination);
+    source.connect(ctx.destination);
     sourceNodeRef.current = source;
 
     setLoadingAudioId(null);
@@ -848,39 +822,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       setLoadingAudioId(id);
       setPlayingAudioId(null);
 
-      // Model-specific natural speed tuning
-      let speed = 1.0;
-      if (targetGender === 'male') {
-        const mId = targetModel?.id || 'male-1';
-        if (mId.includes('2') || mId.includes('deep')) {
-          speed = 0.84;
-        } else if (mId.includes('3') || mId.includes('energetic')) {
-          speed = 0.94;
-        } else if (mId.includes('4') || mId.includes('broadcaster')) {
-          speed = 0.88;
-        } else if (mId.includes('5') || mId.includes('friendly')) {
-          speed = 0.93;
-        } else if (mId.includes('6') || mId.includes('senior')) {
-          speed = 0.86;
-        } else {
-          speed = 0.90; // Male 1 Teacher
-        }
-      } else {
-        const mId = targetModel?.id || 'female-1';
-        if (mId.includes('2') || mId.includes('bright')) {
-          speed = 1.04;
-        } else if (mId.includes('3') || mId.includes('clear')) {
-          speed = 0.98;
-        } else if (mId.includes('4') || mId.includes('news')) {
-          speed = 1.02;
-        } else if (mId.includes('5') || mId.includes('youth')) {
-          speed = 1.06;
-        } else if (mId.includes('6') || mId.includes('mentor')) {
-          speed = 0.96;
-        } else {
-          speed = 1.00; // Female 1 Teacher
-        }
-      }
+      const speed = 1.0;
 
       const cacheKey = `${url}_${targetGender}_${targetModel?.id || 'default'}`;
       if (audioBufferCacheRef.current.has(cacheKey) && audioContextRef.current) {
