@@ -1985,19 +1985,11 @@ const StudentDashboard = () => {
                 Home
               </h1>
 
-              {/* User Welcome & Validity Badge */}
+              {/* User Welcome Badge */}
               <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "4px 14px", backgroundColor: "#f1f5f9", borderRadius: "20px", border: "1px solid #e2e8f0" }}>
                 <span style={{ fontSize: "12px", color: "#334155", fontWeight: "600" }}>
                   Welcome, <strong style={{ color: "#0f3b82" }}>{studentName}</strong>
                 </span>
-                {effectivePackageName && (
-                  <>
-                    <span style={{ color: "#cbd5e1" }}>•</span>
-                    <span style={{ fontSize: "11px", color: isPackageExpired ? "#dc2626" : "#059669", fontWeight: "700" }}>
-                      {effectivePackageName} {effectiveExpiryDate ? `(${effectiveExpiryDate})` : ""}
-                    </span>
-                  </>
-                )}
               </div>
             </div>
 
