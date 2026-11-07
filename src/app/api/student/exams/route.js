@@ -4,7 +4,7 @@ import { requireStudent } from '@/lib/rbac';
 
 export const dynamic = 'force-dynamic';
 
-function isSetCoveredByPackage(set, pkgName) {
+function isSetCoveredBySinglePackage(set, pkgName) {
   if (!set || !pkgName) return false;
   const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const targetPkgNorm = norm(pkgName);
@@ -50,6 +50,12 @@ function isSetCoveredByPackage(set, pkgName) {
   }
 
   return false;
+}
+
+function isSetCoveredByPackage(set, pkgName) {
+  if (!set || !pkgName) return false;
+  const parts = String(pkgName).split(',').map(s => s.trim()).filter(Boolean);
+  return parts.some(item => isSetCoveredBySinglePackage(set, item));
 }
 
 export async function GET(req) {

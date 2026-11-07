@@ -107,7 +107,7 @@ export async function POST(req, { params }) {
         studentUser?.institute?.examSets?.some(ies => ies.examSetId === examSet.id)
       );
 
-      const checkPkg = (pkg) => {
+      const checkSinglePkg = (pkg) => {
         if (!pkg) return false;
         const pNorm = norm(pkg);
         const cleanP = pNorm.replace('specificexam', '');
@@ -119,6 +119,12 @@ export async function POST(req, { params }) {
         if (pNorm.includes('full') && !pNorm.includes('mock') && !isJp && !setPkgNorm.includes('chapter') && !setPkgNorm.includes('model')) return true;
         if ((pNorm.includes('mock') || pNorm.includes('jlpt') || pNorm.includes('jft') || pNorm.includes('nat')) && isJp) return true;
         return false;
+      };
+
+      const checkPkg = (pkg) => {
+        if (!pkg) return false;
+        const parts = String(pkg).split(',').map(s => s.trim()).filter(Boolean);
+        return parts.some(checkSinglePkg);
       };
 
       const hasAccess = Boolean(

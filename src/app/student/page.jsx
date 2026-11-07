@@ -330,16 +330,19 @@ const StudentDashboard = () => {
       }
     });
 
-    // 4. From institute-assigned package (if student was explicitly enrolled by institute in a paid package)
+    // 4. From institute-assigned package (if student was explicitly enrolled by institute in a paid package or specific exams)
     if (
       studentPackage &&
       !isGoogleOrFree &&
       !studentPackage.toLowerCase().includes("free") &&
       !studentPackage.toLowerCase().includes("google")
     ) {
-      if (!list.includes(studentPackage)) {
-        list.push(studentPackage);
-      }
+      const parts = studentPackage.split(",").map(p => p.trim()).filter(Boolean);
+      parts.forEach(p => {
+        if (!list.includes(p)) {
+          list.push(p);
+        }
+      });
     }
 
     // 5. Default track package if enrolled under an institute
@@ -398,7 +401,7 @@ const StudentDashboard = () => {
   );
 
   // Helper: check if a specific exam set belongs to a package name
-  const isSetInPackage = (set, pkgName) => {
+  const isSetInSinglePackage = (set, pkgName) => {
     if (!set || !pkgName) return false;
     const norm = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     const targetPkgNorm = norm(pkgName);
@@ -465,6 +468,12 @@ const StudentDashboard = () => {
     }
 
     return false;
+  };
+
+  const isSetInPackage = (set, pkgName) => {
+    if (!set || !pkgName) return false;
+    const parts = String(pkgName).split(",").map(s => s.trim()).filter(Boolean);
+    return parts.some(p => isSetInSinglePackage(set, p));
   };
 
   // Helper: check if an exam set is covered by any of the student's active released packages
@@ -902,7 +911,11 @@ const StudentDashboard = () => {
           const instPkg = data.user.institute?.examPackage || null;
           const instLogo = data.user.institute?.logoUrl || logo;
           const batchName = data.user.batch || null;
-          const instLang = data.user.instituteLanguage || data.user.institute?.language || data.user.language || "both";
+          const instLang = (data.user.language && data.user.language !== "both")
+            ? data.user.language
+            : (data.user.institute?.language && data.user.institute?.language !== "both"
+                ? data.user.institute?.language
+                : (data.user.language || data.user.institute?.language || data.user.instituteLanguage || "both"));
           const rawPkg = data.user.studentPackage || data.user.batch || "";
 
           const isEnrolledInstitute = Boolean(instId || instName);

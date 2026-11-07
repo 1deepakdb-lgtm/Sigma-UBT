@@ -93,10 +93,12 @@ function AdminStudentsContent() {
     phone: "",
     password: "",
     instituteName: "",
-    assignedPackage: "Chapterwise 30 set",
+    assignedPackage: "Full Set UBT",
     expiryDuration: "1 Month",
-    language: "both"
+    customExpiryDate: "",
+    language: "korean"
   });
+  const [selectedPackagesList, setSelectedPackagesList] = useState(["Full Set UBT"]);
 
   // Exam Sets states
   const [examSets, setExamSets] = useState([]);
@@ -198,13 +200,16 @@ function AdminStudentsContent() {
     loadData();
   }, []);
 
-  const calculateExpiryDate = (duration) => {
+  const calculateExpiryDate = (duration, customDate) => {
+    if (duration === "Custom Date" && customDate) return customDate;
     if (duration === "Lifetime") return "Lifetime";
     const date = new Date();
     if (duration === "15 Days") date.setDate(date.getDate() + 15);
     else if (duration === "1 Month") date.setMonth(date.getMonth() + 1);
     else if (duration === "2 Months") date.setMonth(date.getMonth() + 2);
     else if (duration === "3 Months") date.setMonth(date.getMonth() + 3);
+    else if (duration === "6 Months") date.setMonth(date.getMonth() + 6);
+    else if (duration === "1 Year") date.setFullYear(date.getFullYear() + 1);
     return date.toISOString().split("T")[0];
   };
 
@@ -212,13 +217,43 @@ function AdminStudentsContent() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleAddPackageItem = (itemToAdd) => {
+    if (!itemToAdd) return;
+    const cleanItem = itemToAdd.trim();
+    if (!selectedPackagesList.includes(cleanItem)) {
+      const updated = [...selectedPackagesList, cleanItem];
+      setSelectedPackagesList(updated);
+      setFormData(prev => ({ ...prev, assignedPackage: updated.join(", ") }));
+    }
+  };
+
+  const handleRemovePackageItem = (itemToRemove) => {
+    const updated = selectedPackagesList.filter(it => it !== itemToRemove);
+    setSelectedPackagesList(updated);
+    setFormData(prev => ({ ...prev, assignedPackage: updated.join(", ") }));
+  };
+
+  const handleSelectAllAvailableSets = () => {
+    const setNames = studentFormSpecificSets.map(s => s.name);
+    const updated = Array.from(new Set([...selectedPackagesList, ...setNames]));
+    setSelectedPackagesList(updated);
+    setFormData(prev => ({ ...prev, assignedPackage: updated.join(", ") }));
+  };
+
+  const handleClearAllSelectedItems = () => {
+    setSelectedPackagesList([]);
+    setFormData(prev => ({ ...prev, assignedPackage: "" }));
+  };
+
   const handleSubmitStudent = async (e) => {
     e.preventDefault();
-    const calculatedExpiryDate = calculateExpiryDate(formData.expiryDuration);
+    const calculatedExpiryDate = calculateExpiryDate(formData.expiryDuration, formData.customExpiryDate);
     const targetInst = formData.instituteName || (institutes[0]?.name || "Language Institute");
 
     const allStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
     const currentInstStudents = allStudents[targetInst] || [];
+
+    const finalBatch = (selectedPackagesList.length > 0 ? selectedPackagesList.join(", ") : formData.assignedPackage) || (formData.language === "japanese" ? "Full Mock Test" : "Full Set UBT");
 
     const studentPayload = {
       id: editId || undefined,
@@ -226,9 +261,9 @@ function AdminStudentsContent() {
       username: formData.phone.trim(),
       phone: formData.phone.trim(),
       password: (formData.password || "1234").trim(),
-      batch: formData.assignedPackage || "Full Set UBT",
+      batch: finalBatch,
       status: "Active",
-      language: formData.language || "both",
+      language: formData.language || "korean",
       instituteName: targetInst
     };
 
@@ -246,7 +281,7 @@ function AdminStudentsContent() {
       }
 
       const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
-      buyerMap[formData.phone] = { isBuyer: true, package: formData.assignedPackage, expiryDate: calculatedExpiryDate };
+      buyerMap[formData.phone] = { isBuyer: true, package: finalBatch, expiryDate: calculatedExpiryDate };
       localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
 
       if (editId) {
@@ -255,6 +290,7 @@ function AdminStudentsContent() {
             ? {
                 ...stu,
                 ...formData,
+                assignedPackage: finalBatch,
                 id: data.student?.id || stu.id,
                 instituteName: targetInst,
                 expiryDate: calculatedExpiryDate,
@@ -268,6 +304,7 @@ function AdminStudentsContent() {
         const newStudent = {
           id: data.student?.id || Date.now(),
           ...formData,
+          assignedPackage: finalBatch,
           instituteName: targetInst,
           expiryDate: calculatedExpiryDate,
           status: "Active",
@@ -364,39 +401,67 @@ function AdminStudentsContent() {
   };
 
   const handleEdit = (student) => {
+    const rawAssigned = student.assignedPackage || student.batch || (student.language === "japanese" ? "Full Mock Test" : "Full Set UBT");
+    const items = rawAssigned.split(",").map(s => s.trim().replace(/^Specific Exam:\s*/i, "")).filter(Boolean);
+    setSelectedPackagesList(items.length > 0 ? items : [rawAssigned]);
     setFormData({
       name: student.name,
-      phone: student.phone,
+      phone: student.phone || student.username,
       password: student.password || "",
-      instituteName: student.instituteName || "",
-      assignedPackage: student.assignedPackage || "Chapterwise 30 set",
+      instituteName: student.instituteName || institutes[0]?.name || "",
+      assignedPackage: rawAssigned,
       expiryDuration: student.expiryDuration || "1 Month",
-      language: student.language || "both"
+      customExpiryDate: "",
+      language: student.language || "korean"
     });
     setEditId(student.id);
     setShowForm(true);
     window.scrollTo({ top: 120, behavior: "smooth" });
   };
 
-  const handleDelete = async (id, instName) => {
-    if (window.confirm("Are you sure you want to delete this student?")) {
-      const allStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
-      const targetInst = instName || Object.keys(allStudents)[0];
-      let targetPhone = "";
-      if (allStudents[targetInst]) {
-        const target = allStudents[targetInst].find((s) => s.id === id);
-        targetPhone = target?.phone || "";
-        allStudents[targetInst] = allStudents[targetInst].filter((s) => s.id !== id);
-        localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
-      }
+  const handleDelete = async (stu) => {
+    const studentId = typeof stu === "object" ? stu.id : stu;
+    const studentName = typeof stu === "object" ? stu.name : "this student";
+    const studentPhone = typeof stu === "object" ? (stu.phone || stu.username) : "";
+
+    if (window.confirm(`⚠️ Are you sure you want to PERMANENTLY DELETE student "${studentName}" (${studentPhone || studentId})?\n\nThis will completely remove them from the database, all institutes, and exam records. This cannot be undone.`)) {
       try {
         await fetch(
-          `/api/institute/students?id=${encodeURIComponent(id || "")}&phone=${encodeURIComponent(targetPhone)}`,
+          `/api/institute/students?id=${encodeURIComponent(studentId || "")}&phone=${encodeURIComponent(studentPhone || "")}`,
           { method: "DELETE" }
         );
       } catch (e) {
         console.warn("Delete student API notice:", e);
       }
+
+      // Remove from all institutes in localStorage
+      const allStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
+      let modified = false;
+      for (const instKey of Object.keys(allStudents)) {
+        if (Array.isArray(allStudents[instKey])) {
+          const initialLen = allStudents[instKey].length;
+          allStudents[instKey] = allStudents[instKey].filter(
+            (s) => s.id !== studentId && s.phone !== studentPhone && s.username !== studentPhone
+          );
+          if (allStudents[instKey].length !== initialLen) modified = true;
+        }
+      }
+      if (modified) {
+        localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+      }
+
+      // Remove from buyer map
+      const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+      if (studentId) delete buyerMap[studentId];
+      if (studentPhone) delete buyerMap[studentPhone];
+      localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
+
+      // Remove from users map
+      const globalUsers = JSON.parse(localStorage.getItem("users") || "{}");
+      if (studentPhone) delete globalUsers[studentPhone];
+      localStorage.setItem("users", JSON.stringify(globalUsers));
+
+      alert(`✅ Student "${studentName}" has been permanently deleted from the database.`);
       loadData();
     }
   };
@@ -407,10 +472,12 @@ function AdminStudentsContent() {
       phone: "",
       password: "",
       instituteName: institutes[0]?.name || "",
-      assignedPackage: "Chapterwise 30 set",
+      assignedPackage: "Full Set UBT",
       expiryDuration: "1 Month",
-      language: "both"
+      customExpiryDate: "",
+      language: institutes[0]?.language || "korean"
     });
+    setSelectedPackagesList(["Full Set UBT"]);
     setEditId(null);
     setShowForm(false);
   };
@@ -479,47 +546,59 @@ function AdminStudentsContent() {
 
   const isJpTrackEntity = (item) => {
     if (!item) return false;
+    const track = (item.track || "").toLowerCase();
+    const sType = (item.setType || item.type || "").toUpperCase();
     const name = (item.name || item.title || "").toLowerCase();
-    const sType = (item.setType || "").toUpperCase();
+    const pkgName = (item.packageName || "").toLowerCase();
+    if (track === "japanese") return true;
+    if (track === "korean") return false;
+    if (sType.includes("MOCK") || item.isMock === true) return true;
+    if (sType.includes("UBT") || sType.includes("CHAPTER")) return false;
     return Boolean(
-      item.track === "japanese" ||
-      sType === "MOCK" ||
-      item.isMock === true ||
       name.includes("mock") ||
       name.includes("jlpt") ||
       name.includes("jft") ||
       name.includes("nat") ||
-      (item.packageName && item.packageName.toLowerCase().includes("mock"))
+      pkgName.includes("mock") ||
+      pkgName.includes("jlpt") ||
+      pkgName.includes("jft") ||
+      pkgName.includes("nat")
     );
   };
 
   const studentFormPackages = useMemo(() => {
-    let pkgs = examPackages;
-    if (!pkgs || pkgs.length === 0) {
-      if (formData.language === "japanese") {
-        pkgs = [
-          { name: "Full Mock Test", price: "Rs. 2,500" },
-          { name: "JFT-Basic Mock Test", price: "Rs. 1,500" },
-          { name: "NAT-TEST Mock Test", price: "Rs. 1,500" },
-          { name: "JLPT Mock Test Bundle", price: "Rs. 2,000" }
-        ];
-      } else {
-        pkgs = [
-          { name: "Full Set UBT", price: "Rs. 2,000" },
-          { name: "Chapterwise 30 set", price: "Rs. 1,000" },
-          { name: "100 UBT set", price: "Rs. 3,500" },
-          { name: "Full Package", price: "Rs. 4,500" }
-        ];
+    const defaultKoreanPkgs = [
+      { name: "Full Set UBT", price: "Rs. 2,000", track: "korean" },
+      { name: "30 Set Chapter UBT", price: "Rs. 1,000", track: "korean" },
+      { name: "100 UBT set", price: "Rs. 3,500", track: "korean" },
+      { name: "Full Package", price: "Rs. 4,500", track: "korean" }
+    ];
+    const defaultJapanesePkgs = [
+      { name: "Full Mock Test", price: "Rs. 2,500", track: "japanese" },
+      { name: "JFT-Basic Mock Test", price: "Rs. 1,500", track: "japanese" },
+      { name: "NAT-TEST Mock Test", price: "Rs. 1,500", track: "japanese" },
+      { name: "JLPT Mock Test Bundle", price: "Rs. 2,000", track: "japanese" }
+    ];
+
+    let combined = Array.isArray(examPackages) ? [...examPackages] : [];
+    defaultKoreanPkgs.forEach(kPkg => {
+      if (!combined.some(p => (p.name || "").toLowerCase() === kPkg.name.toLowerCase())) {
+        combined.push(kPkg);
       }
-    }
+    });
+    defaultJapanesePkgs.forEach(jPkg => {
+      if (!combined.some(p => (p.name || "").toLowerCase() === jPkg.name.toLowerCase())) {
+        combined.push(jPkg);
+      }
+    });
 
     if (formData.language === "korean") {
-      return pkgs.filter(p => !isJpTrackEntity(p));
+      return combined.filter(p => !isJpTrackEntity(p));
     }
     if (formData.language === "japanese") {
-      return pkgs.filter(p => isJpTrackEntity(p));
+      return combined.filter(p => isJpTrackEntity(p));
     }
-    return pkgs;
+    return combined;
   }, [examPackages, formData.language]);
 
   const studentFormSpecificSets = useMemo(() => {
@@ -855,7 +934,18 @@ function AdminStudentsContent() {
                 <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold", color: "#475569" }}>
                   Institute
                 </label>
-                <select name="instituteName" value={formData.instituteName} onChange={handleInputChange} style={inputStyle} required>
+                <select
+                  name="instituteName"
+                  value={formData.instituteName}
+                  onChange={(e) => {
+                    const chosen = e.target.value;
+                    const instObj = institutes.find(i => i.name === chosen);
+                    const nextLang = instObj && instObj.language ? instObj.language : formData.language;
+                    setFormData(prev => ({ ...prev, instituteName: chosen, language: nextLang }));
+                  }}
+                  style={inputStyle}
+                  required
+                >
                   {institutes.length === 0 ? (
                     <option value="Language Institute">Language Institute</option>
                   ) : (
@@ -888,36 +978,12 @@ function AdminStudentsContent() {
               </div>
 
               <div>
-                <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold", color: "#475569" }}>
-                  Assigned Package / Specific Exam
-                </label>
-                <select name="assignedPackage" value={formData.assignedPackage} onChange={handleInputChange} style={inputStyle}>
-                  <optgroup label={formData.language === "japanese" ? "🇯🇵 Japanese Mock Packages" : formData.language === "korean" ? "🇰🇷 Korean UBT Packages" : "📦 Exam Packages"}>
-                    {studentFormPackages.map((pkg, idx) => (
-                      <option key={`pkg-${idx}`} value={pkg.name}>
-                        {pkg.name} {pkg.price ? `(${pkg.price})` : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                  {studentFormSpecificSets.length > 0 && (
-                    <optgroup label="🎯 Specific Exams (Particular Exam Access)">
-                      {studentFormSpecificSets.map((s, idx) => (
-                        <option key={`set-${idx}`} value={s.name}>
-                          Specific Exam: {s.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
-              </div>
-
-              <div>
                 <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold", color: "#334155" }}>
                   Select Study Language:
                 </label>
                 <select
                   name="language"
-                  value={formData.language || "both"}
+                  value={formData.language || "korean"}
                   onChange={handleInputChange}
                   style={{
                     ...inputStyle,
@@ -926,23 +992,175 @@ function AdminStudentsContent() {
                     border: "1.5px solid #cbd5e1"
                   }}
                 >
-                  <option value="korean">🇰🇷 Korean</option>
-                  <option value="japanese">🇯🇵 Japanese</option>
-                  <option value="both">🌐 Both</option>
+                  <option value="korean">🇰🇷 Korean (EPS-TOPIK UBT &amp; Chapterwise)</option>
+                  <option value="japanese">🇯🇵 Japanese (JFT-Basic, JLPT &amp; NAT-TEST Mock)</option>
+                  <option value="both">🌐 Both (Korean &amp; Japanese Access)</option>
                 </select>
               </div>
 
               <div>
                 <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold", color: "#475569" }}>
-                  Package Expiry Duration
+                  Package Expiry Duration / Time Limit
                 </label>
                 <select name="expiryDuration" value={formData.expiryDuration} onChange={handleInputChange} style={inputStyle}>
                   <option value="15 Days">15 Days</option>
                   <option value="1 Month">1 Month</option>
                   <option value="2 Months">2 Months</option>
                   <option value="3 Months">3 Months</option>
-                  <option value="Lifetime">Lifetime</option>
+                  <option value="6 Months">6 Months</option>
+                  <option value="1 Year">1 Year</option>
+                  <option value="Lifetime">Lifetime (Unlimited Access)</option>
+                  <option value="Custom Date">Custom Expiry Date</option>
                 </select>
+              </div>
+
+              {formData.expiryDuration === "Custom Date" && (
+                <div style={{ gridColumn: "span 2" }}>
+                  <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold", color: "#0369a1" }}>
+                    Select Custom Expiry Date:
+                  </label>
+                  <input
+                    type="date"
+                    name="customExpiryDate"
+                    value={formData.customExpiryDate || ""}
+                    onChange={handleInputChange}
+                    required={formData.expiryDuration === "Custom Date"}
+                    style={{ ...inputStyle, border: "2px solid #0284c7" }}
+                  />
+                </div>
+              )}
+
+              {/* Multi-Item Package & Specific Exam Chips Selector */}
+              <div style={{ gridColumn: "span 2", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "10px", border: "1.5px solid #cbd5e1" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
+                  <label style={{ fontSize: "13.5px", fontWeight: "800", color: "#0f172a", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>🎯</span>
+                    <span>Assigned Packages &amp; Specific Exams (Multi-Select Allowed):</span>
+                    <span style={{ fontSize: "11px", fontWeight: "700", backgroundColor: "#dbeafe", color: "#1d4ed8", padding: "2px 8px", borderRadius: "10px" }}>
+                      {selectedPackagesList.length} Selected
+                    </span>
+                  </label>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {studentFormSpecificSets.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleSelectAllAvailableSets}
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          backgroundColor: "#eff6ff",
+                          color: "#1d4ed8",
+                          border: "1px solid #93c5fd",
+                          borderRadius: "5px",
+                          padding: "4px 8px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        + Select All Available Sets ({studentFormSpecificSets.length})
+                      </button>
+                    )}
+                    {selectedPackagesList.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleClearAllSelectedItems}
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          backgroundColor: "#fef2f2",
+                          color: "#dc2626",
+                          border: "1px solid #fca5a5",
+                          borderRadius: "5px",
+                          padding: "4px 8px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        ✕ Clear All
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected item chips */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "12px", minHeight: "36px", padding: "6px", backgroundColor: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  {selectedPackagesList.length === 0 ? (
+                    <span style={{ fontSize: "12px", color: "#94a3b8", fontStyle: "italic", padding: "4px 6px" }}>
+                      ⚠️ No package or exam set selected yet. Choose from the dropdown below to assign access.
+                    </span>
+                  ) : (
+                    selectedPackagesList.map((item, idx) => {
+                      const isSet = item.toLowerCase().includes("set") || item.toLowerCase().includes("chapter") || item.toLowerCase().includes("exam");
+                      return (
+                        <span
+                          key={idx}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "4px 10px",
+                            borderRadius: "16px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            backgroundColor: isSet ? "#eff6ff" : "#f0fdf4",
+                            color: isSet ? "#1e40af" : "#166534",
+                            border: `1px solid ${isSet ? "#bfdbfe" : "#bbf7d0"}`
+                          }}
+                        >
+                          <span>{isSet ? "📝" : "📦"}</span>
+                          <span>{item}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePackageItem(item)}
+                            style={{
+                              backgroundColor: "transparent",
+                              border: "none",
+                              color: "#ef4444",
+                              cursor: "pointer",
+                              fontSize: "14px",
+                              fontWeight: "bold",
+                              padding: "0 2px",
+                              lineHeight: 1
+                            }}
+                            title="Remove item"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Multi-add Dropdown */}
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleAddPackageItem(e.target.value);
+                        e.target.value = "";
+                      }
+                    }}
+                    style={{ ...inputStyle, marginBottom: 0, flex: 1, backgroundColor: "#ffffff", fontWeight: "600" }}
+                  >
+                    <option value="">➕ Choose Package or Specific Exam to add...</option>
+                    <optgroup label={formData.language === "japanese" ? "🇯🇵 Japanese Mock Packages" : formData.language === "korean" ? "🇰🇷 Korean UBT Packages" : "📦 Standard Packages"}>
+                      {studentFormPackages.map((pkg, idx) => (
+                        <option key={`pkg-${idx}`} value={pkg.name}>
+                          📦 Package: {pkg.name} {pkg.price ? `(${pkg.price})` : ''}
+                        </option>
+                      ))}
+                    </optgroup>
+                    {studentFormSpecificSets.length > 0 && (
+                      <optgroup label="🎯 Specific Exams (Particular Exam Access)">
+                        {studentFormSpecificSets.map((s, idx) => (
+                          <option key={`set-${idx}`} value={s.name}>
+                            🎯 Specific Exam: {s.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </div>
               </div>
 
               <div style={{ gridColumn: "span 2" }}>
@@ -1065,18 +1283,47 @@ function AdminStudentsContent() {
 
                       {/* Institute Column */}
                       <td style={tdStyle}>
-                        <span
-                          style={{
-                            backgroundColor: isAmb ? "#fef3c7" : "#f1f5f9",
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            fontSize: "12px",
-                            color: isAmb ? "#92400e" : "#334155",
-                            fontWeight: "bold"
-                          }}
-                        >
-                          {isAmb ? "Self-Signup Guest" : (stu.instituteName || "ExamJK Education")}
-                        </span>
+                        {isAmb ? (
+                          <span
+                            style={{
+                              backgroundColor: "#fef3c7",
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              color: "#92400e",
+                              fontWeight: "bold",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px"
+                            }}
+                          >
+                            <span>🌐</span>
+                            <span>Self-Signup Guest</span>
+                          </span>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <span
+                              style={{
+                                backgroundColor: "#eff6ff",
+                                border: "1px solid #bfdbfe",
+                                padding: "4px 9px",
+                                borderRadius: "6px",
+                                fontSize: "12.5px",
+                                color: "#1e40af",
+                                fontWeight: "800",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px"
+                              }}
+                            >
+                              <span>🏫</span>
+                              <span>{stu.instituteName || "ExamJK Institute"}</span>
+                            </span>
+                            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>
+                              Created by: {stu.instituteName || "ExamJK Institute"}
+                            </span>
+                          </div>
+                        )}
                       </td>
 
                       {/* Phone Column - Masked for Ambiguous Users */}
@@ -1227,7 +1474,8 @@ function AdminStudentsContent() {
                               Edit
                             </button>
                             <button
-                              onClick={() => handleDelete(stu.id, stu.instituteName)}
+                              onClick={() => handleDelete(stu)}
+                              title="Permanently delete student from database and all institutes"
                               style={{
                                 backgroundColor: "#ef4444",
                                 color: "white",
@@ -1236,10 +1484,15 @@ function AdminStudentsContent() {
                                 borderRadius: "4px",
                                 cursor: "pointer",
                                 fontSize: "12px",
-                                whiteSpace: "nowrap"
+                                fontWeight: "bold",
+                                whiteSpace: "nowrap",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px"
                               }}
                             >
-                              Delete
+                              <span>🗑️</span>
+                              <span>Delete Permanently</span>
                             </button>
                           </div>
                         )}
