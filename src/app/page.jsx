@@ -22,11 +22,27 @@ export default function LoginPage() {
 
   // Reset password form fields (Super Admin, Institute, Student, Staff)
   const [resetIdentifier, setResetIdentifier] = useState("");
-  const [resetStep, setResetStep] = useState(1); // 1 = lookup, 2 = verify & set
+  const [resetStep, setResetStep] = useState(1); // 1 = lookup, 2 = select channel & send code, 3 = verify code & set
   const [resetAccountInfo, setResetAccountInfo] = useState(null);
+  const [resetChannel, setResetChannel] = useState("whatsapp"); // 'whatsapp' | 'email'
+  const [resetEmailInput, setResetEmailInput] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [sentNotice, setSentNotice] = useState("");
+  const [whatsappUrl, setWhatsappUrl] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
+  const [sendingCode, setSendingCode] = useState(false);
   const [resetCodeInput, setResetCodeInput] = useState("");
   const [resetNewPassword, setResetNewPassword] = useState("");
   const [resetConfirmPassword, setResetConfirmPassword] = useState("");
+
+  // Resend code countdown timer
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const interval = setInterval(() => {
+      setResendTimer((t) => (t > 0 ? t - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendTimer]);
 
   // Google Sign-In modal state
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -244,9 +260,10 @@ export default function LoginPage() {
     if (e) e.preventDefault();
     setError("");
     setSuccessMsg("");
+    setSentNotice("");
 
     if (!resetIdentifier.trim()) {
-      setError("Please enter your Phone number, Username, or ID");
+      setError("Please enter your Phone number, Username, or Email");
       return;
     }
 
@@ -280,8 +297,19 @@ export default function LoginPage() {
       }
 
       setResetAccountInfo(data);
-      setResetCodeInput(data.verificationCode || "");
+      if (data.email) {
+        setResetEmailInput(data.email);
+      }
+      if (data.hasWhatsApp) {
+        setResetChannel("whatsapp");
+      } else if (data.hasEmail) {
+        setResetChannel("email");
+      }
+      setResetCodeInput("");
       setResetStep(2);
+      setCodeSent(false);
+      setSentNotice("");
+      setWhatsappUrl("");
       setError("");
     } catch (err) {
       console.error("Password reset lookup error:", err);
@@ -291,11 +319,62 @@ export default function LoginPage() {
     }
   };
 
-  // Step 2: Verify code and update password
+  // Step 2: Send verification code via WhatsApp or Email
+  const handleSendResetCode = async (channelChoice) => {
+    setError("");
+    setSuccessMsg("");
+    setSendingCode(true);
+
+    const chosen = channelChoice || resetChannel;
+    setResetChannel(chosen);
+
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send_code",
+          resetToken: resetAccountInfo?.resetToken,
+          channel: chosen,
+          email: resetEmailInput.trim() || undefined
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to send verification code");
+        setSendingCode(false);
+        return;
+      }
+
+      setCodeSent(true);
+      setResendTimer(60);
+      setSentNotice(data.message || (chosen === "whatsapp" ? "Verification code sent to WhatsApp!" : "Verification code sent to Email!"));
+      if (data.whatsappUrl) {
+        setWhatsappUrl(data.whatsappUrl);
+        try {
+          window.open(data.whatsappUrl, "_blank", "noopener,noreferrer");
+        } catch (e) {}
+      }
+      setResetStep(3);
+    } catch (err) {
+      console.error("Send reset code error:", err);
+      setError("Failed to dispatch code. Please try again.");
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  // Step 3: Verify code and update password
   const handleResetSubmit = async (e) => {
     if (e) e.preventDefault();
     setError("");
     setSuccessMsg("");
+
+    if (!resetCodeInput.trim()) {
+      setError("Please enter the 6-digit verification code received on WhatsApp / Email");
+      return;
+    }
 
     if (!resetNewPassword) {
       setError("Please enter a new password");
@@ -351,6 +430,9 @@ export default function LoginPage() {
       setResetNewPassword("");
       setResetConfirmPassword("");
       setResetCodeInput("");
+      setCodeSent(false);
+      setSentNotice("");
+      setWhatsappUrl("");
       setAuthMode("login");
     } catch (err) {
       console.error("Password reset update error:", err);
@@ -925,20 +1007,20 @@ export default function LoginPage() {
               </form>
             )}
 
-            {/* STEP 2: Verify & Enter New Password */}
+            {/* STEP 2: Choose Delivery Method (WhatsApp or Email) */}
             {resetStep === 2 && resetAccountInfo && (
-              <form onSubmit={handleResetSubmit} autoComplete="off">
+              <div>
                 {/* Account details card */}
                 <div style={{
                   background: "#f8fafc",
                   border: "1.5px solid #e2e8f0",
                   borderRadius: "10px",
                   padding: "12px 14px",
-                  marginBottom: "12px",
+                  marginBottom: "14px",
                   textAlign: "left"
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                    <span style={{ fontSize: "13.5px", fontWeight: "800", color: "#0f172a" }}>
+                    <span style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>
                       {resetAccountInfo.name || resetAccountInfo.username}
                     </span>
                     <span style={{
@@ -955,65 +1037,303 @@ export default function LoginPage() {
                       {resetAccountInfo.role === "admin" ? "SUPER ADMIN" : resetAccountInfo.role === "institute" ? "INSTITUTE" : resetAccountInfo.role.toUpperCase()}
                     </span>
                   </div>
-                  <div style={{ fontSize: "11.5px", color: "#64748b" }}>
-                    Account: <strong style={{ color: "#334155" }}>@{resetAccountInfo.username}</strong>
+                  <div style={{ fontSize: "12px", color: "#64748b", display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    <span>Account: <strong style={{ color: "#334155" }}>@{resetAccountInfo.username}</strong></span>
                     {resetAccountInfo.maskedPhone && (
-                      <span style={{ marginLeft: "8px" }}>· Phone: <strong style={{ color: "#334155" }}>{resetAccountInfo.maskedPhone}</strong></span>
+                      <span>&middot; Phone: <strong style={{ color: "#334155" }}>{resetAccountInfo.maskedPhone}</strong></span>
                     )}
                   </div>
                 </div>
 
-                {/* Security Verification Code Box */}
-                {resetAccountInfo.verificationCode ? (
-                  <div style={{
-                    background: "#f0fdf4",
-                    border: "1.5px dashed #86efac",
-                    borderRadius: "10px",
-                    padding: "10px 12px",
-                    marginBottom: "12px",
-                    textAlign: "center"
-                  }}>
-                    <div style={{ fontSize: "10.5px", color: "#166534", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                      Security Verification Code
-                    </div>
-                    <div style={{ fontSize: "24px", fontWeight: "900", letterSpacing: "5px", color: "#15803d", margin: "3px 0" }}>
-                      {resetAccountInfo.verificationCode}
-                    </div>
-                    <div style={{ fontSize: "10.5px", color: "#166534" }}>
-                      Enter this code (or your registered phone) below
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{
-                    background: "#fef3c7",
-                    border: "1.5px dashed #f59e0b",
-                    borderRadius: "10px",
-                    padding: "10px 12px",
-                    marginBottom: "12px",
-                    textAlign: "center"
-                  }}>
-                    <div style={{ fontSize: "11px", color: "#92400e", fontWeight: "800", textTransform: "uppercase" }}>
-                      🛡️ Protected Account Recovery
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#b45309", marginTop: "2px" }}>
-                      Enter the Admin Recovery Key below to confirm authorization.
-                    </div>
-                  </div>
-                )}
+                <div style={{ textAlign: "left", marginBottom: "12px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: "800", color: "#1e293b" }}>
+                    Choose Verification Delivery Method:
+                  </label>
+                  <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#64748b" }}>
+                    Select where you would like to receive your 6-digit password reset code:
+                  </p>
+                </div>
 
+                {/* Option 1: WhatsApp */}
+                <div style={{
+                  border: resetChannel === "whatsapp" ? "2px solid #22c55e" : "1.5px solid #e2e8f0",
+                  backgroundColor: resetChannel === "whatsapp" ? "#f0fdf4" : "#ffffff",
+                  borderRadius: "10px",
+                  padding: "12px",
+                  marginBottom: "10px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease"
+                }} onClick={() => setResetChannel("whatsapp")}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                    <div style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "8px",
+                      backgroundColor: "#22c55e",
+                      color: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "16px",
+                      fontWeight: "900",
+                      flexShrink: 0
+                    }}>
+                      💬
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "13px", fontWeight: "800", color: "#166534" }}>
+                        Send Code via WhatsApp
+                      </div>
+                      <div style={{ fontSize: "11.5px", color: "#15803d" }}>
+                        {resetAccountInfo.maskedPhone ? `To registered number: +977 ${resetAccountInfo.maskedPhone}` : "Send 6-digit code to registered WhatsApp"}
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="resetChannelChoice"
+                      checked={resetChannel === "whatsapp"}
+                      onChange={() => setResetChannel("whatsapp")}
+                      style={{ width: "16px", height: "16px", accentColor: "#16a34a", cursor: "pointer" }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSendResetCode("whatsapp");
+                    }}
+                    disabled={sendingCode}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      backgroundColor: "#16a34a",
+                      backgroundImage: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "7px",
+                      fontWeight: "800",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
+                      marginTop: "4px"
+                    }}
+                  >
+                    <span>📲</span> {sendingCode && resetChannel === "whatsapp" ? "Generating WhatsApp Code..." : "Send Verification Code via WhatsApp"}
+                  </button>
+                </div>
+
+                {/* Option 2: Email */}
+                <div style={{
+                  border: resetChannel === "email" ? "2px solid #3b82f6" : "1.5px solid #e2e8f0",
+                  backgroundColor: resetChannel === "email" ? "#eff6ff" : "#ffffff",
+                  borderRadius: "10px",
+                  padding: "12px",
+                  marginBottom: "14px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease"
+                }} onClick={() => setResetChannel("email")}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                    <div style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "8px",
+                      backgroundColor: "#2563eb",
+                      color: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "16px",
+                      fontWeight: "900",
+                      flexShrink: 0
+                    }}>
+                      ✉️
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "13px", fontWeight: "800", color: "#1e40af" }}>
+                        Send Code via Email
+                      </div>
+                      <div style={{ fontSize: "11.5px", color: "#2563eb" }}>
+                        {resetAccountInfo.maskedEmail ? `To: ${resetAccountInfo.maskedEmail}` : "Enter email address to receive 6-digit code"}
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="resetChannelChoice"
+                      checked={resetChannel === "email"}
+                      onChange={() => setResetChannel("email")}
+                      style={{ width: "16px", height: "16px", accentColor: "#2563eb", cursor: "pointer" }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "8px" }} onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="email"
+                      placeholder="Enter / Confirm your Email (e.g. name@gmail.com)"
+                      value={resetEmailInput}
+                      onChange={(e) => setResetEmailInput(e.target.value)}
+                      style={{ ...inputStyle, marginBottom: 0, fontSize: "13px", padding: "8px 12px" }}
+                      required={resetChannel === "email"}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSendResetCode("email");
+                    }}
+                    disabled={sendingCode}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      backgroundColor: "#2563eb",
+                      backgroundImage: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "7px",
+                      fontWeight: "800",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      boxShadow: "0 2px 6px rgba(37, 99, 235, 0.25)"
+                    }}
+                  >
+                    <span>📧</span> {sendingCode && resetChannel === "email" ? "Dispatching Email..." : "Send Verification Code via Email"}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetStep(1);
+                    setError("");
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    background: "transparent",
+                    border: "none",
+                    color: "#64748b",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    cursor: "pointer"
+                  }}
+                >
+                  ← Search Another Account
+                </button>
+              </div>
+            )}
+
+            {/* STEP 3: Enter Code & Update Password */}
+            {resetStep === 3 && resetAccountInfo && (
+              <form onSubmit={handleResetSubmit} autoComplete="off">
+                {/* Code Dispatch Banner */}
+                <div style={{
+                  background: resetChannel === "whatsapp" ? "#f0fdf4" : "#eff6ff",
+                  border: `1.5px solid ${resetChannel === "whatsapp" ? "#86efac" : "#bfdbfe"}`,
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "14px",
+                  textAlign: "center"
+                }}>
+                  <div style={{ fontSize: "12px", fontWeight: "800", color: resetChannel === "whatsapp" ? "#166534" : "#1e40af", marginBottom: "4px" }}>
+                    {resetChannel === "whatsapp" ? "💬 Code Dispatched to WhatsApp!" : "📧 Code Dispatched to Email!"}
+                  </div>
+                  <div style={{ fontSize: "11.5px", color: resetChannel === "whatsapp" ? "#15803d" : "#2563eb", lineHeight: "1.4" }}>
+                    {sentNotice || "Please check your message for the 6-digit verification code."}
+                  </div>
+                  {resetChannel === "whatsapp" && whatsappUrl && (
+                    <div style={{ marginTop: "8px" }}>
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          backgroundColor: "#16a34a",
+                          color: "#ffffff",
+                          padding: "6px 14px",
+                          borderRadius: "6px",
+                          fontSize: "11.5px",
+                          fontWeight: "800",
+                          textDecoration: "none",
+                          boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)"
+                        }}
+                      >
+                        <span>📲 Open WhatsApp Message ↗</span>
+                      </a>
+                    </div>
+                  )}
+                  {resetChannel === "email" && (
+                    <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "4px" }}>
+                      💡 Tip: Also check your Spam or Junk folder if not seen in primary inbox.
+                    </div>
+                  )}
+                </div>
+
+                {/* 6-Digit Verification Code input */}
                 <div style={{ textAlign: "left", marginBottom: "4px" }}>
-                  <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155" }}>
-                    {resetAccountInfo.role === "admin" ? "Admin Recovery Key:" : "Verification Code / Phone:"}
+                  <label style={{ fontSize: "12px", fontWeight: "800", color: "#334155" }}>
+                    Enter 6-Digit Verification Code:
                   </label>
                 </div>
                 <input
-                  type={resetAccountInfo.role === "admin" ? "password" : "text"}
-                  placeholder={resetAccountInfo.role === "admin" ? "Enter Admin Recovery Key" : "Enter 6-digit code or registered phone"}
+                  type="text"
+                  maxLength={6}
+                  placeholder="e.g. 123456"
                   value={resetCodeInput}
-                  onChange={(e) => setResetCodeInput(e.target.value)}
-                  style={inputStyle}
+                  onChange={(e) => setResetCodeInput(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+                  style={{
+                    ...inputStyle,
+                    textAlign: "center",
+                    fontSize: "20px",
+                    fontWeight: "900",
+                    letterSpacing: "6px",
+                    padding: "9px 12px",
+                    fontFamily: "monospace"
+                  }}
+                  autoFocus
                   required
                 />
+
+                {/* Resend Code Option */}
+                <div style={{ textAlign: "right", marginTop: "-4px", marginBottom: "12px" }}>
+                  {resendTimer > 0 ? (
+                    <span style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600" }}>
+                      Resend code in <strong>{resendTimer}s</strong>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSendResetCode(resetChannel)}
+                      disabled={sendingCode}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#2563eb",
+                        fontSize: "11.5px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        padding: 0,
+                        textDecoration: "underline"
+                      }}
+                    >
+                      Resend Verification Code ↻
+                    </button>
+                  )}
+                </div>
 
                 {/* New Password input */}
                 <div style={{ textAlign: "left", marginBottom: "4px" }}>
@@ -1075,10 +1395,30 @@ export default function LoginPage() {
                   }}
                   disabled={loading}
                 >
-                  {loading ? "SAVING NEW PASSWORD..." : "UPDATE & SAVE PASSWORD"}
+                  {loading ? "VERIFYING & UPDATING..." : "VERIFY CODE & UPDATE PASSWORD"}
                 </button>
 
                 <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetStep(2);
+                      setError("");
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "7px 10px",
+                      background: "#f1f5f9",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "6px",
+                      fontSize: "11.5px",
+                      fontWeight: "700",
+                      color: "#475569",
+                      cursor: "pointer"
+                    }}
+                  >
+                    ← Change Delivery Method
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -1097,27 +1437,7 @@ export default function LoginPage() {
                       cursor: "pointer"
                     }}
                   >
-                    ← Search Other Account
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode("login");
-                      setError("");
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: "7px 10px",
-                      background: "#ffffff",
-                      border: "1px solid #cbd5e1",
-                      borderRadius: "6px",
-                      fontSize: "11.5px",
-                      fontWeight: "700",
-                      color: "#2563eb",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Back to Sign In
+                    Search Other Account
                   </button>
                 </div>
               </form>
