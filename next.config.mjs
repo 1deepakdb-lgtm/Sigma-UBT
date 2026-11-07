@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 
+// Prevent SWC / Rayon thread pool panics on restricted host environments (like cPanel / CloudLinux)
+process.env.RAYON_NUM_THREADS = process.env.RAYON_NUM_THREADS || '1';
+process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '1';
+
 // ─── Security Headers ─────────────────────────────────────────────────────────
 const securityHeaders = [
   // Prevent clickjacking / iframe embedding by third-party sites
@@ -69,6 +73,8 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '25mb',
     },
+    cpus: 1,
+    workerThreads: false,
   },
   // Apply security headers to all routes
   async headers() {
