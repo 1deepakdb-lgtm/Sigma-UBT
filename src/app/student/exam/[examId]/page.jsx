@@ -153,11 +153,13 @@ const StudentExam = () => {
           return Boolean(c && targetCleanPhone && c === targetCleanPhone);
         };
 
-        let studentInstitute = null;
-        for (const inst in allInstituteStudents) {
-          if ((allInstituteStudents[inst] || []).some(s => isMatchingPhone(s.phone))) {
-            studentInstitute = inst;
-            break;
+        let studentInstitute = typeof window !== 'undefined' ? (localStorage.getItem("currentInstitute") || null) : null;
+        if (!studentInstitute) {
+          for (const inst in allInstituteStudents) {
+            if ((allInstituteStudents[inst] || []).some(s => isMatchingPhone(s.phone))) {
+              studentInstitute = inst;
+              break;
+            }
           }
         }
         if (!studentInstitute || studentInstitute.toLowerCase() !== currentExamSet.creatorInstituteName.toLowerCase()) {
@@ -179,6 +181,8 @@ const StudentExam = () => {
         let allowedPkgs = [];
         const myPkg = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPackage") || "") : "";
         if (myPkg) allowedPkgs.push(myPkg);
+        const myInstPkg = typeof window !== 'undefined' ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage") || "") : "";
+        if (myInstPkg) allowedPkgs.push(myInstPkg);
         const currentStudentPhone = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone")) : null;
         const studentsList = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("studentsList") || "[]") : [];
         const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);

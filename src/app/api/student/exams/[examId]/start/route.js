@@ -41,6 +41,77 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'Exam set not found' }, { status: 404 });
     }
 
+    // Strict Institute Isolation:
+    // If set is private to another institute, prevent access
+    if (examSet.isPrivate && examSet.creatorInstituteId && examSet.creatorInstituteId !== session.instituteId) {
+      return NextResponse.json({ error: 'Access denied: This exam set is private to its creator institute.' }, { status: 403 });
+    }
+
+    // Access authorization check for student
+    const isFree = Boolean(
+      examSet.isFree ||
+      examSet.setType === 'FREE' ||
+      (examSet.name && examSet.name.toLowerCase().includes('free demo'))
+    );
+
+    if (!isFree) {
+      const studentUser = await prisma.user.findUnique({
+        where: { id: session.id },
+        include: {
+          institute: {
+            include: { examSets: true }
+          }
+        }
+      });
+
+      const instituteId = studentUser?.instituteId || session.instituteId || null;
+      const institutePkg = studentUser?.institute?.examPackage || null;
+      const studentBatch = studentUser?.batch || null;
+      const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
+      const assignedPkg = (studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim())) ? studentBatch : null;
+
+      const isMyInstituteSet = Boolean(instituteId && examSet.creatorInstituteId && examSet.creatorInstituteId === instituteId);
+      const isExplicitlyReleased = Boolean(
+        studentUser?.institute?.examSets?.some(ies => ies.examSetId === examSet.id)
+      );
+
+      const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const setPkgNorm = norm(examSet.packageName || examSet.package?.name || '');
+      const setNameNorm = norm(examSet.name || '');
+      const isJp = Boolean(
+        examSet.setType === 'MOCK' ||
+        setNameNorm.includes('mock') ||
+        setNameNorm.includes('jlpt') ||
+        setNameNorm.includes('jft') ||
+        setNameNorm.includes('nat')
+      );
+
+      const checkPkg = (pkg) => {
+        if (!pkg) return false;
+        const pNorm = norm(pkg);
+        if (pNorm === setPkgNorm) return true;
+        if (pNorm.includes('chapter') && (setPkgNorm.includes('chapter') || setNameNorm.includes('chapter'))) return true;
+        if (pNorm.includes('100') && (setPkgNorm.includes('100') || setNameNorm.includes('100'))) return true;
+        if (pNorm.includes('model') && (setPkgNorm.includes('model') || setNameNorm.includes('model'))) return true;
+        if (pNorm.includes('full') && !pNorm.includes('mock') && !isJp && !setPkgNorm.includes('chapter') && !setPkgNorm.includes('model')) return true;
+        if ((pNorm.includes('mock') || pNorm.includes('jlpt') || pNorm.includes('jft') || pNorm.includes('nat')) && isJp) return true;
+        return false;
+      };
+
+      const hasAccess = Boolean(
+        isMyInstituteSet ||
+        isExplicitlyReleased ||
+        checkPkg(institutePkg) ||
+        checkPkg(assignedPkg)
+      );
+
+      if (!hasAccess) {
+        return NextResponse.json({
+          error: 'This exam set is locked. Please acquire the appropriate institute package or set access.'
+        }, { status: 403 });
+      }
+    }
+
     const durationSeconds = examSet.duration || 3000;
     const now = new Date();
     const expiresAt = new Date(now.getTime() + durationSeconds * 1000);

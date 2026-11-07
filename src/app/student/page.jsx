@@ -164,6 +164,18 @@ const StudentDashboard = () => {
     }
     return null;
   });
+  const [studentInstituteId, setStudentInstituteId] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("currentInstituteId") || null;
+    }
+    return null;
+  });
+  const [studentInstitutePackage, setStudentInstitutePackage] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage") || null;
+    }
+    return null;
+  });
   const [studentBatch, setStudentBatch] = useState(null);
   const [studentPackage, setStudentPackage] = useState(() => (
     typeof window !== "undefined" && (
@@ -220,7 +232,13 @@ const StudentDashboard = () => {
     }
   }, [instituteLanguage, isPureJapaneseStudent, isPureKoreanStudent]);
 
-  const isGoogleOrFree = Boolean(
+  const isEnrolledInstituteStudent = Boolean(
+    studentInstitute ||
+    studentInstituteId ||
+    (typeof window !== "undefined" && (localStorage.getItem("currentInstitute") || localStorage.getItem("currentInstituteId")))
+  );
+
+  const isGoogleOrFree = !isEnrolledInstituteStudent && Boolean(
     studentPackage?.toLowerCase().includes("google") ||
     studentPackage?.toLowerCase().includes("free") ||
     studentBatch?.toLowerCase().includes("google") ||
@@ -263,9 +281,34 @@ const StudentDashboard = () => {
   // Track active released packages specifically for this student
   const activeStudentPackages = (() => {
     let list = [];
-    if (!currentPhone && !studentName) return list;
 
-    // 1. From adminBuyerStudentsMap for this student phone
+    // 1. From student's institute: Enrolled students inherit their institute's active package
+    const instPkg = studentInstitutePackage || (typeof window !== "undefined" ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage")) : null);
+    if (instPkg && !list.includes(instPkg)) {
+      list.push(instPkg);
+    }
+
+    if (typeof window !== "undefined" && studentInstitute) {
+      try {
+        const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
+        const found = institutes.find(i => (i.name && i.name.toLowerCase() === studentInstitute.toLowerCase()) || (i.username && i.username.toLowerCase() === studentInstitute.toLowerCase()));
+        if (found) {
+          if (found.examPackage && !list.includes(found.examPackage)) list.push(found.examPackage);
+          if (Array.isArray(found.purchasedPackages)) {
+            found.purchasedPackages.forEach(p => { if (p && !list.includes(p)) list.push(p); });
+          }
+          if (Array.isArray(found.assignedPackages)) {
+            found.assignedPackages.forEach(p => { if (p && !list.includes(p)) list.push(p); });
+          }
+        }
+        const instPurchased = JSON.parse(localStorage.getItem(`institutePurchasedPackages_${studentInstitute}`) || "[]");
+        if (Array.isArray(instPurchased)) {
+          instPurchased.forEach(p => { if (p && !list.includes(p)) list.push(p); });
+        }
+      } catch (e) {}
+    }
+
+    // 2. From adminBuyerStudentsMap for this student phone
     if (currentBuyer?.packages && Array.isArray(currentBuyer.packages)) {
       list.push(...currentBuyer.packages);
     }
@@ -273,7 +316,7 @@ const StudentDashboard = () => {
       list.push(currentBuyer.packageName);
     }
 
-    // 2. From studentPendingQueries where status === "Released" && itemType === "package"
+    // 3. From studentPendingQueries where status === "Released" && itemType === "package"
     pendingQueries.forEach((q) => {
       const qPhone = q.phone || "";
       if (
@@ -287,7 +330,7 @@ const StudentDashboard = () => {
       }
     });
 
-    // 3. From institute-assigned package (if student was explicitly enrolled by institute in a paid package)
+    // 4. From institute-assigned package (if student was explicitly enrolled by institute in a paid package)
     if (
       studentPackage &&
       !isGoogleOrFree &&
@@ -299,14 +342,36 @@ const StudentDashboard = () => {
       }
     }
 
+    // 5. Default track package if enrolled under an institute
+    if (studentInstitute && list.length === 0) {
+      if (isJapaneseTrack) {
+        list.push("Full Mock Test");
+      } else if (isPureKoreanStudent) {
+        list.push("Full Set UBT");
+      } else {
+        list.push("Full Set UBT", "Full Mock Test");
+      }
+    }
+
     // In Japanese Track: Strictly strip out ANY Korean packages from student package list
     if (isJapaneseTrack) {
       list = list.filter(pkgName => {
         const lower = (pkgName || "").toLowerCase();
         return !lower.includes("ubt") && !lower.includes("chapter") && !lower.includes("eps") && !lower.includes("topik") && !lower.includes("model question");
       });
-      if (list.length === 0 && (currentBuyer?.hasPurchased || currentBuyer?.isBuyer)) {
+      if (list.length === 0 && (currentBuyer?.hasPurchased || currentBuyer?.isBuyer || studentInstitute)) {
         list = ["Full Mock Test"];
+      }
+    }
+
+    // In Pure Korean Track: Strictly strip out Japanese mock packages
+    if (isPureKoreanStudent) {
+      list = list.filter(pkgName => {
+        const lower = (pkgName || "").toLowerCase();
+        return !lower.includes("mock") && !lower.includes("jlpt") && !lower.includes("jft") && !lower.includes("nat");
+      });
+      if (list.length === 0 && (currentBuyer?.hasPurchased || currentBuyer?.isBuyer || studentInstitute)) {
+        list = ["Full Set UBT"];
       }
     }
 
@@ -348,33 +413,49 @@ const StudentDashboard = () => {
       if (match) return true;
     }
 
-    const setPkgNorm = norm(set.packageName);
-    if (!setPkgNorm || !targetPkgNorm) return false;
+    const setPkgNorm = norm(set.packageName || "");
+    const setNameNorm = norm(set.name || "");
+    const isJapaneseSet = Boolean(
+      set.track === "japanese" ||
+      set.level ||
+      set.setType === "MOCK" ||
+      (set.id && (String(set.id).startsWith("jlpt-") || String(set.id).startsWith("jft-"))) ||
+      setNameNorm.includes("mock") ||
+      setNameNorm.includes("jlpt") ||
+      setNameNorm.includes("jft") ||
+      setNameNorm.includes("nat")
+    );
 
     // Exact match (e.g. "30setchapterubt" === "30setchapterubt")
-    if (setPkgNorm === targetPkgNorm) return true;
+    if (setPkgNorm && setPkgNorm === targetPkgNorm) return true;
 
     // Chapterwise package match
-    if (targetPkgNorm.includes("chapter") && setPkgNorm.includes("chapter")) return true;
+    if (targetPkgNorm.includes("chapter") && (setPkgNorm.includes("chapter") || setNameNorm.includes("chapter"))) return true;
 
     // 100 UBT package match
-    if (targetPkgNorm.includes("100") && setPkgNorm.includes("100")) return true;
+    if (targetPkgNorm.includes("100") && (setPkgNorm.includes("100") || setNameNorm.includes("100"))) return true;
 
     // Model Question Bank match
-    if (targetPkgNorm.includes("model") && setPkgNorm.includes("model")) return true;
+    if (targetPkgNorm.includes("model") && (setPkgNorm.includes("model") || setNameNorm.includes("model"))) return true;
 
     // Full Set UBT: covers standard EPS full sets (not chapter and not model question sets)
-    if (targetPkgNorm.includes("full") && !setPkgNorm.includes("chapter") && !setPkgNorm.includes("model") && !setPkgNorm.includes("mock") && !setPkgNorm.includes("jlpt") && !setPkgNorm.includes("jft") && !setPkgNorm.includes("nat")) {
+    if (
+      targetPkgNorm.includes("full") &&
+      !targetPkgNorm.includes("mock") &&
+      !isJapaneseSet &&
+      !setPkgNorm.includes("chapter") &&
+      !setPkgNorm.includes("model") &&
+      !setNameNorm.includes("chapter") &&
+      !setNameNorm.includes("model")
+    ) {
       return true;
     }
 
     // Japanese Mock Test package matches
-    if (targetPkgNorm.includes("mock") && setPkgNorm.includes("mock")) return true;
-    if (targetPkgNorm.includes("jft") && setPkgNorm.includes("jft")) return true;
-    if (targetPkgNorm.includes("jlpt") && setPkgNorm.includes("jlpt")) return true;
-    if (targetPkgNorm.includes("nat") && setPkgNorm.includes("nat")) return true;
-    if (targetPkgNorm.includes("full") && (setPkgNorm.includes("mock") || setPkgNorm.includes("jlpt") || setPkgNorm.includes("jft") || setPkgNorm.includes("nat"))) {
-      return true;
+    if (targetPkgNorm.includes("mock") || targetPkgNorm.includes("jlpt") || targetPkgNorm.includes("jft") || targetPkgNorm.includes("nat")) {
+      if (isJapaneseSet) return true;
+      if (setPkgNorm.includes("mock") || setPkgNorm.includes("jlpt") || setPkgNorm.includes("jft") || setPkgNorm.includes("nat")) return true;
+      if (setNameNorm.includes("mock") || setNameNorm.includes("jlpt") || setNameNorm.includes("jft") || setNameNorm.includes("nat")) return true;
     }
 
     return false;
@@ -404,7 +485,18 @@ const StudentDashboard = () => {
       return true;
     }
 
-    // 2. Check in studentPendingQueries for released individual sets
+    // 2. Check fresh localStorage for unlocked and released sets
+    if (typeof window !== "undefined") {
+      try {
+        const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+        const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+        if ([...u1, ...u2].some(id => id?.toString() === setId || id?.toString() === setName || (encodedName && id?.toString() === encodedName))) {
+          return true;
+        }
+      } catch (e) {}
+    }
+
+    // 3. Check in studentPendingQueries for released individual sets
     if (
       pendingQueries.some((q) =>
         (q.status === "Released" || q.status === "COMPLETE") &&
@@ -420,7 +512,7 @@ const StudentDashboard = () => {
       return true;
     }
 
-    // 3. Check in adminStudentUnlockedSetsMap
+    // 4. Check in adminStudentUnlockedSetsMap
     if (currentPhone && typeof window !== "undefined") {
       const studentSetMap = JSON.parse(localStorage.getItem("adminStudentUnlockedSetsMap") || "{}");
       const phoneSets = studentSetMap[currentPhone] || [];
@@ -452,12 +544,26 @@ const StudentDashboard = () => {
   // Strict Set Unlock Rule:
   // An exam set is unlocked if:
   // 1) Super Admin designated it as FREE DEMO (set.isFree || set.setType === "FREE" || name includes "free demo"), OR
-  // 2) The Institute granted Free distribution for this package/set, OR
-  // 3) It was individually purchased & released for this student, OR
-  // 4) The student has an active package that covers this specific set!
+  // 2) The set was created by the student's institute (all sets created by their institute are unlocked for their students), OR
+  // 3) The Institute granted Free distribution for this package/set, OR
+  // 4) It was individually purchased & released for this student, OR
+  // 5) The student has an active package (or institute package) that covers this specific set!
   const isSetUnlocked = (set) => {
     if (!set) return false;
     if (set.isFree === true || set.setType === "FREE" || (set.name && set.name.toLowerCase().includes("free demo"))) {
+      return true;
+    }
+
+    // Institute ownership check: all sets created by the student's institute are unlocked for their students
+    if (studentInstitute && set.creatorInstituteName && set.creatorInstituteName.toLowerCase() === studentInstitute.toLowerCase()) {
+      return true;
+    }
+    if (studentInstituteId && set.creatorInstituteId && set.creatorInstituteId === studentInstituteId) {
+      return true;
+    }
+
+    // Explicitly released to student or individually unlocked
+    if (isSetIndividuallyUnlocked(set)) {
       return true;
     }
 
@@ -470,17 +576,26 @@ const StudentDashboard = () => {
       return true;
     }
 
-    // Check institute-specific distribution map in localStorage
+    // Check institute-specific distribution map and released sets in localStorage
     if (typeof window !== "undefined" && studentInstitute) {
       try {
         const instDist = JSON.parse(localStorage.getItem(`instituteDistribution_${studentInstitute}`) || "{}");
         if (instDist[set.packageName] === "free" || instDist[set.name] === "free" || instDist[set.id] === "free") {
           return true;
         }
+        const instReleased = JSON.parse(localStorage.getItem(`instituteReleasedSets_${studentInstitute}`) || "[]");
+        if (instReleased.some(id => id?.toString() === set.id?.toString() || id?.toString() === set.name?.toString())) {
+          return true;
+        }
       } catch (e) {}
     }
 
-    return Boolean(isSetIndividuallyUnlocked(set) || isSetCoveredByStudentPackage(set));
+    // Server-provided unlock status
+    if (set.isUnlocked === true) {
+      return true;
+    }
+
+    return Boolean(isSetCoveredByStudentPackage(set));
   };
 
   // Helper: check if a package has a pending payment query awaiting admin confirmation
@@ -511,7 +626,13 @@ const StudentDashboard = () => {
     const targetNorm = norm(pkg.name);
     return activeStudentPackages.some((pName) => {
       const pNorm = norm(pName);
-      return pNorm === targetNorm || (pNorm.includes("chapter") && targetNorm.includes("chapter")) || (pNorm.includes("100") && targetNorm.includes("100"));
+      if (pNorm === targetNorm) return true;
+      if (pNorm.includes("chapter") && targetNorm.includes("chapter")) return true;
+      if (pNorm.includes("100") && targetNorm.includes("100")) return true;
+      if (pNorm.includes("model") && targetNorm.includes("model")) return true;
+      if (pNorm.includes("full") && targetNorm.includes("full")) return true;
+      if (pNorm.includes("mock") && targetNorm.includes("mock")) return true;
+      return false;
     });
   };
 
@@ -745,17 +866,22 @@ const StudentDashboard = () => {
         if (data.authenticated && data.user) {
           const uName = data.user.name || data.user.username;
           const uPhone = data.user.phone || data.user.username;
+          const instId = data.user.instituteId || data.user.institute?.id || null;
           const instName = data.user.institute?.name || null;
+          const instPkg = data.user.institute?.examPackage || null;
           const instLogo = data.user.institute?.logoUrl || logo;
           const batchName = data.user.batch || null;
           const instLang = data.user.instituteLanguage || data.user.institute?.language || "both";
           const rawPkg = data.user.studentPackage || data.user.batch || "";
-          const isGoogleOrFreeUser =
+
+          const isEnrolledInstitute = Boolean(instId || instName);
+          const isGoogleOrFreeUser = !isEnrolledInstitute && (
             rawPkg.toLowerCase().includes("google") ||
             rawPkg.toLowerCase().includes("free") ||
             data.user.isFreeStudent ||
             data.user.username?.includes("@") ||
-            !data.user.phone;
+            !data.user.phone
+          );
 
           const userBuyer = (uPhone && localBuyerMap[uPhone]) || (uName && localBuyerMap[uName]) || localBuyer;
           const userHasPurchased = Boolean(
@@ -769,8 +895,8 @@ const StudentDashboard = () => {
           let userPkg = userHasPurchased
             ? (userBuyer?.package || userBuyer?.packageName || currentBuyer?.package || (isJapaneseTrack ? "Full Mock Test" : "Full Set UBT"))
             : ((!isShift(rawPkg) && !isGoogleOrFreeUser && rawPkg) ||
-               (!isGoogleOrFreeUser && data.user.institute?.examPackage) ||
-               "Free Student Access");
+               instPkg ||
+               (isJapaneseTrack ? "Full Mock Test" : "Full Set UBT"));
 
           if (isJapaneseTrack && userPkg && userPkg !== "Free Student Access" && (userPkg.toLowerCase().includes("ubt") || userPkg.toLowerCase().includes("chapter") || userPkg.toLowerCase().includes("eps"))) {
             userPkg = "Full Mock Test";
@@ -792,7 +918,18 @@ const StudentDashboard = () => {
           } else {
             setStudentExpiryDate(userExp);
           }
-          if (instName) setStudentInstitute(instName);
+          if (instId) {
+            setStudentInstituteId(instId);
+            localStorage.setItem("currentInstituteId", instId);
+          }
+          if (instName) {
+            setStudentInstitute(instName);
+            localStorage.setItem("currentInstitute", instName);
+          }
+          if (instPkg) {
+            setStudentInstitutePackage(instPkg);
+            localStorage.setItem("currentInstitutePackage", instPkg);
+          }
           if (instLogo) setLogoWatermark(instLogo);
           if (batchName) setStudentBatch(batchName);
           if (userPkg && !isShift(userPkg)) {
@@ -891,11 +1028,13 @@ const StudentDashboard = () => {
                 id: srvSet.id,
                 name: srvSet.name,
                 packageName: srvSet.packageName || srvSet.package?.name || "Full Set UBT",
+                creatorInstituteId: srvSet.creatorInstituteId || null,
                 creatorInstituteName: srvSet.creatorInstituteName || null,
                 isPublished: srvSet.isPublished !== false,
                 isFree: Boolean(srvSet.isFree),
                 setType: srvSet.setType || "UBT",
-                track: srvSet.track || "korean"
+                track: srvSet.track || "korean",
+                isUnlocked: srvSet.isUnlocked !== undefined ? Boolean(srvSet.isUnlocked) : undefined
               });
             }
           });
@@ -922,10 +1061,41 @@ const StudentDashboard = () => {
         filterAndSetExamSets(fallbackSets, finalPackages);
       });
 
-    // Load past results from API and LocalStorage
+    // Load past results and enriched exam access from API
     fetch("/api/student/exams")
       .then((res) => res.json())
       .then((data) => {
+        if (data.institute) {
+          if (data.institute.name) {
+            setStudentInstitute(data.institute.name);
+            localStorage.setItem("currentInstitute", data.institute.name);
+          }
+          if (data.institute.id) {
+            setStudentInstituteId(data.institute.id);
+            localStorage.setItem("currentInstituteId", data.institute.id);
+          }
+          if (data.institute.examPackage) {
+            setStudentInstitutePackage(data.institute.examPackage);
+            localStorage.setItem("currentInstitutePackage", data.institute.examPackage);
+          }
+        }
+        if (data.sets && Array.isArray(data.sets) && data.sets.length > 0) {
+          setExamSets(prev => {
+            const serverMap = new Map(data.sets.map(s => [s.id, s]));
+            return prev.map(item => {
+              const match = serverMap.get(item.id);
+              if (match) {
+                return {
+                  ...item,
+                  creatorInstituteId: match.creatorInstituteId || item.creatorInstituteId,
+                  creatorInstituteName: match.creatorInstituteName || item.creatorInstituteName,
+                  isUnlocked: match.isUnlocked !== undefined ? match.isUnlocked : item.isUnlocked
+                };
+              }
+              return item;
+            });
+          });
+        }
         if (data.pastResults && Array.isArray(data.pastResults)) {
           setResults(data.pastResults);
         } else {

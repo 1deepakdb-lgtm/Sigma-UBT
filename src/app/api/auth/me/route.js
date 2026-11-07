@@ -49,19 +49,31 @@ export async function GET(req) {
     if (user.role === 'student') {
       const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
       const isShiftOnly = user.batch && shiftNames.includes(user.batch.toLowerCase().trim());
-      isGoogleOrFree = Boolean(
-        user.batch?.toLowerCase().includes('google') ||
-        user.batch?.toLowerCase().includes('free')
-      );
+      const hasInstitute = Boolean(user.instituteId && user.institute);
 
-      if (isGoogleOrFree) {
-        studentPackage = 'Free Student Access';
-      } else if (user.batch && !isShiftOnly) {
-        studentPackage = user.batch;
-      } else if (user.institute?.examPackage) {
-        studentPackage = user.institute.examPackage;
+      if (hasInstitute) {
+        // Enrolled institute child inherits institute package access
+        isGoogleOrFree = false;
+        if (user.batch && !isShiftOnly && !user.batch.toLowerCase().includes('google') && !user.batch.toLowerCase().includes('free')) {
+          studentPackage = user.batch;
+        } else if (user.institute?.examPackage) {
+          studentPackage = user.institute.examPackage;
+        } else {
+          studentPackage = (user.institute?.language === 'japanese' || user.language === 'japanese') ? 'Full Mock Test' : 'Full Set UBT';
+        }
       } else {
-        studentPackage = 'Full Set UBT';
+        isGoogleOrFree = Boolean(
+          user.batch?.toLowerCase().includes('google') ||
+          user.batch?.toLowerCase().includes('free')
+        );
+
+        if (isGoogleOrFree) {
+          studentPackage = 'Free Student Access';
+        } else if (user.batch && !isShiftOnly) {
+          studentPackage = user.batch;
+        } else {
+          studentPackage = (user.language === 'japanese') ? 'Full Mock Test' : 'Full Set UBT';
+        }
       }
 
       if (user.phone) {
