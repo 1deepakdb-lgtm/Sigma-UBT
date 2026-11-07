@@ -110,6 +110,8 @@ export async function POST(req, { params }) {
       const checkPkg = (pkg) => {
         if (!pkg) return false;
         const pNorm = norm(pkg);
+        const cleanP = pNorm.replace('specificexam', '');
+        if (setNameNorm && (pNorm === setNameNorm || cleanP === setNameNorm || (examSet.id && pNorm === norm(examSet.id)))) return true;
         if (pNorm === setPkgNorm) return true;
         if (pNorm.includes('chapter') && (setPkgNorm.includes('chapter') || setNameNorm.includes('chapter'))) return true;
         if (pNorm.includes('100') && (setPkgNorm.includes('100') || setNameNorm.includes('100'))) return true;

@@ -11,7 +11,7 @@ if (typeof globalThis !== 'undefined' && !globalThis.localStorage) {
   };
 }
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import DictionarySection from "@/components/DictionarySection";
@@ -1137,6 +1137,70 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     ? examSets 
     : examSets.filter(s => s.packageName === selectedPackageFilter);
 
+  const isJpTrackEntity = (item) => {
+    if (!item) return false;
+    const name = (item.name || item.title || "").toLowerCase();
+    const sType = (item.setType || "").toUpperCase();
+    return Boolean(
+      item.track === "japanese" ||
+      sType === "MOCK" ||
+      item.isMock === true ||
+      name.includes("mock") ||
+      name.includes("jlpt") ||
+      name.includes("jft") ||
+      name.includes("nat") ||
+      (item.packageName && item.packageName.toLowerCase().includes("mock"))
+    );
+  };
+
+  const studentFormPackages = useMemo(() => {
+    let pkgs = examPackages;
+    if (!pkgs || pkgs.length === 0) {
+      if (instituteLanguage === "japanese") {
+        pkgs = [
+          { name: "Full Mock Test", price: "Rs. 2,500" },
+          { name: "JFT-Basic Mock Test", price: "Rs. 1,500" },
+          { name: "NAT-TEST Mock Test", price: "Rs. 1,500" },
+          { name: "JLPT Mock Test Bundle", price: "Rs. 2,000" }
+        ];
+      } else {
+        pkgs = [
+          { name: "Full Set UBT", price: "Rs. 2,000" },
+          { name: "30 Set Chapter UBT", price: "Rs. 1,000" },
+          { name: "100 UBT set", price: "Rs. 3,500" },
+          { name: "Full Package", price: "Rs. 4,500" }
+        ];
+      }
+    }
+
+    if (instituteLanguage === "korean") {
+      return pkgs.filter(p => !isJpTrackEntity(p));
+    }
+    if (instituteLanguage === "japanese") {
+      return pkgs.filter(p => isJpTrackEntity(p));
+    }
+    return pkgs;
+  }, [examPackages, instituteLanguage]);
+
+  const studentFormSpecificSets = useMemo(() => {
+    let sets = examSets || [];
+    if (instituteLanguage === "korean") {
+      sets = sets.filter(s => !isJpTrackEntity(s));
+    } else if (instituteLanguage === "japanese") {
+      sets = sets.filter(s => isJpTrackEntity(s));
+    }
+    const seen = new Set();
+    const deduped = [];
+    sets.forEach(s => {
+      const key = (s.name || s.title || "").trim();
+      if (key && !seen.has(key.toLowerCase())) {
+        seen.add(key.toLowerCase());
+        deduped.push(s);
+      }
+    });
+    return deduped;
+  }, [examSets, instituteLanguage]);
+
 
   const protectedStyle = {
     userSelect: "none",
@@ -1798,29 +1862,25 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       <input type="text" name="password" value={formData.password} onChange={handleInputChange} required style={inputStyle} placeholder="Create password" />
                     </div>
                     <div>
-                      <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#64748b" }}>Assigned Package</label>
+                      <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#64748b" }}>
+                        Assigned Package / Specific Exam
+                      </label>
                       <select name="assignedPackage" value={formData.assignedPackage} onChange={handleInputChange} style={inputStyle}>
-                        {examPackages.length === 0 ? (
-                          instituteLanguage === "japanese" ? (
-                            <>
-                              <option value="Full Mock Test">Full Mock Test</option>
-                              <option value="JFT-Basic Mock Test">JFT-Basic Mock Test</option>
-                              <option value="NAT-TEST Mock Test">NAT-TEST Mock Test</option>
-                              <option value="JLPT Mock Test Bundle">JLPT Mock Test Bundle</option>
-                            </>
-                          ) : (
-                            <>
-                              <option value="Full Set UBT">Full Set UBT</option>
-                              <option value="30 Set Chapter UBT">30 Set Chapter UBT</option>
-                              <option value="100 UBT set">100 UBT set</option>
-                            </>
-                          )
-                        ) : (
-                          examPackages.map((pkg, idx) => (
-                            <option key={idx} value={pkg.name}>
+                        <optgroup label={instituteLanguage === "japanese" ? "🇯🇵 Japanese Mock Packages" : instituteLanguage === "korean" ? "🇰🇷 Korean UBT Packages" : "📦 Exam Packages"}>
+                          {studentFormPackages.map((pkg, idx) => (
+                            <option key={`pkg-${idx}`} value={pkg.name}>
                               {pkg.name} {pkg.price ? `(${pkg.price})` : ''}
                             </option>
-                          ))
+                          ))}
+                        </optgroup>
+                        {studentFormSpecificSets.length > 0 && (
+                          <optgroup label="🎯 Specific Exams (Particular Exam Access)">
+                            {studentFormSpecificSets.map((s, idx) => (
+                              <option key={`set-${idx}`} value={s.name}>
+                                Specific Exam: {s.name}
+                              </option>
+                            ))}
+                          </optgroup>
                         )}
                       </select>
                     </div>
@@ -2274,11 +2334,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                         </div>
                       </div>
 
-                      {examSets.length === 0 ? (
+                      {studentFormSpecificSets.length === 0 ? (
                         <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>No sets available in the system yet.</p>
                       ) : (
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px", maxHeight: "250px", overflowY: "auto", padding: "4px" }}>
-                          {examSets.map((s, idx) => {
+                          {studentFormSpecificSets.map((s, idx) => {
                             const isChecked = selectedSetsForPkg.includes(s.name);
                             const isMock = s.setType === "MOCK" || s.track === "japanese" || s.isMock || (s.name && (s.name.toLowerCase().includes("mock") || s.name.toLowerCase().includes("jlpt") || s.name.toLowerCase().includes("jft") || s.name.toLowerCase().includes("nat")));
                             const isChapter = (s.setType || "").toLowerCase().includes("chapter") || (s.name || "").toLowerCase().includes("chapter");

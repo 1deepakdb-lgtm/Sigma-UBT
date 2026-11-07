@@ -426,6 +426,12 @@ const StudentDashboard = () => {
       setNameNorm.includes("nat")
     );
 
+    // Direct Specific Exam / Particular Exam Set match
+    const cleanTarget = targetPkgNorm.replace("specificexam", "");
+    if (setNameNorm && (targetPkgNorm === setNameNorm || cleanTarget === setNameNorm || (set.id && targetPkgNorm === norm(set.id)))) {
+      return true;
+    }
+
     // Exact match (e.g. "30setchapterubt" === "30setchapterubt")
     if (setPkgNorm && setPkgNorm === targetPkgNorm) return true;
 

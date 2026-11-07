@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
@@ -477,6 +477,70 @@ function AdminStudentsContent() {
       ? examSets
       : examSets.filter((s) => s.packageName === selectedPackageFilter);
 
+  const isJpTrackEntity = (item) => {
+    if (!item) return false;
+    const name = (item.name || item.title || "").toLowerCase();
+    const sType = (item.setType || "").toUpperCase();
+    return Boolean(
+      item.track === "japanese" ||
+      sType === "MOCK" ||
+      item.isMock === true ||
+      name.includes("mock") ||
+      name.includes("jlpt") ||
+      name.includes("jft") ||
+      name.includes("nat") ||
+      (item.packageName && item.packageName.toLowerCase().includes("mock"))
+    );
+  };
+
+  const studentFormPackages = useMemo(() => {
+    let pkgs = examPackages;
+    if (!pkgs || pkgs.length === 0) {
+      if (formData.language === "japanese") {
+        pkgs = [
+          { name: "Full Mock Test", price: "Rs. 2,500" },
+          { name: "JFT-Basic Mock Test", price: "Rs. 1,500" },
+          { name: "NAT-TEST Mock Test", price: "Rs. 1,500" },
+          { name: "JLPT Mock Test Bundle", price: "Rs. 2,000" }
+        ];
+      } else {
+        pkgs = [
+          { name: "Full Set UBT", price: "Rs. 2,000" },
+          { name: "Chapterwise 30 set", price: "Rs. 1,000" },
+          { name: "100 UBT set", price: "Rs. 3,500" },
+          { name: "Full Package", price: "Rs. 4,500" }
+        ];
+      }
+    }
+
+    if (formData.language === "korean") {
+      return pkgs.filter(p => !isJpTrackEntity(p));
+    }
+    if (formData.language === "japanese") {
+      return pkgs.filter(p => isJpTrackEntity(p));
+    }
+    return pkgs;
+  }, [examPackages, formData.language]);
+
+  const studentFormSpecificSets = useMemo(() => {
+    let sets = examSets || [];
+    if (formData.language === "korean") {
+      sets = sets.filter(s => !isJpTrackEntity(s));
+    } else if (formData.language === "japanese") {
+      sets = sets.filter(s => isJpTrackEntity(s));
+    }
+    const seen = new Set();
+    const deduped = [];
+    sets.forEach(s => {
+      const key = (s.name || s.title || "").trim();
+      if (key && !seen.has(key.toLowerCase())) {
+        seen.add(key.toLowerCase());
+        deduped.push(s);
+      }
+    });
+    return deduped;
+  }, [examSets, formData.language]);
+
   // Styles
   const containerStyle = { minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" };
   const contentStyle = { padding: "28px 32px", maxWidth: "1280px", margin: "0 auto" };
@@ -825,14 +889,25 @@ function AdminStudentsContent() {
 
               <div>
                 <label style={{ display: "block", marginBottom: "5px", fontSize: "13px", fontWeight: "bold", color: "#475569" }}>
-                  Assigned Package
+                  Assigned Package / Specific Exam
                 </label>
                 <select name="assignedPackage" value={formData.assignedPackage} onChange={handleInputChange} style={inputStyle}>
-                  <option value="Full Set UBT">Full Set UBT</option>
-                  <option value="Chapterwise 30 set">Chapterwise 30 set</option>
-                  <option value="Chapterwise 12 set">Chapterwise 12 set</option>
-                  <option value="100 UBT set">100 UBT set</option>
-                  <option value="Full Package">Full Package</option>
+                  <optgroup label={formData.language === "japanese" ? "🇯🇵 Japanese Mock Packages" : formData.language === "korean" ? "🇰🇷 Korean UBT Packages" : "📦 Exam Packages"}>
+                    {studentFormPackages.map((pkg, idx) => (
+                      <option key={`pkg-${idx}`} value={pkg.name}>
+                        {pkg.name} {pkg.price ? `(${pkg.price})` : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                  {studentFormSpecificSets.length > 0 && (
+                    <optgroup label="🎯 Specific Exams (Particular Exam Access)">
+                      {studentFormSpecificSets.map((s, idx) => (
+                        <option key={`set-${idx}`} value={s.name}>
+                          Specific Exam: {s.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
 

@@ -19,6 +19,12 @@ function isSetCoveredByPackage(set, pkgName) {
     setNameNorm.includes('nat')
   );
 
+  // Direct Specific Exam / Particular Exam Set match
+  const cleanTarget = targetPkgNorm.replace('specificexam', '');
+  if (setNameNorm && (targetPkgNorm === setNameNorm || cleanTarget === setNameNorm || (set.id && targetPkgNorm === norm(set.id)))) {
+    return true;
+  }
+
   if (setPkgNorm && targetPkgNorm === setPkgNorm) return true;
   if (targetPkgNorm.includes('chapter') && (setPkgNorm.includes('chapter') || setNameNorm.includes('chapter'))) return true;
   if (targetPkgNorm.includes('100') && (setPkgNorm.includes('100') || setNameNorm.includes('100'))) return true;
