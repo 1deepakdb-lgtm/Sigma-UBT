@@ -674,10 +674,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           if (gender === 'male') {
             const maleMatch = langVoices.find(v => {
               const vName = (v.name || '').toLowerCase();
+              if (vName.includes('female') || vName.includes('woman') || vName.includes('girl')) return false;
               return vName.includes('male') || vName.includes('david') || vName.includes('keita') || vName.includes('injoon') || vName.includes('george') || vName.includes('sagar') || vName.includes('minho') || vName.includes('sin-ji') || vName.includes('otoya') || vName.includes('guy') || vName.includes('ichiro') || vName.includes('kenji') || vName.includes('x-ism') || vName.includes('x-htm');
             }) || langVoices.find(v => {
               const vName = (v.name || '').toLowerCase();
-              return !vName.includes('female') && !vName.includes('zira') && !vName.includes('nanami') && !vName.includes('sunhi') && !vName.includes('susan') && !vName.includes('hemkala') && !vName.includes('yuna') && !vName.includes('kyoko') && !vName.includes('ayumi');
+              return !vName.includes('female') && !vName.includes('woman') && !vName.includes('girl') && !vName.includes('zira') && !vName.includes('nanami') && !vName.includes('sunhi') && !vName.includes('susan') && !vName.includes('hemkala') && !vName.includes('yuna') && !vName.includes('kyoko') && !vName.includes('ayumi');
             });
             if (maleMatch) {
               utterance.voice = maleMatch;
@@ -687,7 +688,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           } else {
             const femaleMatch = langVoices.find(v => {
               const vName = (v.name || '').toLowerCase();
-              return vName.includes('female') || vName.includes('zira') || vName.includes('nanami') || vName.includes('sunhi') || vName.includes('susan') || vName.includes('hemkala') || vName.includes('yuna') || vName.includes('kyoko') || vName.includes('ayumi') || vName.includes('heami');
+              return vName.includes('female') || vName.includes('woman') || vName.includes('girl') || vName.includes('zira') || vName.includes('nanami') || vName.includes('sunhi') || vName.includes('susan') || vName.includes('hemkala') || vName.includes('yuna') || vName.includes('kyoko') || vName.includes('ayumi') || vName.includes('heami');
             }) || langVoices[0];
             if (femaleMatch) utterance.voice = femaleMatch;
           }
@@ -1605,7 +1606,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             activeFemaleModelId={selectedFemaleModel?.id}
             activeMaleModelId={selectedMaleModel?.id}
             onSelectVoiceModel={(voice) => {
-              const isMale = voice.gender === 'male' || voice.id?.includes('male');
+              const isMale = voice.gender === 'male' || (!/(?:^|[-_])female(?:[-_\d]|$)/i.test(voice.id || '') && /(?:^|[-_])male(?:[-_\d]|$)/i.test(voice.id || ''));
               if (isMale) {
                 const list = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
                 const match = list.find(m => m.id === voice.id) || voice;

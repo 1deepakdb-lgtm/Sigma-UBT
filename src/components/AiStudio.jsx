@@ -296,16 +296,17 @@ export default function AiStudio({
           if (gender === 'male') {
             const m = langVoices.find(v => {
               const n = (v.name || '').toLowerCase();
+              if (n.includes('female') || n.includes('woman') || n.includes('girl')) return false;
               return n.includes('male') || n.includes('keita') || n.includes('injoon') || n.includes('minho') || n.includes('david') || n.includes('george') || n.includes('sagar') || n.includes('x-ism') || n.includes('x-htm');
             }) || langVoices.find(v => {
               const n = (v.name || '').toLowerCase();
-              return !n.includes('female') && !n.includes('sunhi') && !n.includes('nanami') && !n.includes('zira') && !n.includes('kyoko');
+              return !n.includes('female') && !n.includes('woman') && !n.includes('girl') && !n.includes('sunhi') && !n.includes('nanami') && !n.includes('zira') && !n.includes('kyoko');
             });
             if (m) utt.voice = m;
           } else {
             const f = langVoices.find(v => {
               const n = (v.name || '').toLowerCase();
-              return n.includes('female') || n.includes('sunhi') || n.includes('nanami') || n.includes('zira') || n.includes('kyoko');
+              return n.includes('female') || n.includes('woman') || n.includes('girl') || n.includes('sunhi') || n.includes('nanami') || n.includes('zira') || n.includes('kyoko');
             }) || langVoices[0];
             if (f) utt.voice = f;
           }
@@ -388,7 +389,7 @@ export default function AiStudio({
     setPreviewingVoiceId(previewKey);
     setAudioError(null);
 
-    const isMale = voice.gender === 'male' || voice.id?.includes('male');
+    const isMale = voice.gender === 'male' || (!/(?:^|[-_])female(?:[-_\d]|$)/i.test(voice.id || '') && /(?:^|[-_])male(?:[-_\d]|$)/i.test(voice.id || ''));
     const targetGender = isMale ? 'male' : 'female';
 
     try {
@@ -541,7 +542,7 @@ export default function AiStudio({
         body: JSON.stringify({
           text: inputText.trim(),
           voiceProfileId: selectedProfile.id,
-          gender: selectedProfile.gender || (selectedProfile.id?.includes('male') ? 'male' : 'female'),
+          gender: selectedProfile.gender || ((!/(?:^|[-_])female(?:[-_\d]|$)/i.test(selectedProfile.id || '') && /(?:^|[-_])male(?:[-_\d]|$)/i.test(selectedProfile.id || '')) ? 'male' : 'female'),
           modelId: selectedModel,
           style: selectedSpeechMode,
           speechMode: selectedSpeechMode,

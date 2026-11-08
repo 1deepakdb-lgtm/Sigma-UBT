@@ -13,22 +13,22 @@ function buildAudioLinks(item) {
     ...item,
     audio: {
       korean: {
-        female: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=female`,
-        femaleDownload: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=female&download=true&filename=${koSlug}_ko_female.mp3`,
-        male: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=male`,
-        maleDownload: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=male&download=true&filename=${koSlug}_ko_male.mp3`,
+        female: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=female&voice=ko-KR-SunHiNeural`,
+        femaleDownload: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=female&voice=ko-KR-SunHiNeural&download=true&filename=${koSlug}_ko_female.mp3`,
+        male: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=male&voice=ko-KR-InJoonNeural`,
+        maleDownload: `/api/tts?text=${encodeURIComponent(item.korean)}&lang=ko&gender=male&voice=ko-KR-InJoonNeural&download=true&filename=${koSlug}_ko_male.mp3`,
       },
       nepali: {
-        female: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=female`,
-        femaleDownload: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=female&download=true&filename=${neSlug}_ne_female.mp3`,
-        male: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=male`,
-        maleDownload: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=male&download=true&filename=${neSlug}_ne_male.mp3`,
+        female: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=female&voice=ne-NP-HemkalaNeural`,
+        femaleDownload: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=female&voice=ne-NP-HemkalaNeural&download=true&filename=${neSlug}_ne_female.mp3`,
+        male: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=male&voice=ne-NP-SagarNeural`,
+        maleDownload: `/api/tts?text=${encodeURIComponent(item.nepali)}&lang=ne&gender=male&voice=ne-NP-SagarNeural&download=true&filename=${neSlug}_ne_male.mp3`,
       },
       english: {
-        female: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=female`,
-        femaleDownload: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=female&download=true&filename=${enSlug}_en_female.mp3`,
-        male: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=male`,
-        maleDownload: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=male&download=true&filename=${enSlug}_en_male.mp3`,
+        female: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=female&voice=en-US-JennyNeural`,
+        femaleDownload: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=female&voice=en-US-JennyNeural&download=true&filename=${enSlug}_en_female.mp3`,
+        male: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=male&voice=en-US-ChristopherNeural`,
+        maleDownload: `/api/tts?text=${encodeURIComponent(item.english)}&lang=en&gender=male&voice=en-US-ChristopherNeural&download=true&filename=${enSlug}_en_male.mp3`,
       }
     }
   };

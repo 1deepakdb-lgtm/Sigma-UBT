@@ -93,7 +93,10 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   else if (/[\u0900-\u097F]/.test(text) || lang === 'ne') targetLang = 'ne';
   else if (lang === 'en') targetLang = 'en';
 
-  const isMale = gender === 'male' || model.includes('male') || voice.includes('male') || voice.includes('InJoon') || voice.includes('Keita') || voice.includes('Daichi') || voice.includes('Hyunsu') || voice.includes('Sagar') || voice.includes('Christopher');
+  // Explicitly determine male vs female (ensures 'female' is never falsely detected as 'male')
+  const isExplicitFemale = gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(model) || (/female/i.test(voice) && !/male/i.test(voice.replace(/female/gi, ''))) || /SunHi|Nanami|Jenny|Hemkala|Kyoko|Ayumi|Heami|Yuna/i.test(voice);
+  const isExplicitMale = gender === 'male' || (/(?:^|[-_])male(?:[-_\d]|$)/i.test(model) && !/(?:^|[-_])female(?:[-_\d]|$)/i.test(model)) || /InJoon|Keita|Daichi|Hyunsu|Sagar|Christopher|David|George|Minho/i.test(voice);
+  const isMale = !isExplicitFemale && (isExplicitMale || gender === 'male');
 
   // 1. Resolve Voice Tone Profile for Model
   const matchedTone = MODEL_VOICE_TONES[model];
@@ -221,7 +224,9 @@ export async function generateMelodicVoice(text, lang = 'ja', gender = 'female',
 
   if (!clean) clean = text.trim();
 
-  const isMale = gender === 'male' || model.startsWith('male') || voice.includes('Keita') || voice.includes('Daichi') || voice.includes('InJoon') || voice.includes('Hyunsu') || voice.includes('male');
+  const isExplicitFemale = gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(model) || (/female/i.test(voice) && !/male/i.test(voice.replace(/female/gi, ''))) || /SunHi|Nanami|Jenny|Hemkala|Kyoko|Ayumi|Heami|Yuna/i.test(voice);
+  const isExplicitMale = gender === 'male' || (/(?:^|[-_])male(?:[-_\d]|$)/i.test(model) && !/(?:^|[-_])female(?:[-_\d]|$)/i.test(model)) || /InJoon|Keita|Daichi|Hyunsu|Sagar|Christopher|David|George|Minho/i.test(voice);
+  const isMale = !isExplicitFemale && (isExplicitMale || gender === 'male');
 
   let pitchFactor = 1.0;
   let softness = 0.80;

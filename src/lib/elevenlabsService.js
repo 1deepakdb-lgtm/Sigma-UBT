@@ -114,10 +114,13 @@ export async function synthesizeElevenLabs({
 
   // Strictly enforce male vs female separation
   let resolvedVoiceProfileId = voiceProfileId;
-  if (gender === 'male' && resolvedVoiceProfileId.includes('female')) {
-    resolvedVoiceProfileId = resolvedVoiceProfileId.replace('female', 'male');
-  } else if (gender === 'female' && resolvedVoiceProfileId.includes('male')) {
-    resolvedVoiceProfileId = resolvedVoiceProfileId.replace('male', 'female');
+  const isFemaleId = /(?:^|[-_])female(?:[-_\d]|$)/i.test(resolvedVoiceProfileId);
+  const isMaleId = !isFemaleId && /(?:^|[-_])male(?:[-_\d]|$)/i.test(resolvedVoiceProfileId);
+
+  if (gender === 'male' && isFemaleId) {
+    resolvedVoiceProfileId = resolvedVoiceProfileId.replace(/female/gi, 'male');
+  } else if (gender === 'female' && isMaleId) {
+    resolvedVoiceProfileId = resolvedVoiceProfileId.replace(/male/gi, 'female');
   }
 
   const profile = getVoiceProfile(resolvedVoiceProfileId);
