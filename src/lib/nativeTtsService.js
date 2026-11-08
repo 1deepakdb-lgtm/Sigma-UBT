@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
+let isPythonEdgeTtsAvailable = null;
+
 // Verified High-Fidelity Microsoft Neural Voice Configurations
 export const VOICE_CONFIG = {
   ko: {
@@ -169,23 +171,27 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     PYTHONUNBUFFERED: '1'
   };
 
-  const pyCandidates = ['python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3'];
-  for (const py of pyCandidates) {
-    try {
-      execFileSync(py, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {
-        timeout: 12000,
-        env: customEnv
-      });
-      if (fs.existsSync(tmpOut)) {
-        const buf = fs.readFileSync(tmpOut);
-        try { fs.unlinkSync(tmpOut); } catch {}
-        if (buf.length > 500) {
-          return { buffer: buf, contentType: 'audio/mpeg', provider: 'neural-edge' };
-        }
+  // Fast availability check to avoid multi-second hanging if Python edge_tts is missing
+  if (isPythonEdgeTtsAvailable === false) {
+    return null;
+  }
+
+  const py = 'python3';
+  try {
+    execFileSync(py, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {
+      timeout: 2500,
+      env: customEnv
+    });
+    if (fs.existsSync(tmpOut)) {
+      const buf = fs.readFileSync(tmpOut);
+      try { fs.unlinkSync(tmpOut); } catch {}
+      if (buf.length > 500) {
+        isPythonEdgeTtsAvailable = true;
+        return { buffer: buf, contentType: 'audio/mpeg', provider: 'neural-edge' };
       }
-    } catch (err) {
-      // Try next python candidate
     }
+  } catch (err) {
+    isPythonEdgeTtsAvailable = false;
   }
   return null;
 }
@@ -497,7 +503,7 @@ export function generateEdgeTts(text, voice, pitch, rate) {
         child.kill();
       } catch { }
       reject(new Error('TTS timeout'));
-    }, 6000);
+    }, 1500);
 
     child.on('close', (code) => {
       clearTimeout(timer);

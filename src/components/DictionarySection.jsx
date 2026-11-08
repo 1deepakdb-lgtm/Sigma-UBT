@@ -720,10 +720,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
       utterance.lang = langCode;
       if (gender === 'male') {
-        utterance.pitch = 0.88;
-        utterance.rate = 0.95;
+        utterance.pitch = 0.74; // Deep, unmistakable male resonance
+        utterance.rate = 0.94;
       } else {
-        utterance.pitch = 1.00;
+        utterance.pitch = 1.18; // Bright, clear feminine acoustic contour
         utterance.rate = 1.00;
       }
 
@@ -736,20 +736,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             const maleMatch = langVoices.find(v => {
               const vName = (v.name || '').toLowerCase();
               if (vName.includes('female') || vName.includes('woman') || vName.includes('girl')) return false;
-              return vName.includes('male') || vName.includes('david') || vName.includes('keita') || vName.includes('injoon') || vName.includes('george') || vName.includes('sagar') || vName.includes('minho') || vName.includes('sin-ji') || vName.includes('otoya') || vName.includes('guy') || vName.includes('ichiro') || vName.includes('kenji') || vName.includes('x-ism') || vName.includes('x-htm');
+              return vName.includes('male') || vName.includes('david') || vName.includes('keita') || vName.includes('injoon') || vName.includes('george') || vName.includes('sagar') || vName.includes('minho') || vName.includes('sin-ji') || vName.includes('sinji') || vName.includes('otoya') || vName.includes('guy') || vName.includes('ichiro') || vName.includes('kenji') || vName.includes('x-ism') || vName.includes('x-htm') || vName.includes('x-kof') || vName.includes('alex') || vName.includes('fred');
             }) || langVoices.find(v => {
               const vName = (v.name || '').toLowerCase();
-              return !vName.includes('female') && !vName.includes('woman') && !vName.includes('girl') && !vName.includes('zira') && !vName.includes('nanami') && !vName.includes('sunhi') && !vName.includes('susan') && !vName.includes('hemkala') && !vName.includes('yuna') && !vName.includes('kyoko') && !vName.includes('ayumi');
+              return !vName.includes('female') && !vName.includes('woman') && !vName.includes('girl') && !vName.includes('zira') && !vName.includes('nanami') && !vName.includes('sunhi') && !vName.includes('susan') && !vName.includes('hemkala') && !vName.includes('yuna') && !vName.includes('kyoko') && !vName.includes('ayumi') && !vName.includes('samantha');
             });
             if (maleMatch) {
               utterance.voice = maleMatch;
-            } else {
-              utterance.pitch = 0.88;
             }
           } else {
             const femaleMatch = langVoices.find(v => {
               const vName = (v.name || '').toLowerCase();
-              return vName.includes('female') || vName.includes('woman') || vName.includes('girl') || vName.includes('zira') || vName.includes('nanami') || vName.includes('sunhi') || vName.includes('susan') || vName.includes('hemkala') || vName.includes('yuna') || vName.includes('kyoko') || vName.includes('ayumi') || vName.includes('heami');
+              return vName.includes('female') || vName.includes('woman') || vName.includes('girl') || vName.includes('zira') || vName.includes('nanami') || vName.includes('sunhi') || vName.includes('susan') || vName.includes('hemkala') || vName.includes('yuna') || vName.includes('kyoko') || vName.includes('ayumi') || vName.includes('heami') || vName.includes('samantha') || vName.includes('victoria') || vName.includes('karen') || vName.includes('jenny');
             }) || langVoices[0];
             if (femaleMatch) utterance.voice = femaleMatch;
           }
@@ -925,8 +923,23 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         return;
       }
 
-      fetch(url)
+      // Ultra-Fast Response Engine:
+      // If server does not stream back audio within 800ms, immediately speak with zero delay!
+      const abortController = new AbortController();
+      let hasResponded = false;
+      const abortTimer = setTimeout(() => {
+        if (!hasResponded) {
+          abortController.abort();
+          if (text) {
+            speakTextNative(text, targetLang, targetGender, id);
+          }
+        }
+      }, 800);
+
+      fetch(url, { signal: abortController.signal })
         .then(res => {
+          hasResponded = true;
+          clearTimeout(abortTimer);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.arrayBuffer();
         })
@@ -939,22 +952,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           playDecodedSource(decoded, targetGender, speed, id);
         })
         .catch(err => {
-          console.warn('Web Audio playback fallback to HTML audio:', err);
-          const cachedBlobUrl = audioBlobCacheRef.current.get(url);
-          const audioSrc = cachedBlobUrl || url;
-          const audio = new Audio(audioSrc);
-          audioRef.current = audio;
-          audio.playbackRate = speed;
-          audio.onplay = () => { setLoadingAudioId(null); setPlayingAudioId(id); };
-          audio.onended = () => { setPlayingAudioId(null); setLoadingAudioId(null); audioRef.current = null; };
-          audio.onerror = () => {
-            if (text) speakTextNative(text, targetLang, targetGender, id);
-            else { setPlayingAudioId(null); setLoadingAudioId(null); audioRef.current = null; }
-          };
-          audio.play().catch(() => {
-            if (text) speakTextNative(text, targetLang, targetGender, id);
-            else { setPlayingAudioId(null); setLoadingAudioId(null); audioRef.current = null; }
-          });
+          hasResponded = true;
+          clearTimeout(abortTimer);
+          if (err.name === 'AbortError') return; // already speaking instantly!
+          if (text) {
+            speakTextNative(text, targetLang, targetGender, id);
+          } else {
+            setPlayingAudioId(null);
+            setLoadingAudioId(null);
+          }
         });
       return;
     }

@@ -286,8 +286,8 @@ export default function AiStudio({
 
       const utt = new SpeechSynthesisUtterance(clean);
       utt.lang = langCode;
-      utt.pitch = gender === 'male' ? 0.88 : 1.00;
-      utt.rate = gender === 'male' ? 0.95 : 1.00;
+      utt.pitch = gender === 'male' ? 0.74 : 1.18;
+      utt.rate = gender === 'male' ? 0.94 : 1.00;
 
       const voices = window.speechSynthesis.getVoices();
       if (voices && voices.length > 0) {
@@ -297,16 +297,16 @@ export default function AiStudio({
             const m = langVoices.find(v => {
               const n = (v.name || '').toLowerCase();
               if (n.includes('female') || n.includes('woman') || n.includes('girl')) return false;
-              return n.includes('male') || n.includes('keita') || n.includes('injoon') || n.includes('minho') || n.includes('david') || n.includes('george') || n.includes('sagar') || n.includes('x-ism') || n.includes('x-htm');
+              return n.includes('male') || n.includes('keita') || n.includes('injoon') || n.includes('minho') || n.includes('david') || n.includes('george') || n.includes('sagar') || n.includes('sin-ji') || n.includes('sinji') || n.includes('otoya') || n.includes('guy') || n.includes('ichiro') || n.includes('kenji') || n.includes('x-ism') || n.includes('x-htm') || n.includes('x-kof') || n.includes('alex') || n.includes('fred');
             }) || langVoices.find(v => {
               const n = (v.name || '').toLowerCase();
-              return !n.includes('female') && !n.includes('woman') && !n.includes('girl') && !n.includes('sunhi') && !n.includes('nanami') && !n.includes('zira') && !n.includes('kyoko');
+              return !n.includes('female') && !n.includes('woman') && !n.includes('girl') && !n.includes('sunhi') && !n.includes('nanami') && !n.includes('zira') && !n.includes('kyoko') && !n.includes('ayumi') && !n.includes('samantha');
             });
             if (m) utt.voice = m;
           } else {
             const f = langVoices.find(v => {
               const n = (v.name || '').toLowerCase();
-              return n.includes('female') || n.includes('woman') || n.includes('girl') || n.includes('sunhi') || n.includes('nanami') || n.includes('zira') || n.includes('kyoko');
+              return n.includes('female') || n.includes('woman') || n.includes('girl') || n.includes('sunhi') || n.includes('nanami') || n.includes('zira') || n.includes('kyoko') || n.includes('ayumi') || n.includes('yuna') || n.includes('samantha') || n.includes('victoria') || n.includes('karen') || n.includes('jenny');
             }) || langVoices[0];
             if (f) utt.voice = f;
           }
@@ -340,8 +340,19 @@ export default function AiStudio({
       sourceNodeRef.current = null;
     }
 
+    const abortController = new AbortController();
+    let hasResponded = false;
+    const abortTimer = setTimeout(() => {
+      if (!hasResponded) {
+        abortController.abort();
+        if (onError) onError(new Error('TTS fetch timeout'));
+      }
+    }, 850);
+
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: abortController.signal });
+      hasResponded = true;
+      clearTimeout(abortTimer);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const arrayBuf = await res.arrayBuffer();
       const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
@@ -361,6 +372,9 @@ export default function AiStudio({
       source.start(0);
       return true;
     } catch (err) {
+      hasResponded = true;
+      clearTimeout(abortTimer);
+      if (err.name === 'AbortError') return false;
       console.warn('Web Audio studio play error:', err);
       if (onError) onError(err);
       return false;
