@@ -16,25 +16,20 @@ try {
   console.warn('Warning: Unable to chdir to __dirname:', chdirErr);
 }
 
-// Auto-repair missing node_modules/@prisma/client on cPanel server
+// Ensure Prisma client is generated if node_modules is symlinked
 try {
   const prismaClientDir = path.join(__dirname, 'node_modules', '@prisma', 'client');
   if (!fs.existsSync(prismaClientDir)) {
-    console.log('[ExamJK] Detected missing @prisma/client. Running automated production npm install & prisma generate...');
+    console.log('[ExamJK] Prisma client not found. Running prisma generate...');
     try {
-      execSync('npm install --production --no-audit --no-fund', {
-        cwd: __dirname,
-        stdio: 'inherit',
-        timeout: 180000
-      });
       execSync('npx prisma generate', {
         cwd: __dirname,
         stdio: 'inherit',
         timeout: 60000
       });
-      console.log('[ExamJK] Automated dependencies and Prisma client installed successfully!');
+      console.log('[ExamJK] Prisma client generated successfully!');
     } catch (cmdErr) {
-      console.warn('[ExamJK] Notice during auto npm install:', cmdErr?.message);
+      console.warn('[ExamJK] Prisma generate warning:', cmdErr?.message);
     }
   }
 } catch (e) {

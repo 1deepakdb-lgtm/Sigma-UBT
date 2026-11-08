@@ -19,7 +19,13 @@ git fetch origin main
 # 4. Synchronize cleanly with origin/main
 git reset --hard origin/main
 
-# 5. Ensure tmp directory exists and trigger passenger restart
+# 5. Remove real node_modules directory if it is not a symlink (CloudLinux requirement)
+if [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
+  echo "🧹 Removing conflicting physical node_modules so CloudLinux can manage its symlink..."
+  rm -rf node_modules
+fi
+
+# 6. Ensure tmp directory exists and trigger passenger restart
 mkdir -p tmp
 touch tmp/restart.txt
 
