@@ -5,10 +5,15 @@ import fs from 'fs';
 const globalForPrisma = globalThis;
 
 function getResolvedDatabaseUrl() {
-  // 1. Direct cPanel production absolute path check
-  const cpanelPath = '/home/examjkco/sigma-ubt/prisma/dev.db';
-  if (fs.existsSync(cpanelPath)) {
-    return `file:${cpanelPath}`;
+  // 1. Direct cPanel production absolute paths
+  const cpanelCandidates = [
+    '/home/examjkco/repositories/Sigma-UBT/prisma/dev.db',
+    '/home/examjkco/sigma-ubt/prisma/dev.db'
+  ];
+  for (const p of cpanelCandidates) {
+    if (fs.existsSync(p)) {
+      return `file:${p}`;
+    }
   }
 
   // 2. Environment variable check
