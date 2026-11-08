@@ -59,14 +59,9 @@ try {
   console.error('Error loading .env file:', e);
 }
 
-if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = 'production';
-}
+// cPanel Passenger port & socket integration
+const rawPort = process.env.PORT;
 const dev = process.env.NODE_ENV === 'development';
-
-// cPanel Passenger assigns PORT dynamically via environment variable
-const port = parseInt(process.env.PORT, 10) || 3000;
-const hostname = 'localhost';
 
 // Common MIME types for static asset direct delivery
 const MIME_TYPES = {
@@ -91,12 +86,12 @@ const MIME_TYPES = {
 };
 
 // Initialize Next.js app with explicit directory path
-const app = next({ dev, hostname, port, dir: __dirname });
+const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
 app.prepare()
   .then(() => {
-    createServer(async (req, res) => {
+    const server = createServer(async (req, res) => {
       try {
         const parsedUrl = parse(req.url, true);
         const { pathname } = parsedUrl;
@@ -135,14 +130,28 @@ app.prepare()
           res.end('Internal Server Error: ' + (err?.message || 'Server Exception'));
         }
       }
-    })
-      .once('error', (err) => {
-        console.error('Server error:', err);
-        process.exit(1);
-      })
-      .listen(port, hostname, () => {
-        console.log(`> ExamJK Server ready on http://${hostname}:${port}`);
+    });
+
+    server.once('error', (err) => {
+      console.error('Server error:', err);
+      process.exit(1);
+    });
+
+    // Official Phusion Passenger & standalone multi-port listener
+    if (typeof PhusionPassenger !== 'undefined') {
+      server.listen('passenger', () => {
+        console.log('> ExamJK Server ready under Phusion Passenger');
       });
+    } else if (rawPort && isNaN(Number(rawPort))) {
+      server.listen(rawPort, () => {
+        console.log(`> ExamJK Server ready on socket: ${rawPort}`);
+      });
+    } else {
+      const port = parseInt(rawPort, 10) || 3000;
+      server.listen(port, '0.0.0.0', () => {
+        console.log(`> ExamJK Server ready on http://0.0.0.0:${port}`);
+      });
+    }
   })
   .catch((err) => {
     console.error('Failed to prepare Next.js app:', err);
