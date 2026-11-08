@@ -4,6 +4,7 @@ import next from 'next';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +14,31 @@ try {
   process.chdir(__dirname);
 } catch (chdirErr) {
   console.warn('Warning: Unable to chdir to __dirname:', chdirErr);
+}
+
+// Auto-repair missing node_modules/@prisma/client on cPanel server
+try {
+  const prismaClientDir = path.join(__dirname, 'node_modules', '@prisma', 'client');
+  if (!fs.existsSync(prismaClientDir)) {
+    console.log('[ExamJK] Detected missing @prisma/client. Running automated production npm install & prisma generate...');
+    try {
+      execSync('npm install --production --no-audit --no-fund', {
+        cwd: __dirname,
+        stdio: 'inherit',
+        timeout: 180000
+      });
+      execSync('npx prisma generate', {
+        cwd: __dirname,
+        stdio: 'inherit',
+        timeout: 60000
+      });
+      console.log('[ExamJK] Automated dependencies and Prisma client installed successfully!');
+    } catch (cmdErr) {
+      console.warn('[ExamJK] Notice during auto npm install:', cmdErr?.message);
+    }
+  }
+} catch (e) {
+  console.warn('[ExamJK] Auto-repair check notice:', e?.message);
 }
 
 // Manually load .env if process.env.DATABASE_URL is missing (cPanel/Passenger fix)

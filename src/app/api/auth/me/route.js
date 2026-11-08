@@ -161,6 +161,6 @@ export async function GET(req) {
     });
   } catch (err) {
     console.error('Me error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ authenticated: false, user: null, error: err?.message || 'Session unavailable' }, { status: 401 });
   }
 }
