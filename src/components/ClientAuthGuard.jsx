@@ -20,6 +20,16 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
       if (isMounted && !authorized) setShowRetry(true);
     }, 3500);
 
+    function clearSessionAndRedirect() {
+      try {
+        document.cookie = 'sigma_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0;';
+        localStorage.removeItem('sigma_session');
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('role');
+      } catch (e) {}
+      window.location.replace('/?error=unauthorized');
+    }
+
     async function checkAuth() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4500);
@@ -33,19 +43,13 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
         clearTimeout(timeoutId);
 
         if (!res.ok) {
-          if (isMounted) {
-            try { router.replace('/?error=unauthorized'); } catch (e) {}
-            window.location.href = '/?error=unauthorized';
-          }
+          if (isMounted) clearSessionAndRedirect();
           return;
         }
 
         const data = await res.json();
         if (!data.authenticated || !data.user) {
-          if (isMounted) {
-            try { router.replace('/?error=unauthorized'); } catch (e) {}
-            window.location.href = '/?error=unauthorized';
-          }
+          if (isMounted) clearSessionAndRedirect();
           return;
         }
 
@@ -56,8 +60,7 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
             if (role === 'admin') target = '/admin';
             else if (role === 'institute') target = '/institute';
             else if (role === 'staff') target = '/institute?tab=billing';
-            try { router.replace(target); } catch (e) {}
-            window.location.href = target;
+            window.location.replace(target);
           }
           return;
         }
@@ -66,10 +69,7 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
           setAuthorized(true);
         }
       } catch (err) {
-        if (isMounted) {
-          try { router.replace('/?error=unauthorized'); } catch (e) {}
-          window.location.href = '/?error=unauthorized';
-        }
+        if (isMounted) clearSessionAndRedirect();
       }
     }
 

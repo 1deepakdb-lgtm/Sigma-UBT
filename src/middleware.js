@@ -166,6 +166,13 @@ export async function middleware(req) {
 
   // ─── 6. Root / Login Page Handling ──────────────────────────────────────
   if (pathname === '/') {
+    // If arriving with an error (e.g. expired/unauthorized session) or explicit logout, NEVER bounce back to dashboard
+    if (req.nextUrl.searchParams.has('error') || req.nextUrl.searchParams.has('logout')) {
+      const response = NextResponse.next();
+      response.cookies.delete('sigma_session');
+      return response;
+    }
+
     if (userPayload && userPayload.role) {
       if (userPayload.role === 'admin') {
         return NextResponse.redirect(new URL('/admin', req.url));
