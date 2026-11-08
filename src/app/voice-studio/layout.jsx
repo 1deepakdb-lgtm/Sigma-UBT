@@ -17,12 +17,12 @@ export const metadata = {
 export default async function VoiceStudioLayout({ children }) {
   const session = await getSessionUser();
 
-  if (!session || session.role !== 'admin') {
+  if (!session || (session.role !== 'admin' && session.role !== 'institute')) {
     redirect('/?error=unauthorized');
   }
 
   return (
-    <ClientAuthGuard allowedRoles={['admin']}>
+    <ClientAuthGuard allowedRoles={['admin', 'institute']}>
       {children}
     </ClientAuthGuard>
   );

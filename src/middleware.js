@@ -37,9 +37,9 @@ const ROUTE_PERMISSIONS = [
   { prefix: '/api/admin/questions', allowedRoles: ['admin', 'institute'] },
   { prefix: '/admin', allowedRoles: ['admin'] },
   { prefix: '/api/admin', allowedRoles: ['admin'] },
-  { prefix: '/voice-studio', allowedRoles: ['admin'] },
+  { prefix: '/voice-studio', allowedRoles: ['admin', 'institute'] },
   { prefix: '/api/diagnostic', allowedRoles: ['admin'] },
-  { prefix: '/api/elevenlabs/dialogue', allowedRoles: ['admin'] },
+  { prefix: '/api/elevenlabs/dialogue', allowedRoles: ['admin', 'institute', 'staff', 'student'] },
   // Institute-level routes & subpaths
   { prefix: '/institute', allowedRoles: ['institute', 'admin', 'staff'] },
   { prefix: '/api/institute', allowedRoles: ['institute', 'admin', 'staff'] },
@@ -143,7 +143,7 @@ export async function middleware(req) {
 
   // ─── 5. Admin Route Extra Hardening ───────────────────────────────────────
   const isExceptedAdminApi = pathname.startsWith('/api/admin/packages') || pathname.startsWith('/api/admin/questions');
-  if ((pathname.startsWith('/api/admin') || pathname.startsWith('/admin') || pathname.startsWith('/voice-studio')) && !isExceptedAdminApi) {
+  if ((pathname.startsWith('/api/admin') || pathname.startsWith('/admin')) && !isExceptedAdminApi) {
     // Block if authenticated but role is not strictly 'admin'
     if (userPayload && userPayload.role !== 'admin') {
       return NextResponse.json(
