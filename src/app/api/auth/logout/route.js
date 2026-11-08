@@ -17,7 +17,9 @@ export async function POST() {
 }
 
 export async function GET(req) {
-  const loginUrl = new URL('/', req.url);
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'examjk.com';
+  const proto = req.headers.get('x-forwarded-proto') || 'https';
+  const loginUrl = new URL('/', `${proto}://${host}`);
   const response = NextResponse.redirect(loginUrl);
 
   response.cookies.delete('sigma_session');
