@@ -1,87 +1,85 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 /**
  * ClientAuthGuard
- * Client-side double layer protection. Ensures that if a user's session
- * expires or is cleared, the page will not remain visible and will
- * immediately redirect to the login page.
+ * Bulletproof client-side session synchronization.
+ * Because parent layouts (AdminLayout, InstituteLayout, StudentLayout) already
+ * enforce server-side authentication with getSessionUser(), ClientAuthGuard
+ * ensures instant rendering and prevents any possibility of redirect loops.
  */
 export default function ClientAuthGuard({ allowedRoles = [], children }) {
-  const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
-  const [showRetry, setShowRetry] = useState(false);
+  // Initialize authorized to true so server-rendered content appears instantly without delay
+  const [authorized, setAuthorized] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
-    const retryTimer = setTimeout(() => {
-      if (isMounted && !authorized) setShowRetry(true);
-    }, 3500);
 
-    function clearSessionAndRedirect() {
-      try {
-        document.cookie = 'sigma_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0;';
-        localStorage.removeItem('sigma_session');
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('role');
-      } catch (e) {}
-      window.location.replace('/?error=unauthorized');
+    // Loop Prevention Guard: Never redirect if a redirect occurred recently
+    const lastRedirect = sessionStorage.getItem('last_auth_redirect_ts');
+    const now = Date.now();
+    if (lastRedirect && now - parseInt(lastRedirect, 10) < 8000) {
+      console.warn('[ClientAuthGuard] Refresh loop detected and halted.');
+      return;
     }
 
-    async function checkAuth() {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4500);
-
+    async function verifySession() {
       try {
         const res = await fetch('/api/auth/me', {
           cache: 'no-store',
-          signal: controller.signal,
           headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
         });
-        clearTimeout(timeoutId);
 
-        if (!res.ok) {
-          if (isMounted) clearSessionAndRedirect();
+        // If server encounters 500 or 503, DO NOT redirect! Parent layout already verified session.
+        if (res.status >= 500) {
+          console.warn('[ClientAuthGuard] Backend API notice (status ' + res.status + '). Preserving active session.');
           return;
         }
 
-        const data = await res.json();
-        if (!data.authenticated || !data.user) {
-          if (isMounted) clearSessionAndRedirect();
-          return;
-        }
-
-        const role = data.user.role;
-        if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
+        if (res.status === 401) {
+          // Explicitly unauthenticated: clear cookies properly via logout endpoint
+          sessionStorage.setItem('last_auth_redirect_ts', String(Date.now()));
+          try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+          } catch (e) {}
+          try {
+            localStorage.removeItem('sigma_session');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('role');
+          } catch (e) {}
           if (isMounted) {
-            let target = '/student';
-            if (role === 'admin') target = '/admin';
-            else if (role === 'institute') target = '/institute';
-            else if (role === 'staff') target = '/institute?tab=billing';
-            window.location.replace(target);
+            window.location.replace('/?error=unauthorized');
           }
           return;
         }
 
-        if (isMounted) {
-          setAuthorized(true);
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          const role = data.user.role;
+          if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
+            let target = '/student';
+            if (role === 'admin') target = '/admin';
+            else if (role === 'institute') target = '/institute';
+            else if (role === 'staff') target = '/institute?tab=billing';
+            if (isMounted) window.location.replace(target);
+          }
         }
       } catch (err) {
-        if (isMounted) clearSessionAndRedirect();
+        // Network or fetch error: DO NOT redirect in a loop
+        console.warn('[ClientAuthGuard] Network verification warning:', err?.message);
       }
     }
 
-    checkAuth();
+    verifySession();
 
     return () => {
       isMounted = false;
-      clearTimeout(retryTimer);
     };
-  }, [allowedRoles, router]);
+  }, [allowedRoles]);
 
-  if (!authorized) {
+  if (!authorized && authError) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -95,56 +93,23 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         padding: '20px'
       }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3.5px solid rgba(255,255,255,0.15)',
-          borderTopColor: '#38bdf8',
-          borderRadius: '50%',
-          animation: 'authSpin 0.8s linear infinite'
-        }} />
-        <style>{`@keyframes authSpin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ marginTop: '16px', fontSize: '14px', fontWeight: '600', color: '#94a3b8' }}>
-          Verifying security session...
-        </p>
-        {showRetry && (
-          <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
-            <button
-              onClick={() => { window.location.href = '/'; }}
-              style={{
-                background: '#ef4444',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: '700',
-                cursor: 'pointer'
-              }}
-            >
-              ← Back to Sign In
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                background: '#334155',
-                color: '#f8fafc',
-                border: '1px solid #475569',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
+        <p style={{ fontSize: '15px', color: '#f87171', marginBottom: '16px' }}>{authError}</p>
+        <button
+          onClick={() => { window.location.href = '/'; }}
+          style={{
+            background: '#3b82f6',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 20px',
+            cursor: 'pointer'
+          }}
+        >
+          Return to Login
+        </button>
       </div>
     );
   }
 
-  return <>{children}</>;
+  return children;
 }
-
