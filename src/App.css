@@ -12,33 +12,61 @@ body,
   margin: 0;
   padding: 0;
   width: 100%;
+  max-width: 100vw;
   min-height: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 html {
   overflow-y: scroll;
   scrollbar-gutter: stable;
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
   background: #f4f7fb;
   color: #222;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sub-millisecond touch responsiveness across all devices */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[role="tab"] {
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button,
-input,
-select,
-textarea {
-  font-family: inherit;
+[role="button"],
+[role="tab"] {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-button {
-  cursor: pointer;
+/* Instant micro-feedback on press (immediate tactile feel) */
+button:active:not(:disabled),
+.primary-button:active:not(:disabled),
+.secondary-btn:active:not(:disabled),
+.back-button:active:not(:disabled),
+[role="button"]:active:not(:disabled),
+[role="tab"]:active:not(:disabled) {
+  transform: scale(0.975);
+  transition: transform 0.04s ease-out;
 }
 
 img {
   display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 
@@ -1924,4 +1952,79 @@ div[class*="floating-icon"] {
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+/* ============================================================
+   COMPREHENSIVE ALL-DEVICE MOBILE RESPONSIVE ENGINE
+   Tablets, Phablets, Phones (iOS & Android)
+============================================================ */
+
+@media (max-width: 1024px) {
+  .container,
+  .students-container,
+  .dashboard-container {
+    max-width: 100% !important;
+    padding: 18px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Prevent iOS Safari auto-zoom on input focus by guaranteeing 16px font-size */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Fluid containers for mobile screens */
+  .container,
+  .students-container,
+  .dashboard-container,
+  .listening-container {
+    padding: 12px 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Mobile tables card wrappers */
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Touch-friendly buttons (minimum 40px touch targets) */
+  button,
+  .primary-button,
+  .secondary-btn,
+  .back-button {
+    min-height: 40px;
+  }
+
+  /* Modal responsiveness on mobile screens */
+  .modal-content,
+  .student-modal,
+  .admin-modal,
+  .confirm-modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    padding: 16px !important;
+    margin: 10px auto !important;
+    border-radius: 12px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens / iPhones in portrait */
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.3rem !important; }
+  h3 { font-size: 1.15rem !important; }
+
+  .top-header, .students-header {
+    padding: 8px 12px !important;
+  }
 }

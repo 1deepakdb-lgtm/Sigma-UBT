@@ -4172,7 +4172,7 @@ export default function EpsBookReader({
               className="book-tabs-grid"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
                 gap: "16px",
                 width: "100%",
                 boxSizing: "border-box"
@@ -5377,7 +5377,7 @@ export default function EpsBookReader({
               className="book-tabs-grid"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
                 gap: "16px",
                 width: "100%",
                 boxSizing: "border-box"

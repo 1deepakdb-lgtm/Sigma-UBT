@@ -594,7 +594,7 @@ export default function Navbar({
 
       {/* Global Responsive Styles for Navbar */}
       <style jsx>{`
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
           :global(.desktop-nav-menu) {
             display: none !important;
           }
