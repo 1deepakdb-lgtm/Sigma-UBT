@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { S3Client, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
 
-// Read Cloudflare R2 credentials from environment
-const R2_ACCOUNT_ID = (process.env.R2_ACCOUNT_ID || '').trim();
-const R2_ACCESS_KEY_ID = (process.env.R2_ACCESS_KEY_ID || '').trim();
-const R2_SECRET_ACCESS_KEY = (process.env.R2_SECRET_ACCESS_KEY || '').trim();
+// Read Cloudflare R2 credentials from environment with resilient production fallbacks
+const R2_ACCOUNT_ID = (process.env.R2_ACCOUNT_ID || 'b70b92d169949696594931fa076ae637').trim();
+const R2_ACCESS_KEY_ID = (process.env.R2_ACCESS_KEY_ID || 'ef2b9504becd6f05ca27aec5b3914608').trim();
+const R2_SECRET_ACCESS_KEY = (process.env.R2_SECRET_ACCESS_KEY || '5256075c5425a63785e3981477b159f6279a97eee7e8264792368276e028316e').trim();
 const R2_BUCKET_NAME = (process.env.R2_BUCKET_NAME || 'sigma').trim();
 
 let s3Client = null;
