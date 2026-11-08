@@ -1,14 +1,13 @@
 #!/bin/bash
 # ============================================================
-# ExamJK Ultra-Lean Deep Cleanup & Repository Shrinker
+# ExamJK Ultra-Lean Deep Cleanup & Production Starter
 # ============================================================
 
 echo "============================================================"
-echo "🧹 STARTING REPOSITORY & DISK ULTRA-LEAN CLEANUP..."
+echo "🧹 STARTING EXAMJK HOSTING RECOVERY & PRODUCTION SETUP..."
 echo "============================================================"
 
-# 1. Kill any running node processes
-killall -9 node 2>/dev/null || true
+# 1. Kill any stale node processes
 pkill -9 -u examjkco node 2>/dev/null || true
 
 # 2. Clean cPanel Trash & Global Caches
@@ -18,17 +17,15 @@ rm -rf ~/.trash/* ~/.trash/.* ~/.npm ~/.cache ~/tmp/*.log 2>/dev/null || true
 cd /home/examjkco/repositories/Sigma-UBT 2>/dev/null || cd ~/repositories/Sigma-UBT 2>/dev/null || cd "$HOME/repositories/Sigma-UBT"
 
 # 4. Remove heavy non-web folders from the server
-# (Android Studio files and Electron desktop wrappers are NOT needed on web hosting)
 echo "🗑️ Removing non-web files (Android build files, Electron, build caches)..."
-rm -rf android electron .next/cache *.zip *.tar.gz *.log public/downloads/*.apk public/downloads/*.exe 2>/dev/null || true
-rm -rf node_modules tmp/* 2>/dev/null || true
+rm -rf android electron .next/cache *.zip *.tar.gz *.log public/downloads/*.apk public/downloads/*.exe tmp/* 2>/dev/null || true
 
 # 5. Compress and shrink Git repository database
-echo "🗜️ Shrinking Git database and purging old commit bloat..."
+echo "🗜️ Shrinking Git database..."
 git reflog expire --expire=now --all 2>/dev/null || true
-git gc --prune=now --aggressive 2>/dev/null || true
+git gc --prune=now 2>/dev/null || true
 
-# 6. Ensure clean production .env is configured with R2 storage credentials
+# 6. Ensure clean production .env is configured with all credentials
 cat << 'EOF' > .env
 NODE_ENV=production
 DATABASE_URL=file:/home/examjkco/repositories/Sigma-UBT/prisma/dev.db
@@ -42,11 +39,25 @@ R2_BUCKET_NAME="sigma"
 R2_PUBLIC_URL="https://b70b92d169949696594931fa076ae637.r2.cloudflarestorage.com"
 EOF
 
-# 7. Create restart trigger
+# 7. Setup Node 20 environment and install production dependencies
+echo "📦 Ensuring Node.js production dependencies are installed..."
+export PATH=/opt/alt/alt-nodejs20/root/usr/bin:$PATH
+export TMPDIR=$HOME/tmp
+mkdir -p "$HOME/tmp"
+
+if [ ! -d "node_modules/@prisma/client" ] || [ ! -d "node_modules/next" ]; then
+  npm install --omit=dev --no-audit --no-fund
+fi
+
+# 8. Generate Prisma client
+echo "🔄 Generating Prisma Client..."
+npx prisma generate
+
+# 9. Create restart trigger for Phusion Passenger
 mkdir -p tmp
 touch tmp/restart.txt
 
 echo "============================================================"
-echo "💾 CLEANUP COMPLETE! NEW REPOSITORY SIZE:"
+echo "🚀 EXAMJK SERVER READY! NEW REPOSITORY SIZE:"
 du -sh . 2>/dev/null || true
 echo "============================================================"
