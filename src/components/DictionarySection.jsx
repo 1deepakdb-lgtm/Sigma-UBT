@@ -337,21 +337,70 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
   }, [propInstituteLanguage, propUserRole, userRole]);
 
-  // Restore saved voice model preference from localStorage
+  // Restore saved voice model preference from localStorage with strict gender validation
   useEffect(() => {
     try {
+      const femaleList = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
+      const maleList = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
+
       const sf = localStorage.getItem(`sigma_selected_female_model_${activeLang}`);
       if (sf) {
         const parsed = JSON.parse(sf);
-        if (parsed?.id) setSelectedFemaleModel(parsed);
+        const isActuallyFemale = parsed?.gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(parsed?.id || '') || (parsed?.name && parsed.name.toLowerCase().includes('female'));
+        if (parsed?.id && isActuallyFemale) {
+          setSelectedFemaleModel(parsed);
+        } else {
+          setSelectedFemaleModel(femaleList[0]);
+          localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(femaleList[0]));
+        }
       }
+
       const sm = localStorage.getItem(`sigma_selected_male_model_${activeLang}`);
       if (sm) {
         const parsed = JSON.parse(sm);
-        if (parsed?.id) setSelectedMaleModel(parsed);
+        const isFemale = /(?:^|[-_])female(?:[-_\d]|$)/i.test(parsed?.id || '') || parsed?.gender === 'female' || (parsed?.name && parsed.name.toLowerCase().includes('female'));
+        if (parsed?.id && !isFemale) {
+          setSelectedMaleModel(parsed);
+        } else {
+          // Purge corrupted female voice from male slot and restore authentic male model
+          setSelectedMaleModel(maleList[0]);
+          localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(maleList[0]));
+        }
       }
     } catch (e) {}
   }, [activeLang]);
+
+  // Guarantee 100% strict gender separation between Female and Male state models
+  useEffect(() => {
+    const femaleList = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
+    const maleList = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
+
+    // Check if selectedMaleModel has any female identity
+    const maleHasFemale = !selectedMaleModel ||
+      selectedMaleModel.gender === 'female' ||
+      /(?:^|[-_])female(?:[-_\d]|$)/i.test(selectedMaleModel.id || '') ||
+      (selectedMaleModel.name && selectedMaleModel.name.toLowerCase().includes('female'));
+
+    if (maleHasFemale) {
+      setSelectedMaleModel(maleList[0]);
+      try {
+        localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(maleList[0]));
+      } catch (e) {}
+    }
+
+    // Check if selectedFemaleModel has any male identity
+    const femaleHasMale = !selectedFemaleModel ||
+      selectedFemaleModel.gender === 'male' ||
+      (!/(?:^|[-_])female(?:[-_\d]|$)/i.test(selectedFemaleModel.id || '') && /(?:^|[-_])male(?:[-_\d]|$)/i.test(selectedFemaleModel.id || '')) ||
+      (selectedFemaleModel.name && !selectedFemaleModel.name.toLowerCase().includes('female') && selectedFemaleModel.name.toLowerCase().includes('male'));
+
+    if (femaleHasMale) {
+      setSelectedFemaleModel(femaleList[0]);
+      try {
+        localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(femaleList[0]));
+      } catch (e) {}
+    }
+  }, [selectedMaleModel, selectedFemaleModel, activeLang]);
 
   // Listen to window storage events if student switches track in another tab
   useEffect(() => {
@@ -576,9 +625,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       let savedMale = null;
       try {
         const sf = localStorage.getItem('sigma_selected_female_model_ja');
-        if (sf) savedFem = JSON.parse(sf);
+        if (sf) {
+          const p = JSON.parse(sf);
+          if (p?.gender === 'female' || /(?:^|[-_])female/i.test(p?.id || '')) savedFem = p;
+        }
         const sm = localStorage.getItem('sigma_selected_male_model_ja');
-        if (sm) savedMale = JSON.parse(sm);
+        if (sm) {
+          const p = JSON.parse(sm);
+          if (p?.gender === 'male' || (!/(?:^|[-_])female/i.test(p?.id || '') && /(?:^|[-_])male/i.test(p?.id || ''))) savedMale = p;
+        }
       } catch (e) {}
       setSelectedFemaleModel(savedFem || JAPANESE_FEMALE_VOICE_MODELS[0]);
       setSelectedMaleModel(savedMale || JAPANESE_MALE_VOICE_MODELS[0]);
@@ -588,9 +643,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       let savedMale = null;
       try {
         const sf = localStorage.getItem('sigma_selected_female_model_ko');
-        if (sf) savedFem = JSON.parse(sf);
+        if (sf) {
+          const p = JSON.parse(sf);
+          if (p?.gender === 'female' || /(?:^|[-_])female/i.test(p?.id || '')) savedFem = p;
+        }
         const sm = localStorage.getItem('sigma_selected_male_model_ko');
-        if (sm) savedMale = JSON.parse(sm);
+        if (sm) {
+          const p = JSON.parse(sm);
+          if (p?.gender === 'male' || (!/(?:^|[-_])female/i.test(p?.id || '') && /(?:^|[-_])male/i.test(p?.id || ''))) savedMale = p;
+        }
       } catch (e) {}
       setSelectedFemaleModel(savedFem || KOREAN_FEMALE_VOICE_MODELS[0]);
       setSelectedMaleModel(savedMale || KOREAN_MALE_VOICE_MODELS[0]);
@@ -1606,7 +1667,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             activeFemaleModelId={selectedFemaleModel?.id}
             activeMaleModelId={selectedMaleModel?.id}
             onSelectVoiceModel={(voice) => {
-              const isMale = voice.gender === 'male' || (!/(?:^|[-_])female(?:[-_\d]|$)/i.test(voice.id || '') && /(?:^|[-_])male(?:[-_\d]|$)/i.test(voice.id || ''));
+              const isFemale = voice.gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(voice.id || '') || (voice.name && voice.name.toLowerCase().includes('female'));
+              const isMale = !isFemale && (voice.gender === 'male' || /(?:^|[-_])male(?:[-_\d]|$)/i.test(voice.id || ''));
               if (isMale) {
                 const list = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
                 const match = list.find(m => m.id === voice.id) || voice;
@@ -1614,7 +1676,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 try {
                   localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(match));
                 } catch (e) {}
-              } else {
+              } else if (isFemale) {
                 const list = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
                 const match = list.find(m => m.id === voice.id) || voice;
                 setSelectedFemaleModel(match);

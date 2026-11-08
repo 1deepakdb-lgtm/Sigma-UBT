@@ -1583,8 +1583,8 @@ export default function AiStudio({
                   }}
                 >
                   {(dialogueGenderA === 'female' ? activeFemaleModelId === dialogueSpeakerA : activeMaleModelId === dialogueSpeakerA)
-                    ? '✓ Speaker A is Active in Dictionary'
-                    : '★ Use Speaker A Model for Dictionary'}
+                    ? `✓ Speaker A is Active in Dictionary (${dialogueGenderA === 'female' ? 'Female' : 'Male'})`
+                    : `★ Use Speaker A as ${dialogueGenderA === 'female' ? 'Female' : 'Male'} Voice in Dictionary`}
                 </button>
               )}
             </div>
@@ -1744,8 +1744,8 @@ export default function AiStudio({
                   }}
                 >
                   {(dialogueGenderB === 'female' ? activeFemaleModelId === dialogueSpeakerB : activeMaleModelId === dialogueSpeakerB)
-                    ? '✓ Speaker B is Active in Dictionary'
-                    : '★ Use Speaker B Model for Dictionary'}
+                    ? `✓ Speaker B is Active in Dictionary (${dialogueGenderB === 'female' ? 'Female' : 'Male'})`
+                    : `★ Use Speaker B as ${dialogueGenderB === 'female' ? 'Female' : 'Male'} Voice in Dictionary`}
                 </button>
               )}
             </div>
