@@ -1,0 +1,7 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/examjkco/repositories/Sigma-UBT
+    - /bin/cp -n $DEPLOYPATH/prisma/dev.db $DEPLOYPATH/prisma/dev.db.cpanel_backup 2>/dev/null || true
+    - /bin/mkdir -p $DEPLOYPATH/tmp
+    - /bin/touch $DEPLOYPATH/tmp/restart.txt

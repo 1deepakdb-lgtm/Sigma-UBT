@@ -33,6 +33,12 @@ export default function AdminSettings() {
   // ── Active tab ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState('profile');
 
+  // ── Git & cPanel Sync state ──────────────────────────────────────────────
+  const [gitSyncing, setGitSyncing] = useState(false);
+  const [gitLogs, setGitLogs] = useState([]);
+  const [latestCommit, setLatestCommit] = useState('');
+  const [gitError, setGitError] = useState('');
+
   // Load current admin profile on mount
   useEffect(() => {
     async function loadProfile() {
@@ -136,6 +142,26 @@ export default function AdminSettings() {
       setPassMsg({ text: 'Network error. Please try again.', isError: true });
     } finally {
       setSavingPass(false);
+    }
+  };
+
+  // ── Git & cPanel Sync handler ────────────────────────────────────────────
+  const handleGitSync = async () => {
+    setGitSyncing(true);
+    setGitError('');
+    try {
+      const res = await fetch('/api/webhook/deploy?format=json');
+      const data = await res.json();
+      if (data.success) {
+        setGitLogs(data.logs || []);
+        setLatestCommit(data.latestCommit || '');
+      } else {
+        setGitError(data.error || 'Deployment failed');
+      }
+    } catch (err) {
+      setGitError(err.message || 'Network error triggering deployment');
+    } finally {
+      setGitSyncing(false);
     }
   };
 
@@ -307,6 +333,9 @@ export default function AdminSettings() {
           </button>
           <button style={s.tab(activeTab === 'password')} onClick={() => setActiveTab('password')}>
             🔑 Change Password
+          </button>
+          <button style={s.tab(activeTab === 'git')} onClick={() => setActiveTab('git')}>
+            🚀 Git & cPanel Sync
           </button>
         </div>
 
@@ -486,6 +515,117 @@ export default function AdminSettings() {
                 {savingPass ? 'Updating...' : '🔐 Change Password'}
               </button>
             </form>
+          </div>
+        )}
+
+        {/* ── Git & cPanel Live Sync Tab ────────────────────────────────── */}
+        {activeTab === 'git' && (
+          <div style={s.card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ ...s.cardTitle, margin: 0 }}>🚀 Git to cPanel Real-Time Sync</h3>
+              <span style={{ fontSize: '12px', background: '#e0e7ff', color: '#4338ca', padding: '4px 10px', borderRadius: '12px', fontWeight: '600' }}>
+                Production
+              </span>
+            </div>
+
+            <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '20px', lineHeight: '1.6' }}>
+              Pull the latest code and pre-compiled Next.js production builds directly from GitHub into cPanel and automatically reload Phusion Passenger in real time.
+            </p>
+
+            {gitError && (
+              <div style={s.alert(true)}>⚠️ {gitError}</div>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+              <button
+                type="button"
+                onClick={handleGitSync}
+                disabled={gitSyncing}
+                style={{
+                  padding: '11px 22px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: gitSyncing ? '#94a3b8' : 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                  color: '#ffffff',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  cursor: gitSyncing ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                {gitSyncing ? '🔄 Syncing Git to cPanel...' : '⚡ Pull Latest from Git & Restart'}
+              </button>
+
+              <a
+                href="/api/webhook/deploy?key=examjk_deploy_2026"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  padding: '11px 18px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#334155',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                🖥️ Open Live Terminal Output
+              </a>
+            </div>
+
+            {latestCommit && (
+              <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', fontSize: '13px', color: '#065f46' }}>
+                <strong>Active Deployed Commit:</strong> {latestCommit}
+              </div>
+            )}
+
+            {gitLogs.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                  Real-Time Execution Logs:
+                </div>
+                <div style={{
+                  background: '#030712',
+                  color: '#34d399',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  fontFamily: 'SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                  fontSize: '12.5px',
+                  lineHeight: '1.6',
+                  maxHeight: '320px',
+                  overflowY: 'auto',
+                  border: '1px solid #1f2937'
+                }}>
+                  {gitLogs.map((log, i) => (
+                    <div key={i} style={{ margin: '3px 0' }}>{log}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', fontSize: '13px', color: '#475569' }}>
+              <div style={{ fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}>
+                🔗 Auto-Deploy via GitHub Webhook:
+              </div>
+              <div style={{ marginBottom: '6px' }}>
+                In your GitHub repo (<code>1deepakdb-lgtm/sigma-ubt</code>) &rarr; Settings &rarr; Webhooks:
+              </div>
+              <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '8px 12px', fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all' }}>
+                https://examjk.com/api/webhook/deploy?key=examjk_deploy_2026
+              </div>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+                Content type: <code>application/json</code> | Trigger: <code>Just the push event</code>
+              </div>
+            </div>
           </div>
         )}
       </div>
