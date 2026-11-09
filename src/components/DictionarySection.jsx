@@ -2641,6 +2641,37 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               >
                                 {playingAudioId === `card-${primaryWord}` ? "⏹" : "🔊"}
                               </button>
+                              {canDownloadAudio && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const langCode = word.isKanji || activeLang === 'ja' || /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(primaryWord) ? 'ja' : 'ko';
+                                    const textToPlay = spokenWord || primaryWord;
+                                    const dlUrl = `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&download=true`;
+                                    handleDownloadAudio(dlUrl, `${primaryWord}.mp3`);
+                                  }}
+                                  title="Download Audio (MP3)"
+                                  style={{
+                                    width: "24px",
+                                    height: "24px",
+                                    minWidth: "24px",
+                                    borderRadius: "50%",
+                                    border: "1px solid #cbd5e1",
+                                    backgroundColor: "#f8fafc",
+                                    color: "#475569",
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "11px",
+                                    flexShrink: 0,
+                                    padding: 0
+                                  }}
+                                >
+                                  📥
+                                </button>
+                              )}
                               <span>{primaryWord}</span>
                               {hasRule && (
                                 <span
@@ -2690,107 +2721,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       </div>
                     </div>
 
-                    {/* 🔊 Voice Popup Bar (Appears when this word is selected) */}
-                    {isSelected && (
-                      <div
-                        style={{
-                          marginTop: "10px",
-                          paddingTop: "9px",
-                          borderTop: activeLang === 'ja' ? "1.5px solid #e9d5ff" : "1.5px solid #bfdbfe",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "6px",
-                          width: "100%",
-                          animation: "popupFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)"
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {/* Custom Voice Button if exists for this word */}
-                        {customVoiceForWord && (
-                          <button
-                            type="button"
-                            onClick={() => handlePlayAudio(customVoiceForWord.url, `popup-custom-${primaryWord}`)}
-                            title="Play your uploaded voice recording"
-                            style={{
-                              backgroundColor: playingAudioId === `popup-custom-${primaryWord}` ? "#15803d" : "#dcfce7",
-                              color: playingAudioId === `popup-custom-${primaryWord}` ? "#ffffff" : "#15803d",
-                              border: "1.5px solid #86efac",
-                              borderRadius: "8px",
-                              padding: "6px 10px",
-                              fontSize: "12px",
-                              fontWeight: "800",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "4px",
-                              width: "100%"
-                            }}
-                          >
-                            <span>⭐</span>
-                            <span>{playingAudioId === `popup-custom-${primaryWord}` ? "⏹ Stop" : "▶ My Voice"}</span>
-                          </button>
-                        )}
 
-                        {/* Unified Single Audio Bar (Clean & Compact) */}
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", width: "100%", flexWrap: "nowrap", boxSizing: "border-box" }}>
-                          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "8px", overflow: "hidden", border: activeLang === 'ja' ? "1.5px solid #d8b4fe" : "1.5px solid #bfdbfe", background: activeLang === 'ja' ? "#faf5ff" : "#eff6ff", boxShadow: "0 1px 3px rgba(37, 99, 235, 0.08)", flex: "1 1 0%", minWidth: 0 }}>
-                            <button
-                              type="button"
-                              onClick={() => handlePlayCardWord(word, `popup-${primaryWord}`)}
-                              title="Listen Pronunciation"
-                              style={{
-                                backgroundColor: playingAudioId === `popup-${primaryWord}` ? (activeLang === 'ja' ? "#9333ea" : "#2563eb") : "transparent",
-                                color: playingAudioId === `popup-${primaryWord}` ? "#ffffff" : (activeLang === 'ja' ? "#7e22ce" : "#1d4ed8"),
-                                border: "none",
-                                padding: "0 10px",
-                                height: "30px",
-                                fontSize: "12px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "6px",
-                                flex: "1 1 0%"
-                              }}
-                            >
-                              <span>{playingAudioId === `popup-${primaryWord}` ? "⏹ Stop" : "🔊 Listen Pronunciation"}</span>
-                            </button>
-                            {canDownloadAudio && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const langCode = word.isKanji || activeLang === 'ja' || /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(primaryWord) ? 'ja' : 'ko';
-                                  const textToPlay = spokenWord || primaryWord;
-                                  const dlUrl = `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&download=true`;
-                                  handleDownloadAudio(dlUrl, `${primaryWord}.mp3`);
-                                }}
-                                title="Download Audio (MP3)"
-                                style={{
-                                  backgroundColor: "transparent",
-                                  color: activeLang === 'ja' ? "#7e22ce" : "#1d4ed8",
-                                  border: "none",
-                                  borderLeft: activeLang === 'ja' ? "1px solid #d8b4fe" : "1px solid #bfdbfe",
-                                  padding: "0 8px",
-                                  height: "30px",
-                                  fontSize: "12px",
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  flexShrink: 0
-                                }}
-                              >
-                                📥
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                      </div>
-                    )}
                   </div>
                 );
               })}
