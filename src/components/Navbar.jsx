@@ -621,6 +621,7 @@ export default function Navbar({
       {/* ── MOBILE & TABLET BOTTOM APP MENU BAR (Fixed at bottom for all phones & tablets) ── */}
       <nav
         className="navbar-bottom-nav"
+        suppressHydrationWarning={true}
         style={{
           display: 'none',
           position: 'fixed',

@@ -29,6 +29,7 @@ const InstituteDashboard = () => {
   const [instId, setInstId] = useState(null);
 
   const [userRole, setUserRole] = useState("institute");
+  const [mounted, setMounted] = useState(false);
 
   const [activeTab, setActiveTab] = useState("billing"); 
   const [students, setStudents] = useState([]);
@@ -36,6 +37,7 @@ const InstituteDashboard = () => {
   const [studentLangFilter, setStudentLangFilter] = useState("all"); // "all" | "korean" | "japanese"
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("institute")) setInstituteName(decodeURIComponent(params.get("institute")));
@@ -3413,125 +3415,36 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
         </div>
       )}
 
+      </div>
+
       {/* ── MOBILE & TABLET BOTTOM BAR FOR INSTITUTE PORTAL ── */}
-      <nav
-        className="institute-bottom-nav"
-        style={{
-          display: 'none',
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '62px',
-          backgroundColor: '#0f172a',
-          borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          zIndex: 99990,
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.4)',
-          padding: '4px 6px',
-          paddingBottom: 'calc(6px + env(safe-area-inset-bottom, 0px))',
-          boxSizing: 'border-box',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)'
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => handleTabChange("billing")}
+      {mounted && (
+        <nav
+          className="institute-bottom-nav"
+          suppressHydrationWarning={true}
           style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
+            display: 'none',
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '62px',
+            backgroundColor: '#0f172a',
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            justifyContent: 'space-around',
             alignItems: 'center',
-            justifyContent: 'center',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px 0',
-            color: activeTab === 'billing' ? '#38bdf8' : '#94a3b8'
+            zIndex: 99990,
+            boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.4)',
+            padding: '4px 6px',
+            paddingBottom: 'calc(6px + env(safe-area-inset-bottom, 0px))',
+            boxSizing: 'border-box',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)'
           }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'billing' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-            <line x1="1" y1="10" x2="23" y2="10"/>
-          </svg>
-          <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'billing' ? 800 : 600, marginTop: '3px' }}>Billing</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTabChange("listening")}
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px 0',
-            color: activeTab === 'listening' ? '#38bdf8' : '#94a3b8'
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'listening' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-          </svg>
-          <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'listening' ? 800 : 600, marginTop: '3px' }}>Materials</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTabChange("dictionary")}
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px 0',
-            color: activeTab === 'dictionary' ? '#38bdf8' : '#94a3b8'
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'dictionary' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-          </svg>
-          <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'dictionary' ? 800 : 600, marginTop: '3px' }}>Dictionary</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleTabChange("news")}
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px 0',
-            color: activeTab === 'news' ? '#38bdf8' : '#94a3b8'
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'news' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'news' ? 800 : 600, marginTop: '3px' }}>Notice</span>
-        </button>
-
-        {userRole !== "staff" ? (
           <button
             type="button"
-            onClick={() => handleTabChange("students")}
+            onClick={() => handleTabChange("billing")}
             style={{
               flex: 1,
               display: 'flex',
@@ -3542,21 +3455,19 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               border: 'none',
               cursor: 'pointer',
               padding: '4px 0',
-              color: activeTab === 'students' ? '#38bdf8' : '#94a3b8'
+              color: activeTab === 'billing' ? '#38bdf8' : '#94a3b8'
             }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'students' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'billing' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
             </svg>
-            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'students' ? 800 : 600, marginTop: '3px' }}>Students</span>
+            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'billing' ? 800 : 600, marginTop: '3px' }}>Billing</span>
           </button>
-        ) : (
+
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={() => handleTabChange("listening")}
             style={{
               flex: 1,
               display: 'flex',
@@ -3567,14 +3478,110 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               border: 'none',
               cursor: 'pointer',
               padding: '4px 0',
-              color: '#ef4444'
+              color: activeTab === 'listening' ? '#38bdf8' : '#94a3b8'
             }}
           >
-            <span style={{ fontSize: '18px' }}>🚪</span>
-            <span style={{ fontSize: '10.5px', fontWeight: 700, marginTop: '3px' }}>Logout</span>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'listening' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+            </svg>
+            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'listening' ? 800 : 600, marginTop: '3px' }}>Materials</span>
           </button>
-        )}
-      </nav>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("dictionary")}
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px 0',
+              color: activeTab === 'dictionary' ? '#38bdf8' : '#94a3b8'
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'dictionary' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'dictionary' ? 800 : 600, marginTop: '3px' }}>Dictionary</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("news")}
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px 0',
+              color: activeTab === 'news' ? '#38bdf8' : '#94a3b8'
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'news' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'news' ? 800 : 600, marginTop: '3px' }}>Notice</span>
+          </button>
+
+          {userRole !== "staff" ? (
+            <button
+              type="button"
+              onClick={() => handleTabChange("students")}
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 0',
+                color: activeTab === 'students' ? '#38bdf8' : '#94a3b8'
+              }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'students' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'students' ? 800 : 600, marginTop: '3px' }}>Students</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleLogout}
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 0',
+                color: '#ef4444'
+              }}
+            >
+              <span style={{ fontSize: '18px' }}>🚪</span>
+              <span style={{ fontSize: '10.5px', fontWeight: 700, marginTop: '3px' }}>Logout</span>
+            </button>
+          )}
+        </nav>
+      )}
 
       <style jsx>{`
         @media (max-width: 1024px) {
@@ -3599,7 +3606,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
         }
       `}</style>
 
-      </div>
     </div>
   );
 };
