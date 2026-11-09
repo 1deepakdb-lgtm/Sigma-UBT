@@ -1062,6 +1062,42 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     handlePlayAudio(url, audioId, textToSpeak, lang, isMale ? 'male' : 'female', activeModel);
   }
 
+  function handlePlayCardWord(word, customAudioId = null) {
+    if (!word) return;
+    const primary = word.japanese || word.korean || word.kanji || word.word;
+    const spoken = word.japaneseSpoken || word.spoken || primary;
+    const langCode = word.isKanji || activeLang === 'ja' || /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(primary) ? 'ja' : 'ko';
+    const audioId = customAudioId || `card-audio-${primary}`;
+
+    if (playingAudioId === audioId || loadingAudioId === audioId) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setPlayingAudioId(null);
+      setLoadingAudioId(null);
+      return;
+    }
+
+    // Check custom voice in user's library for this word
+    const customVoice = voiceLibrary.find(v => {
+      if (!v.word || v.word === 'all') return false;
+      const w = v.word.trim().toLowerCase();
+      return w === primary.toLowerCase() || (word.english && w === word.english.toLowerCase());
+    });
+
+    if (customVoice && customVoice.url) {
+      handlePlayAudio(customVoice.url, audioId);
+      return;
+    }
+
+    // Default to active voice model
+    const activeModel = selectedFemaleModel || (langCode === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS[0] : KOREAN_FEMALE_VOICE_MODELS[0]);
+    const voiceProfId = activeModel?.voiceProfileId || (langCode === 'ja' ? 'ja-female-1' : 'ko-female-1');
+    const url = `/api/elevenlabs/tts?text=${encodeURIComponent(spoken || primary)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=female`;
+    handlePlayAudio(url, audioId, spoken || primary, langCode, 'female', activeModel);
+  }
+
   function handleDownloadSearchWord(gender = 'female', customModel = null) {
     const activeModel = customModel || (gender === 'female' ? selectedFemaleModel : selectedMaleModel);
 
@@ -2518,9 +2554,36 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 </span>
                               </div>
 
-                              {/* Badges & Pronunciation summary */}
+                              {/* Badges & Pronunciation summary with Side Audio Button */}
                               <div style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1, minWidth: 0 }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePlayCardWord(word, `card-${primaryWord}`);
+                                    }}
+                                    title="Listen Pronunciation"
+                                    style={{
+                                      width: "26px",
+                                      height: "26px",
+                                      minWidth: "26px",
+                                      borderRadius: "50%",
+                                      border: "1px solid #d8b4fe",
+                                      backgroundColor: playingAudioId === `card-${primaryWord}` ? "#9333ea" : "#ffffff",
+                                      color: playingAudioId === `card-${primaryWord}` ? "#ffffff" : "#7e22ce",
+                                      cursor: "pointer",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: "12px",
+                                      flexShrink: 0,
+                                      padding: 0,
+                                      boxShadow: "0 1px 2px rgba(147, 51, 234, 0.12)"
+                                    }}
+                                  >
+                                    {playingAudioId === `card-${primaryWord}` ? "⏹" : "🔊"}
+                                  </button>
                                   <span style={{ fontSize: "11px", backgroundColor: "#ecfdf5", color: "#047857", border: "1.5px solid #a7f3d0", padding: "1px 7px", borderRadius: "4px", fontWeight: "800" }}>
                                     JLPT N{word.jlpt}
                                   </span>
@@ -2548,8 +2611,37 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           </div>
                         ) : (
                           <div>
-                            <div style={{ fontSize: activeLang === 'ja' ? "18px" : "16px", fontWeight: "800", color: "#0f172a", display: "flex", alignItems: "center", gap: "6px", userSelect: "text" }}>
-                              {primaryWord}
+                            <div style={{ fontSize: activeLang === 'ja' ? "18px" : "16px", fontWeight: "800", color: "#0f172a", display: "flex", alignItems: "center", gap: "7px", userSelect: "text" }}>
+                              {/* Single side audio button on left of word */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePlayCardWord(word, `card-${primaryWord}`);
+                                }}
+                                title="उच्चारण सुन्नुहोस् (Listen Pronunciation)"
+                                style={{
+                                  width: "28px",
+                                  height: "28px",
+                                  minWidth: "28px",
+                                  borderRadius: "50%",
+                                  border: "1px solid #cbd5e1",
+                                  backgroundColor: playingAudioId === `card-${primaryWord}` ? "#2563eb" : "#f1f5f9",
+                                  color: playingAudioId === `card-${primaryWord}` ? "#ffffff" : "#0f172a",
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: "12px",
+                                  flexShrink: 0,
+                                  padding: 0,
+                                  boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
+                                  transition: "all 0.15s ease"
+                                }}
+                              >
+                                {playingAudioId === `card-${primaryWord}` ? "⏹" : "🔊"}
+                              </button>
+                              <span>{primaryWord}</span>
                               {hasRule && (
                                 <span
                                   title={activeLang === 'ja' ? (word.pronunciationRule || 'Japanese Pronunciation Rule') : (batchimRuleText || 'Batchim Rule')}
@@ -2572,7 +2664,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 </span>
                               )}
                             </div>
-                            <div style={{ fontSize: "13px", color: activeLang === 'ja' ? "#9333ea" : "#2563eb", fontWeight: "600", marginTop: "2px", userSelect: "text" }}>
+                            <div style={{ fontSize: "13px", color: activeLang === 'ja' ? "#9333ea" : "#2563eb", fontWeight: "600", marginTop: "2px", marginLeft: "35px", userSelect: "text" }}>
                               [{spokenWord}] · <span style={{ color: activeLang === 'ja' ? "#6b21a8" : "#1e40af", fontWeight: "600" }}>[{nepaliPhonetic || romaji}]</span>
                             </div>
                           </div>
@@ -2640,158 +2732,50 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           </button>
                         )}
 
-                        {/* Both Female & Male Voice Groups side-by-side closely in ONE horizontal line - Fixed for all Mobile, Tab & Web */}
+                        {/* Unified Single Audio Bar (Clean & Compact) */}
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", width: "100%", flexWrap: "nowrap", boxSizing: "border-box" }}>
-                          {/* Female Voice Group (Compact & Perfectly Fitted in Box) */}
-                          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 1px 3px rgba(225, 29, 72, 0.08)", flex: "1 1 0%", minWidth: 0 }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "8px", overflow: "hidden", border: activeLang === 'ja' ? "1.5px solid #d8b4fe" : "1.5px solid #bfdbfe", background: activeLang === 'ja' ? "#faf5ff" : "#eff6ff", boxShadow: "0 1px 3px rgba(37, 99, 235, 0.08)", flex: "1 1 0%", minWidth: 0 }}>
                             <button
                               type="button"
-                              onClick={() => {
-                                if (selectedFemaleModel.isCustom && selectedFemaleModel.url) {
-                                  handlePlayAudio(selectedFemaleModel.url, `popup-fem-${primaryWord}`);
-                                } else {
-                                  const langCode = activeLang === 'ja' ? 'ja' : 'ko';
-                                  const textToPlay = spokenWord || primaryWord;
-                                  const voiceProfId = selectedFemaleModel.voiceProfileId || (langCode === 'ja' ? 'ja-female-1' : 'ko-female-1');
-                                  const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=female`;
-                                  handlePlayAudio(url, `popup-fem-${primaryWord}`, textToPlay, langCode, 'female', selectedFemaleModel);
-                                }
-                              }}
-                              title={`Play Female Voice (${selectedFemaleModel.name})`}
+                              onClick={() => handlePlayCardWord(word, `popup-${primaryWord}`)}
+                              title="Listen Pronunciation"
                               style={{
-                                backgroundColor: playingAudioId === `popup-fem-${primaryWord}` ? "#be185d" : "transparent",
-                                color: playingAudioId === `popup-fem-${primaryWord}` ? "#ffffff" : "#be185d",
+                                backgroundColor: playingAudioId === `popup-${primaryWord}` ? (activeLang === 'ja' ? "#9333ea" : "#2563eb") : "transparent",
+                                color: playingAudioId === `popup-${primaryWord}` ? "#ffffff" : (activeLang === 'ja' ? "#7e22ce" : "#1d4ed8"),
                                 border: "none",
-                                padding: "0 4px",
-                                height: "28px",
-                                fontSize: "11px",
+                                padding: "0 10px",
+                                height: "30px",
+                                fontSize: "12px",
                                 fontWeight: "800",
                                 cursor: "pointer",
                                 display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                gap: "3px",
-                                whiteSpace: "nowrap",
-                                flex: "1 1 0%",
-                                minWidth: 0,
-                                overflow: "hidden"
+                                gap: "6px",
+                                flex: "1 1 0%"
                               }}
                             >
-                              <FemaleIcon size={14} isPlaying={playingAudioId === `popup-fem-${primaryWord}`} />
-                              <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {playingAudioId === `popup-fem-${primaryWord}` ? "⏹" : "Female"}
-                              </span>
+                              <span>{playingAudioId === `popup-${primaryWord}` ? "⏹ Stop" : "🔊 Listen Pronunciation"}</span>
                             </button>
                             {canDownloadAudio && (
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (selectedFemaleModel.isCustom && selectedFemaleModel.url) {
-                                    handleDownloadAudio(selectedFemaleModel.url, `${primaryWord}_custom_voice.mp3`);
-                                  } else {
-                                    const langCode = activeLang === 'ja' ? 'ja' : 'ko';
-                                    const textToPlay = spokenWord || primaryWord;
-                                    const voiceProfId = selectedFemaleModel.voiceProfileId || selectedFemaleModel.id;
-                                    const isAi = selectedFemaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
-                                    const filename = `${romaji || primaryWord}_female_${(selectedFemaleModel.name || 'voice').replace(/\s+/g, '_')}.mp3`;
-                                    const dlUrl = isAi
-                                      ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`
-                                      : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=female&voice=${encodeURIComponent(selectedFemaleModel.voice)}&pitch=${encodeURIComponent(selectedFemaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedFemaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedFemaleModel.id || selectedFemaleModel.name || '')}&download=true`;
-                                    handleDownloadAudio(dlUrl, filename);
-                                  }
-                                }}
-                                title="Download Female Voice (MP3)"
-                                style={{
-                                  backgroundColor: "transparent",
-                                  color: "#be185d",
-                                  border: "none",
-                                  borderLeft: "1px solid #fda4af",
-                                  padding: "0 4px",
-                                  height: "28px",
-                                  width: "24px",
-                                  fontSize: "11px",
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  flexShrink: 0
-                                }}
-                              >
-                                📥
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Male Voice Group (Compact & Perfectly Fitted in Box) */}
-                          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 1px 3px rgba(2, 132, 199, 0.08)", flex: "1 1 0%", minWidth: 0 }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (selectedMaleModel.isCustom && selectedMaleModel.url) {
-                                  handlePlayAudio(selectedMaleModel.url, `popup-male-${primaryWord}`);
-                                } else {
-                                  const langCode = activeLang === 'ja' ? 'ja' : 'ko';
+                                  const langCode = word.isKanji || activeLang === 'ja' || /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(primaryWord) ? 'ja' : 'ko';
                                   const textToPlay = spokenWord || primaryWord;
-                                  const voiceProfId = selectedMaleModel.voiceProfileId || (langCode === 'ja' ? 'ja-male-1' : 'ko-male-1');
-                                  const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=male`;
-                                  handlePlayAudio(url, `popup-male-${primaryWord}`, textToPlay, langCode, 'male', selectedMaleModel);
-                                }
-                              }}
-                              title={`Play Male Voice (${selectedMaleModel.name})`}
-                              style={{
-                                backgroundColor: playingAudioId === `popup-male-${primaryWord}` ? "#0284c7" : "transparent",
-                                color: playingAudioId === `popup-male-${primaryWord}` ? "#ffffff" : "#0369a1",
-                                border: "none",
-                                padding: "0 4px",
-                                height: "28px",
-                                fontSize: "11px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "3px",
-                                whiteSpace: "nowrap",
-                                flex: "1 1 0%",
-                                minWidth: 0,
-                                overflow: "hidden"
-                              }}
-                            >
-                              <MaleIcon size={14} isPlaying={playingAudioId === `popup-male-${primaryWord}`} />
-                              <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {playingAudioId === `popup-male-${primaryWord}` ? "⏹" : "Male"}
-                              </span>
-                            </button>
-                            {canDownloadAudio && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (selectedMaleModel.isCustom && selectedMaleModel.url) {
-                                    handleDownloadAudio(selectedMaleModel.url, `${primaryWord}_custom_voice.mp3`);
-                                  } else {
-                                    const langCode = activeLang === 'ja' ? 'ja' : 'ko';
-                                    const textToPlay = spokenWord || primaryWord;
-                                    const voiceProfId = selectedMaleModel.voiceProfileId || selectedMaleModel.id;
-                                    const isAi = selectedMaleModel.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
-                                    const filename = `${romaji || primaryWord}_male_${(selectedMaleModel.name || 'voice').replace(/\s+/g, '_')}.mp3`;
-                                    const dlUrl = isAi
-                                      ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToPlay)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`
-                                      : `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&gender=male&voice=${encodeURIComponent(selectedMaleModel.voice)}&pitch=${encodeURIComponent(selectedMaleModel.pitch || '+0Hz')}&rate=${encodeURIComponent(selectedMaleModel.rate || '+0%')}&model=${encodeURIComponent(selectedMaleModel.id || selectedMaleModel.name || '')}&download=true`;
-                                    handleDownloadAudio(dlUrl, filename);
-                                  }
+                                  const dlUrl = `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&download=true`;
+                                  handleDownloadAudio(dlUrl, `${primaryWord}.mp3`);
                                 }}
-                                title="Download Male Voice (MP3)"
+                                title="Download Audio (MP3)"
                                 style={{
                                   backgroundColor: "transparent",
-                                  color: "#0369a1",
+                                  color: activeLang === 'ja' ? "#7e22ce" : "#1d4ed8",
                                   border: "none",
-                                  borderLeft: "1px solid #7dd3fc",
-                                  padding: "0 4px",
-                                  height: "28px",
-                                  width: "24px",
-                                  fontSize: "11px",
+                                  borderLeft: activeLang === 'ja' ? "1px solid #d8b4fe" : "1px solid #bfdbfe",
+                                  padding: "0 8px",
+                                  height: "30px",
+                                  fontSize: "12px",
                                   cursor: "pointer",
                                   display: "inline-flex",
                                   alignItems: "center",
