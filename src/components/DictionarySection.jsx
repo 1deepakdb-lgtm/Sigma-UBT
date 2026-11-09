@@ -228,14 +228,33 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
   // Role Detection for Audio Downloads (Strictly Admin and Institute only; NEVER Student)
   // Deterministic initial state for SSR hydration; client permissions resolved in useEffect
+  const [mounted, setMounted] = useState(false);
   const [userRole, setUserRole] = useState(
     propUserRole ? String(propUserRole).toLowerCase() : 'student'
   );
 
-  const isStudent = propUserRole === 'student' || userRole === 'student';
-  const canDownloadAudio = !isStudent && (userRole === 'admin' || userRole === 'institute');
+  const isStudent = Boolean(
+    propUserRole === 'student' ||
+    userRole === 'student' ||
+    (mounted && typeof window !== 'undefined' && (
+      window.location.pathname.includes('/student') ||
+      window.location.pathname.includes('/exam') ||
+      localStorage.getItem('currentRole') === 'student' ||
+      localStorage.getItem('role') === 'student' ||
+      localStorage.getItem('userType') === 'student'
+    ))
+  );
+
+  // Audio download is strictly for verified Admin and Institute users. NEVER for students or public visitors.
+  const isStaffOrAdminOrInstitute = Boolean(
+    (propUserRole === 'admin' || propUserRole === 'institute' || userRole === 'admin' || userRole === 'institute') &&
+    (!mounted || (typeof window !== 'undefined' && (window.location.pathname.includes('/admin') || window.location.pathname.includes('/institute'))))
+  );
+
+  const canDownloadAudio = mounted && !isStudent && isStaffOrAdminOrInstitute;
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== 'undefined') {
       try {
         if (propUserRole) {
@@ -992,6 +1011,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       localStorage.setItem(`sigma_selected_voice_model_${activeLang}`, JSON.stringify(model));
     } catch (e) {}
     setIsModelDropdownOpen(false);
+    // One click one play as human voice
+    handlePlaySearchWord(model);
   }
 
   function handlePlaySearchWord(customModel = null, customId = null) {
@@ -1932,7 +1953,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 left: 0,
                 zIndex: 100000,
                 width: "360px",
-                maxWidth: "92vw",
+                maxWidth: "min(360px, calc(100vw - 24px))",
                 backgroundColor: "#ffffff",
                 borderRadius: "14px",
                 boxShadow: "0 12px 36px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08)",
@@ -1941,18 +1962,46 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 animation: "fadeIn 0.15s ease-out"
               }}
             >
-              {/* Header */}
+              {/* Header with Title & Close Button */}
               <div style={{ padding: "10px 14px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: "13px", fontWeight: "800", color: "#0f172a" }}>
                   Choose Model
                 </span>
-                <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>
-                  ({allAvailableModels.length} models)
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>
+                    ({allAvailableModels.length} models)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsModelDropdownOpen(false);
+                    }}
+                    title="Close"
+                    aria-label="Close"
+                    style={{
+                      border: "none",
+                      backgroundColor: "#e2e8f0",
+                      color: "#475569",
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "50%",
+                      fontSize: "12px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               {/* Model List Scroll Area */}
-              <div style={{ maxHeight: "320px", overflowY: "auto", padding: "6px" }}>
+              <div style={{ maxHeight: "340px", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "6px" }}>
                 {allAvailableModels.map(model => {
                     const isSelected = selectedVoiceModel?.id === model.id;
                     const isMale = model.gender === 'male';
@@ -1960,6 +2009,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       <div
                         key={model.id}
                         onClick={() => handleSelectModel(model)}
+                        title={`Select & play with ${model.name}`}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -1994,19 +2044,22 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           </div>
                         </div>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-                          {/* ▶ Preview Audio Button */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                          {/* One Click Play Button */}
                           <button
                             type="button"
-                            onClick={() => handlePlaySearchWord(model, `preview-${model.id}`)}
-                            title={`Preview ${model.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectModel(model);
+                            }}
+                            title={`One click play with ${model.name}`}
                             style={{
                               width: "28px",
                               height: "28px",
                               borderRadius: "50%",
                               border: "none",
-                              backgroundColor: playingAudioId === `preview-${model.id}` ? (isMale ? "#0284c7" : "#e11d48") : "#f1f5f9",
-                              color: playingAudioId === `preview-${model.id}` ? "#ffffff" : "#475569",
+                              backgroundColor: playingAudioId === `preview-${model.id}` || (isSelected && playingAudioId === 'search-active-model') ? (isMale ? "#0284c7" : "#e11d48") : "#f1f5f9",
+                              color: playingAudioId === `preview-${model.id}` || (isSelected && playingAudioId === 'search-active-model') ? "#ffffff" : "#475569",
                               fontSize: "11px",
                               cursor: "pointer",
                               display: "flex",
@@ -2015,7 +2068,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               transition: "all 0.12s ease"
                             }}
                           >
-                            {loadingAudioId === `preview-${model.id}` ? "⏳" : playingAudioId === `preview-${model.id}` ? "⏹" : "▶"}
+                            {loadingAudioId === `preview-${model.id}` ? "⏳" : playingAudioId === `preview-${model.id}` || (isSelected && playingAudioId === 'search-active-model') ? "⏹" : "▶"}
                           </button>
                           {isSelected && (
                             <span style={{ color: isMale ? "#0284c7" : "#e11d48", fontWeight: "900", fontSize: "14px" }}>✓</span>

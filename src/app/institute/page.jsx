@@ -1351,8 +1351,20 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
   const tdStyle = { padding: "15px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", verticalAlign: "middle" };
   const inputStyle = { width: "100%", padding: "10px", marginBottom: "15px", border: "1px solid #cbd5e1", borderRadius: "5px", boxSizing: "border-box", backgroundColor: "white" };
 
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center" }} suppressHydrationWarning={true}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: "42px", height: "42px", border: "4px solid #e2e8f0", borderTopColor: "#2563eb", borderRadius: "50%", animation: "instSpin 0.8s linear infinite", margin: "0 auto 16px" }} />
+          <p style={{ color: "#475569", fontWeight: 700, fontSize: "15px" }}>Loading Institute Portal...</p>
+        </div>
+        <style dangerouslySetInnerHTML={{ __html: `@keyframes instSpin { to { transform: rotate(360deg); } }` }} />
+      </div>
+    );
+  }
+
   return (
-    <div style={containerStyle} onContextMenu={(e) => e.preventDefault()}>
+    <div style={containerStyle} onContextMenu={(e) => e.preventDefault()} suppressHydrationWarning={true}>
       <style dangerouslySetInnerHTML={{ __html: `
         html, body {
           overflow-y: scroll !important;
