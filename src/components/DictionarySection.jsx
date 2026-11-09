@@ -1952,8 +1952,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 top: "calc(100% + 6px)",
                 left: 0,
                 zIndex: 100000,
-                width: "360px",
-                maxWidth: "min(360px, calc(100vw - 24px))",
+                width: "285px",
+                maxWidth: "min(285px, calc(100vw - 20px))",
+                boxSizing: "border-box",
                 backgroundColor: "#ffffff",
                 borderRadius: "14px",
                 boxShadow: "0 12px 36px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08)",
@@ -1963,12 +1964,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               }}
             >
               {/* Header with Title & Close Button */}
-              <div style={{ padding: "10px 14px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", fontWeight: "800", color: "#0f172a" }}>
+              <div style={{ padding: "8px 12px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a" }}>
                   Choose Model
                 </span>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "10.5px", color: "#64748b", fontWeight: "600" }}>
                     ({allAvailableModels.length} models)
                   </span>
                   <button
@@ -1983,10 +1984,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       border: "none",
                       backgroundColor: "#e2e8f0",
                       color: "#475569",
-                      width: "24px",
-                      height: "24px",
+                      width: "22px",
+                      height: "22px",
                       borderRadius: "50%",
-                      fontSize: "12px",
+                      fontSize: "11px",
                       fontWeight: "800",
                       cursor: "pointer",
                       display: "flex",
@@ -2001,7 +2002,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               </div>
 
               {/* Model List Scroll Area */}
-              <div style={{ maxHeight: "340px", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "6px" }}>
+              <div style={{ maxHeight: "330px", overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "5px" }}>
                 {allAvailableModels.map(model => {
                     const isSelected = selectedVoiceModel?.id === model.id;
                     const isMale = model.gender === 'male';
@@ -2014,37 +2015,54 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          padding: "8px 10px",
+                          padding: "6px 8px",
                           borderRadius: "8px",
-                          marginBottom: "4px",
+                          marginBottom: "3px",
                           cursor: "pointer",
                           backgroundColor: isSelected ? (isMale ? "#eff6ff" : "#fff1f2") : "transparent",
                           border: isSelected ? `1.5px solid ${isMale ? '#93c5fd' : '#fecdd3'}` : "1.5px solid transparent",
-                          transition: "background 0.12s ease"
+                          transition: "background 0.12s ease",
+                          gap: "8px"
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: 1 }}>
                           {isMale ? (
-                            <MaleIcon size={28} isPlaying={playingAudioId === `preview-${model.id}`} />
+                            <MaleIcon size={26} isPlaying={playingAudioId === `preview-${model.id}`} />
                           ) : (
-                            <FemaleIcon size={28} isPlaying={playingAudioId === `preview-${model.id}`} />
+                            <FemaleIcon size={26} isPlaying={playingAudioId === `preview-${model.id}`} />
                           )}
-                          <div style={{ minWidth: 0, textAlign: "left" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontSize: "12.5px", fontWeight: "800", color: isSelected ? (isMale ? "#0369a1" : "#be185d") : "#1e293b" }}>
+                          <div style={{ minWidth: 0, textAlign: "left", flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                              <span style={{ fontSize: "12px", fontWeight: "800", color: isSelected ? (isMale ? "#0369a1" : "#be185d") : "#1e293b", whiteSpace: "nowrap" }}>
                                 {model.name}
                               </span>
                               {model.isCustom && (
-                                <span style={{ fontSize: "9px", background: "#fef3c7", color: "#92400e", padding: "1px 5px", borderRadius: "4px", fontWeight: "700" }}>⭐ CUSTOM</span>
+                                <span style={{ fontSize: "8.5px", background: "#fef3c7", color: "#92400e", padding: "1px 4px", borderRadius: "3px", fontWeight: "700" }}>⭐</span>
                               )}
                             </div>
-                            <span style={{ fontSize: "11px", color: "#64748b", display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                            <span style={{ fontSize: "10.5px", color: "#64748b", display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                               {model.tag || model.description || "Voice Model"}
                             </span>
                           </div>
                         </div>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                          {/* Tick Sign BEFORE the play button */}
+                          <span
+                            style={{
+                              width: "16px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: isMale ? "#0284c7" : "#e11d48",
+                              fontWeight: "900",
+                              fontSize: "13px",
+                              lineHeight: 1
+                            }}
+                          >
+                            {isSelected ? "✓" : ""}
+                          </span>
+
                           {/* One Click Play Button */}
                           <button
                             type="button"
@@ -2065,14 +2083,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              transition: "all 0.12s ease"
+                              transition: "all 0.12s ease",
+                              flexShrink: 0
                             }}
                           >
                             {loadingAudioId === `preview-${model.id}` ? "⏳" : playingAudioId === `preview-${model.id}` || (isSelected && playingAudioId === 'search-active-model') ? "⏹" : "▶"}
                           </button>
-                          {isSelected && (
-                            <span style={{ color: isMale ? "#0284c7" : "#e11d48", fontWeight: "900", fontSize: "14px" }}>✓</span>
-                          )}
                         </div>
                       </div>
                     );
