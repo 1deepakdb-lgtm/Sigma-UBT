@@ -1842,14 +1842,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               <FemaleIcon size={24} isPlaying={playingAudioId === 'search-active-model'} />
             )}
             <div style={{ display: "flex", flexDirection: "column", textAlign: "left", lineHeight: 1.15 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Model:</span>
-                <span style={{ fontSize: "12.5px", fontWeight: "800", color: selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d" }}>
-                  {selectedVoiceModel?.name || (activeLang === 'ja' ? "Japanese Female 1" : "Korean Female 1")}
-                </span>
-              </div>
-              <span style={{ fontSize: "10px", color: selectedVoiceModel?.gender === 'male' ? "#0284c7" : "#db2777", fontWeight: "600" }}>
-                {selectedVoiceModel?.isCustom ? "⭐ Custom" : (selectedVoiceModel?.tag || "Natural Voice")}
+              <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b" }}>Choose Model</span>
+              <span style={{ fontSize: "12.5px", fontWeight: "800", color: selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d" }}>
+                {selectedVoiceModel?.name || (activeLang === 'ja' ? "Japanese 1" : "Korean 1")}
               </span>
             </div>
             <span style={{ fontSize: "11px", color: "#64748b", marginLeft: "4px" }}>
@@ -1946,58 +1941,19 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 animation: "fadeIn 0.15s ease-out"
               }}
             >
-              {/* Header with Title & Gender Filter Tabs */}
-              <div style={{ padding: "10px 14px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    🎙️ Choose Voice Model
-                  </span>
-                  <span style={{ fontSize: "10.5px", color: "#64748b", fontWeight: "600" }}>
-                    Sets Audio & Download
-                  </span>
-                </div>
-                {/* Gender Filter Tabs */}
-                <div style={{ display: "flex", gap: "4px", background: "#e2e8f0", padding: "3px", borderRadius: "8px" }}>
-                  {[
-                    { id: 'all', label: 'All Models' },
-                    { id: 'female', label: '👩 Female' },
-                    { id: 'male', label: '👨 Male' },
-                    ...(voiceLibrary.length > 0 ? [{ id: 'custom', label: '⭐ Custom' }] : [])
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setModelGenderTab(tab.id)}
-                      style={{
-                        flex: 1,
-                        padding: "4px 8px",
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        borderRadius: "6px",
-                        border: "none",
-                        cursor: "pointer",
-                        background: modelGenderTab === tab.id ? "#ffffff" : "transparent",
-                        color: modelGenderTab === tab.id ? "#0f172a" : "#64748b",
-                        boxShadow: modelGenderTab === tab.id ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                        transition: "all 0.12s ease"
-                      }}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+              {/* Header */}
+              <div style={{ padding: "10px 14px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "13px", fontWeight: "800", color: "#0f172a" }}>
+                  Choose Model
+                </span>
+                <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>
+                  ({allAvailableModels.length} models)
+                </span>
               </div>
 
               {/* Model List Scroll Area */}
               <div style={{ maxHeight: "320px", overflowY: "auto", padding: "6px" }}>
-                {allAvailableModels
-                  .filter(model => {
-                    if (modelGenderTab === 'female') return model.gender === 'female' && !model.isCustom;
-                    if (modelGenderTab === 'male') return model.gender === 'male' && !model.isCustom;
-                    if (modelGenderTab === 'custom') return model.isCustom;
-                    return true;
-                  })
-                  .map(model => {
+                {allAvailableModels.map(model => {
                     const isSelected = selectedVoiceModel?.id === model.id;
                     const isMale = model.gender === 'male';
                     return (
@@ -2033,7 +1989,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               )}
                             </div>
                             <span style={{ fontSize: "11px", color: "#64748b", display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                              {model.tag || model.description || (isMale ? "Male Voice" : "Female Voice")}
+                              {model.tag || model.description || "Voice Model"}
                             </span>
                           </div>
                         </div>
