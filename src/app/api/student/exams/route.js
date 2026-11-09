@@ -80,11 +80,22 @@ export async function GET(req) {
       }
     });
 
-    const instituteId = studentUser?.instituteId || session.instituteId || null;
-    const institutePkg = studentUser?.institute?.examPackage || null;
+    const isInstituteStudent = Boolean(
+      studentUser?.instituteId &&
+      !studentUser.instituteId.startsWith('examjk-open') &&
+      studentUser.institute &&
+      !studentUser.institute.id.startsWith('examjk-open')
+    );
+
+    const instituteId = isInstituteStudent ? studentUser.instituteId : null;
     const studentBatch = studentUser?.batch || null;
     const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
-    const assignedPkg = (studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim())) ? studentBatch : null;
+
+    // For institute student: their assigned package or institute's package
+    // For self-registered student: ONLY if Super Admin explicitly assigned a package to studentBatch
+    const assignedPkg = isInstituteStudent
+      ? ((studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim()) && !studentBatch.toLowerCase().includes('free')) ? studentBatch : (studentUser?.institute?.examPackage || null))
+      : ((studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim()) && !studentBatch.toLowerCase().includes('free') && !studentBatch.toLowerCase().includes('google') && !studentBatch.toLowerCase().includes('student')) ? studentBatch : null);
 
     // Filter sets based on strict institute isolation:
     // Students can see global published sets OR their own institute's sets
@@ -162,11 +173,22 @@ export async function GET(req) {
           assignedPkg && isSetCoveredByPackage(set, assignedPkg)
         );
 
-        const isUnlocked = Boolean(
-          isFree ||
-          isExplicitlyReleasedToInstitute ||
-          isCoveredByStudentPkg
-        );
+        let isUnlocked = false;
+        if (isFree) {
+          isUnlocked = true;
+        } else if (isInstituteStudent) {
+          // Institute student: unlocked if created by institute, released to institute, or in assigned package
+          isUnlocked = Boolean(
+            isCreatedByMyInstitute ||
+            isExplicitlyReleasedToInstitute ||
+            isCoveredByStudentPkg
+          );
+        } else {
+          // Self-registered student: ONLY unlocked if Super Admin explicitly granted package access!
+          isUnlocked = Boolean(
+            assignedPkg && isCoveredByStudentPkg
+          );
+        }
 
         return {
           id: set.id,

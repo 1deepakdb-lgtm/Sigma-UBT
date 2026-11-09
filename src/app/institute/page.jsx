@@ -571,13 +571,9 @@ const InstituteDashboard = () => {
   };
 
   const loadData = async () => {
-    const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-    const localList = allStudents[instituteName] || [];
-    setStudents(localList);
-
-    // Sync students from backend database to ensure consistency
+    // Fetch students directly from secure backend database (strictly isolated by this institute's ID)
     try {
-      const queryParam = instituteName ? `?institute=${encodeURIComponent(instituteName)}` : '';
+      const queryParam = instId ? `?instituteId=${encodeURIComponent(instId)}` : (instituteName ? `?institute=${encodeURIComponent(instituteName)}` : '');
       const res = await fetch(`/api/institute/students${queryParam}`);
       if (res.ok) {
         const data = await res.json();
@@ -586,40 +582,22 @@ const InstituteDashboard = () => {
             id: s.id,
             name: s.name,
             phone: s.phone || s.username,
-            password: localList.find((l) => l.phone === (s.phone || s.username))?.password || "1234",
+            password: "••••",
             assignedPackage: s.batch || (instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT"),
             expiryDate: calculateExpiryDate("1 Month"),
             status: s.status || "Active"
           }));
 
-          const merged = [...dbStudents];
-          for (const loc of localList) {
-            if (!merged.some((m) => m.phone === loc.phone)) {
-              merged.push(loc);
-              // Auto-sync missing student to database
-              fetch("/api/institute/students", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  name: loc.name,
-                  username: loc.phone,
-                  password: loc.password || "1234",
-                  phone: loc.phone,
-                  batch: loc.assignedPackage || (instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT"),
-                  status: loc.status || "Active",
-                  instituteName: instituteName
-                })
-              }).catch(() => {});
-            }
-          }
-
-          allStudents[instituteName] = merged;
+          const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
+          allStudents[instituteName] = dbStudents;
           localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
-          setStudents(merged);
+          setStudents(dbStudents);
         }
       }
     } catch (e) {
-      console.warn("Notice: Syncing students with database:", e);
+      console.warn("Notice: Fetching students from database:", e);
+      const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
+      setStudents(allStudents[instituteName] || []);
     }
 
     let savedPackages = JSON.parse(localStorage.getItem("examPackages")) || [];

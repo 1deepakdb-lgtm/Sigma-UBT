@@ -278,13 +278,31 @@ export async function POST(req) {
     if (user.role === 'student') {
       const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
       const isShiftOnly = user.batch && shiftNames.includes(user.batch.toLowerCase().trim());
+      const hasRealInstitute = Boolean(
+        user.instituteId &&
+        !user.instituteId.startsWith('examjk-open') &&
+        user.institute &&
+        !user.institute.id.startsWith('examjk-open')
+      );
 
-      if (user.batch && !isShiftOnly) {
-        studentPackage = user.batch;
-      } else if (user.institute?.examPackage) {
-        studentPackage = user.institute.examPackage;
+      if (hasRealInstitute) {
+        if (user.batch && !isShiftOnly && !user.batch.toLowerCase().includes('google') && !user.batch.toLowerCase().includes('free')) {
+          studentPackage = user.batch;
+        } else if (user.institute?.examPackage) {
+          studentPackage = user.institute.examPackage;
+        } else {
+          studentPackage = (user.institute?.language === 'japanese' || user.language === 'japanese') ? 'Full Mock Test' : 'Full Set UBT';
+        }
       } else {
-        studentPackage = 'Full Set UBT';
+        // Self-registered student: Free Student Access by default; only Super Admin can grant paid package
+        const adminAssignedPkg = (user.batch && !isShiftOnly && !user.batch.toLowerCase().includes('free') && !user.batch.toLowerCase().includes('google') && !user.batch.toLowerCase().includes('student'))
+          ? user.batch
+          : null;
+        if (adminAssignedPkg) {
+          studentPackage = adminAssignedPkg;
+        } else {
+          studentPackage = 'Free Student Access';
+        }
       }
 
       if (user.phone) {

@@ -96,16 +96,16 @@ export async function POST(req, { params }) {
     );
 
     if (!isFree) {
-      const instituteId = studentUser?.instituteId || session.instituteId || null;
-      const institutePkg = studentUser?.institute?.examPackage || null;
+      const isInstituteStudent = Boolean(
+        studentUser?.instituteId &&
+        !studentUser.instituteId.startsWith('examjk-open') &&
+        studentUser.institute &&
+        !studentUser.institute.id.startsWith('examjk-open')
+      );
+
+      const instituteId = isInstituteStudent ? studentUser.instituteId : null;
       const studentBatch = studentUser?.batch || null;
       const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
-      const assignedPkg = (studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim())) ? studentBatch : null;
-
-      const isMyInstituteSet = Boolean(instituteId && examSet.creatorInstituteId && examSet.creatorInstituteId === instituteId);
-      const isExplicitlyReleased = Boolean(
-        studentUser?.institute?.examSets?.some(ies => ies.examSetId === examSet.id)
-      );
 
       const checkSinglePkg = (pkg) => {
         if (!pkg) return false;
@@ -131,15 +131,48 @@ export async function POST(req, { params }) {
         return parts.some(checkSinglePkg);
       };
 
-      const hasAccess = Boolean(
-        isExplicitlyReleased ||
-        checkPkg(assignedPkg)
-      );
+      if (isInstituteStudent) {
+        // Enrolled under an accredited Institute:
+        // Access is ONLY granted to exams/packages the institute assigned to them
+        const assignedPkg = (studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim()) && !studentBatch.toLowerCase().includes('free'))
+          ? studentBatch
+          : (studentUser?.institute?.examPackage || null);
 
-      if (!hasAccess) {
-        return NextResponse.json({
-          error: 'This exam set is locked. Please acquire the appropriate institute package or set access.'
-        }, { status: 403 });
+        const isMyInstituteSet = Boolean(instituteId && examSet.creatorInstituteId && examSet.creatorInstituteId === instituteId);
+        const isExplicitlyReleased = Boolean(
+          studentUser?.institute?.examSets?.some(ies => ies.examSetId === examSet.id)
+        );
+
+        const hasInstituteAccess = Boolean(
+          isMyInstituteSet ||
+          isExplicitlyReleased ||
+          checkPkg(assignedPkg)
+        );
+
+        if (!hasInstituteAccess) {
+          return NextResponse.json({
+            error: 'Access denied: This exam is locked. It is not included in your institute\'s assigned package. Please contact your institute.',
+            isLocked: true
+          }, { status: 403 });
+        }
+      } else {
+        // Self-registered / Google student:
+        // Access to paid/non-free sets can ONLY be granted by Super Admin!
+        const adminAssignedPkg = (studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim()) && !studentBatch.toLowerCase().includes('free') && !studentBatch.toLowerCase().includes('google') && !studentBatch.toLowerCase().includes('student'))
+          ? studentBatch
+          : null;
+
+        const hasAdminAccess = Boolean(
+          adminAssignedPkg && checkPkg(adminAssignedPkg)
+        );
+
+        if (!hasAdminAccess) {
+          return NextResponse.json({
+            error: 'Access denied: Free self-registered accounts can only access Free demo exams. Full package access can only be granted by Super Admin.',
+            isLocked: true,
+            requiresAdminGrant: true
+          }, { status: 403 });
+        }
       }
     }
 

@@ -69,9 +69,15 @@ const StudentExam = () => {
             if (data.examName) setExactExamName(data.examName);
             return;
           }
+        } else {
+          // STRICT SECURITY: If backend denies access (e.g. 403 Forbidden), halt immediately and redirect
+          const errData = await res.json().catch(() => ({}));
+          alert(errData.error || "Access Denied: You do not have authorization to access this exam.");
+          router.push("/student");
+          return;
         }
       } catch (err) {
-        console.warn("Backend start API fallback to local bank:", err);
+        console.warn("Backend start API network error:", err);
       }
 
       const savedSets = JSON.parse(localStorage.getItem("examSets")) || [];

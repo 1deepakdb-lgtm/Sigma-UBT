@@ -51,29 +51,30 @@ export async function getOrCreateOpenInstitute(languageTrack = 'both') {
           id: target.id,
           name: target.name,
           username: target.username,
-          subscription: 'Standard',
+          subscription: 'Free Access',
           entryDate: '2026-01-01',
           expireDate: '2099-12-31',
-          examPackage: 'Full Set UBT',
+          examPackage: 'Free Student Access',
           status: 'Active',
           logoUrl: '/examjk-logo.png',
           watermarkText: target.watermarkText,
           language: target.language
         }
       });
-    } else if (openInst.language !== target.language) {
-      // Ensure language matches config
+    } else if (openInst.language !== target.language || openInst.examPackage !== 'Free Student Access') {
+      // Ensure language and free package match config
       openInst = await prisma.institute.update({
         where: { id: openInst.id },
-        data: { language: target.language }
+        data: {
+          language: target.language,
+          examPackage: 'Free Student Access'
+        }
       });
     }
 
     return openInst;
   } catch (err) {
     console.error('getOrCreateOpenInstitute notice:', err);
-    // Fallback: try to find any active institute
-    const fallback = await prisma.institute.findFirst().catch(() => null);
-    return fallback;
+    return null;
   }
 }

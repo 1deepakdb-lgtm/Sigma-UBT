@@ -233,12 +233,15 @@ const StudentDashboard = () => {
   }, [instituteLanguage, isPureJapaneseStudent, isPureKoreanStudent]);
 
   const isEnrolledInstituteStudent = Boolean(
-    studentInstitute ||
-    studentInstituteId ||
-    (typeof window !== "undefined" && (localStorage.getItem("currentInstitute") || localStorage.getItem("currentInstituteId")))
+    (studentInstituteId && !studentInstituteId.startsWith("examjk-open")) ||
+    (studentInstitute && !studentInstitute.toLowerCase().includes("open academy") && !studentInstitute.toLowerCase().includes("open institute")) ||
+    (typeof window !== "undefined" && (
+      (localStorage.getItem("currentInstituteId") && !localStorage.getItem("currentInstituteId").startsWith("examjk-open")) ||
+      (localStorage.getItem("currentInstitute") && !localStorage.getItem("currentInstitute").toLowerCase().includes("open academy") && !localStorage.getItem("currentInstitute").toLowerCase().includes("open institute"))
+    ))
   );
 
-  const isGoogleOrFree = !isEnrolledInstituteStudent && Boolean(
+  const isGoogleOrFree = !isEnrolledInstituteStudent || Boolean(
     studentPackage?.toLowerCase().includes("google") ||
     studentPackage?.toLowerCase().includes("free") ||
     studentBatch?.toLowerCase().includes("google") ||
@@ -282,30 +285,32 @@ const StudentDashboard = () => {
   const activeStudentPackages = (() => {
     let list = [];
 
-    // 1. From student's institute: Enrolled students inherit their institute's active package
-    const instPkg = studentInstitutePackage || (typeof window !== "undefined" ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage")) : null);
-    if (instPkg && !list.includes(instPkg)) {
-      list.push(instPkg);
-    }
+    // 1. From student's institute: Enrolled students inherit their institute's active package (ONLY for accredited institutes)
+    if (isEnrolledInstituteStudent) {
+      const instPkg = studentInstitutePackage || (typeof window !== "undefined" ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage")) : null);
+      if (instPkg && !list.includes(instPkg)) {
+        list.push(instPkg);
+      }
 
-    if (typeof window !== "undefined" && studentInstitute) {
-      try {
-        const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
-        const found = institutes.find(i => (i.name && i.name.toLowerCase() === studentInstitute.toLowerCase()) || (i.username && i.username.toLowerCase() === studentInstitute.toLowerCase()));
-        if (found) {
-          if (found.examPackage && !list.includes(found.examPackage)) list.push(found.examPackage);
-          if (Array.isArray(found.purchasedPackages)) {
-            found.purchasedPackages.forEach(p => { if (p && !list.includes(p)) list.push(p); });
+      if (typeof window !== "undefined" && studentInstitute) {
+        try {
+          const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
+          const found = institutes.find(i => (i.name && i.name.toLowerCase() === studentInstitute.toLowerCase()) || (i.username && i.username.toLowerCase() === studentInstitute.toLowerCase()));
+          if (found) {
+            if (found.examPackage && !list.includes(found.examPackage)) list.push(found.examPackage);
+            if (Array.isArray(found.purchasedPackages)) {
+              found.purchasedPackages.forEach(p => { if (p && !list.includes(p)) list.push(p); });
+            }
+            if (Array.isArray(found.assignedPackages)) {
+              found.assignedPackages.forEach(p => { if (p && !list.includes(p)) list.push(p); });
+            }
           }
-          if (Array.isArray(found.assignedPackages)) {
-            found.assignedPackages.forEach(p => { if (p && !list.includes(p)) list.push(p); });
+          const instPurchased = JSON.parse(localStorage.getItem(`institutePurchasedPackages_${studentInstitute}`) || "[]");
+          if (Array.isArray(instPurchased)) {
+            instPurchased.forEach(p => { if (p && !list.includes(p)) list.push(p); });
           }
-        }
-        const instPurchased = JSON.parse(localStorage.getItem(`institutePurchasedPackages_${studentInstitute}`) || "[]");
-        if (Array.isArray(instPurchased)) {
-          instPurchased.forEach(p => { if (p && !list.includes(p)) list.push(p); });
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
     }
 
     // 2. From adminBuyerStudentsMap for this student phone

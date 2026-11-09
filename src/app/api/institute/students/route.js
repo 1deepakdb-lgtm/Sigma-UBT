@@ -29,7 +29,17 @@ export async function GET(req) {
       }
     } else {
       // Institutes and staff can ONLY query their own students
-      targetInstId = session.instituteId || 'unassigned';
+      targetInstId = session.instituteId || null;
+      if (!targetInstId && session.id) {
+        const instUser = await prisma.user.findUnique({
+          where: { id: session.id },
+          select: { instituteId: true }
+        });
+        targetInstId = instUser?.instituteId || null;
+      }
+      if (!targetInstId) {
+        return NextResponse.json({ students: [] });
+      }
       where.instituteId = targetInstId;
     }
 
@@ -94,11 +104,21 @@ export async function POST(req) {
     const cleanPhone = last10 || rawPhone;
     const cleanPassword = (password || '1234').toString().trim() || '1234';
 
-    // Determine institute ID with multi-level fallback
+    // Determine institute ID with strict tenant isolation
     let targetInstituteId = null;
-    if (session && session.role === 'institute' && session.instituteId) {
-      targetInstituteId = session.instituteId;
-    } else {
+    if (session && (session.role === 'institute' || session.role === 'staff')) {
+      targetInstituteId = session.instituteId || null;
+      if (!targetInstituteId && session.id) {
+        const instUser = await prisma.user.findUnique({
+          where: { id: session.id },
+          select: { instituteId: true }
+        });
+        targetInstituteId = instUser?.instituteId || null;
+      }
+      if (!targetInstituteId) {
+        return NextResponse.json({ error: 'Institute identity could not be verified' }, { status: 403 });
+      }
+    } else if (session && session.role === 'admin') {
       const searchTarget = reqInstId || reqInstName || session?.instituteName || null;
       if (searchTarget) {
         const inst = await prisma.institute.findFirst({
@@ -112,10 +132,8 @@ export async function POST(req) {
         });
         if (inst) targetInstituteId = inst.id;
       }
-      if (!targetInstituteId) {
-        const defaultInst = await prisma.institute.findFirst();
-        if (defaultInst) targetInstituteId = defaultInst.id;
-      }
+    } else {
+      return NextResponse.json({ error: 'Unauthorized to create or modify students' }, { status: 403 });
     }
 
     const passwordHash = await hashPassword(cleanPassword);

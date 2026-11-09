@@ -49,9 +49,14 @@ export async function GET(req) {
     if (user.role === 'student') {
       const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
       const isShiftOnly = user.batch && shiftNames.includes(user.batch.toLowerCase().trim());
-      const hasInstitute = Boolean(user.instituteId && user.institute);
+      const hasRealInstitute = Boolean(
+        user.instituteId &&
+        !user.instituteId.startsWith('examjk-open') &&
+        user.institute &&
+        !user.institute.id.startsWith('examjk-open')
+      );
 
-      if (hasInstitute) {
+      if (hasRealInstitute) {
         // Enrolled institute child inherits institute package access
         isGoogleOrFree = false;
         if (user.batch && !isShiftOnly && !user.batch.toLowerCase().includes('google') && !user.batch.toLowerCase().includes('free')) {
@@ -62,17 +67,19 @@ export async function GET(req) {
           studentPackage = (user.institute?.language === 'japanese' || user.language === 'japanese') ? 'Full Mock Test' : 'Full Set UBT';
         }
       } else {
-        isGoogleOrFree = Boolean(
-          user.batch?.toLowerCase().includes('google') ||
-          user.batch?.toLowerCase().includes('free')
-        );
+        // Self-registered / Google student
+        // STRICT RULE: Can ONLY access Free services by default!
+        // ONLY Super Admin can grant them access to a paid package!
+        const adminAssignedPkg = (user.batch && !isShiftOnly && !user.batch.toLowerCase().includes('free') && !user.batch.toLowerCase().includes('google') && !user.batch.toLowerCase().includes('student'))
+          ? user.batch
+          : null;
 
-        if (isGoogleOrFree) {
-          studentPackage = 'Free Student Access';
-        } else if (user.batch && !isShiftOnly) {
-          studentPackage = user.batch;
+        if (adminAssignedPkg) {
+          studentPackage = adminAssignedPkg;
+          isGoogleOrFree = false;
         } else {
-          studentPackage = (user.language === 'japanese') ? 'Full Mock Test' : 'Full Set UBT';
+          studentPackage = 'Free Student Access';
+          isGoogleOrFree = true;
         }
       }
 
