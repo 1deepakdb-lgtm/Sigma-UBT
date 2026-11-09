@@ -183,13 +183,19 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const [activeLang, setActiveLang] = useState(initialLang);
   const [japaneseFilter, setJapaneseFilter] = useState('all'); // 'all' | 'kanji' | 'n5'..'n1' | 'vocab'
 
-  // Selected Voice Models (State)
+  // Selected Voice Models (Unified Active Model State)
+  const [selectedVoiceModel, setSelectedVoiceModel] = useState(
+    initialLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS[0] : KOREAN_FEMALE_VOICE_MODELS[0]
+  );
   const [selectedFemaleModel, setSelectedFemaleModel] = useState(
     initialLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS[0] : KOREAN_FEMALE_VOICE_MODELS[0]
   );
   const [selectedMaleModel, setSelectedMaleModel] = useState(
     initialLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS[0] : KOREAN_MALE_VOICE_MODELS[0]
   );
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [modelGenderTab, setModelGenderTab] = useState('all'); // 'all' | 'female' | 'male' | 'custom'
+  const modelDropdownRef = useRef(null);
   const [isFemaleDropdownOpen, setIsFemaleDropdownOpen] = useState(false);
   const [isMaleDropdownOpen, setIsMaleDropdownOpen] = useState(false);
 
@@ -564,6 +570,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   // Click outside to close dropdowns
   useEffect(() => {
     function handleClickOutside(e) {
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target)) {
+        setIsModelDropdownOpen(false);
+      }
       if (
         femaleDropdownRef.current && !femaleDropdownRef.current.contains(e.target) &&
         femaleBadgeRef.current && !femaleBadgeRef.current.contains(e.target)
@@ -971,9 +980,23 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
   }
 
-  function handlePlaySearchWord(gender = 'female', customModel = null, customId = null) {
-    const activeModel = customModel || (gender === 'female' ? selectedFemaleModel : selectedMaleModel);
-    const audioId = customId || (customModel ? `preview-${customModel.id}` : `search-${gender}`);
+  function handleSelectModel(model) {
+    if (!model) return;
+    setSelectedVoiceModel(model);
+    if (model.gender === 'male') {
+      setSelectedMaleModel(model);
+    } else {
+      setSelectedFemaleModel(model);
+    }
+    try {
+      localStorage.setItem(`sigma_selected_voice_model_${activeLang}`, JSON.stringify(model));
+    } catch (e) {}
+    setIsModelDropdownOpen(false);
+  }
+
+  function handlePlaySearchWord(customModel = null, customId = null) {
+    const activeModel = customModel || selectedVoiceModel || selectedFemaleModel;
+    const audioId = customId || (customModel ? `preview-${customModel.id}` : 'search-active-model');
 
     if (playingAudioId === audioId || loadingAudioId === audioId) {
       if (audioRef.current) {
@@ -1051,7 +1074,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       }
     }
 
-    const isMale = gender === 'male';
+    const isMale = activeModel?.gender === 'male';
     const voiceProfId = activeModel?.voiceProfileId || (
       lang === 'ja'
         ? (isMale ? 'ja-male-1' : 'ja-female-1')
@@ -1091,15 +1114,16 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       return;
     }
 
-    // Default to active voice model
-    const activeModel = selectedFemaleModel || (langCode === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS[0] : KOREAN_FEMALE_VOICE_MODELS[0]);
-    const voiceProfId = activeModel?.voiceProfileId || (langCode === 'ja' ? 'ja-female-1' : 'ko-female-1');
-    const url = `/api/elevenlabs/tts?text=${encodeURIComponent(spoken || primary)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=female`;
-    handlePlayAudio(url, audioId, spoken || primary, langCode, 'female', activeModel);
+    // Uses the user's chosen active voice model
+    const activeModel = selectedVoiceModel || selectedFemaleModel || (langCode === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS[0] : KOREAN_FEMALE_VOICE_MODELS[0]);
+    const isMale = activeModel?.gender === 'male';
+    const voiceProfId = activeModel?.voiceProfileId || (langCode === 'ja' ? (isMale ? 'ja-male-1' : 'ja-female-1') : (isMale ? 'ko-male-1' : 'ko-female-1'));
+    const url = `/api/elevenlabs/tts?text=${encodeURIComponent(spoken || primary)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=${isMale ? 'male' : 'female'}`;
+    handlePlayAudio(url, audioId, spoken || primary, langCode, isMale ? 'male' : 'female', activeModel);
   }
 
-  function handleDownloadSearchWord(gender = 'female', customModel = null) {
-    const activeModel = customModel || (gender === 'female' ? selectedFemaleModel : selectedMaleModel);
+  function handleDownloadSearchWord(customModel = null) {
+    const activeModel = customModel || selectedVoiceModel || selectedFemaleModel;
 
     if (activeModel?.isCustom && activeModel.url) {
       handleDownloadAudio(activeModel.url, `${activeModel.name.replace(/\s+/g, '_')}_custom_voice.mp3`);
@@ -1107,57 +1131,24 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     }
 
     const queryText = searchQuery.trim();
-    if (queryText && !customModel) {
-      const qLower = queryText.toLowerCase();
-      const matchingCustom = voiceLibrary.find(v => {
-        if (!v.word || v.word === 'all') return false;
-        const wLower = v.word.trim().toLowerCase();
-        if (wLower === qLower) return true;
-        if (selectedWord?.korean && wLower === selectedWord.korean.toLowerCase()) return true;
-        if (selectedWord?.japanese && wLower === selectedWord.japanese.toLowerCase()) return true;
-        return false;
-      });
-      if (matchingCustom?.url) {
-        handleDownloadAudio(matchingCustom.url, `${matchingCustom.word || queryText}_custom_voice.mp3`);
-        return;
-      }
+    let textToSpeak = queryText;
+    if (!textToSpeak) {
+      textToSpeak = activeLang === 'ja'
+        ? (selectedWord?.japanese || results[0]?.japanese || '日本語')
+        : (selectedWord?.korean || results[0]?.korean || '한국어');
     }
 
-    const wordToDownload = searchQuery.trim() || (activeLang === 'ja' ? (selectedWord?.japanese || results[0]?.japanese) : (selectedWord?.korean || results[0]?.korean)) || (activeLang === 'ja' ? 'こんにちは' : '안녕하세요');
-    if (!wordToDownload) return;
-
-    let lang = activeLang === 'ja' ? 'ja' : 'ko';
-    if (/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(wordToDownload)) {
-      lang = 'ja';
-    } else if (/[\uAC00-\uD7AF]/.test(wordToDownload)) {
-      lang = 'ko';
-    } else if (/[\u0900-\u097F]/.test(wordToDownload)) {
-      lang = 'ne';
-    } else if (/^[a-zA-Z\s]+$/.test(wordToDownload)) {
-      lang = activeLang === 'ja' ? 'ja' : 'en';
-    }
-
-    const textToSpeak = (lang === 'ko' && selectedWord?.korean && !/[\uAC00-\uD7AF]/.test(wordToDownload))
-      ? selectedWord.korean
-      : (lang === 'ja' && selectedWord?.japanese && !/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(wordToDownload))
-        ? (selectedWord.japaneseSpoken || selectedWord.reading || selectedWord.japanese)
-        : wordToDownload;
-
-    const voiceProfId = activeModel?.voiceProfileId || activeModel?.id;
+    const langCode = activeLang === 'ja' ? 'ja' : 'ko';
+    const isMale = activeModel?.gender === 'male';
+    const voiceProfId = activeModel?.voiceProfileId || (langCode === 'ja' ? (isMale ? 'ja-male-1' : 'ja-female-1') : (isMale ? 'ko-male-1' : 'ko-female-1'));
     const isAi = activeModel?.isAiStudio || voiceProfId?.startsWith('ko-') || voiceProfId?.startsWith('ja-');
-    const filename = `${textToSpeak}_${gender}_${(activeModel?.name || 'voice').replace(/\s+/g, '_')}.mp3`;
+    const filename = `${(selectedWord?.romaji || textToSpeak).replace(/\s+/g, '_')}_${(activeModel?.name || 'voice').replace(/\s+/g, '_')}.mp3`;
 
-    let url;
-    if (isAi) {
-      url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&download=true&filename=${encodeURIComponent(filename)}`;
-    } else {
-      const defaultVoice = activeLang === 'ja'
-        ? (gender === 'female' ? 'ja-JP-NanamiNeural' : 'ja-JP-KeitaNeural')
-        : (gender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural');
+    const dlUrl = isAi
+      ? `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=${isMale ? 'male' : 'female'}&download=true&filename=${encodeURIComponent(filename)}`
+      : `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${langCode}&gender=${isMale ? 'male' : 'female'}&voice=${encodeURIComponent(activeModel?.voice || '')}&model=${encodeURIComponent(activeModel?.id || '')}&download=true`;
 
-      url = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${lang}&gender=${gender}&voice=${encodeURIComponent(activeModel.voice || defaultVoice)}&pitch=${encodeURIComponent(activeModel.pitch || '+0Hz')}&rate=${encodeURIComponent(activeModel.rate || '-5%')}&model=${encodeURIComponent(activeModel.id || activeModel.name || '')}&download=true`;
-    }
-    handleDownloadAudio(url, filename);
+    handleDownloadAudio(dlUrl, filename);
   }
 
   function handleOpenVoiceStudioForWord(targetWord = '') {
@@ -1428,6 +1419,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const currentActiveWord = selectedWord || (results.length > 0 ? results[0] : null);
   const currentFemaleVoices = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
   const currentMaleVoices = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
+  const allAvailableModels = [
+    ...currentFemaleVoices.map(m => ({ ...m, gender: 'female' })),
+    ...currentMaleVoices.map(m => ({ ...m, gender: 'male' })),
+    ...voiceLibrary.map(v => ({
+      id: `custom-${v.id || v.name}`,
+      name: v.name || 'Custom Voice',
+      gender: v.gender || 'female',
+      tag: `⭐ ${v.word || 'Custom'}`,
+      isCustom: true,
+      url: v.url
+    }))
+  ];
 
   const activeWordString = activeLang === 'ja'
     ? (currentActiveWord?.japanese || currentActiveWord?.kanji || searchQuery.trim() || '')
@@ -1584,62 +1587,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", maxWidth: "100%", paddingBottom: "2px" }}>
-          {/* Active Model Badges & AI Studio Button - All Same Size (Height 42px, radius 24px, 30px icon, 2-line text, strictly ONE line) */}
-          <div
-            ref={femaleBadgeRef}
-            onClick={() => setIsFemaleDropdownOpen(prev => !prev)}
-            title="Active Female Voice Model (Click to select model)"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "#fff1f2",
-              border: "1.5px solid #fecdd3",
-              padding: "4px 14px 4px 6px",
-              borderRadius: "24px",
-              height: "42px",
-              minWidth: "160px",
-              flexShrink: 0,
-              boxSizing: "border-box",
-              cursor: "pointer",
-              transition: "all 0.15s ease"
-            }}
-          >
-            <FemaleIcon size={30} isPlaying={playingAudioId === 'search-female'} />
-            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
-              <span style={{ fontSize: "12px", fontWeight: "800", color: "#be185d" }}>{selectedFemaleModel.name}</span>
-              <span style={{ fontSize: "10px", color: "#9d174d", fontWeight: "600" }}>{selectedFemaleModel.isCustom ? "⭐ Custom Library" : (selectedFemaleModel.tag || "Female Voice")}</span>
-            </div>
-          </div>
-
-          <div
-            ref={maleBadgeRef}
-            onClick={() => setIsMaleDropdownOpen(prev => !prev)}
-            title="Active Male Voice Model (Click to select model)"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "#f0f9ff",
-              border: "1.5px solid #bae6fd",
-              padding: "4px 14px 4px 6px",
-              borderRadius: "24px",
-              height: "42px",
-              minWidth: "160px",
-              flexShrink: 0,
-              boxSizing: "border-box",
-              cursor: "pointer",
-              transition: "all 0.15s ease"
-            }}
-          >
-            <MaleIcon size={30} isPlaying={playingAudioId === 'search-male'} />
-            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
-              <span style={{ fontSize: "12px", fontWeight: "800", color: "#0369a1" }}>{selectedMaleModel.name}</span>
-              <span style={{ fontSize: "10px", color: "#0284c7", fontWeight: "600" }}>{selectedMaleModel.isCustom ? "⭐ Custom Library" : (selectedMaleModel.tag || "Male Voice")}</span>
-            </div>
-          </div>
-
-          {/* AI Studio Toggle Button (Same exact size, height 42px, radius 24px, 30px icon, 2-line layout) */}
+          {/* AI Studio Toggle Button */}
           <button
             type="button"
             onClick={() => {
@@ -1866,506 +1814,264 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </div>
         )}
 
-        {/* 2 & 3. 👩 FEMALE & 👨 MALE VOICE GROUPS - ALWAYS IN ONE HORIZONTAL LINE FOR ALL */}
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "nowrap", flexShrink: 0 }}>
-          {/* 2. 👩 FEMALE VOICE GROUP WITH DROPDOWN ARROW (Minimum 10 Models + Uploaded Voice Library) */}
-          <div ref={femaleDropdownRef} style={{ position: "relative", display: "inline-flex" }}>
-          <div style={{ display: "inline-flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #fda4af", background: "#fff1f2", boxShadow: "0 2px 6px rgba(225, 29, 72, 0.1)" }}>
-            {/* Play Button */}
+        {/* UNIFIED VOICE MODEL SELECTOR, PLAY & DOWNLOAD */}
+        <div ref={modelDropdownRef} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+          {/* Model Picker Pill Button */}
+          <button
+            type="button"
+            onClick={() => setIsModelDropdownOpen(prev => !prev)}
+            title="Choose Voice Model for Playback and Download"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              background: selectedVoiceModel?.gender === 'male' ? "#f0f9ff" : "#fff1f2",
+              border: `1.5px solid ${selectedVoiceModel?.gender === 'male' ? '#bae6fd' : '#fecdd3'}`,
+              padding: "0 12px 0 8px",
+              borderRadius: "8px",
+              height: "40px",
+              cursor: "pointer",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+              transition: "all 0.15s ease",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {selectedVoiceModel?.gender === 'male' ? (
+              <MaleIcon size={24} isPlaying={playingAudioId === 'search-active-model'} />
+            ) : (
+              <FemaleIcon size={24} isPlaying={playingAudioId === 'search-active-model'} />
+            )}
+            <div style={{ display: "flex", flexDirection: "column", textAlign: "left", lineHeight: 1.15 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Model:</span>
+                <span style={{ fontSize: "12.5px", fontWeight: "800", color: selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d" }}>
+                  {selectedVoiceModel?.name || (activeLang === 'ja' ? "Japanese Female 1" : "Korean Female 1")}
+                </span>
+              </div>
+              <span style={{ fontSize: "10px", color: selectedVoiceModel?.gender === 'male' ? "#0284c7" : "#db2777", fontWeight: "600" }}>
+                {selectedVoiceModel?.isCustom ? "⭐ Custom" : (selectedVoiceModel?.tag || "Natural Voice")}
+              </span>
+            </div>
+            <span style={{ fontSize: "11px", color: "#64748b", marginLeft: "4px" }}>
+              {isModelDropdownOpen ? "▲" : "▼"}
+            </span>
+          </button>
+
+          {/* Play Audio with Chosen Model */}
+          <button
+            type="button"
+            onClick={() => handlePlaySearchWord()}
+            title={`Play searched word with ${selectedVoiceModel?.name || 'Active Model'}`}
+            style={{
+              backgroundColor: playingAudioId === 'search-active-model'
+                ? (selectedVoiceModel?.gender === 'male' ? "#0284c7" : "#e11d48")
+                : loadingAudioId === 'search-active-model'
+                ? "#64748b"
+                : (selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d"),
+              color: "#ffffff",
+              border: "none",
+              padding: "0 14px",
+              height: "40px",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontWeight: "800",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              whiteSpace: "nowrap",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+              transition: "all 0.15s ease"
+            }}
+          >
+            {loadingAudioId === 'search-active-model' ? (
+              <>
+                <span style={{ display: "inline-block", animation: "spin 0.8s linear infinite" }}>⏳</span>
+                <span>Loading...</span>
+              </>
+            ) : playingAudioId === 'search-active-model' ? (
+              <>
+                <span>⏹</span>
+                <span>Stop</span>
+              </>
+            ) : (
+              <>
+                <span>🔊</span>
+                <span>Play</span>
+              </>
+            )}
+          </button>
+
+          {/* Download MP3 with Chosen Model */}
+          {canDownloadAudio && (
             <button
               type="button"
-              onClick={() => handlePlaySearchWord('female')}
-              title={`Play searched word in Female Voice (${selectedFemaleModel.name})`}
+              onClick={() => handleDownloadSearchWord()}
+              title={`Download MP3 pronunciation with ${selectedVoiceModel?.name || 'Active Model'}`}
               style={{
-                backgroundColor: playingAudioId === 'search-female' ? "#be185d" : loadingAudioId === 'search-female' ? "#f43f5e" : "transparent",
-                color: playingAudioId === 'search-female' || loadingAudioId === 'search-female' ? "#ffffff" : "#be185d",
-                border: "none",
+                backgroundColor: "#ffffff",
+                color: selectedVoiceModel?.gender === 'male' ? "#0284c7" : "#be185d",
+                border: `1.5px solid ${selectedVoiceModel?.gender === 'male' ? '#bae6fd' : '#fecdd3'}`,
                 padding: "0 12px",
                 height: "40px",
-                fontSize: "13px",
-                fontWeight: "700",
+                borderRadius: "8px",
+                fontSize: "14px",
                 cursor: "pointer",
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: "7px",
-                whiteSpace: "nowrap",
+                justifyContent: "center",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
                 transition: "all 0.15s ease"
               }}
             >
-              <FemaleIcon size={24} isPlaying={playingAudioId === 'search-female'} />
-              <span>{loadingAudioId === 'search-female' ? "⏳ Loading..." : playingAudioId === 'search-female' ? "⏹ Stop" : "Female"}</span>
+              📥
             </button>
+          )}
 
-            {/* Dropdown Arrow Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setIsFemaleDropdownOpen(prev => !prev);
-                setIsMaleDropdownOpen(false);
-              }}
-              title="Choose Female Voice Model or Your Uploaded Voices"
-              style={{
-                backgroundColor: isFemaleDropdownOpen ? "#fecdd3" : "transparent",
-                color: "#be185d",
-                border: "none",
-                borderLeft: "1.5px solid #fda4af",
-                padding: "0 10px",
-                height: "40px",
-                fontSize: "12px",
-                fontWeight: "800",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "3px"
-              }}
-            >
-              <span style={{ fontSize: "10px" }}>▼</span>
-            </button>
-
-            {/* Download MP3 */}
-            {canDownloadAudio && (
-              <button
-                type="button"
-                onClick={() => handleDownloadSearchWord('female')}
-                title={`Download Female Voice (${selectedFemaleModel.name})`}
-                style={{
-                  backgroundColor: "transparent",
-                  color: "#be185d",
-                  border: "none",
-                  borderLeft: "1.5px solid #fda4af",
-                  padding: "0 10px",
-                  height: "40px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                📥
-              </button>
-            )}
-          </div>
-
-          {/* Female Models & Voice Library Dropdown Menu */}
-          {isFemaleDropdownOpen && (
+          {/* Unified Voice Models Dropdown Menu */}
+          {isModelDropdownOpen && (
             <div
               style={{
                 position: "absolute",
                 top: "calc(100% + 6px)",
                 left: 0,
-                zIndex: 1000,
-                width: "330px",
-                maxWidth: "calc(100vw - 28px)",
-                maxHeight: "440px",
-                overflowY: "auto",
+                zIndex: 100000,
+                width: "360px",
+                maxWidth: "92vw",
                 backgroundColor: "#ffffff",
-                border: "1.5px solid #fecdd3",
-                borderRadius: "10px",
-                boxShadow: "0 10px 25px rgba(225, 29, 72, 0.18)",
-                padding: "8px",
-                animation: "dropdownMenuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)"
+                borderRadius: "14px",
+                boxShadow: "0 12px 36px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08)",
+                border: "1.5px solid #e2e8f0",
+                overflow: "hidden",
+                animation: "fadeIn 0.15s ease-out"
               }}
             >
+              {/* Header with Title & Gender Filter Tabs */}
+              <div style={{ padding: "10px 14px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    🎙️ Choose Voice Model
+                  </span>
+                  <span style={{ fontSize: "10.5px", color: "#64748b", fontWeight: "600" }}>
+                    Sets Audio & Download
+                  </span>
+                </div>
+                {/* Gender Filter Tabs */}
+                <div style={{ display: "flex", gap: "4px", background: "#e2e8f0", padding: "3px", borderRadius: "8px" }}>
+                  {[
+                    { id: 'all', label: 'All Models' },
+                    { id: 'female', label: '👩 Female' },
+                    { id: 'male', label: '👨 Male' },
+                    ...(voiceLibrary.length > 0 ? [{ id: 'custom', label: '⭐ Custom' }] : [])
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setModelGenderTab(tab.id)}
+                      style={{
+                        flex: 1,
+                        padding: "4px 8px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        borderRadius: "6px",
+                        border: "none",
+                        cursor: "pointer",
+                        background: modelGenderTab === tab.id ? "#ffffff" : "transparent",
+                        color: modelGenderTab === tab.id ? "#0f172a" : "#64748b",
+                        boxShadow: modelGenderTab === tab.id ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                        transition: "all 0.12s ease"
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {voiceLibrary.length > 0 && (
-                <div style={{ marginBottom: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                  {voiceLibrary.map((voice) => {
-                    const isSelected = selectedFemaleModel.id === voice.id;
-                    const isWordMatch = searchedTerm && voice.word && voice.word.toLowerCase() === searchedTerm;
+              {/* Model List Scroll Area */}
+              <div style={{ maxHeight: "320px", overflowY: "auto", padding: "6px" }}>
+                {allAvailableModels
+                  .filter(model => {
+                    if (modelGenderTab === 'female') return model.gender === 'female' && !model.isCustom;
+                    if (modelGenderTab === 'male') return model.gender === 'male' && !model.isCustom;
+                    if (modelGenderTab === 'custom') return model.isCustom;
+                    return true;
+                  })
+                  .map(model => {
+                    const isSelected = selectedVoiceModel?.id === model.id;
+                    const isMale = model.gender === 'male';
                     return (
                       <div
-                        key={voice.id}
-                        onClick={() => {
-                          handleSetVoiceActive(voice, 'female');
-                          setIsFemaleDropdownOpen(false);
-                        }}
+                        key={model.id}
+                        onClick={() => handleSelectModel(model)}
                         style={{
-                          padding: "6px 10px",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                          backgroundColor: isSelected ? "#ffe4e6" : isWordMatch ? "#f0fdf4" : "#fdf2f8",
-                          border: isSelected ? "1.5px solid #e11d48" : isWordMatch ? "1.5px solid #86efac" : "1px solid #fbcfe8",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "space-between"
+                          justifyContent: "space-between",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          marginBottom: "4px",
+                          cursor: "pointer",
+                          backgroundColor: isSelected ? (isMale ? "#eff6ff" : "#fff1f2") : "transparent",
+                          border: isSelected ? `1.5px solid ${isMale ? '#93c5fd' : '#fecdd3'}` : "1.5px solid transparent",
+                          transition: "background 0.12s ease"
                         }}
                       >
-                        <div style={{ display: "flex", flexDirection: "column" }}>
-                          <span style={{ fontSize: "12px", fontWeight: "800", color: "#9d174d" }}>⭐ {voice.name}</span>
-                          <span style={{ fontSize: "10px", color: "#be185d" }}>{voice.word === 'all' ? 'All Words' : `Word: ${voice.word}`}</span>
-                          {isWordMatch && (
-                            <span style={{ fontSize: "9px", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 5px", borderRadius: "3px", fontWeight: "800", marginTop: "2px", width: "fit-content" }}>
-                              🎯 Matches Searched Word
-                            </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                          {isMale ? (
+                            <MaleIcon size={28} isPlaying={playingAudioId === `preview-${model.id}`} />
+                          ) : (
+                            <FemaleIcon size={28} isPlaying={playingAudioId === `preview-${model.id}`} />
                           )}
+                          <div style={{ minWidth: 0, textAlign: "left" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontSize: "12.5px", fontWeight: "800", color: isSelected ? (isMale ? "#0369a1" : "#be185d") : "#1e293b" }}>
+                                {model.name}
+                              </span>
+                              {model.isCustom && (
+                                <span style={{ fontSize: "9px", background: "#fef3c7", color: "#92400e", padding: "1px 5px", borderRadius: "4px", fontWeight: "700" }}>⭐ CUSTOM</span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: "11px", color: "#64748b", display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                              {model.tag || model.description || (isMale ? "Male Voice" : "Female Voice")}
+                            </span>
+                          </div>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                          {/* ▶ Preview Audio Button */}
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlayAudio(voice.url, `preview-${voice.id}`);
-                            }}
-                            title={playingAudioId === `preview-${voice.id}` ? "Stop preview" : `Play ${voice.name}`}
+                            onClick={() => handlePlaySearchWord(model, `preview-${model.id}`)}
+                            title={`Preview ${model.name}`}
                             style={{
-                              background: playingAudioId === `preview-${voice.id}` ? "#9d174d" : loadingAudioId === `preview-${voice.id}` ? "#be185d" : "#be185d",
-                              color: "white",
-                              border: "none",
+                              width: "28px",
+                              height: "28px",
                               borderRadius: "50%",
-                              width: "24px",
-                              height: "24px",
+                              border: "none",
+                              backgroundColor: playingAudioId === `preview-${model.id}` ? (isMale ? "#0284c7" : "#e11d48") : "#f1f5f9",
+                              color: playingAudioId === `preview-${model.id}` ? "#ffffff" : "#475569",
                               fontSize: "11px",
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              boxShadow: playingAudioId === `preview-${voice.id}` ? "0 0 8px rgba(190, 24, 93, 0.6)" : "none",
-                              transition: "all 0.15s ease"
+                              transition: "all 0.12s ease"
                             }}
                           >
-                            {loadingAudioId === `preview-${voice.id}` ? "⏳" : playingAudioId === `preview-${voice.id}` ? "⏹" : "▶"}
+                            {loadingAudioId === `preview-${model.id}` ? "⏳" : playingAudioId === `preview-${model.id}` ? "⏹" : "▶"}
                           </button>
-                          {isSelected && <span style={{ color: "#e11d48", fontWeight: "800" }}>✓</span>}
+                          {isSelected && (
+                            <span style={{ color: isMale ? "#0284c7" : "#e11d48", fontWeight: "900", fontSize: "14px" }}>✓</span>
+                          )}
                         </div>
                       </div>
                     );
                   })}
-                </div>
-              )}
-
-              {/* Standard AI Models */}
-              <div style={{ padding: "4px 8px 6px 8px", borderBottom: "1px solid #ffe4e6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "11px", fontWeight: "800", color: "#9d174d", textTransform: "uppercase" }}>
-                  {activeLang === 'ja' ? 'Japanese Acoustic Voice Models' : 'Korean Acoustic Voice Models'}
-                </span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "6px" }}>
-                {currentFemaleVoices.map((model) => {
-                  const isSelected = selectedFemaleModel.id === model.id;
-                  return (
-                    <div
-                      key={model.id}
-                      onClick={() => {
-                        setSelectedFemaleModel(model);
-                        try { localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(model)); } catch (e) {}
-                        setIsFemaleDropdownOpen(false);
-                        handlePlaySearchWord('female', model, `preview-${model.id}`);
-                      }}
-                      style={{
-                        padding: "7px 10px",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        backgroundColor: isSelected ? "#fff1f2" : "#ffffff",
-                        border: isSelected ? "1.5px solid #f43f5e" : "1px solid transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between"
-                      }}
-                    >
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ fontSize: "13px", fontWeight: isSelected ? "800" : "700", color: isSelected ? "#be185d" : "#0f172a" }}>
-                            {model.name}
-                          </span>
-                          <span style={{ fontSize: "10px", background: "#fecdd3", color: "#9d174d", padding: "1px 5px", borderRadius: "4px", fontWeight: "700" }}>
-                            {model.tag}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: "11px", color: "#64748b" }}>{model.persona}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePlaySearchWord('female', model, `preview-${model.id}`);
-                          }}
-                          title={playingAudioId === `preview-${model.id}` ? "Stop preview" : `Preview ${model.name}`}
-                          style={{
-                            background: playingAudioId === `preview-${model.id}` ? "#be185d" : loadingAudioId === `preview-${model.id}` ? "#f43f5e" : "#ffe4e6",
-                            color: playingAudioId === `preview-${model.id}` || loadingAudioId === `preview-${model.id}` ? "#ffffff" : "#be185d",
-                            border: "none",
-                            borderRadius: "50%",
-                            width: "26px",
-                            height: "26px",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            boxShadow: playingAudioId === `preview-${model.id}` ? "0 0 10px rgba(190, 24, 93, 0.55)" : "none",
-                            transform: playingAudioId === `preview-${model.id}` ? "scale(1.08)" : "scale(1)",
-                            transition: "all 0.15s ease"
-                          }}
-                        >
-                          {loadingAudioId === `preview-${model.id}` ? (
-                            <span style={{ display: "inline-block", animation: "spin 0.8s linear infinite" }}>⏳</span>
-                          ) : playingAudioId === `preview-${model.id}` ? (
-                            "⏹"
-                          ) : (
-                            "▶"
-                          )}
-                        </button>
-                        {isSelected && <span style={{ color: "#e11d48", fontWeight: "800", fontSize: "14px" }}>✓</span>}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           )}
         </div>
-
-        {/* 3. 👨 MALE VOICE GROUP WITH DROPDOWN ARROW (Minimum 10 Models + Uploaded Voice Library) */}
-        <div ref={maleDropdownRef} style={{ position: "relative", display: "inline-flex" }}>
-          <div style={{ display: "inline-flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #7dd3fc", background: "#f0f9ff", boxShadow: "0 2px 6px rgba(2, 132, 199, 0.1)" }}>
-            {/* Play Button */}
-            <button
-              type="button"
-              onClick={() => handlePlaySearchWord('male')}
-              title={`Play searched word in Male Voice (${selectedMaleModel.name})`}
-              style={{
-                backgroundColor: playingAudioId === 'search-male' ? "#0284c7" : loadingAudioId === 'search-male' ? "#0ea5e9" : "transparent",
-                color: playingAudioId === 'search-male' || loadingAudioId === 'search-male' ? "#ffffff" : "#0369a1",
-                border: "none",
-                padding: "0 12px",
-                height: "40px",
-                fontSize: "13px",
-                fontWeight: "700",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "7px",
-                whiteSpace: "nowrap",
-                transition: "all 0.15s ease"
-              }}
-            >
-              <MaleIcon size={24} isPlaying={playingAudioId === 'search-male'} />
-              <span>{loadingAudioId === 'search-male' ? "⏳ Loading..." : playingAudioId === 'search-male' ? "⏹ Stop" : "Male"}</span>
-            </button>
-
-            {/* Dropdown Arrow Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setIsMaleDropdownOpen(prev => !prev);
-                setIsFemaleDropdownOpen(false);
-              }}
-              title="Choose Male Voice Model or Your Uploaded Voices"
-              style={{
-                backgroundColor: isMaleDropdownOpen ? "#bae6fd" : "transparent",
-                color: "#0369a1",
-                border: "none",
-                borderLeft: "1.5px solid #7dd3fc",
-                padding: "0 10px",
-                height: "40px",
-                fontSize: "12px",
-                fontWeight: "800",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "3px"
-              }}
-            >
-              <span style={{ fontSize: "10px" }}>▼</span>
-            </button>
-
-            {/* Download MP3 */}
-            {canDownloadAudio && (
-              <button
-                type="button"
-                onClick={() => handleDownloadSearchWord('male')}
-                title={`Download Male Voice (${selectedMaleModel.name})`}
-                style={{
-                  backgroundColor: "transparent",
-                  color: "#0369a1",
-                  border: "none",
-                  borderLeft: "1.5px solid #7dd3fc",
-                  padding: "0 10px",
-                  height: "40px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                📥
-              </button>
-            )}
-          </div>
-
-          {/* Male Models & Voice Library Dropdown Menu */}
-          {isMaleDropdownOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "calc(100% + 6px)",
-                right: 0,
-                zIndex: 1000,
-                width: "330px",
-                maxWidth: "calc(100vw - 28px)",
-                maxHeight: "440px",
-                overflowY: "auto",
-                backgroundColor: "#ffffff",
-                border: "1.5px solid #bae6fd",
-                borderRadius: "10px",
-                boxShadow: "0 10px 25px rgba(2, 132, 199, 0.18)",
-                padding: "8px",
-                animation: "dropdownMenuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)"
-              }}
-            >
-
-              {voiceLibrary.length > 0 && (
-                <div style={{ marginBottom: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                  {voiceLibrary.map((voice) => {
-                    const isSelected = selectedMaleModel.id === voice.id;
-                    const isWordMatch = searchedTerm && voice.word && voice.word.toLowerCase() === searchedTerm;
-                    return (
-                      <div
-                        key={voice.id}
-                        onClick={() => {
-                          handleSetVoiceActive(voice, 'male');
-                          setIsMaleDropdownOpen(false);
-                        }}
-                        style={{
-                          padding: "6px 10px",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                          backgroundColor: isSelected ? "#e0f2fe" : isWordMatch ? "#f0fdf4" : "#f0f9ff",
-                          border: isSelected ? "1.5px solid #0284c7" : isWordMatch ? "1.5px solid #86efac" : "1px solid #bae6fd",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between"
-                        }}
-                      >
-                        <div style={{ display: "flex", flexDirection: "column" }}>
-                          <span style={{ fontSize: "12px", fontWeight: "800", color: "#0369a1" }}>⭐ {voice.name}</span>
-                          <span style={{ fontSize: "10px", color: "#0284c7" }}>{voice.word === 'all' ? 'All Words' : `Word: ${voice.word}`}</span>
-                          {isWordMatch && (
-                            <span style={{ fontSize: "9px", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 5px", borderRadius: "3px", fontWeight: "800", marginTop: "2px", width: "fit-content" }}>
-                              🎯 Matches Searched Word
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlayAudio(voice.url, `preview-${voice.id}`);
-                            }}
-                            title={playingAudioId === `preview-${voice.id}` ? "Stop preview" : `Play ${voice.name}`}
-                            style={{
-                              background: playingAudioId === `preview-${voice.id}` ? "#0369a1" : loadingAudioId === `preview-${voice.id}` ? "#0ea5e9" : "#0284c7",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "50%",
-                              width: "24px",
-                              height: "24px",
-                              fontSize: "11px",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              boxShadow: playingAudioId === `preview-${voice.id}` ? "0 0 8px rgba(2, 132, 199, 0.6)" : "none",
-                              transition: "all 0.15s ease"
-                            }}
-                          >
-                            {loadingAudioId === `preview-${voice.id}` ? "⏳" : playingAudioId === `preview-${voice.id}` ? "⏹" : "▶"}
-                          </button>
-                          {isSelected && <span style={{ color: "#0284c7", fontWeight: "800" }}>✓</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Standard AI Models */}
-              <div style={{ padding: "4px 8px 6px 8px", borderBottom: "1px solid #e0f2fe", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "11px", fontWeight: "800", color: "#0369a1", textTransform: "uppercase" }}>
-                  {activeLang === 'ja' ? 'Japanese Acoustic Voice Models' : 'Korean Acoustic Voice Models'}
-                </span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "6px" }}>
-                {currentMaleVoices.map((model) => {
-                  const isSelected = selectedMaleModel.id === model.id;
-                  return (
-                    <div
-                      key={model.id}
-                      onClick={() => {
-                        setSelectedMaleModel(model);
-                        try { localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(model)); } catch (e) {}
-                        setIsMaleDropdownOpen(false);
-                        handlePlaySearchWord('male', model, `preview-${model.id}`);
-                      }}
-                      style={{
-                        padding: "7px 10px",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        backgroundColor: isSelected ? "#f0f9ff" : "#ffffff",
-                        border: isSelected ? "1.5px solid #0284c7" : "1px solid transparent",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between"
-                      }}
-                    >
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ fontSize: "13px", fontWeight: isSelected ? "800" : "700", color: isSelected ? "#0369a1" : "#0f172a" }}>
-                            {model.name}
-                          </span>
-                          <span style={{ fontSize: "10px", background: "#bae6fd", color: "#0284c7", padding: "1px 5px", borderRadius: "4px", fontWeight: "700" }}>
-                            {model.tag}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: "11px", color: "#64748b" }}>{model.persona}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePlaySearchWord('male', model, `preview-${model.id}`);
-                          }}
-                          title={playingAudioId === `preview-${model.id}` ? "Stop preview" : `Preview ${model.name}`}
-                          style={{
-                            background: playingAudioId === `preview-${model.id}` ? "#0284c7" : loadingAudioId === `preview-${model.id}` ? "#0ea5e9" : "#e0f2fe",
-                            color: playingAudioId === `preview-${model.id}` || loadingAudioId === `preview-${model.id}` ? "#ffffff" : "#0369a1",
-                            border: "none",
-                            borderRadius: "50%",
-                            width: "26px",
-                            height: "26px",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            boxShadow: playingAudioId === `preview-${model.id}` ? "0 0 10px rgba(2, 132, 199, 0.55)" : "none",
-                            transform: playingAudioId === `preview-${model.id}` ? "scale(1.08)" : "scale(1)",
-                            transition: "all 0.15s ease"
-                          }}
-                        >
-                          {loadingAudioId === `preview-${model.id}` ? (
-                            <span style={{ display: "inline-block", animation: "spin 0.8s linear infinite" }}>⏳</span>
-                          ) : playingAudioId === `preview-${model.id}` ? (
-                            "⏹"
-                          ) : (
-                            "▶"
-                          )}
-                        </button>
-                        {isSelected && <span style={{ color: "#0284c7", fontWeight: "800", fontSize: "14px" }}>✓</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
 
 

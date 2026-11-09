@@ -1542,7 +1542,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       </div>
 
       {/* Fixed Navbar Spacer: Keeps page content exactly in place without overlap */}
-      <div style={{ height: "64px", minHeight: "64px", flexShrink: 0 }} aria-hidden="true" />
+      <div style={{ height: "64px", minHeight: "64px", flexShrink: 0 }} aria-hidden="true"></div>
 
       <div style={contentAreaStyle}>
         
@@ -3418,10 +3418,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       </div>
 
       {/* ── MOBILE & TABLET BOTTOM BAR FOR INSTITUTE PORTAL ── */}
-      {mounted && (
-        <nav
-          className="institute-bottom-nav"
-          suppressHydrationWarning={true}
+      <nav
+        className="institute-bottom-nav"
+        suppressHydrationWarning={true}
           style={{
             display: 'none',
             position: 'fixed',
@@ -3581,7 +3580,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             </button>
           )}
         </nav>
-      )}
 
       <style jsx>{`
         @media (max-width: 1024px) {
