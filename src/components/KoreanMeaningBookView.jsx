@@ -457,6 +457,131 @@ export default function KoreanMeaningBookView({
             display: none !important;
           }
         }
+
+        /* Meaning Section Card Container */
+        .meaning-section-card {
+          background-color: #ffffff;
+          border-radius: 14px;
+          border: 1.5px solid #e2e8f0;
+          padding: 22px;
+          margin-bottom: 28px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+          box-sizing: border-box;
+          width: 100%;
+        }
+
+        /* 100% full-width responsive table container (no horizontal scrolling or outer bleeding) */
+        .meaning-table-container {
+          width: 100% !important;
+          max-width: 100% !important;
+          border-radius: 10px;
+          border: 1px solid #e2e8f0;
+          overflow: hidden !important;
+          box-sizing: border-box;
+          background-color: #ffffff;
+        }
+
+        /* Fixed-layout full page responsive table */
+        .meaning-full-table {
+          width: 100% !important;
+          min-width: 0 !important;
+          max-width: 100% !important;
+          table-layout: fixed !important;
+          border-collapse: collapse !important;
+          text-align: left !important;
+          box-sizing: border-box;
+        }
+
+        .meaning-full-table th,
+        .meaning-full-table td {
+          box-sizing: border-box;
+          vertical-align: middle;
+          word-break: break-word;
+          overflow-wrap: break-word;
+        }
+
+        .col-word {
+          width: 35% !important;
+          padding: 12px 14px;
+          box-sizing: border-box;
+        }
+        .col-meaning {
+          width: 38% !important;
+          padding: 12px 14px;
+          box-sizing: border-box;
+        }
+        .col-pron {
+          width: 27% !important;
+          padding: 12px 14px;
+          box-sizing: border-box;
+        }
+
+        .col-exp-korean {
+          width: 55% !important;
+          padding: 12px 14px;
+          box-sizing: border-box;
+        }
+        .col-exp-nepali {
+          width: 45% !important;
+          padding: 12px 14px;
+          box-sizing: border-box;
+        }
+
+        /* Mobile App & Mobile Screen Optimization (All mobile devices) */
+        @media (max-width: 640px) {
+          .meaning-section-card {
+            padding: 12px 8px !important;
+            border-radius: 10px !important;
+            margin-bottom: 18px !important;
+          }
+          .meaning-table-container {
+            border-radius: 8px !important;
+          }
+          .col-word {
+            width: 34% !important;
+            padding: 8px 4px !important;
+          }
+          .col-meaning {
+            width: 39% !important;
+            padding: 8px 4px !important;
+          }
+          .col-pron {
+            width: 27% !important;
+            padding: 8px 4px !important;
+          }
+          .col-exp-korean {
+            width: 54% !important;
+            padding: 8px 4px !important;
+          }
+          .col-exp-nepali {
+            width: 46% !important;
+            padding: 8px 4px !important;
+          }
+          .meaning-speak-btn {
+            width: 22px !important;
+            height: 22px !important;
+            min-width: 22px !important;
+            font-size: 10px !important;
+            flex-shrink: 0 !important;
+          }
+          .meaning-word-text {
+            font-size: 13.5px !important;
+            line-height: 1.25 !important;
+          }
+          .meaning-nepali-text {
+            font-size: 13px !important;
+            line-height: 1.25 !important;
+          }
+          .meaning-pron-text {
+            font-size: 11.5px !important;
+            line-height: 1.2 !important;
+          }
+          .meaning-th-title {
+            font-size: 12px !important;
+            padding: 8px 4px !important;
+            letter-spacing: -0.2px !important;
+          }
+        }
       `}</style>
       {/* ── 1. CHAPTER FOLDERS GRID VIEW (CHAPTERS 1 TO 60) ──────────────── */}
       {!selectedChapter ? (
@@ -872,14 +997,7 @@ export default function KoreanMeaningBookView({
               {renderChapterNavBar()}
 
               {/* १. 핵심 단어 — महत्त्वपूर्ण शब्दार्थ */}
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                border: "1.5px solid #e2e8f0",
-                padding: "22px",
-                marginBottom: "30px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
-              }}>
+              <div className="meaning-section-card">
                 <div style={{
                   display: "flex",
                   justifyContent: "space-between",
@@ -895,13 +1013,13 @@ export default function KoreanMeaningBookView({
                   </h3>
                 </div>
 
-                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "10px", border: "1px solid #e2e8f0", width: "100%" }}>
-                  <table style={{ width: "100%", minWidth: "460px", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+                <div className="meaning-table-container">
+                  <table className="meaning-full-table" style={{ fontSize: "14px" }}>
                     <thead>
                       <tr style={{ backgroundColor: "#1e40af", borderBottom: "2px solid #1d4ed8" }}>
-                        <th style={{ padding: "12px 16px", color: "#ffffff", fontWeight: "800", width: "35%" }}>Korean शब्द</th>
-                        <th style={{ padding: "12px 16px", color: "#ffffff", fontWeight: "800", width: "40%" }}>नेपाली अर्थ</th>
-                        <th style={{ padding: "12px 16px", color: "#ffffff", fontWeight: "800", width: "25%" }}>उच्चारण</th>
+                        <th className="col-word meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>शब्द</th>
+                        <th className="col-meaning meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>नेपाली अर्थ</th>
+                        <th className="col-pron meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>उच्चारण</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -913,11 +1031,12 @@ export default function KoreanMeaningBookView({
                             backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc"
                           }}
                         >
-                          <td style={{ padding: "12px 16px", fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <td className="col-word" style={{ fontWeight: "800", color: "#0f172a" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
                               <button
                                 type="button"
                                 onClick={() => handleSpeak(w.korean, `tb_${idx}`)}
+                                className="meaning-speak-btn"
                                 style={{
                                   width: "28px",
                                   height: "28px",
@@ -929,24 +1048,30 @@ export default function KoreanMeaningBookView({
                                   display: "inline-flex",
                                   alignItems: "center",
                                   justifyContent: "center",
-                                  fontSize: "12px"
+                                  fontSize: "12px",
+                                  flexShrink: 0,
+                                  padding: 0
                                 }}
                                 title="उच्चारण सुन्नुहोस्"
                               >
                                 🔊
                               </button>
-                              <span>{w.korean}</span>
-                              {w.category && (
-                                <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 6px", borderRadius: "4px" }}>
-                                  {w.category}
+                              <div style={{ minWidth: 0, wordBreak: "break-word" }}>
+                                <span className="meaning-word-text" style={{ fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
+                                  {w.korean}
                                 </span>
-                              )}
+                                {w.category && (
+                                  <span style={{ fontSize: "9px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "1px 4px", borderRadius: "3px", marginLeft: "4px", display: "inline-block" }}>
+                                    {w.category}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
-                          <td style={{ padding: "12px 16px", fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>
+                          <td className="col-meaning meaning-nepali-text" style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>
                             {w.nepali}
                           </td>
-                          <td style={{ padding: "12px 16px", color: "#64748b", fontWeight: "600", fontSize: "13px" }}>
+                          <td className="col-pron meaning-pron-text" style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>
                             {w.pronunciation}
                           </td>
                         </tr>
@@ -957,23 +1082,16 @@ export default function KoreanMeaningBookView({
               </div>
 
               {/* २. 기본 표현 — आधारभूत वाक्य तथा नेपाली अर्थ */}
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                border: "1.5px solid #e2e8f0",
-                padding: "22px",
-                marginBottom: "30px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
-              }}>
+              <div className="meaning-section-card">
                 <h3 style={{ margin: "0 0 16px 0", fontSize: "19px", fontWeight: "900", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px", paddingBottom: "12px", borderBottom: "1.5px solid #e2e8f0" }}>
                   <span style={{ color: "#0284c7" }}>२. 기본 표현</span> — आधारभूत वाक्य तथा नेपाली अर्थ
                 </h3>
-                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "10px", border: "1px solid #e2e8f0", width: "100%" }}>
-                  <table style={{ width: "100%", minWidth: "460px", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+                <div className="meaning-table-container">
+                  <table className="meaning-full-table" style={{ fontSize: "14px" }}>
                     <thead>
                       <tr style={{ backgroundColor: "#1e40af", borderBottom: "2px solid #1d4ed8" }}>
-                        <th style={{ padding: "12px 16px", color: "#ffffff", fontWeight: "800", width: "55%" }}>Korean वाक्य</th>
-                        <th style={{ padding: "12px 16px", color: "#ffffff", fontWeight: "800", width: "45%" }}>नेपाली अर्थ</th>
+                        <th className="col-exp-korean meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>वाक्य</th>
+                        <th className="col-exp-nepali meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>नेपाली अर्थ</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -985,11 +1103,12 @@ export default function KoreanMeaningBookView({
                             backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc"
                           }}
                         >
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                          <td className="col-exp-korean">
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", minWidth: 0 }}>
                               <button
                                 type="button"
                                 onClick={() => handleSpeak(exp.korean, `exp_${idx}`)}
+                                className="meaning-speak-btn"
                                 style={{
                                   width: "28px",
                                   height: "28px",
@@ -1002,25 +1121,27 @@ export default function KoreanMeaningBookView({
                                   alignItems: "center",
                                   justifyContent: "center",
                                   fontSize: "12px",
-                                  flexShrink: 0
+                                  flexShrink: 0,
+                                  marginTop: "2px",
+                                  padding: 0
                                 }}
                                 title="उच्चारण सुन्नुहोस्"
                               >
                                 🔊
                               </button>
-                              <div>
-                                <div style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
+                              <div style={{ minWidth: 0, wordBreak: "break-word" }}>
+                                <div className="meaning-word-text" style={{ fontWeight: "800", color: "#0f172a", fontSize: "15px" }}>
                                   {exp.korean}
                                 </div>
                                 {exp.pronunciation && (
-                                  <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                                  <div className="meaning-pron-text" style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
                                     उच्चारण: {exp.pronunciation}
                                   </div>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td style={{ padding: "12px 16px", fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>
+                          <td className="col-exp-nepali meaning-nepali-text" style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>
                             {exp.nepali}
                           </td>
                         </tr>
@@ -1031,14 +1152,7 @@ export default function KoreanMeaningBookView({
               </div>
 
               {/* ३. 문법 — व्याकरणको विस्तृत व्याख्या */}
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                border: "1.5px solid #e2e8f0",
-                padding: "22px",
-                marginBottom: "30px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
-              }}>
+              <div className="meaning-section-card">
                 <h3 style={{ margin: "0 0 18px 0", fontSize: "19px", fontWeight: "900", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px", paddingBottom: "12px", borderBottom: "1.5px solid #e2e8f0" }}>
                   <span style={{ color: "#7c3aed" }}>३. 문법</span> — व्याकरणको विस्तृत व्याख्या
                 </h3>
@@ -1103,11 +1217,11 @@ export default function KoreanMeaningBookView({
                           <div style={{ fontSize: "13px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>
                             उदाहरण:
                           </div>
-                          <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px", backgroundColor: "#ffffff" }}>
+                          <div className="meaning-table-container">
+                            <table className="meaning-full-table" style={{ fontSize: "13px", backgroundColor: "#ffffff" }}>
                               <thead>
                                 <tr style={{ backgroundColor: "#1e40af", borderBottom: "1.5px solid #1d4ed8" }}>
-                                  <th style={{ padding: "8px 12px", color: "#ffffff", width: "50%", fontWeight: "800" }}>Korean</th>
+                                  <th style={{ padding: "8px 12px", color: "#ffffff", width: "50%", fontWeight: "800" }}>वाक्य (Korean)</th>
                                   <th style={{ padding: "8px 12px", color: "#ffffff", width: "50%", fontWeight: "800" }}>नेपाली अर्थ</th>
                                 </tr>
                               </thead>
@@ -1164,14 +1278,7 @@ export default function KoreanMeaningBookView({
               </div>
 
               {/* ४. 대화 — संवाद अभ्यास */}
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                border: "1.5px solid #e2e8f0",
-                padding: "22px",
-                marginBottom: "30px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
-              }}>
+              <div className="meaning-section-card">
                 <h3 style={{ margin: "0 0 16px 0", fontSize: "19px", fontWeight: "900", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px", paddingBottom: "12px", borderBottom: "1.5px solid #e2e8f0" }}>
                   <span style={{ color: "#16a34a" }}>४. 대화</span> — संवाद अभ्यास
                 </h3>
@@ -1239,14 +1346,7 @@ export default function KoreanMeaningBookView({
               </div>
 
               {/* ५. EPS-TOPIK अभ्यास प्रश्न */}
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "16px",
-                border: "1.5px solid #e2e8f0",
-                padding: "24px",
-                marginBottom: "30px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
-              }}>
+              <div className="meaning-section-card">
                 <div style={{
                   display: "flex",
                   justifyContent: "space-between",
