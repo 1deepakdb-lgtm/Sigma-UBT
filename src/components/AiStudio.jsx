@@ -347,7 +347,7 @@ export default function AiStudio({
         abortController.abort();
         if (onError) onError(new Error('TTS fetch timeout'));
       }
-    }, 850);
+    }, 5000);
 
     try {
       const res = await fetch(url, { signal: abortController.signal });

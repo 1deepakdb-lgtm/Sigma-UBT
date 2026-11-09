@@ -171,27 +171,28 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     PYTHONUNBUFFERED: '1'
   };
 
-  // Fast availability check to avoid multi-second hanging if Python edge_tts is missing
-  if (isPythonEdgeTtsAvailable === false) {
-    return null;
-  }
-
-  const py = 'python3';
-  try {
-    execFileSync(py, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {
-      timeout: 2500,
-      env: customEnv
-    });
-    if (fs.existsSync(tmpOut)) {
-      const buf = fs.readFileSync(tmpOut);
-      try { fs.unlinkSync(tmpOut); } catch {}
-      if (buf.length > 500) {
-        isPythonEdgeTtsAvailable = true;
-        return { buffer: buf, contentType: 'audio/mpeg', provider: 'neural-edge' };
+  const pyCandidates = ['python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3'];
+  for (const py of pyCandidates) {
+    try {
+      execFileSync(py, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {
+        timeout: 8000,
+        env: customEnv
+      });
+      if (fs.existsSync(tmpOut)) {
+        const buf = fs.readFileSync(tmpOut);
+        try { fs.unlinkSync(tmpOut); } catch {}
+        if (buf.length > 500) {
+          isPythonEdgeTtsAvailable = true;
+          return { buffer: buf, contentType: 'audio/mpeg', provider: 'neural-edge' };
+        }
+      }
+    } catch (err) {
+      // Continue trying next candidate if command was not found
+      if (err.code !== 'ENOENT') {
+        // Log warning for diagnostics if timeout occurred
+        break;
       }
     }
-  } catch (err) {
-    isPythonEdgeTtsAvailable = false;
   }
   return null;
 }

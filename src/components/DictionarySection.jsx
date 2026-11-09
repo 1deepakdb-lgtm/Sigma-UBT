@@ -924,7 +924,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       }
 
       // Ultra-Fast Response Engine:
-      // If server does not stream back audio within 800ms, immediately speak with zero delay!
+      // Allow up to 4500ms for high-fidelity human neural audio to stream down from server
       const abortController = new AbortController();
       let hasResponded = false;
       const abortTimer = setTimeout(() => {
@@ -934,7 +934,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             speakTextNative(text, targetLang, targetGender, id);
           }
         }
-      }, 800);
+      }, 4500);
 
       fetch(url, { signal: abortController.signal })
         .then(res => {
