@@ -468,16 +468,16 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           setInstLang("both");
           return;
         }
-        const savedTrack = typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null;
-        if (!propInstituteLanguage && !savedTrack) {
-          const apiInstLang = (data?.user?.instituteLanguage || data?.user?.institute?.language || "").toLowerCase();
-          if (apiInstLang) {
-            setInstLang(apiInstLang);
-            if (apiInstLang === "japanese" && activeLang !== "ja") {
-              handleSwitchLanguage("ja");
-            } else if (apiInstLang === "korean" && activeLang !== "ko") {
-              handleSwitchLanguage("ko");
-            }
+        const apiInstLang = (data?.user?.instituteLanguage || data?.user?.institute?.language || "").toLowerCase();
+        if (apiInstLang) {
+          setInstLang(apiInstLang);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("instituteLanguage", apiInstLang);
+          }
+          if (apiInstLang === "japanese" && activeLang !== "ja") {
+            handleSwitchLanguage("ja");
+          } else if (apiInstLang === "korean" && activeLang !== "ko") {
+            handleSwitchLanguage("ko");
           }
         }
       })
@@ -1519,13 +1519,28 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
           {title && <h2 style={{ margin: 0, color: "#0f172a", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
 
-          {/* 🇰🇷 Korean vs 🇯🇵 Japanese Language Switcher Toggle Buttons (Aligned with Study Track) */}
+          {/* 🇰🇷 Korean vs 🇯🇵 Japanese Language Switcher Toggle Buttons (Shown strictly for 'both' track; hidden for particular tracks) */}
           {(() => {
             const isSuperAdmin =
               propUserRole === 'admin' ||
               userRole === 'admin' ||
               (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
-            const showBothTabs = isSuperAdmin || instLang === "both" || propInstituteLanguage === "both";
+
+            // Check if current user/institute is locked to a particular language
+            const currentTrack = (
+              propInstituteLanguage ||
+              instLang ||
+              (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
+              "both"
+            ).toLowerCase();
+
+            const isParticularTrack = !isSuperAdmin && (currentTrack === "korean" || currentTrack === "japanese");
+
+            // For particular languages (Korean or Japanese only), remove this toggle completely.
+            // Keep this switcher ONLY for 'both' (or Super Admin).
+            if (isParticularTrack) {
+              return null;
+            }
 
             return (
               <div
@@ -1539,69 +1554,65 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   gap: "6px"
                 }}
               >
-                {(showBothTabs || instLang === "korean") && (
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchLanguage('ko')}
-                    title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
-                    style={{
-                      backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
-                      backgroundImage: activeLang === 'ko' ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-                      color: activeLang === 'ko' ? "#ffffff" : "#475569",
-                      border: "none",
-                      borderRadius: "8px",
-                      padding: "7px 16px",
-                      fontSize: "13.5px",
-                      fontWeight: "800",
-                      cursor: showBothTabs ? "pointer" : "default",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "7px",
-                      boxShadow: activeLang === 'ko' ? "0 2px 10px rgba(37,99,235,0.32)" : "none",
-                      transition: "all 0.18s ease"
-                    }}
-                  >
-                    <span style={{ fontSize: "17px" }}>🇰🇷</span>
-                    <span>{showBothTabs ? "Korean (한국어)" : "Korean Dictionary (한국어)"}</span>
-                    {showBothTabs && activeLang === 'ko' && (
-                      <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
-                        Active
-                      </span>
-                    )}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleSwitchLanguage('ko')}
+                  title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
+                  style={{
+                    backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
+                    backgroundImage: activeLang === 'ko' ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
+                    color: activeLang === 'ko' ? "#ffffff" : "#475569",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "7px 16px",
+                    fontSize: "13.5px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "7px",
+                    boxShadow: activeLang === 'ko' ? "0 2px 10px rgba(37,99,235,0.32)" : "none",
+                    transition: "all 0.18s ease"
+                  }}
+                >
+                  <span style={{ fontSize: "17px" }}>🇰🇷</span>
+                  <span>Korean (한국어)</span>
+                  {activeLang === 'ko' && (
+                    <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
+                      Active
+                    </span>
+                  )}
+                </button>
 
-                {(showBothTabs || instLang === "japanese") && (
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchLanguage('ja')}
-                    title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
-                    style={{
-                      backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
-                      backgroundImage: activeLang === 'ja' ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "none",
-                      color: activeLang === 'ja' ? "#ffffff" : "#475569",
-                      border: "none",
-                      borderRadius: "8px",
-                      padding: "7px 16px",
-                      fontSize: "13.5px",
-                      fontWeight: "800",
-                      cursor: showBothTabs ? "pointer" : "default",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "7px",
-                      boxShadow: activeLang === 'ja' ? "0 2px 10px rgba(147,51,234,0.35)" : "none",
-                      transition: "all 0.18s ease"
-                    }}
-                  >
-                    <span style={{ fontSize: "17px" }}>🇯🇵</span>
-                    <span>{showBothTabs ? "Japanese (日本語)" : "Japanese Dictionary (日本語)"}</span>
-                    {showBothTabs && activeLang === 'ja' && (
-                      <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
-                        Active
-                      </span>
-                    )}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleSwitchLanguage('ja')}
+                  title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
+                  style={{
+                    backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
+                    backgroundImage: activeLang === 'ja' ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "none",
+                    color: activeLang === 'ja' ? "#ffffff" : "#475569",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "7px 16px",
+                    fontSize: "13.5px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "7px",
+                    boxShadow: activeLang === 'ja' ? "0 2px 10px rgba(147,51,234,0.35)" : "none",
+                    transition: "all 0.18s ease"
+                  }}
+                >
+                  <span style={{ fontSize: "17px" }}>🇯🇵</span>
+                  <span>Japanese (日本語)</span>
+                  {activeLang === 'ja' && (
+                    <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
+                      Active
+                    </span>
+                  )}
+                </button>
               </div>
             );
           })()}
