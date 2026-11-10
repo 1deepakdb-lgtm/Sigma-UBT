@@ -273,6 +273,15 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
             box-shadow: none !important;
             width: 100% !important;
           }
+          .grammar-conjugation-section {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .grammar-conjugation-card {
+            padding: 8px 10px !important;
+            gap: 6px !important;
+            border-radius: 8px !important;
+          }
         }
         @media (min-width: 769px) {
           .grammar-chapter-action-btn {
@@ -283,6 +292,10 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
           }
           .grammar-mobile-cards {
             display: none !important;
+          }
+          .grammar-conjugation-section {
+            width: 100%;
+            max-width: 820px;
           }
         }
       `}</style>
@@ -651,33 +664,124 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                         {renderRuleWithSymbols(gp.ruleNe)}
                       </p>
 
-                      {/* Conjugation Table (if available) */}
+                      {/* Conjugation Examples - Outside of Cells, Shrunk Width, Full Display on Mobile & Web */}
                       {gp.conjugationTable && gp.conjugationTable.length > 0 && (
-                        <div style={{ marginBottom: "18px" }}>
-                          <h5 style={{ margin: "0 0 8px 0", fontSize: "13px", fontWeight: "800", color: "#64748b", textTransform: "uppercase" }}>
-                            रूपान्तरण तालिका (Conjugation Examples):
+                        <div className="grammar-conjugation-section" style={{ marginBottom: "18px" }}>
+                          <h5 style={{ margin: "0 0 10px 0", fontSize: "13px", fontWeight: "800", color: "#1e3a8a", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span>🔄</span>
+                            <span>रूपान्तरण उदाहरणहरू (Conjugation Examples):</span>
                           </h5>
-                          <div style={{ overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-                              <thead>
-                                <tr style={{ backgroundColor: "#1e40af", borderBottom: "1.5px solid #1d4ed8" }}>
-                                  <th style={{ padding: "8px 12px", textAlign: "left", color: "#ffffff", fontWeight: "800" }}>मूल शब्द</th>
-                                  <th style={{ padding: "8px 12px", textAlign: "left", color: "#ffffff", fontWeight: "800" }}>धातु / आधार</th>
-                                  <th style={{ padding: "8px 12px", textAlign: "left", color: "#ffffff", fontWeight: "800" }}>व्याकरण जोडिएको रूप</th>
-                                  <th style={{ padding: "8px 12px", textAlign: "left", color: "#ffffff", fontWeight: "800" }}>नेपाली अर्थ</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {gp.conjugationTable.map((row, rIdx) => (
-                                  <tr key={rIdx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                                    <td style={{ padding: "8px 12px", fontWeight: "600" }}>{row.base}</td>
-                                    <td style={{ padding: "8px 12px", color: "#64748b" }}>{renderRuleWithSymbols(row.stem)}</td>
-                                    <td style={{ padding: "8px 12px", fontWeight: "700", color: "#2563eb" }}>{row.conjugated}</td>
-                                    <td style={{ padding: "8px 12px", color: "#334155" }}>{row.neMeaning}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                          <div className="grammar-conjugation-list" style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%" }}>
+                            {gp.conjugationTable.map((row, rIdx) => {
+                              const koSpeech = (row.conjugated || "").split(/[[(/]/)[0].trim() || (row.base || "").split(/[[(/]/)[0].trim();
+                              const isAudioPlaying = speakingText === koSpeech;
+
+                              return (
+                                <div
+                                  key={rIdx}
+                                  className="grammar-conjugation-card"
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    flexWrap: "wrap",
+                                    gap: "8px 12px",
+                                    padding: "9px 13px",
+                                    borderRadius: "10px",
+                                    backgroundColor: rIdx % 2 === 0 ? "#f8fafc" : "#ffffff",
+                                    border: "1.5px solid #e2e8f0",
+                                    boxShadow: "0 1px 3px rgba(15, 23, 42, 0.03)",
+                                    transition: "all 0.15s ease",
+                                    width: "100%",
+                                    boxSizing: "border-box"
+                                  }}
+                                >
+                                  {/* Left: Round Audio Button + Base Word + Stem Rule Condition */}
+                                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", minWidth: 0 }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSpeak(koSpeech)}
+                                      className="conjugation-audio-btn"
+                                      style={{
+                                        width: "28px",
+                                        height: "28px",
+                                        minWidth: "28px",
+                                        borderRadius: "50%",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        backgroundColor: isAudioPlaying ? "#2563eb" : "#ffffff",
+                                        color: isAudioPlaying ? "#ffffff" : "#2563eb",
+                                        border: `1.5px solid ${isAudioPlaying ? "#2563eb" : "#cbd5e1"}`,
+                                        cursor: "pointer",
+                                        fontSize: "12px",
+                                        padding: 0,
+                                        boxShadow: isAudioPlaying ? "0 2px 6px rgba(37,99,235,0.35)" : "0 1px 2px rgba(0,0,0,0.05)",
+                                        transition: "all 0.15s ease",
+                                        flexShrink: 0
+                                      }}
+                                      title="Play pronunciation"
+                                    >
+                                      🔊
+                                    </button>
+
+                                    {/* Base Word (मूल शब्द) */}
+                                    <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "14px" }}>
+                                      {row.base}
+                                    </span>
+
+                                    {/* Stem / Rule Condition (धातु / आधार) */}
+                                    {row.stem && (
+                                      <span style={{
+                                        fontSize: "12px",
+                                        padding: "2px 7px",
+                                        borderRadius: "6px",
+                                        backgroundColor: "#f1f5f9",
+                                        color: "#475569",
+                                        fontWeight: "600",
+                                        border: "1px solid #e2e8f0"
+                                      }}>
+                                        {renderRuleWithSymbols(row.stem)}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Right: Arrow + Conjugated Form + Nepali Meaning */}
+                                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                    <span style={{ color: "#94a3b8", fontSize: "13px", fontWeight: "800" }}>➔</span>
+
+                                    {/* Conjugated Form (व्याकरण जोडिएको रूप) */}
+                                    <span style={{
+                                      fontSize: "14.5px",
+                                      fontWeight: "800",
+                                      color: "#1d4ed8",
+                                      backgroundColor: "#dbeafe",
+                                      border: "1px solid #bfdbfe",
+                                      padding: "3px 9px",
+                                      borderRadius: "6px",
+                                      letterSpacing: "0.2px"
+                                    }}>
+                                      {row.conjugated}
+                                    </span>
+
+                                    {/* Nepali Meaning (नेपाली अर्थ) */}
+                                    {row.neMeaning && (
+                                      <span style={{
+                                        fontSize: "13.5px",
+                                        fontWeight: "700",
+                                        color: "#059669",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px"
+                                      }}>
+                                        <span style={{ color: "#cbd5e1" }}>•</span>
+                                        <span>{row.neMeaning}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -725,13 +829,22 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                                     handleSpeak(d.ko, null, isMale ? 'male' : 'female');
                                   }}
                                   style={{
+                                    width: "30px",
+                                    height: "30px",
+                                    minWidth: "30px",
+                                    borderRadius: "50%",
                                     backgroundColor: speakingText === d.ko ? "#2563eb" : "#ffffff",
-                                    color: speakingText === d.ko ? "#ffffff" : "#475569",
-                                    border: "1px solid #cbd5e1",
-                                    borderRadius: "8px",
-                                    padding: "6px 10px",
+                                    color: speakingText === d.ko ? "#ffffff" : "#2563eb",
+                                    border: `1.5px solid ${speakingText === d.ko ? "#2563eb" : "#cbd5e1"}`,
+                                    padding: 0,
                                     cursor: "pointer",
-                                    fontSize: "12px"
+                                    fontSize: "12px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    boxShadow: speakingText === d.ko ? "0 2px 6px rgba(37,99,235,0.3)" : "none",
+                                    flexShrink: 0,
+                                    transition: "all 0.15s ease"
                                   }}
                                   title="Play Korean pronunciation"
                                 >

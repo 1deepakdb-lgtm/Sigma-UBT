@@ -441,19 +441,40 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           vertical-align: middle;
         }
         @media (max-width: 640px) {
-          .batchim-table td, .batchim-table th {
-            padding: 6px 7px !important;
-            font-size: 11.5px !important;
+          .batchim-table thead {
+            display: none !important;
+          }
+          .batchim-table, .batchim-table tbody, .batchim-table tr, .batchim-table td {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .batchim-table tr {
+            display: flex !important;
+            align-items: center !important;
+            justifyContent: space-between !important;
+            flex-wrap: wrap !important;
+            padding: 8px 10px !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            gap: 6px !important;
+          }
+          .batchim-table td {
+            display: inline-flex !important;
+            align-items: center !important;
+            width: auto !important;
+            padding: 0 !important;
+            border: none !important;
+            font-size: 13px !important;
           }
           .batchim-audio-btn {
-            width: 22px !important;
-            height: 22px !important;
-            min-width: 22px !important;
-            font-size: 10px !important;
+            width: 24px !important;
+            height: 24px !important;
+            min-width: 24px !important;
+            font-size: 11px !important;
           }
           .batchim-spoken-badge {
-            font-size: 11px !important;
-            padding: 1px 4px !important;
+            font-size: 12px !important;
+            padding: 2px 5px !important;
           }
         }
         @media (min-width: 641px) and (max-width: 1024px) {
