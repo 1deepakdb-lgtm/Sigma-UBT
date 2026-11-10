@@ -1512,6 +1512,28 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        .dict-word-row {
+          white-space: nowrap;
+        }
+        .dict-word-row::-webkit-scrollbar {
+          height: 3px;
+        }
+        .dict-word-row::-webkit-scrollbar-thumb {
+          background-color: rgba(148, 163, 184, 0.4);
+          border-radius: 4px;
+        }
+        @media (max-width: 640px) {
+          .dict-word-row {
+            padding: 7px 9px !important;
+            gap: 7px !important;
+          }
+          .dict-audio-circle-btn {
+            width: 26px !important;
+            height: 26px !important;
+            min-width: 26px !important;
+            font-size: 11px !important;
+          }
+        }
       ` }} />
 
       {/* Header */}
@@ -2188,7 +2210,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </div>
         ) : (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))", gap: "12px", width: "100%", boxSizing: "border-box" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%", boxSizing: "border-box" }}>
               {filteredWords.slice(0, displayLimit).map((word, idx) => {
                 const primaryWord = activeLang === 'ja'
                   ? (word.japanese || word.korean)
@@ -2212,7 +2234,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
                 const isPlayingFem = playingAudioId === `card-fem-${primaryWord}` || playingAudioId === `popup-fem-${primaryWord}`;
                 const isPlayingMale = playingAudioId === `card-male-${primaryWord}` || playingAudioId === `popup-male-${primaryWord}`;
-                const isPlayingAny = isPlayingFem || isPlayingMale;
+                const isPlayingCard = playingAudioId === `card-${primaryWord}`;
+                const isPlayingAny = isPlayingFem || isPlayingMale || isPlayingCard;
 
                 const hasBatchimRule = activeLang === 'ko' && Boolean(
                   word.hasBatchimRule ||
@@ -2241,229 +2264,268 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 return (
                   <div
                     key={`${primaryWord}-${idx}`}
-                    onClick={() => setSelectedWord(word)}
+                    onClick={() => {
+                      setSelectedWord(word);
+                      handlePlayCardWord(word, `card-${primaryWord}`);
+                    }}
+                    className="dict-word-row"
                     style={{
-                      backgroundColor: isSelected ? (activeLang === 'ja' ? "#faf5ff" : "#f0f9ff") : "#ffffff",
-                      border: isSelected
-                        ? (activeLang === 'ja' ? "2px solid #9333ea" : "2px solid #2563eb")
-                        : (isPlayingAny ? "1.5px solid #f43f5e" : "1px solid #e2e8f0"),
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor: isPlayingAny
+                        ? (activeLang === 'ja' ? "#faf5ff" : "#eff6ff")
+                        : isSelected
+                        ? (activeLang === 'ja' ? "#f5f3ff" : "#f0f9ff")
+                        : "#ffffff",
+                      border: isPlayingAny
+                        ? (activeLang === 'ja' ? "1.5px solid #c084fc" : "1.5px solid #93c5fd")
+                        : isSelected
+                        ? (activeLang === 'ja' ? "1.5px solid #a855f7" : "1.5px solid #3b82f6")
+                        : "1px solid #e2e8f0",
                       borderRadius: "10px",
-                      padding: "12px 14px",
+                      padding: "8px 12px",
                       boxShadow: isSelected
-                        ? (activeLang === 'ja' ? "0 4px 12px rgba(147,51,234,0.15)" : "0 4px 12px rgba(37,99,235,0.12)")
-                        : "0 1px 4px rgba(0,0,0,0.04)",
+                        ? "0 2px 8px rgba(37,99,235,0.12)"
+                        : "0 1px 3px rgba(0,0,0,0.03)",
                       cursor: "pointer",
-                      transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+                      transition: "all 0.15s ease",
                       position: "relative",
                       userSelect: "text",
-                      WebkitUserSelect: "text"
+                      WebkitUserSelect: "text",
+                      width: "100%",
+                      boxSizing: "border-box",
+                      gap: "10px",
+                      overflowX: "auto",
+                      WebkitOverflowScrolling: "touch"
                     }}
                   >
-                    {/* Top Row: Word + Category & Rule Badge */}
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px", marginBottom: "6px" }}>
-                      <div>
-                        {word.isKanji ? (
-                          <div style={{ width: "100%" }}>
-                            {/* Medium Kanji Showcase Tile & Badges */}
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-                              {/* 🈵 MEDIUM KANJI TILE */}
-                              <div
-                                style={{
-                                  width: "52px",
-                                  height: "52px",
-                                  minWidth: "52px",
-                                  background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)",
-                                  border: "1.5px solid #d8b4fe",
-                                  borderRadius: "10px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  boxShadow: "0 2px 8px rgba(147, 51, 234, 0.12)",
-                                  flexShrink: 0
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontSize: "34px",
-                                    fontWeight: "900",
-                                    color: "#581c87",
-                                    lineHeight: 1,
-                                    userSelect: "text",
-                                    fontFamily: "'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', 'Segoe UI Historic', sans-serif"
-                                  }}
-                                >
-                                  {word.kanji}
-                                </span>
-                              </div>
+                    {/* 1. Circular Audio Button - Replaces color when clicked/playing */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayCardWord(word, `card-${primaryWord}`);
+                      }}
+                      title="उच्चारण सुन्नुहोस् (Listen Pronunciation)"
+                      className="dict-audio-circle-btn"
+                      style={{
+                        width: "30px",
+                        height: "30px",
+                        minWidth: "30px",
+                        borderRadius: "50%",
+                        border: isPlayingAny
+                          ? (activeLang === 'ja' ? "1.5px solid #7e22ce" : "1.5px solid #1d4ed8")
+                          : "1.5px solid #cbd5e1",
+                        backgroundColor: isPlayingAny
+                          ? (activeLang === 'ja' ? "#9333ea" : "#2563eb")
+                          : "#ffffff",
+                        color: isPlayingAny
+                          ? "#ffffff"
+                          : (activeLang === 'ja' ? "#9333ea" : "#2563eb"),
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "12px",
+                        flexShrink: 0,
+                        padding: 0,
+                        boxShadow: isPlayingAny
+                          ? (activeLang === 'ja' ? "0 0 0 3px rgba(147,51,234,0.3)" : "0 0 0 3px rgba(37,99,235,0.28)")
+                          : "0 1px 2px rgba(0,0,0,0.06)",
+                        transform: isPlayingAny ? "scale(1.06)" : "scale(1)",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {isPlayingAny ? "⏹" : "🔊"}
+                    </button>
 
-                              {/* Badges & Pronunciation summary with Side Audio Button */}
-                              <div style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1, minWidth: 0 }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePlayCardWord(word, `card-${primaryWord}`);
-                                    }}
-                                    title="Listen Pronunciation"
-                                    style={{
-                                      width: "26px",
-                                      height: "26px",
-                                      minWidth: "26px",
-                                      borderRadius: "50%",
-                                      border: "1px solid #d8b4fe",
-                                      backgroundColor: playingAudioId === `card-${primaryWord}` ? "#9333ea" : "#ffffff",
-                                      color: playingAudioId === `card-${primaryWord}` ? "#ffffff" : "#7e22ce",
-                                      cursor: "pointer",
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      fontSize: "12px",
-                                      flexShrink: 0,
-                                      padding: 0,
-                                      boxShadow: "0 1px 2px rgba(147, 51, 234, 0.12)"
-                                    }}
-                                  >
-                                    {playingAudioId === `card-${primaryWord}` ? "⏹" : "🔊"}
-                                  </button>
-                                  <span style={{ fontSize: "11px", backgroundColor: "#ecfdf5", color: "#047857", border: "1.5px solid #a7f3d0", padding: "1px 7px", borderRadius: "4px", fontWeight: "800" }}>
-                                    JLPT N{word.jlpt}
-                                  </span>
-                                  {word.strokes && (
-                                    <span style={{ fontSize: "11px", backgroundColor: "#f8fafc", color: "#475569", border: "1px solid #cbd5e1", padding: "1px 6px", borderRadius: "4px", fontWeight: "700" }}>
-                                      {word.strokes} Strokes
-                                    </span>
-                                  )}
-                                </div>
-                                <div style={{ fontSize: "12px", color: "#9333ea", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  [{spokenWord}] · <span style={{ color: "#475569", fontWeight: "600" }}>[{nepaliPhonetic || romaji}]</span>
-                                </div>
-                              </div>
-                            </div>
+                    {/* Download Audio (Admin/Institute only) */}
+                    {canDownloadAudio && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const langCode = word.isKanji || activeLang === 'ja' || /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(primaryWord) ? 'ja' : 'ko';
+                          const textToPlay = spokenWord || primaryWord;
+                          const dlUrl = `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&download=true`;
+                          handleDownloadAudio(dlUrl, `${primaryWord}.mp3`);
+                        }}
+                        title="Download Audio (MP3)"
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          minWidth: "24px",
+                          borderRadius: "50%",
+                          border: "1px solid #cbd5e1",
+                          backgroundColor: "#f8fafc",
+                          color: "#475569",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "11px",
+                          flexShrink: 0,
+                          padding: 0
+                        }}
+                      >
+                        📥
+                      </button>
+                    )}
 
-                            {/* Onyomi & Kunyomi detailed block */}
-                            <div style={{ backgroundColor: "#faf5ff", border: "1px solid #f3e8ff", borderRadius: "7px", padding: "5px 8px", marginBottom: "4px" }}>
-                              <div style={{ fontSize: "12px", color: "#6b21a8", fontWeight: "700", lineHeight: "1.3" }}>
-                                音 (On): <span style={{ color: "#0f172a", fontWeight: "700" }}>{word.onyomi}</span>
-                              </div>
-                              <div style={{ fontSize: "12px", color: "#6b21a8", fontWeight: "700", marginTop: "2px", lineHeight: "1.3" }}>
-                                訓 (Kun): <span style={{ color: "#0f172a", fontWeight: "700" }}>{word.kunyomi}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            <div style={{ fontSize: activeLang === 'ja' ? "18px" : "16px", fontWeight: "800", color: "#0f172a", display: "flex", alignItems: "center", gap: "7px", userSelect: "text" }}>
-                              {/* Single side audio button on left of word */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePlayCardWord(word, `card-${primaryWord}`);
-                                }}
-                                title="उच्चारण सुन्नुहोस् (Listen Pronunciation)"
-                                style={{
-                                  width: "28px",
-                                  height: "28px",
-                                  minWidth: "28px",
-                                  borderRadius: "50%",
-                                  border: "1px solid #cbd5e1",
-                                  backgroundColor: playingAudioId === `card-${primaryWord}` ? "#2563eb" : "#f1f5f9",
-                                  color: playingAudioId === `card-${primaryWord}` ? "#ffffff" : "#0f172a",
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: "12px",
-                                  flexShrink: 0,
-                                  padding: 0,
-                                  boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
-                                  transition: "all 0.15s ease"
-                                }}
-                              >
-                                {playingAudioId === `card-${primaryWord}` ? "⏹" : "🔊"}
-                              </button>
-                              {canDownloadAudio && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const langCode = word.isKanji || activeLang === 'ja' || /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(primaryWord) ? 'ja' : 'ko';
-                                    const textToPlay = spokenWord || primaryWord;
-                                    const dlUrl = `/api/tts?text=${encodeURIComponent(textToPlay)}&lang=${langCode}&download=true`;
-                                    handleDownloadAudio(dlUrl, `${primaryWord}.mp3`);
-                                  }}
-                                  title="Download Audio (MP3)"
-                                  style={{
-                                    width: "24px",
-                                    height: "24px",
-                                    minWidth: "24px",
-                                    borderRadius: "50%",
-                                    border: "1px solid #cbd5e1",
-                                    backgroundColor: "#f8fafc",
-                                    color: "#475569",
-                                    cursor: "pointer",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: "11px",
-                                    flexShrink: 0,
-                                    padding: 0
-                                  }}
-                                >
-                                  📥
-                                </button>
-                              )}
-                              <span>{primaryWord}</span>
-                              {hasRule && (
-                                <span
-                                  title={activeLang === 'ja' ? (word.pronunciationRule || 'Japanese Pronunciation Rule') : (batchimRuleText || 'Batchim Rule')}
-                                  style={{
-                                    fontSize: "11px",
-                                    backgroundColor: activeLang === 'ja' ? "#f3e8ff" : "#fef3c7",
-                                    color: activeLang === 'ja' ? "#7e22ce" : "#92400e",
-                                    border: activeLang === 'ja' ? "1px solid #d8b4fe" : "1px solid #fde68a",
-                                    padding: "1px 6px",
-                                    borderRadius: "4px",
-                                    fontWeight: "700"
-                                  }}
-                                >
-                                  {ruleBadge}
-                                </span>
-                              )}
-                              {customVoiceForWord && (
-                                <span title="You uploaded a custom voice for this word!" style={{ fontSize: "11px", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 5px", borderRadius: "4px", fontWeight: "700" }}>
-                                  ⭐ My Voice
-                                </span>
-                              )}
-                            </div>
-                            <div style={{ fontSize: "13px", color: activeLang === 'ja' ? "#9333ea" : "#2563eb", fontWeight: "600", marginTop: "2px", marginLeft: "35px", userSelect: "text" }}>
-                              [{spokenWord}] · <span style={{ color: activeLang === 'ja' ? "#6b21a8" : "#1e40af", fontWeight: "600" }}>[{nepaliPhonetic || romaji}]</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    {/* Kanji Badge if applicable */}
+                    {word.isKanji && (
+                      <span
+                        style={{
+                          fontSize: "18px",
+                          fontWeight: "900",
+                          color: "#581c87",
+                          backgroundColor: "#faf5ff",
+                          border: "1px solid #d8b4fe",
+                          padding: "1px 7px",
+                          borderRadius: "6px",
+                          lineHeight: 1,
+                          whiteSpace: "nowrap",
+                          flexShrink: 0
+                        }}
+                      >
+                        {word.kanji}
+                      </span>
+                    )}
 
-                      <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                        {word.category && (
-                          <span style={{ fontSize: "11px", backgroundColor: word.isKanji ? "#faf5ff" : "#f1f5f9", color: word.isKanji ? "#7e22ce" : "#475569", border: word.isKanji ? "1px solid #e9d5ff" : "none", padding: "2px 7px", borderRadius: "5px", fontWeight: "700", whiteSpace: "nowrap" }}>
-                            {word.category}
-                          </span>
-                        )}
-                      </div>
+                    {/* Word in Original Script (Korean / Japanese) */}
+                    <span
+                      style={{
+                        fontSize: "15.5px",
+                        fontWeight: "800",
+                        color: "#0f172a",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0
+                      }}
+                    >
+                      {primaryWord}
+                    </span>
+
+                    {/* Spoken Pronunciation in Brackets */}
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        color: activeLang === 'ja' ? "#9333ea" : "#2563eb",
+                        backgroundColor: activeLang === 'ja' ? "#faf5ff" : "#eff6ff",
+                        padding: "2px 7px",
+                        borderRadius: "5px",
+                        border: activeLang === 'ja' ? "1px solid #e9d5ff" : "1px solid #bfdbfe",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0
+                      }}
+                    >
+                      [{spokenWord}]
+                    </span>
+
+                    {/* Nepali Phonetic Romanized Pronunciation */}
+                    {(nepaliPhonetic || romaji) && (
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "700",
+                          color: activeLang === 'ja' ? "#7e22ce" : "#1e40af",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0
+                        }}
+                      >
+                        [{nepaliPhonetic || romaji}]
+                      </span>
+                    )}
+
+                    {/* Dot separator */}
+                    <span style={{ color: "#cbd5e1", fontSize: "12px", flexShrink: 0 }}>•</span>
+
+                    {/* Nepali Meaning in Green */}
+                    <span
+                      style={{
+                        color: "#15803d",
+                        fontWeight: "700",
+                        fontSize: "14px",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0
+                      }}
+                    >
+                      {word.nepali}
+                    </span>
+
+                    {/* English Meaning in subtle Grey */}
+                    {word.english && (
+                      <span
+                        style={{
+                          color: "#64748b",
+                          fontWeight: "600",
+                          fontSize: "12.5px",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0
+                        }}
+                      >
+                        ({word.english})
+                      </span>
+                    )}
+
+                    {/* Badges on Right: Rules / Custom Voice / Category */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto", flexShrink: 0 }}>
+                      {hasRule && (
+                        <span
+                          title={activeLang === 'ja' ? (word.pronunciationRule || 'Japanese Pronunciation Rule') : (batchimRuleText || 'Batchim Rule')}
+                          style={{
+                            fontSize: "11px",
+                            backgroundColor: activeLang === 'ja' ? "#f3e8ff" : "#fef3c7",
+                            color: activeLang === 'ja' ? "#7e22ce" : "#92400e",
+                            border: activeLang === 'ja' ? "1px solid #d8b4fe" : "1px solid #fde68a",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            fontWeight: "700",
+                            whiteSpace: "nowrap"
+                          }}
+                        >
+                          {ruleBadge}
+                        </span>
+                      )}
+                      {customVoiceForWord && (
+                        <span
+                          title="You uploaded a custom voice for this word!"
+                          style={{
+                            fontSize: "11px",
+                            backgroundColor: "#dcfce7",
+                            color: "#15803d",
+                            border: "1px solid #86efac",
+                            padding: "1px 5px",
+                            borderRadius: "4px",
+                            fontWeight: "700",
+                            whiteSpace: "nowrap"
+                          }}
+                        >
+                          ⭐ My Voice
+                        </span>
+                      )}
+                      {word.isKanji && word.jlpt && (
+                        <span style={{ fontSize: "11px", backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "1px 6px", borderRadius: "4px", fontWeight: "800", whiteSpace: "nowrap" }}>
+                          N{word.jlpt}
+                        </span>
+                      )}
+                      {word.category && (
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            backgroundColor: word.isKanji ? "#faf5ff" : "#f1f5f9",
+                            color: word.isKanji ? "#7e22ce" : "#475569",
+                            border: word.isKanji ? "1px solid #e9d5ff" : "1px solid #e2e8f0",
+                            padding: "2px 7px",
+                            borderRadius: "5px",
+                            fontWeight: "700",
+                            whiteSpace: "nowrap"
+                          }}
+                        >
+                          {word.category}
+                        </span>
+                      )}
                     </div>
-
-                    {/* Translations */}
-                    <div style={{ margin: "6px 0 4px 0", display: "flex", flexDirection: "column", gap: "3px", userSelect: "text" }}>
-                      <div style={{ color: "#15803d", fontWeight: "700", fontSize: "14px", lineHeight: "1.3", userSelect: "text" }}>
-                        {word.nepali}
-                      </div>
-                      <div style={{ color: "#334155", fontWeight: "600", fontSize: "13px", lineHeight: "1.3", userSelect: "text" }}>
-                        {word.english}
-                      </div>
-                    </div>
-
-
                   </div>
                 );
               })}
