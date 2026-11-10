@@ -414,6 +414,56 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
         msUserSelect: "text"
       }}
     >
+      <style dangerouslySetInnerHTML={{ __html: `
+        .batchim-table-wrapper {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          margin: 0;
+        }
+        .batchim-table {
+          width: 100%;
+          min-width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+          table-layout: auto;
+        }
+        .batchim-table th {
+          background-color: #1e3a8a;
+          color: #ffffff;
+          font-weight: 800;
+          letter-spacing: -0.2px;
+          white-space: nowrap;
+        }
+        .batchim-table td, .batchim-table th {
+          padding: 8px 12px;
+          font-size: 13.5px;
+          vertical-align: middle;
+        }
+        @media (max-width: 640px) {
+          .batchim-table td, .batchim-table th {
+            padding: 6px 7px !important;
+            font-size: 11.5px !important;
+          }
+          .batchim-audio-btn {
+            width: 22px !important;
+            height: 22px !important;
+            min-width: 22px !important;
+            font-size: 10px !important;
+          }
+          .batchim-spoken-badge {
+            font-size: 11px !important;
+            padding: 1px 4px !important;
+          }
+        }
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .batchim-table td, .batchim-table th {
+            padding: 7px 10px !important;
+            font-size: 12.5px !important;
+          }
+        }
+      ` }} />
+
       {/* SECTION HEADER - KOREAN & NEPALI (REPLACED ENGLISH BANNER) */}
       <div style={{ marginBottom: "22px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "6px" }}>
@@ -519,7 +569,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           </div>
 
           {/* 11 Dual Batchim Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))", gap: "16px" }}>
             {DUAL_BATCHIM_11.map((item, idx) => (
               <div
                 key={idx}
@@ -527,14 +577,14 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   backgroundColor: "#ffffff",
                   borderRadius: "10px",
                   border: "1.5px solid #e2e8f0",
-                  padding: "16px",
                   boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "space-between"
+                  justifyContent: "space-between",
+                  overflow: "hidden"
                 }}
               >
-                <div>
+                <div style={{ padding: "14px 16px 10px" }}>
                   {/* Top Bar with Symbol & Formula */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -554,83 +604,99 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   {/* Sound Rules Boxes */}
                   <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
                     <div style={{ flex: 1, backgroundColor: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-                      <div style={{ fontSize: "14px", fontWeight: "800", color: "#64748b" }}>자음 앞 / 어말 (व्यञ्जन अगाडि वा अन्त्यमा)</div>
+                      <div style={{ fontSize: "13px", fontWeight: "800", color: "#64748b" }}>자음 앞 / 어말 (व्यञ्जन अगाडि वा अन्त्यमा)</div>
                       <div style={{ fontSize: "14px", fontWeight: "800", color: "#1e40af" }}>{item.consonantSound}</div>
                     </div>
                     <div style={{ flex: 1, backgroundColor: "#f8fafc", padding: "6px 10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-                      <div style={{ fontSize: "14px", fontWeight: "800", color: "#64748b" }}>모음(ㅇ) 앞 (स्वर वर्ण अगाडि)</div>
+                      <div style={{ fontSize: "13px", fontWeight: "800", color: "#64748b" }}>모음(ㅇ) 앞 (स्वर वर्ण अगाडि)</div>
                       <div style={{ fontSize: "14px", fontWeight: "800", color: "#15803d" }}>{item.vowelSound}</div>
                     </div>
                   </div>
 
                   {/* Nepali Explanation */}
-                  <div style={{ marginBottom: "12px" }}>
-                    <div style={{ fontSize: "14px", color: "#14532d", backgroundColor: "#f0fdf4", padding: "8px 10px", borderRadius: "6px", border: "1px solid #bbf7d0", lineHeight: "1.5" }}>
+                  <div>
+                    <div style={{ fontSize: "13.5px", color: "#14532d", backgroundColor: "#f0fdf4", padding: "8px 10px", borderRadius: "6px", border: "1px solid #bbf7d0", lineHeight: "1.5" }}>
                       <b style={{ color: "#15803d" }}>नेपाली व्याख्या:</b> {item.summaryNe}
                     </div>
                   </div>
                 </div>
 
-                {/* Practical Examples */}
-                <div>
-                  <div style={{ fontSize: "14px", fontWeight: "800", color: "#64748b", marginBottom: "6px" }}>
-                    보기 (उदाहरणहरू):
+                {/* Practical Examples Table - Full Width / Full Screen without outer box */}
+                <div style={{ borderTop: "1.5px solid #cbd5e1", width: "100%", margin: 0 }}>
+                  <div style={{ padding: "6px 14px", backgroundColor: "#f8fafc", fontSize: "12.5px", fontWeight: "800", color: "#0f172a", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e2e8f0" }}>
+                    <span>보기 (उदाहरणहरू):</span>
+                    <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>{item.examples.length} examples</span>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    {item.examples.map((ex, exIdx) => {
-                      const textToSpeak = ex.spoken || ex.written;
-                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
-                      const audioId = `dual-${item.symbol}-${ex.written}`;
-                      const isPlaying = playingAudioId === audioId;
-                      return (
-                        <div
-                          key={exIdx}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            backgroundColor: "#f8fafc",
-                            padding: "6px 10px",
-                            borderRadius: "8px",
-                            fontSize: "14px",
-                            gap: "8px",
-                            border: "1px solid #f1f5f9"
-                          }}
-                        >
-                          {/* Audio button on LEFT side of word */}
-                          <button
-                            type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
-                            title="उच्चारण सुन्नुहोस् (Listen Pronunciation)"
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              minWidth: "28px",
-                              borderRadius: "50%",
-                              border: "1px solid #e2e8f0",
-                              backgroundColor: isPlaying ? "#2563eb" : "#ffffff",
-                              color: isPlaying ? "#ffffff" : "#0f172a",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "12px",
-                              flexShrink: 0,
-                              padding: 0,
-                              boxShadow: "0 1px 2px rgba(0,0,0,0.06)"
-                            }}
-                          >
-                            {isPlaying ? "⏹" : "🔊"}
-                          </button>
-
-                          <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap", flex: "1 1 auto" }}>
-                            <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "15px" }}>{ex.written}</span>
-                            <span style={{ fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "1px 5px", borderRadius: "4px", fontSize: "14px" }}>[{ex.spoken}]</span>
-                            <span style={{ color: "#1e40af", fontSize: "14px", fontWeight: "600" }}>[{koreanToNepaliRomanized(ex.spoken)}]</span>
-                            <span style={{ color: "#16a34a", fontSize: "14px", fontWeight: "600" }}>- {ex.nepali}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="batchim-table-wrapper">
+                    <table className="batchim-table">
+                      <thead>
+                        <tr>
+                          <th>कोरियन लेखाइ</th>
+                          <th>वास्तविक उच्चारण</th>
+                          <th>नेपाली उच्चारण</th>
+                          <th>नेपाली अर्थ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {item.examples.map((ex, exIdx) => {
+                          const textToSpeak = ex.spoken || ex.written;
+                          const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                          const audioId = `dual-${item.symbol}-${ex.written}`;
+                          const isPlaying = playingAudioId === audioId;
+                          return (
+                            <tr
+                              key={exIdx}
+                              style={{
+                                borderBottom: exIdx === item.examples.length - 1 ? "none" : "1px solid #f1f5f9",
+                                backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#f8fafc"
+                              }}
+                            >
+                              <td style={{ fontWeight: "800", color: "#0f172a" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                                    title="उच्चारण सुन्नुहोस्"
+                                    className="batchim-audio-btn"
+                                    style={{
+                                      width: "24px",
+                                      height: "24px",
+                                      minWidth: "24px",
+                                      borderRadius: "50%",
+                                      border: "1px solid #e2e8f0",
+                                      backgroundColor: isPlaying ? "#2563eb" : "#ffffff",
+                                      color: isPlaying ? "#ffffff" : "#0f172a",
+                                      cursor: "pointer",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: "11px",
+                                      flexShrink: 0,
+                                      padding: 0,
+                                      boxShadow: "0 1px 2px rgba(0,0,0,0.06)"
+                                    }}
+                                  >
+                                    {isPlaying ? "⏹" : "🔊"}
+                                  </button>
+                                  <span>{ex.written}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="batchim-spoken-badge" style={{ fontWeight: "800", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 6px", borderRadius: "4px", border: "1px solid #bfdbfe", whiteSpace: "nowrap" }}>
+                                  [{ex.spoken}]
+                                </span>
+                              </td>
+                              <td style={{ color: "#1e40af", fontWeight: "700", whiteSpace: "nowrap" }}>
+                                [{koreanToNepaliRomanized(ex.spoken)}]
+                              </td>
+                              <td style={{ color: "#15803d", fontWeight: "600" }}>
+                                {ex.nepali}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -711,82 +777,88 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Rule Examples Table */}
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a", marginBottom: "8px", letterSpacing: "0.5px" }}>
-                  EPS-TOPIK 실전 연습 보기 / व्यावहारिक उदाहरणहरू:
-                </div>
-                <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", textAlign: "left" }}>
-                    <thead>
-                      <tr style={{ backgroundColor: "#f1f5f9", borderBottom: "1px solid #cbd5e1", color: "#475569" }}>
-                        <th style={{ padding: "8px 12px", fontWeight: "800", fontSize: "14px" }}>한국어 표기 (कोरियन लेखाइ)</th>
-                        <th style={{ padding: "8px 12px", fontWeight: "800", fontSize: "14px" }}>실제 발음 (वास्तविक उच्चारण)</th>
-                        <th style={{ padding: "8px 12px", fontWeight: "800", fontSize: "14px" }}>नेपाली रोमन (नेपाली उच्चारण)</th>
-                        <th style={{ padding: "8px 12px", fontWeight: "800", fontSize: "14px" }}>नेपाली अर्थ (नेपाली अर्थ)</th>
+            {/* Rule Examples Table - OUTSIDE the inner padding box, FULL WIDTH / FULL SCREEN */}
+            <div style={{ borderTop: "1.5px solid #cbd5e1", backgroundColor: "#f8fafc", padding: "10px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+              <span style={{ fontSize: "13.5px", fontWeight: "800", color: "#0f172a" }}>
+                EPS-TOPIK व्यावहारिक उदाहरणहरू (실전 연습 보기):
+              </span>
+              <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                {rule.examples.length} examples
+              </span>
+            </div>
+
+            <div className="batchim-table-wrapper">
+              <table className="batchim-table">
+                <thead>
+                  <tr>
+                    <th>कोरियन लेखाइ</th>
+                    <th>वास्तविक उच्चारण</th>
+                    <th>नेपाली उच्चारण</th>
+                    <th>नेपाली अर्थ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rule.examples.map((ex, exIdx) => {
+                    const textToSpeak = ex.spoken || ex.written;
+                    const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                    const audioId = `rule-${rule.id}-${ex.written}`;
+                    const isPlaying = playingAudioId === audioId;
+                    return (
+                      <tr
+                        key={exIdx}
+                        style={{
+                          borderBottom: exIdx === rule.examples.length - 1 ? "none" : "1px solid #f1f5f9",
+                          backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#f8fafc"
+                        }}
+                      >
+                        <td style={{ fontWeight: "800", color: "#0f172a" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <button
+                              type="button"
+                              onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                              title="उच्चारण सुन्नुहोस्"
+                              className="batchim-audio-btn"
+                              style={{
+                                width: "26px",
+                                height: "26px",
+                                minWidth: "26px",
+                                borderRadius: "50%",
+                                border: "1px solid #e2e8f0",
+                                backgroundColor: isPlaying ? "#2563eb" : "#ffffff",
+                                color: isPlaying ? "#ffffff" : "#0f172a",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "11px",
+                                flexShrink: 0,
+                                padding: 0,
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.06)"
+                              }}
+                            >
+                              {isPlaying ? "⏹" : "🔊"}
+                            </button>
+                            <span>{ex.written}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="batchim-spoken-badge" style={{ fontWeight: "800", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 7px", borderRadius: "4px", border: "1px solid #bfdbfe", whiteSpace: "nowrap" }}>
+                            [{ex.spoken}]
+                          </span>
+                        </td>
+                        <td style={{ color: "#1e40af", fontWeight: "700", whiteSpace: "nowrap" }}>
+                          [{koreanToNepaliRomanized(ex.spoken)}]
+                        </td>
+                        <td style={{ color: "#15803d", fontWeight: "600" }}>
+                          {ex.nepali}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {rule.examples.map((ex, exIdx) => {
-                        const textToSpeak = ex.spoken || ex.written;
-                        const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
-                        const audioId = `rule-${rule.id}-${ex.written}`;
-                        const isPlaying = playingAudioId === audioId;
-                        return (
-                          <tr
-                            key={exIdx}
-                            style={{
-                              borderBottom: exIdx === rule.examples.length - 1 ? "none" : "1px solid #f1f5f9",
-                              backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfd"
-                            }}
-                          >
-                            <td style={{ padding: "8px 12px", fontWeight: "800", color: "#0f172a", fontSize: "14px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <button
-                                  type="button"
-                                  onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
-                                  title="उच्चारण सुन्नुहोस्"
-                                  style={{
-                                    width: "26px",
-                                    height: "26px",
-                                    minWidth: "26px",
-                                    borderRadius: "50%",
-                                    border: "1px solid #e2e8f0",
-                                    backgroundColor: isPlaying ? "#2563eb" : "#f1f5f9",
-                                    color: isPlaying ? "#ffffff" : "#0f172a",
-                                    cursor: "pointer",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: "11px",
-                                    flexShrink: 0,
-                                    padding: 0
-                                  }}
-                                >
-                                  {isPlaying ? "⏹" : "🔊"}
-                                </button>
-                                <span>{ex.written}</span>
-                              </div>
-                            </td>
-                            <td style={{ padding: "8px 12px" }}>
-                              <span style={{ fontSize: "14px", fontWeight: "800", color: "#2563eb", backgroundColor: "#eff6ff", padding: "2px 6px", borderRadius: "4px", border: "1px solid #bfdbfe" }}>
-                                [{ex.spoken}]
-                              </span>
-                            </td>
-                            <td style={{ padding: "8px 12px", color: "#1e40af", fontWeight: "700", fontSize: "14px" }}>
-                              [{koreanToNepaliRomanized(ex.spoken)}]
-                            </td>
-                            <td style={{ padding: "8px 12px", color: "#15803d", fontWeight: "600", fontSize: "14px" }}>
-                              {ex.nepali}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         ))}
