@@ -1522,7 +1522,20 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           background-color: rgba(148, 163, 184, 0.4);
           border-radius: 4px;
         }
+        .dict-top-toolbar {
+          white-space: nowrap;
+        }
+        .dict-top-toolbar::-webkit-scrollbar {
+          height: 3px;
+        }
+        .dict-top-toolbar::-webkit-scrollbar-thumb {
+          background-color: rgba(148, 163, 184, 0.4);
+          border-radius: 4px;
+        }
         @media (max-width: 640px) {
+          .dict-top-toolbar {
+            gap: 4px !important;
+          }
           .dict-word-row {
             padding: 7px 9px !important;
             gap: 7px !important;
@@ -1536,214 +1549,115 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         }
       ` }} />
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-          {title && <h2 style={{ margin: 0, color: "#0f172a", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
+      {title && <h2 style={{ margin: "0 0 10px 0", color: "#0f172a", fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
 
-          {/* 🇰🇷 Korean vs 🇯🇵 Japanese Language Switcher Toggle Buttons (Shown strictly for 'both' track; hidden for particular tracks) */}
-          {(() => {
-            const isSuperAdmin =
-              propUserRole === 'admin' ||
-              userRole === 'admin' ||
-              (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
+      {/* Unified One-Row Shrunk Toolbar: Language Switcher, Search Input, Go, Voice Model, Play, Download, and AI Studio */}
+      <form onSubmit={handleSearch} className="dict-top-toolbar" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "16px", width: "100%", flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "3px" }}>
+        {/* 1. 🇰🇷 Korean vs 🇯🇵 Japanese Switcher */}
+        {(() => {
+          const isSuperAdmin =
+            propUserRole === 'admin' ||
+            userRole === 'admin' ||
+            (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
 
-            // Check if current user/institute is locked to a particular language
-            const currentTrack = (
-              propInstituteLanguage ||
-              instLang ||
-              (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
-              "both"
-            ).toLowerCase();
+          const currentTrack = (
+            propInstituteLanguage ||
+            instLang ||
+            (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
+            "both"
+          ).toLowerCase();
 
-            const isParticularTrack = !isSuperAdmin && (currentTrack === "korean" || currentTrack === "japanese");
+          const isParticularTrack = !isSuperAdmin && (currentTrack === "korean" || currentTrack === "japanese");
 
-            // For particular languages (Korean or Japanese only), remove this toggle completely.
-            // Keep this switcher ONLY for 'both' (or Super Admin).
-            if (isParticularTrack) {
-              return null;
-            }
+          if (isParticularTrack) {
+            return null;
+          }
 
-            return (
-              <div
-                style={{
-                  display: "inline-flex",
-                  backgroundColor: "#f1f5f9",
-                  padding: "4px",
-                  borderRadius: "12px",
-                  border: "1.5px solid #cbd5e1",
-                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
-                  gap: "6px"
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleSwitchLanguage('ko')}
-                  title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
-                  style={{
-                    backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
-                    backgroundImage: activeLang === 'ko' ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-                    color: activeLang === 'ko' ? "#ffffff" : "#475569",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "7px 16px",
-                    fontSize: "13.5px",
-                    fontWeight: "800",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "7px",
-                    boxShadow: activeLang === 'ko' ? "0 2px 10px rgba(37,99,235,0.32)" : "none",
-                    transition: "all 0.18s ease"
-                  }}
-                >
-                  <span style={{ fontSize: "17px" }}>🇰🇷</span>
-                  <span>Korean (한국어)</span>
-                  {activeLang === 'ko' && (
-                    <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
-                      Active
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSwitchLanguage('ja')}
-                  title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
-                  style={{
-                    backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
-                    backgroundImage: activeLang === 'ja' ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "none",
-                    color: activeLang === 'ja' ? "#ffffff" : "#475569",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "7px 16px",
-                    fontSize: "13.5px",
-                    fontWeight: "800",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "7px",
-                    boxShadow: activeLang === 'ja' ? "0 2px 10px rgba(147,51,234,0.35)" : "none",
-                    transition: "all 0.18s ease"
-                  }}
-                >
-                  <span style={{ fontSize: "17px" }}>🇯🇵</span>
-                  <span>Japanese (日本語)</span>
-                  {activeLang === 'ja' && (
-                    <span style={{ fontSize: "10px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 6px", borderRadius: "10px", fontWeight: "700" }}>
-                      Active
-                    </span>
-                  )}
-                </button>
-              </div>
-            );
-          })()}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", maxWidth: "100%", paddingBottom: "2px" }}>
-          {/* AI Studio Toggle Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setShowAiStudio(prev => {
-                const nextState = !prev;
-                if (nextState) {
-                  setTimeout(() => {
-                    aiStudioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }, 80);
-                }
-                return nextState;
-              });
-            }}
-            title={showAiStudio ? "Close AI Studio" : "Open AI Studio directly under Dictionary"}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              background: showAiStudio
-                ? "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)"
-                : "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-              color: "#ffffff",
-              padding: "4px 14px 4px 6px",
-              borderRadius: "24px",
-              border: showAiStudio ? "1.5px solid #c084fc" : "1.5px solid #6366f1",
-              height: "42px",
-              minWidth: "160px",
-              boxSizing: "border-box",
-              cursor: "pointer",
-              boxShadow: showAiStudio ? "0 0 14px rgba(168, 85, 247, 0.45)" : "0 2px 8px rgba(79, 70, 229, 0.28)",
-              transition: "all 0.18s ease"
-            }}
-          >
+          return (
             <div
               style={{
-                width: "30px",
-                height: "30px",
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #c084fc 0%, #9333ea 50%, #4f46e5 100%)",
-                boxShadow: "0 2px 5px rgba(124, 58, 237, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.7)",
                 display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "15px",
+                backgroundColor: "#f1f5f9",
+                padding: "3px",
+                borderRadius: "9px",
+                border: "1.5px solid #cbd5e1",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
+                gap: "4px",
                 flexShrink: 0
               }}
             >
-              🎙️
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2, textAlign: "left" }}>
-              <span style={{ fontSize: "12px", fontWeight: "800", color: "#ffffff" }}>AI Studio</span>
-              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.85)", fontWeight: "600" }}>Voice Studio</span>
-            </div>
-          </button>
-        </div>
-      </div>
+              <button
+                type="button"
+                onClick={() => handleSwitchLanguage('ko')}
+                title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
+                style={{
+                  backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
+                  backgroundImage: activeLang === 'ko' ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
+                  color: activeLang === 'ko' ? "#ffffff" : "#475569",
+                  border: "none",
+                  borderRadius: "7px",
+                  padding: "4px 10px",
+                  fontSize: "12px",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  boxShadow: activeLang === 'ko' ? "0 1px 5px rgba(37,99,235,0.28)" : "none",
+                  transition: "all 0.15s ease",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                <span style={{ fontSize: "14px" }}>🇰🇷</span>
+                <span>Korean (한국어)</span>
+                {activeLang === 'ko' && (
+                  <span style={{ fontSize: "9px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "8px", fontWeight: "700" }}>
+                    Active
+                  </span>
+                )}
+              </button>
 
-      {/* EMBEDDED AI STUDIO (Opens directly under dictionary without leaving page or jumping navigation) */}
-      {showAiStudio && (
-        <div ref={aiStudioRef} style={{ marginBottom: "22px" }}>
-          <AiStudio
-            embedded={true}
-            userRole={userRole}
-            initialLang={activeLang}
-            instituteLanguage={instLang}
-            initialText={searchQuery || (activeLang === 'ja' ? selectedWord?.japanese : selectedWord?.korean) || ''}
-            activeFemaleModelId={selectedFemaleModel?.id}
-            activeMaleModelId={selectedMaleModel?.id}
-            onSelectVoiceModel={(voice) => {
-              const isFemale = voice.gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(voice.id || '') || (voice.name && voice.name.toLowerCase().includes('female'));
-              const isMale = !isFemale && (voice.gender === 'male' || /(?:^|[-_])male(?:[-_\d]|$)/i.test(voice.id || ''));
-              if (isMale) {
-                const list = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
-                const match = list.find(m => m.id === voice.id) || voice;
-                setSelectedMaleModel(match);
-                try {
-                  localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(match));
-                } catch (e) {}
-              } else if (isFemale) {
-                const list = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
-                const match = list.find(m => m.id === voice.id) || voice;
-                setSelectedFemaleModel(match);
-                try {
-                  localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(match));
-                } catch (e) {}
-              }
-            }}
-            onClose={() => setShowAiStudio(false)}
-          />
-        </div>
-      )}
-
-      {/* Search Bar with Reordered Buttons: GO BUTTON FIRST, then Female Dropdown, Male Dropdown, and User Voice */}
-      <form onSubmit={handleSearch} style={{ display: "flex", gap: "8px", marginBottom: "18px", flexWrap: "wrap", alignItems: "center" }}>
-        {/* Search Input Box */}
-        <div style={{ position: "relative", flex: "1 1 260px", minWidth: "220px" }}>
+              <button
+                type="button"
+                onClick={() => handleSwitchLanguage('ja')}
+                title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
+                style={{
+                  backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
+                  backgroundImage: activeLang === 'ja' ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "none",
+                  color: activeLang === 'ja' ? "#ffffff" : "#475569",
+                  border: "none",
+                  borderRadius: "7px",
+                  padding: "4px 10px",
+                  fontSize: "12px",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  boxShadow: activeLang === 'ja' ? "0 1px 5px rgba(147,51,234,0.3)" : "none",
+                  transition: "all 0.15s ease",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                <span style={{ fontSize: "14px" }}>🇯🇵</span>
+                <span>Japanese (日本語)</span>
+                {activeLang === 'ja' && (
+                  <span style={{ fontSize: "9px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "8px", fontWeight: "700" }}>
+                    Active
+                  </span>
+                )}
+              </button>
+            </div>
+          );
+        })()}
+        {/* 2. Search Input Box */}
+        <div style={{ position: "relative", flex: "1 1 140px", minWidth: "120px" }}>
           <input
             type="text"
             placeholder={
               activeLang === 'ja'
-                ? "Type Japanese (e.g. 食べる, taberu, arigatou, पानी, boy), Nepali, or English and press Go..."
-                : "Type Korean (e.g. kukur, eat, boy, ghar, 안녕), Nepali, or English and press Go..."
+                ? "Type Japanese, Nepali, English..."
+                : "Type Korean, Nepali, English..."
             }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -1755,11 +1669,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             }}
             style={{
               width: "100%",
-              padding: "11px 40px 11px 14px",
-              borderRadius: "8px",
+              padding: "7px 28px 7px 10px",
+              borderRadius: "7px",
               border: "1.5px solid #cbd5e1",
-              fontSize: "14px",
+              fontSize: "13px",
               outline: "none",
+              height: "36px",
+              boxSizing: "border-box",
               backgroundColor: "#f8fafc",
               transition: "border 0.2s, background 0.2s"
             }}
@@ -1772,14 +1688,14 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               onClick={() => { setSearchQuery(''); fetchDictionary('', activeLang); }}
               style={{
                 position: "absolute",
-                right: "12px",
+                right: "8px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 background: "none",
                 border: "none",
                 color: "#94a3b8",
                 cursor: "pointer",
-                fontSize: "14px",
+                fontSize: "12px",
                 padding: 0
               }}
             >
@@ -1788,7 +1704,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           )}
         </div>
 
-        {/* 1. 🔍 GO BUTTON FIRST (Per user instruction: 'yata go button lai suru ma rakhne') */}
+        {/* 3. 🔍 GO BUTTON */}
         <button
           type="submit"
           disabled={loading}
@@ -1797,29 +1713,30 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             backgroundColor: "#2563eb",
             color: "white",
             border: "none",
-            padding: "0 20px",
-            height: "40px",
-            borderRadius: "8px",
-            fontSize: "14px",
+            padding: "0 13px",
+            height: "36px",
+            borderRadius: "7px",
+            fontSize: "13px",
             fontWeight: "800",
             cursor: "pointer",
             display: "inline-flex",
             alignItems: "center",
-            gap: "6px",
-            boxShadow: "0 2px 8px rgba(37,99,235,0.3)",
+            gap: "5px",
+            boxShadow: "0 1px 4px rgba(37,99,235,0.25)",
             whiteSpace: "nowrap",
+            flexShrink: 0,
             transition: "background 0.15s, transform 0.1s"
           }}
           onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
           onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span>{loading ? "Searching..." : "Go"}</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>{loading ? "..." : "Go"}</span>
         </button>
 
-        {/* ⭐ MY VOICE BUTTON FOR THIS SEARCHED WORD (If uploaded voice matches searched word) */}
+        {/* 4. ⭐ MY VOICE BUTTON FOR THIS SEARCHED WORD (If uploaded voice matches searched word) */}
         {matchingSearchedCustomVoice && (
-          <div style={{ display: "inline-flex", borderRadius: "8px", overflow: "hidden", border: "1.5px solid #86efac", background: "#f0fdf4", boxShadow: "0 2px 6px rgba(16, 185, 129, 0.18)" }}>
+          <div style={{ display: "inline-flex", borderRadius: "7px", overflow: "hidden", border: "1.5px solid #86efac", background: "#f0fdf4", boxShadow: "0 1px 4px rgba(16, 185, 129, 0.15)", flexShrink: 0 }}>
             <button
               type="button"
               onClick={() => handlePlayAudio(matchingSearchedCustomVoice.url, 'search-custom-voice')}
@@ -1828,19 +1745,19 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 backgroundColor: playingAudioId === 'search-custom-voice' ? "#15803d" : loadingAudioId === 'search-custom-voice' ? "#16a34a" : "transparent",
                 color: playingAudioId === 'search-custom-voice' || loadingAudioId === 'search-custom-voice' ? "#ffffff" : "#15803d",
                 border: "none",
-                padding: "0 12px",
-                height: "40px",
-                fontSize: "13px",
+                padding: "0 9px",
+                height: "36px",
+                fontSize: "12px",
                 fontWeight: "800",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
+                gap: "5px",
                 whiteSpace: "nowrap",
                 transition: "all 0.15s ease"
               }}
             >
-              <span style={{ fontSize: "14px" }}>⭐</span>
+              <span style={{ fontSize: "12px" }}>⭐</span>
               <span>{playingAudioId === 'search-custom-voice' ? "⏹ Stop" : `▶ My Voice (${matchingSearchedCustomVoice.word})`}</span>
             </button>
             {canDownloadAudio && (
@@ -1853,9 +1770,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   color: "#15803d",
                   border: "none",
                   borderLeft: "1.5px solid #86efac",
-                  padding: "0 10px",
-                  height: "40px",
-                  fontSize: "14px",
+                  padding: "0 8px",
+                  height: "36px",
+                  fontSize: "12px",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -1868,8 +1785,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </div>
         )}
 
-        {/* UNIFIED VOICE MODEL SELECTOR, PLAY & DOWNLOAD */}
-        <div ref={modelDropdownRef} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+        {/* 5. UNIFIED VOICE MODEL SELECTOR, PLAY & DOWNLOAD */}
+        <div ref={modelDropdownRef} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
           {/* Model Picker Pill Button */}
           <button
             type="button"
@@ -1878,30 +1795,30 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "8px",
+              gap: "6px",
               background: selectedVoiceModel?.gender === 'male' ? "#f0f9ff" : "#fff1f2",
               border: `1.5px solid ${selectedVoiceModel?.gender === 'male' ? '#bae6fd' : '#fecdd3'}`,
-              padding: "0 12px 0 8px",
-              borderRadius: "8px",
-              height: "40px",
+              padding: "0 8px 0 6px",
+              borderRadius: "7px",
+              height: "36px",
               cursor: "pointer",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
               transition: "all 0.15s ease",
               whiteSpace: "nowrap"
             }}
           >
             {selectedVoiceModel?.gender === 'male' ? (
-              <MaleIcon size={24} isPlaying={playingAudioId === 'search-active-model'} />
+              <MaleIcon size={20} isPlaying={playingAudioId === 'search-active-model'} />
             ) : (
-              <FemaleIcon size={24} isPlaying={playingAudioId === 'search-active-model'} />
+              <FemaleIcon size={20} isPlaying={playingAudioId === 'search-active-model'} />
             )}
-            <div style={{ display: "flex", flexDirection: "column", textAlign: "left", lineHeight: 1.15 }}>
-              <span style={{ fontSize: "10px", fontWeight: "700", color: "#64748b" }}>Choose Model</span>
-              <span style={{ fontSize: "12.5px", fontWeight: "800", color: selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d" }}>
+            <div style={{ display: "flex", flexDirection: "column", textAlign: "left", lineHeight: 1.1 }}>
+              <span style={{ fontSize: "9px", fontWeight: "700", color: "#64748b" }}>Choose Model</span>
+              <span style={{ fontSize: "11.5px", fontWeight: "800", color: selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d" }}>
                 {selectedVoiceModel?.name || (activeLang === 'ja' ? "Japanese 1" : "Korean 1")}
               </span>
             </div>
-            <span style={{ fontSize: "11px", color: "#64748b", marginLeft: "4px" }}>
+            <span style={{ fontSize: "10px", color: "#64748b", marginLeft: "2px" }}>
               {isModelDropdownOpen ? "▲" : "▼"}
             </span>
           </button>
@@ -1919,24 +1836,24 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 : (selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d"),
               color: "#ffffff",
               border: "none",
-              padding: "0 14px",
-              height: "40px",
-              borderRadius: "8px",
-              fontSize: "13px",
+              padding: "0 11px",
+              height: "36px",
+              borderRadius: "7px",
+              fontSize: "12.5px",
               fontWeight: "800",
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
               whiteSpace: "nowrap",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
               transition: "all 0.15s ease"
             }}
           >
             {loadingAudioId === 'search-active-model' ? (
               <>
                 <span style={{ display: "inline-block", animation: "spin 0.8s linear infinite" }}>⏳</span>
-                <span>Loading...</span>
+                <span>Wait</span>
               </>
             ) : playingAudioId === 'search-active-model' ? (
               <>
@@ -1961,15 +1878,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 backgroundColor: "#ffffff",
                 color: selectedVoiceModel?.gender === 'male' ? "#0284c7" : "#be185d",
                 border: `1.5px solid ${selectedVoiceModel?.gender === 'male' ? '#bae6fd' : '#fecdd3'}`,
-                padding: "0 12px",
-                height: "40px",
-                borderRadius: "8px",
-                fontSize: "14px",
+                padding: "0 9px",
+                height: "36px",
+                borderRadius: "7px",
+                fontSize: "13px",
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
                 transition: "all 0.15s ease"
               }}
             >
@@ -2131,9 +2048,98 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           )}
         </div>
 
-
-
+        {/* 6. AI STUDIO TOGGLE BUTTON (Compact at the end of the single row) */}
+        <button
+          type="button"
+          onClick={() => {
+            setShowAiStudio(prev => {
+              const nextState = !prev;
+              if (nextState) {
+                setTimeout(() => {
+                  aiStudioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 80);
+              }
+              return nextState;
+            });
+          }}
+          title={showAiStudio ? "Close AI Studio" : "Open AI Studio directly under Dictionary"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            background: showAiStudio
+              ? "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)"
+              : "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+            color: "#ffffff",
+            padding: "0 10px 0 5px",
+            borderRadius: "18px",
+            border: showAiStudio ? "1.5px solid #c084fc" : "1.5px solid #6366f1",
+            height: "36px",
+            boxSizing: "border-box",
+            cursor: "pointer",
+            boxShadow: showAiStudio ? "0 0 10px rgba(168, 85, 247, 0.4)" : "0 1px 6px rgba(79, 70, 229, 0.25)",
+            transition: "all 0.15s ease",
+            flexShrink: 0,
+            whiteSpace: "nowrap"
+          }}
+        >
+          <div
+            style={{
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #c084fc 0%, #9333ea 50%, #4f46e5 100%)",
+              boxShadow: "0 1px 3px rgba(124, 58, 237, 0.4)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "12px",
+              flexShrink: 0
+            }}
+          >
+            🎙️
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1, textAlign: "left" }}>
+            <span style={{ fontSize: "11px", fontWeight: "800", color: "#ffffff" }}>AI Studio</span>
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.85)", fontWeight: "600" }}>Voice Studio</span>
+          </div>
+        </button>
       </form>
+
+      {/* EMBEDDED AI STUDIO (Opens directly under dictionary toolbar when clicked) */}
+      {showAiStudio && (
+        <div ref={aiStudioRef} style={{ marginBottom: "20px" }}>
+          <AiStudio
+            embedded={true}
+            userRole={userRole}
+            initialLang={activeLang}
+            instituteLanguage={instLang}
+            initialText={searchQuery || (activeLang === 'ja' ? selectedWord?.japanese : selectedWord?.korean) || ''}
+            activeFemaleModelId={selectedFemaleModel?.id}
+            activeMaleModelId={selectedMaleModel?.id}
+            onSelectVoiceModel={(voice) => {
+              const isFemale = voice.gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(voice.id || '') || (voice.name && voice.name.toLowerCase().includes('female'));
+              const isMale = !isFemale && (voice.gender === 'male' || /(?:^|[-_])male(?:[-_\d]|$)/i.test(voice.id || ''));
+              if (isMale) {
+                const list = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
+                const match = list.find(m => m.id === voice.id) || voice;
+                setSelectedMaleModel(match);
+                try {
+                  localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(match));
+                } catch (e) {}
+              } else if (isFemale) {
+                const list = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
+                const match = list.find(m => m.id === voice.id) || voice;
+                setSelectedFemaleModel(match);
+                try {
+                  localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(match));
+                } catch (e) {}
+              }
+            }}
+            onClose={() => setShowAiStudio(false)}
+          />
+        </div>
+      )}
 
       {/* 📚 SEARCHABLE VOCABULARY WORDS GALLERY & AUDIO PLAYERS */}
       <div style={{ marginBottom: "28px" }}>

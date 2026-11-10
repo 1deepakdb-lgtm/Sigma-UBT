@@ -484,45 +484,54 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
         </p>
       </div>
 
-      {/* FILTER TABS & SEARCH */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "22px" }}>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          {[
-            { id: "all", label: "전체 규칙 (सबै नियमहरू)" },
-            { id: "double_batchim", label: "11가지 겹받침 (११ संयुक्त फात्छिम्)" },
-            { id: "7endings", label: "1. 음절 끝소리 (७ अन्त्य ध्वनि)" },
-            { id: "nasalization", label: "2. 비음화 (नासिक्यीकरण)" },
-            { id: "tensification", label: "3. 경음화 (द्वित्वीकरण)" },
-            { id: "aspiration", label: "4. 격음화 (महाप्राणीकरण)" },
-            { id: "liaison", label: "5. 연음화 (ध्वनि सञ्चार)" },
-            { id: "liquidization", label: "6. 유음화 (तरलीकरण)" },
-            { id: "palatalization", label: "7. 구개음화 (तालव्यीकरण)" },
-            { id: "h_deletion", label: "8. ㅎ 탈락 (ㅎ लोप)" },
-            { id: "n_addition", label: "9. ㄴ 첨가 (ㄴ थप)" }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveCategory(tab.id)}
-              style={{
-                backgroundColor: activeCategory === tab.id ? "#1e40af" : "#f1f5f9",
-                color: activeCategory === tab.id ? "#ffffff" : "#334155",
-                border: "1px solid",
-                borderColor: activeCategory === tab.id ? "#1e40af" : "#e2e8f0",
-                padding: "6px 14px",
-                borderRadius: "20px",
-                fontSize: "14px",
-                fontWeight: "700",
-                cursor: "pointer",
-                transition: "all 0.15s ease"
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+      {/* FILTER DROPDOWN & SEARCH (Dropdown with arrow, button pills removed from mobile view per user request) */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "22px" }}>
+        {/* Dropdown with arrow ▼ for choosing rules */}
+        <div style={{ position: "relative", minWidth: "260px", flex: "1 1 280px" }}>
+          <select
+            value={activeCategory}
+            onChange={(e) => setActiveCategory(e.target.value)}
+            style={{
+              appearance: "none",
+              WebkitAppearance: "none",
+              width: "100%",
+              padding: "10px 38px 10px 14px",
+              borderRadius: "10px",
+              border: "1.5px solid #2563eb",
+              backgroundColor: "#eff6ff",
+              color: "#1e40af",
+              fontSize: "14px",
+              fontWeight: "800",
+              cursor: "pointer",
+              outline: "none",
+              boxShadow: "0 1px 4px rgba(37,99,235,0.12)"
+            }}
+          >
+            {[
+              { id: "all", label: "전체 규칙 (सबै नियमहरू)" },
+              { id: "double_batchim", label: "11가지 겹받침 (११ संयुक्त फात्छिम्)" },
+              { id: "7endings", label: "1. 음절 끝소리 (७ अन्त्य ध्वनि)" },
+              { id: "nasalization", label: "2. 비음화 (नासिक्यीकरण)" },
+              { id: "tensification", label: "3. 경음화 (द्वित्वीकरण)" },
+              { id: "aspiration", label: "4. 격음화 (महाप्राणीकरण)" },
+              { id: "liaison", label: "5. 연음화 (ध्वनि सञ्चार)" },
+              { id: "liquidization", label: "6. 유음화 (तरलीकरण)" },
+              { id: "palatalization", label: "7. 구개음화 (तालव्यीकरण)" },
+              { id: "h_deletion", label: "8. ㅎ 탈락 (ㅎ लोप)" },
+              { id: "n_addition", label: "9. ㄴ 첨가 (ㄴ थप)" }
+            ].map(tab => (
+              <option key={tab.id} value={tab.id} style={{ color: "#0f172a", backgroundColor: "#ffffff", fontWeight: "700" }}>
+                {tab.label}
+              </option>
+            ))}
+          </select>
+          <span style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#1e40af", fontSize: "12px", fontWeight: "900" }}>
+            ▼
+          </span>
         </div>
 
         {/* Search Input */}
-        <div style={{ minWidth: "240px", flex: "1 1 240px", maxWidth: "340px" }}>
+        <div style={{ minWidth: "220px", flex: "1 1 240px" }}>
           <input
             type="text"
             placeholder="규칙 또는 단어 검색 (नियम वा शब्द खोज्नुहोस्)..."
@@ -530,11 +539,12 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: "100%",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              border: "1px solid #cbd5e1",
+              padding: "10px 14px",
+              borderRadius: "10px",
+              border: "1.5px solid #cbd5e1",
               fontSize: "14px",
               outline: "none",
+              boxSizing: "border-box",
               backgroundColor: "#f8fafc"
             }}
           />

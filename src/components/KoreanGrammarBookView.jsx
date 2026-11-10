@@ -231,16 +231,64 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
             flex-shrink: 0 !important;
             line-height: 1.2 !important;
           }
+          .grammar-hero-banner {
+            padding: 16px 14px !important;
+            border-radius: 12px !important;
+            margin-bottom: 16px !important;
+          }
+          .grammar-filters-box {
+            padding: 12px 10px !important;
+            border-radius: 10px !important;
+            margin-bottom: 14px !important;
+          }
+          .grammar-cards-container {
+            width: 100% !important;
+            gap: 10px !important;
+          }
+          .grammar-card {
+            border-radius: 10px !important;
+            width: 100% !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03) !important;
+          }
+          .grammar-card-header {
+            padding: 12px 14px !important;
+          }
+          .grammar-card-body {
+            padding: 14px 12px !important;
+          }
+          .grammar-example-item {
+            padding: 8px 10px !important;
+            border-radius: 8px !important;
+          }
+          .grammar-desktop-table {
+            display: none !important;
+          }
+          .grammar-mobile-cards {
+            display: block !important;
+          }
+          .grammar-comparison-container {
+            padding: 8px 4px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            width: 100% !important;
+          }
         }
         @media (min-width: 769px) {
           .grammar-chapter-action-btn {
+            display: none !important;
+          }
+          .grammar-desktop-table {
+            display: block !important;
+          }
+          .grammar-mobile-cards {
             display: none !important;
           }
         }
       `}</style>
 
       {/* ── TOP HERO HEADER BANNER ────────────────────────────────────────── */}
-      <div style={{
+      <div className="grammar-hero-banner" style={{
         backgroundColor: "#ffffff",
         borderRadius: "18px",
         padding: "26px 30px",
@@ -918,7 +966,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
       {activeTab === "basic_advanced" && (
         <div>
           {/* Filters Bar */}
-          <div style={{
+          <div className="grammar-filters-box" style={{
             backgroundColor: "#ffffff",
             borderRadius: "14px",
             border: "1px solid #e2e8f0",
@@ -948,79 +996,80 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
               </span>
             </div>
 
-            {/* Level Selector Pills */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "10px" }}>
-              <span style={{ fontSize: "12px", fontWeight: "800", color: "#64748b" }}>तहरूप (Level):</span>
-              {["all", "Basic", "Intermediate", "Advanced"].map(lvl => (
-                <button
-                  key={lvl}
-                  type="button"
-                  onClick={() => setLevelFilter(lvl)}
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: "8px",
-                    border: levelFilter === lvl ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
-                    backgroundColor: levelFilter === lvl ? "#2563eb" : "#ffffff",
-                    color: levelFilter === lvl ? "#ffffff" : "#475569",
-                    fontWeight: "700",
-                    fontSize: "12px",
-                    cursor: "pointer"
-                  }}
-                >
-                  {lvl === "all" ? "All Levels (सबै)" : lvl === "Basic" ? "Basic (आधारभूत)" : lvl === "Intermediate" ? "Intermediate (मध्यम)" : "Advanced (उच्च)"}
-                </button>
-              ))}
-            </div>
+            {/* Level & Category Selectors in One Clean Responsive Toolbar */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+              {/* Level Selector Pills */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "12px", fontWeight: "800", color: "#64748b" }}>तहरूप (Level):</span>
+                {["all", "Basic", "Intermediate", "Advanced"].map(lvl => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setLevelFilter(lvl)}
+                    style={{
+                      padding: "5px 12px",
+                      borderRadius: "8px",
+                      border: levelFilter === lvl ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
+                      backgroundColor: levelFilter === lvl ? "#2563eb" : "#ffffff",
+                      color: levelFilter === lvl ? "#ffffff" : "#475569",
+                      fontWeight: "700",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    {lvl === "all" ? "All Levels" : lvl === "Basic" ? "Basic" : lvl === "Intermediate" ? "Intermediate" : "Advanced"}
+                  </button>
+                ))}
+              </div>
 
-            {/* Category Selector Pills */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "12px", fontWeight: "800", color: "#64748b" }}>वर्ग (Category):</span>
-              <button
-                type="button"
-                onClick={() => setCategoryFilter("all")}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  backgroundColor: categoryFilter === "all" ? "#0f172a" : "#f8fafc",
-                  color: categoryFilter === "all" ? "#ffffff" : "#475569",
-                  fontWeight: "700",
-                  fontSize: "11px",
-                  cursor: "pointer"
-                }}
-              >
-                All
-              </button>
-              {categoriesList.map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategoryFilter(cat)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    backgroundColor: categoryFilter === cat ? "#0f172a" : "#f8fafc",
-                    color: categoryFilter === cat ? "#ffffff" : "#475569",
-                    fontWeight: "700",
-                    fontSize: "11px",
-                    cursor: "pointer"
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
+              {/* Category Selector Dropdown with Arrow (Replaced 20+ wrapping buttons) */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: "1 1 240px", maxWidth: "420px" }}>
+                <span style={{ fontSize: "12px", fontWeight: "800", color: "#64748b", whiteSpace: "nowrap" }}>वर्ग (Category):</span>
+                <div style={{ position: "relative", width: "100%" }}>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    style={{
+                      appearance: "none",
+                      WebkitAppearance: "none",
+                      width: "100%",
+                      padding: "8px 34px 8px 12px",
+                      borderRadius: "8px",
+                      border: "1.5px solid #2563eb",
+                      backgroundColor: "#eff6ff",
+                      color: "#1e40af",
+                      fontSize: "13px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      outline: "none",
+                      boxShadow: "0 1px 3px rgba(37,99,235,0.1)"
+                    }}
+                  >
+                    <option value="all">All Categories (सबै वर्गहरू - {GRAMMAR_TOPICS.length})</option>
+                    {categoriesList.map(cat => (
+                      <option key={cat} value={cat} style={{ color: "#0f172a", backgroundColor: "#ffffff", fontWeight: "700" }}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                  <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#1e40af", fontSize: "11px", fontWeight: "900" }}>
+                    ▼
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Grammar Cards List */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div className="grammar-cards-container" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {filteredGrammars.map(g => {
               const isExpanded = expandedGrammarId === g.id;
 
               return (
                 <div
                   key={g.id}
+                  className="grammar-card"
                   style={{
                     backgroundColor: "#ffffff",
                     borderRadius: "14px",
@@ -1033,6 +1082,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                   {/* Card Header Bar */}
                   <div
                     onClick={() => setExpandedGrammarId(isExpanded ? null : g.id)}
+                    className="grammar-card-header"
                     style={{
                       padding: "16px 20px",
                       cursor: "pointer",
@@ -1097,7 +1147,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
 
                   {/* Collapsible Content */}
                   {isExpanded && (
-                    <div style={{ padding: "20px" }}>
+                    <div className="grammar-card-body" style={{ padding: "20px" }}>
                       {/* Formula */}
                       <div style={{
                         backgroundColor: "#eff6ff",
@@ -1140,23 +1190,26 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                           </h5>
                           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                             {g.examples.map((ex, exIdx) => (
-                              <div key={exIdx} style={{
+                              <div key={exIdx} className="grammar-example-item" style={{
                                 backgroundColor: "#f8fafc",
                                 padding: "10px 14px",
                                 borderRadius: "8px",
                                 border: "1px solid #e2e8f0",
                                 display: "flex",
                                 justifyContent: "space-between",
-                                alignItems: "center"
+                                alignItems: "center",
+                                gap: "10px"
                               }}>
-                                <div>
+                                <div style={{ minWidth: 0, flex: 1 }}>
                                   <div style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>
                                     {ex.ko}
                                   </div>
-                                  <div style={{ fontSize: "12px", color: "#64748b", margin: "2px 0" }}>
-                                    उच्चारण: {ex.nePron}
-                                  </div>
-                                  <div style={{ fontSize: "13px", color: "#059669", fontWeight: "600" }}>
+                                  {ex.nePron && (
+                                    <div style={{ fontSize: "12px", color: "#64748b", margin: "2px 0" }}>
+                                      उच्चारण: {ex.nePron}
+                                    </div>
+                                  )}
+                                  <div style={{ fontSize: "13.5px", color: "#15803d", fontWeight: "700" }}>
                                     {ex.ne}
                                   </div>
                                 </div>
@@ -1164,13 +1217,18 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                                   type="button"
                                   onClick={() => handleSpeak(ex.ko)}
                                   style={{
+                                    width: "32px",
+                                    height: "32px",
+                                    borderRadius: "50%",
                                     backgroundColor: speakingText === ex.ko ? "#2563eb" : "#ffffff",
                                     color: speakingText === ex.ko ? "#ffffff" : "#475569",
-                                    border: "1px solid #cbd5e1",
-                                    borderRadius: "6px",
-                                    padding: "4px 8px",
+                                    border: "1.5px solid #cbd5e1",
                                     cursor: "pointer",
-                                    fontSize: "12px"
+                                    fontSize: "12px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0
                                   }}
                                   title="Play pronunciation"
                                 >
@@ -1248,7 +1306,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
 
           {/* Detailed Selected Comparison Card */}
           {selectedComparisonObj && (
-            <div style={{
+            <div className="grammar-comparison-container" style={{
               backgroundColor: "#ffffff",
               borderRadius: "16px",
               border: "1.5px solid #e2e8f0",
@@ -1372,40 +1430,88 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                 </div>
               )}
 
-              {/* 3. Side-by-Side Rules Table */}
+              {/* 3. Side-by-Side Rules Table & Mobile Outside-of-Cell Cards */}
               <div style={{ marginBottom: "24px" }}>
                 <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", fontWeight: "800", color: "#0f172a", textTransform: "uppercase" }}>
                   तुलना तालिका (Comparison Matrix):
                 </h4>
-                <div style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+
+                {/* Desktop High-Contrast Table View */}
+                <div className="grammar-desktop-table" style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid #cbd5e1" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                     <thead>
-                      <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #cbd5e1" }}>
-                        <th style={{ padding: "12px 14px", textAlign: "left", width: "24%", color: "#475569", fontWeight: "800" }}>तुलनाको आधार (Aspect)</th>
-                        <th style={{ padding: "12px 14px", textAlign: "left", width: "38%", color: "#1d4ed8", backgroundColor: "#eff6ff", fontWeight: "800" }}>
+                      <tr style={{ borderBottom: "2px solid #cbd5e1" }}>
+                        <th style={{ padding: "12px 14px", textAlign: "left", width: "24%", backgroundColor: "#1e3a8a", color: "#ffffff", fontWeight: "800" }}>
+                          तुलनाको आधार (Aspect)
+                        </th>
+                        <th style={{ padding: "12px 14px", textAlign: "left", width: "38%", color: "#1e40af", backgroundColor: "#eff6ff", fontWeight: "800", borderLeft: "1px solid #bfdbfe" }}>
                           {selectedComparisonObj.patternA}
                         </th>
-                        <th style={{ padding: "12px 14px", textAlign: "left", width: "38%", color: "#b91c1c", backgroundColor: "#fef2f2", fontWeight: "800" }}>
+                        <th style={{ padding: "12px 14px", textAlign: "left", width: "38%", color: "#991b1b", backgroundColor: "#fef2f2", fontWeight: "800", borderLeft: "1px solid #fecaca" }}>
                           {selectedComparisonObj.patternB}
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedComparisonObj.rules.map((r, idx) => (
-                        <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "12px 14px", fontWeight: "700", color: "#334155" }}>
+                        <tr key={idx} style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
+                          <td style={{ padding: "12px 14px", fontWeight: "800", color: "#0f172a", backgroundColor: "#f8fafc" }}>
                             {r.aspect}
                           </td>
-                          <td style={{ padding: "12px 14px", color: "#1e3a8a", backgroundColor: "#f8fbff", lineHeight: "1.5" }}>
+                          <td style={{ padding: "12px 14px", color: "#1e3a8a", backgroundColor: "#f8fbff", lineHeight: "1.5", borderLeft: "1px solid #e2e8f0" }}>
                             {renderRuleWithSymbols(r.ruleA)}
                           </td>
-                          <td style={{ padding: "12px 14px", color: "#7f1d1d", backgroundColor: "#fffafa", lineHeight: "1.5" }}>
+                          <td style={{ padding: "12px 14px", color: "#7f1d1d", backgroundColor: "#fffafa", lineHeight: "1.5", borderLeft: "1px solid #e2e8f0" }}>
                             {renderRuleWithSymbols(r.ruleB)}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Full-Screen Outside-of-Cell Cards View */}
+                <div className="grammar-mobile-cards">
+                  {selectedComparisonObj.rules.map((r, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        backgroundColor: "#ffffff",
+                        border: "1.5px solid #e2e8f0",
+                        borderRadius: "10px",
+                        padding: "12px 14px",
+                        marginBottom: "10px",
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.03)"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                        <span style={{ backgroundColor: "#1e3a8a", color: "#ffffff", padding: "2px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "800" }}>
+                          आधार
+                        </span>
+                        <span style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>
+                          {r.aspect}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <div style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "8px", padding: "10px 12px" }}>
+                          <div style={{ fontSize: "12px", fontWeight: "800", color: "#1d4ed8", marginBottom: "3px" }}>
+                            [A] {selectedComparisonObj.patternA}
+                          </div>
+                          <div style={{ fontSize: "13.5px", color: "#1e3a8a", lineHeight: "1.5" }}>
+                            {renderRuleWithSymbols(r.ruleA)}
+                          </div>
+                        </div>
+                        <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "10px 12px" }}>
+                          <div style={{ fontSize: "12px", fontWeight: "800", color: "#b91c1c", marginBottom: "3px" }}>
+                            [B] {selectedComparisonObj.patternB}
+                          </div>
+                          <div style={{ fontSize: "13.5px", color: "#7f1d1d", lineHeight: "1.5" }}>
+                            {renderRuleWithSymbols(r.ruleB)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

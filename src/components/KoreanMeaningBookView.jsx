@@ -527,59 +527,196 @@ export default function KoreanMeaningBookView({
           box-sizing: border-box;
         }
 
-        /* Mobile App & Mobile Screen Optimization (All mobile devices) */
-        @media (max-width: 640px) {
-          .meaning-section-card {
-            padding: 12px 8px !important;
+        .meaning-dot-separator {
+          display: none;
+        }
+
+        /* Mobile App & Mobile Web Screen Optimization (All mobile devices) */
+        @media (max-width: 768px) {
+          /* Full screen display on mobile & mobile web view */
+          .meaning-reader-container {
+            padding: 6px 2px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            width: 100% !important;
+          }
+          .meaning-header-banner {
+            padding: 14px 10px !important;
+            margin-bottom: 16px !important;
             border-radius: 10px !important;
-            margin-bottom: 18px !important;
+          }
+          .meaning-header-banner h1 {
+            font-size: 20px !important;
+          }
+          .meaning-header-banner h2 {
+            font-size: 15px !important;
+          }
+          .meaning-section-card {
+            padding: 8px 2px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            margin-bottom: 16px !important;
+            width: 100% !important;
           }
           .meaning-table-container {
-            border-radius: 8px !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            width: 100% !important;
+            overflow: visible !important;
+          }
+          .meaning-dot-separator {
+            display: inline !important;
+          }
+
+          /* Keep all vocabulary items outside of cell: single-line horizontal rows */
+          .meaning-vocab-table,
+          .meaning-vocab-table thead,
+          .meaning-vocab-table tbody {
+            display: block !important;
+            width: 100% !important;
+          }
+          .meaning-vocab-table thead {
+            display: none !important; /* Hide rigid table header cells on mobile */
+          }
+          .meaning-vocab-table tr {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 8px 10px !important;
+            margin-bottom: 6px !important;
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            gap: 8px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            white-space: nowrap !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+          }
+          .meaning-vocab-table tr::-webkit-scrollbar {
+            height: 2px !important;
+          }
+          .meaning-vocab-table td {
+            display: inline-flex !important;
+            align-items: center !important;
+            width: auto !important;
+            padding: 0 !important;
+            border: none !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
           }
           .col-word {
-            width: 34% !important;
-            padding: 8px 4px !important;
-          }
-          .col-meaning {
-            width: 39% !important;
-            padding: 8px 4px !important;
+            order: 1 !important;
+            width: auto !important;
+            padding: 0 !important;
           }
           .col-pron {
-            width: 27% !important;
-            padding: 8px 4px !important;
+            order: 2 !important;
+            width: auto !important;
+            padding: 0 !important;
           }
-          .col-exp-korean {
-            width: 54% !important;
-            padding: 8px 4px !important;
+          .col-meaning {
+            order: 3 !important;
+            width: auto !important;
+            padding: 0 !important;
           }
-          .col-exp-nepali {
-            width: 46% !important;
-            padding: 8px 4px !important;
+          .meaning-nepali-text {
+            color: #15803d !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
           }
+          .meaning-pron-text {
+            color: #1e40af !important;
+            font-weight: 700 !important;
+            background-color: #eff6ff !important;
+            border: 1px solid #bfdbfe !important;
+            padding: 1px 6px !important;
+            border-radius: 4px !important;
+            font-size: 12px !important;
+          }
+
+          /* Expressions outside of cell: clean card rows */
+          .meaning-exp-table,
+          .meaning-exp-table thead,
+          .meaning-exp-table tbody {
+            display: block !important;
+            width: 100% !important;
+          }
+          .meaning-exp-table thead {
+            display: none !important;
+          }
+          .meaning-exp-table tr {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            padding: 10px 12px !important;
+            margin-bottom: 8px !important;
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            gap: 5px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            white-space: normal !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+          }
+          .meaning-exp-table td {
+            display: block !important;
+            width: 100% !important;
+            padding: 0 !important;
+            border: none !important;
+            white-space: normal !important;
+          }
+
+          /* Grammar table outside of cell */
+          .meaning-grammar-table,
+          .meaning-grammar-table thead,
+          .meaning-grammar-table tbody {
+            display: block !important;
+            width: 100% !important;
+          }
+          .meaning-grammar-table thead {
+            display: none !important;
+          }
+          .meaning-grammar-table tr {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            padding: 8px 10px !important;
+            margin-bottom: 6px !important;
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            gap: 4px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            white-space: normal !important;
+          }
+          .meaning-grammar-table td {
+            display: block !important;
+            width: 100% !important;
+            padding: 0 !important;
+            border: none !important;
+            white-space: normal !important;
+          }
+
           .meaning-speak-btn {
-            width: 22px !important;
-            height: 22px !important;
-            min-width: 22px !important;
-            font-size: 10px !important;
+            width: 24px !important;
+            height: 24px !important;
+            min-width: 24px !important;
+            font-size: 11px !important;
             flex-shrink: 0 !important;
           }
           .meaning-word-text {
-            font-size: 13.5px !important;
+            font-size: 14px !important;
             line-height: 1.25 !important;
-          }
-          .meaning-nepali-text {
-            font-size: 13px !important;
-            line-height: 1.25 !important;
-          }
-          .meaning-pron-text {
-            font-size: 11.5px !important;
-            line-height: 1.2 !important;
-          }
-          .meaning-th-title {
-            font-size: 12px !important;
-            padding: 8px 4px !important;
-            letter-spacing: -0.2px !important;
           }
         }
       `}</style>
@@ -795,7 +932,7 @@ export default function KoreanMeaningBookView({
         </div>
       ) : (
         /* ── 2. INSIDE CHAPTER VOCABULARY READER VIEW ────────────────────── */
-        <div style={{
+        <div className="meaning-reader-container" style={{
           backgroundColor: "#ffffff",
           borderRadius: "18px",
           border: "1.5px solid #e2e8f0",
@@ -961,7 +1098,7 @@ export default function KoreanMeaningBookView({
           {chapterViewMode === "book" && currentBookData && (
             <div>
               {/* Header Banner - Clean, Attractive Light Style */}
-              <div style={{
+              <div className="meaning-header-banner" style={{
                 textAlign: "center",
                 padding: "26px 20px",
                 marginBottom: "28px",
@@ -1014,7 +1151,7 @@ export default function KoreanMeaningBookView({
                 </div>
 
                 <div className="meaning-table-container">
-                  <table className="meaning-full-table" style={{ fontSize: "14px" }}>
+                  <table className="meaning-full-table meaning-vocab-table" style={{ fontSize: "14px" }}>
                     <thead>
                       <tr style={{ backgroundColor: "#1e40af", borderBottom: "2px solid #1d4ed8" }}>
                         <th className="col-word meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>शब्द</th>
@@ -1068,11 +1205,12 @@ export default function KoreanMeaningBookView({
                               </div>
                             </div>
                           </td>
-                          <td className="col-meaning meaning-nepali-text" style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>
-                            {w.nepali}
-                          </td>
                           <td className="col-pron meaning-pron-text" style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>
-                            {w.pronunciation}
+                            {w.pronunciation ? `[${w.pronunciation}]` : ""}
+                          </td>
+                          <td className="col-meaning meaning-nepali-text" style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>
+                            <span className="meaning-dot-separator" style={{ color: "#cbd5e1", margin: "0 6px" }}>•</span>
+                            <span>{w.nepali}</span>
                           </td>
                         </tr>
                       ))}
@@ -1087,7 +1225,7 @@ export default function KoreanMeaningBookView({
                   <span style={{ color: "#0284c7" }}>२. 기본 표현</span> — आधारभूत वाक्य तथा नेपाली अर्थ
                 </h3>
                 <div className="meaning-table-container">
-                  <table className="meaning-full-table" style={{ fontSize: "14px" }}>
+                  <table className="meaning-full-table meaning-exp-table" style={{ fontSize: "14px" }}>
                     <thead>
                       <tr style={{ backgroundColor: "#1e40af", borderBottom: "2px solid #1d4ed8" }}>
                         <th className="col-exp-korean meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>वाक्य</th>
@@ -1218,7 +1356,7 @@ export default function KoreanMeaningBookView({
                             उदाहरण:
                           </div>
                           <div className="meaning-table-container">
-                            <table className="meaning-full-table" style={{ fontSize: "13px", backgroundColor: "#ffffff" }}>
+                            <table className="meaning-full-table meaning-grammar-table" style={{ fontSize: "13px", backgroundColor: "#ffffff" }}>
                               <thead>
                                 <tr style={{ backgroundColor: "#1e40af", borderBottom: "1.5px solid #1d4ed8" }}>
                                   <th style={{ padding: "8px 12px", color: "#ffffff", width: "50%", fontWeight: "800" }}>वाक्य (Korean)</th>
