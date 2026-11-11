@@ -533,6 +533,41 @@ export default function KoreanMeaningBookView({
 
         /* Mobile App & Mobile Web Screen Optimization (All mobile devices) */
         @media (max-width: 768px) {
+          .meaning-vocab-row {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 4px !important;
+            padding: 8px 2px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+          }
+          .meaning-vocab-row .col-word {
+            width: 100% !important;
+            flex: none !important;
+            min-width: auto !important;
+          }
+          .meaning-vocab-row .col-pron {
+            padding-left: 38px !important;
+            flex: none !important;
+            min-width: auto !important;
+          }
+          .meaning-vocab-row .col-meaning {
+            padding-left: 38px !important;
+            flex: none !important;
+            width: 100% !important;
+          }
+          .meaning-exp-card {
+            border: none !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 8px 2px !important;
+          }
           /* Full screen display on mobile & mobile web view */
           .meaning-reader-container {
             padding: 6px 2px !important;
@@ -1151,7 +1186,7 @@ export default function KoreanMeaningBookView({
                   </h3>
                 </div>
 
-                <div className="meaning-vocab-list" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div className="meaning-vocab-list" style={{ width: "100%", display: "flex", flexDirection: "column" }}>
                   {currentBookData.words.map((w, idx) => (
                     <div
                       key={idx}
@@ -1159,29 +1194,26 @@ export default function KoreanMeaningBookView({
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "space-between",
-                        flexWrap: "wrap",
-                        gap: "8px 12px",
-                        padding: "10px 14px",
-                        backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
-                        border: "1.5px solid #e2e8f0",
-                        borderRadius: "10px",
+                        padding: "10px 4px",
+                        backgroundColor: speakingWordId === `tb_${idx}` ? "#eff6ff" : (idx % 2 === 0 ? "#ffffff" : "#fcfcfc"),
+                        borderBottom: "1px solid #f1f5f9",
+                        borderLeft: speakingWordId === `tb_${idx}` ? "3px solid #dc2626" : "3px solid transparent",
                         width: "100%",
                         boxSizing: "border-box",
-                        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.03)",
+                        gap: "12px",
                         transition: "all 0.15s ease"
                       }}
                     >
-                      {/* Left: Round Audio Button + Korean Word + Category */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                      {/* Col 1: Round Audio Button + Korean Word */}
+                      <div className="col-word" style={{ display: "flex", alignItems: "center", gap: "10px", flex: "0 0 200px", minWidth: "160px" }}>
                         <button
                           type="button"
                           onClick={() => handleSpeak(w.korean, `tb_${idx}`)}
                           className="meaning-speak-btn"
                           style={{
-                            width: "28px",
-                            height: "28px",
-                            minWidth: "28px",
+                            width: "30px",
+                            height: "30px",
+                            minWidth: "30px",
                             borderRadius: "50%",
                             border: `1.5px solid ${speakingWordId === `tb_${idx}` ? "#dc2626" : "#cbd5e1"}`,
                             backgroundColor: speakingWordId === `tb_${idx}` ? "#dc2626" : "#ffffff",
@@ -1193,28 +1225,31 @@ export default function KoreanMeaningBookView({
                             fontSize: "12px",
                             flexShrink: 0,
                             padding: 0,
-                            boxShadow: speakingWordId === `tb_${idx}` ? "0 2px 6px rgba(220,38,38,0.3)" : "none",
+                            boxShadow: speakingWordId === `tb_${idx}` ? "0 0 0 3px rgba(220,38,38,0.25)" : "0 1px 2px rgba(0,0,0,0.06)",
                             transition: "all 0.15s ease"
                           }}
                           title="उच्चारण सुन्नुहोस्"
                         >
-                          🔊
+                          {speakingWordId === `tb_${idx}` ? "⏹" : "🔊"}
                         </button>
-                        <span className="meaning-word-text" style={{ fontSize: "15.5px", fontWeight: "800", color: "#0f172a" }}>
+                        <span className="meaning-word-text" style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
                           {w.korean}
                         </span>
                       </div>
 
-                      {/* Right: Pronunciation + Nepali Meaning */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px 12px", flexWrap: "wrap" }}>
+                      {/* Col 2: Pronunciation */}
+                      <div className="col-pron" style={{ display: "flex", alignItems: "center", flex: "0 0 180px", minWidth: "140px" }}>
                         {w.pronunciation && (
-                          <span className="meaning-pron-text" style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>
+                          <span className="meaning-pron-text" style={{ color: "#2563eb", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", padding: "2px 7px", borderRadius: "5px", fontWeight: "700", fontSize: "12.5px" }}>
                             [{w.pronunciation}]
                           </span>
                         )}
-                        <span className="meaning-nepali-text" style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                          <span style={{ color: "#cbd5e1" }}>•</span>
-                          <span>{w.nepali}</span>
+                      </div>
+
+                      {/* Col 3: Nepali Meaning */}
+                      <div className="col-meaning" style={{ display: "flex", alignItems: "center", flex: 1 }}>
+                        <span className="meaning-nepali-text" style={{ fontWeight: "700", color: "#15803d", fontSize: "15px" }}>
+                          {w.nepali}
                         </span>
                       </div>
                     </div>
@@ -1233,10 +1268,10 @@ export default function KoreanMeaningBookView({
                       key={idx}
                       className="meaning-exp-card"
                       style={{
-                        backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
-                        border: "1.5px solid #e2e8f0",
-                        borderRadius: "10px",
-                        padding: "12px 14px",
+                        backgroundColor: speakingWordId === `exp_${idx}` ? "#eff6ff" : (idx % 2 === 0 ? "#ffffff" : "#fcfcfc"),
+                        borderBottom: "1px solid #f1f5f9",
+                        borderLeft: speakingWordId === `exp_${idx}` ? "3px solid #2563eb" : "3px solid transparent",
+                        padding: "10px 4px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
@@ -1244,7 +1279,7 @@ export default function KoreanMeaningBookView({
                         gap: "10px",
                         width: "100%",
                         boxSizing: "border-box",
-                        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.03)"
+                        transition: "all 0.15s ease"
                       }}
                     >
                       {/* Left: Speak button + Korean sentence + pronunciation */}
