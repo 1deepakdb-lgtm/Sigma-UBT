@@ -21,21 +21,21 @@ export const ELEVENLABS_MODELS = {
 export const AVAILABLE_MODELS = [
   {
     id: 'eleven_multilingual_v2',
-    name: 'Eleven Multilingual v2',
+    name: 'Multilingual v2',
     shortName: 'Multilingual v2',
     tag: 'Ultra Lifelike · Expressive',
     desc: 'Highest natural intonation, dynamic emotional contour, and authentic human cadence.'
   },
   {
     id: 'eleven_turbo_v2_5',
-    name: 'Eleven Turbo v2.5',
+    name: 'Turbo v2.5',
     shortName: 'Turbo v2.5',
     tag: 'Low-Latency · Dynamic',
     desc: 'Fast generation with natural conversational flow, perfect for responsive dialogue.'
   },
   {
     id: 'eleven_flash_v2',
-    name: 'Eleven Flash v2',
+    name: 'Flash v2',
     shortName: 'Flash v2',
     tag: 'Ultra-Fast · Sharp',
     desc: 'Instant acoustic response, ideal for rapid vocabulary tests and syllable drills.'

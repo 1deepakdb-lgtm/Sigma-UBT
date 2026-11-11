@@ -926,7 +926,7 @@ export default function AiStudio({
                 }}
               >
                 {AVAILABLE_MODELS.map(m => (
-                  <option key={m.id} value={m.id}>{m.name} ({m.shortName})</option>
+                  <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>
 
