@@ -1526,12 +1526,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         .dict-word-row {
           display: flex;
           align-items: center;
+          justify-content: space-between;
           padding: 10px 12px;
           border-bottom: 1px solid #f1f5f9;
           transition: background-color 0.15s ease;
           width: 100%;
           box-sizing: border-box;
-          gap: 14px;
+          gap: 12px;
         }
         .dict-word-row:hover {
           background-color: #f8fafc;
@@ -1539,26 +1540,28 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         .dict-col-word {
           display: flex;
           align-items: center;
-          gap: 10px;
-          min-width: 170px;
-          flex: 0 0 200px;
+          gap: 8px;
+          min-width: 130px;
           flex-shrink: 0;
         }
-        .dict-col-pron {
+        .dict-col-meaning-group {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+          gap: 2px;
+        }
+        .dict-meaning-line {
           display: flex;
           align-items: center;
           gap: 6px;
           flex-wrap: wrap;
-          min-width: 160px;
-          flex: 0 0 220px;
-          flex-shrink: 0;
         }
-        .dict-col-meaning {
+        .dict-explanation-line {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           flex-wrap: wrap;
-          flex: 1;
         }
         .dict-audio-circle-btn {
           width: 32px;
@@ -1577,6 +1580,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           padding: 0;
           box-shadow: 0 1px 3px rgba(0,0,0,0.06);
           transition: all 0.15s ease;
+          margin-left: auto;
         }
         .dict-audio-circle-btn:hover {
           transform: scale(1.08);
@@ -1597,9 +1601,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           }
           .dict-word-row {
             display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 4px !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
             padding: 9px 4px !important;
             border-bottom: 1px solid #f1f5f9 !important;
             border-top: none !important;
@@ -1610,29 +1615,22 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             white-space: normal !important;
           }
           .dict-col-word {
-            min-width: auto !important;
-            flex: none !important;
-            width: 100% !important;
-            gap: 8px !important;
-          }
-          .dict-col-pron {
-            min-width: auto !important;
-            flex: none !important;
-            padding-left: 36px !important;
-            gap: 5px !important;
-          }
-          .dict-col-meaning {
-            min-width: auto !important;
-            flex: none !important;
-            padding-left: 36px !important;
+            min-width: 85px !important;
+            flex-shrink: 0 !important;
             gap: 6px !important;
-            width: 100% !important;
+          }
+          .dict-col-meaning-group {
+            flex: 1 !important;
+            min-width: 0 !important;
+            gap: 2px !important;
           }
           .dict-audio-circle-btn {
-            width: 28px !important;
-            height: 28px !important;
-            min-width: 28px !important;
-            font-size: 11px !important;
+            width: 30px !important;
+            height: 30px !important;
+            min-width: 30px !important;
+            font-size: 12px !important;
+            flex-shrink: 0 !important;
+            margin-left: auto !important;
           }
         }
         @media (max-width: 640px) {
@@ -2294,34 +2292,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       borderBottom: "1px solid #f1f5f9"
                     }}
                   >
-                    {/* COLUMN 1: Audio Circular Button + Word in Original Script */}
+                    {/* LEFT PART: Word in Original Script (Korean / Japanese) */}
                     <div className="dict-col-word">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePlayCardWord(word, `card-${primaryWord}`);
-                        }}
-                        title="उच्चारण सुन्नुहोस् (Listen Pronunciation)"
-                        className="dict-audio-circle-btn"
-                        style={{
-                          backgroundColor: isPlayingAny
-                            ? (activeLang === 'ja' ? "#9333ea" : "#2563eb")
-                            : "#ffffff",
-                          color: isPlayingAny
-                            ? "#ffffff"
-                            : (activeLang === 'ja' ? "#9333ea" : "#2563eb"),
-                          borderColor: isPlayingAny
-                            ? (activeLang === 'ja' ? "#7e22ce" : "#1d4ed8")
-                            : "#cbd5e1",
-                          boxShadow: isPlayingAny
-                            ? (activeLang === 'ja' ? "0 0 0 3.5px rgba(147,51,234,0.3)" : "0 0 0 3.5px rgba(37,99,235,0.28)")
-                            : "0 1px 3px rgba(0,0,0,0.06)"
-                        }}
-                      >
-                        {isPlayingAny ? "⏹" : "🔊"}
-                      </button>
-
                       {/* Kanji Badge if applicable */}
                       {word.isKanji && (
                         <span
@@ -2354,73 +2326,102 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       </span>
                     </div>
 
-                    {/* COLUMN 2: Nepali Pronunciation (Plain text, no box) */}
-                    <div className="dict-col-pron">
-                      {(nepaliPhonetic || romaji) && (
+                    {/* MIDDLE PART: Meaning (Line 1) + Explanation Below (Line 2) */}
+                    <div className="dict-col-meaning-group">
+                      {/* Line 1: Meaning (Nepali) + Badges */}
+                      <div className="dict-meaning-line">
                         <span
                           style={{
-                            fontSize: "13.5px",
-                            fontWeight: "700",
-                            color: activeLang === 'ja' ? "#7e22ce" : "#1e40af",
-                            background: "transparent",
-                            border: "none",
-                            padding: "0",
-                            whiteSpace: "nowrap"
-                          }}
-                        >
-                          [{nepaliPhonetic || romaji}]
-                        </span>
-                      )}
-                    </div>
-
-                    {/* COLUMN 3: Meanings (Nepali in Green + English in Grey) */}
-                    <div className="dict-col-meaning">
-                      <span
-                        style={{
-                          color: "#15803d",
-                          fontWeight: "700",
-                          fontSize: "14.5px"
-                        }}
-                      >
-                        {word.nepali}
-                      </span>
-
-                      {word.english && (
-                        <span
-                          style={{
-                            color: "#64748b",
-                            fontWeight: "600",
-                            fontSize: "12.5px"
-                          }}
-                        >
-                          ({word.english})
-                        </span>
-                      )}
-
-                      {customVoiceForWord && (
-                        <span
-                          title="Custom voice available"
-                          style={{
-                            fontSize: "11px",
-                            backgroundColor: "#dcfce7",
                             color: "#15803d",
-                            border: "1px solid #86efac",
-                            padding: "1px 5px",
-                            borderRadius: "4px",
                             fontWeight: "700",
-                            whiteSpace: "nowrap"
+                            fontSize: "14.5px"
                           }}
                         >
-                          ⭐ My Voice
+                          {word.nepali}
                         </span>
-                      )}
 
-                      {word.isKanji && word.jlpt && (
-                        <span style={{ fontSize: "11px", backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "1px 6px", borderRadius: "4px", fontWeight: "800", whiteSpace: "nowrap" }}>
-                          N{word.jlpt}
-                        </span>
-                      )}
+                        {customVoiceForWord && (
+                          <span
+                            title="Custom voice available"
+                            style={{
+                              fontSize: "10.5px",
+                              backgroundColor: "#dcfce7",
+                              color: "#15803d",
+                              border: "1px solid #86efac",
+                              padding: "1px 5px",
+                              borderRadius: "4px",
+                              fontWeight: "700",
+                              whiteSpace: "nowrap"
+                            }}
+                          >
+                            ⭐ My Voice
+                          </span>
+                        )}
+
+                        {word.isKanji && word.jlpt && (
+                          <span style={{ fontSize: "10.5px", backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "1px 6px", borderRadius: "4px", fontWeight: "800", whiteSpace: "nowrap" }}>
+                            N{word.jlpt}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Line 2 (Below Meaning): Explanation (Nepali Pronunciation + English Translation) */}
+                      <div className="dict-explanation-line">
+                        {(nepaliPhonetic || romaji) && (
+                          <span
+                            style={{
+                              fontSize: "13px",
+                              fontWeight: "700",
+                              color: activeLang === 'ja' ? "#7e22ce" : "#1e40af",
+                              whiteSpace: "nowrap"
+                            }}
+                          >
+                            [{nepaliPhonetic || romaji}]
+                          </span>
+                        )}
+
+                        {word.english && (
+                          <span
+                            style={{
+                              color: "#64748b",
+                              fontWeight: "600",
+                              fontSize: "12.5px"
+                            }}
+                          >
+                            ({word.english})
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    {/* RIGHT PART: Circular Audio Button (Right side of meaning) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayCardWord(word, `card-${primaryWord}`);
+                      }}
+                      title="उच्चारण सुन्नुहोस् (Listen Pronunciation)"
+                      className="dict-audio-circle-btn"
+                      style={{
+                        backgroundColor: isPlayingAny
+                          ? (activeLang === 'ja' ? "#9333ea" : "#2563eb")
+                          : "#ffffff",
+                        color: isPlayingAny
+                          ? "#ffffff"
+                          : (activeLang === 'ja' ? "#9333ea" : "#2563eb"),
+                        borderColor: isPlayingAny
+                          ? (activeLang === 'ja' ? "#7e22ce" : "#1d4ed8")
+                          : "#cbd5e1",
+                        boxShadow: isPlayingAny
+                          ? (activeLang === 'ja' ? "0 0 0 3.5px rgba(147,51,234,0.3)" : "0 0 0 3.5px rgba(37,99,235,0.28)")
+                          : "0 1px 3px rgba(0,0,0,0.06)",
+                        flexShrink: 0,
+                        marginLeft: "auto"
+                      }}
+                    >
+                      {isPlayingAny ? "⏹" : "🔊"}
+                    </button>
                   </div>
                 );
               })}

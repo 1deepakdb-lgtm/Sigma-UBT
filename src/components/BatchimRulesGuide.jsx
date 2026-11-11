@@ -420,12 +420,13 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
         .batchim-word-row {
           display: flex;
           align-items: center;
+          justify-content: space-between;
           padding: 10px 12px;
           border-bottom: 1px solid #f1f5f9;
           transition: background-color 0.15s ease;
           width: 100%;
           box-sizing: border-box;
-          gap: 14px;
+          gap: 12px;
         }
         .batchim-word-row:hover {
           background-color: #f8fafc;
@@ -433,26 +434,28 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
         .batchim-col-word {
           display: flex;
           align-items: center;
-          gap: 10px;
-          min-width: 170px;
-          flex: 0 0 200px;
+          gap: 8px;
+          min-width: 110px;
           flex-shrink: 0;
         }
-        .batchim-col-pron {
+        .batchim-col-meaning-group {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+          gap: 2px;
+        }
+        .batchim-meaning-line {
           display: flex;
           align-items: center;
           gap: 6px;
           flex-wrap: wrap;
-          min-width: 160px;
-          flex: 0 0 220px;
-          flex-shrink: 0;
         }
-        .batchim-col-meaning {
+        .batchim-explanation-line {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           flex-wrap: wrap;
-          flex: 1;
         }
         .batchim-audio-circle-btn {
           width: 32px;
@@ -471,6 +474,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           padding: 0;
           box-shadow: 0 1px 3px rgba(0,0,0,0.06);
           transition: all 0.15s ease;
+          margin-left: auto;
         }
         .batchim-audio-circle-btn:hover {
           transform: scale(1.08);
@@ -479,9 +483,10 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
         @media (max-width: 768px) {
           .batchim-word-row {
             display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 4px !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
             padding: 9px 4px !important;
             border-bottom: 1px solid #f1f5f9 !important;
             border-top: none !important;
@@ -492,29 +497,22 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             white-space: normal !important;
           }
           .batchim-col-word {
-            min-width: auto !important;
-            flex: none !important;
-            width: 100% !important;
-            gap: 8px !important;
-          }
-          .batchim-col-pron {
-            min-width: auto !important;
-            flex: none !important;
-            padding-left: 36px !important;
-            gap: 5px !important;
-          }
-          .batchim-col-meaning {
-            min-width: auto !important;
-            flex: none !important;
-            padding-left: 36px !important;
+            min-width: 75px !important;
+            flex-shrink: 0 !important;
             gap: 6px !important;
-            width: 100% !important;
+          }
+          .batchim-col-meaning-group {
+            flex: 1 !important;
+            min-width: 0 !important;
+            gap: 2px !important;
           }
           .batchim-audio-circle-btn {
-            width: 28px !important;
-            height: 28px !important;
-            min-width: 28px !important;
-            font-size: 11px !important;
+            width: 30px !important;
+            height: 30px !important;
+            min-width: 30px !important;
+            font-size: 12px !important;
+            flex-shrink: 0 !important;
+            margin-left: auto !important;
           }
         }
       ` }} />
@@ -695,48 +693,52 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                           backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc"
                         }}
                       >
-                        {/* COLUMN 1: Round Audio Button + Korean Written Word */}
+                        {/* LEFT PART: Written Word */}
                         <div className="batchim-col-word">
-                          <button
-                            type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
-                            title="उच्चारण सुन्नुहोस्"
-                            className="batchim-audio-circle-btn"
-                            style={{
-                              backgroundColor: isPlaying ? "#2563eb" : "#ffffff",
-                              color: isPlaying ? "#ffffff" : "#2563eb",
-                              borderColor: isPlaying ? "#1d4ed8" : "#cbd5e1",
-                              boxShadow: isPlaying ? "0 0 0 3px rgba(37,99,235,0.25)" : "0 1px 3px rgba(0,0,0,0.06)"
-                            }}
-                          >
-                            {isPlaying ? "⏹" : "🔊"}
-                          </button>
                           <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
                             {ex.written}
                           </span>
                         </div>
 
-                        {/* COLUMN 2: Nepali Pronunciation (Plain text, no box) */}
-                        <div className="batchim-col-pron">
-                          <span style={{
-                            fontWeight: "700",
-                            color: "#4338ca",
-                            background: "transparent",
-                            border: "none",
-                            padding: "0",
-                            fontSize: "13.5px",
-                            whiteSpace: "nowrap"
-                          }}>
-                            [{koreanToNepaliRomanized(ex.spoken)}]
-                          </span>
+                        {/* MIDDLE PART: Meaning on Row 1 + Explanation Below on Row 2 */}
+                        <div className="batchim-col-meaning-group">
+                          {/* Line 1: Nepali Meaning */}
+                          <div className="batchim-meaning-line">
+                            <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
+                              {ex.nepali}
+                            </span>
+                          </div>
+
+                          {/* Line 2 (Below Meaning): Explanation (Nepali Pronunciation) */}
+                          <div className="batchim-explanation-line">
+                            <span style={{
+                              fontWeight: "700",
+                              color: "#4338ca",
+                              fontSize: "13px",
+                              whiteSpace: "nowrap"
+                            }}>
+                              [{koreanToNepaliRomanized(ex.spoken)}]
+                            </span>
+                          </div>
                         </div>
 
-                        {/* COLUMN 3: Nepali Meaning */}
-                        <div className="batchim-col-meaning">
-                          <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
-                            {ex.nepali}
-                          </span>
-                        </div>
+                        {/* RIGHT PART: Round Audio Button (Right side of meaning) */}
+                        <button
+                          type="button"
+                          onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                          title="उच्चारण सुन्नुहोस्"
+                          className="batchim-audio-circle-btn"
+                          style={{
+                            backgroundColor: isPlaying ? "#2563eb" : "#ffffff",
+                            color: isPlaying ? "#ffffff" : "#2563eb",
+                            borderColor: isPlaying ? "#1d4ed8" : "#cbd5e1",
+                            boxShadow: isPlaying ? "0 0 0 3px rgba(37,99,235,0.25)" : "0 1px 3px rgba(0,0,0,0.06)",
+                            marginLeft: "auto",
+                            flexShrink: 0
+                          }}
+                        >
+                          {isPlaying ? "⏹" : "🔊"}
+                        </button>
                       </div>
                     );
                   })}
@@ -835,48 +837,52 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc"
                     }}
                   >
-                    {/* COLUMN 1: Round Audio Button + Korean Written Word */}
+                    {/* LEFT PART: Written Word */}
                     <div className="batchim-col-word">
-                      <button
-                        type="button"
-                        onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
-                        title="उच्चारण सुन्नुहोस्"
-                        className="batchim-audio-circle-btn"
-                        style={{
-                          backgroundColor: isPlaying ? "#2563eb" : "#ffffff",
-                          color: isPlaying ? "#ffffff" : "#2563eb",
-                          borderColor: isPlaying ? "#1d4ed8" : "#cbd5e1",
-                          boxShadow: isPlaying ? "0 0 0 3px rgba(37,99,235,0.25)" : "0 1px 3px rgba(0,0,0,0.06)"
-                        }}
-                      >
-                        {isPlaying ? "⏹" : "🔊"}
-                      </button>
                       <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
                         {ex.written}
                       </span>
                     </div>
 
-                    {/* COLUMN 2: Nepali Pronunciation (Plain text, no box) */}
-                    <div className="batchim-col-pron">
-                      <span style={{
-                        fontWeight: "700",
-                        color: "#4338ca",
-                        background: "transparent",
-                        border: "none",
-                        padding: "0",
-                        fontSize: "13.5px",
-                        whiteSpace: "nowrap"
-                      }}>
-                        [{koreanToNepaliRomanized(ex.spoken)}]
-                      </span>
+                    {/* MIDDLE PART: Meaning on Row 1 + Explanation Below on Row 2 */}
+                    <div className="batchim-col-meaning-group">
+                      {/* Line 1: Nepali Meaning */}
+                      <div className="batchim-meaning-line">
+                        <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
+                          {ex.nepali}
+                        </span>
+                      </div>
+
+                      {/* Line 2 (Below Meaning): Explanation (Nepali Pronunciation) */}
+                      <div className="batchim-explanation-line">
+                        <span style={{
+                          fontWeight: "700",
+                          color: "#4338ca",
+                          fontSize: "13px",
+                          whiteSpace: "nowrap"
+                        }}>
+                          [{koreanToNepaliRomanized(ex.spoken)}]
+                        </span>
+                      </div>
                     </div>
 
-                    {/* COLUMN 3: Nepali Meaning */}
-                    <div className="batchim-col-meaning">
-                      <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
-                        {ex.nepali}
-                      </span>
-                    </div>
+                    {/* RIGHT PART: Round Audio Button (Right side of meaning) */}
+                    <button
+                      type="button"
+                      onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                      title="उच्चारण सुन्नुहोस्"
+                      className="batchim-audio-circle-btn"
+                      style={{
+                        backgroundColor: isPlaying ? "#2563eb" : "#ffffff",
+                        color: isPlaying ? "#ffffff" : "#2563eb",
+                        borderColor: isPlaying ? "#1d4ed8" : "#cbd5e1",
+                        boxShadow: isPlaying ? "0 0 0 3px rgba(37,99,235,0.25)" : "0 1px 3px rgba(0,0,0,0.06)",
+                        marginLeft: "auto",
+                        flexShrink: 0
+                      }}
+                    >
+                      {isPlaying ? "⏹" : "🔊"}
+                    </button>
                   </div>
                 );
               })}

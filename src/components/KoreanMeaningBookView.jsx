@@ -500,20 +500,68 @@ export default function KoreanMeaningBookView({
           overflow-wrap: break-word;
         }
 
+        .meaning-vocab-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 12px;
+          border-bottom: 1px solid #f1f5f9;
+          transition: background-color 0.15s ease;
+          width: 100%;
+          box-sizing: border-box;
+          gap: 12px;
+        }
+        .meaning-vocab-row:hover {
+          background-color: #f8fafc;
+        }
         .col-word {
-          width: 35% !important;
-          padding: 12px 14px;
-          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 120px;
+          flex-shrink: 0;
         }
-        .col-meaning {
-          width: 38% !important;
-          padding: 12px 14px;
-          box-sizing: border-box;
+        .col-meaning-group {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+          gap: 2px;
         }
-        .col-pron {
-          width: 27% !important;
-          padding: 12px 14px;
-          box-sizing: border-box;
+        .meaning-line {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+        .explanation-line {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+        .meaning-speak-btn {
+          width: 32px;
+          height: 32px;
+          min-width: 32px;
+          border-radius: 50%;
+          border: 1.5px solid #cbd5e1;
+          background-color: #ffffff;
+          color: #dc2626;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 13px;
+          flex-shrink: 0;
+          padding: 0;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+          transition: all 0.15s ease;
+          margin-left: auto;
+        }
+        .meaning-speak-btn:hover {
+          transform: scale(1.08);
+          border-color: #fca5a5;
         }
 
         .col-exp-korean {
@@ -535,38 +583,59 @@ export default function KoreanMeaningBookView({
         @media (max-width: 768px) {
           .meaning-vocab-row {
             display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 4px !important;
-            padding: 8px 2px !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            padding: 9px 4px !important;
             border-bottom: 1px solid #f1f5f9 !important;
             border-top: none !important;
             border-left: none !important;
             border-right: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
+            white-space: normal !important;
           }
           .meaning-vocab-row .col-word {
-            width: 100% !important;
-            flex: none !important;
-            min-width: auto !important;
+            width: auto !important;
+            min-width: 80px !important;
+            flex-shrink: 0 !important;
+            padding: 0 !important;
+            gap: 6px !important;
           }
-          .meaning-vocab-row .col-pron {
-            padding-left: 38px !important;
-            flex: none !important;
-            min-width: auto !important;
+          .meaning-vocab-row .col-meaning-group {
+            flex: 1 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            gap: 2px !important;
           }
-          .meaning-vocab-row .col-meaning {
-            padding-left: 38px !important;
-            flex: none !important;
-            width: 100% !important;
+          .meaning-vocab-row .meaning-speak-btn {
+            width: 30px !important;
+            height: 30px !important;
+            min-width: 30px !important;
+            font-size: 12px !important;
+            flex-shrink: 0 !important;
+            margin-left: auto !important;
           }
           .meaning-exp-card {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
             border: none !important;
             border-bottom: 1px solid #f1f5f9 !important;
             border-radius: 0 !important;
             box-shadow: none !important;
-            padding: 8px 2px !important;
+            padding: 9px 4px !important;
+            gap: 10px !important;
+          }
+          .meaning-exp-card .meaning-speak-btn {
+            width: 30px !important;
+            height: 30px !important;
+            min-width: 30px !important;
+            font-size: 12px !important;
+            flex-shrink: 0 !important;
+            margin-left: auto !important;
           }
           /* Full screen display on mobile & mobile web view */
           .meaning-reader-container {
@@ -1204,54 +1273,57 @@ export default function KoreanMeaningBookView({
                         transition: "all 0.15s ease"
                       }}
                     >
-                      {/* Col 1: Round Audio Button + Korean Word */}
-                      <div className="col-word" style={{ display: "flex", alignItems: "center", gap: "10px", flex: "0 0 200px", minWidth: "160px" }}>
-                        <button
-                          type="button"
-                          onClick={() => handleSpeak(w.korean, `tb_${idx}`)}
-                          className="meaning-speak-btn"
-                          style={{
-                            width: "30px",
-                            height: "30px",
-                            minWidth: "30px",
-                            borderRadius: "50%",
-                            border: `1.5px solid ${speakingWordId === `tb_${idx}` ? "#dc2626" : "#cbd5e1"}`,
-                            backgroundColor: speakingWordId === `tb_${idx}` ? "#dc2626" : "#ffffff",
-                            color: speakingWordId === `tb_${idx}` ? "#ffffff" : "#dc2626",
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "12px",
-                            flexShrink: 0,
-                            padding: 0,
-                            boxShadow: speakingWordId === `tb_${idx}` ? "0 0 0 3px rgba(220,38,38,0.25)" : "0 1px 2px rgba(0,0,0,0.06)",
-                            transition: "all 0.15s ease"
-                          }}
-                          title="उच्चारण सुन्नुहोस्"
-                        >
-                          {speakingWordId === `tb_${idx}` ? "⏹" : "🔊"}
-                        </button>
+                      {/* Left: Korean Word */}
+                      <div className="col-word">
                         <span className="meaning-word-text" style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
                           {w.korean}
                         </span>
                       </div>
 
-                      {/* Col 2: Pronunciation */}
-                      <div className="col-pron" style={{ display: "flex", alignItems: "center", flex: "0 0 180px", minWidth: "140px" }}>
-                        {w.pronunciation && (
-                          <span className="meaning-pron-text" style={{ color: "#1e40af", background: "transparent", border: "none", padding: "0", fontWeight: "700", fontSize: "13.5px" }}>
-                            [{w.pronunciation}]
+                      {/* Middle: Meaning (Line 1) + Explanation Below (Line 2) */}
+                      <div className="col-meaning-group">
+                        <div className="meaning-line">
+                          <span className="meaning-nepali-text" style={{ fontWeight: "700", color: "#15803d", fontSize: "15px" }}>
+                            {w.nepali}
                           </span>
+                        </div>
+                        {w.pronunciation && (
+                          <div className="explanation-line">
+                            <span className="meaning-pron-text" style={{ color: "#1e40af", fontWeight: "700", fontSize: "13px" }}>
+                              [{w.pronunciation}]
+                            </span>
+                          </div>
                         )}
                       </div>
 
-                      {/* Col 3: Nepali Meaning */}
-                      <div className="col-meaning" style={{ display: "flex", alignItems: "center", flex: 1 }}>
-                        <span className="meaning-nepali-text" style={{ fontWeight: "700", color: "#15803d", fontSize: "15px" }}>
-                          {w.nepali}
-                        </span>
-                      </div>
+                      {/* Right: Round Audio Button (Right side of meaning) */}
+                      <button
+                        type="button"
+                        onClick={() => handleSpeak(w.korean, `tb_${idx}`)}
+                        className="meaning-speak-btn"
+                        style={{
+                          width: "30px",
+                          height: "30px",
+                          minWidth: "30px",
+                          borderRadius: "50%",
+                          border: `1.5px solid ${speakingWordId === `tb_${idx}` ? "#dc2626" : "#cbd5e1"}`,
+                          backgroundColor: speakingWordId === `tb_${idx}` ? "#dc2626" : "#ffffff",
+                          color: speakingWordId === `tb_${idx}` ? "#ffffff" : "#dc2626",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "12px",
+                          flexShrink: 0,
+                          padding: 0,
+                          boxShadow: speakingWordId === `tb_${idx}` ? "0 0 0 3px rgba(220,38,38,0.25)" : "0 1px 2px rgba(0,0,0,0.06)",
+                          transition: "all 0.15s ease",
+                          marginLeft: "auto"
+                        }}
+                        title="उच्चारण सुन्नुहोस्"
+                      >
+                        {speakingWordId === `tb_${idx}` ? "⏹" : "🔊"}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1282,50 +1354,57 @@ export default function KoreanMeaningBookView({
                         transition: "all 0.15s ease"
                       }}
                     >
-                      {/* Left: Speak button + Korean sentence + pronunciation */}
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", minWidth: 0, flex: "1 1 260px" }}>
-                        <button
-                          type="button"
-                          onClick={() => handleSpeak(exp.korean, `exp_${idx}`)}
-                          className="meaning-speak-btn"
-                          style={{
-                            width: "28px",
-                            height: "28px",
-                            minWidth: "28px",
-                            borderRadius: "50%",
-                            border: `1.5px solid ${speakingWordId === `exp_${idx}` ? "#2563eb" : "#cbd5e1"}`,
-                            backgroundColor: speakingWordId === `exp_${idx}` ? "#2563eb" : "#ffffff",
-                            color: speakingWordId === `exp_${idx}` ? "#ffffff" : "#2563eb",
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "12px",
-                            flexShrink: 0,
-                            padding: 0,
-                            boxShadow: speakingWordId === `exp_${idx}` ? "0 2px 6px rgba(37,99,235,0.3)" : "none",
-                            transition: "all 0.15s ease"
-                          }}
-                          title="उच्चारण सुन्नुहोस्"
-                        >
-                          🔊
-                        </button>
-                        <div style={{ minWidth: 0, wordBreak: "break-word" }}>
-                          <div className="meaning-word-text" style={{ fontWeight: "800", color: "#0f172a", fontSize: "15.5px" }}>
-                            {exp.korean}
-                          </div>
-                          {exp.pronunciation && (
-                            <div className="meaning-pron-text" style={{ fontSize: "12.5px", color: "#64748b", marginTop: "2px" }}>
-                              उच्चारण: {exp.pronunciation}
-                            </div>
-                          )}
-                        </div>
+                      {/* Left: Korean expression */}
+                      <div className="col-word" style={{ minWidth: "120px", flexShrink: 0 }}>
+                        <span className="meaning-word-text" style={{ fontWeight: "800", color: "#0f172a", fontSize: "15.5px" }}>
+                          {exp.korean}
+                        </span>
                       </div>
 
-                      {/* Right: Nepali Meaning */}
-                      <div className="meaning-nepali-text" style={{ fontSize: "14.5px", fontWeight: "700", color: "#0f172a", flex: "1 1 200px" }}>
-                        <span style={{ color: "#15803d" }}>{exp.nepali}</span>
+                      {/* Middle: Meaning (Line 1) + Explanation / Pronunciation Below (Line 2) */}
+                      <div className="col-meaning-group">
+                        <div className="meaning-line">
+                          <span className="meaning-nepali-text" style={{ fontSize: "14.5px", fontWeight: "700", color: "#15803d" }}>
+                            {exp.nepali}
+                          </span>
+                        </div>
+                        {exp.pronunciation && (
+                          <div className="explanation-line">
+                            <span className="meaning-pron-text" style={{ fontSize: "12.5px", color: "#1e40af", fontWeight: "700" }}>
+                              [{exp.pronunciation}]
+                            </span>
+                          </div>
+                        )}
                       </div>
+
+                      {/* Right: Round Audio Button (Right side of meaning) */}
+                      <button
+                        type="button"
+                        onClick={() => handleSpeak(exp.korean, `exp_${idx}`)}
+                        className="meaning-speak-btn"
+                        style={{
+                          width: "30px",
+                          height: "30px",
+                          minWidth: "30px",
+                          borderRadius: "50%",
+                          border: `1.5px solid ${speakingWordId === `exp_${idx}` ? "#2563eb" : "#cbd5e1"}`,
+                          backgroundColor: speakingWordId === `exp_${idx}` ? "#2563eb" : "#ffffff",
+                          color: speakingWordId === `exp_${idx}` ? "#ffffff" : "#2563eb",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "12px",
+                          flexShrink: 0,
+                          padding: 0,
+                          boxShadow: speakingWordId === `exp_${idx}` ? "0 2px 6px rgba(37,99,235,0.3)" : "none",
+                          transition: "all 0.15s ease",
+                          marginLeft: "auto"
+                        }}
+                        title="उच्चारण सुन्नुहोस्"
+                      >
+                        {speakingWordId === `exp_${idx}` ? "⏹" : "🔊"}
+                      </button>
                     </div>
                   ))}
                 </div>
