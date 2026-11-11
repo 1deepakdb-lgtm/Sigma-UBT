@@ -1045,198 +1045,125 @@ export default function KoreanMeaningBookView({
           color: "#0f172a",
           width: "100%"
         }}>
-          {/* Chapter Banner */}
-          <div style={{
-            backgroundColor: currentChapterObj.bookPart === 1 ? "#eff6ff" : "#fffbeb",
-            borderRadius: "14px",
-            padding: "18px 22px",
-            marginBottom: "20px",
-            border: `1.5px solid ${currentChapterObj.bookPart === 1 ? "#bfdbfe" : "#fde68a"}`
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-              <span style={{
-                backgroundColor: currentChapterObj.bookPart === 1 ? "#2563eb" : "#d97706",
-                color: "#ffffff",
-                fontSize: "12px",
-                fontWeight: "800",
-                padding: "4px 12px",
-                borderRadius: "8px"
-              }}>
-                Chapter {currentChapterObj.chapter} • Part {currentChapterObj.bookPart}
-              </span>
-              <h3 style={{ margin: 0, fontSize: "22px", fontWeight: "900", color: "#0f172a" }}>
-                제{currentChapterObj.chapter}과: {currentChapterObj.titleKo} ({currentChapterObj.titleNe})
-              </h3>
-            </div>
-          </div>
-
-          {/* View Mode Switcher & Search Bar inside Chapter */}
+          {/* Clean, Compact Chapter Navigation Bar */}
           <div style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             flexWrap: "wrap",
-            gap: "12px",
-            marginBottom: "20px"
+            gap: "10px",
+            backgroundColor: "#ffffff",
+            padding: "10px 14px",
+            borderRadius: "10px",
+            border: "1px solid #e2e8f0",
+            marginBottom: "16px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
           }}>
-            {/* View Mode Buttons */}
-            <div style={{ display: "flex", backgroundColor: "#f1f5f9", padding: "4px", borderRadius: "10px", gap: "4px", flexWrap: "wrap", border: "1px solid #e2e8f0", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
               <button
                 type="button"
-                onClick={() => setChapterViewMode("book")}
+                onClick={() => {
+                  setSelectedChapter(null);
+                  setChapterViewMode("book");
+                }}
                 style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
+                  backgroundColor: "#0f3b82",
+                  color: "#ffffff",
                   border: "none",
-                  backgroundColor: chapterViewMode === "book" ? "#dc2626" : "transparent",
-                  color: chapterViewMode === "book" ? "#ffffff" : "#475569",
+                  padding: "7px 14px",
+                  borderRadius: "8px",
                   fontWeight: "800",
                   fontSize: "13px",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "6px",
-                  boxShadow: chapterViewMode === "book" ? "0 2px 8px rgba(220,38,38,0.3)" : "none"
+                  gap: "4px",
+                  boxShadow: "0 1px 3px rgba(15, 59, 130, 0.2)"
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                <span>पूर्ण पाठ (Textbook Mode)</span>
+                ← Go Back
               </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                <span style={{ fontWeight: "900", fontSize: "16px", color: "#0f172a" }}>
+                  제{currentChapterObj.chapter}과 {currentChapterObj.titleKo}
+                </span>
+                <span style={{ fontWeight: "700", fontSize: "14px", color: "#dc2626" }}>
+                  ({currentChapterObj.titleNe})
+                </span>
+              </div>
+            </div>
 
+            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               <button
                 type="button"
-                onClick={() => setChapterViewMode("table")}
+                disabled={currentChapterObj.chapter <= 1}
+                onClick={() => {
+                  setSelectedChapter(prev => Math.max(1, prev - 1));
+                  setFlashcardIndex(0);
+                  setIsCardFlipped(false);
+                  setUserQuizAnswers({});
+                  setQuizSubmitted(false);
+                }}
                 style={{
-                  padding: "8px 16px",
+                  padding: "6px 12px",
                   borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: chapterViewMode === "table" ? "#2563eb" : "transparent",
-                  color: chapterViewMode === "table" ? "#ffffff" : "#475569",
-                  fontWeight: "800",
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: chapterViewMode === "table" ? "0 2px 8px rgba(37,99,235,0.3)" : "none"
+                  border: `1px solid ${currentChapterObj.chapter <= 1 ? "#cbd5e1" : "#1e3a8a"}`,
+                  backgroundColor: currentChapterObj.chapter <= 1 ? "#f1f5f9" : "#ffffff",
+                  color: currentChapterObj.chapter <= 1 ? "#94a3b8" : "#1e3a8a",
+                  cursor: currentChapterObj.chapter <= 1 ? "not-allowed" : "pointer",
+                  fontWeight: "700",
+                  fontSize: "12px"
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                <span>Word Table (शब्दार्थ तालिका)</span>
+                ◀ Prev
               </button>
-
               <button
                 type="button"
-                onClick={() => setChapterViewMode("flashcard")}
+                disabled={currentChapterObj.chapter >= 60}
+                onClick={() => {
+                  setSelectedChapter(prev => Math.min(60, prev + 1));
+                  setFlashcardIndex(0);
+                  setIsCardFlipped(false);
+                  setUserQuizAnswers({});
+                  setQuizSubmitted(false);
+                }}
                 style={{
-                  padding: "8px 16px",
+                  padding: "6px 12px",
                   borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: chapterViewMode === "flashcard" ? "#7c3aed" : "transparent",
-                  color: chapterViewMode === "flashcard" ? "#ffffff" : "#475569",
-                  fontWeight: "800",
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: chapterViewMode === "flashcard" ? "0 2px 8px rgba(124,58,237,0.3)" : "none"
+                  border: `1px solid ${currentChapterObj.chapter >= 60 ? "#cbd5e1" : "#1e3a8a"}`,
+                  backgroundColor: currentChapterObj.chapter >= 60 ? "#f1f5f9" : "#ffffff",
+                  color: currentChapterObj.chapter >= 60 ? "#94a3b8" : "#1e3a8a",
+                  cursor: currentChapterObj.chapter >= 60 ? "not-allowed" : "pointer",
+                  fontWeight: "700",
+                  fontSize: "12px"
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                <span>Flashcards (फ्ल्यासकार्ड)</span>
+                Next ▶
               </button>
-
-              {/* Only show Chapter PDF to institute and students if admin uploaded this PDF */}
-              {(Boolean(currentChapterObj.meaningPdfUrl) || isAdmin) && (
+              {isAdmin && onOpenEditModal && (
                 <button
                   type="button"
-                  onClick={() => setChapterViewMode("pdf")}
+                  onClick={() => onOpenEditModal(currentChapterObj)}
                   style={{
-                    padding: "8px 16px",
-                    borderRadius: "8px",
+                    backgroundColor: "#f59e0b",
+                    color: "#ffffff",
                     border: "none",
-                    backgroundColor: chapterViewMode === "pdf" ? "#059669" : "transparent",
-                    color: chapterViewMode === "pdf" ? "#ffffff" : "#475569",
-                    fontWeight: "800",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: chapterViewMode === "pdf" ? "0 2px 8px rgba(5,150,105,0.3)" : "none"
+                    padding: "6px 12px",
+                    borderRadius: "8px",
+                    fontWeight: "700",
+                    fontSize: "12px",
+                    cursor: "pointer"
                   }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  <span>{currentChapterObj.meaningPdfUrl ? "Chapter PDF" : "Admin: + Upload Chapter PDF"}</span>
+                  Admin: Attach PDF
                 </button>
               )}
             </div>
-
-            {/* Word Search in this Chapter */}
-            {chapterViewMode === "table" && (
-              <div style={{ position: "relative", minWidth: "240px" }}>
-                <input
-                  type="text"
-                  placeholder="Search in this chapter words..."
-                  value={wordSearch}
-                  onChange={(e) => setWordSearch(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px 8px 34px",
-                    borderRadius: "8px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "13px",
-                    outline: "none",
-                    backgroundColor: "#f8fafc",
-                    color: "#0f172a"
-                  }}
-                />
-                <span style={{ position: "absolute", left: "10px", top: "9px", color: "#64748b", display: "inline-flex" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </span>
-              </div>
-            )}
           </div>
 
           {/* ── SUB-VIEW 0: FULL COMPREHENSIVE TEXTBOOK VIEW (5 SECTIONS) ── */}
           {chapterViewMode === "book" && currentBookData && (
             <div>
-              {/* Header Banner - Clean, Attractive Light Style */}
-              <div className="meaning-header-banner" style={{
-                textAlign: "center",
-                padding: "26px 20px",
-                marginBottom: "28px",
-                borderRadius: "16px",
-                background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-                color: "#0f172a",
-                border: "1.5px solid #e2e8f0",
-                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)"
-              }}>
-                <div style={{
-                  display: "inline-block",
-                  backgroundColor: "#dc2626",
-                  color: "#ffffff",
-                  fontWeight: "900",
-                  fontSize: "13px",
-                  padding: "4px 18px",
-                  borderRadius: "20px",
-                  marginBottom: "10px",
-                  letterSpacing: "0.5px",
-                  boxShadow: "0 2px 8px rgba(220, 38, 38, 0.25)"
-                }}>
-                  CHAPTER {String(currentBookData.chapter).padStart(2, '0')}
-                </div>
-                <h1 style={{ margin: "0 0 6px 0", fontSize: "28px", fontWeight: "900", color: "#0f172a", letterSpacing: "-0.5px" }}>
-                  {currentBookData.titleKo}
-                </h1>
-                <h2 style={{ margin: "0", fontSize: "20px", fontWeight: "800", color: "#dc2626" }}>
-                  {currentBookData.titleNe}
-                </h2>
-              </div>
-
-              {/* Navigation Bar directly above Section 1 */}
-              {renderChapterNavBar()}
 
               {/* १. 핵심 단어 — महत्त्वपूर्ण शब्दार्थ */}
               <div className="meaning-section-card">
