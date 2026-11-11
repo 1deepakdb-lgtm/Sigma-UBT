@@ -9,6 +9,7 @@ import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import EsewaCheckoutModal from "@/components/EsewaCheckoutModal";
 import JlptMockExamModal from "@/components/JlptMockExamModal";
 import ColorVisionSection from "@/components/ColorVisionSection";
+import AboutUsSection from "@/components/AboutUsSection";
 import { JLPT_MOCK_SETS_META, getMockExamSetById } from "@/data/jlptMockTestData";
 import { performLogout } from "@/lib/clientAuth";
 
@@ -1704,6 +1705,7 @@ const StudentDashboard = () => {
           <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
           <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
+          <button onClick={() => setActiveTab("about")} style={getNavBtnStyle("about")}>About Us</button>
         </div>
 
         {/* Desktop Logout Button */}
@@ -1879,6 +1881,14 @@ const StudentDashboard = () => {
             >
               <span>📈</span>
               <span>Performance</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("about"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "about" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>ℹ️</span>
+              <span>About Us</span>
             </button>
 
             <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
@@ -3297,6 +3307,11 @@ const StudentDashboard = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ABOUT US TAB */}
+        {activeTab === "about" && (
+          <AboutUsSection />
         )}
       </div>
 

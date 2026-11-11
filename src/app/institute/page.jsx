@@ -18,6 +18,7 @@ import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
 import InstituteBillingSection from "@/components/InstituteBillingSection";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
+import AboutUsSection from "@/components/AboutUsSection";
 import { performLogout } from "@/lib/clientAuth";
 import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from "@/lib/instituteGateAuth";
 import { JLPT_MOCK_SETS_META } from "@/data/jlptMockTestData";
@@ -1498,6 +1499,10 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               Notice
             </button>
             
+            <button onClick={() => handleTabChange("about")} style={getNavBtnStyle("about")}>
+              About Us
+            </button>
+            
             {userRole !== "staff" && (
               <button onClick={() => handleTabChange("students")} style={getNavBtnStyle("students")}>
                 Manage Students
@@ -1630,6 +1635,14 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             >
               <span>📢</span>
               <span>Notice Board</span>
+            </button>
+
+            <button
+              onClick={() => { handleTabChange("about"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "about" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>ℹ️</span>
+              <span>About Us</span>
             </button>
 
             {userRole !== "staff" && (
@@ -3528,6 +3541,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           </div>
         </div>
       )}
+
+        {/* ABOUT US TAB */}
+        {activeTab === "about" && (
+          <AboutUsSection />
+        )}
 
       </div>
 
