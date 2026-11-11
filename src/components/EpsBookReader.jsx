@@ -3810,6 +3810,21 @@ export default function EpsBookReader({
         }
         /* Mobile Unit in a Row Display */
         @media (max-width: 768px) {
+          .book-tabs-container {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 4px 0 !important;
+            background: transparent !important;
+          }
+          .active-book-top-bar {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 6px 0 !important;
+            background: transparent !important;
+            margin-bottom: 12px !important;
+          }
           .chapter-unit-grid {
             display: flex !important;
             flex-direction: column !important;
@@ -3924,8 +3939,8 @@ export default function EpsBookReader({
           }
         }
       ` }} />
-      {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials */}
-      {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials */}
+      {/* TOP LANGUAGE TRACK NAVIGATION BAR: Korean Study Materials & Japanese Study Materials (Hidden when inside study material) */}
+      {!isKoreanFolderOpen && !isJapaneseFolderOpen && !selectedChapter && (
       <div style={{
         display: "flex",
         flexDirection: "column",
@@ -4147,6 +4162,7 @@ export default function EpsBookReader({
           </div>
         )}
       </div>
+      )}
 
       {/* ============================================================== */}
       {/* 1. KOREAN STUDY MATERIALS SECTION */}
@@ -4322,7 +4338,7 @@ export default function EpsBookReader({
 
           {/* ACTIVE KOREAN BOOK TOP BAR (Visible when entered inside a specific book) */}
           {isKoreanFolderOpen && (
-            <div style={{
+            <div className="active-book-top-bar" style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -5495,7 +5511,7 @@ export default function EpsBookReader({
 
           {/* ACTIVE JAPANESE BOOK TOP BAR (Visible when entered inside a specific Japanese book) */}
           {isJapaneseFolderOpen && (
-            <div style={{
+            <div className="active-book-top-bar" style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",

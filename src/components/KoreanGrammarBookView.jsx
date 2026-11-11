@@ -277,6 +277,21 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
             width: 100% !important;
             max-width: 100% !important;
           }
+          .grammar-chapter-detail-container {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: 8px 0 !important;
+            width: 100% !important;
+          }
+          .grammar-hero-banner {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 12px 4px !important;
+            background: transparent !important;
+          }
           .grammar-conjugation-card {
             padding: 8px 10px !important;
             gap: 6px !important;
@@ -478,15 +493,16 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {activeTab === "chapterwise" && (
         <div>
-          {/* IF A SPECIFIC CHAPTER IS SELECTED -> SHOW FULL CHAPTER DETAIL */}
+          {/* IF A SPECIFIC CHAPTER IS SELECTED -> SHOW FULL CHAPTER DETAIL (Out of Box for All Devices) */}
           {selectedChapterObj ? (
-            <div style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "16px",
-              border: "1.5px solid #e2e8f0",
-              boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
-              padding: "24px",
-              marginBottom: "30px"
+            <div className="grammar-chapter-detail-container" style={{
+              backgroundColor: "transparent",
+              borderRadius: "0",
+              border: "none",
+              boxShadow: "none",
+              padding: "8px 0",
+              marginBottom: "24px",
+              width: "100%"
             }}>
               {/* Back to Chapters and Chapter Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid #f1f5f9" }}>

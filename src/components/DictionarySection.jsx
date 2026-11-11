@@ -182,6 +182,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   // Active Language State ('ko' | 'ja')
   const [activeLang, setActiveLang] = useState(initialLang);
   const [japaneseFilter, setJapaneseFilter] = useState('all'); // 'all' | 'kanji' | 'n5'..'n1' | 'vocab'
+  // View mode for Dictionary Section: 'all' | 'dictionary' | 'rules' (Study Material)
+  const [activeViewMode, setActiveViewMode] = useState('all');
 
   // Selected Voice Models (Unified Active Model State)
   const [selectedVoiceModel, setSelectedVoiceModel] = useState(
@@ -1477,12 +1479,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   return (
     <div
       onContextMenu={(e) => e.stopPropagation()}
+      className="dict-main-container"
       style={{
-        backgroundColor: "#ffffff",
-        borderRadius: "14px",
-        border: "1.5px solid #e2e8f0",
-        padding: "26px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+        backgroundColor: activeViewMode === 'rules' ? "transparent" : "#ffffff",
+        borderRadius: activeViewMode === 'rules' ? "0" : "14px",
+        border: activeViewMode === 'rules' ? "none" : "1.5px solid #e2e8f0",
+        padding: activeViewMode === 'rules' ? "4px 0" : "26px",
+        boxShadow: activeViewMode === 'rules' ? "none" : "0 4px 20px rgba(0,0,0,0.06)",
         maxWidth: "1200px",
         margin: "0 auto",
         userSelect: "text",
@@ -1532,6 +1535,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           background-color: rgba(148, 163, 184, 0.4);
           border-radius: 4px;
         }
+        @media (max-width: 768px) {
+          .dict-main-container {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 8px 2px !important;
+            background-color: transparent !important;
+            max-width: 100% !important;
+            width: 100% !important;
+          }
+        }
         @media (max-width: 640px) {
           .dict-top-toolbar {
             gap: 4px !important;
@@ -1549,9 +1563,66 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         }
       ` }} />
 
-      {title && <h2 style={{ margin: "0 0 10px 0", color: "#0f172a", fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
+      {/* TOP SECTION MODE SELECTOR: Allows opening Study Material / Pronunciation Rules cleanly out of the box */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
+        {title && <h2 style={{ margin: 0, color: "#0f172a", fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
+        <div style={{ display: "inline-flex", backgroundColor: "#f1f5f9", padding: "3px", borderRadius: "10px", border: "1.5px solid #cbd5e1", gap: "4px" }}>
+          <button
+            type="button"
+            onClick={() => setActiveViewMode('all')}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "8px",
+              border: "none",
+              fontSize: "12px",
+              fontWeight: "800",
+              cursor: "pointer",
+              backgroundColor: activeViewMode === 'all' ? "#2563eb" : "transparent",
+              color: activeViewMode === 'all' ? "#ffffff" : "#475569",
+              transition: "all 0.15s ease"
+            }}
+          >
+            📖 All (सबै)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveViewMode('dictionary')}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "8px",
+              border: "none",
+              fontSize: "12px",
+              fontWeight: "800",
+              cursor: "pointer",
+              backgroundColor: activeViewMode === 'dictionary' ? "#2563eb" : "transparent",
+              color: activeViewMode === 'dictionary' ? "#ffffff" : "#475569",
+              transition: "all 0.15s ease"
+            }}
+          >
+            🔍 Dictionary
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveViewMode('rules')}
+            style={{
+              padding: "5px 12px",
+              borderRadius: "8px",
+              border: "none",
+              fontSize: "12px",
+              fontWeight: "800",
+              cursor: "pointer",
+              backgroundColor: activeViewMode === 'rules' ? "#16a34a" : "transparent",
+              color: activeViewMode === 'rules' ? "#ffffff" : "#475569",
+              transition: "all 0.15s ease"
+            }}
+          >
+            📚 Study Material ({activeLang === 'ja' ? 'जापानी नियम' : 'फात्छिम् नियम'})
+          </button>
+        </div>
+      </div>
 
       {/* Unified One-Row Shrunk Toolbar: Language Switcher, Search Input, Go, Voice Model, Play, Download, and AI Studio */}
+      {activeViewMode !== 'rules' && (
       <form onSubmit={handleSearch} className="dict-top-toolbar" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "16px", width: "100%", flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "3px" }}>
         {/* 1. 🇰🇷 Korean vs 🇯🇵 Japanese Switcher */}
         {(() => {
@@ -2105,9 +2176,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </div>
         </button>
       </form>
+      )}
 
       {/* EMBEDDED AI STUDIO (Opens directly under dictionary toolbar when clicked) */}
-      {showAiStudio && (
+      {activeViewMode !== 'rules' && showAiStudio && (
         <div ref={aiStudioRef} style={{ marginBottom: "20px" }}>
           <AiStudio
             embedded={true}
@@ -2142,6 +2214,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       )}
 
       {/* 📚 SEARCHABLE VOCABULARY WORDS GALLERY & AUDIO PLAYERS */}
+      {activeViewMode !== 'rules' && (
       <div style={{ marginBottom: "28px" }}>
         {/* Search Results indicator if searching */}
         {searchQuery && (
@@ -2561,12 +2634,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </>
         )}
       </div>
+      )}
 
       {/* PRONUNCIATION RULES GUIDE (DYNAMICALLY SWITCHES BETWEEN KOREAN BATCHIM AND JAPANESE KANA & PHONOLOGY) */}
-      {activeLang === 'ja' ? (
-        <JapanesePronunciationGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
-      ) : (
-        <BatchimRulesGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
+      {activeViewMode !== 'dictionary' && (
+        activeLang === 'ja' ? (
+          <JapanesePronunciationGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
+        ) : (
+          <BatchimRulesGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
+        )
       )}
 
       {/* 🎙️ USER OWN VOICE RECORDING, AUDIO UPLOAD & VOICE LIBRARY STUDIO MODAL */}

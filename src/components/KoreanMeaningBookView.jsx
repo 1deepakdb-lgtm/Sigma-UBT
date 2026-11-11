@@ -458,14 +458,14 @@ export default function KoreanMeaningBookView({
           }
         }
 
-        /* Meaning Section Card Container */
+        /* Meaning Section Card Container - Completely Out of Box for All Devices */
         .meaning-section-card {
-          background-color: #ffffff;
-          border-radius: 14px;
-          border: 1.5px solid #e2e8f0;
-          padding: 22px;
-          margin-bottom: 28px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+          background-color: transparent;
+          border-radius: 0;
+          border: none;
+          padding: 8px 0;
+          margin-bottom: 24px;
+          box-shadow: none;
           box-sizing: border-box;
           width: 100%;
         }
@@ -474,11 +474,11 @@ export default function KoreanMeaningBookView({
         .meaning-table-container {
           width: 100% !important;
           max-width: 100% !important;
-          border-radius: 10px;
-          border: 1px solid #e2e8f0;
-          overflow: hidden !important;
+          border-radius: 0 !important;
+          border: none !important;
+          overflow: visible !important;
           box-sizing: border-box;
-          background-color: #ffffff;
+          background-color: transparent !important;
         }
 
         /* Fixed-layout full page responsive table */
@@ -933,12 +933,13 @@ export default function KoreanMeaningBookView({
       ) : (
         /* ── 2. INSIDE CHAPTER VOCABULARY READER VIEW ────────────────────── */
         <div className="meaning-reader-container" style={{
-          backgroundColor: "#ffffff",
-          borderRadius: "18px",
-          border: "1.5px solid #e2e8f0",
-          boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
-          padding: "24px",
-          color: "#0f172a"
+          backgroundColor: "transparent",
+          borderRadius: 0,
+          border: "none",
+          boxShadow: "none",
+          padding: "8px 0",
+          color: "#0f172a",
+          width: "100%"
         }}>
           {/* Chapter Banner */}
           <div style={{

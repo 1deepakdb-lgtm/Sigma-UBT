@@ -331,6 +331,7 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
 
   return (
     <div
+      className="japanese-guide-container"
       style={{
         marginTop: "32px",
         backgroundColor: "#ffffff",
@@ -340,6 +341,17 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
         overflow: "hidden"
       }}
     >
+      <style>{`
+        @media (max-width: 768px) {
+          .japanese-guide-container {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            margin-top: 10px !important;
+          }
+        }
+      `}</style>
       {/* Header Banner */}
       <div
         style={{
