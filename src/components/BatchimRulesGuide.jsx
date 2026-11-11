@@ -716,20 +716,8 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                           </span>
                         </div>
 
-                        {/* COLUMN 2: Spoken Sound Badge + Nepali Romanized */}
+                        {/* COLUMN 2: Nepali Pronunciation Badge */}
                         <div className="batchim-col-pron">
-                          <span style={{
-                            fontWeight: "800",
-                            color: "#1d4ed8",
-                            backgroundColor: "#eff6ff",
-                            padding: "2px 8px",
-                            borderRadius: "6px",
-                            border: "1px solid #bfdbfe",
-                            fontSize: "13px",
-                            whiteSpace: "nowrap"
-                          }}>
-                            [{ex.spoken}]
-                          </span>
                           <span style={{
                             fontWeight: "700",
                             color: "#4338ca",
@@ -869,20 +857,8 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       </span>
                     </div>
 
-                    {/* COLUMN 2: Spoken Sound Badge + Nepali Romanized */}
+                    {/* COLUMN 2: Nepali Pronunciation Badge */}
                     <div className="batchim-col-pron">
-                      <span style={{
-                        fontWeight: "800",
-                        color: "#1d4ed8",
-                        backgroundColor: "#eff6ff",
-                        padding: "2px 8px",
-                        borderRadius: "6px",
-                        border: "1px solid #bfdbfe",
-                        fontSize: "13px",
-                        whiteSpace: "nowrap"
-                      }}>
-                        [{ex.spoken}]
-                      </span>
                       <span style={{
                         fontWeight: "700",
                         color: "#4338ca",

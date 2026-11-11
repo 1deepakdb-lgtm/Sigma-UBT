@@ -2355,25 +2355,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       </span>
                     </div>
 
-                    {/* COLUMN 2: Spoken Pronunciation (Only when sound changes!) + Nepali Romanized Badge */}
+                    {/* COLUMN 2: Nepali Pronunciation Badge */}
                     <div className="dict-col-pron">
-                      {spokenWord && spokenWord !== primaryWord && (
-                        <span
-                          style={{
-                            fontSize: "12.5px",
-                            fontWeight: "700",
-                            color: activeLang === 'ja' ? "#9333ea" : "#2563eb",
-                            backgroundColor: activeLang === 'ja' ? "#faf5ff" : "#eff6ff",
-                            padding: "2px 7px",
-                            borderRadius: "5px",
-                            border: activeLang === 'ja' ? "1px solid #e9d5ff" : "1px solid #bfdbfe",
-                            whiteSpace: "nowrap"
-                          }}
-                        >
-                          [{spokenWord}]
-                        </span>
-                      )}
-
                       {(nepaliPhonetic || romaji) && (
                         <span
                           style={{
@@ -2392,7 +2375,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       )}
                     </div>
 
-                    {/* COLUMN 3: Meanings (Nepali in Green + English in Grey) + Rule badge */}
+                    {/* COLUMN 3: Meanings (Nepali in Green + English in Grey) */}
                     <div className="dict-col-meaning">
                       <span
                         style={{
@@ -2413,26 +2396,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           }}
                         >
                           ({word.english})
-                        </span>
-                      )}
-
-                      {/* Sound Change / Batchim Rule Indicator Badge */}
-                      {hasRule && (
-                        <span
-                          title={activeLang === 'ja' ? (word.pronunciationRule || 'Japanese Pronunciation Rule') : (batchimRuleText || 'Batchim Rule')}
-                          style={{
-                            fontSize: "11px",
-                            backgroundColor: activeLang === 'ja' ? "#f3e8ff" : "#fef3c7",
-                            color: activeLang === 'ja' ? "#7e22ce" : "#92400e",
-                            border: activeLang === 'ja' ? "1px solid #d8b4fe" : "1px solid #fde68a",
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                            fontWeight: "700",
-                            whiteSpace: "nowrap",
-                            marginLeft: "auto"
-                          }}
-                        >
-                          {ruleBadge}
                         </span>
                       )}
 
