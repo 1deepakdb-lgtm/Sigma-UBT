@@ -2588,22 +2588,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           N{word.jlpt}
                         </span>
                       )}
-                      {word.category && (
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            backgroundColor: word.isKanji ? "#faf5ff" : "#f1f5f9",
-                            color: word.isKanji ? "#7e22ce" : "#475569",
-                            border: word.isKanji ? "1px solid #e9d5ff" : "1px solid #e2e8f0",
-                            padding: "2px 7px",
-                            borderRadius: "5px",
-                            fontWeight: "700",
-                            whiteSpace: "nowrap"
-                          }}
-                        >
-                          {word.category}
-                        </span>
-                      )}
                     </div>
                   </div>
                 );

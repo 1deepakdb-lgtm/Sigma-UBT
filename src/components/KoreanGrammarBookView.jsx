@@ -1240,9 +1240,6 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                       <span style={{ fontSize: "13px", fontWeight: "700", color: "#059669" }}>
                         • {g.titleNe}
                       </span>
-                      <span style={{ fontSize: "11px", color: "#64748b", backgroundColor: "#f1f5f9", padding: "2px 8px", borderRadius: "10px" }}>
-                        {g.category}
-                      </span>
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

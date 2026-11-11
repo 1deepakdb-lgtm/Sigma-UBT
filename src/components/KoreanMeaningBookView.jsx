@@ -1203,11 +1203,6 @@ export default function KoreanMeaningBookView({
                         <span className="meaning-word-text" style={{ fontSize: "15.5px", fontWeight: "800", color: "#0f172a" }}>
                           {w.korean}
                         </span>
-                        {w.category && (
-                          <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "1px 6px", borderRadius: "4px" }}>
-                            {w.category}
-                          </span>
-                        )}
                       </div>
 
                       {/* Right: Pronunciation + Nepali Meaning */}
@@ -1784,21 +1779,6 @@ export default function KoreanMeaningBookView({
                           </div>
                         )}
                       </div>
-
-                      {/* Right: Category badge */}
-                      {w.category && (
-                        <span style={{
-                          fontSize: "11px",
-                          fontWeight: "700",
-                          backgroundColor: "#eff6ff",
-                          color: "#1d4ed8",
-                          padding: "3px 8px",
-                          borderRadius: "10px",
-                          border: "1px solid #bfdbfe"
-                        }}>
-                          {w.category}
-                        </span>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -1864,9 +1844,6 @@ export default function KoreanMeaningBookView({
                       {!isCardFlipped ? (
                         /* Front side: Korean */
                         <div>
-                          <div style={{ fontSize: "13px", fontWeight: "700", color: "#0284c7", marginBottom: "8px" }}>
-                            {card.category || "Vocabulary"}
-                          </div>
                           <h2 style={{ fontSize: "38px", fontWeight: "900", color: "#0f172a", margin: "0 0 16px 0" }}>
                             {card.korean}
                           </h2>
