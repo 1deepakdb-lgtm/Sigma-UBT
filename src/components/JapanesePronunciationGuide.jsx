@@ -333,21 +333,23 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
     <div
       className="japanese-guide-container"
       style={{
-        marginTop: "32px",
-        backgroundColor: "#ffffff",
-        borderRadius: "14px",
-        border: "1.5px solid #e2e8f0",
-        boxShadow: "0 6px 24px rgba(15, 23, 42, 0.06)",
+        marginTop: "20px",
+        backgroundColor: "transparent",
+        borderRadius: "0",
+        border: "none",
+        boxShadow: "none",
         overflow: "hidden"
       }}
     >
       <style>{`
+        .japanese-guide-container {
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          background: transparent !important;
+        }
         @media (max-width: 768px) {
           .japanese-guide-container {
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            background: transparent !important;
             margin-top: 10px !important;
           }
         }

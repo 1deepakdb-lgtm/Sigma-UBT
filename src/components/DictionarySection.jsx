@@ -182,8 +182,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   // Active Language State ('ko' | 'ja')
   const [activeLang, setActiveLang] = useState(initialLang);
   const [japaneseFilter, setJapaneseFilter] = useState('all'); // 'all' | 'kanji' | 'n5'..'n1' | 'vocab'
-  // View mode for Dictionary Section: 'all' | 'dictionary' | 'rules' (Study Material)
-  const [activeViewMode, setActiveViewMode] = useState('all');
 
   // Selected Voice Models (Unified Active Model State)
   const [selectedVoiceModel, setSelectedVoiceModel] = useState(
@@ -1481,12 +1479,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       onContextMenu={(e) => e.stopPropagation()}
       className="dict-main-container"
       style={{
-        backgroundColor: activeViewMode === 'rules' ? "transparent" : "#ffffff",
-        borderRadius: activeViewMode === 'rules' ? "0" : "14px",
-        border: activeViewMode === 'rules' ? "none" : "1.5px solid #e2e8f0",
-        padding: activeViewMode === 'rules' ? "4px 0" : "26px",
-        boxShadow: activeViewMode === 'rules' ? "none" : "0 4px 20px rgba(0,0,0,0.06)",
-        maxWidth: "1200px",
+        backgroundColor: "transparent",
+        borderRadius: "0",
+        border: "none",
+        padding: "8px 2px",
+        boxShadow: "none",
+        maxWidth: "100%",
+        width: "100%",
         margin: "0 auto",
         userSelect: "text",
         WebkitUserSelect: "text",
@@ -1514,6 +1513,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        .dict-main-container {
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          padding: 8px 2px !important;
+          background-color: transparent !important;
+          max-width: 100% !important;
+          width: 100% !important;
         }
         .dict-word-row {
           display: flex;
@@ -1641,165 +1649,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         }
       ` }} />
 
-      {/* TOP SECTION MODE SELECTOR: Allows opening Study Material / Pronunciation Rules cleanly out of the box */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
-        {title && <h2 style={{ margin: 0, color: "#0f172a", fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>}
-        <div style={{ display: "inline-flex", backgroundColor: "#f1f5f9", padding: "3px", borderRadius: "10px", border: "1.5px solid #cbd5e1", gap: "4px" }}>
-          <button
-            type="button"
-            onClick={() => setActiveViewMode('all')}
-            style={{
-              padding: "5px 12px",
-              borderRadius: "8px",
-              border: "none",
-              fontSize: "12px",
-              fontWeight: "800",
-              cursor: "pointer",
-              backgroundColor: activeViewMode === 'all' ? "#2563eb" : "transparent",
-              color: activeViewMode === 'all' ? "#ffffff" : "#475569",
-              transition: "all 0.15s ease"
-            }}
-          >
-            📖 All (सबै)
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveViewMode('dictionary')}
-            style={{
-              padding: "5px 12px",
-              borderRadius: "8px",
-              border: "none",
-              fontSize: "12px",
-              fontWeight: "800",
-              cursor: "pointer",
-              backgroundColor: activeViewMode === 'dictionary' ? "#2563eb" : "transparent",
-              color: activeViewMode === 'dictionary' ? "#ffffff" : "#475569",
-              transition: "all 0.15s ease"
-            }}
-          >
-            🔍 Dictionary
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveViewMode('rules')}
-            style={{
-              padding: "5px 12px",
-              borderRadius: "8px",
-              border: "none",
-              fontSize: "12px",
-              fontWeight: "800",
-              cursor: "pointer",
-              backgroundColor: activeViewMode === 'rules' ? "#16a34a" : "transparent",
-              color: activeViewMode === 'rules' ? "#ffffff" : "#475569",
-              transition: "all 0.15s ease"
-            }}
-          >
-            📚 Study Material ({activeLang === 'ja' ? 'जापानी नियम' : 'फात्छिम् नियम'})
-          </button>
+      {title && (
+        <div style={{ marginBottom: "14px" }}>
+          <h2 style={{ margin: 0, color: "#0f172a", fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>
         </div>
-      </div>
+      )}
 
-      {/* Unified One-Row Shrunk Toolbar: Language Switcher, Search Input, Go, Voice Model, Play, Download, and AI Studio */}
-      {activeViewMode !== 'rules' && (
+      {/* Unified One-Row Shrunk Toolbar: Search Input, Go, Voice Model, Play, Download, and AI Studio */}
       <form onSubmit={handleSearch} className="dict-top-toolbar" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "16px", width: "100%", flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "3px" }}>
-        {/* 1. 🇰🇷 Korean vs 🇯🇵 Japanese Switcher */}
-        {(() => {
-          const isSuperAdmin =
-            propUserRole === 'admin' ||
-            userRole === 'admin' ||
-            (typeof window !== "undefined" && window.location.pathname.startsWith('/admin'));
-
-          const currentTrack = (
-            propInstituteLanguage ||
-            instLang ||
-            (typeof window !== "undefined" ? localStorage.getItem("instituteLanguage") : null) ||
-            "both"
-          ).toLowerCase();
-
-          const isParticularTrack = !isSuperAdmin && (currentTrack === "korean" || currentTrack === "japanese");
-
-          if (isParticularTrack) {
-            return null;
-          }
-
-          return (
-            <div
-              style={{
-                display: "inline-flex",
-                backgroundColor: "#f1f5f9",
-                padding: "3px",
-                borderRadius: "9px",
-                border: "1.5px solid #cbd5e1",
-                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)",
-                gap: "4px",
-                flexShrink: 0
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => handleSwitchLanguage('ko')}
-                title="Korean Multi-Language Dictionary & EPS-TOPIK Batchim Guide"
-                style={{
-                  backgroundColor: activeLang === 'ko' ? "#2563eb" : "transparent",
-                  backgroundImage: activeLang === 'ko' ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "none",
-                  color: activeLang === 'ko' ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
-                  padding: "4px 10px",
-                  fontSize: "12px",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  boxShadow: activeLang === 'ko' ? "0 1px 5px rgba(37,99,235,0.28)" : "none",
-                  transition: "all 0.15s ease",
-                  whiteSpace: "nowrap"
-                }}
-              >
-                <span style={{ fontSize: "14px" }}>🇰🇷</span>
-                <span>Korean (한국어)</span>
-                {activeLang === 'ko' && (
-                  <span style={{ fontSize: "9px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "8px", fontWeight: "700" }}>
-                    Active
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSwitchLanguage('ja')}
-                title="Japanese Multi-Language Dictionary & JLPT/JFT Pronunciation Guide"
-                style={{
-                  backgroundColor: activeLang === 'ja' ? "#9333ea" : "transparent",
-                  backgroundImage: activeLang === 'ja' ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "none",
-                  color: activeLang === 'ja' ? "#ffffff" : "#475569",
-                  border: "none",
-                  borderRadius: "7px",
-                  padding: "4px 10px",
-                  fontSize: "12px",
-                  fontWeight: "800",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  boxShadow: activeLang === 'ja' ? "0 1px 5px rgba(147,51,234,0.3)" : "none",
-                  transition: "all 0.15s ease",
-                  whiteSpace: "nowrap"
-                }}
-              >
-                <span style={{ fontSize: "14px" }}>🇯🇵</span>
-                <span>Japanese (日本語)</span>
-                {activeLang === 'ja' && (
-                  <span style={{ fontSize: "9px", backgroundColor: "rgba(255,255,255,0.25)", padding: "1px 5px", borderRadius: "8px", fontWeight: "700" }}>
-                    Active
-                  </span>
-                )}
-              </button>
-            </div>
-          );
-        })()}
-        {/* 2. Search Input Box */}
+        {/* 1. Search Input Box */}
         <div style={{ position: "relative", flex: "1 1 140px", minWidth: "120px" }}>
           <input
             type="text"
@@ -2254,10 +2112,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </div>
         </button>
       </form>
-      )}
 
       {/* EMBEDDED AI STUDIO (Opens directly under dictionary toolbar when clicked) */}
-      {activeViewMode !== 'rules' && showAiStudio && (
+      {showAiStudio && (
         <div ref={aiStudioRef} style={{ marginBottom: "20px" }}>
           <AiStudio
             embedded={true}
@@ -2292,7 +2149,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       )}
 
       {/* 📚 SEARCHABLE VOCABULARY WORDS GALLERY & AUDIO PLAYERS */}
-      {activeViewMode !== 'rules' && (
       <div style={{ marginBottom: "28px" }}>
         {/* Search Results indicator if searching */}
         {searchQuery && (
@@ -2633,15 +2489,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </>
         )}
       </div>
-      )}
 
       {/* PRONUNCIATION RULES GUIDE (DYNAMICALLY SWITCHES BETWEEN KOREAN BATCHIM AND JAPANESE KANA & PHONOLOGY) */}
-      {activeViewMode !== 'dictionary' && (
-        activeLang === 'ja' ? (
-          <JapanesePronunciationGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
-        ) : (
-          <BatchimRulesGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
-        )
+      {activeLang === 'ja' ? (
+        <JapanesePronunciationGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
+      ) : (
+        <BatchimRulesGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
       )}
 
       {/* 🎙️ USER OWN VOICE RECORDING, AUDIO UPLOAD & VOICE LIBRARY STUDIO MODAL */}
