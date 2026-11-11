@@ -669,9 +669,9 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   </div>
                 </div>
 
-                {/* Nepali Explanation Box */}
-                <div style={{ fontSize: "13.5px", color: "#14532d", backgroundColor: "#f0fdf4", padding: "10px 14px", borderRadius: "8px", border: "1px solid #bbf7d0", lineHeight: "1.6", marginBottom: "14px" }}>
-                  <b style={{ color: "#15803d" }}>नेपाली व्याख्या:</b> {item.summaryNe}
+                {/* Nepali Explanation - Clean, open, outside of any box */}
+                <div style={{ fontSize: "14px", color: "#166534", lineHeight: "1.6", margin: "8px 0 14px" }}>
+                  <strong style={{ color: "#15803d" }}>नेपाली व्याख्या:</strong> {item.summaryNe}
                 </div>
 
                 {/* Examples Header */}
@@ -786,38 +786,31 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
               </div>
             </div>
 
-            {/* Formula Highlight Box */}
-            <div style={{ backgroundColor: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: "8px", padding: "10px 16px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "13px", fontWeight: "800", color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+            {/* Formula Highlight - Clean, open, out of box */}
+            <div style={{ margin: "6px 0 10px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "13.5px", fontWeight: "800", color: "#1d4ed8" }}>
                 공식 / नियम:
               </span>
-              <code style={{ fontSize: "13.5px", fontWeight: "800", color: "#1e3a8a", backgroundColor: "#ffffff", padding: "3px 8px", borderRadius: "4px", border: "1px solid #93c5fd" }}>
+              <code style={{ fontSize: "14px", fontWeight: "800", color: "#1e3a8a", backgroundColor: "#eff6ff", padding: "3px 10px", borderRadius: "6px", border: "1px solid #bfdbfe" }}>
                 {rule.formula}
               </code>
             </div>
 
-            {/* Explanation in Nepali */}
-            <div style={{ marginBottom: "14px" }}>
-              <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px" }}>
-                <div style={{ fontSize: "13px", fontWeight: "800", color: "#15803d", textTransform: "uppercase", marginBottom: "4px" }}>
-                  नेपाली व्याख्या
-                </div>
-                <div style={{ fontSize: "14px", color: "#166534", lineHeight: "1.6" }}>
-                  {rule.summaryNe}
-                </div>
-              </div>
+            {/* Explanation in Nepali - Clean prose */}
+            <div style={{ fontSize: "14px", color: "#166534", lineHeight: "1.6", margin: "6px 0 14px" }}>
+              <strong style={{ color: "#15803d" }}>नेपाली व्याख्या:</strong> {rule.summaryNe}
             </div>
 
             {/* Representative Groups breakdown if exists (for Rule 1) */}
             {rule.groups && (
-              <div style={{ marginBottom: "16px", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0", padding: "12px 16px" }}>
+              <div style={{ margin: "10px 0 16px" }}>
                 <div style={{ fontSize: "13px", fontWeight: "800", color: "#334155", marginBottom: "8px" }}>
                   음운 분류 / ध्वनि वर्गीकरण:
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "8px" }}>
                   {rule.groups.map((grp, gIdx) => (
-                    <div key={gIdx} style={{ backgroundColor: "#ffffff", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
+                    <div key={gIdx} style={{ padding: "6px 10px", borderRadius: "6px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
                         <span style={{ fontSize: "15px", fontWeight: "800", color: "#2563eb" }}>{grp.rep}</span>
                         <span style={{ fontSize: "13px", fontWeight: "700", color: "#475569" }}>← {grp.letters}</span>
                       </div>
