@@ -2355,18 +2355,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       </span>
                     </div>
 
-                    {/* COLUMN 2: Nepali Pronunciation Badge */}
+                    {/* COLUMN 2: Nepali Pronunciation (Plain text, no box) */}
                     <div className="dict-col-pron">
                       {(nepaliPhonetic || romaji) && (
                         <span
                           style={{
-                            fontSize: "12.5px",
+                            fontSize: "13.5px",
                             fontWeight: "700",
                             color: activeLang === 'ja' ? "#7e22ce" : "#1e40af",
-                            backgroundColor: activeLang === 'ja' ? "#fdf4ff" : "#f0fdf4",
-                            padding: "2px 7px",
-                            borderRadius: "5px",
-                            border: activeLang === 'ja' ? "1px solid #f5d0fe" : "1px solid #bbf7d0",
+                            background: "transparent",
+                            border: "none",
+                            padding: "0",
                             whiteSpace: "nowrap"
                           }}
                         >

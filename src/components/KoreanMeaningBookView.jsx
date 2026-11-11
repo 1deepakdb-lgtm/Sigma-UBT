@@ -670,11 +670,11 @@ export default function KoreanMeaningBookView({
           .meaning-pron-text {
             color: #1e40af !important;
             font-weight: 700 !important;
-            background-color: #eff6ff !important;
-            border: 1px solid #bfdbfe !important;
-            padding: 1px 6px !important;
-            border-radius: 4px !important;
-            font-size: 12px !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            font-size: 13.5px !important;
           }
 
           /* Expressions outside of cell: clean card rows */
@@ -1240,7 +1240,7 @@ export default function KoreanMeaningBookView({
                       {/* Col 2: Pronunciation */}
                       <div className="col-pron" style={{ display: "flex", alignItems: "center", flex: "0 0 180px", minWidth: "140px" }}>
                         {w.pronunciation && (
-                          <span className="meaning-pron-text" style={{ color: "#2563eb", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", padding: "2px 7px", borderRadius: "5px", fontWeight: "700", fontSize: "12.5px" }}>
+                          <span className="meaning-pron-text" style={{ color: "#1e40af", background: "transparent", border: "none", padding: "0", fontWeight: "700", fontSize: "13.5px" }}>
                             [{w.pronunciation}]
                           </span>
                         )}

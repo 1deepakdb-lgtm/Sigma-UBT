@@ -716,16 +716,15 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                           </span>
                         </div>
 
-                        {/* COLUMN 2: Nepali Pronunciation Badge */}
+                        {/* COLUMN 2: Nepali Pronunciation (Plain text, no box) */}
                         <div className="batchim-col-pron">
                           <span style={{
                             fontWeight: "700",
                             color: "#4338ca",
-                            backgroundColor: "#eef2ff",
-                            padding: "2px 8px",
-                            borderRadius: "6px",
-                            border: "1px solid #c7d2fe",
-                            fontSize: "13px",
+                            background: "transparent",
+                            border: "none",
+                            padding: "0",
+                            fontSize: "13.5px",
                             whiteSpace: "nowrap"
                           }}>
                             [{koreanToNepaliRomanized(ex.spoken)}]
@@ -857,16 +856,15 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       </span>
                     </div>
 
-                    {/* COLUMN 2: Nepali Pronunciation Badge */}
+                    {/* COLUMN 2: Nepali Pronunciation (Plain text, no box) */}
                     <div className="batchim-col-pron">
                       <span style={{
                         fontWeight: "700",
                         color: "#4338ca",
-                        backgroundColor: "#eef2ff",
-                        padding: "2px 8px",
-                        borderRadius: "6px",
-                        border: "1px solid #c7d2fe",
-                        fontSize: "13px",
+                        background: "transparent",
+                        border: "none",
+                        padding: "0",
+                        fontSize: "13.5px",
                         whiteSpace: "nowrap"
                       }}>
                         [{koreanToNepaliRomanized(ex.spoken)}]
