@@ -387,17 +387,51 @@ export default function AiStudio({
     const effectiveModel = modelOverride || selectedModel;
     const previewKey = `${voice.id}_${effectiveModel}`;
 
+    // If currently playing, stop it immediately (toggle off)
+    if (previewingVoiceId === previewKey) {
+      if (previewAudioRef.current) {
+        try {
+          previewAudioRef.current.pause();
+          previewAudioRef.current.currentTime = 0;
+        } catch (e) {}
+      }
+      if (sourceNodeRef.current) {
+        try { sourceNodeRef.current.stop(); } catch (e) {}
+        sourceNodeRef.current = null;
+      }
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+      setPreviewingVoiceId(null);
+      return;
+    }
+
+    // Stop currently running audio
     if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
+      try {
+        previewAudioRef.current.pause();
+        previewAudioRef.current.currentTime = 0;
+      } catch (e) {}
     }
     if (sourceNodeRef.current) {
       try { sourceNodeRef.current.stop(); } catch (e) {}
       sourceNodeRef.current = null;
     }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
 
-    if (previewingVoiceId === previewKey) {
-      setPreviewingVoiceId(null);
-      return;
+    // Unlock Web Audio context synchronously during user tap (crucial for mobile/tablet Safari & Chrome)
+    if (typeof window !== 'undefined') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx && !audioContextRef.current) {
+          audioContextRef.current = new AudioCtx();
+        }
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+      } catch (e) {}
     }
 
     setPreviewingVoiceId(previewKey);
@@ -422,32 +456,45 @@ export default function AiStudio({
       });
       const url = `/api/elevenlabs/tts?${params.toString()}`;
 
-      const played = await playWebAudioStudio(
-        url,
-        targetGender,
-        () => setPreviewingVoiceId(null),
-        () => {
-          const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
-          if (!spoke) {
-            setPreviewingVoiceId(null);
-            setAudioError('Failed to play voice preview. Please check your connection.');
-          }
-        }
-      );
-
-      if (!played) {
-        const audio = new Audio(url);
+      // Immediate Audio element playback: synchronous with user gesture (guarantees playback on iOS mobile & tablets)
+      let audio = previewAudioRef.current;
+      if (!audio) {
+        audio = new Audio();
         previewAudioRef.current = audio;
-        audio.playbackRate = 1.0;
-        audio.onended = () => setPreviewingVoiceId(null);
-        audio.onerror = () => {
-          const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
-          if (!spoke) {
-            setPreviewingVoiceId(null);
-            setAudioError('Failed to play voice preview.');
+      }
+      audio.src = url;
+      audio.playbackRate = 1.0;
+
+      audio.onended = () => {
+        setPreviewingVoiceId(null);
+      };
+
+      const fallbackToWebAudio = () => {
+        playWebAudioStudio(
+          url,
+          targetGender,
+          () => setPreviewingVoiceId(null),
+          () => {
+            const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
+            if (!spoke) {
+              setPreviewingVoiceId(null);
+              setAudioError('Failed to play voice preview. Please check connection.');
+            }
           }
-        };
-        await audio.play();
+        );
+      };
+
+      audio.onerror = () => {
+        console.warn('HTML5 Audio error on mobile/tablet, attempting Web Audio fallback...');
+        fallbackToWebAudio();
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('HTML5 Audio play rejected, falling back to Web Audio:', err);
+          fallbackToWebAudio();
+        });
       }
     } catch (err) {
       const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
@@ -463,16 +510,35 @@ export default function AiStudio({
     if (!turn.text || !turn.text.trim()) return;
 
     if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
+      try {
+        previewAudioRef.current.pause();
+        previewAudioRef.current.currentTime = 0;
+      } catch (e) {}
     }
     if (sourceNodeRef.current) {
       try { sourceNodeRef.current.stop(); } catch (e) {}
       sourceNodeRef.current = null;
     }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
 
     if (previewingLineIndex === index) {
       setPreviewingLineIndex(null);
       return;
+    }
+
+    // Unlock Web Audio context synchronously during user tap
+    if (typeof window !== 'undefined') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx && !audioContextRef.current) {
+          audioContextRef.current = new AudioCtx();
+        }
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+      } catch (e) {}
     }
 
     setPreviewingLineIndex(index);
@@ -499,32 +565,42 @@ export default function AiStudio({
       });
       const url = `/api/elevenlabs/tts?${params.toString()}`;
 
-      const played = await playWebAudioStudio(
-        url,
-        lineGender,
-        () => setPreviewingLineIndex(null),
-        () => {
-          const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', lineGender, () => setPreviewingLineIndex(null));
-          if (!spoke) {
-            setPreviewingLineIndex(null);
-            setAudioError('Failed to play dialogue line preview.');
-          }
-        }
-      );
-
-      if (!played) {
-        const audio = new Audio(url);
+      let audio = previewAudioRef.current;
+      if (!audio) {
+        audio = new Audio();
         previewAudioRef.current = audio;
-        audio.playbackRate = 1.0;
-        audio.onended = () => setPreviewingLineIndex(null);
-        audio.onerror = () => {
-          const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', lineGender, () => setPreviewingLineIndex(null));
-          if (!spoke) {
-            setPreviewingLineIndex(null);
-            setAudioError('Failed to play dialogue line preview.');
+      }
+      audio.src = url;
+      audio.playbackRate = 1.0;
+
+      audio.onended = () => {
+        setPreviewingLineIndex(null);
+      };
+
+      const fallbackToWebAudio = () => {
+        playWebAudioStudio(
+          url,
+          lineGender,
+          () => setPreviewingLineIndex(null),
+          () => {
+            const spoke = speakStudioNative(turn.text.trim(), voice.language === 'ja' ? 'ja-JP' : 'ko-KR', lineGender, () => setPreviewingLineIndex(null));
+            if (!spoke) {
+              setPreviewingLineIndex(null);
+              setAudioError('Failed to play dialogue line preview.');
+            }
           }
-        };
-        await audio.play();
+        );
+      };
+
+      audio.onerror = () => {
+        fallbackToWebAudio();
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          fallbackToWebAudio();
+        });
       }
     } catch (err) {
       const voiceId = turn.voiceProfileId || (turn.speaker === 'A' ? dialogueSpeakerA : dialogueSpeakerB);
@@ -949,16 +1025,17 @@ export default function AiStudio({
                   transition: 'all 0.15s ease'
                 }}
               >
-                {previewingVoiceId === `${selectedProfile.id}_${selectedModel}` ? '⏹ Stop Audio' : `▶ Play ${selectedProfile.name} (${AVAILABLE_MODELS.find(m => m.id === selectedModel)?.shortName || 'Model'})`}
+                {previewingVoiceId === `${selectedProfile.id}_${selectedModel}` ? '⏹ Stop Audio' : `▶ Play ${selectedProfile.name}`}
               </button>
             </div>
           </div>
 
           {/* 10 Voice Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px', marginBottom: '28px' }}>
             {filteredVoices.map(voice => {
               const isSelected = selectedProfile.id === voice.id;
               const isPreviewing = previewingVoiceId === `${voice.id}_${selectedModel}`;
+              const isActive = (voice.gender === 'female' ? activeFemaleModelId === voice.id : activeMaleModelId === voice.id);
 
               return (
                 <div
@@ -973,102 +1050,119 @@ export default function AiStudio({
                     backgroundColor: isSelected ? '#faf5ff' : '#ffffff',
                     borderRadius: '14px',
                     border: isSelected ? '2px solid #4f46e5' : '1.5px solid #e2e8f0',
-                    padding: '16px',
+                    padding: '14px 16px',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
-                    boxShadow: isSelected ? '0 6px 18px rgba(79, 70, 229, 0.15)' : '0 1px 4px rgba(0,0,0,0.03)',
+                    boxShadow: isSelected ? '0 4px 14px rgba(79, 70, 229, 0.12)' : '0 1px 3px rgba(0,0,0,0.03)',
                     position: 'relative'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontWeight: '900', fontSize: '15px', color: '#0f172a' }}>{voice.name}</span>
-                          <span style={{ fontSize: '10px', background: voice.gender === 'female' ? '#fce7f3' : '#e0f2fe', color: voice.gender === 'female' ? '#be185d' : '#0369a1', padding: '1px 6px', borderRadius: '10px', fontWeight: '800' }}>
-                            {voice.gender === 'female' ? 'Female' : 'Male'}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '11px', color: '#64748b' }}>{voice.title}</span>
-                      </div>
+                  {/* Top: Name, Gender & Active Status */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontWeight: '900', fontSize: '15px', color: '#0f172a', whiteSpace: 'nowrap' }}>
+                        {voice.name}
+                      </span>
+                      <span style={{
+                        fontSize: '10px',
+                        background: voice.gender === 'female' ? '#fce7f3' : '#e0f2fe',
+                        color: voice.gender === 'female' ? '#be185d' : '#0369a1',
+                        padding: '1px 7px',
+                        borderRadius: '10px',
+                        fontWeight: '800'
+                      }}>
+                        {voice.gender === 'female' ? 'Female' : 'Male'}
+                      </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      {onSelectVoiceModel && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectVoiceModel(voice);
-                          }}
-                          title={`Select ${voice.name} as active ${voice.gender} voice for dictionary`}
-                          style={{
-                            background: (voice.gender === 'female' ? activeFemaleModelId === voice.id : activeMaleModelId === voice.id)
-                              ? '#059669'
-                              : '#ffffff',
-                            color: (voice.gender === 'female' ? activeFemaleModelId === voice.id : activeMaleModelId === voice.id)
-                              ? '#ffffff'
-                              : '#059669',
-                            border: '1.5px solid #059669',
-                            borderRadius: '20px',
-                            padding: '5px 11px',
-                            fontSize: '11px',
-                            fontWeight: '800',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            boxShadow: '0 1px 3px rgba(5, 150, 105, 0.15)',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          {(voice.gender === 'female' ? activeFemaleModelId === voice.id : activeMaleModelId === voice.id)
-                            ? '✓ Active'
-                            : '+ Select for Dictionary'}
-                        </button>
-                      )}
+                    {isActive && (
+                      <span style={{
+                        fontSize: '11px',
+                        background: '#ecfdf5',
+                        color: '#059669',
+                        border: '1.5px solid #059669',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontWeight: '800',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px'
+                      }}>
+                        ✓ Active
+                      </span>
+                    )}
+                  </div>
 
+                  {/* Clean Subtitle / Role */}
+                  {voice.title && (
+                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', marginBottom: '12px' }}>
+                      {voice.title}
+                    </div>
+                  )}
+
+                  {/* Action Buttons Row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayPreview(voice, selectedModel);
+                      }}
+                      title="Preview this human voice with selected model"
+                      style={{
+                        flex: '1 1 auto',
+                        minWidth: '100px',
+                        background: isPreviewing ? '#ef4444' : '#4f46e5',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '20px',
+                        padding: '7px 14px',
+                        fontSize: '12px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px',
+                        boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+                        transition: 'all 0.15s ease',
+                        WebkitTapHighlightColor: 'transparent'
+                      }}
+                    >
+                      {isPreviewing ? '⏹ Stop' : '▶ Play Voice'}
+                    </button>
+
+                    {onSelectVoiceModel && !isActive && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handlePlayPreview(voice, selectedModel);
+                          onSelectVoiceModel(voice);
                         }}
-                        title="Preview this human voice with selected model"
+                        title={`Select ${voice.name} as active ${voice.gender} voice for dictionary`}
                         style={{
-                          background: isPreviewing ? '#ef4444' : '#4f46e5',
-                          color: '#ffffff',
-                          border: 'none',
+                          flex: '1 1 auto',
+                          minWidth: '130px',
+                          background: '#ffffff',
+                          color: '#059669',
+                          border: '1.5px solid #059669',
                           borderRadius: '20px',
-                          padding: '5px 12px',
+                          padding: '6px 12px',
                           fontSize: '11px',
                           fontWeight: '800',
                           cursor: 'pointer',
-                          display: 'flex',
+                          display: 'inline-flex',
                           alignItems: 'center',
+                          justifyContent: 'center',
                           gap: '4px',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                          boxShadow: '0 1px 3px rgba(5, 150, 105, 0.12)',
+                          transition: 'all 0.15s ease',
+                          WebkitTapHighlightColor: 'transparent'
                         }}
                       >
-                        {isPreviewing ? '⏹ Stop' : '▶ Play Voice'}
+                        + Select for Dictionary
                       </button>
-                    </div>
-                  </div>
-
-                  <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 10px 0', lineHeight: 1.4 }}>
-                    {voice.description}
-                  </p>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '10px' }}>
-                    {(voice.traits || (voice.tag ? [voice.tag] : [])).map(t => (
-                      <span key={t} style={{ fontSize: '10px', background: '#f1f5f9', color: '#334155', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px', fontSize: '11px', color: '#334155', fontStyle: 'italic', borderLeft: '3px solid #818cf8' }}>
-                    "{voice.sampleSentence}"
+                    )}
                   </div>
                 </div>
               );
