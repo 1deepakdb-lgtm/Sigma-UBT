@@ -16,7 +16,7 @@ export async function GET(req) {
 
     if (session.role === 'admin') {
       if (queryInst && queryInst !== 'All') {
-        const inst = await prisma.institute.findFirst({
+        let inst = await prisma.institute.findFirst({
           where: {
             OR: [
               { id: queryInst },
@@ -25,7 +25,33 @@ export async function GET(req) {
             ]
           }
         });
-        if (inst) targetInstId = inst.id;
+
+        // Also check if queryInst matches an institute user (e.g. name or username)
+        if (!inst) {
+          const instUser = await prisma.user.findFirst({
+            where: {
+              role: { in: ['institute', 'staff'] },
+              OR: [
+                { id: queryInst },
+                { name: queryInst },
+                { username: queryInst }
+              ]
+            },
+            select: { instituteId: true }
+          });
+          if (instUser?.instituteId) {
+            inst = await prisma.institute.findUnique({
+              where: { id: instUser.instituteId }
+            });
+          }
+        }
+
+        if (inst) {
+          targetInstId = inst.id;
+        } else {
+          // If a specific institute was requested by admin but does not exist, return empty array (prevent data leak)
+          return NextResponse.json({ students: [] });
+        }
       }
     } else {
       // Institutes and staff can ONLY query their own students
@@ -40,11 +66,17 @@ export async function GET(req) {
       if (!targetInstId) {
         return NextResponse.json({ students: [] });
       }
-      where.instituteId = targetInstId;
     }
 
-    if (session.role === 'admin' && targetInstId) {
+    if (targetInstId) {
       where.instituteId = targetInstId;
+      // Normal institutes or institute-filtered views: NEVER show self-signup open students
+      if (!targetInstId.startsWith('examjk-open')) {
+        where.NOT = [
+          { instituteId: { startsWith: 'examjk-open' } },
+          { instituteId: null }
+        ];
+      }
     }
 
     const students = await prisma.user.findMany({
@@ -58,6 +90,7 @@ export async function GET(req) {
         status: true,
         language: true,
         createdAt: true,
+        instituteId: true,
         institute: { select: { id: true, name: true, language: true } },
         _count: { select: { results: true } }
       },
@@ -121,7 +154,7 @@ export async function POST(req) {
     } else if (session && session.role === 'admin') {
       const searchTarget = reqInstId || reqInstName || session?.instituteName || null;
       if (searchTarget) {
-        const inst = await prisma.institute.findFirst({
+        let inst = await prisma.institute.findFirst({
           where: {
             OR: [
               { id: searchTarget },
@@ -130,6 +163,24 @@ export async function POST(req) {
             ]
           }
         });
+        if (!inst) {
+          const instUser = await prisma.user.findFirst({
+            where: {
+              role: { in: ['institute', 'staff'] },
+              OR: [
+                { id: searchTarget },
+                { name: searchTarget },
+                { username: searchTarget }
+              ]
+            },
+            select: { instituteId: true }
+          });
+          if (instUser?.instituteId) {
+            inst = await prisma.institute.findUnique({
+              where: { id: instUser.instituteId }
+            });
+          }
+        }
         if (inst) targetInstituteId = inst.id;
       }
     } else {
@@ -181,11 +232,14 @@ export async function POST(req) {
     }
 
     if (existing) {
-      // Prevent cross-tenant IDOR: an institute cannot overwrite a student belonging to another institute
-      if (session?.role !== 'admin' && existing.instituteId && existing.instituteId !== targetInstituteId) {
-        return NextResponse.json({
-          error: 'Forbidden. This student is registered under another institute.'
-        }, { status: 403 });
+      // Prevent cross-tenant IDOR: an institute cannot overwrite a student belonging to another institute or self-registered open users
+      if (session?.role !== 'admin') {
+        const isSelfRegistered = !existing.instituteId || existing.instituteId.startsWith('examjk-open');
+        if (isSelfRegistered || existing.instituteId !== targetInstituteId) {
+          return NextResponse.json({
+            error: 'Forbidden. This student is registered under another institute or registered independently via open signup.'
+          }, { status: 403 });
+        }
       }
 
       const updated = await prisma.user.update({
@@ -274,7 +328,12 @@ export async function DELETE(req) {
 
     // Validate ownership: non-admin institutes can only delete students belonging to their institute
     if (session.role !== 'admin') {
-      if (!targetStudent.instituteId || targetStudent.instituteId !== session.instituteId) {
+      let nonAdminInstId = session.instituteId;
+      if (!nonAdminInstId && session.id) {
+        const u = await prisma.user.findUnique({ where: { id: session.id }, select: { instituteId: true } });
+        nonAdminInstId = u?.instituteId;
+      }
+      if (!targetStudent.instituteId || targetStudent.instituteId !== nonAdminInstId || targetStudent.instituteId.startsWith('examjk-open')) {
         return NextResponse.json({ error: 'Forbidden. You do not own this student record.' }, { status: 403 });
       }
     }

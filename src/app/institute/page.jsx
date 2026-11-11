@@ -73,6 +73,16 @@ const InstituteDashboard = () => {
       .then((res) => res.json())
       .then((data) => {
         if (data.authenticated && data.user) {
+          const verifiedInstId = data.user.instituteId || data.user.institute?.id || null;
+          const verifiedInstName = data.user.institute?.name || (data.user.role === "institute" ? data.user.name : null);
+          if (verifiedInstId) {
+            setInstId(verifiedInstId);
+            localStorage.setItem("currentInstituteId", verifiedInstId);
+          }
+          if (verifiedInstName) {
+            setInstituteName(verifiedInstName);
+            localStorage.setItem("currentInstitute", verifiedInstName);
+          }
           const lang = data.user.instituteLanguage || data.user.institute?.language || "both";
           setInstituteLanguage(lang);
           localStorage.setItem("instituteLanguage", lang);
@@ -80,6 +90,8 @@ const InstituteDashboard = () => {
             setFormData(prev => ({ ...prev, language: lang }));
             setNoticeTargetTrack(lang);
           }
+          // Immediately refresh data with verified institute credentials
+          loadData(verifiedInstId, verifiedInstName);
         }
       })
       .catch(() => {});
@@ -572,10 +584,12 @@ const InstituteDashboard = () => {
     }
   };
 
-  const loadData = async () => {
+  const loadData = async (overrideInstId, overrideInstName) => {
     // Fetch students directly from secure backend database (strictly isolated by this institute's ID)
     try {
-      const queryParam = instId ? `?instituteId=${encodeURIComponent(instId)}` : (instituteName ? `?institute=${encodeURIComponent(instituteName)}` : '');
+      const activeId = overrideInstId || instId || (typeof window !== "undefined" ? localStorage.getItem("currentInstituteId") : null);
+      const activeName = overrideInstName || instituteName || (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : null);
+      const queryParam = activeId ? `?instituteId=${encodeURIComponent(activeId)}` : (activeName ? `?institute=${encodeURIComponent(activeName)}` : '');
       const res = await fetch(`/api/institute/students${queryParam}`);
       if (res.ok) {
         const data = await res.json();
@@ -591,7 +605,7 @@ const InstituteDashboard = () => {
           }));
 
           const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-          allStudents[instituteName] = dbStudents;
+          allStudents[activeName || instituteName] = dbStudents;
           localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
           setStudents(dbStudents);
         }
@@ -1045,6 +1059,7 @@ const InstituteDashboard = () => {
         setStudents(updatedStudents);
         alert("Student Updated Successfully!\nPassword and details have been updated in the database.");
         resetForm();
+        loadData(instId, instituteName);
         return;
       }
 
@@ -1069,6 +1084,7 @@ const InstituteDashboard = () => {
 
       alert("Student Registered Successfully!\nThey can now log in with:\nPhone / Username: " + formData.phone + "\nPassword: " + (formData.password || "1234"));
       resetForm();
+      loadData(instId, instituteName);
     } catch (err) {
       console.error("Save student error:", err);
       alert("Error saving student to database: " + err.message);
@@ -1112,6 +1128,7 @@ const InstituteDashboard = () => {
       if (!res.ok) {
         alert(data.error || "Failed to permanently delete student");
       }
+      loadData(instId, instituteName);
     } catch (err) {
       console.warn("Delete student error:", err);
     }
