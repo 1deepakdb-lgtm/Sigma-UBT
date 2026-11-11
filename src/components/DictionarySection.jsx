@@ -1518,7 +1518,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           border: none !important;
           border-radius: 0 !important;
           box-shadow: none !important;
-          padding: 8px 2px !important;
+          padding: 4px 2px !important;
           background-color: transparent !important;
           max-width: 100% !important;
           width: 100% !important;
@@ -1641,18 +1641,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       ` }} />
 
       {title && (
-        <div style={{ marginBottom: "14px" }}>
-          <h2 style={{ margin: 0, color: "#0f172a", fontSize: "20px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>
+        <div style={{ marginBottom: "6px" }}>
+          <h2 style={{ margin: 0, color: "#0f172a", fontSize: "19px", fontWeight: "800", letterSpacing: "-0.5px" }}>{title}</h2>
         </div>
       )}
 
-      {/* 2-Row Responsive Toolbar: Voice Controls on TOP & CENTER, Search Bar below */}
-      <form onSubmit={handleSearch} className="dict-top-toolbar" style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px", width: "100%" }}>
-        {/* Row 1 (TOP & CENTER): Voice Controls & AI Studio */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%", flexWrap: "wrap", margin: "0 auto" }}>
+      {/* 2-Row Responsive Toolbar: Compact Voice Controls on TOP & CENTER, Compact Search Bar below */}
+      <form onSubmit={handleSearch} className="dict-top-toolbar" style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px", width: "100%" }}>
+        {/* Row 1 (TOP & CENTER): Shrunk Voice Controls & AI Studio */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", width: "100%", flexWrap: "wrap", margin: "0 auto" }}>
           {/* 4. ⭐ MY VOICE BUTTON FOR THIS SEARCHED WORD (If uploaded voice matches searched word) */}
         {matchingSearchedCustomVoice && (
-          <div style={{ display: "inline-flex", borderRadius: "7px", overflow: "hidden", border: "1.5px solid #86efac", background: "#f0fdf4", boxShadow: "0 1px 4px rgba(16, 185, 129, 0.15)", flexShrink: 0 }}>
+          <div style={{ display: "inline-flex", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #86efac", background: "#f0fdf4", boxShadow: "0 1px 3px rgba(16, 185, 129, 0.12)", flexShrink: 0 }}>
             <button
               type="button"
               onClick={() => handlePlayAudio(matchingSearchedCustomVoice.url, 'search-custom-voice')}
@@ -1661,19 +1661,19 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 backgroundColor: playingAudioId === 'search-custom-voice' ? "#15803d" : loadingAudioId === 'search-custom-voice' ? "#16a34a" : "transparent",
                 color: playingAudioId === 'search-custom-voice' || loadingAudioId === 'search-custom-voice' ? "#ffffff" : "#15803d",
                 border: "none",
-                padding: "0 9px",
-                height: "36px",
-                fontSize: "12px",
+                padding: "0 8px",
+                height: "32px",
+                fontSize: "11.5px",
                 fontWeight: "800",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "5px",
+                gap: "4px",
                 whiteSpace: "nowrap",
                 transition: "all 0.15s ease"
               }}
             >
-              <span style={{ fontSize: "12px" }}>⭐</span>
+              <span style={{ fontSize: "11px" }}>⭐</span>
               <span>{playingAudioId === 'search-custom-voice' ? "⏹ Stop" : `▶ My Voice (${matchingSearchedCustomVoice.word})`}</span>
             </button>
             {canDownloadAudio && (
@@ -1686,9 +1686,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   color: "#15803d",
                   border: "none",
                   borderLeft: "1.5px solid #86efac",
-                  padding: "0 8px",
-                  height: "36px",
-                  fontSize: "12px",
+                  padding: "0 6px",
+                  height: "32px",
+                  fontSize: "11.5px",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -1702,7 +1702,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         )}
 
         {/* 5. UNIFIED VOICE MODEL SELECTOR, PLAY & DOWNLOAD */}
-        <div ref={modelDropdownRef} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
+        <div ref={modelDropdownRef} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
           {/* Model Picker Pill Button */}
           <button
             type="button"
@@ -1711,12 +1711,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
               background: selectedVoiceModel?.gender === 'male' ? "#f0f9ff" : "#fff1f2",
               border: `1.5px solid ${selectedVoiceModel?.gender === 'male' ? '#bae6fd' : '#fecdd3'}`,
-              padding: "0 8px 0 6px",
-              borderRadius: "7px",
-              height: "36px",
+              padding: "0 7px 0 5px",
+              borderRadius: "6px",
+              height: "32px",
               cursor: "pointer",
               boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
               transition: "all 0.15s ease",
@@ -1724,17 +1724,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             }}
           >
             {selectedVoiceModel?.gender === 'male' ? (
-              <MaleIcon size={20} isPlaying={playingAudioId === 'search-active-model'} />
+              <MaleIcon size={18} isPlaying={playingAudioId === 'search-active-model'} />
             ) : (
-              <FemaleIcon size={20} isPlaying={playingAudioId === 'search-active-model'} />
+              <FemaleIcon size={18} isPlaying={playingAudioId === 'search-active-model'} />
             )}
-            <div style={{ display: "flex", flexDirection: "column", textAlign: "left", lineHeight: 1.1 }}>
-              <span style={{ fontSize: "9px", fontWeight: "700", color: "#64748b" }}>Choose Model</span>
-              <span style={{ fontSize: "11.5px", fontWeight: "800", color: selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d" }}>
+            <div style={{ display: "flex", flexDirection: "column", textAlign: "left", lineHeight: 1.05 }}>
+              <span style={{ fontSize: "8.5px", fontWeight: "700", color: "#64748b" }}>Choose Model</span>
+              <span style={{ fontSize: "11px", fontWeight: "800", color: selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d" }}>
                 {selectedVoiceModel?.name || (activeLang === 'ja' ? "Japanese 1" : "Korean 1")}
               </span>
             </div>
-            <span style={{ fontSize: "10px", color: "#64748b", marginLeft: "2px" }}>
+            <span style={{ fontSize: "9px", color: "#64748b", marginLeft: "2px" }}>
               {isModelDropdownOpen ? "▲" : "▼"}
             </span>
           </button>
@@ -1752,17 +1752,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 : (selectedVoiceModel?.gender === 'male' ? "#0369a1" : "#be185d"),
               color: "#ffffff",
               border: "none",
-              padding: "0 11px",
-              height: "36px",
-              borderRadius: "7px",
-              fontSize: "12.5px",
+              padding: "0 9px",
+              height: "32px",
+              borderRadius: "6px",
+              fontSize: "12px",
               fontWeight: "800",
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: "5px",
+              gap: "4px",
               whiteSpace: "nowrap",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               transition: "all 0.15s ease"
             }}
           >
@@ -1794,10 +1794,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 backgroundColor: "#ffffff",
                 color: selectedVoiceModel?.gender === 'male' ? "#0284c7" : "#be185d",
                 border: `1.5px solid ${selectedVoiceModel?.gender === 'male' ? '#bae6fd' : '#fecdd3'}`,
-                padding: "0 9px",
-                height: "36px",
-                borderRadius: "7px",
-                fontSize: "13px",
+                padding: "0 7px",
+                height: "32px",
+                borderRadius: "6px",
+                fontSize: "12px",
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
@@ -1815,27 +1815,27 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             <div
               style={{
                 position: "absolute",
-                top: "calc(100% + 6px)",
+                top: "calc(100% + 4px)",
                 left: 0,
                 zIndex: 100000,
                 width: "285px",
                 maxWidth: "min(285px, calc(100vw - 20px))",
                 boxSizing: "border-box",
                 backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                boxShadow: "0 12px 36px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08)",
+                borderRadius: "12px",
+                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08)",
                 border: "1.5px solid #e2e8f0",
                 overflow: "hidden",
                 animation: "fadeIn 0.15s ease-out"
               }}
             >
               {/* Header with Title & Close Button */}
-              <div style={{ padding: "8px 12px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a" }}>
+              <div style={{ padding: "7px 10px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a" }}>
                   Choose Model
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "10.5px", color: "#64748b", fontWeight: "600" }}>
+                  <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "600" }}>
                     ({allAvailableModels.length} models)
                   </span>
                   <button
@@ -1850,10 +1850,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       border: "none",
                       backgroundColor: "#e2e8f0",
                       color: "#475569",
-                      width: "22px",
-                      height: "22px",
+                      width: "20px",
+                      height: "20px",
                       borderRadius: "50%",
-                      fontSize: "11px",
+                      fontSize: "10.5px",
                       fontWeight: "800",
                       cursor: "pointer",
                       display: "flex",
@@ -1982,18 +1982,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "6px",
+            gap: "5px",
             background: showAiStudio
               ? "linear-gradient(135deg, #1e1b4b 0%, #311042 100%)"
               : "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
             color: "#ffffff",
-            padding: "0 10px 0 5px",
-            borderRadius: "18px",
+            padding: "0 8px 0 4px",
+            borderRadius: "16px",
             border: showAiStudio ? "1.5px solid #c084fc" : "1.5px solid #6366f1",
-            height: "36px",
+            height: "32px",
             boxSizing: "border-box",
             cursor: "pointer",
-            boxShadow: showAiStudio ? "0 0 10px rgba(168, 85, 247, 0.4)" : "0 1px 6px rgba(79, 70, 229, 0.25)",
+            boxShadow: showAiStudio ? "0 0 10px rgba(168, 85, 247, 0.4)" : "0 1px 4px rgba(79, 70, 229, 0.25)",
             transition: "all 0.15s ease",
             flexShrink: 0,
             whiteSpace: "nowrap"
@@ -2001,29 +2001,29 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         >
           <div
             style={{
-              width: "24px",
-              height: "24px",
+              width: "20px",
+              height: "20px",
               borderRadius: "50%",
               background: "linear-gradient(135deg, #c084fc 0%, #9333ea 50%, #4f46e5 100%)",
               boxShadow: "0 1px 3px rgba(124, 58, 237, 0.4)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "12px",
+              fontSize: "10.5px",
               flexShrink: 0
             }}
           >
             🎙️
           </div>
-          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1, textAlign: "left" }}>
-            <span style={{ fontSize: "11px", fontWeight: "800", color: "#ffffff" }}>AI Studio</span>
-            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.85)", fontWeight: "600" }}>Voice Studio</span>
+          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.05, textAlign: "left" }}>
+            <span style={{ fontSize: "10.5px", fontWeight: "800", color: "#ffffff" }}>AI Studio</span>
+            <span style={{ fontSize: "8.5px", color: "rgba(255,255,255,0.85)", fontWeight: "600" }}>Voice Studio</span>
           </div>
         </button>
       </div>
 
       {/* Row 2: Search Input Box & Go Button */}
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "5px", width: "100%" }}>
         {/* 1. Search Input Box */}
         <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
           <input
@@ -2043,12 +2043,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             }}
             style={{
               width: "100%",
-              padding: "7px 28px 7px 10px",
-              borderRadius: "7px",
+              padding: "5px 26px 5px 8px",
+              borderRadius: "6px",
               border: "1.5px solid #cbd5e1",
-              fontSize: "13px",
+              fontSize: "12.5px",
               outline: "none",
-              height: "36px",
+              height: "32px",
               boxSizing: "border-box",
               backgroundColor: "#f8fafc",
               transition: "border 0.2s, background 0.2s"
@@ -2062,14 +2062,14 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               onClick={() => { setSearchQuery(''); fetchDictionary('', activeLang); }}
               style={{
                 position: "absolute",
-                right: "8px",
+                right: "7px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 background: "none",
                 border: "none",
                 color: "#94a3b8",
                 cursor: "pointer",
-                fontSize: "12px",
+                fontSize: "11px",
                 padding: 0
               }}
             >
@@ -2087,16 +2087,16 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             backgroundColor: "#2563eb",
             color: "white",
             border: "none",
-            padding: "0 14px",
-            height: "36px",
-            borderRadius: "7px",
-            fontSize: "13px",
+            padding: "0 12px",
+            height: "32px",
+            borderRadius: "6px",
+            fontSize: "12.5px",
             fontWeight: "800",
             cursor: "pointer",
             display: "inline-flex",
             alignItems: "center",
-            gap: "5px",
-            boxShadow: "0 1px 4px rgba(37,99,235,0.25)",
+            gap: "4px",
+            boxShadow: "0 1px 3px rgba(37,99,235,0.25)",
             whiteSpace: "nowrap",
             flexShrink: 0,
             transition: "background 0.15s, transform 0.1s"
