@@ -1150,72 +1150,79 @@ export default function KoreanMeaningBookView({
                   </h3>
                 </div>
 
-                <div className="meaning-table-container">
-                  <table className="meaning-full-table meaning-vocab-table" style={{ fontSize: "14px" }}>
-                    <thead>
-                      <tr style={{ backgroundColor: "#1e40af", borderBottom: "2px solid #1d4ed8" }}>
-                        <th className="col-word meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>शब्द</th>
-                        <th className="col-meaning meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>नेपाली अर्थ</th>
-                        <th className="col-pron meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>उच्चारण</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentBookData.words.map((w, idx) => (
-                        <tr
-                          key={idx}
+                <div className="meaning-vocab-list" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {currentBookData.words.map((w, idx) => (
+                    <div
+                      key={idx}
+                      className="meaning-vocab-row"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "8px 12px",
+                        padding: "10px 14px",
+                        backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                        border: "1.5px solid #e2e8f0",
+                        borderRadius: "10px",
+                        width: "100%",
+                        boxSizing: "border-box",
+                        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.03)",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {/* Left: Round Audio Button + Korean Word + Category */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleSpeak(w.korean, `tb_${idx}`)}
+                          className="meaning-speak-btn"
                           style={{
-                            borderBottom: "1px solid #f1f5f9",
-                            backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc"
+                            width: "28px",
+                            height: "28px",
+                            minWidth: "28px",
+                            borderRadius: "50%",
+                            border: `1.5px solid ${speakingWordId === `tb_${idx}` ? "#dc2626" : "#cbd5e1"}`,
+                            backgroundColor: speakingWordId === `tb_${idx}` ? "#dc2626" : "#ffffff",
+                            color: speakingWordId === `tb_${idx}` ? "#ffffff" : "#dc2626",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "12px",
+                            flexShrink: 0,
+                            padding: 0,
+                            boxShadow: speakingWordId === `tb_${idx}` ? "0 2px 6px rgba(220,38,38,0.3)" : "none",
+                            transition: "all 0.15s ease"
                           }}
+                          title="उच्चारण सुन्नुहोस्"
                         >
-                          <td className="col-word" style={{ fontWeight: "800", color: "#0f172a" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
-                              <button
-                                type="button"
-                                onClick={() => handleSpeak(w.korean, `tb_${idx}`)}
-                                className="meaning-speak-btn"
-                                style={{
-                                  width: "28px",
-                                  height: "28px",
-                                  borderRadius: "50%",
-                                  border: "1px solid #e2e8f0",
-                                  backgroundColor: speakingWordId === `tb_${idx}` ? "#dc2626" : "#f1f5f9",
-                                  color: speakingWordId === `tb_${idx}` ? "#ffffff" : "#0f172a",
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: "12px",
-                                  flexShrink: 0,
-                                  padding: 0
-                                }}
-                                title="उच्चारण सुन्नुहोस्"
-                              >
-                                🔊
-                              </button>
-                              <div style={{ minWidth: 0, wordBreak: "break-word" }}>
-                                <span className="meaning-word-text" style={{ fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
-                                  {w.korean}
-                                </span>
-                                {w.category && (
-                                  <span style={{ fontSize: "9px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "1px 4px", borderRadius: "3px", marginLeft: "4px", display: "inline-block" }}>
-                                    {w.category}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="col-pron meaning-pron-text" style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>
-                            {w.pronunciation ? `[${w.pronunciation}]` : ""}
-                          </td>
-                          <td className="col-meaning meaning-nepali-text" style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>
-                            <span className="meaning-dot-separator" style={{ color: "#cbd5e1", margin: "0 6px" }}>•</span>
-                            <span>{w.nepali}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          🔊
+                        </button>
+                        <span className="meaning-word-text" style={{ fontSize: "15.5px", fontWeight: "800", color: "#0f172a" }}>
+                          {w.korean}
+                        </span>
+                        {w.category && (
+                          <span style={{ fontSize: "10px", fontWeight: "700", color: "#2563eb", backgroundColor: "#eff6ff", padding: "1px 6px", borderRadius: "4px" }}>
+                            {w.category}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Right: Pronunciation + Nepali Meaning */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px 12px", flexWrap: "wrap" }}>
+                        {w.pronunciation && (
+                          <span className="meaning-pron-text" style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>
+                            [{w.pronunciation}]
+                          </span>
+                        )}
+                        <span className="meaning-nepali-text" style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ color: "#cbd5e1" }}>•</span>
+                          <span>{w.nepali}</span>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -1224,68 +1231,72 @@ export default function KoreanMeaningBookView({
                 <h3 style={{ margin: "0 0 16px 0", fontSize: "19px", fontWeight: "900", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px", paddingBottom: "12px", borderBottom: "1.5px solid #e2e8f0" }}>
                   <span style={{ color: "#0284c7" }}>२. 기본 표현</span> — आधारभूत वाक्य तथा नेपाली अर्थ
                 </h3>
-                <div className="meaning-table-container">
-                  <table className="meaning-full-table meaning-exp-table" style={{ fontSize: "14px" }}>
-                    <thead>
-                      <tr style={{ backgroundColor: "#1e40af", borderBottom: "2px solid #1d4ed8" }}>
-                        <th className="col-exp-korean meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>वाक्य</th>
-                        <th className="col-exp-nepali meaning-th-title" style={{ color: "#ffffff", fontWeight: "800" }}>नेपाली अर्थ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(currentBookData.expressions || []).map((exp, idx) => (
-                        <tr
-                          key={idx}
+                <div className="meaning-exp-list" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {(currentBookData.expressions || []).map((exp, idx) => (
+                    <div
+                      key={idx}
+                      className="meaning-exp-card"
+                      style={{
+                        backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                        border: "1.5px solid #e2e8f0",
+                        borderRadius: "10px",
+                        padding: "12px 14px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "10px",
+                        width: "100%",
+                        boxSizing: "border-box",
+                        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.03)"
+                      }}
+                    >
+                      {/* Left: Speak button + Korean sentence + pronunciation */}
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", minWidth: 0, flex: "1 1 260px" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleSpeak(exp.korean, `exp_${idx}`)}
+                          className="meaning-speak-btn"
                           style={{
-                            borderBottom: "1px solid #f1f5f9",
-                            backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc"
+                            width: "28px",
+                            height: "28px",
+                            minWidth: "28px",
+                            borderRadius: "50%",
+                            border: `1.5px solid ${speakingWordId === `exp_${idx}` ? "#2563eb" : "#cbd5e1"}`,
+                            backgroundColor: speakingWordId === `exp_${idx}` ? "#2563eb" : "#ffffff",
+                            color: speakingWordId === `exp_${idx}` ? "#ffffff" : "#2563eb",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "12px",
+                            flexShrink: 0,
+                            padding: 0,
+                            boxShadow: speakingWordId === `exp_${idx}` ? "0 2px 6px rgba(37,99,235,0.3)" : "none",
+                            transition: "all 0.15s ease"
                           }}
+                          title="उच्चारण सुन्नुहोस्"
                         >
-                          <td className="col-exp-korean">
-                            <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", minWidth: 0 }}>
-                              <button
-                                type="button"
-                                onClick={() => handleSpeak(exp.korean, `exp_${idx}`)}
-                                className="meaning-speak-btn"
-                                style={{
-                                  width: "28px",
-                                  height: "28px",
-                                  borderRadius: "50%",
-                                  border: "1px solid #e2e8f0",
-                                  backgroundColor: speakingWordId === `exp_${idx}` ? "#2563eb" : "#f1f5f9",
-                                  color: speakingWordId === `exp_${idx}` ? "#ffffff" : "#0f172a",
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: "12px",
-                                  flexShrink: 0,
-                                  marginTop: "2px",
-                                  padding: 0
-                                }}
-                                title="उच्चारण सुन्नुहोस्"
-                              >
-                                🔊
-                              </button>
-                              <div style={{ minWidth: 0, wordBreak: "break-word" }}>
-                                <div className="meaning-word-text" style={{ fontWeight: "800", color: "#0f172a", fontSize: "15px" }}>
-                                  {exp.korean}
-                                </div>
-                                {exp.pronunciation && (
-                                  <div className="meaning-pron-text" style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
-                                    उच्चारण: {exp.pronunciation}
-                                  </div>
-                                )}
-                              </div>
+                          🔊
+                        </button>
+                        <div style={{ minWidth: 0, wordBreak: "break-word" }}>
+                          <div className="meaning-word-text" style={{ fontWeight: "800", color: "#0f172a", fontSize: "15.5px" }}>
+                            {exp.korean}
+                          </div>
+                          {exp.pronunciation && (
+                            <div className="meaning-pron-text" style={{ fontSize: "12.5px", color: "#64748b", marginTop: "2px" }}>
+                              उच्चारण: {exp.pronunciation}
                             </div>
-                          </td>
-                          <td className="col-exp-nepali meaning-nepali-text" style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>
-                            {exp.nepali}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Nepali Meaning */}
+                      <div className="meaning-nepali-text" style={{ fontSize: "14.5px", fontWeight: "700", color: "#0f172a", flex: "1 1 200px" }}>
+                        <span style={{ color: "#15803d" }}>{exp.nepali}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -1355,27 +1366,32 @@ export default function KoreanMeaningBookView({
                           <div style={{ fontSize: "13px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>
                             उदाहरण:
                           </div>
-                          <div className="meaning-table-container">
-                            <table className="meaning-full-table meaning-grammar-table" style={{ fontSize: "13px", backgroundColor: "#ffffff" }}>
-                              <thead>
-                                <tr style={{ backgroundColor: "#1e40af", borderBottom: "1.5px solid #1d4ed8" }}>
-                                  <th style={{ padding: "8px 12px", color: "#ffffff", width: "50%", fontWeight: "800" }}>वाक्य (Korean)</th>
-                                  <th style={{ padding: "8px 12px", color: "#ffffff", width: "50%", fontWeight: "800" }}>नेपाली अर्थ</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {gm.examples.map((ex, eIdx) => (
-                                  <tr key={eIdx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                                    <td style={{ padding: "8px 12px", fontWeight: "700", color: "#0f172a" }}>
-                                      {ex.korean}
-                                    </td>
-                                    <td style={{ padding: "8px 12px", color: "#15803d", fontWeight: "600" }}>
-                                      {ex.nepali}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                          <div className="meaning-grammar-list" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "6px" }}>
+                            {gm.examples.map((ex, eIdx) => (
+                              <div
+                                key={eIdx}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  flexWrap: "wrap",
+                                  gap: "8px 12px",
+                                  padding: "9px 12px",
+                                  borderRadius: "8px",
+                                  backgroundColor: eIdx % 2 === 0 ? "#ffffff" : "#f8fafc",
+                                  border: "1px solid #e2e8f0",
+                                  width: "100%",
+                                  boxSizing: "border-box"
+                                }}
+                              >
+                                <div style={{ fontWeight: "800", color: "#0f172a", fontSize: "14px" }}>
+                                  {ex.korean}
+                                </div>
+                                <div style={{ color: "#15803d", fontWeight: "700", fontSize: "13.5px" }}>
+                                  {ex.nepali}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}

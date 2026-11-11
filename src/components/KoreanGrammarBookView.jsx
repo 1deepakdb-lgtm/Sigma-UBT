@@ -139,7 +139,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
         const matchNum = ch.chapter.toString() === q;
         const matchKo = (ch.titleKo || "").toLowerCase().includes(q);
         const matchNe = (ch.titleNe || "").toLowerCase().includes(q);
-        const matchGrammar = (ch.grammarPoints || []).some(gp => 
+        const matchGrammar = (ch.grammarPoints || []).some(gp =>
           (gp.pattern || "").toLowerCase().includes(q) || (gp.nameNe || "").toLowerCase().includes(q)
         );
         return matchNum || matchKo || matchNe || matchGrammar;
@@ -1543,82 +1543,58 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                 </div>
               )}
 
-              {/* 3. Side-by-Side Rules Table & Mobile Outside-of-Cell Cards */}
+              {/* 3. Universal Outside-of-Table Comparison Cards (All Devices: Mobile, Tablet, Web) */}
               <div style={{ marginBottom: "24px" }}>
                 <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", fontWeight: "800", color: "#0f172a", textTransform: "uppercase" }}>
-                  तुलना तालिका (Comparison Matrix):
+                  तुलना कार्डहरू (Comparison Rules):
                 </h4>
 
-                {/* Desktop High-Contrast Table View */}
-                <div className="grammar-desktop-table" style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid #cbd5e1" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-                    <thead>
-                      <tr style={{ borderBottom: "2px solid #cbd5e1" }}>
-                        <th style={{ padding: "12px 14px", textAlign: "left", width: "24%", backgroundColor: "#1e3a8a", color: "#ffffff", fontWeight: "800" }}>
-                          तुलनाको आधार (Aspect)
-                        </th>
-                        <th style={{ padding: "12px 14px", textAlign: "left", width: "38%", color: "#1e40af", backgroundColor: "#eff6ff", fontWeight: "800", borderLeft: "1px solid #bfdbfe" }}>
-                          {selectedComparisonObj.patternA}
-                        </th>
-                        <th style={{ padding: "12px 14px", textAlign: "left", width: "38%", color: "#991b1b", backgroundColor: "#fef2f2", fontWeight: "800", borderLeft: "1px solid #fecaca" }}>
-                          {selectedComparisonObj.patternB}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedComparisonObj.rules.map((r, idx) => (
-                        <tr key={idx} style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
-                          <td style={{ padding: "12px 14px", fontWeight: "800", color: "#0f172a", backgroundColor: "#f8fafc" }}>
-                            {r.aspect}
-                          </td>
-                          <td style={{ padding: "12px 14px", color: "#1e3a8a", backgroundColor: "#f8fbff", lineHeight: "1.5", borderLeft: "1px solid #e2e8f0" }}>
-                            {renderRuleWithSymbols(r.ruleA)}
-                          </td>
-                          <td style={{ padding: "12px 14px", color: "#7f1d1d", backgroundColor: "#fffafa", lineHeight: "1.5", borderLeft: "1px solid #e2e8f0" }}>
-                            {renderRuleWithSymbols(r.ruleB)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Full-Screen Outside-of-Cell Cards View */}
-                <div className="grammar-mobile-cards">
+                {/* Outside-of-Table Cards for ALL devices */}
+                <div className="grammar-comparison-cards" style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
                   {selectedComparisonObj.rules.map((r, idx) => (
                     <div
                       key={idx}
                       style={{
                         backgroundColor: "#ffffff",
                         border: "1.5px solid #e2e8f0",
-                        borderRadius: "10px",
-                        padding: "12px 14px",
-                        marginBottom: "10px",
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.03)"
+                        borderRadius: "12px",
+                        padding: "14px 16px",
+                        boxShadow: "0 1px 4px rgba(15, 23, 42, 0.04)",
+                        width: "100%",
+                        boxSizing: "border-box"
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                        <span style={{ backgroundColor: "#1e3a8a", color: "#ffffff", padding: "2px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "800" }}>
-                          आधार
+                      {/* Aspect Header Badge */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                        <span style={{ backgroundColor: "#1e3a8a", color: "#ffffff", padding: "3px 9px", borderRadius: "6px", fontSize: "11.5px", fontWeight: "800" }}>
+                          तुलनाको आधार
                         </span>
-                        <span style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>
+                        <span style={{ fontSize: "15px", fontWeight: "800", color: "#0f172a" }}>
                           {r.aspect}
                         </span>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <div style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "8px", padding: "10px 12px" }}>
-                          <div style={{ fontSize: "12px", fontWeight: "800", color: "#1d4ed8", marginBottom: "3px" }}>
+
+                      {/* Side-by-Side or Stacked Rules Outside of Table */}
+                      <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                        gap: "10px",
+                        width: "100%"
+                      }}>
+                        <div style={{ backgroundColor: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: "8px", padding: "10px 14px" }}>
+                          <div style={{ fontSize: "12.5px", fontWeight: "800", color: "#1d4ed8", marginBottom: "4px" }}>
                             [A] {selectedComparisonObj.patternA}
                           </div>
-                          <div style={{ fontSize: "13.5px", color: "#1e3a8a", lineHeight: "1.5" }}>
+                          <div style={{ fontSize: "13.5px", color: "#1e3a8a", lineHeight: "1.55" }}>
                             {renderRuleWithSymbols(r.ruleA)}
                           </div>
                         </div>
-                        <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "10px 12px" }}>
-                          <div style={{ fontSize: "12px", fontWeight: "800", color: "#b91c1c", marginBottom: "3px" }}>
+
+                        <div style={{ backgroundColor: "#fef2f2", border: "1.5px solid #fecaca", borderRadius: "8px", padding: "10px 14px" }}>
+                          <div style={{ fontSize: "12.5px", fontWeight: "800", color: "#b91c1c", marginBottom: "4px" }}>
                             [B] {selectedComparisonObj.patternB}
                           </div>
-                          <div style={{ fontSize: "13.5px", color: "#7f1d1d", lineHeight: "1.5" }}>
+                          <div style={{ fontSize: "13.5px", color: "#7f1d1d", lineHeight: "1.55" }}>
                             {renderRuleWithSymbols(r.ruleB)}
                           </div>
                         </div>
