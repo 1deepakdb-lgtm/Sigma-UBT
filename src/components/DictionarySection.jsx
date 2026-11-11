@@ -1539,28 +1539,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         }
         .dict-col-word {
           display: flex;
-          align-items: center;
-          gap: 8px;
-          min-width: 130px;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 2px;
+          min-width: 90px;
           flex-shrink: 0;
         }
-        .dict-col-meaning-group {
+        .dict-col-meaning {
           display: flex;
-          flex-direction: column;
+          align-items: center;
+          gap: 6px;
           flex: 1;
           min-width: 0;
-          gap: 2px;
-        }
-        .dict-meaning-line {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          flex-wrap: wrap;
-        }
-        .dict-explanation-line {
-          display: flex;
-          align-items: center;
-          gap: 6px;
           flex-wrap: wrap;
         }
         .dict-audio-circle-btn {
@@ -1615,14 +1605,14 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             white-space: normal !important;
           }
           .dict-col-word {
-            min-width: 85px !important;
+            min-width: 70px !important;
             flex-shrink: 0 !important;
-            gap: 6px !important;
+            gap: 2px !important;
           }
-          .dict-col-meaning-group {
+          .dict-col-meaning {
             flex: 1 !important;
             min-width: 0 !important;
-            gap: 2px !important;
+            gap: 4px !important;
           }
           .dict-audio-circle-btn {
             width: 30px !important;
@@ -2319,79 +2309,75 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           fontSize: "16px",
                           fontWeight: "800",
                           color: "#0f172a",
-                          whiteSpace: "nowrap"
+                          whiteSpace: "nowrap",
+                          lineHeight: "1.2"
                         }}
                       >
                         {primaryWord}
                       </span>
-                    </div>
 
-                    {/* MIDDLE PART: Meaning (Line 1) + Explanation Below (Line 2) */}
-                    <div className="dict-col-meaning-group">
-                      {/* Line 1: Meaning (Nepali) + Badges */}
-                      <div className="dict-meaning-line">
+                      {(nepaliPhonetic || romaji) && (
                         <span
                           style={{
-                            color: "#15803d",
+                            fontSize: "12.5px",
                             fontWeight: "700",
-                            fontSize: "14.5px"
+                            color: activeLang === 'ja' ? "#7e22ce" : "#1e40af",
+                            whiteSpace: "nowrap",
+                            lineHeight: "1.2"
                           }}
                         >
-                          {word.nepali}
+                          [{nepaliPhonetic || romaji}]
                         </span>
+                      )}
+                    </div>
 
-                        {customVoiceForWord && (
-                          <span
-                            title="Custom voice available"
-                            style={{
-                              fontSize: "10.5px",
-                              backgroundColor: "#dcfce7",
-                              color: "#15803d",
-                              border: "1px solid #86efac",
-                              padding: "1px 5px",
-                              borderRadius: "4px",
-                              fontWeight: "700",
-                              whiteSpace: "nowrap"
-                            }}
-                          >
-                            ⭐ My Voice
-                          </span>
-                        )}
+                    {/* MIDDLE PART: Meaning (Nepali) + English & Badges */}
+                    <div className="dict-col-meaning">
+                      <span
+                        style={{
+                          color: "#15803d",
+                          fontWeight: "700",
+                          fontSize: "14.5px"
+                        }}
+                      >
+                        {word.nepali}
+                      </span>
 
-                        {word.isKanji && word.jlpt && (
-                          <span style={{ fontSize: "10.5px", backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "1px 6px", borderRadius: "4px", fontWeight: "800", whiteSpace: "nowrap" }}>
-                            N{word.jlpt}
-                          </span>
-                        )}
-                      </div>
+                      {word.english && (
+                        <span
+                          style={{
+                            color: "#64748b",
+                            fontWeight: "600",
+                            fontSize: "12.5px"
+                          }}
+                        >
+                          ({word.english})
+                        </span>
+                      )}
 
-                      {/* Line 2 (Below Meaning): Explanation (Nepali Pronunciation + English Translation) */}
-                      <div className="dict-explanation-line">
-                        {(nepaliPhonetic || romaji) && (
-                          <span
-                            style={{
-                              fontSize: "13px",
-                              fontWeight: "700",
-                              color: activeLang === 'ja' ? "#7e22ce" : "#1e40af",
-                              whiteSpace: "nowrap"
-                            }}
-                          >
-                            [{nepaliPhonetic || romaji}]
-                          </span>
-                        )}
+                      {customVoiceForWord && (
+                        <span
+                          title="Custom voice available"
+                          style={{
+                            fontSize: "10.5px",
+                            backgroundColor: "#dcfce7",
+                            color: "#15803d",
+                            border: "1px solid #86efac",
+                            padding: "1px 5px",
+                            borderRadius: "4px",
+                            fontWeight: "700",
+                            whiteSpace: "nowrap"
+                          }}
+                        >
+                          ⭐ My Voice
+                        </span>
+                      )}
 
-                        {word.english && (
-                          <span
-                            style={{
-                              color: "#64748b",
-                              fontWeight: "600",
-                              fontSize: "12.5px"
-                            }}
-                          >
-                            ({word.english})
-                          </span>
-                        )}
-                      </div>
+                      {word.isKanji && word.jlpt && (
+                        <span style={{ fontSize: "10.5px", backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "1px 6px", borderRadius: "4px", fontWeight: "800", whiteSpace: "nowrap" }}>
+                          N{word.jlpt}
+                        </span>
+                      )}
                     </div>
 
                     {/* RIGHT PART: Circular Audio Button (Right side of meaning) */}

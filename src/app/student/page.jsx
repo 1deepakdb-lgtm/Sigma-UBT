@@ -1751,10 +1751,10 @@ const StudentDashboard = () => {
           {mobileMenuOpen ? (
             <span style={{ fontSize: "18px", fontWeight: "bold", lineHeight: 1 }}>✕</span>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "3.5px", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
-              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
-              <span style={{ width: "18px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px" }}></span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ width: "20px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px", display: "block" }}></span>
+              <span style={{ width: "20px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px", display: "block" }}></span>
+              <span style={{ width: "20px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px", display: "block" }}></span>
             </div>
           )}
         </button>

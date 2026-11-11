@@ -32,6 +32,7 @@ const InstituteDashboard = () => {
   const [mounted, setMounted] = useState(false);
 
   const [activeTab, setActiveTab] = useState("billing"); 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [students, setStudents] = useState([]);
   const [instituteLanguage, setInstituteLanguage] = useState("both");
   const [studentLangFilter, setStudentLangFilter] = useState("all"); // "all" | "korean" | "japanese"
@@ -1469,9 +1470,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
         </div>
       )}
 
-      <div style={topNavStyle}>
-        <div style={navInnerStyle}>
-          <div style={navLeftSlotStyle}>
+      <div style={topNavStyle} className="institute-top-nav">
+        <div style={navInnerStyle} className="institute-nav-inner">
+          <div style={navLeftSlotStyle} className="institute-nav-left">
             <span suppressHydrationWarning={true}>INSTITUTE PANEL ({instituteName || "sig"})</span>
             {userRole === "staff" && (
               <span style={{ fontSize: "11px", backgroundColor: "#10b981", color: "white", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold", flexShrink: 0, whiteSpace: "nowrap" }}>
@@ -1480,7 +1481,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             )}
           </div>
           
-          <div style={menuContainerStyle}>
+          <div style={menuContainerStyle} className="institute-desktop-tabs">
             <button onClick={() => handleTabChange("billing")} style={getNavBtnStyle("billing")}>
               Billing
             </button>
@@ -1504,7 +1505,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             )}
           </div>
 
-          <div style={navRightSlotStyle}>
+          <div style={navRightSlotStyle} className="institute-desktop-logout">
             <button 
               onClick={handleLogout} 
               style={{ 
@@ -1528,8 +1529,131 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               Logout
             </button>
           </div>
+
+          {/* Three Horizontal Lines Hamburger Button for Institute Portal */}
+          <button
+            type="button"
+            className="institute-mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Institute Navigation Menu"
+            title="Toggle Navigation Menu"
+            style={{
+              display: "none",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "38px",
+              height: "38px",
+              borderRadius: "8px",
+              backgroundColor: mobileMenuOpen ? "#2563eb" : "rgba(255, 255, 255, 0.15)",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              color: "#ffffff",
+              cursor: "pointer",
+              flexShrink: 0,
+              padding: "4px"
+            }}
+          >
+            {mobileMenuOpen ? (
+              <span style={{ fontSize: "18px", fontWeight: "bold", lineHeight: 1 }}>✕</span>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ width: "20px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px", display: "block" }}></span>
+                <span style={{ width: "20px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px", display: "block" }}></span>
+                <span style={{ width: "20px", height: "2.5px", backgroundColor: "#ffffff", borderRadius: "2px", display: "block" }}></span>
+              </div>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer Menu for Institute Portal */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.65)",
+              backdropFilter: "blur(4px)",
+              zIndex: 99998
+            }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "64px",
+              left: 0,
+              right: 0,
+              backgroundColor: "#0f172a",
+              borderBottom: "3px solid #2563eb",
+              boxShadow: "0 12px 35px rgba(0, 0, 0, 0.5)",
+              zIndex: 99999,
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              maxHeight: "calc(100vh - 70px)",
+              overflowY: "auto"
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+              Institute Menu ({instituteName || "Panel"})
+            </div>
+
+            <button
+              onClick={() => { handleTabChange("billing"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "billing" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "billing" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>💳</span>
+              <span>Billing & Management</span>
+            </button>
+
+            <button
+              onClick={() => { handleTabChange("listening"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "listening" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "listening" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>🎧</span>
+              <span>Study Materials & Books</span>
+            </button>
+
+            <button
+              onClick={() => { handleTabChange("dictionary"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "dictionary" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "dictionary" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📖</span>
+              <span>Dictionary & Vocabulary</span>
+            </button>
+
+            <button
+              onClick={() => { handleTabChange("news"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "news" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "news" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📢</span>
+              <span>Notice Board</span>
+            </button>
+
+            {userRole !== "staff" && (
+              <button
+                onClick={() => { handleTabChange("students"); setMobileMenuOpen(false); }}
+                style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "students" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "students" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span>👥</span>
+                <span>Manage Students</span>
+              </button>
+            )}
+
+            <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
+              <button
+                onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                style={{ width: "100%", backgroundColor: "#ef4444", color: "#ffffff", border: "none", padding: "11px", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+              >
+                <span>🚪</span>
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Fixed Navbar Spacer: Keeps page content exactly in place without overlap */}
       <div style={{ height: "64px", minHeight: "64px", flexShrink: 0 }} aria-hidden="true"></div>
@@ -3573,6 +3697,23 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
       <style jsx>{`
         @media (max-width: 1024px) {
+          :global(.institute-desktop-tabs) {
+            display: none !important;
+          }
+          :global(.institute-desktop-logout) {
+            display: none !important;
+          }
+          :global(.institute-mobile-menu-btn) {
+            display: inline-flex !important;
+          }
+          :global(.institute-top-nav) {
+            padding: 0 14px !important;
+            overflow-x: visible !important;
+          }
+          :global(.institute-nav-inner) {
+            min-width: 0 !important;
+            width: 100% !important;
+          }
           :global(.institute-bottom-nav) {
             display: flex !important;
           }
@@ -3581,6 +3722,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           }
         }
         @media (min-width: 1025px) {
+          :global(.institute-mobile-menu-btn) {
+            display: none !important;
+          }
           :global(.institute-bottom-nav) {
             display: none !important;
           }

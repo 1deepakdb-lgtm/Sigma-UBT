@@ -433,27 +433,17 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
         }
         .batchim-col-word {
           display: flex;
-          align-items: center;
-          gap: 8px;
-          min-width: 110px;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 2px;
+          min-width: 90px;
           flex-shrink: 0;
         }
-        .batchim-col-meaning-group {
+        .batchim-col-meaning {
           display: flex;
-          flex-direction: column;
+          align-items: center;
           flex: 1;
           min-width: 0;
-          gap: 2px;
-        }
-        .batchim-meaning-line {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          flex-wrap: wrap;
-        }
-        .batchim-explanation-line {
-          display: flex;
-          align-items: center;
           gap: 6px;
           flex-wrap: wrap;
         }
@@ -497,14 +487,13 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             white-space: normal !important;
           }
           .batchim-col-word {
-            min-width: 75px !important;
+            min-width: 70px !important;
             flex-shrink: 0 !important;
-            gap: 6px !important;
+            gap: 2px !important;
           }
-          .batchim-col-meaning-group {
+          .batchim-col-meaning {
             flex: 1 !important;
             min-width: 0 !important;
-            gap: 2px !important;
           }
           .batchim-audio-circle-btn {
             width: 30px !important;
@@ -693,33 +682,27 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                           backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc"
                         }}
                       >
-                        {/* LEFT PART: Written Word */}
+                        {/* LEFT PART: Written Word + Pronunciation Below */}
                         <div className="batchim-col-word">
-                          <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
+                          <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px", lineHeight: "1.2" }}>
                             {ex.written}
+                          </span>
+                          <span style={{
+                            fontWeight: "700",
+                            color: "#1e40af",
+                            fontSize: "12.5px",
+                            whiteSpace: "nowrap",
+                            lineHeight: "1.2"
+                          }}>
+                            [{koreanToNepaliRomanized(ex.spoken)}]
                           </span>
                         </div>
 
-                        {/* MIDDLE PART: Meaning on Row 1 + Explanation Below on Row 2 */}
-                        <div className="batchim-col-meaning-group">
-                          {/* Line 1: Nepali Meaning */}
-                          <div className="batchim-meaning-line">
-                            <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
-                              {ex.nepali}
-                            </span>
-                          </div>
-
-                          {/* Line 2 (Below Meaning): Explanation (Nepali Pronunciation) */}
-                          <div className="batchim-explanation-line">
-                            <span style={{
-                              fontWeight: "700",
-                              color: "#4338ca",
-                              fontSize: "13px",
-                              whiteSpace: "nowrap"
-                            }}>
-                              [{koreanToNepaliRomanized(ex.spoken)}]
-                            </span>
-                          </div>
+                        {/* MIDDLE PART: Nepali Meaning */}
+                        <div className="batchim-col-meaning">
+                          <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
+                            {ex.nepali}
+                          </span>
                         </div>
 
                         {/* RIGHT PART: Round Audio Button (Right side of meaning) */}
@@ -837,33 +820,27 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc"
                     }}
                   >
-                    {/* LEFT PART: Written Word */}
+                    {/* LEFT PART: Written Word + Pronunciation Below */}
                     <div className="batchim-col-word">
-                      <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
+                      <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px", lineHeight: "1.2" }}>
                         {ex.written}
+                      </span>
+                      <span style={{
+                        fontWeight: "700",
+                        color: "#1e40af",
+                        fontSize: "12.5px",
+                        whiteSpace: "nowrap",
+                        lineHeight: "1.2"
+                      }}>
+                        [{koreanToNepaliRomanized(ex.spoken)}]
                       </span>
                     </div>
 
-                    {/* MIDDLE PART: Meaning on Row 1 + Explanation Below on Row 2 */}
-                    <div className="batchim-col-meaning-group">
-                      {/* Line 1: Nepali Meaning */}
-                      <div className="batchim-meaning-line">
-                        <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
-                          {ex.nepali}
-                        </span>
-                      </div>
-
-                      {/* Line 2 (Below Meaning): Explanation (Nepali Pronunciation) */}
-                      <div className="batchim-explanation-line">
-                        <span style={{
-                          fontWeight: "700",
-                          color: "#4338ca",
-                          fontSize: "13px",
-                          whiteSpace: "nowrap"
-                        }}>
-                          [{koreanToNepaliRomanized(ex.spoken)}]
-                        </span>
-                      </div>
+                    {/* MIDDLE PART: Nepali Meaning */}
+                    <div className="batchim-col-meaning">
+                      <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
+                        {ex.nepali}
+                      </span>
                     </div>
 
                     {/* RIGHT PART: Round Audio Button (Right side of meaning) */}
