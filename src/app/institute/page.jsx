@@ -1688,7 +1688,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       {/* Fixed Navbar Spacer: Keeps page content exactly in place without overlap */}
       <div style={{ height: "64px", minHeight: "64px", flexShrink: 0 }} aria-hidden="true"></div>
 
-      <div style={contentAreaStyle}>
+      <div className="institute-content-area" style={contentAreaStyle}>
         
         {activeTab === "billing" && (
           <InstituteBillingSection instituteName={instituteName} userRole={userRole} instId={instId} instituteLanguage={instituteLanguage} />
@@ -1869,48 +1869,48 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           ) : (
             <div>
               {/* Top Metrics Cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px", marginBottom: "24px" }}>
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
-                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Available Packages</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {examPackages.length}
-                </p>
+              <div className="manage-students-stats-grid">
+                <div className="dynamic-card manage-students-stats-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                  <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Available Packages</span>
+                  <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {examPackages.length}
+                  </p>
+                </div>
+
+                <div className="dynamic-card manage-students-stats-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                  <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Created by {instituteName}</span>
+                  <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {examPackages.filter(p => p.isCustom || p.createdBy === instituteName).length}
+                  </p>
+                </div>
+
+                <div className="dynamic-card manage-students-stats-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                  <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Accessible Exam Sets</span>
+                  <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {examSets.length}
+                  </p>
+                </div>
+
+                <div className="dynamic-card manage-students-stats-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                  <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Package Pricing Range</span>
+                  <p style={{ margin: "6px 0 0 0", fontSize: "17px", letterSpacing: "-0.5px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {examPackages.length > 0 ? (
+                      `${examPackages[0]?.price || 'Rs. 1,000'} - ${examPackages[examPackages.length - 1]?.price || 'Rs. 4,500'}`
+                    ) : "Configurable"}
+                  </p>
+                </div>
+
+                <div className="dynamic-card manage-students-stats-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
+                  <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Students</span>
+                  <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {students.length}
+                  </p>
+                </div>
               </div>
 
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
-                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Created by {instituteName}</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {examPackages.filter(p => p.isCustom || p.createdBy === instituteName).length}
-                </p>
-              </div>
-
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
-                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Accessible Exam Sets</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {examSets.length}
-                </p>
-              </div>
-
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
-                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Package Pricing Range</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "17px", letterSpacing: "-0.5px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {examPackages.length > 0 ? (
-                    `${examPackages[0]?.price || 'Rs. 1,000'} - ${examPackages[examPackages.length - 1]?.price || 'Rs. 4,500'}`
-                  ) : "Configurable"}
-                </p>
-              </div>
-
-              <div className="dynamic-card" style={{ ...cardStyle, background: "linear-gradient(145deg, #0284c7, #0369a1)", border: "none", marginBottom: 0, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "14px 16px" }}>
-                <span style={{ fontSize: "11px", color: "#e0f2fe", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Students</span>
-                <p style={{ margin: "6px 0 0 0", fontSize: "22px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {students.length}
-                </p>
-              </div>
-            </div>
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
+              <div className="manage-students-header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
                 <h3 style={{ color: "#475569", margin: 0, fontSize: "18px" }}>My Enrolled Students ({students.length})</h3>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                <div className="manage-students-actions-row" style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
                   <button
                     onClick={handleLockStudents}
                     title="Lock Manage Students again"
@@ -2053,7 +2053,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               {showForm && (
                 <div style={cardStyle}>
                   <h4 style={{ margin: "0 0 15px 0", color: "#1e293b" }}>{editId ? "Update Student Details" : "Register Student under " + instituteName}</h4>
-                  <form onSubmit={handleSubmitStudent} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                  <form onSubmit={handleSubmitStudent} className="manage-students-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
                     <div>
                       <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", color: "#64748b" }}>Student Full Name</label>
                       <input type="text" name="name" value={formData.name} onChange={handleInputChange} required style={inputStyle} placeholder="Enter student name" />
@@ -2373,54 +2373,179 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       </div>
                     )}
 
-                    <table style={tableStyle}>
-                      <thead>
-                        <tr style={{ backgroundColor: "#f8fafc" }}>
-                          <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
-                          <th style={thStyle}>Phone Number</th>
-                          <th style={thStyle}>Study Language</th>
-                          <th style={thStyle}>Package & Expiry</th>
-                          <th style={thStyle}>Status</th>
-                          <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
+                    {/* Desktop Table View (Scrollable container so it never breaks layout) */}
+                    <div className="manage-students-table-wrap" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>
+                      <table style={{ ...tableStyle, minWidth: "680px", marginBottom: 0 }}>
+                        <thead>
+                          <tr style={{ backgroundColor: "#f8fafc" }}>
+                            <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
+                            <th style={thStyle}>Phone Number</th>
+                            <th style={thStyle}>Study Language</th>
+                            <th style={thStyle}>Package & Expiry</th>
+                            <th style={thStyle}>Status</th>
+                            <th style={{ ...thStyle, borderTopRightRadius: "8px" }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {displayedStudents.length === 0 ? (
+                            <tr><td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>No students registered under this track yet.</td></tr>
+                          ) : (
+                            displayedStudents.map((stu) => (
+                        <tr key={stu.id}>
+                          <td style={{ ...tdStyle, fontWeight: "bold" }}>{stu.name}</td>
+                          <td style={tdStyle}>{stu.phone}</td>
+                          <td style={tdStyle}>
+                            <span style={{
+                              display: "inline-block",
+                              padding: "4px 10px",
+                              borderRadius: "12px",
+                              fontSize: "12px",
+                              fontWeight: "800",
+                              backgroundColor: stu.language === "japanese" ? "#f3e8ff" : stu.language === "korean" ? "#eff6ff" : "#f1f5f9",
+                              color: stu.language === "japanese" ? "#7e22ce" : stu.language === "korean" ? "#1d4ed8" : "#334155",
+                              border: `1px solid ${stu.language === "japanese" ? "#d8b4fe" : stu.language === "korean" ? "#bfdbfe" : "#cbd5e1"}`
+                            }}>
+                              {stu.language === "japanese" ? "🇯🇵 Japanese" : stu.language === "korean" ? "🇰🇷 Korean" : "🌐 Both"}
+                            </span>
+                          </td>
+                          <td style={tdStyle}>
+                            <span style={{ fontWeight: "bold", color: "#2563eb" }}>{stu.assignedPackage}</span>
+                            <br/><span style={{ fontSize: "12px", color: "#ef4444" }}>Ends: {stu.expiryDate}</span>
+                          </td>
+                          <td style={tdStyle}><span style={{ backgroundColor: "#dcfce7", color: "#166534", padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold" }}>{stu.status || "Active"}</span></td>
+                          <td style={tdStyle}>
+                            <button onClick={() => handleEdit(stu)} style={{ backgroundColor: "#2563eb", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", marginRight: "5px", cursor: "pointer", fontSize: "12px" }}>Edit</button>
+                            <button onClick={() => handleDelete(stu.id, stu.phone)} style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Delete</button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {displayedStudents.length === 0 ? (
-                          <tr><td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>No students registered under this track yet.</td></tr>
-                        ) : (
-                          displayedStudents.map((stu) => (
-                      <tr key={stu.id}>
-                        <td style={{ ...tdStyle, fontWeight: "bold" }}>{stu.name}</td>
-                        <td style={tdStyle}>{stu.phone}</td>
-                        <td style={tdStyle}>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile & Tablet Card View (Clear, Touch-Friendly, Never Squished) */}
+              <div className="manage-students-mobile-cards">
+                {displayedStudents.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "30px 16px", color: "#94a3b8", backgroundColor: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                    No students registered under this track yet.
+                  </div>
+                ) : (
+                  displayedStudents.map((stu) => (
+                    <div
+                      key={stu.id}
+                      style={{
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "10px",
+                        padding: "14px 16px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px"
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                        <div>
+                          <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
+                            {stu.name}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "3px" }}>
+                            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>Login ID:</span>
+                            <span style={{ fontSize: "13px", fontWeight: "700", color: "#1e40af", letterSpacing: "0.3px" }}>{stu.phone}</span>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
                           <span style={{
-                            display: "inline-block",
-                            padding: "4px 10px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: "800",
+                            backgroundColor: "#dcfce7",
+                            color: "#166534",
+                            padding: "3px 8px",
+                            borderRadius: "10px",
+                            fontSize: "11px",
+                            fontWeight: "800"
+                          }}>
+                            {stu.status || "Active"}
+                          </span>
+                          <span style={{
+                            padding: "2px 8px",
+                            borderRadius: "10px",
+                            fontSize: "11px",
+                            fontWeight: "700",
                             backgroundColor: stu.language === "japanese" ? "#f3e8ff" : stu.language === "korean" ? "#eff6ff" : "#f1f5f9",
                             color: stu.language === "japanese" ? "#7e22ce" : stu.language === "korean" ? "#1d4ed8" : "#334155",
                             border: `1px solid ${stu.language === "japanese" ? "#d8b4fe" : stu.language === "korean" ? "#bfdbfe" : "#cbd5e1"}`
                           }}>
                             {stu.language === "japanese" ? "🇯🇵 Japanese" : stu.language === "korean" ? "🇰🇷 Korean" : "🌐 Both"}
                           </span>
-                        </td>
-                        <td style={tdStyle}>
-                          <span style={{ fontWeight: "bold", color: "#2563eb" }}>{stu.assignedPackage}</span>
-                          <br/><span style={{ fontSize: "12px", color: "#ef4444" }}>Ends: {stu.expiryDate}</span>
-                        </td>
-                        <td style={tdStyle}><span style={{ backgroundColor: "#dcfce7", color: "#166534", padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold" }}>{stu.status || "Active"}</span></td>
-                        <td style={tdStyle}>
+                        </div>
+                      </div>
 
-                          <button onClick={() => handleEdit(stu)} style={{ backgroundColor: "#2563eb", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", marginRight: "5px", cursor: "pointer", fontSize: "12px" }}>Edit</button>
-                          <button onClick={() => handleDelete(stu.id, stu.phone)} style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Delete</button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                      <div style={{
+                        backgroundColor: "#f8fafc",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #e2e8f0",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "6px"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "12px" }}>📦</span>
+                          <span style={{ fontSize: "13px", fontWeight: "700", color: "#1d4ed8" }}>{stu.assignedPackage}</span>
+                        </div>
+                        <div style={{ fontSize: "11.5px", color: "#dc2626", fontWeight: "700" }}>
+                          Ends: {stu.expiryDate}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "2px" }}>
+                        <button
+                          onClick={() => handleEdit(stu)}
+                          style={{
+                            backgroundColor: "#2563eb",
+                            color: "#ffffff",
+                            border: "none",
+                            padding: "9px 12px",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            minHeight: "38px"
+                          }}
+                        >
+                          <span>✏️ Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(stu.id, stu.phone)}
+                          style={{
+                            backgroundColor: "#fee2e2",
+                            color: "#dc2626",
+                            border: "1px solid #fca5a5",
+                            padding: "9px 12px",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "13px",
+                            fontWeight: "700",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            minHeight: "38px"
+                          }}
+                        >
+                          <span>🗑️ Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           );
         })()}
@@ -3731,6 +3856,13 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
         </nav>
 
       <style jsx>{`
+        :global(.manage-students-stats-grid) {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+
         @media (max-width: 1024px) {
           :global(.institute-desktop-tabs) {
             display: none !important;
@@ -3755,7 +3887,86 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           :global(body) {
             padding-bottom: 68px !important;
           }
+          :global(.manage-students-stats-grid) {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 10px !important;
+          }
         }
+
+        @media (max-width: 768px) {
+          :global(.manage-students-table-wrap) {
+            display: none !important;
+          }
+          :global(.manage-students-mobile-cards) {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+        }
+
+        @media (min-width: 769px) {
+          :global(.manage-students-table-wrap) {
+            display: block !important;
+          }
+          :global(.manage-students-mobile-cards) {
+            display: none !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          :global(.institute-content-area) {
+            padding: 14px 10px !important;
+          }
+          :global(.manage-students-stats-grid) {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+            margin-bottom: 16px !important;
+          }
+          :global(.manage-students-stats-grid > div:last-child) {
+            grid-column: span 2 !important;
+          }
+          :global(.manage-students-stats-card) {
+            padding: 10px 12px !important;
+          }
+          :global(.manage-students-stats-card span) {
+            font-size: 10px !important;
+          }
+          :global(.manage-students-stats-card p) {
+            font-size: 18px !important;
+          }
+          :global(.manage-students-header-row) {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+            margin-bottom: 14px !important;
+          }
+          :global(.manage-students-header-row h3) {
+            font-size: 16px !important;
+          }
+          :global(.manage-students-actions-row) {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+            width: 100% !important;
+          }
+          :global(.manage-students-actions-row > *) {
+            width: 100% !important;
+            min-height: 40px !important;
+            font-size: 12.5px !important;
+            padding: 8px 10px !important;
+            box-sizing: border-box !important;
+            justify-content: center !important;
+            text-align: center !important;
+          }
+          :global(.manage-students-form-grid) {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+          :global(.manage-students-form-grid > div) {
+            grid-column: span 1 !important;
+          }
+        }
+
         @media (min-width: 1025px) {
           :global(.institute-mobile-menu-btn) {
             display: none !important;
