@@ -1646,97 +1646,10 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         </div>
       )}
 
-      {/* 2-Row Responsive Toolbar: Search Bar + Voice Controls Bellow Line */}
-      <form onSubmit={handleSearch} className="dict-top-toolbar" style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px", width: "100%" }}>
-        {/* Row 1: Search Input Box & Go Button */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
-          {/* 1. Search Input Box */}
-          <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
-            <input
-              type="text"
-              placeholder={
-                activeLang === 'ja'
-                  ? "Type Japanese, Nepali, English..."
-                  : "Type Korean, Nepali, English..."
-              }
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSearch();
-                }
-              }}
-              style={{
-                width: "100%",
-                padding: "7px 28px 7px 10px",
-                borderRadius: "7px",
-                border: "1.5px solid #cbd5e1",
-                fontSize: "13px",
-                outline: "none",
-                height: "36px",
-                boxSizing: "border-box",
-                backgroundColor: "#f8fafc",
-                transition: "border 0.2s, background 0.2s"
-              }}
-              onFocus={(e) => { e.target.style.borderColor = activeLang === 'ja' ? "#9333ea" : "#2563eb"; e.target.style.backgroundColor = "#fff"; }}
-              onBlur={(e) => { e.target.style.borderColor = "#cbd5e1"; e.target.style.backgroundColor = "#f8fafc"; }}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => { setSearchQuery(''); fetchDictionary('', activeLang); }}
-                style={{
-                  position: "absolute",
-                  right: "8px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  color: "#94a3b8",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  padding: 0
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          {/* 3. 🔍 GO BUTTON */}
-          <button
-            type="submit"
-            disabled={loading}
-            title="Click Go or press Enter to find result"
-            style={{
-              backgroundColor: "#2563eb",
-              color: "white",
-              border: "none",
-              padding: "0 13px",
-              height: "36px",
-              borderRadius: "7px",
-              fontSize: "13px",
-              fontWeight: "800",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              boxShadow: "0 1px 4px rgba(37,99,235,0.25)",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              transition: "background 0.15s, transform 0.1s"
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
-            onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <span>{loading ? "..." : "Go"}</span>
-          </button>
-        </div>
-
-        {/* Row 2: Voice Controls & AI Studio (Bellow Line) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", flexWrap: "wrap" }}>
+      {/* 2-Row Responsive Toolbar: Voice Controls on TOP & CENTER, Search Bar below */}
+      <form onSubmit={handleSearch} className="dict-top-toolbar" style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px", width: "100%" }}>
+        {/* Row 1 (TOP & CENTER): Voice Controls & AI Studio */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", width: "100%", flexWrap: "wrap", margin: "0 auto" }}>
           {/* 4. ⭐ MY VOICE BUTTON FOR THIS SEARCHED WORD (If uploaded voice matches searched word) */}
         {matchingSearchedCustomVoice && (
           <div style={{ display: "inline-flex", borderRadius: "7px", overflow: "hidden", border: "1.5px solid #86efac", background: "#f0fdf4", boxShadow: "0 1px 4px rgba(16, 185, 129, 0.15)", flexShrink: 0 }}>
@@ -2106,6 +2019,93 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             <span style={{ fontSize: "11px", fontWeight: "800", color: "#ffffff" }}>AI Studio</span>
             <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.85)", fontWeight: "600" }}>Voice Studio</span>
           </div>
+        </button>
+      </div>
+
+      {/* Row 2: Search Input Box & Go Button */}
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
+        {/* 1. Search Input Box */}
+        <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+          <input
+            type="text"
+            placeholder={
+              activeLang === 'ja'
+                ? "Type Japanese, Nepali, English..."
+                : "Type Korean, Nepali, English..."
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
+            style={{
+              width: "100%",
+              padding: "7px 28px 7px 10px",
+              borderRadius: "7px",
+              border: "1.5px solid #cbd5e1",
+              fontSize: "13px",
+              outline: "none",
+              height: "36px",
+              boxSizing: "border-box",
+              backgroundColor: "#f8fafc",
+              transition: "border 0.2s, background 0.2s"
+            }}
+            onFocus={(e) => { e.target.style.borderColor = activeLang === 'ja' ? "#9333ea" : "#2563eb"; e.target.style.backgroundColor = "#fff"; }}
+            onBlur={(e) => { e.target.style.borderColor = "#cbd5e1"; e.target.style.backgroundColor = "#f8fafc"; }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => { setSearchQuery(''); fetchDictionary('', activeLang); }}
+              style={{
+                position: "absolute",
+                right: "8px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                color: "#94a3b8",
+                cursor: "pointer",
+                fontSize: "12px",
+                padding: 0
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* 3. 🔍 GO BUTTON */}
+        <button
+          type="submit"
+          disabled={loading}
+          title="Click Go or press Enter to find result"
+          style={{
+            backgroundColor: "#2563eb",
+            color: "white",
+            border: "none",
+            padding: "0 14px",
+            height: "36px",
+            borderRadius: "7px",
+            fontSize: "13px",
+            fontWeight: "800",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            boxShadow: "0 1px 4px rgba(37,99,235,0.25)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+            transition: "background 0.15s, transform 0.1s"
+          }}
+          onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.97)"}
+          onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>{loading ? "..." : "Go"}</span>
         </button>
       </div>
     </form>
