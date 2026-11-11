@@ -61,7 +61,13 @@ try {
 
 // cPanel Passenger port & socket integration
 const rawPort = process.env.PORT;
-const dev = process.env.NODE_ENV === 'development';
+// Force production mode if pre-built .next exists (prevents cPanel 'development' mode 404 errors)
+const hasPrebuiltNext = fs.existsSync(path.join(__dirname, '.next', 'BUILD_ID'));
+const dev = process.env.FORCE_DEV === 'true' ? true : (!hasPrebuiltNext && process.env.NODE_ENV === 'development');
+
+if (!dev) {
+  process.env.NODE_ENV = 'production';
+}
 
 // Common MIME types for static asset direct delivery
 const MIME_TYPES = {

@@ -25,6 +25,12 @@ if [ -d "node_modules" ] && [ ! -L "node_modules" ]; then
   rm -rf node_modules
 fi
 
+# 5.1 Ensure production dependencies exist
+if [ ! -d "node_modules/next" ]; then
+  echo "📦 Ensuring production node_modules exist..."
+  npm install --omit=dev --no-audit --no-fund 2>/dev/null || true
+fi
+
 # 6. Ensure tmp directory exists and trigger passenger restart
 mkdir -p tmp
 touch tmp/restart.txt
