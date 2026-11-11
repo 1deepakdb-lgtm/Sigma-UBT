@@ -435,27 +435,20 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           display: flex;
           align-items: center;
           gap: 8px;
-          min-width: 110px;
+          min-width: 80px;
           flex-shrink: 0;
         }
-        .batchim-col-meaning-group {
+        .batchim-col-meaning {
           display: flex;
-          flex-direction: column;
+          align-items: center;
           flex: 1;
           min-width: 0;
-          gap: 2px;
         }
-        .batchim-meaning-line {
+        .batchim-col-pronounce {
           display: flex;
           align-items: center;
-          gap: 6px;
-          flex-wrap: wrap;
-        }
-        .batchim-explanation-line {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          flex-wrap: wrap;
+          min-width: 80px;
+          flex-shrink: 0;
         }
         .batchim-audio-circle-btn {
           width: 32px;
@@ -486,8 +479,8 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             flex-direction: row !important;
             align-items: center !important;
             justify-content: space-between !important;
-            gap: 10px !important;
-            padding: 9px 4px !important;
+            gap: 8px !important;
+            padding: 8px 4px !important;
             border-bottom: 1px solid #f1f5f9 !important;
             border-top: none !important;
             border-left: none !important;
@@ -497,22 +490,25 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             white-space: normal !important;
           }
           .batchim-col-word {
-            min-width: 75px !important;
+            min-width: 60px !important;
             flex-shrink: 0 !important;
-            gap: 6px !important;
+            gap: 4px !important;
           }
-          .batchim-col-meaning-group {
+          .batchim-col-meaning {
             flex: 1 !important;
             min-width: 0 !important;
-            gap: 2px !important;
+          }
+          .batchim-col-pronounce {
+            min-width: 65px !important;
+            flex-shrink: 0 !important;
           }
           .batchim-audio-circle-btn {
-            width: 30px !important;
-            height: 30px !important;
-            min-width: 30px !important;
-            font-size: 12px !important;
-            flex-shrink: 0 !important;
+            width: 28px !important;
+            height: 28px !important;
+            min-width: 28px !important;
+            font-size: 11px !important;
             margin-left: auto !important;
+            flex-shrink: 0 !important;
           }
         }
       ` }} />
@@ -693,33 +689,30 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                           backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc"
                         }}
                       >
-                        {/* LEFT PART: Written Word */}
+                        {/* Column 1: Written Word */}
                         <div className="batchim-col-word">
                           <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
                             {ex.written}
                           </span>
                         </div>
 
-                        {/* MIDDLE PART: Meaning on Row 1 + Explanation Below on Row 2 */}
-                        <div className="batchim-col-meaning-group">
-                          {/* Line 1: Nepali Meaning */}
-                          <div className="batchim-meaning-line">
-                            <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
-                              {ex.nepali}
-                            </span>
-                          </div>
+                        {/* Column 2: Meaning (Nepali) */}
+                        <div className="batchim-col-meaning">
+                          <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
+                            {ex.nepali}
+                          </span>
+                        </div>
 
-                          {/* Line 2 (Below Meaning): Explanation (Nepali Pronunciation) */}
-                          <div className="batchim-explanation-line">
-                            <span style={{
-                              fontWeight: "700",
-                              color: "#4338ca",
-                              fontSize: "13px",
-                              whiteSpace: "nowrap"
-                            }}>
-                              [{koreanToNepaliRomanized(ex.spoken)}]
-                            </span>
-                          </div>
+                        {/* Column 3: Pronounce (Nepali Pronunciation) */}
+                        <div className="batchim-col-pronounce">
+                          <span style={{
+                            fontWeight: "700",
+                            color: "#4338ca",
+                            fontSize: "13px",
+                            whiteSpace: "nowrap"
+                          }}>
+                            [{koreanToNepaliRomanized(ex.spoken)}]
+                          </span>
                         </div>
 
                         {/* RIGHT PART: Round Audio Button (Right side of meaning) */}
@@ -837,33 +830,30 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc"
                     }}
                   >
-                    {/* LEFT PART: Written Word */}
+                    {/* Column 1: Written Word */}
                     <div className="batchim-col-word">
                       <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
                         {ex.written}
                       </span>
                     </div>
 
-                    {/* MIDDLE PART: Meaning on Row 1 + Explanation Below on Row 2 */}
-                    <div className="batchim-col-meaning-group">
-                      {/* Line 1: Nepali Meaning */}
-                      <div className="batchim-meaning-line">
-                        <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
-                          {ex.nepali}
-                        </span>
-                      </div>
+                    {/* Column 2: Meaning (Nepali) */}
+                    <div className="batchim-col-meaning">
+                      <span style={{ color: "#15803d", fontWeight: "700", fontSize: "14.5px" }}>
+                        {ex.nepali}
+                      </span>
+                    </div>
 
-                      {/* Line 2 (Below Meaning): Explanation (Nepali Pronunciation) */}
-                      <div className="batchim-explanation-line">
-                        <span style={{
-                          fontWeight: "700",
-                          color: "#4338ca",
-                          fontSize: "13px",
-                          whiteSpace: "nowrap"
-                        }}>
-                          [{koreanToNepaliRomanized(ex.spoken)}]
-                        </span>
-                      </div>
+                    {/* Column 3: Pronounce (Nepali Pronunciation) */}
+                    <div className="batchim-col-pronounce">
+                      <span style={{
+                        fontWeight: "700",
+                        color: "#4338ca",
+                        fontSize: "13px",
+                        whiteSpace: "nowrap"
+                      }}>
+                        [{koreanToNepaliRomanized(ex.spoken)}]
+                      </span>
                     </div>
 
                     {/* RIGHT PART: Round Audio Button (Right side of meaning) */}
