@@ -191,13 +191,22 @@ export async function POST(req, { params }) {
       }
     });
 
-    // Strip answers completely to prevent exam cheating
-    const questionsWithoutAnswers = examSet.questions.map(q => {
+    // Prepare questions and answerSheet for seamless online & offline support
+    const answerSheet = {};
+    const questionsForStudent = examSet.questions.map(q => {
       let parsedOptions = [];
       try {
         parsedOptions = JSON.parse(q.optionsJson || '[]');
       } catch (e) {
         parsedOptions = [];
+      }
+
+      const qAns = q.answer !== undefined && q.answer !== null ? Number(q.answer) : null;
+      if (qAns !== null) {
+        answerSheet[q.id] = qAns;
+        if (q.qIndex !== undefined) {
+          answerSheet[q.qIndex] = qAns;
+        }
       }
 
       return {
@@ -209,9 +218,8 @@ export async function POST(req, { params }) {
         description: q.description,
         image: q.image,
         audio: q.audio,
-        options: parsedOptions
-        // SECURITY: answer key is strictly stripped during active exam.
-        // Grading and correct answer review is returned only by the server submit endpoint.
+        options: parsedOptions,
+        answer: qAns
       };
     });
 
@@ -233,7 +241,8 @@ export async function POST(req, { params }) {
       duration: durationSeconds,
       expiresAt: expiresAt.toISOString(),
       watermark,
-      questions: questionsWithoutAnswers
+      questions: questionsForStudent,
+      answerSheet
     });
   } catch (err) {
     console.error('Error starting exam:', err);

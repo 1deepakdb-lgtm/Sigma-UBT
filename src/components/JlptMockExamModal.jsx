@@ -53,6 +53,14 @@ export default function JlptMockExamModal({
 
   // Auto-rotate and lock screen to landscape mode for Mock Exam
   useEffect(() => {
+    if (examSet && examSet.id && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`offline_jlpt_mock_${examSet.id}`, JSON.stringify(examSet));
+      } catch (e) {
+        console.warn("Failed to cache JLPT mock set:", e);
+      }
+    }
+
     if (typeof window !== "undefined") {
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {

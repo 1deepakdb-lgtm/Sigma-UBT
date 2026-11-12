@@ -80,6 +80,7 @@ const StudentExam = () => {
   const [optionAudioLocked, setOptionAudioLocked] = useState({});
   const [isPlayingAnyAudio, setIsPlayingAnyAudio] = useState(false);
   const [backendSessionId, setBackendSessionId] = useState(null);
+  const [answerSheet, setAnswerSheet] = useState({});
 
   useEffect(() => {
     async function loadQuestions() {
@@ -91,8 +92,24 @@ const StudentExam = () => {
           const data = await res.json();
           if (data.questions && data.questions.length >= 40) {
             setQuestions(data.questions);
+            if (data.answerSheet) setAnswerSheet(data.answerSheet);
             setBackendSessionId(data.sessionId);
             if (data.examName) setExactExamName(data.examName);
+
+            // DOWNLOAD & CACHE QUESTIONS + ANSWERSHEET FOR COMPLETE OFFLINE TAKE & REVIEW
+            try {
+              localStorage.setItem(`offline_ubt_exam_${examId || "set-1-demo"}`, JSON.stringify({
+                questions: data.questions,
+                answerSheet: data.answerSheet || {},
+                sessionId: data.sessionId,
+                examName: data.examName,
+                duration: data.duration,
+                expiresAt: data.expiresAt,
+                cachedAt: Date.now()
+              }));
+            } catch (cErr) {
+              console.warn("Could not write offline exam cache:", cErr);
+            }
             return;
           }
         } else {
@@ -103,7 +120,22 @@ const StudentExam = () => {
           return;
         }
       } catch (err) {
-        console.warn("Backend start API network error:", err);
+        console.warn("Backend start API network error (attempting offline cache):", err);
+        try {
+          const cachedExamStr = localStorage.getItem(`offline_ubt_exam_${examId || "set-1-demo"}`);
+          if (cachedExamStr) {
+            const cachedExam = JSON.parse(cachedExamStr);
+            if (cachedExam.questions && cachedExam.questions.length >= 40) {
+              setQuestions(cachedExam.questions);
+              if (cachedExam.answerSheet) setAnswerSheet(cachedExam.answerSheet);
+              setBackendSessionId(cachedExam.sessionId || `offline_${Date.now()}`);
+              if (cachedExam.examName) setExactExamName(cachedExam.examName);
+              return;
+            }
+          }
+        } catch (offlineErr) {
+          console.warn("Offline restore error:", offlineErr);
+        }
       }
 
       const savedSets = JSON.parse(localStorage.getItem("examSets")) || [];
@@ -395,30 +427,40 @@ const StudentExam = () => {
       if (audioRef.current) audioRef.current.pause();
       Object.values(optionAudioRefs.current).forEach(aud => aud && aud.pause());
 
+      // Prepare enriched questions with cached answerSheet for 100% offline accuracy & review
+      const enrichedQuestions = questions.map((q, idx) => {
+        const correctAns = answerSheet[q.id] ?? answerSheet[q.qIndex] ?? answerSheet[idx + 1] ?? q.answer;
+        return {
+          ...q,
+          answer: correctAns !== undefined && correctAns !== null ? Number(correctAns) : undefined
+        };
+      });
+
       let score = 0;
       let attemptedCount = 0;
       const formattedSelectedAnswers = {};
 
-      questions.forEach((q, index) => {
+      enrichedQuestions.forEach((q, index) => {
         // Fallback to array index for older states if q.id is missing
         const userSelectedAnswer = selectedAnswers[q.id] !== undefined 
           ? selectedAnswers[q.id] 
           : selectedAnswers[index];
         
         if (userSelectedAnswer !== undefined && userSelectedAnswer !== null && userSelectedAnswer !== "") {
-          formattedSelectedAnswers[q.id] = userSelectedAnswer;
+          const numAns = Number(userSelectedAnswer);
+          formattedSelectedAnswers[q.id] = numAns;
           if (q.qIndex !== undefined) {
-            formattedSelectedAnswers[q.qIndex] = userSelectedAnswer;
+            formattedSelectedAnswers[q.qIndex] = numAns;
           }
           
           attemptedCount += 1; 
-          if (q.answer !== undefined && Number(userSelectedAnswer) === Number(q.answer)) {
+          if (q.answer !== undefined && numAns === Number(q.answer)) {
             score += 1; 
           }
         }
       });
 
-      const totalQ = questions.length > 0 ? questions.length : 40;
+      const totalQ = enrichedQuestions.length > 0 ? enrichedQuestions.length : 40;
       const examResultData = { 
         examName: exactExamName,
         score, 
@@ -426,22 +468,29 @@ const StudentExam = () => {
         attempted: attemptedCount,
         percentage: Math.round((score / totalQ) * 100),
         passed: Math.round((score / totalQ) * 100) >= 40,
-        questions,
-        selectedAnswers: formattedSelectedAnswers
+        questions: enrichedQuestions,
+        selectedAnswers: formattedSelectedAnswers,
+        isOfflineSubmitted: false
       };
 
-      // Submit to backend and retrieve verified server scores and breakdown
-      if (backendSessionId) {
+      // Attempt submit to backend with 3.5s timeout, falling back smoothly to offline mode
+      let onlineSubmitted = false;
+      if (backendSessionId && typeof navigator !== "undefined" && navigator.onLine) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3500);
           const submitRes = await fetch(`/api/student/exams/${examId || "set-1-demo"}/submit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               sessionId: backendSessionId,
               selectedAnswers: formattedSelectedAnswers
-            })
+            }),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
           if (submitRes.ok) {
+            onlineSubmitted = true;
             const submitData = await submitRes.json();
             if (submitData.result) {
               const resObj = submitData.result;
@@ -450,7 +499,7 @@ const StudentExam = () => {
               examResultData.passed = Boolean(resObj.passed);
               examResultData.percentage = Math.round(((examResultData.score) / (examResultData.total)) * 100);
               if (Array.isArray(resObj.breakdown)) {
-                examResultData.questions = questions.map((q, qIdx) => {
+                examResultData.questions = enrichedQuestions.map((q, qIdx) => {
                   const bd = resObj.breakdown.find(b => b.qIndex === q.qIndex || b.qIndex === (qIdx + 1));
                   return bd ? { ...q, answer: bd.correctAnswer } : q;
                 });
@@ -458,7 +507,26 @@ const StudentExam = () => {
             }
           }
         } catch (e) {
-          console.warn("Submit API network notice:", e);
+          console.warn("Submit API network notice (enqueuing for offline sync):", e);
+        }
+      }
+
+      // If offline or network submission timed out, tag and queue for sync
+      if (!onlineSubmitted) {
+        examResultData.isOfflineSubmitted = true;
+        try {
+          const syncQueue = JSON.parse(localStorage.getItem("offlineExamSyncQueue") || "[]");
+          syncQueue.push({
+            examId: examId || "set-1-demo",
+            sessionId: backendSessionId || `offline_${Date.now()}`,
+            selectedAnswers: formattedSelectedAnswers,
+            score,
+            total: totalQ,
+            submittedAt: new Date().toISOString()
+          });
+          localStorage.setItem("offlineExamSyncQueue", JSON.stringify(syncQueue));
+        } catch (queueErr) {
+          console.warn("Could not save to offline sync queue:", queueErr);
         }
       }
       

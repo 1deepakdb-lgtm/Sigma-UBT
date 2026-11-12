@@ -42,6 +42,51 @@ const StudentResult = () => {
     } catch (e) {}
     setMounted(true);
   }, []);
+
+  // Background Auto-Sync for Offline Submissions when internet is available
+  React.useEffect(() => {
+    const syncOfflineQueue = async () => {
+      if (typeof window === "undefined" || !navigator.onLine) return;
+      try {
+        const queueStr = localStorage.getItem("offlineExamSyncQueue");
+        if (!queueStr) return;
+        const queue = JSON.parse(queueStr);
+        if (!Array.isArray(queue) || queue.length === 0) return;
+
+        const remainingQueue = [];
+        for (const item of queue) {
+          try {
+            const res = await fetch(`/api/student/exams/${item.examId || "set-1-demo"}/submit`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sessionId: item.sessionId,
+                selectedAnswers: item.selectedAnswers
+              })
+            });
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              // Discard stale/invalid sessions, retain transient errors
+              if (res.status === 404 || (errData.error && errData.error.includes("not found"))) {
+                // done
+              } else {
+                remainingQueue.push(item);
+              }
+            }
+          } catch (err) {
+            remainingQueue.push(item);
+          }
+        }
+        localStorage.setItem("offlineExamSyncQueue", JSON.stringify(remainingQueue));
+      } catch (e) {
+        console.warn("Offline sync queue notice:", e);
+      }
+    };
+
+    syncOfflineQueue();
+    window.addEventListener("online", syncOfflineQueue);
+    return () => window.removeEventListener("online", syncOfflineQueue);
+  }, []);
   
   const { examName, questions, selectedAnswers } = resultData;
 
