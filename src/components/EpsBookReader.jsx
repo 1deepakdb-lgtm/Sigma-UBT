@@ -1258,22 +1258,6 @@ export default function EpsBookReader({
     { id: "grammar-book", name: "Grammar Book", icon: "", coverImage: "/images/books/grammar-book-cover.png", description: "Comprehensive Korean Grammar Rules, Patterns & Examples" }
   ];
 
-  const getFolderNewTabUrl = (lang, folderName) => {
-    let base = "/admin/listening";
-    if (typeof window !== "undefined") {
-      const p = window.location.pathname;
-      if (p.includes("/student")) {
-        base = "/student?tab=listening";
-      } else if (p.includes("/institute")) {
-        base = "/institute?tab=listening";
-      } else if (p.includes("/admin")) {
-        base = "/admin/listening";
-      }
-    }
-    const sep = base.includes("?") ? "&" : "?";
-    return `${base}${sep}lang=${encodeURIComponent(lang)}&folder=${encodeURIComponent(folderName)}`;
-  };
-
   const getFolderCover = (folder) => {
     if (folder?.coverImage) return folder.coverImage;
     const name = (folder?.name || "").toLowerCase();
@@ -4228,30 +4212,6 @@ export default function EpsBookReader({
                     {f.name}
                   </button>
                 ))}
-
-                <a
-                  href={getFolderNewTabUrl("korean", activeFolder)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open this book in a new browser tab"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "6px 12px",
-                    borderRadius: "8px",
-                    backgroundColor: "#f1f5f9",
-                    color: "#0f172a",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "12px",
-                    fontWeight: "700",
-                    textDecoration: "none",
-                    cursor: "pointer"
-                  }}
-                >
-                  <span>↗</span>
-                  <span>New Tab</span>
-                </a>
               </div>
             </div>
             {/* RENDER EPS BOOK SECTION IF ACTIVE */}
