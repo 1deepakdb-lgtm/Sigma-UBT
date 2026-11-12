@@ -1516,15 +1516,15 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               Notice
             </button>
             
-            <button onClick={() => handleTabChange("about")} style={getNavBtnStyle("about")}>
-              About Us
-            </button>
-            
             {userRole !== "staff" && (
               <button onClick={() => handleTabChange("students")} style={getNavBtnStyle("students")}>
                 Manage Students
               </button>
             )}
+
+            <button onClick={() => handleTabChange("about")} style={getNavBtnStyle("about")}>
+              About Us
+            </button>
           </div>
 
           <div style={navRightSlotStyle} className="institute-desktop-logout">
@@ -1654,14 +1654,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               <span>Notice Board</span>
             </button>
 
-            <button
-              onClick={() => { handleTabChange("about"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "about" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <span>ℹ️</span>
-              <span>About Us</span>
-            </button>
-
             {userRole !== "staff" && (
               <button
                 onClick={() => { handleTabChange("students"); setMobileMenuOpen(false); }}
@@ -1671,6 +1663,14 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 <span>Manage Students</span>
               </button>
             )}
+
+            <button
+              onClick={() => { handleTabChange("about"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "about" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>ℹ️</span>
+              <span>About Us</span>
+            </button>
 
             <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
               <button
