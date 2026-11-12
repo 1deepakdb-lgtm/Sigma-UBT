@@ -472,6 +472,28 @@ export default function LoginPage() {
     }
   };
 
+  // Derive clean capitalized Full Name from Gmail address (e.g. dwijbhatt8@gmail.com -> Dwij Bhatt)
+  const deriveNameFromEmail = (email) => {
+    if (!email || !email.includes("@")) return "";
+    const local = email.split("@")[0].trim();
+    if (!local) return "";
+    const parts = local.split(/[._\-+0-9]+/).filter(Boolean);
+    if (parts.length > 0) {
+      return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ");
+    }
+    return local.charAt(0).toUpperCase() + local.slice(1);
+  };
+
+  const handleGoogleEmailChange = (val) => {
+    setGoogleEmail(val);
+    if (val && val.includes("@")) {
+      const derived = deriveNameFromEmail(val);
+      if (derived) {
+        setGoogleName(derived);
+      }
+    }
+  };
+
   // Manual Google One-Click Auth flow (works across Web, iOS, Android, macOS, Windows)
   const handleManualGoogleAuth = async (e) => {
     e.preventDefault();
@@ -490,12 +512,17 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const derivedName = googleName.trim() || deriveNameFromEmail(googleEmail) || googleEmail.split("@")[0];
+      try {
+        localStorage.setItem("lastLoginEmail", googleEmail.trim().toLowerCase());
+      } catch (e) {}
+
       const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: googleEmail.trim(),
-          name: googleName.trim() || googleEmail.split("@")[0],
+          name: derivedName,
           languageTrack: regLanguage
         })
       });
@@ -516,6 +543,19 @@ export default function LoginPage() {
   };
 
   const handleGoogleButtonClick = () => {
+    try {
+      const savedEmail = localStorage.getItem("lastLoginEmail") || localStorage.getItem("userEmail") || "";
+      if (savedEmail && !googleEmail) {
+        setGoogleEmail(savedEmail);
+        const derived = deriveNameFromEmail(savedEmail);
+        if (derived && !googleName) setGoogleName(derived);
+      }
+      const savedLang = localStorage.getItem("instituteLanguage");
+      if (savedLang && ["korean", "japanese"].includes(savedLang) && !regLanguage) {
+        setRegLanguage(savedLang);
+      }
+    } catch (e) {}
+
     if (window.google?.accounts?.id && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
@@ -1510,28 +1550,55 @@ export default function LoginPage() {
               Sign in with your Google Account for instant student access to all free textbooks, audio readers, and dictionaries.
             </p>
 
-            <form onSubmit={handleManualGoogleAuth}>
+            <form onSubmit={handleManualGoogleAuth} autoComplete="on">
               <div style={{ marginBottom: "12px" }}>
                 <label style={{ display: "block", fontSize: "12.5px", fontWeight: "700", color: "#334155", marginBottom: "5px" }}>
                   Google Email Address:
                 </label>
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
                   placeholder="yourname@gmail.com"
                   value={googleEmail}
-                  onChange={(e) => setGoogleEmail(e.target.value)}
+                  onChange={(e) => handleGoogleEmailChange(e.target.value)}
                   style={inputStyle}
                   required
                   autoFocus
                 />
+                {/* Security info explaining passwordless authentication */}
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  backgroundColor: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: "6px",
+                  padding: "5px 8px",
+                  fontSize: "11px",
+                  color: "#166534",
+                  marginTop: "6px"
+                }}>
+                  <span>🔐</span>
+                  <span><strong>Password-Free:</strong> Authenticated directly with Google/Gmail. No password required.</span>
+                </div>
               </div>
 
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "12.5px", fontWeight: "700", color: "#334155", marginBottom: "5px" }}>
-                  Full Name (Optional):
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: "700", color: "#334155" }}>
+                    Full Name (Auto from Gmail):
+                  </label>
+                  {googleName && (
+                    <span style={{ fontSize: "10.5px", fontWeight: "700", color: "#16a34a" }}>
+                      ✓ Auto-detected from Gmail
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
+                  name="name"
+                  autoComplete="name"
                   placeholder="e.g. John Doe"
                   value={googleName}
                   onChange={(e) => setGoogleName(e.target.value)}

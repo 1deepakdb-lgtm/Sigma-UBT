@@ -821,6 +821,10 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           width: 32px;
           height: 32px;
           min-width: 32px;
+          min-height: 32px;
+          max-width: 32px;
+          max-height: 32px;
+          aspect-ratio: 1 / 1;
           border-radius: 50%;
           border: 1.5px solid #cbd5e1;
           background-color: #ffffff;
@@ -831,6 +835,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           justify-content: center;
           font-size: 13px;
           flex-shrink: 0;
+          align-self: center;
           padding: 0;
           box-shadow: 0 1px 3px rgba(0,0,0,0.06);
           transition: all 0.15s ease;
@@ -869,8 +874,13 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             width: 30px !important;
             height: 30px !important;
             min-width: 30px !important;
+            min-height: 30px !important;
+            max-width: 30px !important;
+            max-height: 30px !important;
+            aspect-ratio: 1 / 1 !important;
             font-size: 12px !important;
             flex-shrink: 0 !important;
+            align-self: center !important;
             margin-left: auto !important;
           }
         }

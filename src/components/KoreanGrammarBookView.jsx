@@ -735,6 +735,10 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                                         width: "28px",
                                         height: "28px",
                                         minWidth: "28px",
+                                        minHeight: "28px",
+                                        maxWidth: "28px",
+                                        maxHeight: "28px",
+                                        aspectRatio: "1 / 1",
                                         borderRadius: "50%",
                                         display: "inline-flex",
                                         alignItems: "center",
@@ -861,6 +865,10 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                                     width: "30px",
                                     height: "30px",
                                     minWidth: "30px",
+                                    minHeight: "30px",
+                                    maxWidth: "30px",
+                                    maxHeight: "30px",
+                                    aspectRatio: "1 / 1",
                                     borderRadius: "50%",
                                     backgroundColor: speakingText === d.ko ? "#2563eb" : "#ffffff",
                                     color: speakingText === d.ko ? "#ffffff" : "#2563eb",
@@ -1355,9 +1363,15 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                                 <button
                                   type="button"
                                   onClick={() => handleSpeak(ex.ko)}
+                                  className="audio-circle-btn"
                                   style={{
-                                    width: "32px",
-                                    height: "32px",
+                                    width: "30px",
+                                    height: "30px",
+                                    minWidth: "30px",
+                                    minHeight: "30px",
+                                    maxWidth: "30px",
+                                    maxHeight: "30px",
+                                    aspectRatio: "1 / 1",
                                     borderRadius: "50%",
                                     backgroundColor: speakingText === ex.ko ? "#2563eb" : "#ffffff",
                                     color: speakingText === ex.ko ? "#ffffff" : "#475569",
@@ -1367,6 +1381,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                                     display: "inline-flex",
                                     alignItems: "center",
                                     justifyContent: "center",
+                                    padding: 0,
                                     flexShrink: 0
                                   }}
                                   title="Play pronunciation"
@@ -1654,14 +1669,26 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                           <button
                             type="button"
                             onClick={() => handleSpeak(c.koA)}
+                            className="audio-circle-btn"
                             style={{
                               backgroundColor: speakingText === c.koA ? "#2563eb" : "#ffffff",
                               color: speakingText === c.koA ? "#ffffff" : "#475569",
                               border: "1px solid #cbd5e1",
-                              borderRadius: "6px",
-                              padding: "3px 6px",
+                              borderRadius: "50%",
+                              width: "28px",
+                              height: "28px",
+                              minWidth: "28px",
+                              minHeight: "28px",
+                              maxWidth: "28px",
+                              maxHeight: "28px",
+                              aspectRatio: "1 / 1",
+                              padding: 0,
                               cursor: "pointer",
-                              fontSize: "11px"
+                              fontSize: "11px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0
                             }}
                             title="Play pronunciation"
                           >
@@ -1684,14 +1711,26 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                           <button
                             type="button"
                             onClick={() => handleSpeak(c.koB)}
+                            className="audio-circle-btn"
                             style={{
                               backgroundColor: speakingText === c.koB ? "#dc2626" : "#ffffff",
                               color: speakingText === c.koB ? "#ffffff" : "#475569",
                               border: "1px solid #cbd5e1",
-                              borderRadius: "6px",
-                              padding: "3px 6px",
+                              borderRadius: "50%",
+                              width: "28px",
+                              height: "28px",
+                              minWidth: "28px",
+                              minHeight: "28px",
+                              maxWidth: "28px",
+                              maxHeight: "28px",
+                              aspectRatio: "1 / 1",
+                              padding: 0,
                               cursor: "pointer",
-                              fontSize: "11px"
+                              fontSize: "11px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0
                             }}
                             title="Play pronunciation"
                           >

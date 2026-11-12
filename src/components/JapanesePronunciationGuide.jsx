@@ -532,21 +532,29 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
                               <button
                                 type="button"
                                 onClick={() => playSample(ex.sentence, exAudioId)}
+                                className="jp-audio-circle-btn"
                                 style={{
                                   backgroundColor: isExPlaying ? "#7e22ce" : "#ffffff",
                                   color: isExPlaying ? "#ffffff" : "#7e22ce",
                                   border: "1.5px solid #d8b4fe",
-                                  borderRadius: "6px",
-                                  padding: "5px 9px",
+                                  borderRadius: "50%",
+                                  width: "30px",
+                                  height: "30px",
+                                  minWidth: "30px",
+                                  minHeight: "30px",
+                                  maxWidth: "30px",
+                                  maxHeight: "30px",
+                                  aspectRatio: "1 / 1",
                                   fontSize: "12px",
-                                  fontWeight: "700",
                                   cursor: "pointer",
-                                  display: "flex",
+                                  display: "inline-flex",
                                   alignItems: "center",
-                                  gap: "4px"
+                                  justifyContent: "center",
+                                  padding: 0,
+                                  flexShrink: 0
                                 }}
                               >
-                                <span>{isExPlaying ? "⏹" : "▶"}</span>
+                                <span>{isExPlaying ? "⏹" : "🔊"}</span>
                               </button>
                             </div>
                           );
@@ -594,21 +602,29 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
                       <button
                         type="button"
                         onClick={() => playSample(item.written, audioId)}
+                        className="jp-audio-circle-btn"
                         style={{
                           backgroundColor: isPlaying ? "#16a34a" : "#f0fdf4",
                           color: isPlaying ? "#ffffff" : "#166534",
                           border: "1.5px solid #86efac",
-                          borderRadius: "6px",
-                          padding: "5px 10px",
+                          borderRadius: "50%",
+                          width: "30px",
+                          height: "30px",
+                          minWidth: "30px",
+                          minHeight: "30px",
+                          maxWidth: "30px",
+                          maxHeight: "30px",
+                          aspectRatio: "1 / 1",
                           fontSize: "12px",
-                          fontWeight: "700",
                           cursor: "pointer",
-                          display: "flex",
+                          display: "inline-flex",
                           alignItems: "center",
-                          gap: "4px"
+                          justifyContent: "center",
+                          padding: 0,
+                          flexShrink: 0
                         }}
                       >
-                        <span>{isPlaying ? "⏹ Stop" : "▶ Pronounce"}</span>
+                        <span>{isPlaying ? "⏹" : "🔊"}</span>
                       </button>
                     </div>
 
@@ -688,18 +704,29 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
                           <button
                             type="button"
                             onClick={() => playSample(ex.written, audioId)}
+                            className="jp-audio-circle-btn"
                             style={{
                               backgroundColor: isPlaying ? "#2563eb" : "#ffffff",
                               color: isPlaying ? "#ffffff" : "#2563eb",
                               border: "1px solid #bfdbfe",
-                              borderRadius: "4px",
-                              padding: "4px 8px",
+                              borderRadius: "50%",
+                              width: "28px",
+                              height: "28px",
+                              minWidth: "28px",
+                              minHeight: "28px",
+                              maxWidth: "28px",
+                              maxHeight: "28px",
+                              aspectRatio: "1 / 1",
                               fontSize: "11px",
-                              fontWeight: "700",
-                              cursor: "pointer"
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              flexShrink: 0
                             }}
                           >
-                            {isPlaying ? "⏹" : "▶"}
+                            <span>{isPlaying ? "⏹" : "🔊"}</span>
                           </button>
                         </div>
                       );
@@ -776,18 +803,29 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
                           <button
                             type="button"
                             onClick={() => playSample(ex.written, audioId)}
+                            className="jp-audio-circle-btn"
                             style={{
                               backgroundColor: isPlaying ? "#ea580c" : "#ffffff",
                               color: isPlaying ? "#ffffff" : "#ea580c",
                               border: "1px solid #fdba74",
-                              borderRadius: "4px",
-                              padding: "4px 8px",
+                              borderRadius: "50%",
+                              width: "28px",
+                              height: "28px",
+                              minWidth: "28px",
+                              minHeight: "28px",
+                              maxWidth: "28px",
+                              maxHeight: "28px",
+                              aspectRatio: "1 / 1",
                               fontSize: "11px",
-                              fontWeight: "700",
-                              cursor: "pointer"
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              flexShrink: 0
                             }}
                           >
-                            {isPlaying ? "⏹" : "▶"}
+                            <span>{isPlaying ? "⏹" : "🔊"}</span>
                           </button>
                         </div>
                       );
@@ -853,18 +891,29 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
                           <button
                             type="button"
                             onClick={() => playSample(it.word, audioId)}
+                            className="jp-audio-circle-btn"
                             style={{
                               backgroundColor: isPlaying ? "#a21caf" : "#ffffff",
                               color: isPlaying ? "#ffffff" : "#a21caf",
                               border: "1px solid #f5d0fe",
-                              borderRadius: "4px",
-                              padding: "4px 7px",
+                              borderRadius: "50%",
+                              width: "28px",
+                              height: "28px",
+                              minWidth: "28px",
+                              minHeight: "28px",
+                              maxWidth: "28px",
+                              maxHeight: "28px",
+                              aspectRatio: "1 / 1",
                               fontSize: "11px",
-                              fontWeight: "700",
-                              cursor: "pointer"
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              flexShrink: 0
                             }}
                           >
-                            {isPlaying ? "⏹" : "▶"}
+                            <span>{isPlaying ? "⏹" : "🔊"}</span>
                           </button>
                         </div>
                       );
@@ -935,18 +984,29 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
                           <button
                             type="button"
                             onClick={() => playSample(ex.written, audioId)}
+                            className="jp-audio-circle-btn"
                             style={{
                               backgroundColor: isPlaying ? "#0284c7" : "#ffffff",
                               color: isPlaying ? "#ffffff" : "#0284c7",
                               border: "1px solid #cbd5e1",
-                              borderRadius: "4px",
-                              padding: "4px 8px",
+                              borderRadius: "50%",
+                              width: "28px",
+                              height: "28px",
+                              minWidth: "28px",
+                              minHeight: "28px",
+                              maxWidth: "28px",
+                              maxHeight: "28px",
+                              aspectRatio: "1 / 1",
                               fontSize: "11px",
-                              fontWeight: "700",
-                              cursor: "pointer"
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              flexShrink: 0
                             }}
                           >
-                            {isPlaying ? "⏹" : "▶"}
+                            <span>{isPlaying ? "⏹" : "🔊"}</span>
                           </button>
                         </div>
                       );
@@ -1004,18 +1064,29 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
                           <button
                             type="button"
                             onClick={() => playSample(ex.written, audioId)}
+                            className="jp-audio-circle-btn"
                             style={{
                               backgroundColor: isPlaying ? "#7e22ce" : "#ffffff",
                               color: isPlaying ? "#ffffff" : "#7e22ce",
                               border: "1px solid #d8b4fe",
-                              borderRadius: "4px",
-                              padding: "2px 6px",
-                              fontSize: "10px",
-                              fontWeight: "700",
-                              cursor: "pointer"
+                              borderRadius: "50%",
+                              width: "28px",
+                              height: "28px",
+                              minWidth: "28px",
+                              minHeight: "28px",
+                              maxWidth: "28px",
+                              maxHeight: "28px",
+                              aspectRatio: "1 / 1",
+                              fontSize: "11px",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              flexShrink: 0
                             }}
                           >
-                            {isPlaying ? "⏹" : "▶"}
+                            <span>{isPlaying ? "⏹" : "🔊"}</span>
                           </button>
                         </div>
                       );

@@ -1226,6 +1226,10 @@ export default function KoreanMeaningBookView({
                           width: "30px",
                           height: "30px",
                           minWidth: "30px",
+                          minHeight: "30px",
+                          maxWidth: "30px",
+                          maxHeight: "30px",
+                          aspectRatio: "1 / 1",
                           borderRadius: "50%",
                           border: `1.5px solid ${speakingWordId === `tb_${idx}` ? "#dc2626" : "#cbd5e1"}`,
                           backgroundColor: speakingWordId === `tb_${idx}` ? "#dc2626" : "#ffffff",
@@ -1303,6 +1307,10 @@ export default function KoreanMeaningBookView({
                           width: "30px",
                           height: "30px",
                           minWidth: "30px",
+                          minHeight: "30px",
+                          maxWidth: "30px",
+                          maxHeight: "30px",
+                          aspectRatio: "1 / 1",
                           borderRadius: "50%",
                           border: `1.5px solid ${speakingWordId === `exp_${idx}` ? "#2563eb" : "#cbd5e1"}`,
                           backgroundColor: speakingWordId === `exp_${idx}` ? "#2563eb" : "#ffffff",
@@ -1493,8 +1501,13 @@ export default function KoreanMeaningBookView({
                             handleSpeak(dlg.ko, `dlg_${dIdx}`, isMale ? 'male' : 'female');
                           }}
                           style={{
-                            width: "24px",
-                            height: "24px",
+                            width: "26px",
+                            height: "26px",
+                            minWidth: "26px",
+                            minHeight: "26px",
+                            maxWidth: "26px",
+                            maxHeight: "26px",
+                            aspectRatio: "1 / 1",
                             borderRadius: "50%",
                             border: "1px solid #e2e8f0",
                             backgroundColor: speakingWordId === `dlg_${dIdx}` ? "#16a34a" : "#ffffff",
@@ -1503,7 +1516,9 @@ export default function KoreanMeaningBookView({
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            fontSize: "11px"
+                            fontSize: "11px",
+                            padding: 0,
+                            flexShrink: 0
                           }}
                           title="सम्वाद सुन्नुहोस्"
                         >
@@ -1799,6 +1814,10 @@ export default function KoreanMeaningBookView({
                           width: "30px",
                           height: "30px",
                           minWidth: "30px",
+                          minHeight: "30px",
+                          maxWidth: "30px",
+                          maxHeight: "30px",
+                          aspectRatio: "1 / 1",
                           borderRadius: "50%",
                           border: `1.5px solid ${speakingWordId === w.id ? "#dc2626" : "#cbd5e1"}`,
                           backgroundColor: speakingWordId === w.id ? "#dc2626" : "#ffffff",
