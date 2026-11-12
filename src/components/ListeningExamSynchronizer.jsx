@@ -354,6 +354,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         const sanitized = questions.map(q => ({
           ...q,
           questionAudioFile: null,
+          singleAudioFile: null,
           options: q.options.map(opt => ({ ...opt, audioFile: null }))
         }));
         localStorage.setItem('eps_listening_studio_q21_q40', JSON.stringify(sanitized));
@@ -504,35 +505,50 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         }
         if (previewCancelRef.current) return;
 
-        // 3.0s Gap after Question Prompt
-        if (optionGapSec > 0) {
+        // 3.0s Gap after Question Prompt (only if options follow)
+        const hasSingleAudio = Boolean(q.singleAudioText?.trim() || q.singleAudioUrl);
+        if (optionGapSec > 0 && !hasSingleAudio) {
           setPreviewStage('gap-prompt');
           await waitSeconds(optionGapSec);
           if (previewCancelRef.current) return;
         }
       }
 
-      // 4. Options 1 to 4 with 3.0s gap
-      for (let i = 0; i < q.options.length; i++) {
-        if (previewCancelRef.current) break;
-        const opt = q.options[i];
-        setPreviewStage(`opt-${opt.id}`);
-
-        let optUrl = opt.audioUrl;
-        if (!optUrl && opt.text?.trim()) {
-          const prefix = `${opt.id}번. `;
-          const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+      // 4. Play Single Audio Text if set (skips options 1-4 entirely)
+      const hasSingleAudio = Boolean(q.singleAudioText?.trim() || q.singleAudioUrl);
+      if (hasSingleAudio) {
+        setPreviewStage('single-word');
+        let singleUrl = q.singleAudioUrl;
+        if (!singleUrl && q.singleAudioText?.trim()) {
           const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-          optUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+          singleUrl = `/api/tts?text=${encodeURIComponent(q.singleAudioText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
         }
-        if (optUrl) {
-          await playAndWait(optUrl);
+        if (singleUrl) {
+          await playAndWait(singleUrl);
         }
-        if (previewCancelRef.current) break;
+      } else {
+        // Standard flow: Options 1 to 4 with 3.0s gap
+        for (let i = 0; i < q.options.length; i++) {
+          if (previewCancelRef.current) break;
+          const opt = q.options[i];
+          setPreviewStage(`opt-${opt.id}`);
 
-        if (i < q.options.length - 1 && optionGapSec > 0) {
-          setPreviewStage(`gap-opt-${opt.id}`);
-          await waitSeconds(optionGapSec);
+          let optUrl = opt.audioUrl;
+          if (!optUrl && opt.text?.trim()) {
+            const prefix = `${opt.id}번. `;
+            const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+            const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+            optUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+          }
+          if (optUrl) {
+            await playAndWait(optUrl);
+          }
+          if (previewCancelRef.current) break;
+
+          if (i < q.options.length - 1 && optionGapSec > 0) {
+            setPreviewStage(`gap-opt-${opt.id}`);
+            await waitSeconds(optionGapSec);
+          }
         }
       }
     } catch (e) {
@@ -657,6 +673,57 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     }
   };
 
+  // Generate Audio for Single Audio Text (skips options 1-4 audio)
+  const handleGenerateSingleCustomAudio = async () => {
+    if (!currentQuestion.singleAudioText?.trim()) {
+      alert('Please enter Korean text to generate single audio.');
+      return;
+    }
+
+    setGeneratingKey('single-custom');
+    try {
+      const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+      const cleanText = currentQuestion.singleAudioText.trim();
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+
+      const res = await fetch(ttsUrl);
+      if (!res.ok) throw new Error('Speech synthesis failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      const audio = new Audio();
+      audio.src = url;
+      audio.onloadedmetadata = () => {
+        updateCurrentQuestion({
+          singleAudioUrl: url,
+          singleAudioFile: new File([blob], `Q${activeQNum}_single.mp3`, { type: 'audio/mp3' }),
+          singleAudioDuration: Math.round(audio.duration * 10) / 10
+        });
+        setGeneratingKey(null);
+      };
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate speech: ' + err.message);
+      setGeneratingKey(null);
+    }
+  };
+
+  // Upload custom file for Single Audio Text
+  const handleSingleCustomAudioUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    audio.src = url;
+    audio.onloadedmetadata = () => {
+      updateCurrentQuestion({
+        singleAudioUrl: url,
+        singleAudioFile: file,
+        singleAudioDuration: Math.round(audio.duration * 10) / 10
+      });
+    };
+  };
+
   // Update current question
   const updateCurrentQuestion = (updates) => {
     setQuestions(prev => prev.map(q => q.qNum === activeQNum ? { ...q, ...updates } : q));
@@ -774,31 +841,49 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           segmentsToStitch.push({ type: 'audio', buffer: qBuffer, label: `Q${q.qNum} Prompt` });
         }
 
-        // 4. Insert 3-second gap after question
-        segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Q${q.qNum} 3s Gap` });
+        const hasSingleAudio = Boolean(q.singleAudioText?.trim() || q.singleAudioUrl);
 
-        // 3. Process 4 Options with 3-second gap between each option
-        for (let optIdx = 0; optIdx < q.options.length; optIdx++) {
-          const opt = q.options[optIdx];
-          let optBuffer = null;
-
-          if (opt.audioUrl) {
-            optBuffer = await fetchAndDecodeAudio(decodeCtx, opt.audioUrl);
-          } else if (opt.text?.trim()) {
-            const prefix = `${opt.id}번. `;
-            const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+        if (hasSingleAudio) {
+          // If single audio text/url is set: stitch this text only and SKIP options 1-4!
+          let singleBuffer = null;
+          if (q.singleAudioUrl) {
+            singleBuffer = await fetchAndDecodeAudio(decodeCtx, q.singleAudioUrl);
+          } else if (q.singleAudioText?.trim()) {
             const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-            const ttsUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
-            optBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
+            const ttsUrl = `/api/tts?text=${encodeURIComponent(q.singleAudioText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+            singleBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
           }
 
-          if (optBuffer) {
-            segmentsToStitch.push({ type: 'audio', buffer: optBuffer, label: `Q${q.qNum} Opt ${opt.id}` });
+          if (singleBuffer) {
+            segmentsToStitch.push({ type: 'audio', buffer: singleBuffer, label: `Q${q.qNum} Single Word Audio` });
           }
+        } else {
+          // 4. Insert 3-second gap after question
+          segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Q${q.qNum} 3s Gap` });
 
-          // Insert 3s gap after option (except if last option, where question gap applies)
-          if (optIdx < q.options.length - 1) {
-            segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Option Gap 3s` });
+          // 3. Process 4 Options with 3-second gap between each option
+          for (let optIdx = 0; optIdx < q.options.length; optIdx++) {
+            const opt = q.options[optIdx];
+            let optBuffer = null;
+
+            if (opt.audioUrl) {
+              optBuffer = await fetchAndDecodeAudio(decodeCtx, opt.audioUrl);
+            } else if (opt.text?.trim()) {
+              const prefix = `${opt.id}번. `;
+              const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+              const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+              const ttsUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+              optBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
+            }
+
+            if (optBuffer) {
+              segmentsToStitch.push({ type: 'audio', buffer: optBuffer, label: `Q${q.qNum} Opt ${opt.id}` });
+            }
+
+            // Insert 3s gap after option (except if last option, where question gap applies)
+            if (optIdx < q.options.length - 1) {
+              segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Option Gap 3s` });
+            }
           }
         }
 
@@ -1642,27 +1727,206 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         {/* 4 OPTIONS */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
-              Options (1 to 4)
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
+                Options (1 to 4)
+              </label>
+              {currentQuestion.singleAudioText && (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: '800',
+                  color: '#15803d',
+                  backgroundColor: '#dcfce7',
+                  border: '1px solid #bbf7d0',
+                  padding: '2px 8px',
+                  borderRadius: '12px'
+                }}>
+                  ✓ Single Audio Word Active (Options 1-4 Bypassed)
+                </span>
+              )}
+            </div>
 
             <button
               type="button"
               onClick={handleGenerateAllOptions}
-              disabled={Boolean(generatingKey)}
+              disabled={Boolean(generatingKey) || Boolean(currentQuestion.singleAudioText)}
+              title={currentQuestion.singleAudioText ? 'Disabled because Single Audio Word is active above' : 'Generate TTS speech for all 4 options'}
               style={{
-                backgroundColor: '#4f46e5',
+                backgroundColor: currentQuestion.singleAudioText ? '#94a3b8' : '#4f46e5',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '5px',
                 padding: '5px 12px',
                 fontSize: '11.5px',
                 fontWeight: '700',
-                cursor: 'pointer'
+                cursor: currentQuestion.singleAudioText ? 'not-allowed' : 'pointer'
               }}
             >
               Generate All Options
             </button>
+          </div>
+
+          {/* SINGLE TARGET WORD / AUDIO (IF ENTERED, 1-4 OPTIONS AUDIO NOT NEEDED) */}
+          <div style={{
+            backgroundColor: currentQuestion.singleAudioText ? '#f0fdf4' : '#f8fafc',
+            border: currentQuestion.singleAudioText ? '1.5px solid #86efac' : '1.5px dashed #cbd5e1',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '14px',
+            transition: 'all 0.15s ease'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '14px' }}>🎯</span>
+                <label style={{ fontSize: '12.5px', fontWeight: '800', color: currentQuestion.singleAudioText ? '#15803d' : '#1e3a8a' }}>
+                  Single Audio Word / Text (यदि यहाँ शब्द लेख्नुभयो भने १-४ अप्सनको अडियो बनाउनु पर्दैन, यसको मात्र अडियो बन्छ)
+                </label>
+              </div>
+
+              {currentQuestion.singleAudioDuration > 0 && (
+                <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#16a34a', backgroundColor: '#ffffff', padding: '2px 8px', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
+                  Duration: {currentQuestion.singleAudioDuration}s
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={currentQuestion.singleAudioText || ''}
+                onChange={(e) => updateCurrentQuestion({ singleAudioText: e.target.value })}
+                placeholder="Enter word/sentence to speak only (e.g. 지갑) — Options 1-4 audio will NOT be needed"
+                style={{
+                  flex: 1,
+                  minWidth: '220px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: currentQuestion.singleAudioText ? '1.5px solid #16a34a' : '1px solid #cbd5e1',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  color: '#0f172a',
+                  backgroundColor: '#ffffff'
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={handleGenerateSingleCustomAudio}
+                disabled={generatingKey === 'single-custom' || !currentQuestion.singleAudioText?.trim()}
+                style={{
+                  backgroundColor: '#16a34a',
+                  backgroundImage: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: !currentQuestion.singleAudioText?.trim() ? 'not-allowed' : 'pointer',
+                  opacity: !currentQuestion.singleAudioText?.trim() ? 0.6 : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)'
+                }}
+              >
+                <span>🎙️</span>
+                <span>{generatingKey === 'single-custom' ? 'Generating...' : 'Generate This Audio Only'}</span>
+              </button>
+
+              <label style={{
+                backgroundColor: '#ffffff',
+                color: '#15803d',
+                border: '1px solid #86efac',
+                borderRadius: '6px',
+                padding: '7px 12px',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                whiteSpace: 'nowrap'
+              }}>
+                <span>📁 Upload</span>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={handleSingleCustomAudioUpload}
+                  style={{ display: 'none' }}
+                />
+              </label>
+
+              {currentQuestion.singleAudioUrl && (
+                <button
+                  type="button"
+                  onClick={() => handlePlayPreview(`single-${activeQNum}`, currentQuestion.singleAudioUrl)}
+                  style={{
+                    backgroundColor: playingItemKey === `single-${activeQNum}` ? '#dc2626' : '#16a34a',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '7px 14px',
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {playingItemKey === `single-${activeQNum}` ? 'Stop' : 'Play Preview'}
+                </button>
+              )}
+            </div>
+
+            {/* Quick helper buttons to auto-fill text from Option 1, 2, 3, or 4 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11.5px' }}>
+              <span style={{ color: '#64748b', fontWeight: '600' }}>Quick set from option:</span>
+              {currentQuestion.options.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    const cleanWord = (opt.text || '').replace(/^[0-9]+번[\.\,\s]*/, '').trim();
+                    if (cleanWord) {
+                      updateCurrentQuestion({ singleAudioText: cleanWord });
+                    }
+                  }}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '4px',
+                    padding: '2px 8px',
+                    fontSize: '11px',
+                    color: '#1e40af',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Opt {opt.id}: {opt.text || `Option ${opt.id}`}
+                </button>
+              ))}
+
+              {currentQuestion.singleAudioText && (
+                <button
+                  type="button"
+                  onClick={() => updateCurrentQuestion({ singleAudioText: '', singleAudioUrl: null, singleAudioFile: null, singleAudioDuration: 0 })}
+                  style={{
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '4px',
+                    padding: '2px 8px',
+                    fontSize: '11px',
+                    color: '#b91c1c',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    marginLeft: 'auto'
+                  }}
+                >
+                  ✕ Clear (Re-enable 1-4 Options Audio)
+                </button>
+              )}
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
