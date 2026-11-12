@@ -523,17 +523,19 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                   type="button"
                   onClick={() => setSelectedChapterNum(null)}
                   style={{
-                    backgroundColor: "#f1f5f9",
-                    color: "#334155",
-                    border: "1px solid #cbd5e1",
-                    padding: "8px 16px",
+                    backgroundColor: "#1e3a8a",
+                    backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "9px 18px",
                     borderRadius: "8px",
-                    fontWeight: "700",
+                    fontWeight: "800",
                     fontSize: "13px",
                     cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "6px"
+                    gap: "6px",
+                    boxShadow: "0 2px 8px rgba(30, 58, 138, 0.25)"
                   }}
                 >
                   ← Back to All Chapters (सबै अध्यायहरू)

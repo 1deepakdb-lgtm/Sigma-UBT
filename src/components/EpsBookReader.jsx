@@ -4137,82 +4137,39 @@ export default function EpsBookReader({
           {/* 2. ACTIVE BOOK CONTENT (Opened in dedicated page over this tab) */}
           {isKoreanFolderOpen && (
           <div id="korean-book-active-content">
-            {/* TOP NAVIGATION BAR FOR OPENED BOOK */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "12px",
-                padding: "10px 14px",
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                border: "1.5px solid #dbeafe",
-                boxShadow: "0 2px 10px rgba(37, 99, 235, 0.06)",
-                marginBottom: "20px",
-                flexWrap: "wrap"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={() => setIsKoreanFolderOpen(false)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
-                    backgroundColor: "#eff6ff",
-                    color: "#1d4ed8",
-                    border: "1.5px solid #bfdbfe",
-                    borderRadius: "10px",
-                    fontWeight: "800",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                    boxShadow: "0 2px 6px rgba(37, 99, 235, 0.08)"
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#dbeafe")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#eff6ff")}
-                >
-                  <span style={{ fontSize: "16px", fontWeight: "900" }}>←</span>
-                  <span>Back to Books</span>
-                </button>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontSize: "18px" }}>🇰🇷</span>
-                  <span style={{ fontSize: "16px", fontWeight: "900", color: "#0f172a" }}>
-                    {activeFolder}
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick switch between other books */}
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                {folders.map((f) => (
-                  <button
-                    key={f.id || f.name}
-                    type="button"
-                    onClick={() => {
-                      setActiveFolder(f.name);
-                      setIsKoreanFolderOpen(true);
-                    }}
-                    style={{
-                      padding: "6px 12px",
-                      borderRadius: "8px",
-                      border: activeFolder === f.name ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
-                      backgroundColor: activeFolder === f.name ? "#2563eb" : "#f8fafc",
-                      color: activeFolder === f.name ? "#ffffff" : "#475569",
-                      fontSize: "12px",
-                      fontWeight: "800",
-                      cursor: "pointer",
-                      transition: "all 0.15s ease"
-                    }}
-                  >
-                    {f.name}
-                  </button>
-                ))}
-              </div>
+            {/* TOP NAVIGATION: BACK BUTTON ONLY */}
+            <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => setIsKoreanFolderOpen(false)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 22px",
+                  backgroundColor: "#1e3a8a",
+                  backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontWeight: "800",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  boxShadow: "0 3px 10px rgba(30, 58, 138, 0.3)"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#172554";
+                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #172554 0%, #1e3a8a 100%)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#1e3a8a";
+                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)";
+                }}
+              >
+                <span style={{ fontSize: "16px", fontWeight: "900" }}>←</span>
+                <span>Back to Books</span>
+              </button>
             </div>
             {/* RENDER EPS BOOK SECTION IF ACTIVE */}
             {activeFolder === "EPS Book" && (
