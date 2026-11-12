@@ -1111,14 +1111,16 @@ const InstituteDashboard = () => {
 
   const handleDelete = async (id, phone) => {
     if (!window.confirm("Are you sure you want to PERMANENTLY delete this student from the database?")) return;
-    const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-    const currentInstStudents = allStudents[instituteName] || [];
-    const target = currentInstStudents.find(s => s.id === id || s.phone === phone);
-    const targetPhone = phone || target?.phone || '';
-    const updatedStudents = currentInstStudents.filter(stu => stu.id !== id && stu.phone !== targetPhone);
-    allStudents[instituteName] = updatedStudents;
-    localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
-    setStudents(updatedStudents);
+    const targetPhone = phone || '';
+
+    // Immediately remove from UI and local storage
+    setStudents(prev => prev.filter(stu => stu.id !== id && stu.phone !== targetPhone));
+    try {
+      const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
+      const currentInstStudents = allStudents[instituteName] || [];
+      allStudents[instituteName] = currentInstStudents.filter(stu => stu.id !== id && stu.phone !== targetPhone);
+      localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+    } catch (e) {}
 
     try {
       const res = await fetch(`/api/institute/students?id=${encodeURIComponent(id || '')}&phone=${encodeURIComponent(targetPhone)}`, {
@@ -1131,6 +1133,35 @@ const InstituteDashboard = () => {
       loadData(instId, instituteName);
     } catch (err) {
       console.warn("Delete student error:", err);
+      alert("Error connecting to server to delete student: " + err.message);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (students.length === 0) return;
+    const confirmPrompt = window.confirm(`Are you sure you want to delete ALL ${students.length} students from the database? This cannot be undone.`);
+    if (!confirmPrompt) return;
+
+    try {
+      const activeInstId = instId || (typeof window !== "undefined" ? localStorage.getItem("currentInstituteId") : null);
+      const res = await fetch(`/api/institute/students?deleteAll=true&instituteId=${encodeURIComponent(activeInstId || '')}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to delete all students");
+        return;
+      }
+      setStudents([]);
+      try {
+        const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
+        allStudents[instituteName] = [];
+        localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+      } catch (e) {}
+      alert(`Successfully deleted ${data.count || students.length} students.`);
+      loadData(activeInstId, instituteName);
+    } catch (err) {
+      alert("Error deleting all students: " + err.message);
     }
   };
 
@@ -2335,43 +2366,87 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       </div>
                     )}
 
-                    {instituteLanguage === "korean" && (
-                      <div style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "6px 14px",
-                        borderRadius: "10px",
-                        backgroundColor: "#eff6ff",
-                        border: "1px solid #bfdbfe",
-                        color: "#1d4ed8",
-                        fontWeight: "800",
-                        fontSize: "13px",
-                        marginBottom: "14px"
-                      }}>
-                        <span>🇰🇷</span>
-                        <span>Korean Student Management ({displayedStudents.length} Students)</span>
-                      </div>
-                    )}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+                      {instituteLanguage === "korean" && (
+                        <div style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "6px 14px",
+                          borderRadius: "10px",
+                          backgroundColor: "#eff6ff",
+                          border: "1px solid #bfdbfe",
+                          color: "#1d4ed8",
+                          fontWeight: "800",
+                          fontSize: "13px"
+                        }}>
+                          <span>🇰🇷</span>
+                          <span>Korean Student Management ({displayedStudents.length} Students)</span>
+                        </div>
+                      )}
 
-                    {instituteLanguage === "japanese" && (
-                      <div style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "6px 14px",
-                        borderRadius: "10px",
-                        backgroundColor: "#fdf4ff",
-                        border: "1px solid #f5d0fe",
-                        color: "#9333ea",
-                        fontWeight: "800",
-                        fontSize: "13px",
-                        marginBottom: "14px"
-                      }}>
-                        <span>🇯🇵</span>
-                        <span>Japanese Student Management ({displayedStudents.length} Students)</span>
-                      </div>
-                    )}
+                      {instituteLanguage === "japanese" && (
+                        <div style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "6px 14px",
+                          borderRadius: "10px",
+                          backgroundColor: "#fdf4ff",
+                          border: "1px solid #f5d0fe",
+                          color: "#9333ea",
+                          fontWeight: "800",
+                          fontSize: "13px"
+                        }}>
+                          <span>🇯🇵</span>
+                          <span>Japanese Student Management ({displayedStudents.length} Students)</span>
+                        </div>
+                      )}
+
+                      {instituteLanguage === "both" && (
+                        <div style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "6px 14px",
+                          borderRadius: "10px",
+                          backgroundColor: "#f8fafc",
+                          border: "1px solid #e2e8f0",
+                          color: "#334155",
+                          fontWeight: "800",
+                          fontSize: "13px"
+                        }}>
+                          <span>🌐</span>
+                          <span>Student Management ({displayedStudents.length} Students)</span>
+                        </div>
+                      )}
+
+                      {displayedStudents.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleDeleteAll}
+                          style={{
+                            backgroundColor: "#fff1f2",
+                            color: "#e11d48",
+                            border: "1px solid #fecdd3",
+                            padding: "6px 14px",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#ffe4e6"; }}
+                          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#fff1f2"; }}
+                        >
+                          <span>🗑️</span>
+                          <span>Delete All ({displayedStudents.length})</span>
+                        </button>
+                      )}
+                    </div>
 
                     {/* Desktop Table View (Scrollable container so it never breaks layout) */}
                     <div className="manage-students-table-wrap" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>

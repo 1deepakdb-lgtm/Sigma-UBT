@@ -307,41 +307,116 @@ export async function DELETE(req) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     const phone = searchParams.get('phone');
+    const deleteAll = searchParams.get('deleteAll');
+
+    // Resolve caller's institute ID for authorization
+    let callerInstId = null;
+    if (session.role !== 'admin') {
+      callerInstId = session.instituteId;
+      if (!callerInstId && session.id) {
+        const u = await prisma.user.findUnique({
+          where: { id: session.id },
+          select: { instituteId: true, username: true }
+        });
+        callerInstId = u?.instituteId;
+        if (!callerInstId && u?.username) {
+          const inst = await prisma.institute.findFirst({
+            where: {
+              OR: [
+                { id: u.username },
+                { username: u.username },
+                { name: u.username }
+              ]
+            }
+          });
+          if (inst) callerInstId = inst.id;
+        }
+      }
+      if (!callerInstId && session.id) {
+        const inst = await prisma.institute.findUnique({ where: { id: session.id } });
+        if (inst) callerInstId = inst.id;
+      }
+    }
+
+    // Support bulk deletion for institute
+    if (deleteAll === 'true' || id === 'all') {
+      const targetInstId = session.role === 'admin' ? (searchParams.get('instituteId') || callerInstId) : callerInstId;
+      if (!targetInstId) {
+        return NextResponse.json({ error: 'Institute ID required for bulk student deletion' }, { status: 400 });
+      }
+      const studentsToDelete = await prisma.user.findMany({
+        where: { role: 'student', instituteId: targetInstId },
+        select: { id: true }
+      });
+      const ids = studentsToDelete.map(s => s.id);
+      if (ids.length > 0) {
+        await prisma.$transaction(async (tx) => {
+          await tx.examResult.deleteMany({ where: { userId: { in: ids } } });
+          await tx.examSession.deleteMany({ where: { userId: { in: ids } } });
+          await tx.user.deleteMany({ where: { id: { in: ids } } });
+        });
+      }
+      return NextResponse.json({ success: true, count: ids.length, message: `Successfully deleted ${ids.length} students` });
+    }
 
     if (!id && !phone) return NextResponse.json({ error: 'ID or phone is required' }, { status: 400 });
 
-    const digitsOnly = (phone || '').replace(/[^0-9]/g, '');
+    const digitsOnly = (phone || id || '').replace(/[^0-9]/g, '');
     const last10 = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
 
-    const where = id ? { id } : {
-      OR: [
-        { phone },
-        { username: phone },
-        ...(last10 ? [{ phone: { contains: last10 } }, { username: { contains: last10 } }] : [])
-      ]
-    };
+    // Multi-factor lookup: match by exact id, phone, username, or last 10 digits
+    let targetStudent = null;
+    if (id && id.length > 15 && id.includes('-')) {
+      targetStudent = await prisma.user.findFirst({ where: { id, role: 'student' } });
+    }
+    if (!targetStudent && phone) {
+      targetStudent = await prisma.user.findFirst({
+        where: {
+          role: 'student',
+          OR: [
+            { phone: phone },
+            { username: phone },
+            ...(last10 && last10.length >= 6 ? [{ phone: { contains: last10 } }, { username: { contains: last10 } }] : [])
+          ]
+        }
+      });
+    }
+    if (!targetStudent && id) {
+      targetStudent = await prisma.user.findFirst({
+        where: {
+          role: 'student',
+          OR: [
+            { id: id },
+            { phone: id },
+            { username: id },
+            ...(last10 && last10.length >= 6 ? [{ phone: { contains: last10 } }, { username: { contains: last10 } }] : [])
+          ]
+        }
+      });
+    }
 
-    const targetStudent = await prisma.user.findFirst({ where });
     if (!targetStudent) {
-      return NextResponse.json({ success: true, message: 'Student not found in database or already deleted' });
+      return NextResponse.json({ success: true, message: 'Student record not found in database or already deleted' });
     }
 
     // Validate ownership: non-admin institutes can only delete students belonging to their institute
     if (session.role !== 'admin') {
-      let nonAdminInstId = session.instituteId;
-      if (!nonAdminInstId && session.id) {
-        const u = await prisma.user.findUnique({ where: { id: session.id }, select: { instituteId: true } });
-        nonAdminInstId = u?.instituteId;
-      }
-      if (!targetStudent.instituteId || targetStudent.instituteId !== nonAdminInstId || targetStudent.instituteId.startsWith('examjk-open')) {
+      const isOwner = callerInstId && targetStudent.instituteId === callerInstId;
+      if (!isOwner) {
         return NextResponse.json({ error: 'Forbidden. You do not own this student record.' }, { status: 403 });
       }
     }
 
-    await prisma.user.delete({ where: { id: targetStudent.id } });
-    return NextResponse.json({ success: true, message: 'Student removed' });
+    // Perform atomic cascaded deletion
+    await prisma.$transaction(async (tx) => {
+      await tx.examResult.deleteMany({ where: { userId: targetStudent.id } });
+      await tx.examSession.deleteMany({ where: { userId: targetStudent.id } });
+      await tx.user.delete({ where: { id: targetStudent.id } });
+    });
+
+    return NextResponse.json({ success: true, message: 'Student removed from database' });
   } catch (err) {
     console.error('Error deleting student:', err);
-    return NextResponse.json({ error: 'Failed to delete student' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to delete student: ' + (err.message || String(err)) }, { status: 500 });
   }
 }
