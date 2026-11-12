@@ -1831,29 +1831,6 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           </div>
         </div>
       )}
-
-      {/* EPS-TOPIK EXAM STRATEGY CARD (Border-left accent, flat out of box) */}
-      <div style={{ marginTop: "24px", backgroundColor: "#fefce8", borderLeft: "4px solid #eab308", borderTop: "none", borderRight: "none", borderBottom: "none", padding: "16px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-          <span style={{ fontSize: "20px" }}>💡</span>
-          <h4 style={{ margin: 0, fontSize: "15px", fontWeight: "800", color: "#854d0e" }}>
-            EPS-TOPIK 시험 핵심 전략 (EPS-TOPIK परीक्षा रणनीति)
-          </h4>
-        </div>
-        <p style={{ margin: 0, fontSize: "14px", color: "#713f12", lineHeight: "1.6" }}>
-          EPS-TOPIK 듣기(Listening) र 읽기(Reading) दुवै परीक्षामा यी ६ वटा आधारभूत क्षेत्रहरूबाट प्रायः धेरै प्रश्नहरू सोधिन्छन्:
-          <br />
-          <b>१. ㄱ, ㄷ, ㅂ, ㅈ उच्चारण:</b> शब्दको सुरुमा, बीचमा र फात्छिममा हुने आवाजको भिन्नता चिन्नुहोस्।
-          <br />
-          <b>२. एकल र संयुक्त फात्छिम:</b> फात्छिम पछि स्वर (ㅇ) आउँदा सर्ने नियम (연음) कण्ठ पार्नुहोस्।
-          <br />
-          <b>३. संयुक्त उच्चारण नियम:</b> 감사함니다 [감사함니다], 한국어 [한구거], 같이 [가치] जस्ता नियमहरूले लिसनिङमा ठूलो मद्दत पुर्‍याउँछन्।
-          <br />
-          <b>४. संख्या र एकाइ:</b> समयमा 시 (घण्टा) मा नेटिभ नम्बर र 분 (मिनेट) मा सिनो नम्बर प्रयोग हुन्छ (जस्तै: 3시 30분 = 세 시 삼십 분)।
-          <br />
-          <b>५. विभक्ति र काल:</b> 은/는 (विषय), 이/가 (कर्ता), 을/를 (कर्म), 에/에서 (स्थान/समय) तथा वर्तमान, भूत र भविष्यत् कालका रूपहरूलाई राम्रोसँग अभ्यास गर्नुहोस्।
-        </p>
-      </div>
     </div>
   );
 }
