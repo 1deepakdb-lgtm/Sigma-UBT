@@ -504,35 +504,37 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         }
         if (previewCancelRef.current) return;
 
-        // 3.0s Gap after Question Prompt
-        if (optionGapSec > 0) {
+        // 3.0s Gap after Question Prompt (only if options follow)
+        if (optionGapSec > 0 && !q.singleAudioMode) {
           setPreviewStage('gap-prompt');
           await waitSeconds(optionGapSec);
           if (previewCancelRef.current) return;
         }
       }
 
-      // 4. Options 1 to 4 with 3.0s gap
-      for (let i = 0; i < q.options.length; i++) {
-        if (previewCancelRef.current) break;
-        const opt = q.options[i];
-        setPreviewStage(`opt-${opt.id}`);
+      // 4. Options 1 to 4 with 3.0s gap (skipped if question is set to singleAudioMode)
+      if (!q.singleAudioMode) {
+        for (let i = 0; i < q.options.length; i++) {
+          if (previewCancelRef.current) break;
+          const opt = q.options[i];
+          setPreviewStage(`opt-${opt.id}`);
 
-        let optUrl = opt.audioUrl;
-        if (!optUrl && opt.text?.trim()) {
-          const prefix = `${opt.id}번. `;
-          const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
-          const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-          optUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
-        }
-        if (optUrl) {
-          await playAndWait(optUrl);
-        }
-        if (previewCancelRef.current) break;
+          let optUrl = opt.audioUrl;
+          if (!optUrl && opt.text?.trim()) {
+            const prefix = `${opt.id}번. `;
+            const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+            const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+            optUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+          }
+          if (optUrl) {
+            await playAndWait(optUrl);
+          }
+          if (previewCancelRef.current) break;
 
-        if (i < q.options.length - 1 && optionGapSec > 0) {
-          setPreviewStage(`gap-opt-${opt.id}`);
-          await waitSeconds(optionGapSec);
+          if (i < q.options.length - 1 && optionGapSec > 0) {
+            setPreviewStage(`gap-opt-${opt.id}`);
+            await waitSeconds(optionGapSec);
+          }
         }
       }
     } catch (e) {
@@ -657,6 +659,63 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     }
   };
 
+  // Generate Single Clean Audio Without Option Numbers (e.g. "가방, 공책, 지갑, 모자" without "1번, 2번") & Set for Question
+  const handleGenerateSingleAudioWithoutOptions = async (customText = null) => {
+    let textToSpeak = '';
+    if (customText && typeof customText === 'string') {
+      textToSpeak = customText.replace(/^[0-9]+번[\.\,\s]*/, '').trim();
+    } else {
+      const optionTexts = currentQuestion.options
+        .map(o => (o.text || '').replace(/^[0-9]+번[\.\,\s]*/, '').trim())
+        .filter(Boolean);
+
+      if (optionTexts.length === 0) {
+        if (currentQuestion.questionText?.trim()) {
+          textToSpeak = currentQuestion.questionText.trim();
+        } else {
+          alert('Please enter Korean text in the options or question text field first.');
+          return;
+        }
+      } else {
+        // Natural comma-separated pause between words: e.g. "가방, 공책, 지갑, 모자"
+        textToSpeak = optionTexts.join(', ');
+      }
+    }
+
+    if (!textToSpeak.trim()) {
+      alert('No Korean text found to generate speech.');
+      return;
+    }
+
+    setGeneratingKey('single-q');
+    try {
+      const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(textToSpeak.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+
+      const res = await fetch(ttsUrl);
+      if (!res.ok) throw new Error('Speech synthesis failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      const audio = new Audio();
+      audio.src = url;
+      audio.onloadedmetadata = () => {
+        updateCurrentQuestion({
+          questionAudioUrl: url,
+          questionAudioFile: new File([blob], `Q${activeQNum}_single_no_options.mp3`, { type: 'audio/mp3' }),
+          questionDuration: Math.round(audio.duration * 10) / 10,
+          questionText: currentQuestion.questionText || textToSpeak,
+          singleAudioMode: true
+        });
+        setGeneratingKey(null);
+      };
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate single audio: ' + err.message);
+      setGeneratingKey(null);
+    }
+  };
+
   // Update current question
   const updateCurrentQuestion = (updates) => {
     setQuestions(prev => prev.map(q => q.qNum === activeQNum ? { ...q, ...updates } : q));
@@ -774,31 +833,34 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           segmentsToStitch.push({ type: 'audio', buffer: qBuffer, label: `Q${q.qNum} Prompt` });
         }
 
-        // 4. Insert 3-second gap after question
-        segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Q${q.qNum} 3s Gap` });
+        // 4. Options 1 to 4 with 3-second gap (only if question is NOT in singleAudioMode)
+        if (!q.singleAudioMode) {
+          // Insert 3-second gap after question
+          segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Q${q.qNum} 3s Gap` });
 
-        // 3. Process 4 Options with 3-second gap between each option
-        for (let optIdx = 0; optIdx < q.options.length; optIdx++) {
-          const opt = q.options[optIdx];
-          let optBuffer = null;
+          // Process 4 Options with 3-second gap between each option
+          for (let optIdx = 0; optIdx < q.options.length; optIdx++) {
+            const opt = q.options[optIdx];
+            let optBuffer = null;
 
-          if (opt.audioUrl) {
-            optBuffer = await fetchAndDecodeAudio(decodeCtx, opt.audioUrl);
-          } else if (opt.text?.trim()) {
-            const prefix = `${opt.id}번. `;
-            const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
-            const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-            const ttsUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
-            optBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
-          }
+            if (opt.audioUrl) {
+              optBuffer = await fetchAndDecodeAudio(decodeCtx, opt.audioUrl);
+            } else if (opt.text?.trim()) {
+              const prefix = `${opt.id}번. `;
+              const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+              const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+              const ttsUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+              optBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
+            }
 
-          if (optBuffer) {
-            segmentsToStitch.push({ type: 'audio', buffer: optBuffer, label: `Q${q.qNum} Opt ${opt.id}` });
-          }
+            if (optBuffer) {
+              segmentsToStitch.push({ type: 'audio', buffer: optBuffer, label: `Q${q.qNum} Opt ${opt.id}` });
+            }
 
-          // Insert 3s gap after option (except if last option, where question gap applies)
-          if (optIdx < q.options.length - 1) {
-            segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Option Gap 3s` });
+            // Insert 3s gap after option (except if last option, where question gap applies)
+            if (optIdx < q.options.length - 1) {
+              segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Option Gap 3s` });
+            }
           }
         }
 
@@ -1636,33 +1698,98 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 {playingItemKey === `q-${activeQNum}` ? 'Stop' : 'Play Preview'}
               </button>
             )}
+
+            <label style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '11.5px',
+              fontWeight: '700',
+              color: currentQuestion.singleAudioMode ? '#0284c7' : '#64748b',
+              cursor: 'pointer',
+              backgroundColor: currentQuestion.singleAudioMode ? '#f0f9ff' : '#ffffff',
+              border: currentQuestion.singleAudioMode ? '1px solid #bae6fd' : '1px solid #cbd5e1',
+              padding: '6px 11px',
+              borderRadius: '6px',
+              marginLeft: 'auto'
+            }}>
+              <input
+                type="checkbox"
+                checked={Boolean(currentQuestion.singleAudioMode)}
+                onChange={(e) => updateCurrentQuestion({ singleAudioMode: e.target.checked })}
+              />
+              <span>Single Audio Mode (Question Only, Skip Options in Exam Track)</span>
+            </label>
           </div>
         </div>
 
         {/* 4 OPTIONS */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
-              Options (1 to 4)
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
+                Options (1 to 4)
+              </label>
+              {currentQuestion.singleAudioMode && (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: '800',
+                  color: '#0284c7',
+                  backgroundColor: '#e0f2fe',
+                  border: '1px solid #bae6fd',
+                  padding: '2px 8px',
+                  borderRadius: '12px'
+                }}>
+                  ✓ Single Audio Set For Question
+                </span>
+              )}
+            </div>
 
-            <button
-              type="button"
-              onClick={handleGenerateAllOptions}
-              disabled={Boolean(generatingKey)}
-              style={{
-                backgroundColor: '#4f46e5',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '5px',
-                padding: '5px 12px',
-                fontSize: '11.5px',
-                fontWeight: '700',
-                cursor: 'pointer'
-              }}
-            >
-              Generate All Options
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {/* Button: Generate Single Audio Without Options Prefix -> Set Directly for Question */}
+              <button
+                type="button"
+                onClick={() => handleGenerateSingleAudioWithoutOptions()}
+                disabled={Boolean(generatingKey)}
+                title="Generate single clean audio from all options without option numbers (1번, 2번...) and set directly as Question Audio"
+                style={{
+                  backgroundColor: '#0284c7',
+                  backgroundImage: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '6px 14px',
+                  fontSize: '11.5px',
+                  fontWeight: '700',
+                  cursor: Boolean(generatingKey) ? 'wait' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)'
+                }}
+              >
+                <span>🎙️</span>
+                <span>{generatingKey === 'single-q' ? 'Generating Single Audio...' : 'Generate Single Audio (No Option #) → Set for Question'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGenerateAllOptions}
+                disabled={Boolean(generatingKey)}
+                style={{
+                  backgroundColor: '#4f46e5',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '6px 12px',
+                  fontSize: '11.5px',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                Generate All Options
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
@@ -1695,7 +1822,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                   style={{ width: '100%', padding: '6px 9px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12.5px', boxSizing: 'border-box', marginBottom: '8px' }}
                 />
 
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     onClick={() => handleGenerateOptionAudio(opt.id, opt.text)}
@@ -1706,13 +1833,35 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '4px',
-                      padding: '5px 8px',
+                      padding: '5px 7px',
                       fontSize: '11px',
                       fontWeight: '700',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     {generatingKey === `opt-${opt.id}` ? '...' : 'Generate'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateSingleAudioWithoutOptions(opt.text)}
+                    disabled={generatingKey === `single-opt-${opt.id}`}
+                    title={`Generate audio for "${opt.text}" without "${opt.id}번" and set directly as Question Audio`}
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#0284c7',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '5px 7px',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {generatingKey === `single-opt-${opt.id}` ? '...' : 'Set as Q'}
                   </button>
 
                   <label style={{
@@ -1722,10 +1871,11 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                     color: '#475569',
                     border: '1px solid #cbd5e1',
                     borderRadius: '4px',
-                    padding: '5px 8px',
+                    padding: '5px 7px',
                     fontSize: '11px',
                     fontWeight: '700',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
                   }}>
                     <span>Upload</span>
                     <input
