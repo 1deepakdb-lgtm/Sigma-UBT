@@ -431,29 +431,6 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
 
           <button
             type="button"
-            onClick={() => setActiveTab("basic_advanced")}
-            style={{
-              padding: "10px 18px",
-              borderRadius: "10px",
-              border: activeTab === "basic_advanced" ? "2px solid #059669" : "1.5px solid #e2e8f0",
-              backgroundColor: activeTab === "basic_advanced" ? "#059669" : "#ffffff",
-              color: activeTab === "basic_advanced" ? "#ffffff" : "#334155",
-              fontWeight: "800",
-              fontSize: "13px",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              boxShadow: activeTab === "basic_advanced" ? "0 4px 12px rgba(5,150,105,0.25)" : "none",
-              transition: "all 0.15s ease"
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            <span>Basic to Advanced</span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => setActiveTab("comparisons")}
             style={{
               padding: "10px 18px",
