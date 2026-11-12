@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import BatchimRulesGuide from '@/components/BatchimRulesGuide';
 import JapanesePronunciationGuide from '@/components/JapanesePronunciationGuide';
 import AiStudio from '@/components/AiStudio';
 import { VOICE_PROFILES } from '@/lib/elevenlabsConfig';
@@ -2438,11 +2437,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         )}
       </div>
 
-      {/* PRONUNCIATION RULES GUIDE (DYNAMICALLY SWITCHES BETWEEN KOREAN BATCHIM AND JAPANESE KANA & PHONOLOGY) */}
-      {activeLang === 'ja' ? (
+      {/* JAPANESE PRONUNCIATION RULES GUIDE (WHEN JAPANESE IS ACTIVE) */}
+      {activeLang === 'ja' && (
         <JapanesePronunciationGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
-      ) : (
-        <BatchimRulesGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
       )}
 
       {/* 🎙️ USER OWN VOICE RECORDING, AUDIO UPLOAD & VOICE LIBRARY STUDIO MODAL */}
