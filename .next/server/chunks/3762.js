@@ -1004,7 +1004,7 @@ Your payment screenshot and transaction details were submitted. Once Admin verif
           flex-direction: column;
           overflow-y: auto;
         }
-        @media (max-width: 860px) {
+        @media (max-width: 860px) and (orientation: portrait) {
           .jlpt-exam-overlay {
             padding: 0 !important;
           }
@@ -1028,6 +1028,32 @@ Your payment screenshot and transaction details were submitted. Once Admin verif
             border-top: 1.5px solid #e2e8f0 !important;
             max-height: 220px !important;
             padding: 12px 14px !important;
+          }
+        }
+        @media (orientation: landscape) and (max-height: 600px) {
+          .jlpt-exam-overlay {
+            padding: 0 !important;
+          }
+          .jlpt-exam-modal {
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            border-radius: 0 !important;
+            border: none !important;
+          }
+          .jlpt-exam-body {
+            flex-direction: row !important;
+          }
+          .jlpt-exam-question-area {
+            padding: 10px 16px !important;
+            flex: 1 !important;
+          }
+          .jlpt-exam-sidebar {
+            width: 220px !important;
+            border-left: 1.5px solid #e2e8f0 !important;
+            border-top: none !important;
+            max-height: none !important;
+            padding: 10px 12px !important;
           }
         }
         @media (max-width: 540px) {

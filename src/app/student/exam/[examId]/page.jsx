@@ -43,12 +43,12 @@ const StudentExam = () => {
     } catch (e) {}
   }, []);
 
-  // Auto-rotate and lock screen to portrait mode on UBT Exam start
+  // Auto-rotate and lock screen to landscape mode on UBT Exam start
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
-          screen.orientation.lock("portrait").catch(() => {
+          screen.orientation.lock("landscape").catch(() => {
             if (screen.orientation && typeof screen.orientation.unlock === "function") {
               screen.orientation.unlock();
             }
@@ -301,11 +301,11 @@ const StudentExam = () => {
   }, [isStarted]);
 
   const handleGetStarted = () => {
-    // Lock screen to portrait mode on student device
+    // Lock screen to landscape mode on student device
     if (typeof window !== "undefined") {
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
-          screen.orientation.lock("portrait").catch(() => {});
+          screen.orientation.lock("landscape").catch(() => {});
         }
       } catch (e) {}
     }
@@ -313,7 +313,7 @@ const StudentExam = () => {
       document.documentElement.requestFullscreen().then(() => {
         try {
           if (screen.orientation && typeof screen.orientation.lock === "function") {
-            screen.orientation.lock("portrait").catch(() => {});
+            screen.orientation.lock("landscape").catch(() => {});
           }
         } catch (e) {}
       }).catch(err => console.log(err));
@@ -498,7 +498,7 @@ const StudentExam = () => {
           backgroundColor: "#f8fafc", 
           fontFamily: "Arial, sans-serif", 
           boxSizing: "border-box", 
-          padding: "16px 14px",
+          padding: "12px 14px",
           overflowY: "auto",
           ...protectedStyle 
         }} 
@@ -507,104 +507,161 @@ const StudentExam = () => {
         <style dangerouslySetInnerHTML={{ __html: `
           .ubt-pre-exam-dialog {
             background-color: #ffffff;
-            padding: 28px 24px;
+            padding: 20px 24px;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            text-align: center;
             border: 1px solid #e2e8f0;
-            max-width: 480px;
+            max-width: 760px;
             width: 100%;
             max-height: 94vh;
+            max-height: 94dvh;
             overflow-y: auto;
             box-sizing: border-box;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            gap: 22px;
             margin: auto;
+            align-items: center;
           }
-          @media (max-width: 480px) {
+          .ubt-pre-exam-col-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            justify-content: space-between;
+          }
+          .ubt-pre-exam-col-details {
+            flex: 1.25;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+          }
+          .ubt-pre-exam-icon {
+            width: 54px;
+            height: 54px;
+            background-color: #0284c7;
+            border-radius: 50%;
+            margin: 0 auto 8px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(2,132,199,0.3);
+            flex-shrink: 0;
+          }
+          .ubt-pre-exam-title {
+            color: #0f172a;
+            font-size: 22px;
+            margin: 0 0 4px 0;
+            font-weight: 800;
+          }
+          .ubt-pre-exam-subtitle {
+            color: #64748b;
+            margin: 0 0 14px 0;
+            font-size: 13px;
+          }
+          .ubt-pre-exam-table {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+          }
+          .ubt-pre-exam-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+          }
+          .ubt-pre-exam-btn {
+            flex: 1;
+            padding: 11px;
+            font-size: 13.5px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+          .ubt-pre-exam-buttons {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 14px;
+          }
+
+          /* Stack vertically on portrait mode phones or narrow views */
+          @media (orientation: portrait), (max-width: 580px) {
             .ubt-pre-exam-dialog {
-              padding: 20px 16px !important;
-              max-height: 96vh !important;
+              flex-direction: column !important;
+              max-width: 440px !important;
+              padding: 18px 16px !important;
+              gap: 14px !important;
             }
-            .ubt-pre-exam-icon {
-              width: 58px !important;
-              height: 58px !important;
-              margin-bottom: 12px !important;
-            }
-            .ubt-pre-exam-title {
-              font-size: 22px !important;
-              margin-bottom: 4px !important;
-            }
-            .ubt-pre-exam-subtitle {
-              font-size: 13px !important;
-              margin-bottom: 16px !important;
-            }
-            .ubt-pre-exam-table {
-              padding: 12px 14px !important;
-              margin-bottom: 20px !important;
-            }
-            .ubt-pre-exam-row {
-              padding-bottom: 8px !important;
-              margin-bottom: 8px !important;
-            }
-            .ubt-pre-exam-btn {
-              padding: 12px !important;
-              font-size: 14px !important;
+            .ubt-pre-exam-buttons {
+              margin-top: 8px !important;
             }
           }
         ` }} />
         <div className="ubt-pre-exam-dialog">
-          <div className="ubt-pre-exam-icon" style={{ width: "70px", height: "70px", backgroundColor: "#0284c7", borderRadius: "50%", margin: "0 auto 16px auto", display: "flex", alignItems: "center", justifyContent: "center", color: "white", boxShadow: "0 4px 10px rgba(2,132,199,0.3)", flexShrink: 0 }}>
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-          </div>
-          <h2 className="ubt-pre-exam-title" style={{ color: "#0f172a", fontSize: "26px", marginTop: 0, marginBottom: "6px", fontWeight: "800" }}>EPS-TOPIK UBT Exam</h2>
-          <p className="ubt-pre-exam-subtitle" style={{ color: "#64748b", margin: "0 0 20px 0", fontSize: "14px" }}>Please verify your details before starting</p>
-          
-          <div className="ubt-pre-exam-table" style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "16px 18px", marginBottom: "24px", border: "1px solid #e2e8f0", textAlign: "left" }}>
-            <div className="ubt-pre-exam-row" style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px dashed #cbd5e1", paddingBottom: "10px", marginBottom: "10px" }}>
-              <span style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>Exam ID</span>
-              <span style={{ color: "#0f172a", fontWeight: "bold", fontSize: "14px" }}>287378RM</span>
+          <div className="ubt-pre-exam-col-info">
+            <div className="ubt-pre-exam-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
             </div>
-            <div className="ubt-pre-exam-row" style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px dashed #cbd5e1", paddingBottom: "10px", marginBottom: "10px" }}>
-              <span style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>Student Name</span>
-              <span suppressHydrationWarning style={{ color: "#0f172a", fontWeight: "bold", fontSize: "14px" }}>{studentName}</span>
-            </div>
-            <div className="ubt-pre-exam-row" style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px dashed #cbd5e1", paddingBottom: "10px", marginBottom: "10px" }}>
-              <span style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>Exam Title</span>
-              <span style={{ color: "#0f172a", fontWeight: "bold", fontSize: "14px" }}>{exactExamName}</span>
-            </div>
-            <div className="ubt-pre-exam-row" style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px dashed #cbd5e1", paddingBottom: "10px", marginBottom: "10px" }}>
-              <span style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>Total Questions</span>
-              <span style={{ color: "#2563eb", fontWeight: "bold", fontSize: "14px" }}>40 (20 Reading + 20 Listening)</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#64748b", fontWeight: "600", fontSize: "13px" }}>Time Limit</span>
-              <span style={{ color: "#d97706", fontWeight: "bold", fontSize: "14px" }}>50 Minutes</span>
+            <h2 className="ubt-pre-exam-title">EPS-TOPIK UBT Exam</h2>
+            <p className="ubt-pre-exam-subtitle">Please verify your details before starting</p>
+            
+            <div className="ubt-pre-exam-buttons">
+              <button 
+                type="button"
+                className="ubt-pre-exam-btn"
+                onClick={() => router.push("/student")}
+                style={{ backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1" }}
+              >
+                CANCEL
+              </button>
+              <button 
+                type="button"
+                className="ubt-pre-exam-btn"
+                onClick={handleGetStarted}
+                style={{ backgroundColor: "#0284c7", color: "white", border: "none", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
+              >
+                GET STARTED
+              </button>
             </div>
           </div>
-          
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginTop: "auto", flexShrink: 0 }}>
-            <button 
-              type="button"
-              className="ubt-pre-exam-btn"
-              onClick={() => router.push("/student")}
-              style={{ flex: 1, backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "13px", fontSize: "14px", fontWeight: "bold", borderRadius: "8px", cursor: "pointer", transition: "all 0.2s" }}
-              onMouseOver={(e) => { e.target.style.backgroundColor = '#e2e8f0'; }}
-              onMouseOut={(e) => { e.target.style.backgroundColor = '#f1f5f9'; }}
-            >
-              CANCEL
-            </button>
-            <button 
-              type="button"
-              className="ubt-pre-exam-btn"
-              onClick={handleGetStarted}
-              style={{ flex: 1, backgroundColor: "#0284c7", color: "white", border: "none", padding: "13px", fontSize: "14px", fontWeight: "bold", borderRadius: "8px", cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
-            >
-              GET STARTED
-            </button>
+
+          <div className="ubt-pre-exam-col-details">
+            <div className="ubt-pre-exam-table">
+              <div className="ubt-pre-exam-row">
+                <span style={{ color: "#64748b", fontWeight: "600" }}>Exam ID</span>
+                <span style={{ color: "#0f172a", fontWeight: "bold" }}>287378RM</span>
+              </div>
+              <div className="ubt-pre-exam-row">
+                <span style={{ color: "#64748b", fontWeight: "600" }}>Student Name</span>
+                <span suppressHydrationWarning style={{ color: "#0f172a", fontWeight: "bold" }}>{studentName}</span>
+              </div>
+              <div className="ubt-pre-exam-row">
+                <span style={{ color: "#64748b", fontWeight: "600" }}>Exam Title</span>
+                <span style={{ color: "#0f172a", fontWeight: "bold" }}>{exactExamName}</span>
+              </div>
+              <div className="ubt-pre-exam-row">
+                <span style={{ color: "#64748b", fontWeight: "600" }}>Total Questions</span>
+                <span style={{ color: "#2563eb", fontWeight: "bold" }}>40 (20 Reading + 20 Listening)</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                <span style={{ color: "#64748b", fontWeight: "600" }}>Time Limit</span>
+                <span style={{ color: "#d97706", fontWeight: "bold" }}>50 Minutes</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -728,8 +785,81 @@ const StudentExam = () => {
           gap: 25px;
         }
 
-        /* PORTRAIT & MOBILE ADAPTIVE STYLING FOR EXAM */
-        @media (max-width: 768px), (orientation: portrait) and (max-width: 900px) {
+        /* LANDSCAPE OPTIMIZED EXAM STYLING FOR ALL MOBILE & TABLET DEVICES */
+        @media (orientation: landscape) and (max-height: 600px) {
+          .ubt-exam-wrapper {
+            padding: 4px 8px !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            overflow: hidden !important;
+          }
+          .ubt-exam-main {
+            height: 100% !important;
+            max-width: 100% !important;
+            justify-content: center !important;
+          }
+          .ubt-exam-card {
+            height: calc(100dvh - 8px) !important;
+            min-height: 0 !important;
+            max-height: calc(100dvh - 8px) !important;
+          }
+          .ubt-exam-columns {
+            flex-direction: row !important;
+            flex: 1 !important;
+            overflow: hidden !important;
+            min-height: 0 !important;
+          }
+          .ubt-exam-left {
+            flex: 1.25 !important;
+            padding: 8px 14px !important;
+            border-right: 1.5px solid #e2e8f0 !important;
+            border-bottom: none !important;
+            max-height: none !important;
+            overflow-y: auto !important;
+            height: 100% !important;
+          }
+          .ubt-exam-left p {
+            font-size: 15.5px !important;
+            margin-bottom: 6px !important;
+            line-height: 1.35 !important;
+          }
+          .ubt-exam-right {
+            flex: 1 !important;
+            padding: 8px 14px !important;
+            overflow-y: auto !important;
+            height: 100% !important;
+            max-height: none !important;
+            gap: 6px !important;
+          }
+          .ubt-exam-header-bar {
+            padding: 6px 14px !important;
+            font-size: 12.5px !important;
+            border-radius: 6px 6px 0 0 !important;
+          }
+          .ubt-exam-nav-bar {
+            padding: 6px 14px !important;
+            border-radius: 0 0 6px 6px !important;
+          }
+          .ubt-exam-nav-bar button {
+            padding: 6px 14px !important;
+            font-size: 12px !important;
+          }
+          .ubt-overview-box {
+            padding: 10px 14px !important;
+            max-height: calc(100dvh - 45px) !important;
+          }
+          .ubt-overview-flex {
+            flex-direction: row !important;
+            gap: 12px !important;
+          }
+          .ubt-overview-flex button {
+            padding: 6px 0 !important;
+            font-size: 11.5px !important;
+          }
+        }
+
+        /* FALLBACK FOR PORTRAIT MOBILE BEFORE ROTATION */
+        @media (orientation: portrait) and (max-width: 768px) {
           .ubt-exam-wrapper {
             padding: 6px !important;
             height: 100dvh !important;

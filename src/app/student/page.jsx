@@ -1492,11 +1492,11 @@ const StudentDashboard = () => {
     });
   }, [examSets, unlockedSets, activeStudentPackages, examPackages, isPureKoreanStudent, isPureJapaneseStudent]);
 
-  const enforcePortraitMode = () => {
+  const enforceLandscapeMode = () => {
     if (typeof window !== "undefined") {
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
-          screen.orientation.lock("portrait").catch(() => {
+          screen.orientation.lock("landscape").catch(() => {
             if (screen.orientation && typeof screen.orientation.unlock === "function") {
               screen.orientation.unlock();
             }
@@ -1509,7 +1509,7 @@ const StudentDashboard = () => {
   };
 
   const handleStartExam = (set) => {
-    enforcePortraitMode();
+    enforceLandscapeMode();
     const isJlptSet = Boolean(
       set.track === "japanese" ||
       set.level ||
@@ -1517,7 +1517,7 @@ const StudentDashboard = () => {
     );
 
     const start = () => {
-      enforcePortraitMode();
+      enforceLandscapeMode();
       if (isJlptSet) {
         const fullSet = getMockExamSetById(set.id);
         setActiveJlptExamSet(fullSet);
@@ -2905,7 +2905,7 @@ const StudentDashboard = () => {
                           );
 
                           const startExam = () => {
-                            enforcePortraitMode();
+                            enforceLandscapeMode();
                             if (isJlptSet) {
                               const fullSet = getMockExamSetById(set.id);
                               setActiveJlptExamSet(fullSet);

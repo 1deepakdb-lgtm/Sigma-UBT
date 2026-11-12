@@ -51,12 +51,12 @@ export default function JlptMockExamModal({
     "JFT-Basic": { primary: "#0891b2", bg: "#ecfeff", border: "#a5f3fc", text: "#0e7490" }
   }[examSet.level] || { primary: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" };
 
-  // Auto-rotate and lock screen to portrait mode for Mock Exam
+  // Auto-rotate and lock screen to landscape mode for Mock Exam
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
-          screen.orientation.lock("portrait").catch(() => {
+          screen.orientation.lock("landscape").catch(() => {
             if (screen.orientation && typeof screen.orientation.unlock === "function") {
               screen.orientation.unlock();
             }
@@ -348,7 +348,7 @@ export default function JlptMockExamModal({
           flex-direction: column;
           overflow-y: auto;
         }
-        @media (max-width: 860px) {
+        @media (max-width: 860px) and (orientation: portrait) {
           .jlpt-exam-overlay {
             padding: 0 !important;
           }
@@ -372,6 +372,32 @@ export default function JlptMockExamModal({
             border-top: 1.5px solid #e2e8f0 !important;
             max-height: 220px !important;
             padding: 12px 14px !important;
+          }
+        }
+        @media (orientation: landscape) and (max-height: 600px) {
+          .jlpt-exam-overlay {
+            padding: 0 !important;
+          }
+          .jlpt-exam-modal {
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            border-radius: 0 !important;
+            border: none !important;
+          }
+          .jlpt-exam-body {
+            flex-direction: row !important;
+          }
+          .jlpt-exam-question-area {
+            padding: 10px 16px !important;
+            flex: 1 !important;
+          }
+          .jlpt-exam-sidebar {
+            width: 220px !important;
+            border-left: 1.5px solid #e2e8f0 !important;
+            border-top: none !important;
+            max-height: none !important;
+            padding: 10px 12px !important;
           }
         }
         @media (max-width: 540px) {
