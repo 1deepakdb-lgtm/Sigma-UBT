@@ -304,6 +304,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
   // Current Active Question (21 to 40)
   const [activeQNum, setActiveQNum] = useState(21);
   const currentQuestion = questions.find(q => q.qNum === activeQNum) || questions[0];
+  const isSingleWord = Boolean(currentQuestion.isSingleWord || currentQuestion.singleAudioText?.trim() || currentQuestion.singleAudioUrl);
 
   // Timing Gaps & Sequence Configuration (As requested: Bell -> 1s gap -> Question number -> 1s gap -> Prompt -> 3s gap -> Options -> 7s gap)
   const [includeBell, setIncludeBell] = useState(true); // Bell chime before each question
@@ -506,7 +507,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         if (previewCancelRef.current) return;
 
         // 3.0s Gap after Question Prompt (only if options follow)
-        const hasSingleAudio = Boolean(q.singleAudioText?.trim() || q.singleAudioUrl);
+        const hasSingleAudio = Boolean(q.isSingleWord || q.singleAudioText?.trim() || q.singleAudioUrl);
         if (optionGapSec > 0 && !hasSingleAudio) {
           setPreviewStage('gap-prompt');
           await waitSeconds(optionGapSec);
@@ -515,7 +516,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       }
 
       // 4. Play Single Audio Text if set (skips options 1-4 entirely)
-      const hasSingleAudio = Boolean(q.singleAudioText?.trim() || q.singleAudioUrl);
+      const hasSingleAudio = Boolean(q.isSingleWord || q.singleAudioText?.trim() || q.singleAudioUrl);
       if (hasSingleAudio) {
         setPreviewStage('single-word');
         let singleUrl = q.singleAudioUrl;
@@ -841,7 +842,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           segmentsToStitch.push({ type: 'audio', buffer: qBuffer, label: `Q${q.qNum} Prompt` });
         }
 
-        const hasSingleAudio = Boolean(q.singleAudioText?.trim() || q.singleAudioUrl);
+        const hasSingleAudio = Boolean(q.isSingleWord || q.singleAudioText?.trim() || q.singleAudioUrl);
 
         if (hasSingleAudio) {
           // If single audio text/url is set: stitch this text only and SKIP options 1-4!
@@ -1522,109 +1523,122 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               {qNumGapSec}s Gap
             </span>
 
-            <span style={{ color: '#94a3b8' }}>→</span>
+            {(currentQuestion.questionAudioUrl || currentQuestion.questionText?.trim() || !isSingleWord) && (
+              <>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 7px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'prompt' ? '#bae6fd' : '#ffffff',
+                  color: '#0369a1',
+                  border: '1px solid #cbd5e1'
+                }}>
+                  Question Audio
+                </span>
+              </>
+            )}
 
-            <span style={{
-              padding: '3px 7px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'prompt' ? '#bae6fd' : '#ffffff',
-              color: '#0369a1',
-              border: '1px solid #cbd5e1'
-            }}>
-              Question Audio
-            </span>
+            {isSingleWord ? (
+              <>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 8px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'single-word' ? '#bbf7d0' : '#f0fdf4',
+                  color: '#15803d',
+                  border: '1.5px solid #86efac',
+                  fontWeight: '700'
+                }}>
+                  🎯 Single Word Audio
+                </span>
+              </>
+            ) : (
+              <>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 6px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'gap-prompt' ? '#bbf7d0' : '#f1f5f9',
+                  color: '#334155'
+                }}>
+                  {optionGapSec}s Gap
+                </span>
 
-            <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 6px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'opt-1' ? '#c7d2fe' : '#ffffff',
+                  color: '#3730a3',
+                  border: '1px solid #cbd5e1'
+                }}>
+                  Option 1
+                </span>
 
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'gap-prompt' ? '#bbf7d0' : '#f1f5f9',
-              color: '#334155'
-            }}>
-              {optionGapSec}s Gap
-            </span>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 6px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'gap-opt-1' ? '#bbf7d0' : '#f1f5f9',
+                  color: '#334155'
+                }}>
+                  {optionGapSec}s
+                </span>
 
-            <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 6px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'opt-2' ? '#c7d2fe' : '#ffffff',
+                  color: '#3730a3',
+                  border: '1px solid #cbd5e1'
+                }}>
+                  Option 2
+                </span>
 
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'opt-1' ? '#c7d2fe' : '#ffffff',
-              color: '#3730a3',
-              border: '1px solid #cbd5e1'
-            }}>
-              Option 1
-            </span>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 6px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'gap-opt-2' ? '#bbf7d0' : '#f1f5f9',
+                  color: '#334155'
+                }}>
+                  {optionGapSec}s
+                </span>
 
-            <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 6px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'opt-3' ? '#c7d2fe' : '#ffffff',
+                  color: '#3730a3',
+                  border: '1px solid #cbd5e1'
+                }}>
+                  Option 3
+                </span>
 
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'gap-opt-1' ? '#bbf7d0' : '#f1f5f9',
-              color: '#334155'
-            }}>
-              {optionGapSec}s
-            </span>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 6px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'gap-opt-3' ? '#bbf7d0' : '#f1f5f9',
+                  color: '#334155'
+                }}>
+                  {optionGapSec}s
+                </span>
 
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'opt-2' ? '#c7d2fe' : '#ffffff',
-              color: '#3730a3',
-              border: '1px solid #cbd5e1'
-            }}>
-              Option 2
-            </span>
-
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'gap-opt-2' ? '#bbf7d0' : '#f1f5f9',
-              color: '#334155'
-            }}>
-              {optionGapSec}s
-            </span>
-
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'opt-3' ? '#c7d2fe' : '#ffffff',
-              color: '#3730a3',
-              border: '1px solid #cbd5e1'
-            }}>
-              Option 3
-            </span>
-
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'gap-opt-3' ? '#bbf7d0' : '#f1f5f9',
-              color: '#334155'
-            }}>
-              {optionGapSec}s
-            </span>
-
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'opt-4' ? '#c7d2fe' : '#ffffff',
-              color: '#3730a3',
-              border: '1px solid #cbd5e1'
-            }}>
-              Option 4
-            </span>
+                <span style={{ color: '#94a3b8' }}>→</span>
+                <span style={{
+                  padding: '3px 6px',
+                  borderRadius: '5px',
+                  backgroundColor: previewStage === 'opt-4' ? '#c7d2fe' : '#ffffff',
+                  color: '#3730a3',
+                  border: '1px solid #cbd5e1'
+                }}>
+                  Option 4
+                </span>
+              </>
+            )}
 
             <span style={{ color: '#94a3b8' }}>→</span>
 
@@ -1724,84 +1738,86 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           </div>
         </div>
 
-        {/* 4 OPTIONS */}
+        {/* OPTIONS OR SINGLE WORD AUDIO */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
-                Options (1 to 4)
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <label style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '800',
+                color: isSingleWord ? '#15803d' : '#1e3a8a',
+                userSelect: 'none'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={isSingleWord}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    updateCurrentQuestion({
+                      isSingleWord: checked,
+                      ...(checked ? {} : { singleAudioText: '', singleAudioUrl: null, singleAudioFile: null, singleAudioDuration: 0 })
+                    });
+                  }}
+                  style={{ width: '16px', height: '16px', accentColor: '#16a34a', cursor: 'pointer' }}
+                />
+                <span>🎯 Single Word Audio</span>
               </label>
-              {currentQuestion.singleAudioText && (
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: '800',
-                  color: '#15803d',
-                  backgroundColor: '#dcfce7',
-                  border: '1px solid #bbf7d0',
-                  padding: '2px 8px',
-                  borderRadius: '12px'
-                }}>
-                  ✓ Single Audio Word Active (Options 1-4 Bypassed)
+
+              {!isSingleWord && (
+                <span style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
+                  Options (1 to 4)
                 </span>
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={handleGenerateAllOptions}
-              disabled={Boolean(generatingKey) || Boolean(currentQuestion.singleAudioText)}
-              title={currentQuestion.singleAudioText ? 'Disabled because Single Audio Word is active above' : 'Generate TTS speech for all 4 options'}
-              style={{
-                backgroundColor: currentQuestion.singleAudioText ? '#94a3b8' : '#4f46e5',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '5px',
-                padding: '5px 12px',
-                fontSize: '11.5px',
-                fontWeight: '700',
-                cursor: currentQuestion.singleAudioText ? 'not-allowed' : 'pointer'
-              }}
-            >
-              Generate All Options
-            </button>
+            {!isSingleWord && (
+              <button
+                type="button"
+                onClick={handleGenerateAllOptions}
+                disabled={Boolean(generatingKey)}
+                style={{
+                  backgroundColor: '#4f46e5',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '5px 12px',
+                  fontSize: '11.5px',
+                  fontWeight: '700',
+                  cursor: 'pointer'
+                }}
+              >
+                Generate All Options
+              </button>
+            )}
           </div>
 
-          {/* SINGLE TARGET WORD / AUDIO (IF ENTERED, 1-4 OPTIONS AUDIO NOT NEEDED) */}
-          <div style={{
-            backgroundColor: currentQuestion.singleAudioText ? '#f0fdf4' : '#f8fafc',
-            border: currentQuestion.singleAudioText ? '1.5px solid #86efac' : '1.5px dashed #cbd5e1',
-            borderRadius: '8px',
-            padding: '12px',
-            marginBottom: '14px',
-            transition: 'all 0.15s ease'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '14px' }}>🎯</span>
-                <label style={{ fontSize: '12.5px', fontWeight: '800', color: currentQuestion.singleAudioText ? '#15803d' : '#1e3a8a' }}>
-                  Single Audio Word / Text (यदि यहाँ शब्द लेख्नुभयो भने १-४ अप्सनको अडियो बनाउनु पर्दैन, यसको मात्र अडियो बन्छ)
-                </label>
-              </div>
-
-              {currentQuestion.singleAudioDuration > 0 && (
-                <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#16a34a', backgroundColor: '#ffffff', padding: '2px 8px', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
-                  Duration: {currentQuestion.singleAudioDuration}s
-                </span>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+          {isSingleWord ? (
+            /* CLEAN SINGLE WORD AUDIO (ALL 4 OPTIONS ARE HIDDEN) */
+            <div style={{
+              backgroundColor: '#f0fdf4',
+              border: '1.5px solid #86efac',
+              borderRadius: '8px',
+              padding: '12px 14px',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+              flexWrap: 'wrap'
+            }}>
               <input
                 type="text"
                 value={currentQuestion.singleAudioText || ''}
-                onChange={(e) => updateCurrentQuestion({ singleAudioText: e.target.value })}
-                placeholder="Enter word/sentence to speak only (e.g. 지갑) — Options 1-4 audio will NOT be needed"
+                onChange={(e) => updateCurrentQuestion({ singleAudioText: e.target.value, isSingleWord: true })}
+                placeholder="e.g. 지갑"
                 style={{
                   flex: 1,
-                  minWidth: '220px',
+                  minWidth: '200px',
                   padding: '8px 12px',
                   borderRadius: '6px',
-                  border: currentQuestion.singleAudioText ? '1.5px solid #16a34a' : '1px solid #cbd5e1',
+                  border: '1.5px solid #16a34a',
                   fontSize: '13px',
                   fontWeight: '700',
                   color: '#0f172a',
@@ -1815,7 +1831,6 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 disabled={generatingKey === 'single-custom' || !currentQuestion.singleAudioText?.trim()}
                 style={{
                   backgroundColor: '#16a34a',
-                  backgroundImage: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '6px',
@@ -1827,47 +1842,23 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  whiteSpace: 'nowrap',
-                  boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)'
+                  whiteSpace: 'nowrap'
                 }}
               >
                 <span>🎙️</span>
-                <span>{generatingKey === 'single-custom' ? 'Generating...' : 'Generate This Audio Only'}</span>
+                <span>{generatingKey === 'single-custom' ? 'Generating...' : 'Generate Audio'}</span>
               </button>
-
-              <label style={{
-                backgroundColor: '#ffffff',
-                color: '#15803d',
-                border: '1px solid #86efac',
-                borderRadius: '6px',
-                padding: '7px 12px',
-                fontSize: '12px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                whiteSpace: 'nowrap'
-              }}>
-                <span>📁 Upload</span>
-                <input
-                  type="file"
-                  accept="audio/*"
-                  onChange={handleSingleCustomAudioUpload}
-                  style={{ display: 'none' }}
-                />
-              </label>
 
               {currentQuestion.singleAudioUrl && (
                 <button
                   type="button"
                   onClick={() => handlePlayPreview(`single-${activeQNum}`, currentQuestion.singleAudioUrl)}
                   style={{
-                    backgroundColor: playingItemKey === `single-${activeQNum}` ? '#dc2626' : '#16a34a',
+                    backgroundColor: playingItemKey === `single-${activeQNum}` ? '#dc2626' : '#15803d',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '6px',
-                    padding: '7px 14px',
+                    padding: '8px 14px',
                     fontWeight: '700',
                     fontSize: '12px',
                     cursor: 'pointer',
@@ -1878,56 +1869,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 </button>
               )}
             </div>
-
-            {/* Quick helper buttons to auto-fill text from Option 1, 2, 3, or 4 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11.5px' }}>
-              <span style={{ color: '#64748b', fontWeight: '600' }}>Quick set from option:</span>
-              {currentQuestion.options.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => {
-                    const cleanWord = (opt.text || '').replace(/^[0-9]+번[\.\,\s]*/, '').trim();
-                    if (cleanWord) {
-                      updateCurrentQuestion({ singleAudioText: cleanWord });
-                    }
-                  }}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '4px',
-                    padding: '2px 8px',
-                    fontSize: '11px',
-                    color: '#1e40af',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Opt {opt.id}: {opt.text || `Option ${opt.id}`}
-                </button>
-              ))}
-
-              {currentQuestion.singleAudioText && (
-                <button
-                  type="button"
-                  onClick={() => updateCurrentQuestion({ singleAudioText: '', singleAudioUrl: null, singleAudioFile: null, singleAudioDuration: 0 })}
-                  style={{
-                    backgroundColor: '#fee2e2',
-                    border: '1px solid #fca5a5',
-                    borderRadius: '4px',
-                    padding: '2px 8px',
-                    fontSize: '11px',
-                    color: '#b91c1c',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    marginLeft: 'auto'
-                  }}
-                >
-                  ✕ Clear (Re-enable 1-4 Options Audio)
-                </button>
-              )}
-            </div>
-          </div>
+          ) : (
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
             {currentQuestion.options.map((opt) => (
@@ -2022,6 +1964,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
     </div>
