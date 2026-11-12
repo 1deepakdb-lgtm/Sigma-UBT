@@ -589,31 +589,51 @@ const InstituteDashboard = () => {
     try {
       const activeId = overrideInstId || instId || (typeof window !== "undefined" ? localStorage.getItem("currentInstituteId") : null);
       const activeName = overrideInstName || instituteName || (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : null);
-      const queryParam = activeId ? `?instituteId=${encodeURIComponent(activeId)}` : (activeName ? `?institute=${encodeURIComponent(activeName)}` : '');
+
+      if (!activeId && (!activeName || activeName === "Language Institute")) {
+        return;
+      }
+
+      const queryParam = activeId ? `?instituteId=${encodeURIComponent(activeId)}` : `?institute=${encodeURIComponent(activeName)}`;
       const res = await fetch(`/api/institute/students${queryParam}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.students)) {
-          const dbStudents = data.students.map((s) => ({
+          // Strictly isolate: only keep students belonging to this active institute
+          const filteredStudents = data.students.filter(s => {
+            if (activeId && s.instituteId) {
+              return s.instituteId === activeId;
+            }
+            return true;
+          });
+
+          const dbStudents = filteredStudents.map((s) => ({
             id: s.id,
             name: s.name,
             phone: s.phone || s.username,
             password: "••••",
             assignedPackage: s.batch || (instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT"),
             expiryDate: calculateExpiryDate("1 Month"),
-            status: s.status || "Active"
+            status: s.status || "Active",
+            instituteId: s.instituteId
           }));
 
-          const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-          allStudents[activeName || instituteName] = dbStudents;
-          localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+          const cacheKey = activeId ? `instituteStudents_${activeId}` : `instituteStudents_${activeName}`;
+          localStorage.setItem(cacheKey, JSON.stringify(dbStudents));
           setStudents(dbStudents);
         }
+      } else {
+        const cacheKey = activeId ? `instituteStudents_${activeId}` : `instituteStudents_${activeName}`;
+        const localStudents = JSON.parse(localStorage.getItem(cacheKey)) || [];
+        setStudents(localStudents);
       }
     } catch (e) {
       console.warn("Notice: Fetching students from database:", e);
-      const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-      setStudents(allStudents[instituteName] || []);
+      const activeId = overrideInstId || instId || (typeof window !== "undefined" ? localStorage.getItem("currentInstituteId") : null);
+      const activeName = overrideInstName || instituteName || (typeof window !== "undefined" ? localStorage.getItem("currentInstitute") : null);
+      const cacheKey = activeId ? `instituteStudents_${activeId}` : `instituteStudents_${activeName}`;
+      const localStudents = JSON.parse(localStorage.getItem(cacheKey)) || [];
+      setStudents(localStudents);
     }
 
     let savedPackages = JSON.parse(localStorage.getItem("examPackages")) || [];
@@ -1016,11 +1036,11 @@ const InstituteDashboard = () => {
   const handleSubmitStudent = async (e) => {
     e.preventDefault();
     const calculatedExpiryDate = calculateExpiryDate(formData.expiryDuration, formData.customExpiryDate);
-    const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-    const currentInstStudents = allStudents[instituteName] || [];
 
     const chosenLanguage = formData.language || (instituteLanguage === "both" ? "both" : instituteLanguage);
     const finalBatch = (selectedPackagesList.length > 0 ? selectedPackagesList.join(", ") : formData.assignedPackage) || (instituteLanguage === "japanese" ? "Full Mock Test" : "Full Set UBT");
+
+    const activeInstId = instId || (typeof window !== "undefined" ? localStorage.getItem("currentInstituteId") : undefined);
 
     const studentPayload = {
       id: editId || undefined,
@@ -1032,7 +1052,7 @@ const InstituteDashboard = () => {
       status: "Active",
       language: chosenLanguage,
       instituteName: instituteName,
-      instituteId: instId || undefined
+      instituteId: activeInstId || undefined
     };
 
     try {
@@ -1048,43 +1068,10 @@ const InstituteDashboard = () => {
         return;
       }
 
-      if (editId) {
-        const updatedStudents = currentInstStudents.map((stu) =>
-          stu.id === editId || stu.phone === formData.phone
-            ? { ...stu, ...formData, assignedPackage: finalBatch, id: data.student?.id || stu.id, expiryDate: calculatedExpiryDate, language: data.student?.language || chosenLanguage }
-            : stu
-        );
-        allStudents[instituteName] = updatedStudents;
-        localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
-        setStudents(updatedStudents);
-        alert("Student Updated Successfully!\nPassword and details have been updated in the database.");
-        resetForm();
-        loadData(instId, instituteName);
-        return;
-      }
-
-      // NEW student
-      const newStudent = {
-        id: data.student?.id || Date.now(),
-        ...formData,
-        assignedPackage: finalBatch,
-        language: data.student?.language || chosenLanguage,
-        expiryDate: calculatedExpiryDate,
-        status: "Active"
-      };
-      const updatedStudents = [...currentInstStudents.filter(s => s.phone !== formData.phone), newStudent];
-      allStudents[instituteName] = updatedStudents;
-      localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
-      setStudents(updatedStudents);
-
-      // Keep legacy users map for any fallback reads
-      const globalUsers = JSON.parse(localStorage.getItem("users")) || {};
-      globalUsers[formData.phone] = { name: formData.name, password: formData.password || "1234" };
-      localStorage.setItem("users", JSON.stringify(globalUsers));
-
-      alert("Student Registered Successfully!\nThey can now log in with:\nPhone / Username: " + formData.phone + "\nPassword: " + (formData.password || "1234"));
+      alert(editId ? "Student Updated Successfully!" : "Student Registered Successfully!\nPhone: " + formData.phone);
       resetForm();
-      loadData(instId, instituteName);
+      setShowForm(false);
+      await loadData(activeInstId, instituteName);
     } catch (err) {
       console.error("Save student error:", err);
       alert("Error saving student to database: " + err.message);
@@ -1115,11 +1102,13 @@ const InstituteDashboard = () => {
 
     // Immediately remove from UI and local storage
     setStudents(prev => prev.filter(stu => stu.id !== id && stu.phone !== targetPhone));
+
+    const activeInstId = instId || (typeof window !== "undefined" ? localStorage.getItem("currentInstituteId") : null);
+    const cacheKey = activeInstId ? `instituteStudents_${activeInstId}` : `instituteStudents_${instituteName}`;
     try {
-      const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-      const currentInstStudents = allStudents[instituteName] || [];
-      allStudents[instituteName] = currentInstStudents.filter(stu => stu.id !== id && stu.phone !== targetPhone);
-      localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+      const cached = JSON.parse(localStorage.getItem(cacheKey)) || [];
+      const updated = cached.filter(stu => stu.id !== id && stu.phone !== targetPhone);
+      localStorage.setItem(cacheKey, JSON.stringify(updated));
     } catch (e) {}
 
     try {
@@ -1130,7 +1119,7 @@ const InstituteDashboard = () => {
       if (!res.ok) {
         alert(data.error || "Failed to permanently delete student");
       }
-      loadData(instId, instituteName);
+      loadData(activeInstId, instituteName);
     } catch (err) {
       console.warn("Delete student error:", err);
       alert("Error connecting to server to delete student: " + err.message);
@@ -1153,10 +1142,9 @@ const InstituteDashboard = () => {
         return;
       }
       setStudents([]);
+      const cacheKey = activeInstId ? `instituteStudents_${activeInstId}` : `instituteStudents_${instituteName}`;
       try {
-        const allStudents = JSON.parse(localStorage.getItem("instituteStudents")) || {};
-        allStudents[instituteName] = [];
-        localStorage.setItem("instituteStudents", JSON.stringify(allStudents));
+        localStorage.removeItem(cacheKey);
       } catch (e) {}
       alert(`Successfully deleted ${data.count || students.length} students.`);
       loadData(activeInstId, instituteName);

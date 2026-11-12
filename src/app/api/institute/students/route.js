@@ -10,6 +10,7 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const queryInst = searchParams.get('institute') || searchParams.get('instituteId') || searchParams.get('instituteName');
+    const allowAll = searchParams.get('all') === 'true';
 
     const where = { role: 'student' };
     let targetInstId = null;
@@ -52,16 +53,32 @@ export async function GET(req) {
           // If a specific institute was requested by admin but does not exist, return empty array (prevent data leak)
           return NextResponse.json({ students: [] });
         }
+      } else if (!allowAll) {
+        // Guard: If admin calls without an institute query and without explicit ?all=true,
+        // do not return all students to prevent data bleed into uninitialized panels
+        return NextResponse.json({ students: [] });
       }
     } else {
-      // Institutes and staff can ONLY query their own students
+      // STRICT TENANT ISOLATION: Institutes and staff can ONLY ever query their own students
       targetInstId = session.instituteId || null;
       if (!targetInstId && session.id) {
         const instUser = await prisma.user.findUnique({
           where: { id: session.id },
-          select: { instituteId: true }
+          select: { instituteId: true, username: true }
         });
         targetInstId = instUser?.instituteId || null;
+        if (!targetInstId && instUser?.username) {
+          const inst = await prisma.institute.findFirst({
+            where: {
+              OR: [
+                { id: instUser.username },
+                { username: instUser.username },
+                { name: instUser.username }
+              ]
+            }
+          });
+          if (inst) targetInstId = inst.id;
+        }
       }
       if (!targetInstId) {
         return NextResponse.json({ students: [] });
@@ -77,6 +94,8 @@ export async function GET(req) {
           { instituteId: null }
         ];
       }
+    } else if (session.role !== 'admin' || !allowAll) {
+      return NextResponse.json({ students: [] });
     }
 
     const students = await prisma.user.findMany({
@@ -212,13 +231,14 @@ export async function POST(req) {
     let existing = null;
     if (reqStudentId && typeof reqStudentId === 'string' && reqStudentId.length > 10) {
       existing = await prisma.user.findFirst({
-        where: { id: reqStudentId, role: 'student' }
+        where: { id: reqStudentId, role: 'student', instituteId: targetInstituteId }
       });
     }
     if (!existing) {
       existing = await prisma.user.findFirst({
         where: {
           role: 'student',
+          instituteId: targetInstituteId,
           OR: orConditions
         }
       });
@@ -228,7 +248,11 @@ export async function POST(req) {
     let finalUsername = cleanUsername;
     const existingWithSameUsername = await prisma.user.findUnique({ where: { username: finalUsername } });
     if (existingWithSameUsername && existingWithSameUsername.id !== existing?.id) {
-      finalUsername = `${cleanUsername}-${Date.now().toString().slice(-4)}`;
+      finalUsername = `${cleanUsername}-${targetInstituteId ? targetInstituteId.slice(0, 4) : Date.now().toString().slice(-4)}`;
+      const secondCollision = await prisma.user.findUnique({ where: { username: finalUsername } });
+      if (secondCollision && secondCollision.id !== existing?.id) {
+        finalUsername = `${cleanUsername}-${Date.now().toString().slice(-4)}`;
+      }
     }
 
     if (existing) {
