@@ -31,6 +31,17 @@ const StudentExam = () => {
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(3000); // 50 Minutes (3000 seconds)
   const [exactExamName, setExactExamName] = useState(`Chapterwise 0${examId}`);
+  const [isExamSubmitted, setIsExamSubmitted] = useState(false);
+  const [submittedExamResult, setSubmittedExamResult] = useState(null);
+  const [inlineShowDetailed, setInlineShowDetailed] = useState(false);
+  const [inlineSelectedQIndex, setInlineSelectedQIndex] = useState(null);
+
+  useEffect(() => {
+    try {
+      router.prefetch("/student/result");
+      router.prefetch("/student");
+    } catch (e) {}
+  }, [router]);
 
   useEffect(() => {
     try {
@@ -535,11 +546,20 @@ const StudentExam = () => {
       const existingResults = JSON.parse(localStorage.getItem("examResults")) || [];
       localStorage.setItem("examResults", JSON.stringify([examResultData, ...existingResults]));
 
+      setSubmittedExamResult(examResultData);
+      setIsExamSubmitted(true);
       setShowConfirmModal(false);
-      router.push("/student/result");
+
+      try {
+        router.push("/student/result");
+      } catch (navErr) {
+        console.warn("Offline router navigation notice (active in-page review fallback):", navErr);
+      }
     } catch (err) {
       console.error("Submission error:", err);
-      router.push("/student/result");
+      try {
+        router.push("/student/result");
+      } catch (e) {}
     }
   };
 
@@ -729,6 +749,338 @@ const StudentExam = () => {
                 <span style={{ color: "#64748b", fontWeight: "600" }}>Time Limit</span>
                 <span style={{ color: "#d97706", fontWeight: "bold" }}>50 Minutes</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==============================================================
+  // OFFLINE SUBMITTED RESULT & QUESTION REVIEW (1 - 40)
+  // ==============================================================
+  if (isExamSubmitted && submittedExamResult) {
+    const res = submittedExamResult;
+    const revQuestions = res.questions || [];
+    const revReading = revQuestions.filter(q => (q.type && q.type.toLowerCase() === "reading") || (q.qIndex !== undefined && q.qIndex <= 20)).slice(0, 20);
+    const revListening = revQuestions.filter(q => (q.type && q.type.toLowerCase() === "listening") || (q.qIndex !== undefined && q.qIndex > 20)).slice(0, 20);
+    const allRevQuestions = [...revReading, ...revListening].length > 0 ? [...revReading, ...revListening] : revQuestions.slice(0, 40);
+    const revAnswers = res.selectedAnswers || {};
+
+    const getAns = (q, idx) => {
+      if (!q) return undefined;
+      if (revAnswers[q.id] !== undefined) return revAnswers[q.id];
+      if (q.qIndex !== undefined && revAnswers[q.qIndex] !== undefined) return revAnswers[q.qIndex];
+      if (revAnswers[idx] !== undefined) return revAnswers[idx];
+      return undefined;
+    };
+
+    // 1. Detailed Single Question View
+    if (inlineShowDetailed && inlineSelectedQIndex !== null) {
+      const q = allRevQuestions[inlineSelectedQIndex];
+      const studentAns = getAns(q, inlineSelectedQIndex);
+      const isAttempted = studentAns !== undefined && studentAns !== null && studentAns !== "";
+      const isCorrect = isAttempted && q?.answer !== undefined && Number(studentAns) === Number(q.answer);
+
+      return (
+        <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", padding: "16px", boxSizing: "border-box", fontFamily: "Arial, sans-serif", overflowY: "auto" }}>
+          <div style={{ maxWidth: "980px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setInlineSelectedQIndex(null)}
+                  style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                >
+                  ❮ Back to Grid
+                </button>
+                <h3 style={{ margin: 0, color: "#0f172a", fontSize: "18px", fontWeight: "800" }}>
+                  Question {inlineSelectedQIndex + 1} Review ({q?.type || (inlineSelectedQIndex < 20 ? "Reading" : "Listening")})
+                </h3>
+              </div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <span style={{ backgroundColor: isCorrect ? "#dcfce7" : (isAttempted ? "#fee2e2" : "#f1f5f9"), color: isCorrect ? "#15803d" : (isAttempted ? "#b91c1c" : "#64748b"), padding: "6px 14px", borderRadius: "20px", fontWeight: "800", fontSize: "12px" }}>
+                  {isCorrect ? "✓ Correct" : (isAttempted ? "✗ Incorrect" : "○ Not Attempted")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => { setInlineShowDetailed(false); setInlineSelectedQIndex(null); }}
+                  style={{ backgroundColor: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", padding: "6px 14px", borderRadius: "6px", fontWeight: "700", cursor: "pointer", fontSize: "12px" }}
+                >
+                  Summary
+                </button>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "10px", padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+              <p style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold", margin: "0 0 10px 0" }}>
+                {q?.mainHeading || (inlineSelectedQIndex < 20 ? `[ ${inlineSelectedQIndex + 1} ] 다음을 읽고 알맞은 것을 고르십시오.` : `[ ${inlineSelectedQIndex + 1} ] 이야기를 듣고 질문에 알맞은 것을 고르십시오.`)}
+              </p>
+              {q?.questionHeading && (
+                <p style={{ color: "#334155", fontSize: "14px", fontWeight: "bold", margin: "0 0 10px 0" }}>
+                  {q.questionHeading}
+                </p>
+              )}
+              <p style={{ color: "#0f172a", fontSize: "17px", fontWeight: "bold", margin: "0 0 15px 0" }}>
+                {inlineSelectedQIndex + 1}. {q?.description || ""}
+              </p>
+
+              {q?.image && (
+                <div style={{ margin: "15px 0", textAlign: "center" }}>
+                  <img src={q.image} alt="Question" style={{ maxHeight: "180px", maxWidth: "260px", objectFit: "contain", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
+                </div>
+              )}
+
+              {q?.audio && (
+                <div style={{ margin: "15px 0" }}>
+                  <audio controls controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} src={q.audio} style={{ width: "100%", height: "35px" }} />
+                </div>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+                {Array.isArray(q?.options) && q.options.map((opt, optIdx) => {
+                  const optText = typeof opt === 'object' && opt !== null ? opt.text : opt;
+                  const optImg = typeof opt === 'object' && opt !== null ? opt.image : null;
+                  const optAud = typeof opt === 'object' && opt !== null ? opt.audio : null;
+
+                  const isThisCorrect = Number(optIdx) === Number(q.answer);
+                  const isThisStudent = Number(optIdx) === Number(studentAns);
+
+                  let bg = "#f8fafc";
+                  let border = "1px solid #cbd5e1";
+                  let color = "#1e293b";
+                  let badgeBg = "white";
+                  let badgeBorder = "2px solid #0284c7";
+                  let badgeColor = "#0284c7";
+
+                  if (isThisCorrect) {
+                    bg = "#f0fdf4";
+                    border = "1.5px solid #16a34a";
+                    color = "#15803d";
+                    badgeBg = "#16a34a";
+                    badgeBorder = "2px solid #16a34a";
+                    badgeColor = "white";
+                  } else if (isThisStudent && !isCorrect) {
+                    bg = "#fef2f2";
+                    border = "1.5px solid #ef4444";
+                    color = "#b91c1c";
+                    badgeBg = "#ef4444";
+                    badgeBorder = "2px solid #ef4444";
+                    badgeColor = "white";
+                  }
+
+                  return (
+                    <div key={optIdx} style={{ display: "flex", flexDirection: "column", padding: "10px 14px", backgroundColor: bg, border, borderRadius: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                        <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: badgeBg, color: badgeColor, border: badgeBorder, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", marginRight: "12px", flexShrink: 0 }}>
+                          {optIdx + 1}
+                        </div>
+                        <span style={{ fontSize: "15px", flex: 1, color }}>{optText}</span>
+                        {isThisCorrect && (
+                          <span style={{ fontSize: "12px", fontWeight: "800", color: "#16a34a", marginLeft: "8px" }}>
+                            ✓ Correct Answer
+                          </span>
+                        )}
+                        {isThisStudent && !isThisCorrect && (
+                          <span style={{ fontSize: "12px", fontWeight: "800", color: "#ef4444", marginLeft: "8px" }}>
+                            ✗ Your Answer
+                          </span>
+                        )}
+                      </div>
+                      {optImg && (
+                        <div style={{ marginTop: "6px", paddingLeft: "40px" }}>
+                          <img src={optImg} alt={`Opt ${optIdx + 1}`} style={{ maxHeight: "60px", borderRadius: "4px" }} />
+                        </div>
+                      )}
+                      {optAud && (
+                        <div style={{ marginTop: "6px", paddingLeft: "40px" }}>
+                          <audio controls controlsList="nodownload" src={optAud} style={{ width: "100%", height: "26px" }} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ marginTop: "24px", display: "flex", justifyContent: "space-between" }}>
+                <button
+                  type="button"
+                  onClick={() => setInlineSelectedQIndex(prev => Math.max(0, prev - 1))}
+                  disabled={inlineSelectedQIndex === 0}
+                  style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "9px 18px", borderRadius: "6px", fontWeight: "bold", cursor: inlineSelectedQIndex === 0 ? "not-allowed" : "pointer", opacity: inlineSelectedQIndex === 0 ? 0.5 : 1 }}
+                >
+                  ❮ Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInlineSelectedQIndex(prev => Math.min(allRevQuestions.length - 1, prev + 1))}
+                  disabled={inlineSelectedQIndex === allRevQuestions.length - 1}
+                  style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "9px 18px", borderRadius: "6px", fontWeight: "bold", cursor: inlineSelectedQIndex === allRevQuestions.length - 1 ? "not-allowed" : "pointer", opacity: inlineSelectedQIndex === allRevQuestions.length - 1 ? 0.5 : 1 }}
+                >
+                  Next ❯
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 2. 40-Question Grid Overview
+    if (inlineShowDetailed && inlineSelectedQIndex === null) {
+      return (
+        <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", padding: "16px", boxSizing: "border-box", fontFamily: "Arial, sans-serif", overflowY: "auto" }}>
+          <div style={{ maxWidth: "980px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setInlineShowDetailed(false)}
+                style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+              >
+                ❮ Back to Summary
+              </button>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <span style={{ fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>● Correct ({res.score})</span>
+                <span style={{ fontSize: "13px", fontWeight: "700", color: "#ef4444" }}>● Incorrect ({res.attempted - res.score})</span>
+                <span style={{ fontSize: "13px", fontWeight: "700", color: "#64748b" }}>● Unanswered ({res.total - res.attempted})</span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "10px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+              <div style={{ backgroundColor: "#0284c7", color: "white", padding: "12px 20px", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "14px", flexWrap: "wrap", gap: "8px" }}>
+                <span>Exam: {res.examName}</span>
+                <span>Score: {res.score} / {res.total} ({res.percentage}%)</span>
+                <span>Click any question number to review</span>
+              </div>
+
+              <div style={{ padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: "280px" }}>
+                    <h4 style={{ textAlign: "center", color: "#0284c7", margin: "0 0 12px 0", fontSize: "15px" }}>Reading Questions (1 - 20)</h4>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
+                      {allRevQuestions.slice(0, 20).map((q, idx) => {
+                        const ans = getAns(q, idx);
+                        const isAtt = ans !== undefined && ans !== null && ans !== "";
+                        const isCor = isAtt && q.answer !== undefined && Number(ans) === Number(q.answer);
+
+                        let bg = "white";
+                        let border = "#cbd5e1";
+                        let text = "#1e293b";
+                        if (isAtt) {
+                          if (isCor) { bg = "#16a34a"; border = "#15803d"; text = "white"; }
+                          else { bg = "#ef4444"; border = "#dc2626"; text = "white"; }
+                        }
+
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setInlineSelectedQIndex(idx)}
+                            style={{ padding: "10px 0", backgroundColor: bg, border: `1.5px solid ${border}`, borderRadius: "6px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", color: text }}
+                          >
+                            {idx + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: "280px" }}>
+                    <h4 style={{ textAlign: "center", color: "#0284c7", margin: "0 0 12px 0", fontSize: "15px" }}>Listening Questions (21 - 40)</h4>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
+                      {allRevQuestions.slice(20, 40).map((q, idx) => {
+                        const actualIdx = idx + 20;
+                        const ans = getAns(q, actualIdx);
+                        const isAtt = ans !== undefined && ans !== null && ans !== "";
+                        const isCor = isAtt && q.answer !== undefined && Number(ans) === Number(q.answer);
+
+                        let bg = "white";
+                        let border = "#cbd5e1";
+                        let text = "#1e293b";
+                        if (isAtt) {
+                          if (isCor) { bg = "#16a34a"; border = "#15803d"; text = "white"; }
+                          else { bg = "#ef4444"; border = "#dc2626"; text = "white"; }
+                        }
+
+                        return (
+                          <button
+                            key={actualIdx}
+                            type="button"
+                            onClick={() => setInlineSelectedQIndex(actualIdx)}
+                            style={{ padding: "10px 0", backgroundColor: bg, border: `1.5px solid ${border}`, borderRadius: "6px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", color: text }}
+                          >
+                            {actualIdx + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 3. Default: Exam Summary Screen
+    return (
+      <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column" }}>
+        <div style={{ backgroundColor: "#0284c7", color: "white", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "16px", fontWeight: "bold", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+          <span>Exam Summary (Offline Mode Active)</span>
+        </div>
+
+        <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", padding: "20px" }}>
+          <div style={{ width: "100%", maxWidth: "480px", backgroundColor: "white", borderRadius: "12px", padding: "28px", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0" }}>
+            <div style={{ textAlign: "center", marginBottom: "18px" }}>
+              <div style={{ width: "64px", height: "64px", borderRadius: "50%", backgroundColor: "#fef3c7", border: "1px solid #fde68a", margin: "0 auto 10px auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px" }}>
+                🏆
+              </div>
+              <h2 style={{ color: "#0f172a", fontSize: "22px", margin: "0 0 8px 0", fontWeight: "800" }}>Congratulations, Exam Ended!</h2>
+              <div style={{ display: "inline-block", backgroundColor: "#f1f5f9", padding: "6px 14px", borderRadius: "20px", color: "#475569", fontWeight: "600", fontSize: "13px" }}>
+                <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>Exam:</span> {res.examName}
+              </div>
+              <div style={{ marginTop: "10px" }}>
+                <span style={{ backgroundColor: "#fef3c7", color: "#b45309", border: "1px solid #fde68a", padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                  ⚡ Completed & Submitted Offline • Review Active
+                </span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: "#f8fafc", borderRadius: "10px", padding: "16px 20px", marginBottom: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", border: "1px solid #e2e8f0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Questions</span>
+                <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{res.total}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Attempted</span>
+                <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{res.attempted}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Correct</span>
+                <span style={{ color: "#16a34a", fontSize: "17px", fontWeight: "900" }}>{res.score}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", paddingTop: "4px" }}>
+                <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Your Percentage</span>
+                <span style={{ color: res.percentage >= 40 ? "#0284c7" : "#ef4444", fontSize: "17px", fontWeight: "900" }}>{res.percentage}%</span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setInlineShowDetailed(true)}
+                style={{ flex: 1, minWidth: "160px", backgroundColor: "#0284c7", color: "white", border: "none", padding: "12px 18px", borderRadius: "6px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
+              >
+                VIEW REVIEW (1-40)
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/student")}
+                style={{ flex: 1, minWidth: "160px", backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "12px 18px", borderRadius: "6px", fontWeight: "bold", fontSize: "14px", cursor: "pointer" }}
+              >
+                CLOSE
+              </button>
             </div>
           </div>
         </div>

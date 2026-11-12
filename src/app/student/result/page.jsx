@@ -88,24 +88,41 @@ const StudentResult = () => {
     return () => window.removeEventListener("online", syncOfflineQueue);
   }, []);
   
-  const { examName, questions, selectedAnswers } = resultData;
+  const { examName, questions = [], selectedAnswers = {} } = resultData;
 
-  const readingQuestions = questions.filter(q => q.type === "Reading").slice(0, 20);
-  const listeningQuestions = questions.filter(q => q.type === "Listening").slice(0, 20);
-  const displayedQuestions = [...readingQuestions, ...listeningQuestions];
+  const readingQuestions = questions.filter(q => 
+    (q.type && q.type.toLowerCase() === "reading") || 
+    (q.qIndex !== undefined && q.qIndex <= 20)
+  ).slice(0, 20);
+
+  const listeningQuestions = questions.filter(q => 
+    (q.type && q.type.toLowerCase() === "listening") || 
+    (q.qIndex !== undefined && q.qIndex > 20)
+  ).slice(0, 20);
+
+  let displayedQuestions = [...readingQuestions, ...listeningQuestions];
+  if (displayedQuestions.length === 0 && questions.length > 0) {
+    displayedQuestions = questions.slice(0, 40);
+  }
   const total = displayedQuestions.length > 0 ? displayedQuestions.length : 40;
 
   let calculatedAttempted = 0;
   let calculatedScore = 0;
 
+  const getStudentAnswer = (q, idx) => {
+    if (!q) return undefined;
+    if (selectedAnswers[q.id] !== undefined) return selectedAnswers[q.id];
+    if (q.qIndex !== undefined && selectedAnswers[q.qIndex] !== undefined) return selectedAnswers[q.qIndex];
+    if (selectedAnswers[idx] !== undefined) return selectedAnswers[idx];
+    return undefined;
+  };
+
   displayedQuestions.forEach((q, idx) => {
-    const studentAns = selectedAnswers[q.id] !== undefined 
-      ? selectedAnswers[q.id] 
-      : (q.qIndex !== undefined ? selectedAnswers[q.qIndex] : undefined);
+    const studentAns = getStudentAnswer(q, idx);
 
     if (studentAns !== undefined && studentAns !== null && studentAns !== "") {
       calculatedAttempted += 1;
-      if (Number(studentAns) === Number(q.answer)) {
+      if (q.answer !== undefined && Number(studentAns) === Number(q.answer)) {
         calculatedScore += 1;
       }
     }
@@ -119,11 +136,9 @@ const StudentResult = () => {
   if (showDetailedView) {
     if (selectedQuestionIndex !== null) {
       const q = displayedQuestions[selectedQuestionIndex];
-      const studentAns = selectedAnswers[q?.id] !== undefined 
-        ? selectedAnswers[q?.id] 
-        : (q?.qIndex !== undefined ? selectedAnswers[q?.qIndex] : undefined);
+      const studentAns = getStudentAnswer(q, selectedQuestionIndex);
       const isAttempted = studentAns !== undefined && studentAns !== null && studentAns !== "";
-      const isCorrect = isAttempted && Number(studentAns) === Number(q.answer);
+      const isCorrect = isAttempted && q.answer !== undefined && Number(studentAns) === Number(q.answer);
 
       return (
         <div style={{ maxWidth: "1050px", margin: "40px auto", padding: "20px", fontFamily: "Arial, sans-serif" }}>
@@ -280,11 +295,9 @@ const StudentResult = () => {
                 <h3 style={{ textAlign: "center", color: "#0284c7", marginBottom: "15px", fontSize: "16px" }}>Reading Questions</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
                   {displayedQuestions.slice(0, 20).map((q, idx) => {
-                    const studentAns = selectedAnswers[q.id] !== undefined 
-                      ? selectedAnswers[q.id] 
-                      : (q.qIndex !== undefined ? selectedAnswers[q.qIndex] : undefined);
-                    const isCorrect = studentAns !== undefined && studentAns !== null && studentAns !== "" && Number(studentAns) === Number(q.answer);
+                    const studentAns = getStudentAnswer(q, idx);
                     const isAttempted = studentAns !== undefined && studentAns !== null && studentAns !== "";
+                    const isCorrect = isAttempted && q.answer !== undefined && Number(studentAns) === Number(q.answer);
 
                     let bgColor = "white";
                     let borderColor = "#cbd5e1";
@@ -329,11 +342,9 @@ const StudentResult = () => {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
                   {displayedQuestions.slice(20, 40).map((q, idx) => {
                     const actualIndex = idx + 20;
-                    const studentAns = selectedAnswers[q.id] !== undefined 
-                      ? selectedAnswers[q.id] 
-                      : (q.qIndex !== undefined ? selectedAnswers[q.qIndex] : undefined);
-                    const isCorrect = studentAns !== undefined && studentAns !== null && studentAns !== "" && Number(studentAns) === Number(q.answer);
+                    const studentAns = getStudentAnswer(q, actualIndex);
                     const isAttempted = studentAns !== undefined && studentAns !== null && studentAns !== "";
+                    const isCorrect = isAttempted && q.answer !== undefined && Number(studentAns) === Number(q.answer);
 
                     let bgColor = "white";
                     let borderColor = "#cbd5e1";
@@ -406,6 +417,13 @@ const StudentResult = () => {
             <div style={{ display: "inline-block", backgroundColor: "#f1f5f9", padding: "6px 16px", borderRadius: "20px", color: "#475569", fontWeight: "600", fontSize: "14px" }}>
               <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>Exam:</span> {examName}
             </div>
+            {resultData.isOfflineSubmitted && (
+              <div style={{ marginTop: "10px" }}>
+                <span style={{ backgroundColor: "#fef3c7", color: "#b45309", border: "1px solid #fde68a", padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                  ⚡ Completed & Submitted Offline (Saved locally)
+                </span>
+              </div>
+            )}
           </div>
 
           <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "20px", marginBottom: "25px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", border: "1px solid #e2e8f0" }}>
