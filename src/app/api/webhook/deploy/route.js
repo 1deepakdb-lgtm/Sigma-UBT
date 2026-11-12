@@ -90,9 +90,14 @@ async function runDeployTasks(repoDir) {
   // 3. Git fetch origin main
   try {
     addLog(`🌐 Fetching latest changes from origin/main...`);
-    const { stdout, stderr } = await execAsync('git fetch origin main', { cwd: repoDir });
-    if (stdout.trim()) addLog(`⬇️ Fetch output:\n${stdout.trim()}`);
-    if (stderr.trim()) addLog(`ℹ️ Fetch details: ${stderr.trim()}`);
+    try {
+      await execAsync('rm -f .git/index.lock .git/refs/remotes/origin/*\\ *', { cwd: repoDir });
+    } catch {}
+    const { stdout, stderr } = await execAsync('git fetch origin main --force', { cwd: repoDir });
+    const outStr = stdout ? String(stdout).trim() : '';
+    const errStr = stderr ? String(stderr).trim() : '';
+    if (outStr) addLog(`⬇️ Fetch output:\n${outStr}`);
+    if (errStr) addLog(`ℹ️ Fetch details: ${errStr}`);
   } catch (e) {
     addLog(`❌ Git fetch failed: ${e.message}`);
     throw new Error(`Git fetch failed: ${e.message}`);
@@ -102,7 +107,8 @@ async function runDeployTasks(repoDir) {
   try {
     addLog(`🔄 Resetting local tree to origin/main...`);
     const { stdout } = await execAsync('git reset --hard origin/main', { cwd: repoDir });
-    addLog(`✅ Reset output:\n${stdout.trim()}`);
+    const outStr = stdout ? String(stdout).trim() : '';
+    addLog(`✅ Reset output:\n${outStr}`);
   } catch (e) {
     addLog(`❌ Git reset failed: ${e.message}`);
     throw new Error(`Git reset failed: ${e.message}`);
