@@ -10,24 +10,25 @@ export const GDBJ_RULES = [
   {
     id: "gdbj_initial",
     symbol: "अगाडि (Initial)",
-    titleKo: "1. 단어 첫머리(초성)에서의 발음: ㄱ[ㅋ/क], ㄷ[ㅌ/थ], ㅂ[ㅍ/फ], ㅈ[ㅊ/छ]",
-    titleNe: "१. शब्दको सुरुमा (पहिलो स्थानमा) आउँदाको उच्चारण नियम",
-    formula: "शब्दको सुरुमा ㄱ → [k/kh], ㄷ → [t/th], ㅂ → [p/ph], ㅈ → [ch]",
-    summaryKo: "한국어의 'ㄱ, ㄷ, ㅂ, ㅈ'이 단어의 첫소리(초성)로 올 때는 유성음(g, d, b, j)이 아닌 무성음(k, t, p, ch) 또는 가벼운 거센소리(ㅋ, ㅌ, ㅍ, ㅊ)에 가깝게 발음됩니다.",
-    summaryNe: "कोरियन भाषाका सामान्य व्यञ्जन वर्णहरू 'ㄱ, ㄷ, ㅂ, ㅈ' शब्दको पहिलो स्थानमा (सुरुमा) आउँदा क्रमशः 'ख/क', 'थ/त', 'फ/प' र 'छ/च' जस्तो अघोष ध्वनिमा उच्चारण हुन्छन्।",
+    titleKo: "1. 단어 첫머리(초성)에서의 발음: ㄱ[ㅋ/ख], ㄷ[ㅌ/थ], ㅂ[ㅍ/फ], ㅈ[ㅊ/छ]",
+    titleNe: "१. शब्दको सुरुमा ㄱ, ㄷ, ㅂ, ㅈ आउँदाको उच्चारण नियम (초성 발음 규칙)",
+    formula: "ㄱ → ख | ㄷ → थ | ㅂ → फ | ㅈ → छ",
+    formulaBullets: ["ㄱ → ख", "ㄷ → थ", "ㅂ → फ", "ㅈ → छ"],
+    summaryKo: "한국어의 'ㄱ, ㄷ, ㅂ, ㅈ'이 단어의 첫머리(초성)에 올 때는 각각 'ㅋ(ख)', 'ㅌ(थ)', 'ㅍ(फ)', 'ㅊ(छ)'에 가깝게 발음됩니다.",
+    summaryNe: "कुनै पनि कोरियन शब्दको सुरुमा ㄱ, ㄷ, ㅂ, ㅈ आएमा क्रमशः ख, थ, फ, छ उच्चारण गरिन्छ।",
     examples: [
-      { written: "가방", spoken: "가방", romanized: "gabang", nepali: "झोला (ㄱ अगाडि: ख/क)" },
+      { written: "가방", spoken: "가방", romanized: "gabang", nepali: "झोला (ㄱ अगाडि: ख)" },
       { written: "고기", spoken: "고기", romanized: "gogi", nepali: "मासु (पहिलो ㄱ: ख, दोस्रो ㄱ: ग)" },
-      { written: "김치", spoken: "김치", romanized: "gimchi", nepali: "किम्ची (ㄱ अगाडि: ख/क)" },
-      { written: "길", spoken: "길", romanized: "gil", nepali: "बाटो (ㄱ अगाडि: ख/क)" },
-      { written: "다리", spoken: "다리", romanized: "dari", nepali: "खुट्टा / पुल (ㄷ अगाडि: थ/त)" },
-      { written: "도시", spoken: "도시", romanized: "dosi", nepali: "सहर (ㄷ अगाडि: थ/त)" },
-      { written: "돈", spoken: "돈", romanized: "don", nepali: "पैसा (ㄷ अगाडि: थ/त)" },
+      { written: "김치", spoken: "김치", romanized: "gimchi", nepali: "किम्ची (ㄱ अगाडि: ख)" },
+      { written: "길", spoken: "길", romanized: "gil", nepali: "बाटो (ㄱ अगाडि: ख)" },
+      { written: "다리", spoken: "다리", romanized: "dari", nepali: "खुट्टा / पुल (ㄷ अगाडि: थ)" },
+      { written: "도시", spoken: "도시", romanized: "dosi", nepali: "सहर (ㄷ अगाडि: थ)" },
+      { written: "돈", spoken: "돈", romanized: "don", nepali: "पैसा (ㄷ अगाडि: थ)" },
       { written: "바보", spoken: "바보", romanized: "babo", nepali: "मूर्ख (पहिलो ㅂ: फ, दोस्रो ㅂ: ब)" },
-      { written: "방", spoken: "방", romanized: "bang", nepali: "कोठा (ㅂ अगाडि: फ/प)" },
+      { written: "방", spoken: "방", romanized: "bang", nepali: "कोठा (ㅂ अगाडि: फ)" },
       { written: "밥", spoken: "밥", romanized: "bap", nepali: "भात (पहिलो ㅂ: फ, मुनिको ㅂ: प्)" },
-      { written: "지도", spoken: "지도", romanized: "jido", nepali: "नक्सा (ㅈ अगाडि: छ/च, ㄷ बीचमा: द)" },
-      { written: "집", spoken: "집", romanized: "jip", nepali: "घर (ㅈ अगाडि: छ/च, मुनिको ㅂ: प्)" }
+      { written: "지도", spoken: "지도", romanized: "jido", nepali: "नक्सा (ㅈ अगाडि: छ, ㄷ बीचमा: द)" },
+      { written: "집", spoken: "집", romanized: "jip", nepali: "घर (ㅈ अगाडि: छ, मुनिको ㅂ: प्)" }
     ]
   },
   {
@@ -1007,16 +1008,29 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                     </span>
                   </div>
 
-                  <div style={{ margin: "6px 0 10px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "13px", fontWeight: "800", color: "#1d4ed8" }}>नियम सूत्र:</span>
-                    <code style={{ fontSize: "13.5px", fontWeight: "800", color: "#1e3a8a", backgroundColor: "#eff6ff", padding: "3px 10px", borderRadius: "6px", border: "1px solid #bfdbfe" }}>
-                      {rule.formula}
-                    </code>
+                  <div style={{ fontSize: "14px", color: "#166534", lineHeight: "1.6", margin: "6px 0 10px" }}>
+                    <strong style={{ color: "#15803d" }}>नियम:</strong> {rule.summaryNe}
                   </div>
 
-                  <div style={{ fontSize: "14px", color: "#166534", lineHeight: "1.6", margin: "6px 0 12px" }}>
-                    <strong style={{ color: "#15803d" }}>नेपाली व्याख्या:</strong> {rule.summaryNe}
-                  </div>
+                  {rule.formulaBullets ? (
+                    <div style={{ margin: "6px 0 12px" }}>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: "#1d4ed8" }}>नियम सूत्र:</span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "4px" }}>
+                        {rule.formulaBullets.map((bullet, bIdx) => (
+                          <span key={bIdx} style={{ fontSize: "13.5px", fontWeight: "800", color: "#1e3a8a", backgroundColor: "#eff6ff", padding: "3px 12px", borderRadius: "6px", border: "1.5px solid #bfdbfe" }}>
+                            - {bullet}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ margin: "6px 0 10px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "13px", fontWeight: "800", color: "#1d4ed8" }}>नियम सूत्र:</span>
+                      <code style={{ fontSize: "13.5px", fontWeight: "800", color: "#1e3a8a", backgroundColor: "#eff6ff", padding: "3px 10px", borderRadius: "6px", border: "1px solid #bfdbfe" }}>
+                        {rule.formula}
+                      </code>
+                    </div>
+                  )}
 
                   {/* Examples Header */}
                   <div style={{ padding: "6px 4px", fontSize: "13px", fontWeight: "800", color: "#0f172a", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1.5px solid #cbd5e1" }}>
