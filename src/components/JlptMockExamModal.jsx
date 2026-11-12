@@ -51,6 +51,32 @@ export default function JlptMockExamModal({
     "JFT-Basic": { primary: "#0891b2", bg: "#ecfeff", border: "#a5f3fc", text: "#0e7490" }
   }[examSet.level] || { primary: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" };
 
+  // Auto-rotate and lock screen to portrait mode for Mock Exam
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        if (screen.orientation && typeof screen.orientation.lock === "function") {
+          screen.orientation.lock("portrait").catch(() => {
+            if (screen.orientation && typeof screen.orientation.unlock === "function") {
+              screen.orientation.unlock();
+            }
+          });
+        } else if (screen.orientation && typeof screen.orientation.unlock === "function") {
+          screen.orientation.unlock();
+        }
+      } catch (e) {}
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        try {
+          if (screen.orientation && typeof screen.orientation.unlock === "function") {
+            screen.orientation.unlock();
+          }
+        } catch (e) {}
+      }
+    };
+  }, []);
+
   // Timer countdown for active exam
   useEffect(() => {
     if (isExamSubmitted || mode === "institute" || mode === "admin") return;
@@ -328,7 +354,9 @@ export default function JlptMockExamModal({
           }
           .jlpt-exam-modal {
             height: 100vh !important;
+            height: 100dvh !important;
             max-height: 100vh !important;
+            max-height: 100dvh !important;
             border-radius: 0 !important;
             border: none !important;
           }
@@ -349,6 +377,9 @@ export default function JlptMockExamModal({
         @media (max-width: 540px) {
           .jlpt-exam-question-area {
             padding: 12px 10px !important;
+          }
+          .jlpt-confirm-card {
+            padding: 20px 16px !important;
           }
         }
       ` }} />
@@ -1260,17 +1291,21 @@ export default function JlptMockExamModal({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "20px",
+            padding: "16px",
+            boxSizing: "border-box",
             zIndex: 100
           }}>
-            <div style={{
+            <div className="jlpt-confirm-card" style={{
               backgroundColor: "#ffffff",
               borderRadius: "16px",
               padding: "26px",
               maxWidth: "420px",
               width: "100%",
+              maxHeight: "92vh",
+              overflowY: "auto",
               boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
-              textAlign: "center"
+              textAlign: "center",
+              boxSizing: "border-box"
             }}>
               <div style={{ fontSize: "40px", marginBottom: "8px" }}>📝</div>
               <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>
