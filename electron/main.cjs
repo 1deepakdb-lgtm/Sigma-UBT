@@ -23,7 +23,7 @@ function createWindow() {
   });
 
   // Target local server (or production URL)
-  const appUrl = process.env.ELECTRON_START_URL || 'http://localhost:3000';
+  const appUrl = process.env.ELECTRON_START_URL || 'https://examjk.com';
   mainWindow.loadURL(appUrl);
 
   mainWindow.once('ready-to-show', () => {

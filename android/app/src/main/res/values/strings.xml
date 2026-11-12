@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ExamJK</string>
-    <string name="server_url">http://10.0.2.2:3000</string>
+    <string name="server_url">https://examjk.com</string>
     <string name="offline_title">You Are Offline</string>
     <string name="offline_message">Please check your internet connection or verify your ExamJK server is running.</string>
     <string name="retry_button">Retry Connection</string>

@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String PREFS_NAME = "ExamJKPrefs";
     private static final String KEY_SERVER_URL = "server_url";
-    private static final String DEFAULT_URL = "http://10.0.2.2:3000";
+    private static final String DEFAULT_URL = "https://examjk.com";
 
     private WebView webView;
     private SwipeRefreshLayout swipeRefresh;
