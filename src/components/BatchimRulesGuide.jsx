@@ -27,8 +27,7 @@ export const GDBJ_RULES = [
       { written: "방", spoken: "방", romanized: "bang", nepali: "कोठा (ㅂ अगाडि: फ/प)" },
       { written: "밥", spoken: "밥", romanized: "bap", nepali: "भात (पहिलो ㅂ: फ, मुनिको ㅂ: प्)" },
       { written: "지도", spoken: "지도", romanized: "jido", nepali: "नक्सा (ㅈ अगाडि: छ/च, ㄷ बीचमा: द)" },
-      { written: "집", spoken: "집", romanized: "jip", nepali: "घर (ㅈ अगाडि: छ/च, मुनिको ㅂ: प्)" },
-      { written: "친구", spoken: "친구", romanized: "chingu", nepali: "साथी (ㅈ अगाडि: छ/च)" }
+      { written: "집", spoken: "집", romanized: "jip", nepali: "घर (ㅈ अगाडि: छ/च, मुनिको ㅂ: प्)" }
     ]
   },
   {
