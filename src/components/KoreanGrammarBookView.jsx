@@ -4,10 +4,11 @@ import React, { useState, useMemo, useRef } from 'react';
 import { BASIC_GRAMMAR, INTERMEDIATE_GRAMMAR, ADVANCED_GRAMMAR, GRAMMAR_COMPARISONS } from '@/lib/koreanGrammarData';
 import { CHAPTER_GRAMMAR_MAP } from '@/lib/koreanChapterGrammarData';
 import { renderRuleWithSymbols } from './KoreanMeaningBookView';
+import BatchimRulesGuide from '@/components/BatchimRulesGuide';
 
 export default function KoreanGrammarBookView({ materials = [], isAdmin = false, onUploadMaterial }) {
-  // Modes: "chapterwise" | "basic_advanced" | "comparisons" | "pdfs"
-  const [activeTab, setActiveTab] = useState("chapterwise");
+  // Modes: "basic_book" | "chapterwise" | "basic_advanced" | "comparisons" | "pdfs"
+  const [activeTab, setActiveTab] = useState("basic_book");
 
   // Chapter-wise state
   const [chapterBookFilter, setChapterBookFilter] = useState("all"); // "all" | "book1" | "book2"
@@ -384,6 +385,29 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
         }}>
           <button
             type="button"
+            onClick={() => { setActiveTab("basic_book"); setSelectedChapterNum(null); }}
+            style={{
+              padding: "10px 18px",
+              borderRadius: "10px",
+              border: activeTab === "basic_book" ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
+              backgroundColor: activeTab === "basic_book" ? "#2563eb" : "#ffffff",
+              color: activeTab === "basic_book" ? "#ffffff" : "#1e293b",
+              fontWeight: "800",
+              fontSize: "13.5px",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: activeTab === "basic_book" ? "0 4px 12px rgba(37,99,235,0.25)" : "none",
+              transition: "all 0.15s ease"
+            }}
+          >
+            <span style={{ fontSize: "16px" }}>📘</span>
+            <span>Basic Book (आधारभूत पुस्तक)</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => { setActiveTab("chapterwise"); setSelectedChapterNum(null); }}
             style={{
               padding: "10px 18px",
@@ -402,7 +426,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-            <span>Chapterwise Grammar</span>
+            <span>Chapterwise Grammar (६० पाठ ग्रामर)</span>
           </button>
 
           <button
@@ -487,6 +511,18 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
           )}
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 0. BASIC BOOK VIEW (PRONUNCIATION, BATCHIM, VST & GRAMMAR RULES)    */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {activeTab === "basic_book" && (
+        <div style={{ marginTop: "14px", width: "100%" }}>
+          <BatchimRulesGuide
+            handlePlayAudio={(url, id, text, lang, gender) => handleSpeak(text, id, gender)}
+            playingAudioId={speakingText}
+          />
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 1. CHAPTERWISE GRAMMAR VIEW (CHAPTERS 1 TO 60 FOLDERS)            */}
