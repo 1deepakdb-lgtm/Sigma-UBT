@@ -4073,36 +4073,6 @@ export default function EpsBookReader({
                     flexShrink: 0
                   }}
                 >
-                  {/* Open in New Browser Tab Button */}
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(getFolderNewTabUrl("korean", folder.name), "_blank");
-                    }}
-                    title="Open this book in a new browser tab"
-                    style={{
-                      position: "absolute",
-                      top: "10px",
-                      right: "10px",
-                      width: "30px",
-                      height: "30px",
-                      borderRadius: "8px",
-                      backgroundColor: "rgba(255, 255, 255, 0.95)",
-                      border: "1.5px solid #cbd5e1",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "14px",
-                      color: "#1e40af",
-                      fontWeight: "900",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-                      zIndex: 3
-                    }}
-                  >
-                    ↗
-                  </span>
-
                   {/* BOOK COVER PHOTO CONTAINER - FULL IMAGE WITH UNCLIPPED BORDERS */}
                   <div style={{
                     width: "100%",
