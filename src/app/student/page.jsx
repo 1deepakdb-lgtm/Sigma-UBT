@@ -2168,13 +2168,29 @@ const StudentDashboard = () => {
                       boxShadow: "0 3px 8px rgba(225, 29, 72, 0.15)"
                     }}
                   >
-                    {/* Starburst Badge with bold FREE label */}
-                    <svg width="28" height="28" viewBox="0 0 36 36">
-                      <path
-                        d="M18 3l2.8 3.5 4.4-1.2 1.6 4.3 4.4 0.8-0.4 4.5 3.6 2.8-2.4 3.9 2.4 4-3.6 2.7 0.4 4.5-4.4 0.8-1.6 4.4-4.4-1.3L18 35l-2.8-3.5-4.4 1.3-1.6-4.4-4.4-0.8 0.4-4.5-3.6-2.7 2.4-4-2.4-3.9 3.6-2.8-0.4-4.5 4.4-0.8 1.6-4.3 4.4 1.2z"
-                        fill="#dc2626"
-                      />
-                      <text x="18" y="21.5" textAnchor="middle" fontSize="7.5" fontWeight="900" fill="#ffffff" letterSpacing="0.4">FREE</text>
+                    {/* 3D Gift Box with Golden Ribbon & Sparkles */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      {/* Box Body */}
+                      <rect x="7" y="16" width="22" height="14" rx="3" fill="#ef4444"/>
+                      <path d="M7 19c0-1.657 1.343-3 3-3h8v14H10c-1.657 0-3-1.343-3-3V19z" fill="#dc2626"/>
+                      {/* Box Lid */}
+                      <rect x="5" y="11.5" width="26" height="5.5" rx="2" fill="#f87171"/>
+                      <path d="M5 13.5c0-1.105.895-2 2-2h11v5.5H5v-3.5z" fill="#ef4444"/>
+                      {/* Golden Ribbon Cross */}
+                      <rect x="15.5" y="11.5" width="5" height="18.5" fill="#facc15"/>
+                      <rect x="15.5" y="11.5" width="2.5" height="18.5" fill="#eab308"/>
+                      <rect x="7" y="21" width="22" height="4" fill="#facc15"/>
+                      <rect x="7" y="21" width="11" height="4" fill="#eab308"/>
+                      {/* Ribbon Bow Left */}
+                      <path d="M18 11.5C14.5 6.5 8 7.5 10.5 11C12 13 15.5 11.5 18 11.5Z" fill="#fbbf24" stroke="#ca8a04" strokeWidth="0.8"/>
+                      {/* Ribbon Bow Right */}
+                      <path d="M18 11.5C21.5 6.5 28 7.5 25.5 11C24 13 20.5 11.5 18 11.5Z" fill="#fde047" stroke="#ca8a04" strokeWidth="0.8"/>
+                      {/* Ribbon Knot */}
+                      <circle cx="18" cy="11.5" r="2.2" fill="#d97706"/>
+                      <circle cx="18" cy="11.5" r="1.2" fill="#facc15"/>
+                      {/* Sparkles */}
+                      <path d="M6 7L6.8 5.3L8.5 4.5L6.8 3.7L6 2L5.2 3.7L3.5 4.5L5.2 5.3L6 7Z" fill="#f59e0b"/>
+                      <path d="M30 7.5L30.6 6.1L32 5.5L30.6 4.9L30 3.5L29.4 4.9L28 5.5L29.4 6.1L30 7.5Z" fill="#f59e0b"/>
                     </svg>
                   </div>
                   <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
