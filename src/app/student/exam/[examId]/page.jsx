@@ -177,34 +177,8 @@ const StudentExam = () => {
 
       const targetPackageName = currentExamSet ? currentExamSet.packageName : "";
 
-      // Check Model Question Bank Authorization
-      const isModelBank = 
-        targetPackageName?.toLowerCase().includes("model") || 
-        examId?.toString().includes("ubt-model-set") ||
-        currentExamSet?.name?.toLowerCase().includes("model");
-
-      if (isModelBank) {
-        let allowedPkgs = [];
-        const myPkg = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPackage") || "") : "";
-        if (myPkg) allowedPkgs.push(myPkg);
-        const myInstPkg = typeof window !== 'undefined' ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage") || "") : "";
-        if (myInstPkg) allowedPkgs.push(myInstPkg);
-        const currentStudentPhone = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone")) : null;
-        const studentsList = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("studentsList") || "[]") : [];
-        const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);
-        const foundStudent = studentsList.find(s => s.phone && cleanDigits(s.phone) === cleanDigits(currentStudentPhone));
-        if (foundStudent) {
-          if (foundStudent.assignedPackage || foundStudent.package) allowedPkgs.push(foundStudent.assignedPackage || foundStudent.package);
-          if (Array.isArray(foundStudent.assignedPackages)) allowedPkgs.push(...foundStudent.assignedPackages);
-        }
-        const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        const hasModelBank = allowedPkgs.map(norm).some(p => p.includes("modelquestion") || p.includes("modelbank"));
-        if (!hasModelBank) {
-          alert(`Access Restricted: This exam set belongs to "Model Question Bank" which must be purchased separately. It is not included in "${myPkg || 'Full Set UBT'}".`);
-          router.push("/student");
-          return;
-        }
-      }
+      // Model Question Bank sets are open for all users
+      // No restricted authorization check needed
 
       let matchedQuestions = allQuestions.filter(q => 
         q && (

@@ -958,8 +958,15 @@ export default function EpsBookReader({
 
   useEffect(() => {
     if (initialFolder) {
-      setStudyLanguage("japanese");
-      setActiveJapaneseFolder(initialFolder);
+      if (["EPS Book", "Meaning Book", "Model Question Bank", "Grammar Book"].includes(initialFolder)) {
+        setStudyLanguage("korean");
+        setActiveFolder(initialFolder);
+        setIsKoreanFolderOpen(true);
+      } else {
+        setStudyLanguage("japanese");
+        setActiveJapaneseFolder(initialFolder);
+        setIsJapaneseFolderOpen(true);
+      }
     }
   }, [initialFolder]);
   const [isJapaneseFolderOpen, setIsJapaneseFolderOpen] = useState(() => {
@@ -1574,92 +1581,21 @@ export default function EpsBookReader({
   };
 
   const isModelBankUnlocked = () => {
-    // Only Super Admin ('admin') has automatic access.
-    // Both Student AND Institute must purchase this product, otherwise no access!
-    if (mode === "admin") return true;
-
-    const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    // 1. STUDENT VERIFICATION
-    if (mode === "student") {
-      let allowedList = purchasedPackages && purchasedPackages.length > 0 ? [...purchasedPackages] : [];
-
-      if (typeof window !== "undefined") {
-        let myPkg = studentPackage || localStorage.getItem("currentStudentPackage") || "";
-        if (myPkg) allowedList.push(myPkg);
-
-        const phone = localStorage.getItem("currentStudentPhone") || "";
-        const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);
-        const studentsList = JSON.parse(localStorage.getItem("studentsList") || "[]");
-        const foundStudent = studentsList.find(s => s.phone && cleanDigits(s.phone) === cleanDigits(phone));
-        if (foundStudent) {
-          if (foundStudent.assignedPackage || foundStudent.package) {
-            allowedList.push(foundStudent.assignedPackage || foundStudent.package);
-          }
-          if (foundStudent.assignedPackages && Array.isArray(foundStudent.assignedPackages)) {
-            allowedList.push(...foundStudent.assignedPackages);
-          }
-        }
-      }
-
-      const normAllowed = allowedList.map(norm);
-      return normAllowed.some(pkg =>
-        pkg.includes("modelquestion") ||
-        pkg.includes("modelbank") ||
-        pkg === norm("Model Question Bank")
-      );
-    }
-
-    // 2. INSTITUTE VERIFICATION (CRITICAL: Student and Institute must both buy this product, otherwise do not get to access)
-    if (mode === "institute") {
-      let instAllowedList = [];
-
-      if (typeof window !== "undefined") {
-        const currentInst = localStorage.getItem("currentInstitute") || "";
-        const currentInstPkg = localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage") || "";
-        if (currentInstPkg) instAllowedList.push(currentInstPkg);
-
-        const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
-        const foundInst = institutes.find(i =>
-          (i.name && currentInst && i.name.toLowerCase() === currentInst.toLowerCase()) ||
-          (i.username && currentInst && i.username.toLowerCase() === currentInst.toLowerCase())
-        );
-        if (foundInst) {
-          if (foundInst.examPackage) instAllowedList.push(foundInst.examPackage);
-          if (Array.isArray(foundInst.purchasedPackages)) instAllowedList.push(...foundInst.purchasedPackages);
-          if (Array.isArray(foundInst.assignedPackages)) instAllowedList.push(...foundInst.assignedPackages);
-        }
-
-        const instPurchased = JSON.parse(localStorage.getItem(`institutePurchasedPackages_${currentInst}`) || "[]");
-        if (Array.isArray(instPurchased)) instAllowedList.push(...instPurchased);
-
-        const allInstPurchased = JSON.parse(localStorage.getItem("institutePurchasedPackages") || "[]");
-        if (Array.isArray(allInstPurchased)) instAllowedList.push(...allInstPurchased);
-      }
-
-      const normAllowed = instAllowedList.map(norm);
-      return normAllowed.some(pkg =>
-        pkg.includes("modelquestion") ||
-        pkg.includes("modelbank") ||
-        pkg === norm("Model Question Bank")
-      );
-    }
-
-    return false;
+    // Model Question Bank is fully open and unlocked for all users
+    return true;
   };
 
   const isSetUnlocked = (set) => {
-    // If set is inside Model Question Bank:
+    // If set is inside Model Question Bank: fully open for all users
     const isModelBankSet =
       activeFolder === "Model Question Bank" ||
-      set.folder === "Model Question Bank" ||
-      set.source === "model_question_bank" ||
-      (set.packageName && set.packageName.toLowerCase().includes("model")) ||
-      (set.name && set.name.toLowerCase().includes("model"));
+      set?.folder === "Model Question Bank" ||
+      set?.source === "model_question_bank" ||
+      (set?.packageName && set.packageName.toLowerCase().includes("model")) ||
+      (set?.name && set.name.toLowerCase().includes("model"));
 
     if (isModelBankSet) {
-      // Both student AND institute must buy this product, otherwise do not get to access!
-      return isModelBankUnlocked();
+      return true;
     }
 
     // For other sets (outside Model Question Bank):
@@ -1689,7 +1625,7 @@ export default function EpsBookReader({
 
     const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     const normAllowed = allowedList.map(norm);
-    const setPkgNorm = norm(set.packageName || set.package?.name || "Full Set UBT");
+    const setPkgNorm = norm(set?.packageName || set?.package?.name || "Full Set UBT");
 
     if (normAllowed.includes(setPkgNorm)) return true;
     if (normAllowed.some(ap => ap.includes('full') || ap.includes('100') || ap.includes('ubt'))) return true;
@@ -1698,22 +1634,31 @@ export default function EpsBookReader({
   };
 
   const handleStartUbtSet = (set) => {
-    const unlocked = isSetUnlocked(set);
-    if (!unlocked) {
-      if (mode === "institute") {
-        setShowInstituteBuyModal(true);
+    const isModelBankSet =
+      activeFolder === "Model Question Bank" ||
+      set?.folder === "Model Question Bank" ||
+      set?.source === "model_question_bank" ||
+      (set?.packageName && set.packageName.toLowerCase().includes("model")) ||
+      (set?.name && set.name.toLowerCase().includes("model"));
+
+    if (!isModelBankSet) {
+      const unlocked = isSetUnlocked(set);
+      if (!unlocked) {
+        if (mode === "institute") {
+          setShowInstituteBuyModal(true);
+          return;
+        }
+
+        const msg = `Exam set is not included in "${studentPackage || 'Full Set UBT'}". Please go to Packages to unlock this exam set.`;
+        if (onNavigateTab) {
+          if (confirm(`${msg}\n\nDo you want to go to Packages now?`)) {
+            onNavigateTab("buyExam");
+          }
+        } else {
+          alert(msg);
+        }
         return;
       }
-
-      const msg = `Model Question Bank is not included in "${studentPackage || 'Full Set UBT'}" and must be purchased separately. Please go to Packages to unlock Model Question Bank.`;
-      if (onNavigateTab) {
-        if (confirm(`${msg}\n\nDo you want to go to Packages to enroll in Model Question Bank now?`)) {
-          onNavigateTab("buyExam");
-        }
-      } else {
-        alert(msg);
-      }
-      return;
     }
 
     if (mode === "institute") {
@@ -4237,6 +4182,12 @@ export default function EpsBookReader({
                   onClick={() => {
                     setActiveFolder(folder.name);
                     setIsKoreanFolderOpen(true);
+                    setTimeout(() => {
+                      const el = document.getElementById("korean-book-active-content");
+                      if (el) {
+                        el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }
+                    }, 60);
                   }}
                   style={{
                     display: "flex",
@@ -4334,8 +4285,10 @@ export default function EpsBookReader({
             </div>
           </div>
 
-          {/* RENDER EPS BOOK SECTION IF ACTIVE */}
-          {activeFolder === "EPS Book" && (
+          {/* ACTIVE BOOK CONTENT CONTAINER */}
+          <div id="korean-book-active-content">
+            {/* RENDER EPS BOOK SECTION IF ACTIVE */}
+            {activeFolder === "EPS Book" && (
             <>
               {/* SEARCH BAR (CLEAN & SIMPLE) */}
               <div style={{
@@ -4829,46 +4782,19 @@ export default function EpsBookReader({
                                 UBT 40 Questions
                               </span>
 
-                              {mode === "admin" ? (
-                                <span style={{
-                                  backgroundColor: "#f0fdf4",
-                                  color: "#166534",
-                                  padding: "4px 10px",
-                                  borderRadius: "8px",
-                                  fontSize: "11px",
-                                  fontWeight: "800"
-                                }}>
-                                  Admin Access
-                                </span>
-                              ) : unlocked ? (
-                                <span style={{
-                                  backgroundColor: "#dcfce7",
-                                  color: "#15803d",
-                                  padding: "4px 10px",
-                                  borderRadius: "8px",
-                                  fontSize: "11px",
-                                  fontWeight: "800",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px"
-                                }}>
-                                  ✅ Unlocked
-                                </span>
-                              ) : (
-                                <span style={{
-                                  backgroundColor: "#fef3c7",
-                                  color: "#b45309",
-                                  padding: "4px 10px",
-                                  borderRadius: "8px",
-                                  fontSize: "11px",
-                                  fontWeight: "800",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px"
-                                }}>
-                                  🔒 Locked
-                                </span>
-                              )}
+                              <span style={{
+                                backgroundColor: "#dcfce7",
+                                color: "#15803d",
+                                padding: "4px 10px",
+                                borderRadius: "8px",
+                                fontSize: "11px",
+                                fontWeight: "800",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px"
+                              }}>
+                                ✅ Open for All
+                              </span>
                             </div>
 
                             {/* Icon & Title */}
@@ -4877,20 +4803,20 @@ export default function EpsBookReader({
                                 width: "44px",
                                 height: "44px",
                                 borderRadius: "10px",
-                                backgroundColor: unlocked ? "#eff6ff" : "#f1f5f9",
+                                backgroundColor: "#eff6ff",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 fontSize: "22px"
                               }}>
-                                {unlocked ? "💻" : "🔒"}
+                                💻
                               </div>
                               <div>
                                 <h4 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#0f172a" }}>
                                   {set.name}
                                 </h4>
-                                <span style={{ fontSize: "12px", color: "#2563eb", fontWeight: "700" }}>
-                                  Package: Model Question Bank (Separate Purchase)
+                                <span style={{ fontSize: "12px", color: "#16a34a", fontWeight: "700" }}>
+                                  Package: Model Question Bank (Free Access)
                                 </span>
                               </div>
                             </div>
@@ -4917,53 +4843,30 @@ export default function EpsBookReader({
 
                           {/* Action Button */}
                           <div>
-                            {unlocked ? (
-                              <button
-                                type="button"
-                                onClick={() => handleStartUbtSet(set)}
-                                style={{
-                                  width: "100%",
-                                  backgroundColor: "#16a34a",
-                                  backgroundImage: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                                  color: "#ffffff",
-                                  border: "none",
-                                  padding: "12px 18px",
-                                  borderRadius: "10px",
-                                  fontWeight: "800",
-                                  fontSize: "14px",
-                                  cursor: "pointer",
-                                  boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)",
-                                  transition: "all 0.15s ease"
-                                }}
-                              >
-                                {mode === "institute" ? "👁️ PREVIEW UBT EXAM" : "▶ START UBT EXAM"}
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleStartUbtSet(set)}
-                                style={{
-                                  width: "100%",
-                                  backgroundColor: "#2563eb",
-                                  backgroundImage: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                                  color: "#ffffff",
-                                  border: "none",
-                                  padding: "12px 18px",
-                                  borderRadius: "10px",
-                                  fontWeight: "800",
-                                  fontSize: "13px",
-                                  cursor: "pointer",
-                                  boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  gap: "8px"
-                                }}
-                              >
-                                <span>🔒</span>
-                                <span>{mode === "institute" ? "BUY PRODUCT TO UNLOCK" : "BUY MODEL QUESTION BANK TO UNLOCK"}</span>
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleStartUbtSet(set)}
+                              style={{
+                                width: "100%",
+                                backgroundColor: "#16a34a",
+                                backgroundImage: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                                color: "#ffffff",
+                                border: "none",
+                                padding: "12px 18px",
+                                borderRadius: "10px",
+                                fontWeight: "800",
+                                fontSize: "14px",
+                                cursor: "pointer",
+                                boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)",
+                                transition: "all 0.15s ease",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "8px"
+                              }}
+                            >
+                              <span>{mode === "institute" ? "👁️ PREVIEW UBT EXAM" : "▶ START UBT EXAM"}</span>
+                            </button>
                           </div>
                         </div>
                       );
@@ -5268,6 +5171,7 @@ export default function EpsBookReader({
               </div>
             );
           })()}
+          </div>
         </div>
       )}
 

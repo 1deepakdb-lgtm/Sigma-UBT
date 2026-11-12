@@ -434,8 +434,8 @@ const StudentDashboard = () => {
     // 100 UBT package match
     if (targetPkgNorm.includes("100") && (setPkgNorm.includes("100") || setNameNorm.includes("100"))) return true;
 
-    // Model Question Bank match
-    if (targetPkgNorm.includes("model") && (setPkgNorm.includes("model") || setNameNorm.includes("model"))) return true;
+    // Model Question Bank match - open for all students
+    if (setPkgNorm.includes("model") || setNameNorm.includes("model")) return true;
 
     // Full Set UBT: covers standard EPS full sets (not chapter and not model question sets)
     if (
@@ -1962,7 +1962,10 @@ const StudentDashboard = () => {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
                 {/* 1. Book Services / Study Materials */}
                 <div
-                  onClick={() => setActiveTab("listening")}
+                  onClick={() => {
+                    setActiveBookFolder("EPS Book");
+                    setActiveTab("listening");
+                  }}
                   style={{
                     background: "linear-gradient(145deg, #e0f2fe 0%, #bae6fd 50%, #c7d2fe 100%)",
                     borderRadius: "16px",
@@ -2016,9 +2019,14 @@ const StudentDashboard = () => {
                 {/* 2. Modal Bank / JFT-Basic CBT */}
                 <div
                   onClick={() => {
-                    setActiveTab("exams");
-                    setExamCategoryFilter(isPureJapaneseStudent ? "mock" : "ubt");
-                    setExamSetsPage(1);
+                    if (isPureJapaneseStudent) {
+                      setActiveTab("exams");
+                      setExamCategoryFilter("mock");
+                      setExamSetsPage(1);
+                    } else {
+                      setActiveBookFolder("Model Question Bank");
+                      setActiveTab("listening");
+                    }
                   }}
                   style={{
                     background: "linear-gradient(145deg, #dcfce7 0%, #bbf7d0 50%, #a7f3d0 100%)",
@@ -3032,7 +3040,7 @@ const StudentDashboard = () => {
               studentPackage={studentPackage}
               purchasedPackages={purchasedPackages}
               instituteLanguage={instituteLanguage}
-              initialFolder={activeTab === "japaneseMock" ? "Mock Test" : undefined}
+              initialFolder={activeTab === "japaneseMock" ? "Mock Test" : (activeBookFolder || undefined)}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onOpenEsewaModal={handleOpenEsewaModal}
               unlockedSets={unlockedSets}

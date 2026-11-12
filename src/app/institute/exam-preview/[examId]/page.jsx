@@ -44,40 +44,8 @@ const InstituteExamPreview = () => {
     const targetSetName = currentExam ? currentExam.name : `Chapterwise 0${examId}`;
     const targetPackageName = currentExam ? currentExam.packageName : "";
 
-    // Check if set is Model Question Bank - requires institute purchase
-    const isModelBank = 
-      targetPackageName?.toLowerCase().includes("model") || 
-      currentExam?.name?.toLowerCase().includes("model") ||
-      examId?.toString().includes("ubt-model-set");
-
-    if (isModelBank) {
-      let instAllowedList = [];
-      const currentInst = typeof window !== "undefined" ? (localStorage.getItem("currentInstitute") || "") : "";
-      const currentInstPkg = typeof window !== "undefined" ? (localStorage.getItem("currentInstitutePackage") || localStorage.getItem("instituteExamPackage") || "") : "";
-      if (currentInstPkg) instAllowedList.push(currentInstPkg);
-
-      const institutes = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("institutes") || "[]") : [];
-      const foundInst = institutes.find(i => 
-        (i.name && currentInst && i.name.toLowerCase() === currentInst.toLowerCase()) ||
-        (i.username && currentInst && i.username.toLowerCase() === currentInst.toLowerCase())
-      );
-      if (foundInst) {
-        if (foundInst.examPackage) instAllowedList.push(foundInst.examPackage);
-        if (Array.isArray(foundInst.purchasedPackages)) instAllowedList.push(...foundInst.purchasedPackages);
-        if (Array.isArray(foundInst.assignedPackages)) instAllowedList.push(...foundInst.assignedPackages);
-      }
-      const instPurchased = typeof window !== "undefined" ? JSON.parse(localStorage.getItem(`institutePurchasedPackages_${currentInst}`) || "[]") : [];
-      if (Array.isArray(instPurchased)) instAllowedList.push(...instPurchased);
-
-      const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const hasModelBank = instAllowedList.map(norm).some(p => p.includes("modelquestion") || p.includes("modelbank"));
-
-      if (!hasModelBank) {
-        alert(`Access Restricted: This exam set belongs to "Model Question Bank". Institutes must buy this product to access.`);
-        router.push("/institute?tab=listening");
-        return;
-      }
-    }
+    // Model Question Bank sets are open for institute preview
+    // No purchase restriction block needed
 
     const allQuestions = JSON.parse(localStorage.getItem("questionBank")) || [];
     
