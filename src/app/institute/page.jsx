@@ -798,6 +798,69 @@ const InstituteDashboard = () => {
       .catch((err) => console.warn("Failed to fetch notices in institute dashboard:", err));
   };
 
+  const [isPortraitMobile, setIsPortraitMobile] = useState(false);
+
+  const tryAutoRotateLandscape = async () => {
+    if (typeof window === "undefined") return;
+    try {
+      if (screen.orientation && typeof screen.orientation.lock === "function") {
+        await screen.orientation.lock("landscape").catch(async () => {
+          if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+            await document.documentElement.requestFullscreen().catch(() => {});
+            if (screen.orientation && screen.orientation.lock) {
+              await screen.orientation.lock("landscape").catch(() => {});
+            }
+          }
+        });
+      } else if (screen.lockOrientation) {
+        screen.lockOrientation("landscape");
+      } else if (screen.mozLockOrientation) {
+        screen.mozLockOrientation("landscape");
+      } else if (screen.msLockOrientation) {
+        screen.msLockOrientation("landscape");
+      }
+    } catch (e) {
+      console.warn("Auto-rotate landscape notice:", e);
+    }
+  };
+
+  const unlockOrientation = () => {
+    if (typeof window === "undefined") return;
+    try {
+      if (screen.orientation && typeof screen.orientation.unlock === "function") {
+        screen.orientation.unlock();
+      } else if (screen.unlockOrientation) {
+        screen.unlockOrientation();
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    const checkOrientation = () => {
+      if (typeof window === "undefined") return;
+      const isMobile = window.innerWidth <= 1024 || (typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+      const isPortrait = window.matchMedia("(orientation: portrait)").matches || window.innerHeight > window.innerWidth;
+      setIsPortraitMobile(Boolean(isMobile && isPortrait));
+    };
+
+    checkOrientation();
+    window.addEventListener("resize", checkOrientation);
+    window.addEventListener("orientationchange", checkOrientation);
+
+    return () => {
+      window.removeEventListener("resize", checkOrientation);
+      window.removeEventListener("orientationchange", checkOrientation);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "billing" || activeTab === "students" || activeTab === "exams") {
+      tryAutoRotateLandscape();
+    } else {
+      unlockOrientation();
+    }
+  }, [activeTab]);
+
   useEffect(() => {
     loadData();
   }, [activeTab, instituteName, activeBookFolder]);
@@ -812,6 +875,11 @@ const InstituteDashboard = () => {
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
     loadData();
+    if (tabName === "billing" || tabName === "students" || tabName === "exams") {
+      tryAutoRotateLandscape();
+    } else {
+      unlockOrientation();
+    }
   };
 
   const handleLogout = () => {
@@ -1709,6 +1777,51 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
       <div className="institute-content-area" style={contentAreaStyle}>
         
+        {/* Landscape orientation reminder banner on mobile portrait for wide tables */}
+        {(activeTab === "billing" || activeTab === "students" || activeTab === "exams") && isPortraitMobile && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: "#0f172a",
+            color: "#ffffff",
+            padding: "10px 14px",
+            borderRadius: "10px",
+            marginBottom: "16px",
+            fontSize: "13px",
+            fontWeight: "600",
+            boxShadow: "0 4px 14px rgba(15, 23, 42, 0.25)",
+            gap: "10px",
+            flexWrap: "wrap",
+            border: "1px solid #334155"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "18px" }}>📱 ↷</span>
+              <span>Rotate device to <strong>Landscape</strong> for wide table view</span>
+            </div>
+            <button
+              type="button"
+              onClick={tryAutoRotateLandscape}
+              style={{
+                backgroundColor: "#3b82f6",
+                color: "#ffffff",
+                border: "none",
+                padding: "6px 14px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: "700",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px"
+              }}
+            >
+              <span>Auto Rotate</span>
+              <span>🔄</span>
+            </button>
+          </div>
+        )}
+
         {activeTab === "billing" && (
           <InstituteBillingSection instituteName={instituteName} userRole={userRole} instId={instId} instituteLanguage={instituteLanguage} />
         )}
@@ -3956,7 +4069,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 768px) and (orientation: portrait) {
           :global(.manage-students-table-wrap) {
             display: none !important;
           }
@@ -3967,12 +4080,21 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           }
         }
 
-        @media (min-width: 769px) {
+        @media (min-width: 769px), (orientation: landscape) {
           :global(.manage-students-table-wrap) {
             display: block !important;
           }
           :global(.manage-students-mobile-cards) {
             display: none !important;
+          }
+        }
+
+        @media (orientation: landscape) and (max-height: 550px) {
+          :global(.institute-bottom-nav) {
+            height: 46px !important;
+          }
+          :global(body) {
+            padding-bottom: 52px !important;
           }
         }
 
