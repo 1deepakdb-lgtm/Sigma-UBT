@@ -697,11 +697,27 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       const audio = new Audio();
       audio.src = url;
       audio.onloadedmetadata = () => {
-        updateCurrentQuestion({
-          singleAudioUrl: url,
-          singleAudioFile: new File([blob], `Q${activeQNum}_single.mp3`, { type: 'audio/mp3' }),
-          singleAudioDuration: Math.round(audio.duration * 10) / 10
-        });
+        const dur = Math.round(audio.duration * 10) / 10;
+        setQuestions(prev => prev.map(q => {
+          if (q.qNum !== activeQNum) return q;
+          return {
+            ...q,
+            singleAudioUrl: url,
+            singleAudioFile: new File([blob], `Q${activeQNum}_single.mp3`, { type: 'audio/mp3' }),
+            singleAudioDuration: dur,
+            // Also use in Question Audio
+            questionAudioUrl: url,
+            questionAudioFile: new File([blob], `Q${activeQNum}_prompt.mp3`, { type: 'audio/mp3' }),
+            questionDuration: dur,
+            questionText: cleanText,
+            // Also use in Question Option Audio
+            options: q.options.map(opt => ({
+              ...opt,
+              audioUrl: url,
+              duration: dur
+            }))
+          };
+        }));
         setGeneratingKey(null);
       };
     } catch (err) {
@@ -711,7 +727,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     }
   };
 
-  // Upload custom file for Single Audio Text
+  // Upload custom file for Single Audio Text (also applies to question & options)
   const handleSingleCustomAudioUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -719,11 +735,26 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     const audio = new Audio();
     audio.src = url;
     audio.onloadedmetadata = () => {
-      updateCurrentQuestion({
-        singleAudioUrl: url,
-        singleAudioFile: file,
-        singleAudioDuration: Math.round(audio.duration * 10) / 10
-      });
+      const dur = Math.round(audio.duration * 10) / 10;
+      setQuestions(prev => prev.map(q => {
+        if (q.qNum !== activeQNum) return q;
+        return {
+          ...q,
+          singleAudioUrl: url,
+          singleAudioFile: file,
+          singleAudioDuration: dur,
+          // Also use in Question Audio
+          questionAudioUrl: url,
+          questionAudioFile: file,
+          questionDuration: dur,
+          // Also use in Question Option Audio
+          options: q.options.map(opt => ({
+            ...opt,
+            audioUrl: url,
+            duration: dur
+          }))
+        };
+      }));
     };
   };
 
@@ -1626,8 +1657,15 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               <input
                 type="text"
                 value={currentQuestion.singleAudioText || ''}
-                onChange={(e) => updateCurrentQuestion({ singleAudioText: e.target.value, isSingleWord: true })}
-                placeholder="e.g. 지갑"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  updateCurrentQuestion({
+                    singleAudioText: val,
+                    isSingleWord: true,
+                    questionText: val
+                  });
+                }}
+                placeholder="e.g. 들은 것을 고르십시오 / 지갑"
                 style={{
                   flex: 1,
                   minWidth: '200px',
@@ -1666,23 +1704,38 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               </button>
 
               {currentQuestion.singleAudioUrl && (
-                <button
-                  type="button"
-                  onClick={() => handlePlayPreview(`single-${activeQNum}`, currentQuestion.singleAudioUrl)}
-                  style={{
-                    backgroundColor: playingItemKey === `single-${activeQNum}` ? '#dc2626' : '#15803d',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '8px 14px',
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handlePlayPreview(`single-${activeQNum}`, currentQuestion.singleAudioUrl)}
+                    style={{
+                      backgroundColor: playingItemKey === `single-${activeQNum}` ? '#dc2626' : '#15803d',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 14px',
+                      fontWeight: '700',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {playingItemKey === `single-${activeQNum}` ? 'Stop' : 'Play Preview'}
+                  </button>
+
+                  <span style={{
+                    fontSize: '11px',
                     fontWeight: '700',
-                    fontSize: '12px',
-                    cursor: 'pointer',
+                    color: '#15803d',
+                    backgroundColor: '#dcfce7',
+                    border: '1px solid #bbf7d0',
+                    padding: '4px 8px',
+                    borderRadius: '5px',
                     whiteSpace: 'nowrap'
-                  }}
-                >
-                  {playingItemKey === `single-${activeQNum}` ? 'Stop' : 'Play Preview'}
-                </button>
+                  }}>
+                    ✓ Set as Question &amp; Option Audio
+                  </span>
+                </>
               )}
 
               <button
