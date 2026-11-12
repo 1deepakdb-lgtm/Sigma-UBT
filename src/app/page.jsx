@@ -652,7 +652,7 @@ export default function LoginPage() {
               boxShadow: authMode === "register" ? "0 4px 14px rgba(22, 163, 74, 0.35)" : "none"
             }}
           >
-            Register
+            Sign Up
           </button>
         </div>
 
@@ -876,11 +876,10 @@ export default function LoginPage() {
                 )}
               </label>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "14px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "14px" }}>
               {[
                 { key: "korean", label: "🇰🇷 Korean", sub: "EPS-TOPIK" },
-                { key: "japanese", label: "🇯🇵 Japanese", sub: "JLPT / JFT" },
-                { key: "both", label: "🌐 Both", sub: "All Courses" }
+                { key: "japanese", label: "🇯🇵 Japanese", sub: "JLPT / JFT" }
               ].map((opt) => (
                 <button
                   key={opt.key}
@@ -921,7 +920,7 @@ export default function LoginPage() {
               }}
               disabled={loading}
             >
-              {loading ? "REGISTERING..." : "REGISTER"}
+              {loading ? "SIGNING UP..." : "SIGN UP"}
             </button>
           </form>
         )}
@@ -1554,11 +1553,10 @@ export default function LoginPage() {
                     </span>
                   )}
                 </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                   {[
                     { key: "korean", label: "🇰🇷 Korean", sub: "EPS-TOPIK" },
-                    { key: "japanese", label: "🇯🇵 Japanese", sub: "JLPT / JFT" },
-                    { key: "both", label: "🌐 Both", sub: "All Courses" }
+                    { key: "japanese", label: "🇯🇵 Japanese", sub: "JLPT / JFT" }
                   ].map((opt) => (
                     <button
                       key={opt.key}
