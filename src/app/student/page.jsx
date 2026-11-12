@@ -1963,7 +1963,7 @@ const StudentDashboard = () => {
                 {/* 1. Book Services / Study Materials */}
                 <div
                   onClick={() => {
-                    setActiveBookFolder("EPS Book");
+                    setActiveBookFolder("");
                     setActiveTab("listening");
                   }}
                   style={{

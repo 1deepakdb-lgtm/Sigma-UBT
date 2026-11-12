@@ -4114,7 +4114,8 @@ export default function EpsBookReader({
       {/* ============================================================== */}
       {(studyLanguage === "korean" || studyLanguage === "both") && (
         <div style={{ marginBottom: studyLanguage === "both" ? "40px" : "0" }}>
-          {/* Korean Folder Selection Tabs */}
+          {/* 1. Korean Folder Selection Tabs (Shown when NO folder is entered) */}
+          {!isKoreanFolderOpen && (
           <div
             className="book-tabs-container"
             style={{
@@ -4182,12 +4183,6 @@ export default function EpsBookReader({
                   onClick={() => {
                     setActiveFolder(folder.name);
                     setIsKoreanFolderOpen(true);
-                    setTimeout(() => {
-                      const el = document.getElementById("korean-book-active-content");
-                      if (el) {
-                        el.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }
-                    }, 60);
                   }}
                   style={{
                     display: "flex",
@@ -4209,6 +4204,36 @@ export default function EpsBookReader({
                     flexShrink: 0
                   }}
                 >
+                  {/* Open in New Browser Tab Button */}
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(getFolderNewTabUrl("korean", folder.name), "_blank");
+                    }}
+                    title="Open this book in a new browser tab"
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      right: "10px",
+                      width: "30px",
+                      height: "30px",
+                      borderRadius: "8px",
+                      backgroundColor: "rgba(255, 255, 255, 0.95)",
+                      border: "1.5px solid #cbd5e1",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "14px",
+                      color: "#1e40af",
+                      fontWeight: "900",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+                      zIndex: 3
+                    }}
+                  >
+                    ↗
+                  </span>
+
                   {/* BOOK COVER PHOTO CONTAINER - FULL IMAGE WITH UNCLIPPED BORDERS */}
                   <div style={{
                     width: "100%",
@@ -4284,9 +4309,112 @@ export default function EpsBookReader({
             })}
             </div>
           </div>
+          )}
 
-          {/* ACTIVE BOOK CONTENT CONTAINER */}
+          {/* 2. ACTIVE BOOK CONTENT (Opened in dedicated page over this tab) */}
+          {isKoreanFolderOpen && (
           <div id="korean-book-active-content">
+            {/* TOP NAVIGATION BAR FOR OPENED BOOK */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                padding: "10px 14px",
+                backgroundColor: "#ffffff",
+                borderRadius: "14px",
+                border: "1.5px solid #dbeafe",
+                boxShadow: "0 2px 10px rgba(37, 99, 235, 0.06)",
+                marginBottom: "20px",
+                flexWrap: "wrap"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsKoreanFolderOpen(false)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 16px",
+                    backgroundColor: "#eff6ff",
+                    color: "#1d4ed8",
+                    border: "1.5px solid #bfdbfe",
+                    borderRadius: "10px",
+                    fontWeight: "800",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                    boxShadow: "0 2px 6px rgba(37, 99, 235, 0.08)"
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#dbeafe")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#eff6ff")}
+                >
+                  <span style={{ fontSize: "16px", fontWeight: "900" }}>←</span>
+                  <span>Back to Books</span>
+                </button>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "18px" }}>🇰🇷</span>
+                  <span style={{ fontSize: "16px", fontWeight: "900", color: "#0f172a" }}>
+                    {activeFolder}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quick switch between other books */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                {folders.map((f) => (
+                  <button
+                    key={f.id || f.name}
+                    type="button"
+                    onClick={() => {
+                      setActiveFolder(f.name);
+                      setIsKoreanFolderOpen(true);
+                    }}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      border: activeFolder === f.name ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
+                      backgroundColor: activeFolder === f.name ? "#2563eb" : "#f8fafc",
+                      color: activeFolder === f.name ? "#ffffff" : "#475569",
+                      fontSize: "12px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    {f.name}
+                  </button>
+                ))}
+
+                <a
+                  href={getFolderNewTabUrl("korean", activeFolder)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open this book in a new browser tab"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "6px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#0f172a",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    textDecoration: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span>↗</span>
+                  <span>New Tab</span>
+                </a>
+              </div>
+            </div>
             {/* RENDER EPS BOOK SECTION IF ACTIVE */}
             {activeFolder === "EPS Book" && (
             <>
@@ -5172,6 +5300,7 @@ export default function EpsBookReader({
             );
           })()}
           </div>
+          )}
         </div>
       )}
 
