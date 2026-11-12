@@ -1566,22 +1566,6 @@ export default function LoginPage() {
                   required
                   autoFocus
                 />
-                {/* Security info explaining passwordless authentication */}
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  backgroundColor: "#f0fdf4",
-                  border: "1px solid #bbf7d0",
-                  borderRadius: "6px",
-                  padding: "5px 8px",
-                  fontSize: "11px",
-                  color: "#166534",
-                  marginTop: "6px"
-                }}>
-                  <span>🔐</span>
-                  <span><strong>Password-Free:</strong> Authenticated directly with Google/Gmail. No password required.</span>
-                </div>
               </div>
 
               <div style={{ marginBottom: "16px" }}>
