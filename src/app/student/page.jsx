@@ -1958,36 +1958,57 @@ const StudentDashboard = () => {
                 Our Services
               </h2>
 
-              {/* 9-Card Grid (3x3): Every menu has its own distinct, vibrant color gradient */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+              {/* 9-Card Grid (3x3): Every menu has a unique 3D/vector icon and distinct style */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
                 {/* 1. Book Services / Study Materials */}
                 <div
                   onClick={() => setActiveTab("listening")}
                   style={{
-                    background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 45%, #c7d2fe 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #e0f2fe 0%, #bae6fd 50%, #c7d2fe 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(2, 132, 199, 0.1)",
-                    border: "1.5px solid rgba(186, 230, 253, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(2, 132, 199, 0.14)",
+                    border: "1.5px solid #93c5fd",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                      <rect x="8" y="28" width="32" height="10" rx="3" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="2"/>
-                      <rect x="8" y="18" width="32" height="10" rx="3" fill="#f59e0b" stroke="#d97706" strokeWidth="2"/>
-                      <rect x="8" y="8" width="32" height="10" rx="3" fill="#10b981" stroke="#059669" strokeWidth="2"/>
-                      <line x1="16" y1="8" x2="16" y2="38" stroke="#ffffff" strokeWidth="2"/>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #bfdbfe",
+                      boxShadow: "0 3px 8px rgba(37, 99, 235, 0.15)"
+                    }}
+                  >
+                    {/* Layered Color Books with Ribbon */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <rect x="5" y="24" width="26" height="6.5" rx="2" fill="#2563eb"/>
+                      <path d="M5 26h6v4.5H5z" fill="#1d4ed8"/>
+                      <rect x="7" y="16" width="24" height="6.5" rx="2" fill="#f59e0b"/>
+                      <path d="M7 18h6v4.5H7z" fill="#d97706"/>
+                      <rect x="9" y="8" width="22" height="6.5" rx="2" fill="#10b981"/>
+                      <path d="M9 10h5v4.5H9z" fill="#059669"/>
+                      <path d="M22 6v9l3-2 3 2V6z" fill="#ef4444"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     {isPureJapaneseStudent ? "Study Materials" : "Book Services"}
                   </span>
                 </div>
@@ -2000,31 +2021,50 @@ const StudentDashboard = () => {
                     setExamSetsPage(1);
                   }}
                   style={{
-                    background: "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 45%, #a7f3d0 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #dcfce7 0%, #bbf7d0 50%, #a7f3d0 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(16, 185, 129, 0.1)",
-                    border: "1.5px solid rgba(187, 247, 208, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(16, 185, 129, 0.14)",
+                    border: "1.5px solid #86efac",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                      <rect x="10" y="24" width="28" height="12" rx="3" fill="#10b981" stroke="#047857" strokeWidth="2"/>
-                      <rect x="10" y="14" width="28" height="10" rx="3" fill="#ef4444" stroke="#b91c1c" strokeWidth="2"/>
-                      <path d="M26 8v8a3 3 0 1 1-3-3h3" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
-                      <path d="M34 6v8a3 3 0 1 1-3-3h3" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
-                      <line x1="26" y1="8" x2="34" y2="6" stroke="#8b5cf6" strokeWidth="2.5"/>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #bbf7d0",
+                      boxShadow: "0 3px 8px rgba(16, 185, 129, 0.15)"
+                    }}
+                  >
+                    {/* Audio Headset with Music Notes on Book */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <rect x="6" y="21" width="24" height="6.5" rx="2" fill="#059669"/>
+                      <rect x="6" y="14" width="24" height="6" rx="2" fill="#dc2626"/>
+                      <path d="M11 6a8 8 0 0 1 14 0" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round"/>
+                      <circle cx="10" cy="13" r="2.5" fill="#7c3aed"/>
+                      <circle cx="26" cy="13" r="2.5" fill="#7c3aed"/>
+                      <path d="M21 8.5v3a1.5 1.5 0 1 1-1.5-1.5H21" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     {isPureJapaneseStudent ? "JFT-Basic CBT" : "Modal Bank"}
                   </span>
                 </div>
@@ -2037,34 +2077,52 @@ const StudentDashboard = () => {
                     setExamSetsPage(1);
                   }}
                   style={{
-                    background: "linear-gradient(135deg, #ffedd5 0%, #fed7aa 45%, #fecdd3 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #ffedd5 0%, #fed7aa 50%, #fecdd3 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(249, 115, 22, 0.1)",
-                    border: "1.5px solid rgba(254, 215, 170, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(249, 115, 22, 0.14)",
+                    border: "1.5px solid #fdba74",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                      <rect x="10" y="8" width="28" height="34" rx="4" fill="#ffffff" stroke="#ef4444" strokeWidth="2"/>
-                      <rect x="16" y="4" width="16" height="6" rx="2" fill="#ef4444"/>
-                      <rect x="14" y="18" width="20" height="20" rx="2" fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.5"/>
-                      <line x1="14" y1="24" x2="34" y2="24" stroke="#3b82f6" strokeWidth="1.5"/>
-                      <line x1="14" y1="30" x2="34" y2="30" stroke="#3b82f6" strokeWidth="1.5"/>
-                      <line x1="20" y1="18" x2="20" y2="38" stroke="#3b82f6" strokeWidth="1.5"/>
-                      <line x1="28" y1="18" x2="28" y2="38" stroke="#3b82f6" strokeWidth="1.5"/>
-                      <text x="24" y="15" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#ef4444">SCORE</text>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #fed7aa",
+                      boxShadow: "0 3px 8px rgba(249, 115, 22, 0.15)"
+                    }}
+                  >
+                    {/* Scorecard with Grid and Score Tag */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <rect x="7" y="6" width="22" height="26" rx="3.5" fill="#ffffff" stroke="#ef4444" strokeWidth="2"/>
+                      <rect x="12" y="3" width="12" height="5" rx="1.5" fill="#ef4444"/>
+                      <rect x="10" y="14" width="16" height="15" rx="1.5" fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.2"/>
+                      <line x1="10" y1="19" x2="26" y2="19" stroke="#3b82f6" strokeWidth="1.2"/>
+                      <line x1="10" y1="24" x2="26" y2="24" stroke="#3b82f6" strokeWidth="1.2"/>
+                      <line x1="15" y1="14" x2="15" y2="29" stroke="#3b82f6" strokeWidth="1.2"/>
+                      <line x1="21" y1="14" x2="21" y2="29" stroke="#3b82f6" strokeWidth="1.2"/>
+                      <text x="18" y="11.5" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#ef4444">SCORE</text>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     {isPureJapaneseStudent ? "JLPT Mock Tests" : "EPS-TOPIK UBT"}
                   </span>
                 </div>
@@ -2077,28 +2135,49 @@ const StudentDashboard = () => {
                     setExamSetsPage(1);
                   }}
                   style={{
-                    background: "linear-gradient(135deg, #fee2e2 0%, #fecdd3 45%, #ffe4e6 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #fee2e2 0%, #fecdd3 50%, #ffe4e6 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(225, 29, 72, 0.1)",
-                    border: "1.5px solid rgba(254, 205, 211, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(225, 29, 72, 0.14)",
+                    border: "1.5px solid #fda4af",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48">
-                      <path d="M24 4l3.5 4.5 5.5-1.5 2 5.5 5.5 1-0.5 5.5 4.5 3.5-3 5 3 5-4.5 3.5 0.5 5.5-5.5 1-2 5.5-5.5-1.5L24 44l-3.5-4.5-5.5 1.5-2-5.5-5.5-1 0.5-5.5-4.5-3.5 3-5-3-5 4.5-3.5-0.5-5.5 5.5-1 2-5.5 5.5 1.5z" fill="#dc2626"/>
-                      <text x="24" y="27" textAnchor="middle" fontSize="9" fontWeight="900" fill="#ffffff" letterSpacing="0.5">FREE</text>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #fecdd3",
+                      boxShadow: "0 3px 8px rgba(225, 29, 72, 0.15)"
+                    }}
+                  >
+                    {/* Starburst Badge with bold FREE label */}
+                    <svg width="28" height="28" viewBox="0 0 36 36">
+                      <path
+                        d="M18 3l2.8 3.5 4.4-1.2 1.6 4.3 4.4 0.8-0.4 4.5 3.6 2.8-2.4 3.9 2.4 4-3.6 2.7 0.4 4.5-4.4 0.8-1.6 4.4-4.4-1.3L18 35l-2.8-3.5-4.4 1.3-1.6-4.4-4.4-0.8 0.4-4.5-3.6-2.7 2.4-4-2.4-3.9 3.6-2.8-0.4-4.5 4.4-0.8 1.6-4.3 4.4 1.2z"
+                        fill="#dc2626"
+                      />
+                      <text x="18" y="21.5" textAnchor="middle" fontSize="7.5" fontWeight="900" fill="#ffffff" letterSpacing="0.4">FREE</text>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     {isPureKoreanStudent ? "Free UBT Exams" : isPureJapaneseStudent ? "Free Mock Sets" : "Free exams"}
                   </span>
                 </div>
@@ -2107,34 +2186,52 @@ const StudentDashboard = () => {
                 <div
                   onClick={() => setActiveTab("buyExam")}
                   style={{
-                    background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 45%, #fed7aa 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #fef3c7 0%, #fde68a 50%, #fed7aa 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(217, 119, 6, 0.1)",
-                    border: "1.5px solid rgba(253, 230, 138, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(217, 119, 6, 0.14)",
+                    border: "1.5px solid #fcd34d",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                      <circle cx="18" cy="38" r="3" fill="#64748b"/>
-                      <circle cx="34" cy="38" r="3" fill="#64748b"/>
-                      <path d="M10 14h6l4 18h16l4-14H18" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <rect x="22" y="8" width="16" height="20" rx="2" fill="#ffffff" stroke="#3b82f6" strokeWidth="1.5"/>
-                      <circle cx="30" cy="15" r="4" fill="#10b981"/>
-                      <text x="30" y="17.5" textAnchor="middle" fontSize="6.5" fontWeight="bold" fill="#ffffff">$</text>
-                      <line x1="25" y1="22" x2="35" y2="22" stroke="#94a3b8" strokeWidth="1.5"/>
-                      <line x1="25" y1="25" x2="31" y2="25" stroke="#94a3b8" strokeWidth="1.5"/>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #fde68a",
+                      boxShadow: "0 3px 8px rgba(217, 119, 6, 0.15)"
+                    }}
+                  >
+                    {/* Shopping Cart with Dollar Bill Package */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <circle cx="13" cy="29" r="2.2" fill="#475569"/>
+                      <circle cx="26" cy="29" r="2.2" fill="#475569"/>
+                      <path d="M7 11h4.5l3.2 14h13.3l3.2-11H13.5" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <rect x="17" y="7" width="13" height="15" rx="1.8" fill="#ffffff" stroke="#0284c7" strokeWidth="1.2"/>
+                      <circle cx="23.5" cy="12" r="3" fill="#10b981"/>
+                      <text x="23.5" y="14" textAnchor="middle" fontSize="4.8" fontWeight="bold" fill="#ffffff">$</text>
+                      <line x1="19.5" y1="17.5" x2="27.5" y2="17.5" stroke="#94a3b8" strokeWidth="1"/>
+                      <line x1="19.5" y1="19.5" x2="24.5" y2="19.5" stroke="#94a3b8" strokeWidth="1"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     {isPureKoreanStudent ? "Buy UBT Package" : isPureJapaneseStudent ? "Buy Mock Package" : "Buy Packages"}
                   </span>
                 </div>
@@ -2143,32 +2240,49 @@ const StudentDashboard = () => {
                 <div
                   onClick={() => setActiveTab("vocab")}
                   style={{
-                    background: "linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 45%, #fae8ff 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #f3e8ff 0%, #e9d5ff 50%, #fae8ff 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(147, 51, 234, 0.1)",
-                    border: "1.5px solid rgba(233, 213, 255, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(147, 51, 234, 0.14)",
+                    border: "1.5px solid #d8b4fe",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                      <path d="M8 38C13 36 19 36 24 39C29 36 35 36 40 38V11C35 9 29 9 24 12C19 9 13 9 8 11V38Z" fill="#ffffff" stroke="#9333ea" strokeWidth="2.5" strokeLinejoin="round"/>
-                      <path d="M24 12V39" stroke="#9333ea" strokeWidth="2.5"/>
-                      <path d="M13 18H19" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
-                      <path d="M13 24H19" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
-                      <path d="M29 18H35" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
-                      <path d="M29 24H35" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #e9d5ff",
+                      boxShadow: "0 3px 8px rgba(147, 51, 234, 0.15)"
+                    }}
+                  >
+                    {/* Dictionary Lexicon with Magnifying Glass */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <rect x="6" y="7" width="20" height="24" rx="3" fill="#ffffff" stroke="#9333ea" strokeWidth="2"/>
+                      <path d="M10 7v24" stroke="#c084fc" strokeWidth="1.8"/>
+                      <text x="17" y="17" textAnchor="middle" fontSize="8" fontWeight="900" fill="#7e22ce">가</text>
+                      <circle cx="23" cy="22" r="5" fill="#faf5ff" stroke="#3b82f6" strokeWidth="1.8"/>
+                      <line x1="26.5" y1="25.5" x2="30.5" y2="29.5" stroke="#3b82f6" strokeWidth="2.2" strokeLinecap="round"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     Dictionary
                   </span>
                 </div>
@@ -2177,31 +2291,49 @@ const StudentDashboard = () => {
                 <div
                   onClick={() => setActiveTab("results")}
                   style={{
-                    background: "linear-gradient(135deg, #ccfbf1 0%, #99f6e4 45%, #e0f2fe 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #ccfbf1 0%, #99f6e4 50%, #e0f2fe 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(13, 148, 136, 0.1)",
-                    border: "1.5px solid rgba(153, 246, 228, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(13, 148, 136, 0.14)",
+                    border: "1.5px solid #5eead4",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                      <rect x="8" y="10" width="32" height="30" rx="4" fill="#ffffff" stroke="#0d9488" strokeWidth="2.5"/>
-                      <rect x="14" y="24" width="5" height="12" rx="1.5" fill="#14b8a6"/>
-                      <rect x="22" y="18" width="5" height="18" rx="1.5" fill="#0d9488"/>
-                      <rect x="30" y="14" width="5" height="22" rx="1.5" fill="#042f2e"/>
-                      <path d="M12 18L22 14L28 17L36 10" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #99f6e4",
+                      boxShadow: "0 3px 8px rgba(13, 148, 136, 0.15)"
+                    }}
+                  >
+                    {/* Champion Gold Trophy with Victory Star */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <path d="M11 7h14v10a7 7 0 0 1-14 0V7z" fill="#facc15" stroke="#ca8a04" strokeWidth="1.8"/>
+                      <path d="M11 10H7a3 3 0 0 0 3 3h1" stroke="#ca8a04" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M25 10h4a3 3 0 0 1-3 3h-1" stroke="#ca8a04" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M18 17v7m-5 4h10v-4H13v4z" stroke="#ca8a04" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M18 9l1 2 2.2 0.3-1.6 1.6 0.4 2.1-2-1.1-2 1.1 0.4-2.1-1.6-1.6 2.2-0.3z" fill="#ffffff"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     Performance
                   </span>
                 </div>
@@ -2210,30 +2342,48 @@ const StudentDashboard = () => {
                 <div
                   onClick={() => setActiveTab("news")}
                   style={{
-                    background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 45%, #e0e7ff 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #ede9fe 0%, #ddd6fe 50%, #e0e7ff 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(99, 102, 241, 0.1)",
-                    border: "1.5px solid rgba(221, 214, 254, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(99, 102, 241, 0.14)",
+                    border: "1.5px solid #c4b5fd",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                      <path d="M30 14L16 20H10C8.89543 20 8 20.8954 8 22V26C8 27.1046 8.89543 28 10 28H16L30 34V14Z" fill="#6366f1" stroke="#4f46e5" strokeWidth="2"/>
-                      <path d="M14 28V36C14 37.1046 14.8954 38 16 38H18C19.1046 38 20 37.1046 20 36V28" fill="#a5b4fc"/>
-                      <path d="M35 19C37.5 21 39 23 39 24C39 25 37.5 27 35 29" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round"/>
-                      <path d="M38 14C41.5 17 43.5 20.5 43.5 24C43.5 27.5 41.5 31 38 34" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round"/>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #c7d2fe",
+                      boxShadow: "0 3px 8px rgba(99, 102, 241, 0.15)"
+                    }}
+                  >
+                    {/* Announcement Megaphone with Sound Waves */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <path d="M23 10L12 15H7a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h5l11 5V10z" fill="#6366f1" stroke="#4338ca" strokeWidth="1.8"/>
+                      <path d="M10 21v6a1.5 1.5 0 0 0 1.5 1.5h1A1.5 1.5 0 0 0 14 27v-6" fill="#a5b4fc" stroke="#4338ca" strokeWidth="1.2"/>
+                      <path d="M27 14c1.8 1.5 2.8 3 2.8 4s-1 2.5-2.8 4" stroke="#f59e0b" strokeWidth="2.2" strokeLinecap="round"/>
+                      <circle cx="23" cy="18" r="1.5" fill="#ffffff"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     Notice Board
                   </span>
                 </div>
@@ -2242,29 +2392,47 @@ const StudentDashboard = () => {
                 <div
                   onClick={() => setActiveTab("about")}
                   style={{
-                    background: "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 45%, #e0e7ff 100%)",
-                    borderRadius: "14px",
-                    padding: "14px 6px",
+                    background: "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 50%, #e0e7ff 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
                     cursor: "pointer",
-                    boxShadow: "0 2px 8px rgba(71, 85, 105, 0.1)",
-                    border: "1.5px solid rgba(226, 232, 240, 0.95)",
-                    minHeight: "102px",
-                    transition: "transform 0.15s, box-shadow 0.15s"
+                    boxShadow: "0 3px 12px rgba(71, 85, 105, 0.14)",
+                    border: "1.5px solid #cbd5e1",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
                 >
-                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
-                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                      <circle cx="24" cy="24" r="18" fill="#ffffff" stroke="#4f46e5" strokeWidth="2.5"/>
-                      <circle cx="24" cy="16" r="3" fill="#4f46e5"/>
-                      <rect x="22" y="22" width="4" height="14" rx="2" fill="#4f46e5"/>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #cbd5e1",
+                      boxShadow: "0 3px 8px rgba(71, 85, 105, 0.15)"
+                    }}
+                  >
+                    {/* Academy Shield with Columns & Verified Ribbon */}
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <path d="M18 5L7 9v9c0 6.5 4.5 11.5 11 13 6.5-1.5 11-6.5 11-13V9L18 5z" fill="#ffffff" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round"/>
+                      <path d="M12 14v8m6-8v8m6-8v8" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round"/>
+                      <path d="M10 24h16M11 13h14" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round"/>
                     </svg>
                   </div>
-                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
                     About Us
                   </span>
                 </div>
