@@ -1952,197 +1952,321 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Section 1: Our Services */}
+            {/* Section 1: Our Services (All Menus in Distinct Color Gradients) */}
             <div style={{ marginBottom: "28px" }}>
               <h2 style={{ color: "#111827", fontSize: "18px", fontWeight: "800", textAlign: "center", margin: "0 0 16px 0", letterSpacing: "-0.2px" }}>
                 Our Services
               </h2>
 
-              {/* 5-Card Grid: Row 1 has 3 cards, Row 2 has 2 cards centered */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {/* Row 1: 3 cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-                  {/* Card 1: Book Services */}
-                  <div
-                    onClick={() => setActiveTab("listening")}
-                    style={{
-                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
-                      borderRadius: "14px",
-                      padding: "14px 8px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.7)",
-                      minHeight: "100px",
-                      transition: "transform 0.15s, box-shadow 0.15s"
-                    }}
-                  >
-                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
-                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
-                        <rect x="8" y="28" width="32" height="10" rx="3" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="2"/>
-                        <rect x="8" y="18" width="32" height="10" rx="3" fill="#f59e0b" stroke="#d97706" strokeWidth="2"/>
-                        <rect x="8" y="8" width="32" height="10" rx="3" fill="#10b981" stroke="#059669" strokeWidth="2"/>
-                        <line x1="16" y1="8" x2="16" y2="38" stroke="#ffffff" strokeWidth="2"/>
-                      </svg>
-                    </div>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      {isPureJapaneseStudent ? "Study Materials" : "Book Services"}
-                    </span>
+              {/* 9-Card Grid (3x3): Every menu has its own distinct, vibrant color gradient */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                {/* 1. Book Services / Study Materials */}
+                <div
+                  onClick={() => setActiveTab("listening")}
+                  style={{
+                    background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 45%, #c7d2fe 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(2, 132, 199, 0.1)",
+                    border: "1.5px solid rgba(186, 230, 253, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                      <rect x="8" y="28" width="32" height="10" rx="3" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="2"/>
+                      <rect x="8" y="18" width="32" height="10" rx="3" fill="#f59e0b" stroke="#d97706" strokeWidth="2"/>
+                      <rect x="8" y="8" width="32" height="10" rx="3" fill="#10b981" stroke="#059669" strokeWidth="2"/>
+                      <line x1="16" y1="8" x2="16" y2="38" stroke="#ffffff" strokeWidth="2"/>
+                    </svg>
                   </div>
-
-                  {/* Card 2: Modal Bank / JFT-Basic CBT */}
-                  <div
-                    onClick={() => {
-                      setActiveTab("exams");
-                      setExamCategoryFilter(isPureJapaneseStudent ? "mock" : "ubt");
-                      setExamSetsPage(1);
-                    }}
-                    style={{
-                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
-                      borderRadius: "14px",
-                      padding: "14px 8px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.7)",
-                      minHeight: "100px",
-                      transition: "transform 0.15s, box-shadow 0.15s"
-                    }}
-                  >
-                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
-                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
-                        <rect x="10" y="24" width="28" height="12" rx="3" fill="#10b981" stroke="#047857" strokeWidth="2"/>
-                        <rect x="10" y="14" width="28" height="10" rx="3" fill="#ef4444" stroke="#b91c1c" strokeWidth="2"/>
-                        <path d="M26 8v8a3 3 0 1 1-3-3h3" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
-                        <path d="M34 6v8a3 3 0 1 1-3-3h3" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
-                        <line x1="26" y1="8" x2="34" y2="6" stroke="#8b5cf6" strokeWidth="2.5"/>
-                      </svg>
-                    </div>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      {isPureJapaneseStudent ? "JFT-Basic CBT" : "Modal Bank"}
-                    </span>
-                  </div>
-
-                  {/* Card 3: EPS-TOPIK UBT / JLPT Mock Tests */}
-                  <div
-                    onClick={() => {
-                      setActiveTab("exams");
-                      setExamCategoryFilter(isPureJapaneseStudent ? "mock" : "ubt");
-                      setExamSetsPage(1);
-                    }}
-                    style={{
-                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
-                      borderRadius: "14px",
-                      padding: "14px 8px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.7)",
-                      minHeight: "100px",
-                      transition: "transform 0.15s, box-shadow 0.15s"
-                    }}
-                  >
-                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
-                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
-                        <rect x="10" y="8" width="28" height="34" rx="4" fill="#ffffff" stroke="#ef4444" strokeWidth="2"/>
-                        <rect x="16" y="4" width="16" height="6" rx="2" fill="#ef4444"/>
-                        <rect x="14" y="18" width="20" height="20" rx="2" fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.5"/>
-                        <line x1="14" y1="24" x2="34" y2="24" stroke="#3b82f6" strokeWidth="1.5"/>
-                        <line x1="14" y1="30" x2="34" y2="30" stroke="#3b82f6" strokeWidth="1.5"/>
-                        <line x1="20" y1="18" x2="20" y2="38" stroke="#3b82f6" strokeWidth="1.5"/>
-                        <line x1="28" y1="18" x2="28" y2="38" stroke="#3b82f6" strokeWidth="1.5"/>
-                        <text x="24" y="15" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#ef4444">SCORE</text>
-                      </svg>
-                    </div>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      {isPureJapaneseStudent ? "JLPT Mock Tests" : "EPS-TOPIK UBT"}
-                    </span>
-                  </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    {isPureJapaneseStudent ? "Study Materials" : "Book Services"}
+                  </span>
                 </div>
 
-                {/* Row 2: 2 cards centered */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", maxWidth: "420px", margin: "0 auto", width: "100%" }}>
-                  {/* Card 4: Free exams */}
-                  <div
-                    onClick={() => {
-                      setActiveTab("exams");
-                      setExamCategoryFilter("free");
-                      setExamSetsPage(1);
-                    }}
-                    style={{
-                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
-                      borderRadius: "14px",
-                      padding: "14px 8px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.7)",
-                      minHeight: "100px",
-                      transition: "transform 0.15s, box-shadow 0.15s"
-                    }}
-                  >
-                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
-                      <svg width="36" height="36" viewBox="0 0 48 48">
-                        <path d="M24 4l3.5 4.5 5.5-1.5 2 5.5 5.5 1-0.5 5.5 4.5 3.5-3 5 3 5-4.5 3.5 0.5 5.5-5.5 1-2 5.5-5.5-1.5L24 44l-3.5-4.5-5.5 1.5-2-5.5-5.5-1 0.5-5.5-4.5-3.5 3-5-3-5 4.5-3.5-0.5-5.5 5.5-1 2-5.5 5.5 1.5z" fill="#dc2626"/>
-                        <text x="24" y="27" textAnchor="middle" fontSize="9" fontWeight="900" fill="#ffffff" letterSpacing="0.5">FREE</text>
-                      </svg>
-                    </div>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      {isPureKoreanStudent ? "Free UBT Exams" : isPureJapaneseStudent ? "Free Mock Sets" : "Free exams"}
-                    </span>
+                {/* 2. Modal Bank / JFT-Basic CBT */}
+                <div
+                  onClick={() => {
+                    setActiveTab("exams");
+                    setExamCategoryFilter(isPureJapaneseStudent ? "mock" : "ubt");
+                    setExamSetsPage(1);
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 45%, #a7f3d0 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(16, 185, 129, 0.1)",
+                    border: "1.5px solid rgba(187, 247, 208, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                      <rect x="10" y="24" width="28" height="12" rx="3" fill="#10b981" stroke="#047857" strokeWidth="2"/>
+                      <rect x="10" y="14" width="28" height="10" rx="3" fill="#ef4444" stroke="#b91c1c" strokeWidth="2"/>
+                      <path d="M26 8v8a3 3 0 1 1-3-3h3" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
+                      <path d="M34 6v8a3 3 0 1 1-3-3h3" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"/>
+                      <line x1="26" y1="8" x2="34" y2="6" stroke="#8b5cf6" strokeWidth="2.5"/>
+                    </svg>
                   </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    {isPureJapaneseStudent ? "JFT-Basic CBT" : "Modal Bank"}
+                  </span>
+                </div>
 
-                  {/* Card 5: Buy Exam */}
-                  <div
-                    onClick={() => setActiveTab("buyExam")}
-                    style={{
-                      background: "linear-gradient(135deg, #fed7aa 0%, #fecdd3 35%, #bfdbfe 100%)",
-                      borderRadius: "14px",
-                      padding: "14px 8px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.7)",
-                      minHeight: "100px",
-                      transition: "transform 0.15s, box-shadow 0.15s"
-                    }}
-                  >
-                    <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
-                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
-                        <circle cx="18" cy="38" r="3" fill="#64748b"/>
-                        <circle cx="34" cy="38" r="3" fill="#64748b"/>
-                        <path d="M10 14h6l4 18h16l4-14H18" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <rect x="22" y="8" width="16" height="20" rx="2" fill="#ffffff" stroke="#3b82f6" strokeWidth="1.5"/>
-                        <circle cx="30" cy="15" r="4" fill="#10b981"/>
-                        <text x="30" y="17.5" textAnchor="middle" fontSize="6.5" fontWeight="bold" fill="#ffffff">$</text>
-                        <line x1="25" y1="22" x2="35" y2="22" stroke="#94a3b8" strokeWidth="1.5"/>
-                        <line x1="25" y1="25" x2="31" y2="25" stroke="#94a3b8" strokeWidth="1.5"/>
-                      </svg>
-                    </div>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#111827", lineHeight: "1.2" }}>
-                      {isPureKoreanStudent ? "Buy UBT Package" : isPureJapaneseStudent ? "Buy Mock Package" : "Buy Exam"}
-                    </span>
+                {/* 3. EPS-TOPIK UBT / JLPT Mock Tests */}
+                <div
+                  onClick={() => {
+                    setActiveTab("exams");
+                    setExamCategoryFilter(isPureJapaneseStudent ? "mock" : "ubt");
+                    setExamSetsPage(1);
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #ffedd5 0%, #fed7aa 45%, #fecdd3 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(249, 115, 22, 0.1)",
+                    border: "1.5px solid rgba(254, 215, 170, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                      <rect x="10" y="8" width="28" height="34" rx="4" fill="#ffffff" stroke="#ef4444" strokeWidth="2"/>
+                      <rect x="16" y="4" width="16" height="6" rx="2" fill="#ef4444"/>
+                      <rect x="14" y="18" width="20" height="20" rx="2" fill="#eff6ff" stroke="#3b82f6" strokeWidth="1.5"/>
+                      <line x1="14" y1="24" x2="34" y2="24" stroke="#3b82f6" strokeWidth="1.5"/>
+                      <line x1="14" y1="30" x2="34" y2="30" stroke="#3b82f6" strokeWidth="1.5"/>
+                      <line x1="20" y1="18" x2="20" y2="38" stroke="#3b82f6" strokeWidth="1.5"/>
+                      <line x1="28" y1="18" x2="28" y2="38" stroke="#3b82f6" strokeWidth="1.5"/>
+                      <text x="24" y="15" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#ef4444">SCORE</text>
+                    </svg>
                   </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    {isPureJapaneseStudent ? "JLPT Mock Tests" : "EPS-TOPIK UBT"}
+                  </span>
+                </div>
+
+                {/* 4. Free UBT Exams / Free Mock Sets */}
+                <div
+                  onClick={() => {
+                    setActiveTab("exams");
+                    setExamCategoryFilter("free");
+                    setExamSetsPage(1);
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #fee2e2 0%, #fecdd3 45%, #ffe4e6 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(225, 29, 72, 0.1)",
+                    border: "1.5px solid rgba(254, 205, 211, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48">
+                      <path d="M24 4l3.5 4.5 5.5-1.5 2 5.5 5.5 1-0.5 5.5 4.5 3.5-3 5 3 5-4.5 3.5 0.5 5.5-5.5 1-2 5.5-5.5-1.5L24 44l-3.5-4.5-5.5 1.5-2-5.5-5.5-1 0.5-5.5-4.5-3.5 3-5-3-5 4.5-3.5-0.5-5.5 5.5-1 2-5.5 5.5 1.5z" fill="#dc2626"/>
+                      <text x="24" y="27" textAnchor="middle" fontSize="9" fontWeight="900" fill="#ffffff" letterSpacing="0.5">FREE</text>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    {isPureKoreanStudent ? "Free UBT Exams" : isPureJapaneseStudent ? "Free Mock Sets" : "Free exams"}
+                  </span>
+                </div>
+
+                {/* 5. Buy UBT Package / Buy Exam */}
+                <div
+                  onClick={() => setActiveTab("buyExam")}
+                  style={{
+                    background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 45%, #fed7aa 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(217, 119, 6, 0.1)",
+                    border: "1.5px solid rgba(253, 230, 138, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                      <circle cx="18" cy="38" r="3" fill="#64748b"/>
+                      <circle cx="34" cy="38" r="3" fill="#64748b"/>
+                      <path d="M10 14h6l4 18h16l4-14H18" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <rect x="22" y="8" width="16" height="20" rx="2" fill="#ffffff" stroke="#3b82f6" strokeWidth="1.5"/>
+                      <circle cx="30" cy="15" r="4" fill="#10b981"/>
+                      <text x="30" y="17.5" textAnchor="middle" fontSize="6.5" fontWeight="bold" fill="#ffffff">$</text>
+                      <line x1="25" y1="22" x2="35" y2="22" stroke="#94a3b8" strokeWidth="1.5"/>
+                      <line x1="25" y1="25" x2="31" y2="25" stroke="#94a3b8" strokeWidth="1.5"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    {isPureKoreanStudent ? "Buy UBT Package" : isPureJapaneseStudent ? "Buy Mock Package" : "Buy Packages"}
+                  </span>
+                </div>
+
+                {/* 6. Dictionary (Vocabulary) */}
+                <div
+                  onClick={() => setActiveTab("vocab")}
+                  style={{
+                    background: "linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 45%, #fae8ff 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(147, 51, 234, 0.1)",
+                    border: "1.5px solid rgba(233, 213, 255, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                      <path d="M8 38C13 36 19 36 24 39C29 36 35 36 40 38V11C35 9 29 9 24 12C19 9 13 9 8 11V38Z" fill="#ffffff" stroke="#9333ea" strokeWidth="2.5" strokeLinejoin="round"/>
+                      <path d="M24 12V39" stroke="#9333ea" strokeWidth="2.5"/>
+                      <path d="M13 18H19" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M13 24H19" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M29 18H35" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M29 24H35" stroke="#a855f7" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    Dictionary
+                  </span>
+                </div>
+
+                {/* 7. Performance & Results */}
+                <div
+                  onClick={() => setActiveTab("results")}
+                  style={{
+                    background: "linear-gradient(135deg, #ccfbf1 0%, #99f6e4 45%, #e0f2fe 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(13, 148, 136, 0.1)",
+                    border: "1.5px solid rgba(153, 246, 228, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                      <rect x="8" y="10" width="32" height="30" rx="4" fill="#ffffff" stroke="#0d9488" strokeWidth="2.5"/>
+                      <rect x="14" y="24" width="5" height="12" rx="1.5" fill="#14b8a6"/>
+                      <rect x="22" y="18" width="5" height="18" rx="1.5" fill="#0d9488"/>
+                      <rect x="30" y="14" width="5" height="22" rx="1.5" fill="#042f2e"/>
+                      <path d="M12 18L22 14L28 17L36 10" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    Performance
+                  </span>
+                </div>
+
+                {/* 8. Notice & Messages */}
+                <div
+                  onClick={() => setActiveTab("news")}
+                  style={{
+                    background: "linear-gradient(135deg, #ede9fe 0%, #ddd6fe 45%, #e0e7ff 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(99, 102, 241, 0.1)",
+                    border: "1.5px solid rgba(221, 214, 254, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                      <path d="M30 14L16 20H10C8.89543 20 8 20.8954 8 22V26C8 27.1046 8.89543 28 10 28H16L30 34V14Z" fill="#6366f1" stroke="#4f46e5" strokeWidth="2"/>
+                      <path d="M14 28V36C14 37.1046 14.8954 38 16 38H18C19.1046 38 20 37.1046 20 36V28" fill="#a5b4fc"/>
+                      <path d="M35 19C37.5 21 39 23 39 24C39 25 37.5 27 35 29" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round"/>
+                      <path d="M38 14C41.5 17 43.5 20.5 43.5 24C43.5 27.5 41.5 31 38 34" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    Notice Board
+                  </span>
+                </div>
+
+                {/* 9. About Us */}
+                <div
+                  onClick={() => setActiveTab("about")}
+                  style={{
+                    background: "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 45%, #e0e7ff 100%)",
+                    borderRadius: "14px",
+                    padding: "14px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(71, 85, 105, 0.1)",
+                    border: "1.5px solid rgba(226, 232, 240, 0.95)",
+                    minHeight: "102px",
+                    transition: "transform 0.15s, box-shadow 0.15s"
+                  }}
+                >
+                  <div style={{ width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 5 }}>
+                    <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                      <circle cx="24" cy="24" r="18" fill="#ffffff" stroke="#4f46e5" strokeWidth="2.5"/>
+                      <circle cx="24" cy="16" r="3" fill="#4f46e5"/>
+                      <rect x="22" y="22" width="4" height="14" rx="2" fill="#4f46e5"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#0f172a", lineHeight: "1.2" }}>
+                    About Us
+                  </span>
                 </div>
               </div>
             </div>
