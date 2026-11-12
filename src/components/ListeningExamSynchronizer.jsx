@@ -493,8 +493,9 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         }
       }
 
-      // 3. Question Prompt Audio
-      if (!previewCancelRef.current) {
+      // 3. Question Prompt Audio (only if explicit question audio exists or NOT single audio)
+      const hasSingleAudio = Boolean(q.isSingleWord || q.singleAudioText?.trim() || q.singleAudioUrl);
+      if (!previewCancelRef.current && (q.questionAudioUrl || (!hasSingleAudio && q.questionText?.trim()))) {
         setPreviewStage('prompt');
         let promptUrl = q.questionAudioUrl;
         if (!promptUrl && q.questionText?.trim()) {
@@ -506,8 +507,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         }
         if (previewCancelRef.current) return;
 
-        // 3.0s Gap after Question Prompt (only if options follow)
-        const hasSingleAudio = Boolean(q.isSingleWord || q.singleAudioText?.trim() || q.singleAudioUrl);
+        // Gap after Question Prompt (only if options follow)
         if (optionGapSec > 0 && !hasSingleAudio) {
           setPreviewStage('gap-prompt');
           await waitSeconds(optionGapSec);
@@ -516,13 +516,15 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       }
 
       // 4. Play Single Audio Text if set (skips options 1-4 entirely)
-      const hasSingleAudio = Boolean(q.isSingleWord || q.singleAudioText?.trim() || q.singleAudioUrl);
       if (hasSingleAudio) {
         setPreviewStage('single-word');
         let singleUrl = q.singleAudioUrl;
-        if (!singleUrl && q.singleAudioText?.trim()) {
-          const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-          singleUrl = `/api/tts?text=${encodeURIComponent(q.singleAudioText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+        if (!singleUrl) {
+          const wordToSpeak = (q.singleAudioText || q.options[0]?.text || '').replace(/^[0-9]+번[\.\,\s]*/, '').trim();
+          if (wordToSpeak) {
+            const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+            singleUrl = `/api/tts?text=${encodeURIComponent(wordToSpeak)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+          }
         }
         if (singleUrl) {
           await playAndWait(singleUrl);
@@ -827,12 +829,14 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           }
         }
 
-        // 3. Question Audio Prompt Buffer
+        const hasSingleAudio = Boolean(q.isSingleWord || q.singleAudioText?.trim() || q.singleAudioUrl);
+
+        // 3. Question Audio Prompt Buffer (only if explicit uploaded audio exists or NOT single audio)
         let qBuffer = null;
         if (q.questionAudioUrl) {
           qBuffer = await fetchAndDecodeAudio(decodeCtx, q.questionAudioUrl);
-        } else if (q.questionText?.trim()) {
-          // Auto synthesize if text provided
+        } else if (!hasSingleAudio && q.questionText?.trim()) {
+          // Auto synthesize question prompt only when not single word question
           const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
           const ttsUrl = `/api/tts?text=${encodeURIComponent(q.questionText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
           qBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
@@ -842,17 +846,18 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           segmentsToStitch.push({ type: 'audio', buffer: qBuffer, label: `Q${q.qNum} Prompt` });
         }
 
-        const hasSingleAudio = Boolean(q.isSingleWord || q.singleAudioText?.trim() || q.singleAudioUrl);
-
         if (hasSingleAudio) {
-          // If single audio text/url is set: stitch this text only and SKIP options 1-4!
+          // Stitch single word audio and SKIP options 1-4!
           let singleBuffer = null;
           if (q.singleAudioUrl) {
             singleBuffer = await fetchAndDecodeAudio(decodeCtx, q.singleAudioUrl);
-          } else if (q.singleAudioText?.trim()) {
-            const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-            const ttsUrl = `/api/tts?text=${encodeURIComponent(q.singleAudioText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
-            singleBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
+          } else {
+            const wordToSpeak = (q.singleAudioText || q.options[0]?.text || '').replace(/^[0-9]+번[\.\,\s]*/, '').trim();
+            if (wordToSpeak) {
+              const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+              const ttsUrl = `/api/tts?text=${encodeURIComponent(wordToSpeak)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+              singleBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
+            }
           }
 
           if (singleBuffer) {
@@ -1408,7 +1413,26 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => handlePreviewSingleSequence(activeQNum)}
+              style={{
+                backgroundColor: previewStage ? '#dc2626' : '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '5px',
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              <span>{previewStage ? '■ Stop' : `▶ Test Q${activeQNum} Audio`}</span>
+            </button>
             <button
               type="button"
               disabled={activeQNum <= 21}
@@ -1443,214 +1467,6 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             >
               Next (Q{activeQNum + 1})
             </button>
-          </div>
-        </div>
-
-        {/* SEQUENCE FLOW PREVIEW BAR FOR THIS QUESTION */}
-        <div style={{
-          backgroundColor: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '10px 14px',
-          marginBottom: '16px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12.5px', fontWeight: '800', color: '#1e3a8a' }}>
-              Question {activeQNum} Sequence Flow:
-            </span>
-
-            <button
-              type="button"
-              onClick={() => handlePreviewSingleSequence(activeQNum)}
-              style={{
-                backgroundColor: previewStage ? '#dc2626' : '#2563eb',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '5px',
-                padding: '5px 12px',
-                fontSize: '11.5px',
-                fontWeight: '700',
-                cursor: 'pointer'
-              }}
-            >
-              {previewStage ? 'Stop Preview' : `Test Sequence (Q${activeQNum})`}
-            </button>
-          </div>
-
-          {/* Clean Sequence Pills */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', fontSize: '11.5px', fontWeight: '600' }}>
-            <span style={{
-              padding: '3px 7px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'bell' ? '#fde68a' : '#ffffff',
-              color: previewStage === 'bell' ? '#78350f' : '#1e3a8a',
-              border: '1px solid #cbd5e1'
-            }}>
-              Bell
-            </span>
-
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'gap-bell' ? '#bbf7d0' : '#f1f5f9',
-              color: '#334155'
-            }}>
-              {bellGapSec}s Gap
-            </span>
-
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 7px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'qnum' ? '#bfdbfe' : '#ffffff',
-              color: '#1e3a8a',
-              border: '1px solid #cbd5e1'
-            }}>
-              {activeQNum}번
-            </span>
-
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: previewStage === 'gap-qnum' ? '#bbf7d0' : '#f1f5f9',
-              color: '#334155'
-            }}>
-              {qNumGapSec}s Gap
-            </span>
-
-            {(currentQuestion.questionAudioUrl || currentQuestion.questionText?.trim() || !isSingleWord) && (
-              <>
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 7px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'prompt' ? '#bae6fd' : '#ffffff',
-                  color: '#0369a1',
-                  border: '1px solid #cbd5e1'
-                }}>
-                  Question Audio
-                </span>
-              </>
-            )}
-
-            {isSingleWord ? (
-              <>
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 8px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'single-word' ? '#bbf7d0' : '#f0fdf4',
-                  color: '#15803d',
-                  border: '1.5px solid #86efac',
-                  fontWeight: '700'
-                }}>
-                  🎯 Single Word Audio
-                </span>
-              </>
-            ) : (
-              <>
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 6px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'gap-prompt' ? '#bbf7d0' : '#f1f5f9',
-                  color: '#334155'
-                }}>
-                  {optionGapSec}s Gap
-                </span>
-
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 6px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'opt-1' ? '#c7d2fe' : '#ffffff',
-                  color: '#3730a3',
-                  border: '1px solid #cbd5e1'
-                }}>
-                  Option 1
-                </span>
-
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 6px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'gap-opt-1' ? '#bbf7d0' : '#f1f5f9',
-                  color: '#334155'
-                }}>
-                  {optionGapSec}s
-                </span>
-
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 6px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'opt-2' ? '#c7d2fe' : '#ffffff',
-                  color: '#3730a3',
-                  border: '1px solid #cbd5e1'
-                }}>
-                  Option 2
-                </span>
-
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 6px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'gap-opt-2' ? '#bbf7d0' : '#f1f5f9',
-                  color: '#334155'
-                }}>
-                  {optionGapSec}s
-                </span>
-
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 6px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'opt-3' ? '#c7d2fe' : '#ffffff',
-                  color: '#3730a3',
-                  border: '1px solid #cbd5e1'
-                }}>
-                  Option 3
-                </span>
-
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 6px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'gap-opt-3' ? '#bbf7d0' : '#f1f5f9',
-                  color: '#334155'
-                }}>
-                  {optionGapSec}s
-                </span>
-
-                <span style={{ color: '#94a3b8' }}>→</span>
-                <span style={{
-                  padding: '3px 6px',
-                  borderRadius: '5px',
-                  backgroundColor: previewStage === 'opt-4' ? '#c7d2fe' : '#ffffff',
-                  color: '#3730a3',
-                  border: '1px solid #cbd5e1'
-                }}>
-                  Option 4
-                </span>
-              </>
-            )}
-
-            <span style={{ color: '#94a3b8' }}>→</span>
-
-            <span style={{
-              padding: '3px 6px',
-              borderRadius: '5px',
-              backgroundColor: '#fef3c7',
-              color: '#92400e',
-              border: '1px solid #fde68a'
-            }}>
-              {questionGapSec}s (Next Q)
-            </span>
           </div>
         </div>
 
@@ -1868,6 +1684,28 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                   {playingItemKey === `single-${activeQNum}` ? 'Stop' : 'Play Preview'}
                 </button>
               )}
+
+              <button
+                type="button"
+                disabled={activeQNum >= 40}
+                onClick={() => setActiveQNum(prev => Math.min(40, prev + 1))}
+                style={{
+                  backgroundColor: activeQNum >= 40 ? '#94a3b8' : '#1e3a8a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontWeight: '700',
+                  fontSize: '12px',
+                  cursor: activeQNum >= 40 ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  marginLeft: 'auto'
+                }}
+              >
+                <span>Next (Q{activeQNum + 1}) →</span>
+              </button>
             </div>
           ) : (
 
@@ -1965,6 +1803,66 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             ))}
           </div>
           )}
+
+          {/* BOTTOM NAVIGATION: NEXT BUTTON FOR ALL OPTIONS */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '20px',
+            paddingTop: '16px',
+            borderTop: '1.5px solid #f1f5f9',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <button
+              type="button"
+              disabled={activeQNum <= 21}
+              onClick={() => setActiveQNum(prev => Math.max(21, prev - 1))}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '7px',
+                border: '1px solid #cbd5e1',
+                backgroundColor: activeQNum <= 21 ? '#f8fafc' : '#ffffff',
+                color: activeQNum <= 21 ? '#94a3b8' : '#334155',
+                fontWeight: '700',
+                fontSize: '12.5px',
+                cursor: activeQNum <= 21 ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>← Previous (Q{activeQNum - 1})</span>
+            </button>
+
+            <span style={{ fontSize: '13px', fontWeight: '800', color: '#64748b' }}>
+              Question {activeQNum} of 40
+            </span>
+
+            <button
+              type="button"
+              disabled={activeQNum >= 40}
+              onClick={() => setActiveQNum(prev => Math.min(40, prev + 1))}
+              style={{
+                backgroundColor: activeQNum >= 40 ? '#94a3b8' : '#1e3a8a',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '7px',
+                padding: '9px 24px',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: activeQNum >= 40 ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: activeQNum >= 40 ? 'none' : '0 2px 8px rgba(30, 58, 138, 0.25)'
+              }}
+            >
+              <span>Next Question (Q{activeQNum + 1})</span>
+              <span>→</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
