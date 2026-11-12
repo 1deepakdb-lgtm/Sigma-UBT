@@ -292,6 +292,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       questionAudioFile: null,
       questionDuration: 0,
       repeatQuestion: 1, // 1 time or 2 times
+      nextGapSec: 7.0, // Gap / pause before next question begins
       options: [
         { id: 1, text: sample.options[0] || '1번', audioUrl: null, audioFile: null, duration: 0 },
         { id: 2, text: sample.options[1] || '2번', audioUrl: null, audioFile: null, duration: 0 },
@@ -553,6 +554,13 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             await waitSeconds(optionGapSec);
           }
         }
+      }
+
+      // 5. Gap before next question starts
+      const qNextGap = q.nextGapSec !== undefined && q.nextGapSec !== null ? q.nextGapSec : questionGapSec;
+      if (qNextGap > 0 && !previewCancelRef.current) {
+        setPreviewStage('gap-next');
+        await waitSeconds(qNextGap);
       }
     } catch (e) {
       console.error('Sequence preview failed:', e);
@@ -924,9 +932,10 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           }
         }
 
-        // 4. Insert 7-second gap between questions (except after last question Q40)
-        if (i < totalQuestionsCount - 1) {
-          segmentsToStitch.push({ type: 'silence', durationSec: questionGapSec, label: `Inter-Question Gap 7s` });
+        // 4. Insert gap between questions (using each question's individual nextGapSec)
+        const qNextGap = q.nextGapSec !== undefined && q.nextGapSec !== null ? q.nextGapSec : questionGapSec;
+        if (i < totalQuestionsCount - 1 && qNextGap > 0) {
+          segmentsToStitch.push({ type: 'silence', durationSec: qNextGap, label: `Q${q.qNum} Next Gap (${qNextGap}s)` });
         }
       }
 
@@ -1481,6 +1490,41 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             >
               Previous (Q{activeQNum - 1})
             </button>
+            <label style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '5px',
+              padding: '3px 8px',
+              fontSize: '11.5px',
+              fontWeight: '700',
+              color: '#1e40af'
+            }}>
+              <span>⏱️ Next Q Timing:</span>
+              <input
+                type="number"
+                min="0"
+                max="20"
+                step="0.5"
+                value={currentQuestion.nextGapSec ?? questionGapSec}
+                onChange={(e) => updateCurrentQuestion({ nextGapSec: parseFloat(e.target.value) || 0 })}
+                style={{
+                  width: '46px',
+                  padding: '2px 4px',
+                  borderRadius: '3px',
+                  border: '1px solid #93c5fd',
+                  fontWeight: '800',
+                  fontSize: '11.5px',
+                  textAlign: 'center',
+                  color: '#1e3a8a',
+                  backgroundColor: '#ffffff'
+                }}
+              />
+              <span>s</span>
+            </label>
+
             <button
               type="button"
               disabled={activeQNum >= 40}
@@ -1738,27 +1782,63 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 </>
               )}
 
-              <button
-                type="button"
-                disabled={activeQNum >= 40}
-                onClick={() => setActiveQNum(prev => Math.min(40, prev + 1))}
-                style={{
-                  backgroundColor: activeQNum >= 40 ? '#94a3b8' : '#1e3a8a',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontWeight: '700',
-                  fontSize: '12px',
-                  cursor: activeQNum >= 40 ? 'not-allowed' : 'pointer',
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+                <label style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '5px',
-                  marginLeft: 'auto'
-                }}
-              >
-                <span>Next (Q{activeQNum + 1}) →</span>
-              </button>
+                  gap: '4px',
+                  fontSize: '11.5px',
+                  fontWeight: '700',
+                  color: '#1e40af',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '5px',
+                  padding: '4px 8px'
+                }}>
+                  <span>⏱️ Next Q Timing:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    step="0.5"
+                    value={currentQuestion.nextGapSec ?? questionGapSec}
+                    onChange={(e) => updateCurrentQuestion({ nextGapSec: parseFloat(e.target.value) || 0 })}
+                    style={{
+                      width: '46px',
+                      padding: '2px 4px',
+                      borderRadius: '4px',
+                      border: '1px solid #93c5fd',
+                      fontWeight: '800',
+                      fontSize: '11.5px',
+                      textAlign: 'center',
+                      color: '#1e3a8a',
+                      backgroundColor: '#ffffff'
+                    }}
+                  />
+                  <span>s</span>
+                </label>
+
+                <button
+                  type="button"
+                  disabled={activeQNum >= 40}
+                  onClick={() => setActiveQNum(prev => Math.min(40, prev + 1))}
+                  style={{
+                    backgroundColor: activeQNum >= 40 ? '#94a3b8' : '#1e3a8a',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    cursor: activeQNum >= 40 ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <span>Next (Q{activeQNum + 1}) →</span>
+                </button>
+              </div>
             </div>
           ) : (
 
@@ -1893,28 +1973,65 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
               Question {activeQNum} of 40
             </span>
 
-            <button
-              type="button"
-              disabled={activeQNum >= 40}
-              onClick={() => setActiveQNum(prev => Math.min(40, prev + 1))}
-              style={{
-                backgroundColor: activeQNum >= 40 ? '#94a3b8' : '#1e3a8a',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '7px',
-                padding: '9px 24px',
-                fontWeight: '700',
-                fontSize: '13px',
-                cursor: activeQNum >= 40 ? 'not-allowed' : 'pointer',
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <label style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                boxShadow: activeQNum >= 40 ? 'none' : '0 2px 8px rgba(30, 58, 138, 0.25)'
-              }}
-            >
-              <span>Next Question (Q{activeQNum + 1})</span>
-              <span>→</span>
-            </button>
+                gap: '6px',
+                backgroundColor: '#eff6ff',
+                border: '1.5px solid #bfdbfe',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: '700',
+                color: '#1e40af'
+              }}>
+                <span>⏱️ Next Question Timing:</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="0.5"
+                  value={currentQuestion.nextGapSec ?? questionGapSec}
+                  onChange={(e) => updateCurrentQuestion({ nextGapSec: parseFloat(e.target.value) || 0 })}
+                  style={{
+                    width: '54px',
+                    padding: '3px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid #93c5fd',
+                    fontWeight: '800',
+                    fontSize: '12.5px',
+                    textAlign: 'center',
+                    color: '#1e3a8a',
+                    backgroundColor: '#ffffff'
+                  }}
+                />
+                <span>sec</span>
+              </label>
+
+              <button
+                type="button"
+                disabled={activeQNum >= 40}
+                onClick={() => setActiveQNum(prev => Math.min(40, prev + 1))}
+                style={{
+                  backgroundColor: activeQNum >= 40 ? '#94a3b8' : '#1e3a8a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '7px',
+                  padding: '9px 24px',
+                  fontWeight: '700',
+                  fontSize: '13px',
+                  cursor: activeQNum >= 40 ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: activeQNum >= 40 ? 'none' : '0 2px 8px rgba(30, 58, 138, 0.25)'
+                }}
+              >
+                <span>Next Question (Q{activeQNum + 1})</span>
+                <span>→</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
