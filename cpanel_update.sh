@@ -15,6 +15,11 @@ fi
 
 echo "🚀 [ExamJK] Starting update in $(pwd)..."
 
+# Ensure convenient shortcut exists in $HOME so 'bash cpanel_update.sh' works from ~
+if [ -n "$HOME" ] && [ -d "$HOME" ]; then
+  ln -sf "$(pwd)/cpanel_update.sh" "$HOME/cpanel_update.sh" 2>/dev/null || true
+fi
+
 # 1. Kill stale node processes holding old build in memory
 pkill -9 -u examjkco node 2>/dev/null || true
 

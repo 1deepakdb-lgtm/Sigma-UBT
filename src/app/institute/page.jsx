@@ -4154,7 +4154,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           }
         }
 
-        @media (orientation: landscape) and (max-height: 550px) {
+        @media (orientation: landscape) and (max-height: 650px) {
           :global(.institute-landscape-menu-toggle) {
             display: inline-flex !important;
           }

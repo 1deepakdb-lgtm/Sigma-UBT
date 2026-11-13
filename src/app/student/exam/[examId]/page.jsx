@@ -1118,12 +1118,15 @@ const StudentExam = () => {
           margin: auto;
           justify-content: center;
           min-height: 0;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
         }
         .ubt-exam-card {
           background-color: rgba(255, 255, 255, 0.95);
           border: 1px solid #cbd5e1;
           border-top: none;
-          border-radius: 0 0 8px 8px;
+          border-radius: 0 0 16px 16px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.06);
           display: flex;
           flex-direction: column;
@@ -1160,29 +1163,46 @@ const StudentExam = () => {
           display: flex;
           background-color: #0284c7;
           color: white;
-          padding: 12px 20px;
-          border-radius: 8px 8px 0 0;
+          padding: 14px 22px;
+          border-radius: 16px 16px 0 0;
           justify-content: space-between;
           font-weight: bold;
-          font-size: 15px;
+          font-size: 15.5px;
           gap: 8px;
         }
         .ubt-exam-nav-bar {
           display: flex;
-          padding: 12px 25px;
+          padding: 14px 24px;
           background-color: #f8fafc;
           border-top: 1px solid #cbd5e1;
-          border-radius: 0 0 8px 8px;
+          border-radius: 0 0 16px 16px;
           justify-content: space-between;
-          gap: 8px;
+          align-items: center;
+          gap: 12px;
           flex-shrink: 0;
+        }
+        .ubt-exam-nav-bar button {
+          background-color: #0ea5e9;
+          color: white;
+          border: none;
+          padding: 12px 28px;
+          border-radius: 8px;
+          font-weight: 800;
+          font-size: 15px;
+          cursor: pointer;
+          letter-spacing: 0.3px;
+          box-shadow: 0 2px 6px rgba(14, 165, 233, 0.35);
+          transition: all 0.15s ease;
+        }
+        .ubt-exam-nav-bar button:active {
+          transform: scale(0.97);
         }
         .ubt-overview-box {
           background-color: rgba(255, 255, 255, 0.95);
           border: 1px solid #cbd5e1;
           border-top: none;
           padding: 25px 30px;
-          border-radius: 0 0 8px 8px;
+          border-radius: 0 0 16px 16px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.06);
           overflow-y: auto;
           max-height: 80vh;
@@ -1205,11 +1225,13 @@ const StudentExam = () => {
             height: 100% !important;
             max-width: 100% !important;
             justify-content: center !important;
+            border-radius: 14px !important;
           }
           .ubt-exam-card {
             height: calc(100dvh - 8px) !important;
             min-height: 0 !important;
             max-height: calc(100dvh - 8px) !important;
+            border-radius: 0 0 14px 14px !important;
           }
           .ubt-exam-columns {
             flex-direction: row !important;
@@ -1240,20 +1262,23 @@ const StudentExam = () => {
             gap: 6px !important;
           }
           .ubt-exam-header-bar {
-            padding: 6px 14px !important;
-            font-size: 12.5px !important;
-            border-radius: 6px 6px 0 0 !important;
+            padding: 7px 16px !important;
+            font-size: 13px !important;
+            border-radius: 14px 14px 0 0 !important;
           }
           .ubt-exam-nav-bar {
-            padding: 6px 14px !important;
-            border-radius: 0 0 6px 6px !important;
+            padding: 7px 16px !important;
+            border-radius: 0 0 14px 14px !important;
           }
           .ubt-exam-nav-bar button {
-            padding: 6px 14px !important;
-            font-size: 12px !important;
+            padding: 9px 20px !important;
+            font-size: 13.5px !important;
+            font-weight: 800 !important;
+            border-radius: 8px !important;
           }
           .ubt-overview-box {
             padding: 10px 14px !important;
+            border-radius: 0 0 14px 14px !important;
             max-height: calc(100dvh - 45px) !important;
           }
           .ubt-overview-flex {
@@ -1276,10 +1301,12 @@ const StudentExam = () => {
           .ubt-exam-main {
             height: 100% !important;
             justify-content: flex-start !important;
+            border-radius: 14px !important;
           }
           .ubt-exam-header-bar {
-            padding: 10px 12px !important;
-            font-size: 12.5px !important;
+            padding: 10px 14px !important;
+            font-size: 13px !important;
+            border-radius: 14px 14px 0 0 !important;
             flex-wrap: wrap !important;
           }
           .ubt-exam-card {
@@ -1287,6 +1314,7 @@ const StudentExam = () => {
             min-height: 0 !important;
             flex: 1 !important;
             max-height: calc(100dvh - 75px) !important;
+            border-radius: 0 0 14px 14px !important;
           }
           .ubt-exam-columns {
             flex-direction: column !important;
@@ -1311,15 +1339,19 @@ const StudentExam = () => {
             height: auto !important;
           }
           .ubt-exam-nav-bar {
-            padding: 9px 12px !important;
-            gap: 6px !important;
+            padding: 10px 14px !important;
+            border-radius: 0 0 14px 14px !important;
+            gap: 8px !important;
           }
           .ubt-exam-nav-bar button {
-            padding: 8px 12px !important;
-            font-size: 12px !important;
+            padding: 10px 18px !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            border-radius: 8px !important;
           }
           .ubt-overview-box {
             padding: 16px 14px !important;
+            border-radius: 0 0 14px 14px !important;
             max-height: calc(100dvh - 75px) !important;
           }
           .ubt-overview-flex {
@@ -1366,15 +1398,15 @@ const StudentExam = () => {
       )}
 
       {viewMode === "overview" ? (
-        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "850px", width: "100%", height: "100%", margin: "auto", justifyContent: "center" }}>
+        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "850px", width: "100%", height: "100%", margin: "auto", justifyContent: "center", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
           
-          <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 20px", borderRadius: "8px 8px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15px" }}>
+          <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "16px 16px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15.5px" }}>
             <span>Remaining Questions: 40</span>
             <span>{exactExamName}</span>
             <span>Time Remaining: {formatTime(timeLeft)}</span>
           </div>
 
-          <div className="ubt-overview-box" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", padding: "25px 30px", borderRadius: "0 0 8px 8px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)" }}>
+          <div className="ubt-overview-box" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", padding: "25px 30px", borderRadius: "0 0 16px 16px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)" }}>
             <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "space-between", gap: "25px" }}>
               
               <div style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "15px" }}>
@@ -1434,32 +1466,39 @@ const StudentExam = () => {
 
             </div>
 
-            <div style={{ marginTop: "25px", textAlign: "right" }}>
+            <div style={{ marginTop: "25px", display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center" }}>
+              <button 
+                type="button"
+                onClick={() => setViewMode("single")}
+                style={{ backgroundColor: "#64748b", color: "white", border: "none", padding: "12px 24px", fontSize: "15px", fontWeight: "800", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 6px rgba(100, 116, 139, 0.35)" }}
+              >
+                ❮ BACK TO QUESTION
+              </button>
               <button 
                 type="button"
                 onClick={() => setShowConfirmModal(true)}
-                style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "12px 24px", fontSize: "15px", fontWeight: "bold", borderRadius: "5px", cursor: "pointer" }}
+                style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "12px 28px", fontSize: "15px", fontWeight: "800", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)" }}
               >
-                SUBMIT AND FINISH EXAM
+                SUBMIT AND FINISH EXAM ❯
               </button>
             </div>
           </div>
 
         </div>
       ) : (
-        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "1050px", width: "100%", height: "100%", margin: "auto", justifyContent: "center" }}>
+        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "1050px", width: "100%", height: "100%", margin: "auto", justifyContent: "center", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
           
           {(() => {
             const currentQ = questions[currentQuestion];
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-                <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "12px 20px", borderRadius: "8px 8px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15px" }}>
+                <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "16px 16px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15.5px" }}>
                   <span>Remaining Questions: 40</span>
                   <span>{exactExamName}</span>
                   <span>Time Remaining: {formatTime(timeLeft)}</span>
                 </div>
 
-                <div className="ubt-exam-card" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", borderRadius: "0 0 8px 8px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", justifyContent: "space-between", height: "550px", minHeight: "550px" }}>
+                <div className="ubt-exam-card" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", borderRadius: "0 0 16px 16px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", justifyContent: "space-between", height: "550px", minHeight: "550px" }}>
                   <div className="ubt-exam-columns" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
                     
                     <div className="ubt-exam-left" style={{ flex: 1.2, padding: "20px 25px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%" }}>
@@ -1739,7 +1778,7 @@ const StudentExam = () => {
                     </div>
                   </div>
 
-                  <div className="ubt-exam-nav-bar" style={{ display: "flex", padding: "12px 25px", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", borderRadius: "0 0 8px 8px", justifyContent: "space-between" }}>
+                  <div className="ubt-exam-nav-bar" style={{ display: "flex", padding: "14px 24px", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", borderRadius: "0 0 16px 16px", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
                     <button 
                       type="button"
                       onClick={() => {
@@ -1750,7 +1789,19 @@ const StudentExam = () => {
                         setCurrentQuestion(prev => Math.max(0, prev - 1));
                       }}
                       disabled={currentQuestion === 0}
-                      style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "9px 18px", borderRadius: "4px", fontWeight: "bold", cursor: currentQuestion === 0 ? "not-allowed" : "pointer", fontSize: "13px" }}
+                      style={{ 
+                        backgroundColor: "#0ea5e9", 
+                        color: "white", 
+                        border: "none", 
+                        padding: "12px 26px", 
+                        borderRadius: "8px", 
+                        fontWeight: "800", 
+                        cursor: currentQuestion === 0 ? "not-allowed" : "pointer", 
+                        fontSize: "15px",
+                        letterSpacing: "0.4px",
+                        boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)",
+                        minWidth: "125px"
+                      }}
                     >
                       ❮ PREVIOUS
                     </button>
@@ -1763,7 +1814,19 @@ const StudentExam = () => {
                         Object.values(optionAudioRefs.current).forEach(aud => aud && aud.pause());
                         setViewMode("overview");
                       }}
-                      style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "9px 18px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                      style={{ 
+                        backgroundColor: "#0ea5e9", 
+                        color: "white", 
+                        border: "none", 
+                        padding: "12px 28px", 
+                        borderRadius: "8px", 
+                        fontWeight: "800", 
+                        cursor: "pointer", 
+                        fontSize: "15px",
+                        letterSpacing: "0.4px",
+                        boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)",
+                        minWidth: "170px"
+                      }}
                     >
                       TOTAL QUESTIONS
                     </button>
@@ -1780,7 +1843,19 @@ const StudentExam = () => {
                           setShowConfirmModal(true); 
                         }
                       }}
-                      style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "9px 18px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+                      style={{ 
+                        backgroundColor: "#0ea5e9", 
+                        color: "white", 
+                        border: "none", 
+                        padding: "12px 26px", 
+                        borderRadius: "8px", 
+                        fontWeight: "800", 
+                        cursor: "pointer", 
+                        fontSize: "15px",
+                        letterSpacing: "0.4px",
+                        boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)",
+                        minWidth: "125px"
+                      }}
                     >
                       {currentQuestion === questions.length - 1 ? "SUBMIT ❯" : "NEXT ❯"}
                     </button>
