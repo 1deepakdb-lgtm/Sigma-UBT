@@ -315,6 +315,15 @@ const StudentExam = () => {
       }
 
       setQuestions(finalBatch);
+
+      const initialAnswerSheet = {};
+      finalBatch.forEach(q => {
+        if (q.answer !== undefined && q.answer !== null) {
+          initialAnswerSheet[q.id] = Number(q.answer);
+          if (q.qIndex !== undefined) initialAnswerSheet[q.qIndex] = Number(q.answer);
+        }
+      });
+      setAnswerSheet(prev => ({ ...initialAnswerSheet, ...prev }));
     }
     loadQuestions();
   }, [examId]);
@@ -462,62 +471,108 @@ const StudentExam = () => {
 
       // Prepare enriched questions with cached answerSheet for 100% offline accuracy & review
       const enrichedQuestions = questions.map((q, idx) => {
-        const correctAns = answerSheet[q.id] ?? answerSheet[q.qIndex] ?? answerSheet[idx + 1] ?? q.answer;
+        const rawCorrect = answerSheet[q.id] ?? answerSheet[String(q.id)] ?? answerSheet[q.qIndex] ?? answerSheet[String(q.qIndex)] ?? answerSheet[idx + 1] ?? q.answer;
+        const correctAns = rawCorrect !== undefined && rawCorrect !== null ? Number(rawCorrect) : 0;
         return {
           ...q,
-          answer: correctAns !== undefined && correctAns !== null ? Number(correctAns) : undefined
+          answer: correctAns
         };
       });
 
       let score = 0;
+      let readingCorrect = 0;
+      let listeningCorrect = 0;
       let attemptedCount = 0;
       const formattedSelectedAnswers = {};
 
       enrichedQuestions.forEach((q, index) => {
-        // Fallback to array index for older states if q.id is missing
+        const qIdKey = q.id !== undefined ? q.id : (index + 1);
+        const qNum = q.qIndex !== undefined ? q.qIndex : (index + 1);
+
         const userSelectedAnswer = selectedAnswers[q.id] !== undefined 
           ? selectedAnswers[q.id] 
-          : selectedAnswers[index];
+          : (selectedAnswers[String(q.id)] !== undefined
+            ? selectedAnswers[String(q.id)]
+            : (selectedAnswers[qNum] !== undefined
+              ? selectedAnswers[qNum]
+              : (selectedAnswers[String(qNum)] !== undefined
+                ? selectedAnswers[String(qNum)]
+                : selectedAnswers[index])));
         
         if (userSelectedAnswer !== undefined && userSelectedAnswer !== null && userSelectedAnswer !== "") {
           const numAns = Number(userSelectedAnswer);
-          formattedSelectedAnswers[q.id] = numAns;
-          if (q.qIndex !== undefined) {
-            formattedSelectedAnswers[q.qIndex] = numAns;
-          }
+          formattedSelectedAnswers[qIdKey] = numAns;
+          formattedSelectedAnswers[String(qIdKey)] = numAns;
+          formattedSelectedAnswers[qNum] = numAns;
+          formattedSelectedAnswers[String(qNum)] = numAns;
+          formattedSelectedAnswers[index] = numAns;
           
           attemptedCount += 1; 
-          if (q.answer !== undefined && numAns === Number(q.answer)) {
+
+          const qAns = q.answer !== undefined && q.answer !== null ? Number(q.answer) : undefined;
+          let isCorrect = false;
+          if (qAns !== undefined) {
+            // Accommodate 0-indexed (0=Opt1, 1=Opt2...) and 1-indexed (1=Opt1, 2=Opt2...) matches
+            if (numAns === qAns || numAns + 1 === qAns) {
+              isCorrect = true;
+            }
+          }
+
+          if (isCorrect) {
             score += 1; 
+            const isReading = (q.type && q.type.toLowerCase() === "reading") || qNum <= 20 || index < 20;
+            if (isReading) {
+              readingCorrect += 1;
+            } else {
+              listeningCorrect += 1;
+            }
           }
         }
       });
 
       const totalQ = enrichedQuestions.length > 0 ? enrichedQuestions.length : 40;
+      const readingScore = readingCorrect * 5;
+      const listeningScore = listeningCorrect * 5;
+      const totalScore = readingScore + listeningScore;
+      const percentage = Math.round((score / totalQ) * 100);
+      const passed = percentage >= 40 || totalScore >= 96;
+
+      const curStudentName = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentName") || localStorage.getItem("currentUser") || "Student") : "Student";
+      const curStudentPhone = typeof window !== 'undefined' ? (localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone") || "") : "";
+
       const examResultData = { 
         examName: exactExamName,
         score, 
         total: totalQ, 
         attempted: attemptedCount,
-        percentage: Math.round((score / totalQ) * 100),
-        passed: Math.round((score / totalQ) * 100) >= 40,
+        readingCorrect,
+        listeningCorrect,
+        readingScore,
+        listeningScore,
+        totalScore,
+        percentage,
+        passed,
         questions: enrichedQuestions,
         selectedAnswers: formattedSelectedAnswers,
-        isOfflineSubmitted: false
+        isOfflineSubmitted: false,
+        studentName: curStudentName,
+        createdAt: new Date().toISOString()
       };
 
-      // Attempt submit to backend with 3.5s timeout, falling back smoothly to offline mode
+      // Attempt submit to backend with 4.5s timeout, falling back smoothly to offline queue
       let onlineSubmitted = false;
-      if (backendSessionId && typeof navigator !== "undefined" && navigator.onLine) {
+      if (typeof navigator !== "undefined" && navigator.onLine) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const timeoutId = setTimeout(() => controller.abort(), 4500);
           const submitRes = await fetch(`/api/student/exams/${examId || "set-1-demo"}/submit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              sessionId: backendSessionId,
-              selectedAnswers: formattedSelectedAnswers
+              sessionId: backendSessionId || `offline_${Date.now()}`,
+              selectedAnswers: formattedSelectedAnswers,
+              studentName: curStudentName,
+              studentPhone: curStudentPhone
             }),
             signal: controller.signal
           });
@@ -529,6 +584,9 @@ const StudentExam = () => {
               const resObj = submitData.result;
               examResultData.score = resObj.correctAnswers !== undefined ? resObj.correctAnswers : score;
               examResultData.total = resObj.totalQuestions || totalQ;
+              examResultData.readingScore = resObj.readingScore ?? readingScore;
+              examResultData.listeningScore = resObj.listeningScore ?? listeningScore;
+              examResultData.totalScore = resObj.totalScore ?? totalScore;
               examResultData.passed = Boolean(resObj.passed);
               examResultData.percentage = Math.round(((examResultData.score) / (examResultData.total)) * 100);
               if (Array.isArray(resObj.breakdown)) {
@@ -555,6 +613,11 @@ const StudentExam = () => {
             selectedAnswers: formattedSelectedAnswers,
             score,
             total: totalQ,
+            readingScore,
+            listeningScore,
+            totalScore,
+            studentName: curStudentName,
+            studentPhone: curStudentPhone,
             submittedAt: new Date().toISOString()
           });
           localStorage.setItem("offlineExamSyncQueue", JSON.stringify(syncQueue));
@@ -1230,21 +1293,31 @@ const StudentExam = () => {
 
             <div className="exam-finish-grid">
               <div className="exam-finish-stats">
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
-                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Questions</span>
-                  <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{res.total}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
+                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Total Questions</span>
+                  <span style={{ color: "#0f172a", fontSize: "14px", fontWeight: "bold" }}>{res.total || 40}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
-                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Attempted</span>
-                  <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{res.attempted}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
+                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Total Attempted</span>
+                  <span style={{ color: "#0f172a", fontSize: "14px", fontWeight: "bold" }}>{res.attempted}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
-                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Correct</span>
-                  <span style={{ color: "#16a34a", fontSize: "17px", fontWeight: "900" }}>{res.score}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
+                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Total Correct</span>
+                  <span style={{ color: "#16a34a", fontSize: "16px", fontWeight: "900" }}>{res.score} / {res.total || 40}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", paddingTop: "4px" }}>
-                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Your Percentage</span>
-                  <span style={{ color: res.percentage >= 40 ? "#0284c7" : "#ef4444", fontSize: "17px", fontWeight: "900" }}>{res.percentage}%</span>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
+                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Reading Score</span>
+                  <span style={{ color: "#0284c7", fontSize: "13.5px", fontWeight: "700" }}>{res.readingScore ?? ((res.readingCorrect || 0) * 5)} / 100</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
+                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Listening Score</span>
+                  <span style={{ color: "#0284c7", fontSize: "13.5px", fontWeight: "700" }}>{res.listeningScore ?? ((res.listeningCorrect || 0) * 5)} / 100</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", paddingTop: "3px" }}>
+                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Percentage & Status</span>
+                  <span style={{ color: res.passed ? "#16a34a" : "#ef4444", fontSize: "14px", fontWeight: "900" }}>
+                    {res.percentage}% &nbsp; ({res.passed ? "PASSED" : "FAILED"})
+                  </span>
                 </div>
               </div>
 

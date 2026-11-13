@@ -43,7 +43,7 @@ const StudentResult = () => {
     setMounted(true);
   }, []);
 
-  // Background Auto-Sync for Offline Submissions when internet is available
+  // Background Auto-Sync for Offline Submissions to update cPanel database in real time
   React.useEffect(() => {
     const syncOfflineQueue = async () => {
       if (typeof window === "undefined" || !navigator.onLine) return;
@@ -61,17 +61,28 @@ const StudentResult = () => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 sessionId: item.sessionId,
-                selectedAnswers: item.selectedAnswers
+                selectedAnswers: item.selectedAnswers,
+                studentName: item.studentName || localStorage.getItem("currentStudentName") || localStorage.getItem("currentUser") || "Student",
+                studentPhone: item.studentPhone || localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone") || ""
               })
             });
-            if (!res.ok) {
-              const errData = await res.json().catch(() => ({}));
-              // Discard stale/invalid sessions, retain transient errors
-              if (res.status === 404 || (errData.error && errData.error.includes("not found"))) {
-                // done
-              } else {
-                remainingQueue.push(item);
+            if (res.ok) {
+              const resData = await res.json();
+              if (resData.result) {
+                // Update local cached result with synced server record
+                setResultData(prev => ({
+                  ...prev,
+                  isOfflineSubmitted: false,
+                  score: resData.result.correctAnswers ?? prev.score,
+                  readingScore: resData.result.readingScore,
+                  listeningScore: resData.result.listeningScore,
+                  totalScore: resData.result.totalScore,
+                  percentage: resData.result.percentage ?? prev.percentage,
+                  passed: resData.result.passed ?? prev.passed
+                }));
               }
+            } else {
+              remainingQueue.push(item);
             }
           } catch (err) {
             remainingQueue.push(item);

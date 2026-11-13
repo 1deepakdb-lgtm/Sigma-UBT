@@ -1142,10 +1142,62 @@ const StudentDashboard = () => {
             });
           });
         }
+        const localResults = JSON.parse(localStorage.getItem("examResults") || "[]");
         if (data.pastResults && Array.isArray(data.pastResults)) {
-          setResults(data.pastResults);
+          const formattedPast = data.pastResults.map(pr => ({
+            id: pr.id,
+            examName: pr.examName,
+            score: pr.correctAnswers !== undefined ? pr.correctAnswers : (pr.totalScore ? Math.round(pr.totalScore / 5) : 0),
+            total: pr.totalQuestions || 40,
+            readingScore: pr.readingScore,
+            listeningScore: pr.listeningScore,
+            totalScore: pr.totalScore,
+            percentage: pr.correctAnswers !== undefined ? Math.round((pr.correctAnswers / (pr.totalQuestions || 40)) * 100) : (pr.percentage || 0),
+            passed: Boolean(pr.passed),
+            createdAt: pr.createdAt
+          }));
+          const combined = [...formattedPast];
+          localResults.forEach(lr => {
+            if (!combined.some(c => c.id === lr.id || (c.examName === lr.examName && c.createdAt === lr.createdAt))) {
+              combined.push(lr);
+            }
+          });
+          setResults(combined);
         } else {
-          setResults(JSON.parse(localStorage.getItem("examResults") || "[]"));
+          setResults(localResults);
+        }
+
+        // Trigger real-time background auto-sync of any pending offline exams to cPanel server
+        try {
+          const queueStr = localStorage.getItem("offlineExamSyncQueue");
+          if (queueStr) {
+            const queue = JSON.parse(queueStr);
+            if (Array.isArray(queue) && queue.length > 0) {
+              (async () => {
+                const remaining = [];
+                for (const item of queue) {
+                  try {
+                    const syncRes = await fetch(`/api/student/exams/${item.examId || "set-1-demo"}/submit`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        sessionId: item.sessionId,
+                        selectedAnswers: item.selectedAnswers,
+                        studentName: item.studentName || localStorage.getItem("currentStudentName") || "Student",
+                        studentPhone: item.studentPhone || localStorage.getItem("currentStudentPhone") || ""
+                      })
+                    });
+                    if (!syncRes.ok) remaining.push(item);
+                  } catch (e) {
+                    remaining.push(item);
+                  }
+                }
+                localStorage.setItem("offlineExamSyncQueue", JSON.stringify(remaining));
+              })();
+            }
+          }
+        } catch (syncErr) {
+          console.warn("Auto-sync error notice:", syncErr);
         }
       })
       .catch(() => {
@@ -3639,6 +3691,7 @@ const StudentDashboard = () => {
                     <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff" }}>
                       <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Exam Set</th>
                       <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Score</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Section Performance</th>
                       <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Percentage</th>
                       <th style={{ padding: "14px 16px", textAlign: "left", color: "#ffffff", fontSize: "13.5px", fontWeight: "700" }}>Status</th>
                     </tr>
@@ -3646,23 +3699,48 @@ const StudentDashboard = () => {
                   <tbody>
                     {results.length === 0 ? (
                       <tr>
-                        <td colSpan="4" style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}>
+                        <td colSpan="5" style={{ padding: "30px", textAlign: "center", color: "#94a3b8" }}>
                           No exam results recorded yet. Start a {isJapaneseTrack ? "Japanese CBT Mock Exam" : "UBT exam"} to view your scores here.
                         </td>
                       </tr>
                     ) : (
-                      results.map((res, idx) => (
-                        <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#ffffff" }}>
-                          <td style={{ padding: "14px 16px", fontWeight: "700", color: "#0f172a" }}>{res.examName || (isJapaneseTrack ? "Japanese Mock Set" : "UBT Set")}</td>
-                          <td style={{ padding: "14px 16px", fontWeight: "700", color: "#2563eb" }}>{res.score} / {res.total || 40}</td>
-                          <td style={{ padding: "14px 16px", color: "#334155", fontWeight: "600" }}>{res.percentage || Math.round((Number(res.score) / (Number(res.total) || 40)) * 100)}%</td>
-                          <td style={{ padding: "14px 16px" }}>
-                            <span style={{ backgroundColor: res.passed ? "#dcfce7" : "#fee2e2", color: res.passed ? "#166534" : "#991b1b", padding: "4px 10px", borderRadius: "10px", fontSize: "12px", fontWeight: "700" }}>
-                              {res.passed ? "Passed" : "Failed"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                      results.map((res, idx) => {
+                        const rScore = res.readingScore ?? ((res.readingCorrect || 0) * 5);
+                        const lScore = res.listeningScore ?? ((res.listeningCorrect || 0) * 5);
+                        const pct = res.percentage || (res.total ? Math.round((Number(res.score) / Number(res.total)) * 100) : 0);
+                        const isPassed = res.passed !== undefined ? res.passed : pct >= 40;
+
+                        return (
+                          <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: "#ffffff" }}>
+                            <td style={{ padding: "14px 16px", fontWeight: "700", color: "#0f172a" }}>
+                              <div>{res.examName || (isJapaneseTrack ? "Japanese Mock Set" : "UBT Set")}</div>
+                              <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "normal", marginTop: "2px" }}>
+                                {res.createdAt ? new Date(res.createdAt).toLocaleDateString() : "Recent Test"}
+                              </div>
+                            </td>
+                            <td style={{ padding: "14px 16px", fontWeight: "800", color: "#2563eb", fontSize: "14px" }}>
+                              {res.score} / {res.total || 40}
+                            </td>
+                            <td style={{ padding: "14px 16px", fontSize: "12.5px", color: "#475569" }}>
+                              <span style={{ fontWeight: "600", color: "#0284c7" }}>📖 R: {rScore}/100</span> &nbsp;·&nbsp;
+                              <span style={{ fontWeight: "600", color: "#16a34a" }}>🎧 L: {lScore}/100</span>
+                            </td>
+                            <td style={{ padding: "14px 16px", color: "#334155", fontWeight: "700" }}>{pct}%</td>
+                            <td style={{ padding: "14px 16px" }}>
+                              <span style={{
+                                backgroundColor: isPassed ? "#dcfce7" : "#fee2e2",
+                                color: isPassed ? "#166534" : "#991b1b",
+                                padding: "4px 10px",
+                                borderRadius: "10px",
+                                fontSize: "12px",
+                                fontWeight: "800"
+                              }}>
+                                {isPassed ? "PASSED" : "FAILED"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
