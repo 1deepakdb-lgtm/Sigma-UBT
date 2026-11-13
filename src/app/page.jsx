@@ -104,10 +104,34 @@ export default function LoginPage() {
       localStorage.setItem("currentInstitute", userData.instituteName || userData.name);
       localStorage.setItem("billingRole", "admin");
       redirectUrl = "/institute";
+
+      // If signing in as institute by mobile, auto-rotate to landscape while user click gesture is active
+      if (typeof window !== "undefined") {
+        const isMobile = window.innerWidth <= 1024 || (typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
+        if (isMobile) {
+          try {
+            if (screen.orientation && typeof screen.orientation.lock === "function") {
+              screen.orientation.lock("landscape").catch(() => {});
+            }
+          } catch (e) {}
+        }
+      }
     } else if (userData.role === "staff") {
       localStorage.setItem("currentInstitute", userData.instituteName || "Language Institute");
       localStorage.setItem("billingRole", "user");
       redirectUrl = "/institute?tab=billing";
+
+      // If signing in as staff by mobile, auto-rotate to landscape while user click gesture is active
+      if (typeof window !== "undefined") {
+        const isMobile = window.innerWidth <= 1024 || (typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
+        if (isMobile) {
+          try {
+            if (screen.orientation && typeof screen.orientation.lock === "function") {
+              screen.orientation.lock("landscape").catch(() => {});
+            }
+          } catch (e) {}
+        }
+      }
     } else {
       // Student role (self-registered or Google student)
       const studentPhone = userData.phone || userData.username;

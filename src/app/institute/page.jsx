@@ -800,8 +800,19 @@ const InstituteDashboard = () => {
 
   const [isPortraitMobile, setIsPortraitMobile] = useState(false);
 
+  const isMobileDevice = () => {
+    if (typeof window === "undefined") return false;
+    return (
+      window.innerWidth <= 1024 ||
+      (typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent))
+    );
+  };
+
   const tryAutoRotateLandscape = async () => {
     if (typeof window === "undefined") return;
+    // Strictly ONLY auto-rotate on mobile devices (never on desktop/laptop)
+    if (!isMobileDevice()) return;
+
     try {
       if (screen.orientation && typeof screen.orientation.lock === "function") {
         await screen.orientation.lock("landscape").catch(async () => {
@@ -838,7 +849,7 @@ const InstituteDashboard = () => {
   useEffect(() => {
     const checkOrientation = () => {
       if (typeof window === "undefined") return;
-      const isMobile = window.innerWidth <= 1024 || (typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+      const isMobile = isMobileDevice();
       const isPortrait = window.matchMedia("(orientation: portrait)").matches || window.innerHeight > window.innerWidth;
       setIsPortraitMobile(Boolean(isMobile && isPortrait));
     };
@@ -854,9 +865,26 @@ const InstituteDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "billing" || activeTab === "students" || activeTab === "exams") {
+    // Only auto-rotate to landscape on mobile devices, and ONLY when on billing or manage students
+    if (isMobileDevice() && (activeTab === "billing" || activeTab === "students")) {
       tryAutoRotateLandscape();
+
+      // Mobile browsers require a user gesture to execute screen.orientation.lock / fullscreen.
+      // Automatically trigger on first touch/click when viewing billing or manage students on mobile.
+      const handleUserGesture = () => {
+        if (isMobileDevice() && (activeTab === "billing" || activeTab === "students")) {
+          tryAutoRotateLandscape();
+        }
+      };
+      window.addEventListener("touchstart", handleUserGesture, { once: true, passive: true });
+      window.addEventListener("click", handleUserGesture, { once: true, passive: true });
+
+      return () => {
+        window.removeEventListener("touchstart", handleUserGesture);
+        window.removeEventListener("click", handleUserGesture);
+      };
     } else {
+      // Return to normal unlocked portrait on other tabs or desktop
       unlockOrientation();
     }
   }, [activeTab]);
@@ -875,7 +903,7 @@ const InstituteDashboard = () => {
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
     loadData();
-    if (tabName === "billing" || tabName === "students" || tabName === "exams") {
+    if (isMobileDevice() && (tabName === "billing" || tabName === "students")) {
       tryAutoRotateLandscape();
     } else {
       unlockOrientation();
@@ -1778,7 +1806,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       <div className="institute-content-area" style={contentAreaStyle}>
         
         {/* Landscape orientation reminder banner on mobile portrait for wide tables */}
-        {(activeTab === "billing" || activeTab === "students" || activeTab === "exams") && isPortraitMobile && (
+        {(activeTab === "billing" || activeTab === "students") && isPortraitMobile && (
           <div style={{
             display: "flex",
             alignItems: "center",
