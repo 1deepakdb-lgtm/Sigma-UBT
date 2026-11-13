@@ -1522,7 +1522,7 @@ const StudentExam = () => {
           padding: 14px 18px;
           border-radius: 0 0 18px 18px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-          overflow-y: auto;
+          overflow: hidden;
           flex: 1;
           min-height: 0;
           display: flex;
@@ -1535,6 +1535,25 @@ const StudentExam = () => {
           gap: 20px;
           flex: 1;
           min-height: 0;
+          overflow: hidden;
+        }
+        .ubt-overview-col {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          overflow: hidden;
+        }
+        .ubt-overview-grid-scroll {
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
+          overflow-x: hidden;
+        }
+        .ubt-overview-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 6px;
         }
 
         /* LANDSCAPE OPTIMIZED EXAM STYLING: ALWAYS FIT FULL DISPLAY SCREEN */
@@ -1645,41 +1664,55 @@ const StudentExam = () => {
             min-width: 0 !important;
           }
           .ubt-overview-box {
-            padding: 5px 12px !important;
+            padding: 5px 10px !important;
             border-radius: 0 0 16px 16px !important;
             flex: 1 !important;
             min-height: 0 !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            overflow-y: auto !important;
+            overflow: hidden !important;
           }
           .ubt-overview-flex {
             flex-direction: row !important;
-            gap: 12px !important;
+            gap: 10px !important;
             flex: 1 !important;
             min-height: 0 !important;
+            overflow: hidden !important;
           }
-          .ubt-overview-box h4 {
-            margin: 0 0 4px 0 !important;
-            font-size: 12px !important;
+          .ubt-overview-col {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+          .ubt-overview-grid-scroll {
+            flex: 1 !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+          }
+          .ubt-overview-box h4, .ubt-overview-heading {
+            margin: 0 0 3px 0 !important;
+            font-size: 11px !important;
           }
           .ubt-overview-grid {
             gap: 3px !important;
           }
           .ubt-overview-grid button {
-            padding: 3px 0 !important;
-            font-size: 11px !important;
-            min-height: 24px !important;
+            padding: 2px 0 !important;
+            font-size: 10px !important;
+            min-height: 20px !important;
             border-radius: 4px !important;
           }
           .ubt-overview-actions {
-            margin-top: 5px !important;
+            margin-top: 4px !important;
             gap: 8px !important;
+            flex-shrink: 0 !important;
           }
           .ubt-overview-actions button {
-            padding: 6px 14px !important;
-            font-size: 12px !important;
+            padding: 5px 12px !important;
+            font-size: 11px !important;
             border-radius: 6px !important;
           }
         }
@@ -1735,7 +1768,22 @@ const StudentExam = () => {
           }
           .ubt-exam-landscape-enforcer .ubt-overview-flex {
             flex-direction: row !important;
-            gap: 12px !important;
+            gap: 10px !important;
+            flex: 1 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+          .ubt-exam-landscape-enforcer .ubt-overview-col {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+          .ubt-exam-landscape-enforcer .ubt-overview-grid-scroll {
+            flex: 1 !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-header-bar {
             padding: 5px 14px !important;
@@ -1826,20 +1874,25 @@ const StudentExam = () => {
           .ubt-overview-box {
             padding: 16px 14px !important;
             border-radius: 0 0 20px 20px !important;
-            max-height: calc(100dvh - 75px) !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
           }
           .ubt-overview-flex {
             flex-direction: column !important;
             gap: 16px !important;
           }
-          .ubt-overview-flex > div:first-child {
+          .ubt-overview-col {
             border-right: none !important;
-            border-bottom: 1.5px solid #e2e8f0 !important;
             padding-right: 0 !important;
+            padding-left: 0 !important;
+            overflow: visible !important;
+          }
+          .ubt-overview-col:first-child {
+            border-bottom: 1.5px solid #e2e8f0 !important;
             padding-bottom: 16px !important;
           }
-          .ubt-overview-flex > div:last-child {
-            padding-left: 0 !important;
+          .ubt-overview-grid-scroll {
+            overflow: visible !important;
           }
         }
       ` }} />
@@ -1880,45 +1933,18 @@ const StudentExam = () => {
             <span>Time Remaining: {formatTime(timeLeft)}</span>
           </div>
 
-          <div className="ubt-overview-box" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", padding: "14px 18px", borderRadius: "0 0 18px 18px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", overflowY: "auto" }}>
-            <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "space-between", gap: "16px", flex: 1, minHeight: 0 }}>
+          <div className="ubt-overview-box" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", padding: "14px 18px", borderRadius: "0 0 18px 18px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", overflow: "hidden" }}>
+            <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "space-between", gap: "16px", flex: 1, minHeight: 0, overflow: "hidden" }}>
               
-              <div style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "12px", minHeight: 0 }}>
-                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 10px 0", fontSize: "14px" }}>Reading Questions (1 - 20)</h4>
-                <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
-                  {questions.slice(0, 20).map((q, idx) => (
-                    <button
-                      type="button"
-                      key={q.id}
-                      onClick={() => { setCurrentQuestion(idx); setViewMode("single"); }}
-                      style={{
-                        padding: "8px 0",
-                        backgroundColor: selectedAnswers[q.id] !== undefined ? "#dcfce7" : "white",
-                        border: "1px solid #0284c7",
-                        borderRadius: "5px",
-                        fontWeight: "bold",
-                        fontSize: "13px",
-                        cursor: "pointer",
-                        color: "#1e293b",
-                        transition: "0.15s"
-                      }}
-                    >
-                      {idx + 1}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ flex: 1, paddingLeft: "12px", minHeight: 0 }}>
-                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 10px 0", fontSize: "14px" }}>Listening Questions (21 - 40)</h4>
-                <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
-                  {questions.slice(20, 40).map((q, idx) => {
-                    const actualIndex = idx + 20;
-                    return (
+              <div className="ubt-overview-col" style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "12px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 10px 0", fontSize: "14px", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
+                <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}>
+                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
+                    {questions.slice(0, 20).map((q, idx) => (
                       <button
                         type="button"
                         key={q.id}
-                        onClick={() => { setCurrentQuestion(actualIndex); setViewMode("single"); }}
+                        onClick={() => { setCurrentQuestion(idx); setViewMode("single"); }}
                         style={{
                           padding: "8px 0",
                           backgroundColor: selectedAnswers[q.id] !== undefined ? "#dcfce7" : "white",
@@ -1931,10 +1957,41 @@ const StudentExam = () => {
                           transition: "0.15s"
                         }}
                       >
-                        {actualIndex + 1}
+                        {idx + 1}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="ubt-overview-col" style={{ flex: 1, paddingLeft: "12px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 10px 0", fontSize: "14px", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
+                <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden" }}>
+                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
+                    {questions.slice(20, 40).map((q, idx) => {
+                      const actualIndex = idx + 20;
+                      return (
+                        <button
+                          type="button"
+                          key={q.id}
+                          onClick={() => { setCurrentQuestion(actualIndex); setViewMode("single"); }}
+                          style={{
+                            padding: "8px 0",
+                            backgroundColor: selectedAnswers[q.id] !== undefined ? "#dcfce7" : "white",
+                            border: "1px solid #0284c7",
+                            borderRadius: "5px",
+                            fontWeight: "bold",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                            color: "#1e293b",
+                            transition: "0.15s"
+                          }}
+                        >
+                          {actualIndex + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
