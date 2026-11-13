@@ -344,11 +344,30 @@ const StudentExam = () => {
   }, [isStarted]);
 
   const handleGetStarted = () => {
-    // Lock screen to landscape mode on student device without triggering browser fullscreen banner
+    // Enter fullscreen and lock orientation to landscape display on full screen
     if (typeof window !== "undefined") {
+      try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        } else if (docEl.mozRequestFullScreen) {
+          docEl.mozRequestFullScreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
+        }
+      } catch (e) {}
+
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
           screen.orientation.lock("landscape").catch(() => {});
+        } else if (screen.lockOrientation) {
+          screen.lockOrientation("landscape");
+        } else if (screen.webkitLockOrientation) {
+          screen.webkitLockOrientation("landscape");
+        } else if (screen.mozLockOrientation) {
+          screen.mozLockOrientation("landscape");
         }
       } catch (e) {}
     }
@@ -710,7 +729,7 @@ const StudentExam = () => {
                 onClick={handleGetStarted}
                 style={{ backgroundColor: "#0284c7", color: "white", border: "none", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
               >
-                GET STARTED
+                GET START
               </button>
             </div>
           </div>

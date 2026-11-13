@@ -1495,14 +1495,27 @@ const StudentDashboard = () => {
   const enforceLandscapeMode = () => {
     if (typeof window !== "undefined") {
       try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        } else if (docEl.mozRequestFullScreen) {
+          docEl.mozRequestFullScreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
+        }
+      } catch (e) {}
+
+      try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
-          screen.orientation.lock("landscape").catch(() => {
-            if (screen.orientation && typeof screen.orientation.unlock === "function") {
-              screen.orientation.unlock();
-            }
-          });
-        } else if (screen.orientation && typeof screen.orientation.unlock === "function") {
-          screen.orientation.unlock();
+          screen.orientation.lock("landscape").catch(() => {});
+        } else if (screen.lockOrientation) {
+          screen.lockOrientation("landscape");
+        } else if (screen.webkitLockOrientation) {
+          screen.webkitLockOrientation("landscape");
+        } else if (screen.mozLockOrientation) {
+          screen.mozLockOrientation("landscape");
         }
       } catch (e) {}
     }
@@ -2968,11 +2981,11 @@ const StudentDashboard = () => {
                         }}
                       >
                         {isFree
-                          ? "START FREE EXAM ▶"
+                          ? "GET START (FREE) ▶"
                           : unlocked
                           ? (isPackageExpired && !individuallyUnlocked)
                             ? "PACKAGE EXPIRED"
-                            : "START EXAM ▶"
+                            : "GET START ▶"
                           : pending
                           ? "⏳ PENDING CONFIRMATION"
                           : "🔒 BUY TO UNLOCK ▶ (Rs. 40)"}
