@@ -1918,13 +1918,6 @@ export default function EpsBookReader({
         setOfflineChaptersMap((prev) => ({ ...prev, [chId]: true }));
       }
     });
-
-    // Safely attempt fullscreen without throwing on unsupported devices (e.g. smartboard Android TV / iOS)
-    if (typeof document !== "undefined" && !document.fullscreenElement && document.documentElement?.requestFullscreen) {
-      try {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } catch (e) {}
-    }
   };
 
   // Close Full-Screen View and return to Chapter Grid
@@ -1933,7 +1926,7 @@ export default function EpsBookReader({
       audioRef.current.pause();
     }
     if (typeof document !== "undefined" && document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => { });
+      document.exitFullscreen().catch(() => {});
     }
     setSelectedChapter(null);
     setActivePdfBlobUrl("");

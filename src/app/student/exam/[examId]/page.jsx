@@ -344,22 +344,13 @@ const StudentExam = () => {
   }, [isStarted]);
 
   const handleGetStarted = () => {
-    // Lock screen to landscape mode on student device
+    // Lock screen to landscape mode on student device without triggering browser fullscreen banner
     if (typeof window !== "undefined") {
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
           screen.orientation.lock("landscape").catch(() => {});
         }
       } catch (e) {}
-    }
-    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        try {
-          if (screen.orientation && typeof screen.orientation.lock === "function") {
-            screen.orientation.lock("landscape").catch(() => {});
-          }
-        } catch (e) {}
-      }).catch(err => console.log(err));
     }
     setIsStarted(true);
   };
@@ -430,9 +421,6 @@ const StudentExam = () => {
 
   const handleFinalSubmit = async () => {
     try {
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       Object.values(optionTimeoutRefs.current).forEach(t => clearTimeout(t));
       if (audioRef.current) audioRef.current.pause();

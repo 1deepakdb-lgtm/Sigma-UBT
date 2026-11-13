@@ -815,14 +815,7 @@ const InstituteDashboard = () => {
 
     try {
       if (screen.orientation && typeof screen.orientation.lock === "function") {
-        await screen.orientation.lock("landscape").catch(async () => {
-          if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
-            await document.documentElement.requestFullscreen().catch(() => {});
-            if (screen.orientation && screen.orientation.lock) {
-              await screen.orientation.lock("landscape").catch(() => {});
-            }
-          }
-        });
+        await screen.orientation.lock("landscape").catch(() => {});
       } else if (screen.lockOrientation) {
         screen.lockOrientation("landscape");
       } else if (screen.mozLockOrientation) {
