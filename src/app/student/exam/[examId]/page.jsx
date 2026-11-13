@@ -1014,61 +1014,222 @@ const StudentExam = () => {
     // 3. Default: Exam Summary Screen
     return (
       <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column" }}>
-        <div style={{ backgroundColor: "#0284c7", color: "white", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "16px", fontWeight: "bold", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-          <span>Exam Summary (Offline Mode Active)</span>
+        <style dangerouslySetInnerHTML={{ __html: `
+          .exam-finish-top-bar {
+            background-color: #0284c7;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .exam-finish-wrap {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+          }
+          .exam-finish-card {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 16px;
+            padding: 26px 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            box-sizing: border-box;
+            max-height: 94vh;
+            overflow-y: auto;
+          }
+          .exam-finish-header {
+            text-align: center;
+            margin-bottom: 18px;
+          }
+          .exam-finish-trophy {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: #fef3c7;
+            border: 1px solid #fde68a;
+            margin: 0 auto 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+          }
+          .exam-finish-title {
+            color: #0f172a;
+            font-size: 22px;
+            margin: 0 0 8px 0;
+            fontWeight: 800;
+          }
+          .exam-finish-badge {
+            display: inline-block;
+            background-color: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: #475569;
+            font-weight: 600;
+            font-size: 13.5px;
+          }
+          .exam-finish-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          }
+          .exam-finish-stats {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #e2e8f0;
+          }
+          .exam-finish-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+          }
+
+          /* LANDSCAPE MODE: FIT ON SCREEN CLEANLY WITHOUT SCROLL OR OVERFLOW */
+          @media (orientation: landscape) and (max-height: 650px) {
+            .exam-finish-top-bar {
+              display: none !important;
+            }
+            .exam-finish-wrap {
+              padding: 6px 12px !important;
+              height: 100vh !important;
+              min-height: 100vh !important;
+              overflow: hidden !important;
+            }
+            .exam-finish-card {
+              max-width: 650px !important;
+              padding: 10px 16px !important;
+              max-height: 96vh !important;
+              border-radius: 12px !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: center !important;
+            }
+            .exam-finish-header {
+              margin-bottom: 6px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              gap: 10px !important;
+              text-align: left !important;
+            }
+            .exam-finish-trophy {
+              width: 32px !important;
+              height: 32px !important;
+              font-size: 18px !important;
+              margin: 0 !important;
+              flex-shrink: 0 !important;
+            }
+            .exam-finish-title {
+              font-size: 15.5px !important;
+              margin: 0 !important;
+            }
+            .exam-finish-badge {
+              font-size: 11.5px !important;
+              padding: 2px 8px !important;
+            }
+            .exam-finish-grid {
+              flex-direction: row !important;
+              align-items: stretch !important;
+              gap: 12px !important;
+            }
+            .exam-finish-stats {
+              flex: 1.25 !important;
+              padding: 8px 12px !important;
+              gap: 4px !important;
+              margin-bottom: 0 !important;
+            }
+            .exam-finish-stats > div {
+              padding-bottom: 3px !important;
+              max-width: 100% !important;
+            }
+            .exam-finish-stats span {
+              font-size: 12.5px !important;
+            }
+            .exam-finish-actions {
+              flex: 1 !important;
+              flex-direction: column !important;
+              justify-content: center !important;
+              gap: 8px !important;
+            }
+            .exam-finish-actions button {
+              width: 100% !important;
+              max-width: none !important;
+              min-width: 0 !important;
+              padding: 9px 12px !important;
+              font-size: 13px !important;
+            }
+          }
+        ` }} />
+
+        <div className="exam-finish-top-bar">
+          <span>Exam Summary</span>
         </div>
 
-        <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", padding: "20px" }}>
-          <div style={{ width: "100%", maxWidth: "480px", backgroundColor: "white", borderRadius: "12px", padding: "28px", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", border: "1px solid #e2e8f0" }}>
-            <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <div style={{ width: "64px", height: "64px", borderRadius: "50%", backgroundColor: "#fef3c7", border: "1px solid #fde68a", margin: "0 auto 10px auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px" }}>
+        <div className="exam-finish-wrap">
+          <div className="exam-finish-card">
+            <div className="exam-finish-header">
+              <div className="exam-finish-trophy">
                 🏆
               </div>
-              <h2 style={{ color: "#0f172a", fontSize: "22px", margin: "0 0 8px 0", fontWeight: "800" }}>Congratulations, Exam Ended!</h2>
-              <div style={{ display: "inline-block", backgroundColor: "#f1f5f9", padding: "6px 14px", borderRadius: "20px", color: "#475569", fontWeight: "600", fontSize: "13px" }}>
-                <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>Exam:</span> {res.examName}
-              </div>
-              <div style={{ marginTop: "10px" }}>
-                <span style={{ backgroundColor: "#fef3c7", color: "#b45309", border: "1px solid #fde68a", padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                  ⚡ Completed & Submitted Offline • Review Active
-                </span>
+              <div>
+                <h2 className="exam-finish-title">Congratulations, Exam Ended!</h2>
+                <div className="exam-finish-badge">
+                  <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>Exam:</span> {res.examName}
+                </div>
               </div>
             </div>
 
-            <div style={{ backgroundColor: "#f8fafc", borderRadius: "10px", padding: "16px 20px", marginBottom: "20px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", border: "1px solid #e2e8f0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
-                <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Questions</span>
-                <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{res.total}</span>
+            <div className="exam-finish-grid">
+              <div className="exam-finish-stats">
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Questions</span>
+                  <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{res.total}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Attempted</span>
+                  <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{res.attempted}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Correct</span>
+                  <span style={{ color: "#16a34a", fontSize: "17px", fontWeight: "900" }}>{res.score}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", paddingTop: "4px" }}>
+                  <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Your Percentage</span>
+                  <span style={{ color: res.percentage >= 40 ? "#0284c7" : "#ef4444", fontSize: "17px", fontWeight: "900" }}>{res.percentage}%</span>
+                </div>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
-                <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Attempted</span>
-                <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{res.attempted}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
-                <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Total Correct</span>
-                <span style={{ color: "#16a34a", fontSize: "17px", fontWeight: "900" }}>{res.score}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", paddingTop: "4px" }}>
-                <span style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>Your Percentage</span>
-                <span style={{ color: res.percentage >= 40 ? "#0284c7" : "#ef4444", fontSize: "17px", fontWeight: "900" }}>{res.percentage}%</span>
-              </div>
-            </div>
 
-            <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={() => setInlineShowDetailed(true)}
-                style={{ flex: 1, minWidth: "160px", backgroundColor: "#0284c7", color: "white", border: "none", padding: "12px 18px", borderRadius: "6px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
-              >
-                VIEW REVIEW (1-40)
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push("/student")}
-                style={{ flex: 1, minWidth: "160px", backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "12px 18px", borderRadius: "6px", fontWeight: "bold", fontSize: "14px", cursor: "pointer" }}
-              >
-                CLOSE
-              </button>
+              <div className="exam-finish-actions">
+                <button
+                  type="button"
+                  onClick={() => setInlineShowDetailed(true)}
+                  style={{ flex: 1, minWidth: "160px", backgroundColor: "#0284c7", color: "white", border: "none", padding: "12px 18px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
+                >
+                  VIEW REVIEW (1-40)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/student")}
+                  style={{ flex: 1, minWidth: "160px", backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "12px 18px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", cursor: "pointer" }}
+                >
+                  CLOSE
+                </button>
+              </div>
             </div>
           </div>
         </div>

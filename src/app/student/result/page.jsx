@@ -393,80 +393,230 @@ const StudentResult = () => {
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column" }}>
-      <div style={{ backgroundColor: "#0284c7", color: "white", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "16px", fontWeight: "bold", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .result-summary-top-bar {
+          background-color: #0284c7;
+          color: white;
+          padding: 12px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 16px;
+          font-weight: bold;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result-summary-wrap {
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+          box-sizing: border-box;
+        }
+        .result-summary-card {
+          width: 100%;
+          max-width: 500px;
+          background-color: white;
+          border-radius: 16px;
+          padding: 26px 24px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+          border: 1px solid #e2e8f0;
+          box-sizing: border-box;
+          max-height: 94vh;
+          overflow-y: auto;
+        }
+        .result-summary-header {
+          text-align: center;
+          margin-bottom: 18px;
+        }
+        .result-summary-trophy {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background-color: #fef3c7;
+          border: 1px solid #fde68a;
+          margin: 0 auto 10px auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 32px;
+        }
+        .result-summary-title {
+          color: #0f172a;
+          font-size: 22px;
+          margin: 0 0 8px 0;
+          font-weight: 800;
+        }
+        .result-summary-badge {
+          display: inline-block;
+          background-color: #f1f5f9;
+          padding: 6px 16px;
+          border-radius: 20px;
+          color: #475569;
+          font-weight: 600;
+          font-size: 13.5px;
+        }
+        .result-summary-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .result-summary-stats {
+          background-color: #f8fafc;
+          border-radius: 12px;
+          padding: 16px 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          border: 1px solid #e2e8f0;
+        }
+        .result-summary-actions {
+          display: flex;
+          justify-content: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        /* LANDSCAPE MODE: FIT ON SCREEN CLEANLY WITHOUT SCROLL OR OVERFLOW */
+        @media (orientation: landscape) and (max-height: 650px) {
+          .result-summary-top-bar {
+            display: none !important;
+          }
+          .result-summary-wrap {
+            padding: 6px 12px !important;
+            height: 100vh !important;
+            min-height: 100vh !important;
+            overflow: hidden !important;
+          }
+          .result-summary-card {
+            max-width: 650px !important;
+            padding: 10px 16px !important;
+            max-height: 96vh !important;
+            border-radius: 12px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+          }
+          .result-summary-header {
+            margin-bottom: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            text-align: left !important;
+          }
+          .result-summary-trophy {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 18px !important;
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+          }
+          .result-summary-title {
+            font-size: 15.5px !important;
+            margin: 0 !important;
+          }
+          .result-summary-badge {
+            font-size: 11.5px !important;
+            padding: 2px 8px !important;
+          }
+          .result-summary-grid {
+            flex-direction: row !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+          }
+          .result-summary-stats {
+            flex: 1.25 !important;
+            padding: 8px 12px !important;
+            gap: 4px !important;
+            margin-bottom: 0 !important;
+          }
+          .result-summary-stats > div {
+            padding-bottom: 3px !important;
+            max-width: 100% !important;
+          }
+          .result-summary-stats span {
+            font-size: 12.5px !important;
+          }
+          .result-summary-actions {
+            flex: 1 !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            gap: 8px !important;
+          }
+          .result-summary-actions button {
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            padding: 9px 12px !important;
+            font-size: 13px !important;
+          }
+        }
+      ` }} />
+
+      <div className="result-summary-top-bar">
         <span>Exam Summary</span>
       </div>
 
-      <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", padding: "20px" }}>
-        
-        <div style={{ 
-          width: "100%",
-          maxWidth: "500px", 
-          backgroundColor: "white", 
-          borderRadius: "12px", 
-          padding: "30px", 
-          boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-          border: "1px solid #e2e8f0" 
-        }}>
+      <div className="result-summary-wrap">
+        <div className="result-summary-card">
           
-          <div style={{ textAlign: "center", marginBottom: "20px" }}>
-            <div style={{ width: "68px", height: "68px", borderRadius: "50%", backgroundColor: "#fef3c7", border: "1px solid #fde68a", margin: "0 auto 12px auto", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "36px" }}>
+          <div className="result-summary-header">
+            <div className="result-summary-trophy">
               🏆
             </div>
-            <h2 style={{ color: "#0f172a", fontSize: "22px", margin: "0 0 10px 0", fontWeight: "800" }}>Congratulations, Exam Ended!</h2>
-            <div style={{ display: "inline-block", backgroundColor: "#f1f5f9", padding: "6px 16px", borderRadius: "20px", color: "#475569", fontWeight: "600", fontSize: "14px" }}>
-              <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>Exam:</span> {examName}
-            </div>
-            {resultData.isOfflineSubmitted && (
-              <div style={{ marginTop: "10px" }}>
-                <span style={{ backgroundColor: "#fef3c7", color: "#b45309", border: "1px solid #fde68a", padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                  ⚡ Completed & Submitted Offline (Saved locally)
-                </span>
+            <div>
+              <h2 className="result-summary-title">Congratulations, Exam Ended!</h2>
+              <div className="result-summary-badge">
+                <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>Exam:</span> {examName}
               </div>
-            )}
+            </div>
           </div>
 
-          <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "20px", marginBottom: "25px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", border: "1px solid #e2e8f0" }}>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "280px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "8px" }}>
-              <span style={{ color: "#64748b", fontSize: "15px", fontWeight: "600" }}>Total Questions</span>
-              <span style={{ color: "#0f172a", fontSize: "16px", fontWeight: "bold" }}>{total}</span>
+          <div className="result-summary-grid">
+            <div className="result-summary-stats">
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "280px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                <span style={{ color: "#64748b", fontSize: "14.5px", fontWeight: "600" }}>Total Questions</span>
+                <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{total}</span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "280px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                <span style={{ color: "#64748b", fontSize: "14.5px", fontWeight: "600" }}>Total Attempted</span>
+                <span style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold" }}>{calculatedAttempted}</span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "280px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "6px" }}>
+                <span style={{ color: "#64748b", fontSize: "14.5px", fontWeight: "600" }}>Total Correct</span>
+                <span style={{ color: "#16a34a", fontSize: "17px", fontWeight: "900" }}>{calculatedScore}</span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "280px", paddingTop: "4px" }}>
+                <span style={{ color: "#64748b", fontSize: "14.5px", fontWeight: "600" }}>Your Percentage</span>
+                <span style={{ color: percentage >= 40 ? "#0284c7" : "#ef4444", fontSize: "17px", fontWeight: "900" }}>{percentage}%</span>
+              </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "280px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "8px" }}>
-              <span style={{ color: "#64748b", fontSize: "15px", fontWeight: "600" }}>Total Attempted</span>
-              <span style={{ color: "#0f172a", fontSize: "16px", fontWeight: "bold" }}>{calculatedAttempted}</span>
+            <div className="result-summary-actions">
+              <button 
+                type="button"
+                onClick={() => setShowDetailedView(true)}
+                style={{ flex: 1, minWidth: "160px", maxWidth: "220px", backgroundColor: "#0284c7", color: "white", border: "none", padding: "12px 20px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", transition: "transform 0.2s", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
+                onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+                onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+              >
+                VIEW RESULT
+              </button>
+              <button 
+                type="button"
+                onClick={() => router.push("/student")}
+                style={{ flex: 1, minWidth: "160px", maxWidth: "220px", backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "12px 20px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", transition: "all 0.2s" }}
+                onMouseOver={(e) => { e.target.style.backgroundColor = '#e2e8f0'; e.target.style.transform = 'translateY(-2px)'; }}
+                onMouseOut={(e) => { e.target.style.backgroundColor = '#f1f5f9'; e.target.style.transform = 'translateY(0)'; }}
+              >
+                CLOSE
+              </button>
             </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "280px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "8px" }}>
-              <span style={{ color: "#64748b", fontSize: "15px", fontWeight: "600" }}>Total Correct</span>
-              <span style={{ color: "#16a34a", fontSize: "18px", fontWeight: "900" }}>{calculatedScore}</span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "280px", paddingTop: "4px" }}>
-              <span style={{ color: "#64748b", fontSize: "15px", fontWeight: "600" }}>Your Percentage</span>
-              <span style={{ color: percentage >= 40 ? "#0284c7" : "#ef4444", fontSize: "18px", fontWeight: "900" }}>{percentage}%</span>
-            </div>
-
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "center", gap: "15px", flexWrap: "wrap" }}>
-            <button 
-              onClick={() => setShowDetailedView(true)}
-              style={{ flex: 1, minWidth: "180px", maxWidth: "220px", backgroundColor: "#0284c7", color: "white", border: "none", padding: "12px 20px", borderRadius: "6px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", transition: "transform 0.2s", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
-              onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-              onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
-            >
-              VIEW RESULT
-            </button>
-            <button 
-              onClick={() => router.push("/student")}
-              style={{ flex: 1, minWidth: "180px", maxWidth: "220px", backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "12px 20px", borderRadius: "6px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", transition: "all 0.2s" }}
-              onMouseOver={(e) => { e.target.style.backgroundColor = '#e2e8f0'; e.target.style.transform = 'translateY(-2px)'; }}
-              onMouseOut={(e) => { e.target.style.backgroundColor = '#f1f5f9'; e.target.style.transform = 'translateY(0)'; }}
-            >
-              CLOSE
-            </button>
           </div>
         </div>
       </div>
