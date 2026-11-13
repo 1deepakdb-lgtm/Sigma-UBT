@@ -64,8 +64,17 @@ export default function JlptMockExamModal({
     if (typeof window !== "undefined") {
       const lockLandscape = async () => {
         try {
+          const docEl = document.documentElement;
+          if (docEl.requestFullscreen) {
+            await docEl.requestFullscreen().catch(() => {});
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+          }
+        } catch (e) {}
+
+        try {
           if (screen.orientation && typeof screen.orientation.lock === "function") {
-            await screen.orientation.lock("landscape").catch(() => {});
+            await screen.orientation.lock("landscape").catch(() => { });
           } else if (screen.lockOrientation) {
             screen.lockOrientation("landscape");
           } else if (screen.webkitLockOrientation) {
@@ -73,7 +82,7 @@ export default function JlptMockExamModal({
           } else if (screen.mozLockOrientation) {
             screen.mozLockOrientation("landscape");
           }
-        } catch (e) {}
+        } catch (e) { }
       };
       lockLandscape();
     }
@@ -83,7 +92,11 @@ export default function JlptMockExamModal({
           if (screen.orientation && typeof screen.orientation.unlock === "function") {
             screen.orientation.unlock();
           }
-        } catch (e) {}
+          if (document.fullscreenElement) {
+            if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          }
+        } catch (e) { }
       }
     };
   }, []);
@@ -280,7 +293,7 @@ export default function JlptMockExamModal({
         const history = JSON.parse(localStorage.getItem("jlptExamResults") || "[]");
         history.unshift(resultPayload);
         localStorage.setItem("jlptExamResults", JSON.stringify(history.slice(0, 30)));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (onComplete) onComplete(resultPayload);
@@ -325,7 +338,8 @@ export default function JlptMockExamModal({
       padding: "12px",
       boxSizing: "border-box"
     }}>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .jlpt-exam-modal {
           width: 100%;
           max-width: 1140px;

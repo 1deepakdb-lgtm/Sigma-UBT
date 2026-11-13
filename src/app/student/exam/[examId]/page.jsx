@@ -75,6 +75,13 @@ const StudentExam = () => {
           if (screen.orientation && typeof screen.orientation.unlock === "function") {
             screen.orientation.unlock();
           }
+          if (document.fullscreenElement) {
+            if (document.exitFullscreen) {
+              document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+              document.webkitExitFullscreen();
+            }
+          }
         } catch (e) {}
       }
     };
@@ -368,8 +375,21 @@ const StudentExam = () => {
   }, [isStarted]);
 
   const handleGetStarted = async () => {
-    // Lock orientation to landscape mode on student device without requesting native fullscreen
+    // Request fullscreen and auto-lock orientation to landscape on student device
     if (typeof window !== "undefined") {
+      try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen().catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        } else if (docEl.mozRequestFullScreen) {
+          docEl.mozRequestFullScreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
+        }
+      } catch (e) {}
+
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
           await screen.orientation.lock("landscape").catch(() => {});
