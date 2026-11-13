@@ -23,7 +23,6 @@ const StudentExam = () => {
   const [logoWatermark, setLogoWatermark] = useState("");
 
   const [isStarted, setIsStarted] = useState(false);
-  const [forceLandscape, setForceLandscape] = useState(true);
   const [viewMode, setViewMode] = useState("overview"); 
   const [showConfirmModal, setShowConfirmModal] = useState(false); 
   
@@ -369,7 +368,7 @@ const StudentExam = () => {
   }, [isStarted]);
 
   const handleGetStarted = async () => {
-    // Attempt orientation lock to landscape without triggering Chrome's fullscreen exit popup
+    // Lock orientation to landscape mode on student device without requesting native fullscreen
     if (typeof window !== "undefined") {
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
@@ -383,7 +382,6 @@ const StudentExam = () => {
         }
       } catch (e) {}
     }
-    setForceLandscape(true);
     setIsStarted(true);
   };
 
@@ -1363,7 +1361,7 @@ const StudentExam = () => {
   };
 
   return (
-    <div className={`ubt-exam-wrapper ${forceLandscape ? "force-landscape" : ""}`} style={containerExamStyle} onContextMenu={(e) => e.preventDefault()}>
+    <div className="ubt-exam-wrapper" style={containerExamStyle} onContextMenu={(e) => e.preventDefault()}>
       <style dangerouslySetInnerHTML={{ __html: `
         .ubt-exam-wrapper {
           width: 100vw;
@@ -1559,90 +1557,7 @@ const StudentExam = () => {
           }
         }
 
-        /* DEFAULT ENFORCED LANDSCAPE MODE FOR PORTRAIT VIEWPORTS */
-        @media (orientation: portrait) and (max-width: 900px) {
-          .ubt-exam-wrapper.force-landscape {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            width: 100dvh !important;
-            height: 100dvw !important;
-            transform: translate(-50%, -50%) rotate(90deg) !important;
-            transform-origin: center center !important;
-            overflow: hidden !important;
-            padding: 4px 8px !important;
-            box-sizing: border-box !important;
-            z-index: 9999 !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-main {
-            height: 100% !important;
-            max-width: 100% !important;
-            justify-content: center !important;
-            border-radius: 20px !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-card {
-            height: calc(100dvw - 52px) !important;
-            min-height: 0 !important;
-            max-height: calc(100dvw - 52px) !important;
-            border-radius: 0 0 20px 20px !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-columns {
-            flex-direction: row !important;
-            flex: 1 !important;
-            overflow: hidden !important;
-            min-height: 0 !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-left {
-            flex: 1.25 !important;
-            padding: 8px 14px !important;
-            border-right: 1.5px solid #e2e8f0 !important;
-            border-bottom: none !important;
-            overflow-y: auto !important;
-            height: 100% !important;
-            max-height: none !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-left p {
-            font-size: 15.5px !important;
-            margin-bottom: 6px !important;
-            line-height: 1.35 !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-right {
-            flex: 1 !important;
-            padding: 8px 14px !important;
-            overflow-y: auto !important;
-            height: 100% !important;
-            max-height: none !important;
-            gap: 6px !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-header-bar {
-            padding: 7px 16px !important;
-            font-size: 13px !important;
-            border-radius: 20px 20px 0 0 !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-nav-bar {
-            padding: 7px 16px !important;
-            border-radius: 0 0 20px 20px !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-exam-nav-bar button {
-            padding: 8px 18px !important;
-            font-size: 13px !important;
-            font-weight: 800 !important;
-            border-radius: 8px !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-overview-box {
-            padding: 10px 14px !important;
-            border-radius: 0 0 20px 20px !important;
-            max-height: calc(100dvw - 52px) !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-overview-flex {
-            flex-direction: row !important;
-            gap: 12px !important;
-          }
-          .ubt-exam-wrapper.force-landscape .ubt-overview-flex button {
-            padding: 6px 0 !important;
-            font-size: 11.5px !important;
-          }
-        }
+        /* OPTIMIZED FOR PORTRAIT MOBILE */
 
         /* FALLBACK FOR PORTRAIT MOBILE BEFORE ROTATION */
         @media (orientation: portrait) and (max-width: 768px) {
@@ -1755,29 +1670,7 @@ const StudentExam = () => {
           
           <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "24px 24px 0 0", justifyContent: "space-between", alignItems: "center", fontWeight: "bold", fontSize: "15.5px" }}>
             <span>Remaining Questions: 40</span>
-            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>{exactExamName}</span>
-              <button
-                type="button"
-                onClick={() => setForceLandscape(prev => !prev)}
-                title="Rotate Screen (Landscape / Portrait)"
-                style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.22)",
-                  color: "white",
-                  border: "1px solid rgba(255, 255, 255, 0.4)",
-                  borderRadius: "12px",
-                  padding: "3px 9px",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px"
-                }}
-              >
-                🔄 Rotate
-              </button>
-            </span>
+            <span>{exactExamName}</span>
             <span>Time Remaining: {formatTime(timeLeft)}</span>
           </div>
 
@@ -1869,29 +1762,7 @@ const StudentExam = () => {
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
                 <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "24px 24px 0 0", justifyContent: "space-between", alignItems: "center", fontWeight: "bold", fontSize: "15.5px" }}>
                   <span>Remaining Questions: 40</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span>{exactExamName}</span>
-                    <button
-                      type="button"
-                      onClick={() => setForceLandscape(prev => !prev)}
-                      title="Rotate Screen (Landscape / Portrait)"
-                      style={{
-                        backgroundColor: "rgba(255, 255, 255, 0.22)",
-                        color: "white",
-                        border: "1px solid rgba(255, 255, 255, 0.4)",
-                        borderRadius: "12px",
-                        padding: "3px 9px",
-                        fontSize: "12px",
-                        fontWeight: "700",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px"
-                      }}
-                    >
-                      🔄 Rotate
-                    </button>
-                  </span>
+                  <span>{exactExamName}</span>
                   <span>Time Remaining: {formatTime(timeLeft)}</span>
                 </div>
 
