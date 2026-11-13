@@ -348,6 +348,300 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
   // Individual Option Generating state
   const [generatingKey, setGeneratingKey] = useState(null);
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TARGET EXAM SET INTEGRATION (UBT & CHAPTERWISE AUTO-SYNC)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const [availableSets, setAvailableSets] = useState([]);
+  const [selectedSetId, setSelectedSetId] = useState('');
+  const [selectedSet, setSelectedSet] = useState(null);
+  const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(true);
+  const [syncStatus, setSyncStatus] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [setSearchTerm, setSetSearchTerm] = useState('');
+  const selectedSetRef = useRef(null);
+  selectedSetRef.current = selectedSet;
+  const isAutoSyncRef = useRef(true);
+  isAutoSyncRef.current = isAutoSyncEnabled;
+
+  // Load available Exam Sets (UBT & Chapterwise)
+  useEffect(() => {
+    const loadSets = async () => {
+      try {
+        let localSets = [];
+        try {
+          localSets = JSON.parse(localStorage.getItem('examSets') || '[]');
+        } catch (e) {}
+
+        let serverSets = [];
+        try {
+          const res = await fetch('/api/admin/packages?all=true&superadmin=true');
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.sets)) serverSets = data.sets;
+          }
+        } catch (e) {}
+
+        const setMap = new Map();
+        [...localSets, ...serverSets].forEach(s => {
+          if (!s || !s.name) return;
+          const key = (s.name || '').trim().toUpperCase();
+          const existing = setMap.get(key);
+          setMap.set(key, { ...existing, ...s, name: key });
+        });
+
+        const merged = Array.from(setMap.values());
+        merged.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        setAvailableSets(merged);
+
+        // Auto-select last used set if saved
+        const savedId = typeof window !== 'undefined' ? localStorage.getItem('eps_listening_selected_set_id') : null;
+        if (savedId) {
+          const found = merged.find(s => s.id === savedId || s.name === savedId);
+          if (found) {
+            setSelectedSetId(found.id || found.name);
+            setSelectedSet(found);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load exam sets:', err);
+      }
+    };
+    loadSets();
+  }, []);
+
+  // Separate UBT sets & Chapterwise sets
+  const ubtSetsList = availableSets.filter(s => {
+    const name = (s.name || '').toLowerCase();
+    const pkg = (s.packageName || '').toLowerCase();
+    const type = (s.setType || '').toLowerCase();
+    return type === 'ubt' || name.includes('ubt') || pkg.includes('ubt') || pkg.includes('full set');
+  });
+
+  const chapterSetsList = availableSets.filter(s => {
+    const name = (s.name || '').toLowerCase();
+    const pkg = (s.packageName || '').toLowerCase();
+    const type = (s.setType || '').toLowerCase();
+    return type === 'chapterwise' || name.includes('chapter') || pkg.includes('chapter') || (s.name && /^SET\s+\d+$/i.test(s.name));
+  });
+
+  // Select target exam set and load existing Q21-Q40 questions
+  const handleSelectSet = async (targetId) => {
+    setSelectedSetId(targetId);
+    if (!targetId) {
+      setSelectedSet(null);
+      if (typeof window !== 'undefined') localStorage.removeItem('eps_listening_selected_set_id');
+      return;
+    }
+
+    const target = availableSets.find(s => s.id === targetId || s.name === targetId);
+    if (!target) return;
+    setSelectedSet(target);
+    if (typeof window !== 'undefined') localStorage.setItem('eps_listening_selected_set_id', target.id || target.name);
+
+    setIsSyncing(true);
+    setSyncStatus(`Loading Q21–Q40 questions from "${target.name}"...`);
+
+    try {
+      let serverQuestions = [];
+      try {
+        const url = target.id 
+          ? `/api/admin/questions?setId=${encodeURIComponent(target.id)}` 
+          : `/api/admin/questions?setName=${encodeURIComponent(target.name)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.questions)) serverQuestions = data.questions;
+        }
+      } catch (e) {}
+
+      let localBank = [];
+      try {
+        localBank = JSON.parse(localStorage.getItem('questionBank') || '[]');
+      } catch (e) {}
+
+      const cleanTargetName = (target.name || '').trim().toUpperCase();
+      const setQuestions = [
+        ...serverQuestions,
+        ...localBank.filter(q => (q.setId && q.setId === target.id) || (q.set && q.set.trim().toUpperCase() === cleanTargetName))
+      ];
+
+      setQuestions(prev => prev.map(sample => {
+        const found = setQuestions.find(q => Number(q.qIndex) === sample.qNum);
+        if (!found) return sample;
+
+        const qText = (found.description || found.questionHeading || found.mainHeading || '')
+          .replace(/^\[\s*\d+\s*\]\s*/, '')
+          .trim();
+
+        const rawOpts = Array.isArray(found.options) ? found.options : [];
+        const mappedOpts = sample.options.map(opt => {
+          const item = rawOpts[opt.id - 1] || rawOpts.find(o => o.id === opt.id);
+          const rawText = typeof item === 'string' ? item : (item?.text || opt.text || '');
+          const cleanText = rawText.replace(/^[0-9]+번[\.\,\s]*/, '').replace(/^[0-9]+[\.\)\s]+/, '').trim();
+          const audioUrl = typeof item === 'object' && item !== null ? (item.audio || null) : null;
+          return {
+            ...opt,
+            text: cleanText || opt.text,
+            audioUrl: audioUrl || opt.audioUrl
+          };
+        });
+
+        return {
+          ...sample,
+          questionText: qText || sample.questionText,
+          questionAudioUrl: found.audio || sample.questionAudioUrl,
+          options: mappedOpts
+        };
+      }));
+
+      setSyncStatus(`✓ Loaded Q21–Q40 from ${target.name}`);
+      setTimeout(() => setSyncStatus(''), 3500);
+    } catch (err) {
+      console.error('Error loading set questions:', err);
+      setSyncStatus(`Notice: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Sync a single question to target Exam Set (text to text, audio to audio, strictly NO bell/option numbers)
+  const syncQuestionToTargetSet = async (qNum, qData, targetSet = selectedSetRef.current) => {
+    if (!targetSet) return;
+
+    try {
+      const cleanSetName = (targetSet.name || '').trim().toUpperCase();
+      const cleanPkgName = targetSet.packageName || 'Full Set UBT';
+
+      // Text fields:
+      const qText = (qData.questionText || '').trim();
+
+      // Options: strictly pure text and audio, NO option numbers ("1번.") and NO bell chimes!
+      const cleanOptions = qData.options.map((opt) => {
+        const pureText = (opt.text || '')
+          .replace(/^[0-9]+번[\.\,\s]*/, '')
+          .replace(/^[0-9]+[\.\)\s]+/, '')
+          .trim();
+        const optAudio = opt.permanentUrl || opt.audioUrl || '';
+        return {
+          text: pureText,
+          audio: optAudio,
+          image: '',
+          video: ''
+        };
+      });
+
+      const questionAudio = qData.singleAudioPermanentUrl || qData.questionPermanentUrl || qData.singleAudioUrl || qData.questionAudioUrl || '';
+
+      // 1. Update localStorage questionBank
+      let localBank = [];
+      try {
+        localBank = JSON.parse(localStorage.getItem('questionBank') || '[]');
+      } catch (e) {}
+
+      const existingIdx = localBank.findIndex(q => 
+        Number(q.qIndex) === qNum && 
+        (q.set?.trim().toUpperCase() === cleanSetName || (q.setId && q.setId === targetSet.id))
+      );
+
+      const existingItem = existingIdx >= 0 ? localBank[existingIdx] : null;
+
+      const updatedPayload = {
+        id: existingItem?.id || `q-${targetSet.id || cleanSetName}-${qNum}`,
+        package: cleanPkgName,
+        set: cleanSetName,
+        setId: targetSet.id,
+        examSetId: targetSet.id,
+        qIndex: qNum,
+        type: 'Listening',
+        mainHeading: existingItem?.mainHeading || `[ ${qNum} ] 이야기를 듣고 질문에 알맞은 것을 고르십시오.`,
+        questionHeading: String(qNum),
+        description: qText,
+        image: existingItem?.image || '',
+        audio: questionAudio,
+        options: cleanOptions,
+        answer: existingItem?.answer ?? 0
+      };
+
+      if (existingIdx >= 0) {
+        localBank[existingIdx] = { ...localBank[existingIdx], ...updatedPayload };
+      } else {
+        localBank.push(updatedPayload);
+      }
+
+      try {
+        localStorage.setItem('questionBank', JSON.stringify(localBank));
+      } catch (e) {}
+
+      // 2. Sync to Server SQLite DB
+      if (targetSet.id) {
+        try {
+          const isDbId = updatedPayload.id && !updatedPayload.id.startsWith('q-');
+          if (isDbId) {
+            await fetch('/api/admin/questions', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: updatedPayload.id,
+                qIndex: qNum,
+                type: 'Listening',
+                mainHeading: updatedPayload.mainHeading,
+                questionHeading: updatedPayload.questionHeading,
+                description: updatedPayload.description,
+                audio: updatedPayload.audio,
+                options: updatedPayload.options
+              })
+            });
+          } else {
+            await fetch('/api/admin/questions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                examSetId: targetSet.id,
+                qIndex: qNum,
+                type: 'Listening',
+                mainHeading: updatedPayload.mainHeading,
+                questionHeading: updatedPayload.questionHeading,
+                description: updatedPayload.description,
+                audio: updatedPayload.audio,
+                options: updatedPayload.options,
+                answer: updatedPayload.answer
+              })
+            });
+          }
+        } catch (serverErr) {
+          console.warn('Backend question sync notice:', serverErr);
+        }
+      }
+
+      setSyncStatus(`✓ Q${qNum} Auto-Updated to ${cleanSetName}! (Text & Audio updated, bell/numbers untouched)`);
+      setTimeout(() => setSyncStatus(''), 3000);
+    } catch (err) {
+      console.error('Failed to sync question to target set:', err);
+    }
+  };
+
+  // Sync All 20 Questions (Q21 to Q40) at once
+  const handleSyncAllQuestions = async () => {
+    if (!selectedSet) {
+      alert('Please select an Exam Set first!');
+      return;
+    }
+    setIsSyncing(true);
+    setSyncStatus(`Updating all 20 listening questions in "${selectedSet.name}"...`);
+
+    try {
+      for (const q of questions) {
+        await syncQuestionToTargetSet(q.qNum, q, selectedSet);
+      }
+      setSyncStatus(`✓ Successfully updated Q21–Q40 in ${selectedSet.name}!`);
+      setTimeout(() => setSyncStatus(''), 4000);
+    } catch (err) {
+      alert('Error updating set: ' + err.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   // Auto-save questions to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -570,38 +864,69 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
   };
 
   // Handle Question Audio Upload
-  const handleQuestionAudioUpload = (e) => {
+  const handleQuestionAudioUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
+    const localUrl = URL.createObjectURL(file);
+    let finalUrl = localUrl;
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) finalUrl = data.url;
+      }
+    } catch (err) {
+      console.warn('Audio upload notice:', err);
+    }
+
     const audio = new Audio();
-    audio.src = url;
+    audio.src = localUrl;
     audio.onloadedmetadata = () => {
       const dur = audio.duration || 0;
-      updateCurrentQuestion({
-        questionAudioUrl: url,
+      const updates = {
+        questionAudioUrl: finalUrl,
+        questionPermanentUrl: finalUrl,
         questionAudioFile: file,
         questionDuration: Math.round(dur * 10) / 10
-      });
+      };
+      updateCurrentQuestion(updates, true);
     };
   };
 
   // Handle Option Audio Upload
-  const handleOptionAudioUpload = (optId, e) => {
+  const handleOptionAudioUpload = async (optId, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
+    const localUrl = URL.createObjectURL(file);
+    let finalUrl = localUrl;
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) finalUrl = data.url;
+      }
+    } catch (err) {
+      console.warn('Option audio upload notice:', err);
+    }
+
     const audio = new Audio();
-    audio.src = url;
+    audio.src = localUrl;
     audio.onloadedmetadata = () => {
       const dur = audio.duration || 0;
       updateOption(optId, {
-        audioUrl: url,
+        audioUrl: finalUrl,
+        permanentUrl: finalUrl,
         audioFile: file,
         duration: Math.round(dur * 10) / 10
-      });
+      }, true);
     };
   };
 
@@ -615,7 +940,8 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     setGeneratingKey('q');
     try {
       const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(currentQuestion.questionText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+      const cleanPrompt = currentQuestion.questionText.trim();
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanPrompt)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
 
       const res = await fetch(ttsUrl);
       if (!res.ok) throw new Error('Speech synthesis failed');
@@ -625,11 +951,13 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       const audio = new Audio();
       audio.src = url;
       audio.onloadedmetadata = () => {
-        updateCurrentQuestion({
+        const updates = {
           questionAudioUrl: url,
+          questionPermanentUrl: ttsUrl,
           questionAudioFile: new File([blob], `Q${activeQNum}_prompt.mp3`, { type: 'audio/mp3' }),
           questionDuration: Math.round(audio.duration * 10) / 10
-        });
+        };
+        updateCurrentQuestion(updates, true);
         setGeneratingKey(null);
       };
     } catch (err) {
@@ -648,9 +976,9 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
 
     setGeneratingKey(`opt-${optId}`);
     try {
-      // e.g. "1번, 공장"
+      const pureText = text.replace(/^[0-9]+번[\.\,\s]*/, '').replace(/^[0-9]+[\.\)\s]+/, '').trim();
       const prefix = `${optId}번. `;
-      const fullText = text.startsWith(optId + '번') ? text : prefix + text;
+      const fullText = prefix + pureText;
 
       const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
       const ttsUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
@@ -664,10 +992,12 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       audio.src = url;
       audio.onloadedmetadata = () => {
         updateOption(optId, {
+          text: pureText,
           audioUrl: url,
+          permanentUrl: ttsUrl,
           audioFile: new File([blob], `Q${activeQNum}_opt${optId}.mp3`, { type: 'audio/mp3' }),
           duration: Math.round(audio.duration * 10) / 10
-        });
+        }, true);
         setGeneratingKey(null);
       };
     } catch (err) {
@@ -706,26 +1036,41 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       audio.src = url;
       audio.onloadedmetadata = () => {
         const dur = Math.round(audio.duration * 10) / 10;
-        setQuestions(prev => prev.map(q => {
-          if (q.qNum !== activeQNum) return q;
-          return {
-            ...q,
-            singleAudioUrl: url,
-            singleAudioFile: new File([blob], `Q${activeQNum}_single.mp3`, { type: 'audio/mp3' }),
-            singleAudioDuration: dur,
-            // Also use in Question Audio
-            questionAudioUrl: url,
-            questionAudioFile: new File([blob], `Q${activeQNum}_prompt.mp3`, { type: 'audio/mp3' }),
-            questionDuration: dur,
-            questionText: cleanText,
-            // Also use in Question Option Audio
-            options: q.options.map(opt => ({
-              ...opt,
-              audioUrl: url,
-              duration: dur
-            }))
-          };
-        }));
+        let updatedQuestionObj = null;
+
+        setQuestions(prev => {
+          const next = prev.map(q => {
+            if (q.qNum !== activeQNum) return q;
+            const updated = {
+              ...q,
+              singleAudioUrl: url,
+              singleAudioPermanentUrl: ttsUrl,
+              singleAudioFile: new File([blob], `Q${activeQNum}_single.mp3`, { type: 'audio/mp3' }),
+              singleAudioDuration: dur,
+              // Also set on Question Prompt
+              questionAudioUrl: url,
+              questionPermanentUrl: ttsUrl,
+              questionAudioFile: new File([blob], `Q${activeQNum}_prompt.mp3`, { type: 'audio/mp3' }),
+              questionDuration: dur,
+              questionText: cleanText,
+              // Also set on options
+              options: q.options.map(opt => ({
+                ...opt,
+                audioUrl: url,
+                permanentUrl: ttsUrl,
+                duration: dur
+              }))
+            };
+            updatedQuestionObj = updated;
+            return updated;
+          });
+          return next;
+        });
+
+        if (updatedQuestionObj && isAutoSyncRef.current && selectedSetRef.current) {
+          syncQuestionToTargetSet(activeQNum, updatedQuestionObj, selectedSetRef.current);
+        }
+
         setGeneratingKey(null);
       };
     } catch (err) {
@@ -736,50 +1081,100 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
   };
 
   // Upload custom file for Single Audio Text (also applies to question & options)
-  const handleSingleCustomAudioUpload = (e) => {
+  const handleSingleCustomAudioUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
+
+    const localUrl = URL.createObjectURL(file);
+    let finalUrl = localUrl;
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) finalUrl = data.url;
+      }
+    } catch (err) {
+      console.warn('Single audio upload notice:', err);
+    }
+
     const audio = new Audio();
-    audio.src = url;
+    audio.src = localUrl;
     audio.onloadedmetadata = () => {
       const dur = Math.round(audio.duration * 10) / 10;
-      setQuestions(prev => prev.map(q => {
-        if (q.qNum !== activeQNum) return q;
-        return {
-          ...q,
-          singleAudioUrl: url,
-          singleAudioFile: file,
-          singleAudioDuration: dur,
-          // Also use in Question Audio
-          questionAudioUrl: url,
-          questionAudioFile: file,
-          questionDuration: dur,
-          // Also use in Question Option Audio
-          options: q.options.map(opt => ({
-            ...opt,
-            audioUrl: url,
-            duration: dur
-          }))
-        };
-      }));
+      let updatedQuestionObj = null;
+
+      setQuestions(prev => {
+        const next = prev.map(q => {
+          if (q.qNum !== activeQNum) return q;
+          const updated = {
+            ...q,
+            singleAudioUrl: finalUrl,
+            singleAudioPermanentUrl: finalUrl,
+            singleAudioFile: file,
+            singleAudioDuration: dur,
+            questionAudioUrl: finalUrl,
+            questionPermanentUrl: finalUrl,
+            questionAudioFile: file,
+            questionDuration: dur,
+            options: q.options.map(opt => ({
+              ...opt,
+              audioUrl: finalUrl,
+              permanentUrl: finalUrl,
+              duration: dur
+            }))
+          };
+          updatedQuestionObj = updated;
+          return updated;
+        });
+        return next;
+      });
+
+      if (updatedQuestionObj && isAutoSyncRef.current && selectedSetRef.current) {
+        syncQuestionToTargetSet(activeQNum, updatedQuestionObj, selectedSetRef.current);
+      }
     };
   };
 
   // Update current question
-  const updateCurrentQuestion = (updates) => {
-    setQuestions(prev => prev.map(q => q.qNum === activeQNum ? { ...q, ...updates } : q));
+  const updateCurrentQuestion = (updates, autoSync = false) => {
+    let targetUpdated = null;
+    setQuestions(prev => {
+      const next = prev.map(q => {
+        if (q.qNum !== activeQNum) return q;
+        const up = { ...q, ...updates };
+        targetUpdated = up;
+        return up;
+      });
+      return next;
+    });
+
+    if (autoSync && isAutoSyncRef.current && selectedSetRef.current && targetUpdated) {
+      syncQuestionToTargetSet(activeQNum, targetUpdated, selectedSetRef.current);
+    }
   };
 
   // Update a specific option inside current question
-  const updateOption = (optId, updates) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.qNum !== activeQNum) return q;
-      return {
-        ...q,
-        options: q.options.map(opt => opt.id === optId ? { ...opt, ...updates } : opt)
-      };
-    }));
+  const updateOption = (optId, updates, autoSync = false) => {
+    let targetUpdated = null;
+    setQuestions(prev => {
+      const next = prev.map(q => {
+        if (q.qNum !== activeQNum) return q;
+        const up = {
+          ...q,
+          options: q.options.map(opt => opt.id === optId ? { ...opt, ...updates } : opt)
+        };
+        targetUpdated = up;
+        return up;
+      });
+      return next;
+    });
+
+    if (autoSync && isAutoSyncRef.current && selectedSetRef.current && targetUpdated) {
+      syncQuestionToTargetSet(activeQNum, targetUpdated, selectedSetRef.current);
+    }
   };
 
   // Play Preview of a single sound
@@ -1095,6 +1490,170 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             <span>Merge &amp; Generate Audio Track (Q21–Q40)</span>
           )}
         </button>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          TARGET EXAM SET AUTO-SYNC PANEL (UBT & CHAPTERWISE)
+      ───────────────────────────────────────────────────────────────────────────── */}
+      <div style={{
+        backgroundColor: '#f0f9ff',
+        border: '1.5px solid #38bdf8',
+        borderRadius: '12px',
+        padding: '16px 18px',
+        marginBottom: '20px',
+        boxShadow: '0 3px 12px rgba(56, 189, 248, 0.12)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '22px' }}>🎯</span>
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: '800', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>Target Exam Set (Auto-Sync Listening Q21–Q40)</span>
+                {selectedSet && (
+                  <span style={{ backgroundColor: '#0284c7', color: '#ffffff', fontSize: '11px', padding: '2px 8px', borderRadius: '10px', fontWeight: '800' }}>
+                    Active: {selectedSet.name}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px' }}>
+                UBT वा Chapterwise सेट छान्नुहोस् — यहाँ बनाइएको listening question र option को text तथा audio सिधै त्यस सेटमा auto-update हुनेछ (option number र bell sound यथावत रहनेछन्)।
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <label style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: isAutoSyncEnabled ? '#dcfce7' : '#ffffff',
+              border: isAutoSyncEnabled ? '1.5px solid #16a34a' : '1px solid #cbd5e1',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '700',
+              fontSize: '12px',
+              color: isAutoSyncEnabled ? '#15803d' : '#64748b',
+              userSelect: 'none'
+            }}>
+              <input
+                type="checkbox"
+                checked={isAutoSyncEnabled}
+                onChange={(e) => setIsAutoSyncEnabled(e.target.checked)}
+              />
+              <span>⚡ Real-Time Auto-Sync ({isAutoSyncEnabled ? 'ACTIVE' : 'OFF'})</span>
+            </label>
+
+            {selectedSet && (
+              <button
+                type="button"
+                onClick={handleSyncAllQuestions}
+                disabled={isSyncing}
+                style={{
+                  backgroundColor: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '7px 16px',
+                  fontWeight: '700',
+                  fontSize: '12px',
+                  cursor: isSyncing ? 'wait' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
+                }}
+              >
+                <span>💾 Save All Q21–Q40 to {selectedSet.name}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Set Selector Dropdown */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 320px' }}>
+            <select
+              value={selectedSetId}
+              onChange={(e) => handleSelectSet(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                border: '1.5px solid #0284c7',
+                fontSize: '13px',
+                fontWeight: '700',
+                color: '#0f172a',
+                backgroundColor: '#ffffff',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="">-- Choose UBT or Chapterwise Exam Set (Q21–Q40 Auto-Sync) --</option>
+              
+              {ubtSetsList.length > 0 && (
+                <optgroup label="📂 UBT Exam Sets (Full 40 Qs)">
+                  {ubtSetsList.map(s => (
+                    <option key={s.id || s.name} value={s.id || s.name}>
+                      {s.name} ({s.packageName || 'Full Set UBT'})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+
+              {chapterSetsList.length > 0 && (
+                <optgroup label="📖 Chapterwise Exam Sets">
+                  {chapterSetsList.map(s => (
+                    <option key={s.id || s.name} value={s.id || s.name}>
+                      {s.name} ({s.packageName || '30 Set Chapter UBT'})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+
+          {selectedSet && (
+            <button
+              type="button"
+              onClick={() => handleSelectSet(selectedSetId)}
+              disabled={isSyncing}
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1.5px solid #38bdf8',
+                color: '#0369a1',
+                borderRadius: '8px',
+                padding: '8px 14px',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: isSyncing ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>🔄 Reload from {selectedSet.name}</span>
+            </button>
+          )}
+        </div>
+
+        {/* Real-time sync notification badge */}
+        {syncStatus && (
+          <div style={{
+            marginTop: '10px',
+            padding: '7px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: '700',
+            backgroundColor: syncStatus.startsWith('✓') ? '#f0fdf4' : '#eff6ff',
+            color: syncStatus.startsWith('✓') ? '#15803d' : '#1e40af',
+            border: syncStatus.startsWith('✓') ? '1px solid #bbf7d0' : '1px solid #bfdbfe',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <span>{syncStatus}</span>
+          </div>
+        )}
       </div>
 
       {/* Synthesis Progress Bar */}
@@ -1542,6 +2101,31 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             >
               Next (Q{activeQNum + 1})
             </button>
+
+            {selectedSet && (
+              <button
+                type="button"
+                onClick={() => syncQuestionToTargetSet(activeQNum, currentQuestion, selectedSet)}
+                disabled={isSyncing}
+                style={{
+                  backgroundColor: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: isSyncing ? 'wait' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: '0 1px 4px rgba(2, 132, 199, 0.3)'
+                }}
+                title={`Sync Q${activeQNum} to ${selectedSet.name}`}
+              >
+                <span>⚡ Sync Q{activeQNum} to Set</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -1562,7 +2146,12 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             <input
               type="text"
               value={currentQuestion.questionText || ''}
-              onChange={(e) => updateCurrentQuestion({ questionText: e.target.value })}
+              onChange={(e) => updateCurrentQuestion({ questionText: e.target.value }, false)}
+              onBlur={() => {
+                if (isAutoSyncRef.current && selectedSetRef.current) {
+                  syncQuestionToTargetSet(activeQNum, currentQuestion, selectedSetRef.current);
+                }
+              }}
               placeholder="Enter Korean question text (e.g. 21번 문제입니다. 들은 것을 고르십시오.)"
               style={{ width: '100%', padding: '8px 12px', borderRadius: '5px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
             />
@@ -1707,7 +2296,12 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                     singleAudioText: val,
                     isSingleWord: true,
                     questionText: val
-                  });
+                  }, false);
+                }}
+                onBlur={() => {
+                  if (isAutoSyncRef.current && selectedSetRef.current) {
+                    syncQuestionToTargetSet(activeQNum, currentQuestion, selectedSetRef.current);
+                  }
                 }}
                 placeholder="e.g. 들은 것을 고르십시오 / 지갑"
                 style={{
@@ -1867,7 +2461,12 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                 <input
                   type="text"
                   value={opt.text}
-                  onChange={(e) => updateOption(opt.id, { text: e.target.value })}
+                  onChange={(e) => updateOption(opt.id, { text: e.target.value }, false)}
+                  onBlur={() => {
+                    if (isAutoSyncRef.current && selectedSetRef.current) {
+                      syncQuestionToTargetSet(activeQNum, currentQuestion, selectedSetRef.current);
+                    }
+                  }}
                   placeholder={`Option ${opt.id} text`}
                   style={{ width: '100%', padding: '6px 9px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12.5px', boxSizing: 'border-box', marginBottom: '8px' }}
                 />
