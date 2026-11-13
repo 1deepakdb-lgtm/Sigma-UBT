@@ -343,12 +343,25 @@ const StudentExam = () => {
     }
   }, [isStarted]);
 
-  const handleGetStarted = () => {
-    // Lock orientation to landscape mode on student device without requesting native fullscreen (which avoids the system exit banner)
+  const handleGetStarted = async () => {
+    // Auto rotate screen to landscape on click of Get Start
     if (typeof window !== "undefined") {
       try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen().catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        } else if (docEl.mozRequestFullScreen) {
+          docEl.mozRequestFullScreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
+        }
+      } catch (e) {}
+
+      try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
-          screen.orientation.lock("landscape").catch(() => {});
+          await screen.orientation.lock("landscape").catch(() => {});
         } else if (screen.lockOrientation) {
           screen.lockOrientation("landscape");
         } else if (screen.webkitLockOrientation) {
