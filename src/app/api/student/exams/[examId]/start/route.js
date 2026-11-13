@@ -88,11 +88,23 @@ export async function POST(req, { params }) {
       }, { status: 403 });
     }
 
-    // Access authorization check for student
+    // Access authorization check for student: All free sets are accessible by everyone across all devices
     const isFree = Boolean(
-      examSet.isFree ||
+      examSet.isFree === true ||
+      examSet.isFree === "true" ||
+      examSet.isFree === 1 ||
       examSet.setType === 'FREE' ||
-      (examSet.name && examSet.name.toLowerCase().includes('free demo'))
+      examSet.distributionMode === 'free' ||
+      examSet.isFreeForInstituteStudents === true ||
+      examSet.price === 0 ||
+      examSet.price === "0" ||
+      examSet.price === "Rs. 0" ||
+      (typeof examSet.price === "string" && examSet.price.toLowerCase().includes("free")) ||
+      (examSet.name && examSet.name.toLowerCase().includes('free')) ||
+      (examSet.packageName && examSet.packageName.toLowerCase().includes('free')) ||
+      (examSet.packageName && examSet.packageName.toLowerCase().includes('model')) ||
+      examSet.source === 'model_question_bank' ||
+      examSet.folder === 'Model Question Bank'
     );
 
     if (!isFree) {

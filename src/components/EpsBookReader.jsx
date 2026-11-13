@@ -1570,20 +1570,46 @@ export default function EpsBookReader({
   };
 
   const isSetUnlocked = (set) => {
-    // If set is inside Model Question Bank: fully open for all users
-    const isModelBankSet =
-      activeFolder === "Model Question Bank" ||
-      set?.folder === "Model Question Bank" ||
-      set?.source === "model_question_bank" ||
-      (set?.packageName && set.packageName.toLowerCase().includes("model")) ||
-      (set?.name && set.name.toLowerCase().includes("model"));
+    if (!set) return false;
 
-    if (isModelBankSet) {
+    // 1. Any set designated as FREE by admin, Free Demo, price=0, or in Model Question Bank
+    const isFree = Boolean(
+      set.isFree === true ||
+      set.isFree === "true" ||
+      set.isFree === 1 ||
+      set.isFree === "1" ||
+      set.setType === "FREE" ||
+      set.distributionMode === "free" ||
+      set.isFreeForInstituteStudents === true ||
+      set.price === 0 ||
+      set.price === "0" ||
+      set.price === "Rs. 0" ||
+      (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
+      (set.name && set.name.toLowerCase().includes("free")) ||
+      (set.title && set.title.toLowerCase().includes("free")) ||
+      (set.packageName && set.packageName.toLowerCase().includes("free")) ||
+      (set.packageName && set.packageName.toLowerCase().includes("model")) ||
+      activeFolder === "Model Question Bank" ||
+      set.folder === "Model Question Bank" ||
+      set.source === "model_question_bank" ||
+      (set.name && set.name.toLowerCase().includes("model"))
+    );
+
+    if (isFree) {
       return true;
     }
 
-    // For other sets (outside Model Question Bank):
+    // For other sets (outside Model Question Bank / Free):
     if (mode === "admin" || mode === "institute") return true;
+
+    // Check individually unlocked sets
+    const setId = set.id?.toString();
+    const setName = (set.name || set.title)?.toString();
+    if (unlockedSets && unlockedSets.length > 0) {
+      if (unlockedSets.some(id => id?.toString() === setId || id?.toString() === setName)) {
+        return true;
+      }
+    }
 
     let myPkg = studentPackage;
     let allowedList = purchasedPackages && purchasedPackages.length > 0 ? [...purchasedPackages] : [];
@@ -1618,37 +1644,54 @@ export default function EpsBookReader({
   };
 
   const handleStartUbtSet = (set) => {
-    const isModelBankSet =
+    const isFree = Boolean(
+      set?.isFree === true ||
+      set?.isFree === "true" ||
+      set?.isFree === 1 ||
+      set?.isFree === "1" ||
+      set?.setType === "FREE" ||
+      set?.distributionMode === "free" ||
+      set?.isFreeForInstituteStudents === true ||
+      set?.price === 0 ||
+      set?.price === "0" ||
+      set?.price === "Rs. 0" ||
+      (typeof set?.price === "string" && set.price.toLowerCase().includes("free")) ||
+      (set?.name && set.name.toLowerCase().includes("free")) ||
+      (set?.title && set.title.toLowerCase().includes("free")) ||
+      (set?.packageName && set.packageName.toLowerCase().includes("free")) ||
+      (set?.packageName && set.packageName.toLowerCase().includes("model")) ||
       activeFolder === "Model Question Bank" ||
       set?.folder === "Model Question Bank" ||
       set?.source === "model_question_bank" ||
-      (set?.packageName && set.packageName.toLowerCase().includes("model")) ||
-      (set?.name && set.name.toLowerCase().includes("model"));
+      (set?.name && set.name.toLowerCase().includes("model"))
+    );
 
-    if (!isModelBankSet) {
-      const unlocked = isSetUnlocked(set);
-      if (!unlocked) {
-        if (mode === "institute") {
-          setShowInstituteBuyModal(true);
-          return;
-        }
+    const unlocked = isFree || isSetUnlocked(set);
 
-        const msg = `Exam set is not included in "${studentPackage || 'Full Set UBT'}". Please go to Packages to unlock this exam set.`;
-        if (onNavigateTab) {
-          if (confirm(`${msg}\n\nDo you want to go to Packages now?`)) {
-            onNavigateTab("buyExam");
-          }
-        } else {
-          alert(msg);
-        }
+    if (!unlocked) {
+      if (mode === "institute") {
+        setShowInstituteBuyModal(true);
         return;
       }
+
+      const msg = `Exam set is not included in "${studentPackage || 'Full Set UBT'}". Please go to Packages to unlock this exam set.`;
+      if (onNavigateTab) {
+        if (confirm(`${msg}\n\nDo you want to go to Packages now?`)) {
+          onNavigateTab("buyExam");
+        }
+      } else {
+        alert(msg);
+      }
+      return;
     }
 
     if (mode === "institute") {
       router.push(`/institute/exam-preview/${set.id || encodeURIComponent(set.name)}`);
       return;
     }
+
+    // Direct exam launch for student (bypasses paywall for free sets)
+    enforceLandscapeMode();
     router.push(`/student/exam/${set.id || encodeURIComponent(set.name)}`);
   };
 
@@ -4626,7 +4669,28 @@ export default function EpsBookReader({
                     gap: "20px"
                   }}>
                     {filteredUbtSets.map((set, idx) => {
-                      const unlocked = isSetUnlocked(set);
+                      const isFree = Boolean(
+                        set?.isFree === true ||
+                        set?.isFree === "true" ||
+                        set?.isFree === 1 ||
+                        set?.isFree === "1" ||
+                        set?.setType === "FREE" ||
+                        set?.distributionMode === "free" ||
+                        set?.isFreeForInstituteStudents === true ||
+                        set?.price === 0 ||
+                        set?.price === "0" ||
+                        set?.price === "Rs. 0" ||
+                        (typeof set?.price === "string" && set.price.toLowerCase().includes("free")) ||
+                        (set?.name && set.name.toLowerCase().includes("free")) ||
+                        (set?.title && set.title.toLowerCase().includes("free")) ||
+                        (set?.packageName && set.packageName.toLowerCase().includes("free")) ||
+                        (set?.packageName && set.packageName.toLowerCase().includes("model")) ||
+                        activeFolder === "Model Question Bank" ||
+                        set?.folder === "Model Question Bank" ||
+                        set?.source === "model_question_bank" ||
+                        (set?.name && set.name.toLowerCase().includes("model"))
+                      );
+                      const unlocked = isFree || isSetUnlocked(set);
 
                       return (
                         <div
@@ -4634,7 +4698,7 @@ export default function EpsBookReader({
                           style={{
                             backgroundColor: "#ffffff",
                             borderRadius: "14px",
-                            border: unlocked ? "1px solid #cbd5e1" : "1px solid #fed7aa",
+                            border: isFree ? "1.5px solid #86efac" : unlocked ? "1px solid #cbd5e1" : "1px solid #fed7aa",
                             boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                             padding: "22px",
                             display: "flex",
@@ -4660,8 +4724,8 @@ export default function EpsBookReader({
                               </span>
 
                               <span style={{
-                                backgroundColor: "#dcfce7",
-                                color: "#15803d",
+                                backgroundColor: isFree ? "#dcfce7" : (unlocked ? "#dbeafe" : "#fef3c7"),
+                                color: isFree ? "#15803d" : (unlocked ? "#1e40af" : "#b45309"),
                                 padding: "4px 10px",
                                 borderRadius: "8px",
                                 fontSize: "11px",
@@ -4670,7 +4734,7 @@ export default function EpsBookReader({
                                 alignItems: "center",
                                 gap: "4px"
                               }}>
-                                ✅ Open for All
+                                {isFree ? "🎁 Free Access" : (unlocked ? "✅ Unlocked" : "🔒 Purchase Required")}
                               </span>
                             </div>
 
@@ -4680,20 +4744,20 @@ export default function EpsBookReader({
                                 width: "44px",
                                 height: "44px",
                                 borderRadius: "10px",
-                                backgroundColor: "#eff6ff",
+                                backgroundColor: isFree ? "#ecfdf5" : "#eff6ff",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 fontSize: "22px"
                               }}>
-                                💻
+                                {isFree ? "🎁" : "💻"}
                               </div>
                               <div>
                                 <h4 style={{ margin: 0, fontSize: "17px", fontWeight: "800", color: "#0f172a" }}>
                                   {set.name}
                                 </h4>
-                                <span style={{ fontSize: "12px", color: "#16a34a", fontWeight: "700" }}>
-                                  Package: Model Question Bank (Free Access)
+                                <span style={{ fontSize: "12px", color: isFree ? "#16a34a" : "#64748b", fontWeight: "700" }}>
+                                  Package: {set.packageName || (isFree ? "Free Practice Set" : "Full Set UBT")} {isFree ? "(Free Access)" : ""}
                                 </span>
                               </div>
                             </div>
@@ -4725,8 +4789,12 @@ export default function EpsBookReader({
                               onClick={() => handleStartUbtSet(set)}
                               style={{
                                 width: "100%",
-                                backgroundColor: "#16a34a",
-                                backgroundImage: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                                backgroundColor: isFree ? "#059669" : (unlocked ? "#16a34a" : "#f59e0b"),
+                                backgroundImage: isFree
+                                  ? "linear-gradient(135deg, #059669 0%, #047857 100%)"
+                                  : unlocked
+                                  ? "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"
+                                  : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
                                 color: "#ffffff",
                                 border: "none",
                                 padding: "12px 18px",
@@ -4734,7 +4802,7 @@ export default function EpsBookReader({
                                 fontWeight: "800",
                                 fontSize: "14px",
                                 cursor: "pointer",
-                                boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)",
+                                boxShadow: isFree ? "0 4px 12px rgba(5, 150, 105, 0.3)" : (unlocked ? "0 4px 12px rgba(22, 163, 74, 0.3)" : "0 4px 12px rgba(245, 158, 11, 0.3)"),
                                 transition: "all 0.15s ease",
                                 display: "inline-flex",
                                 alignItems: "center",
@@ -4742,7 +4810,15 @@ export default function EpsBookReader({
                                 gap: "8px"
                               }}
                             >
-                              <span>{mode === "institute" ? "👁️ PREVIEW UBT EXAM" : "▶ START UBT EXAM"}</span>
+                              <span>
+                                {mode === "institute"
+                                  ? "👁️ PREVIEW UBT EXAM"
+                                  : isFree
+                                  ? "▶ START FREE UBT EXAM"
+                                  : unlocked
+                                  ? "▶ START UBT EXAM"
+                                  : "🔒 UNLOCK SET"}
+                              </span>
                             </button>
                           </div>
                         </div>
@@ -4996,7 +5072,7 @@ export default function EpsBookReader({
                             </button>
                           )}
 
-                          {mode !== "student" && mat.fileUrl && (
+                          {mat.fileUrl && (
                             <a
                               href={mat.fileUrl}
                               download={mat.fileName || "document.pdf"}
@@ -6722,11 +6798,23 @@ export default function EpsBookReader({
                       {filteredJlptSets.map((set) => {
                         const pastScore = jlptPastResults[set.id];
                         const isFree = Boolean(
-                          set.isFree ||
+                          set.isFree === true ||
+                          set.isFree === "true" ||
+                          set.isFree === 1 ||
+                          set.isFree === "1" ||
                           set.setType === "FREE" ||
+                          set.distributionMode === "free" ||
+                          set.isFreeForInstituteStudents === true ||
                           set.setNumber === 1 ||
                           (set.id && String(set.id).endsWith("-01")) ||
-                          (set.title && set.title.toLowerCase().includes("free demo"))
+                          set.price === 0 ||
+                          set.price === "0" ||
+                          set.price === "Rs. 0" ||
+                          (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
+                          (set.title && set.title.toLowerCase().includes("free")) ||
+                          (set.name && set.name.toLowerCase().includes("free")) ||
+                          (set.packageName && set.packageName.toLowerCase().includes("free")) ||
+                          (set.packageName && set.packageName.toLowerCase().includes("model"))
                         );
                         const setId = set.id?.toString();
                         const setTitle = (set.title || set.name)?.toString();

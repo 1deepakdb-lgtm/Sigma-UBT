@@ -181,10 +181,25 @@ const StudentExam = () => {
       );
 
       const isExamSetFree = Boolean(
-        currentExamSet?.isFree ||
+        currentExamSet?.isFree === true ||
+        currentExamSet?.isFree === "true" ||
+        currentExamSet?.isFree === 1 ||
+        currentExamSet?.isFree === "1" ||
         currentExamSet?.setType === "FREE" ||
-        (currentExamSet?.name && currentExamSet.name.toLowerCase().includes("free demo")) ||
-        (targetSetName && targetSetName.toLowerCase().includes("free demo"))
+        currentExamSet?.distributionMode === "free" ||
+        currentExamSet?.isFreeForInstituteStudents === true ||
+        currentExamSet?.price === 0 ||
+        currentExamSet?.price === "0" ||
+        currentExamSet?.price === "Rs. 0" ||
+        (typeof currentExamSet?.price === "string" && currentExamSet.price.toLowerCase().includes("free")) ||
+        (currentExamSet?.name && currentExamSet.name.toLowerCase().includes("free")) ||
+        (currentExamSet?.title && currentExamSet.title.toLowerCase().includes("free")) ||
+        (currentExamSet?.packageName && currentExamSet.packageName.toLowerCase().includes("free")) ||
+        (currentExamSet?.packageName && currentExamSet.packageName.toLowerCase().includes("model")) ||
+        currentExamSet?.source === "model_question_bank" ||
+        currentExamSet?.folder === "Model Question Bank" ||
+        (targetSetName && targetSetName.toLowerCase().includes("free")) ||
+        (targetSetName && targetSetName.toLowerCase().includes("model"))
       );
 
       const hasPaidExam = Boolean(

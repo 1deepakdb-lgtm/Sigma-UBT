@@ -156,9 +156,21 @@ export async function GET(req) {
       })
       .map(set => {
         const isFree = Boolean(
-          set.isFree ||
+          set.isFree === true ||
+          set.isFree === "true" ||
+          set.isFree === 1 ||
           set.setType === 'FREE' ||
-          (set.name && set.name.toLowerCase().includes('free demo'))
+          set.distributionMode === 'free' ||
+          set.isFreeForInstituteStudents === true ||
+          set.price === 0 ||
+          set.price === "0" ||
+          set.price === "Rs. 0" ||
+          (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
+          (set.name && set.name.toLowerCase().includes('free')) ||
+          (set.packageName && set.packageName.toLowerCase().includes('free')) ||
+          (set.packageName && set.packageName.toLowerCase().includes('model')) ||
+          set.source === 'model_question_bank' ||
+          set.folder === 'Model Question Bank'
         );
 
         const isCreatedByMyInstitute = Boolean(

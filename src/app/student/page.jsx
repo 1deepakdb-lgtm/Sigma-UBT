@@ -584,7 +584,27 @@ const StudentDashboard = () => {
       return false;
     }
 
-    if (set.isFree === true || set.setType === "FREE" || (set.name && set.name.toLowerCase().includes("free demo"))) {
+    const isFree = Boolean(
+      set.isFree === true ||
+      set.isFree === "true" ||
+      set.isFree === 1 ||
+      set.isFree === "1" ||
+      set.setType === "FREE" ||
+      set.distributionMode === "free" ||
+      set.isFreeForInstituteStudents === true ||
+      set.price === 0 ||
+      set.price === "0" ||
+      set.price === "Rs. 0" ||
+      (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
+      (set.name && set.name.toLowerCase().includes("free")) ||
+      (set.title && set.title.toLowerCase().includes("free")) ||
+      (set.packageName && set.packageName.toLowerCase().includes("free")) ||
+      (set.packageName && set.packageName.toLowerCase().includes("model")) ||
+      set.source === "model_question_bank" ||
+      set.folder === "Model Question Bank"
+    );
+
+    if (isFree) {
       return true;
     }
 
@@ -1001,23 +1021,45 @@ const StudentDashboard = () => {
 
     const savedSets = JSON.parse(localStorage.getItem("examSets") || "[]");
 
+    const checkSetIsFree = (s) => Boolean(
+      s?.isFree === true ||
+      s?.isFree === "true" ||
+      s?.isFree === 1 ||
+      s?.isFree === "1" ||
+      s?.setType === "FREE" ||
+      s?.distributionMode === "free" ||
+      s?.isFreeForInstituteStudents === true ||
+      s?.price === 0 ||
+      s?.price === "0" ||
+      s?.price === "Rs. 0" ||
+      (typeof s?.price === "string" && s.price.toLowerCase().includes("free")) ||
+      (s?.name && s.name.toLowerCase().includes("free")) ||
+      (s?.title && s.title.toLowerCase().includes("free")) ||
+      (s?.packageName && s.packageName.toLowerCase().includes("free")) ||
+      (s?.packageName && s.packageName.toLowerCase().includes("model")) ||
+      s?.source === "model_question_bank" ||
+      s?.folder === "Model Question Bank"
+    );
+
     // Fetch packages and sets from server API to guarantee data is never empty
     fetch("/api/admin/packages")
       .then((res) => res.json())
       .then((data) => {
         let mergedSets = savedSets.map(s => ({
           ...s,
-          isFree: Boolean(s.isFree || s.setType === "FREE" || (s.name && s.name.toLowerCase().includes("free demo")))
+          isFree: checkSetIsFree(s)
         }));
         if (data.sets && Array.isArray(data.sets) && data.sets.length > 0) {
           data.sets.forEach((srvSet) => {
             const idx = mergedSets.findIndex(
               (s) => s.id === srvSet.id || (s.name && srvSet.name && s.name.trim().toUpperCase() === srvSet.name.trim().toUpperCase())
             );
+            const srvIsFree = checkSetIsFree(srvSet);
             if (idx >= 0) {
               mergedSets[idx] = {
                 ...mergedSets[idx],
-                isFree: srvSet.isFree !== undefined ? Boolean(srvSet.isFree) : mergedSets[idx].isFree
+                ...srvSet,
+                isFree: srvIsFree || checkSetIsFree(mergedSets[idx])
               };
             } else {
               mergedSets.push({
@@ -1027,7 +1069,7 @@ const StudentDashboard = () => {
                 creatorInstituteId: srvSet.creatorInstituteId || null,
                 creatorInstituteName: srvSet.creatorInstituteName || null,
                 isPublished: srvSet.isPublished !== false,
-                isFree: Boolean(srvSet.isFree),
+                isFree: srvIsFree,
                 setType: srvSet.setType || "UBT",
                 track: srvSet.track || "korean",
                 isUnlocked: srvSet.isUnlocked !== undefined ? Boolean(srvSet.isUnlocked) : undefined
@@ -1414,7 +1456,25 @@ const StudentDashboard = () => {
         return isJp && !isKorean;
       }
       if (examCategoryFilter === "free") {
-        return s.isFree === true || s.setType === "FREE" || (s.name && s.name.toLowerCase().includes("free demo")) || isSetUnlocked(s);
+        return isSetUnlocked(s) || Boolean(
+          s.isFree === true ||
+          s.isFree === "true" ||
+          s.isFree === 1 ||
+          s.isFree === "1" ||
+          s.setType === "FREE" ||
+          s.distributionMode === "free" ||
+          s.isFreeForInstituteStudents === true ||
+          s.price === 0 ||
+          s.price === "0" ||
+          s.price === "Rs. 0" ||
+          (typeof s.price === "string" && s.price.toLowerCase().includes("free")) ||
+          (s.name && s.name.toLowerCase().includes("free")) ||
+          (s.title && s.title.toLowerCase().includes("free")) ||
+          (s.packageName && s.packageName.toLowerCase().includes("free")) ||
+          (s.packageName && s.packageName.toLowerCase().includes("model")) ||
+          s.source === "model_question_bank" ||
+          s.folder === "Model Question Bank"
+        );
       }
       return true;
     })
@@ -2856,8 +2916,26 @@ const StudentDashboard = () => {
                 </div>
               ) : (
                 paginatedSets.map((set, idx) => {
-                  const isFree = Boolean(set.isFree || set.setType === "FREE" || (set.name && set.name.toLowerCase().includes("free demo")));
-                  const unlocked = isSetUnlocked(set);
+                  const isFree = Boolean(
+                    set.isFree === true ||
+                    set.isFree === "true" ||
+                    set.isFree === 1 ||
+                    set.isFree === "1" ||
+                    set.setType === "FREE" ||
+                    set.distributionMode === "free" ||
+                    set.isFreeForInstituteStudents === true ||
+                    set.price === 0 ||
+                    set.price === "0" ||
+                    set.price === "Rs. 0" ||
+                    (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
+                    (set.name && set.name.toLowerCase().includes("free")) ||
+                    (set.title && set.title.toLowerCase().includes("free")) ||
+                    (set.packageName && set.packageName.toLowerCase().includes("free")) ||
+                    (set.packageName && set.packageName.toLowerCase().includes("model")) ||
+                    set.source === "model_question_bank" ||
+                    set.folder === "Model Question Bank"
+                  );
+                  const unlocked = isFree || isSetUnlocked(set);
                   const individuallyUnlocked = isSetIndividuallyUnlocked(set);
                   const packageCovered = isSetCoveredByStudentPackage(set);
                   const pending = isSetPending(set);
