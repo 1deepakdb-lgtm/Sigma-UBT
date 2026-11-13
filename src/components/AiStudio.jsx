@@ -176,8 +176,8 @@ export default function AiStudio({
   const [dialogueSpeakerB, setDialogueSpeakerB] = useState(getInitialLang() === 'ja' ? 'ja-male-1' : 'ko-male-2');
   const [dialogueGenderA, setDialogueGenderA] = useState('female');
   const [dialogueGenderB, setDialogueGenderB] = useState('male');
-  const [dialogueModelA, setDialogueModelA] = useState('eleven_multilingual_v2');
-  const [dialogueModelB, setDialogueModelB] = useState('eleven_turbo_v2_5');
+  const [dialogueModelA, setDialogueModelA] = useState('humanized_conversational_v3');
+  const [dialogueModelB, setDialogueModelB] = useState('deep_human_neural_v2');
   const [dialogueTurns, setDialogueTurns] = useState([]);
   const [isGeneratingDialogue, setIsGeneratingDialogue] = useState(false);
   const [dialogueAudioUrl, setDialogueAudioUrl] = useState(null);
@@ -1001,9 +1001,16 @@ export default function AiStudio({
                   cursor: 'pointer'
                 }}
               >
-                {AVAILABLE_MODELS.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
+                <optgroup label="🌟 Humanized Voice Models">
+                  {AVAILABLE_MODELS.filter(m => m.category === 'humanized').map(m => (
+                    <option key={m.id} value={m.id}>{m.name} — {m.tag}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="⚡ Neural Studio Models">
+                  {AVAILABLE_MODELS.filter(m => m.category !== 'humanized').map(m => (
+                    <option key={m.id} value={m.id}>{m.name} — {m.tag}</option>
+                  ))}
+                </optgroup>
               </select>
 
               <button
@@ -1632,13 +1639,46 @@ export default function AiStudio({
                   fontWeight: '700',
                   color: '#0f172a',
                   background: '#ffffff',
-                  marginBottom: '12px'
+                  marginBottom: '6px'
                 }}
               >
-                {AVAILABLE_MODELS.map(m => (
-                  <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
-                ))}
+                <optgroup label="🌟 Humanized Voice Models">
+                  {AVAILABLE_MODELS.filter(m => m.category === 'humanized').map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
+                  ))}
+                </optgroup>
+                <optgroup label="⚡ Neural Studio Models">
+                  {AVAILABLE_MODELS.filter(m => m.category !== 'humanized').map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
+                  ))}
+                </optgroup>
               </select>
+
+              {/* Active Model Acoustic Character for Speaker A */}
+              {(() => {
+                const curModel = AVAILABLE_MODELS.find(m => m.id === dialogueModelA);
+                const voiceSpec = dialogueGenderA === 'male' ? curModel?.maleVoice : curModel?.femaleVoice;
+                return (
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#15803d',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '7px',
+                    padding: '6px 8px',
+                    marginBottom: '10px',
+                    lineHeight: '1.3'
+                  }}>
+                    <div style={{ fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                      <span>{dialogueGenderA === 'male' ? '👨 Model Male Voice:' : '👩 Model Female Voice:'} {voiceSpec?.name}</span>
+                      <span style={{ fontSize: '10px', color: '#166534' }}>({voiceSpec?.pitch}, {voiceSpec?.rate})</span>
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: '#166534', marginTop: '2px' }}>
+                      {voiceSpec?.description}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Play / Test Speaker A */}
               <button
@@ -1793,13 +1833,46 @@ export default function AiStudio({
                   fontWeight: '700',
                   color: '#0f172a',
                   background: '#ffffff',
-                  marginBottom: '12px'
+                  marginBottom: '6px'
                 }}
               >
-                {AVAILABLE_MODELS.map(m => (
-                  <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
-                ))}
+                <optgroup label="🌟 Humanized Voice Models">
+                  {AVAILABLE_MODELS.filter(m => m.category === 'humanized').map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
+                  ))}
+                </optgroup>
+                <optgroup label="⚡ Neural Studio Models">
+                  {AVAILABLE_MODELS.filter(m => m.category !== 'humanized').map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
+                  ))}
+                </optgroup>
               </select>
+
+              {/* Active Model Acoustic Character for Speaker B */}
+              {(() => {
+                const curModel = AVAILABLE_MODELS.find(m => m.id === dialogueModelB);
+                const voiceSpec = dialogueGenderB === 'female' ? curModel?.femaleVoice : curModel?.maleVoice;
+                return (
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#1d4ed8',
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: '7px',
+                    padding: '6px 8px',
+                    marginBottom: '10px',
+                    lineHeight: '1.3'
+                  }}>
+                    <div style={{ fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                      <span>{dialogueGenderB === 'female' ? '👩 Model Female Voice:' : '👨 Model Male Voice:'} {voiceSpec?.name}</span>
+                      <span style={{ fontSize: '10px', color: '#1e40af' }}>({voiceSpec?.pitch}, {voiceSpec?.rate})</span>
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: '#1e40af', marginTop: '2px' }}>
+                      {voiceSpec?.description}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Play / Test Speaker B */}
               <button

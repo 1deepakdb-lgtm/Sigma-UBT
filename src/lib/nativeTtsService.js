@@ -34,6 +34,8 @@ export const MODEL_VOICE_TONES = {
   'ko-female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-4Hz', rate: '+2%' },  // News Announcer
   'ko-female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+10Hz', rate: '+5%' }, // Youthful Student
   'ko-female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '-5%' },  // Warm Calming Mentor
+  'ko-female-7': { voice: 'ko-KR-SunHiNeural', pitch: '+3Hz', rate: '-2%' },  // Humanized Conversationalist
+  'ko-female-8': { voice: 'ko-KR-SunHiNeural', pitch: '-5Hz', rate: '-4%' },  // Deep Human Resonance
 
   'female-1': { voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '+0%' },
   'female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+6Hz', rate: '+4%' },
@@ -41,6 +43,8 @@ export const MODEL_VOICE_TONES = {
   'female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-4Hz', rate: '+2%' },
   'female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+10Hz', rate: '+5%' },
   'female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '-5%' },
+  'female-7': { voice: 'ko-KR-SunHiNeural', pitch: '+3Hz', rate: '-2%' },
+  'female-8': { voice: 'ko-KR-SunHiNeural', pitch: '-5Hz', rate: '-4%' },
 
   // ── Korean Male ────────────────────────────────────────
   'ko-male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },   // DEFAULT BASELINE
@@ -49,6 +53,8 @@ export const MODEL_VOICE_TONES = {
   'ko-male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-6Hz', rate: '+2%' },   // Resonant Broadcaster
   'ko-male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+5%' }, // Friendly Travel Companion
   'ko-male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-4Hz', rate: '-6%' },   // Senior Academic Lecturer
+  'ko-male-7': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '-3Hz', rate: '-1%' }, // Humanized Conversationalist
+  'ko-male-8': { voice: 'ko-KR-InJoonNeural', pitch: '-12Hz', rate: '-4%' },  // Deep Human Neural Bass
 
   'male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },
   'male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-10Hz', rate: '-4%' },
@@ -56,6 +62,8 @@ export const MODEL_VOICE_TONES = {
   'male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-6Hz', rate: '+2%' },
   'male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+5%' },
   'male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-4Hz', rate: '-6%' },
+  'male-7': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '-3Hz', rate: '-1%' },
+  'male-8': { voice: 'ko-KR-InJoonNeural', pitch: '-12Hz', rate: '-4%' },
 
   // ── Japanese Female ────────────────────────────────────
   'ja-female-1': { voice: 'ja-JP-NanamiNeural', pitch: '+0Hz', rate: '+0%' }, // DEFAULT BASELINE
@@ -64,6 +72,8 @@ export const MODEL_VOICE_TONES = {
   'ja-female-4': { voice: 'ja-JP-NanamiNeural', pitch: '-4Hz', rate: '+2%' }, // News Announcer
   'ja-female-5': { voice: 'ja-JP-NanamiNeural', pitch: '+10Hz', rate: '+5%' },// Lively Campus Student
   'ja-female-6': { voice: 'ja-JP-NanamiNeural', pitch: '-6Hz', rate: '-5%' }, // Warm Mentor & Storyteller
+  'ja-female-7': { voice: 'ja-JP-NanamiNeural', pitch: '+3Hz', rate: '-2%' }, // Humanized Conversationalist
+  'ja-female-8': { voice: 'ja-JP-NanamiNeural', pitch: '-6Hz', rate: '-5%' }, // Deep Human Resonance
 
   // ── Japanese Male ──────────────────────────────────────
   'ja-male-1': { voice: 'ja-JP-KeitaNeural', pitch: '+0Hz', rate: '+0%' },    // DEFAULT BASELINE
@@ -71,7 +81,83 @@ export const MODEL_VOICE_TONES = {
   'ja-male-3': { voice: 'ja-JP-KeitaNeural', pitch: '+4Hz', rate: '+3%' },    // Energetic Business Keigo
   'ja-male-4': { voice: 'ja-JP-KeitaNeural', pitch: '-6Hz', rate: '+2%' },    // Resonant Narrator
   'ja-male-5': { voice: 'ja-JP-KeitaNeural', pitch: '+8Hz', rate: '+5%' },    // Friendly Casual Companion
-  'ja-male-6': { voice: 'ja-JP-KeitaNeural', pitch: '-4Hz', rate: '-6%' }     // Senior Academic Lecturer
+  'ja-male-6': { voice: 'ja-JP-KeitaNeural', pitch: '-4Hz', rate: '-6%' },    // Senior Academic Lecturer
+  'ja-male-7': { voice: 'ja-JP-KeitaNeural', pitch: '-3Hz', rate: '-1%' },    // Humanized Conversationalist
+  'ja-male-8': { voice: 'ja-JP-KeitaNeural', pitch: '-11Hz', rate: '-5%' }    // Deep Human Resonance
+};
+
+// Acoustic Specifications for AI Models (Ensures distinct male & female voices per model)
+export const AI_MODEL_ACOUSTIC_PROFILES = {
+  humanized_conversational_v3: {
+    ko: {
+      female: { voice: 'ko-KR-SunHiNeural', pitchOffset: 3, rateOffset: -2, stability: 0.40, style: 0.28 },
+      male:   { voice: 'ko-KR-HyunsuMultilingualNeural', pitchOffset: -3, rateOffset: -1, stability: 0.42, style: 0.26 }
+    },
+    ja: {
+      female: { voice: 'ja-JP-NanamiNeural', pitchOffset: 3, rateOffset: -2, stability: 0.40, style: 0.28 },
+      male:   { voice: 'ja-JP-KeitaNeural', pitchOffset: -3, rateOffset: -1, stability: 0.42, style: 0.26 }
+    }
+  },
+  deep_human_neural_v2: {
+    ko: {
+      female: { voice: 'ko-KR-SunHiNeural', pitchOffset: -5, rateOffset: -4, stability: 0.55, style: 0.16 },
+      male:   { voice: 'ko-KR-InJoonNeural', pitchOffset: -12, rateOffset: -4, stability: 0.58, style: 0.15 }
+    },
+    ja: {
+      female: { voice: 'ja-JP-NanamiNeural', pitchOffset: -6, rateOffset: -5, stability: 0.55, style: 0.16 },
+      male:   { voice: 'ja-JP-KeitaNeural', pitchOffset: -11, rateOffset: -5, stability: 0.58, style: 0.15 }
+    }
+  },
+  humanized_pedagogical_v1: {
+    ko: {
+      female: { voice: 'ko-KR-SunHiNeural', pitchOffset: 1, rateOffset: -7, stability: 0.62, style: 0.12 },
+      male:   { voice: 'ko-KR-InJoonNeural', pitchOffset: -2, rateOffset: -6, stability: 0.64, style: 0.12 }
+    },
+    ja: {
+      female: { voice: 'ja-JP-NanamiNeural', pitchOffset: 1, rateOffset: -7, stability: 0.62, style: 0.12 },
+      male:   { voice: 'ja-JP-KeitaNeural', pitchOffset: -2, rateOffset: -6, stability: 0.64, style: 0.12 }
+    }
+  },
+  eleven_multilingual_v2: {
+    ko: {
+      female: { voice: 'ko-KR-SunHiNeural', pitchOffset: 0, rateOffset: 0, stability: 0.50, style: 0.18 },
+      male:   { voice: 'ko-KR-InJoonNeural', pitchOffset: 0, rateOffset: 0, stability: 0.50, style: 0.18 }
+    },
+    ja: {
+      female: { voice: 'ja-JP-NanamiNeural', pitchOffset: 0, rateOffset: 0, stability: 0.50, style: 0.18 },
+      male:   { voice: 'ja-JP-KeitaNeural', pitchOffset: 0, rateOffset: 0, stability: 0.50, style: 0.18 }
+    }
+  },
+  eleven_turbo_v2_5: {
+    ko: {
+      female: { voice: 'ko-KR-SunHiNeural', pitchOffset: 6, rateOffset: 4, stability: 0.44, style: 0.22 },
+      male:   { voice: 'ko-KR-HyunsuMultilingualNeural', pitchOffset: 3, rateOffset: 4, stability: 0.46, style: 0.20 }
+    },
+    ja: {
+      female: { voice: 'ja-JP-NanamiNeural', pitchOffset: 6, rateOffset: 4, stability: 0.44, style: 0.22 },
+      male:   { voice: 'ja-JP-KeitaNeural', pitchOffset: 4, rateOffset: 4, stability: 0.46, style: 0.20 }
+    }
+  },
+  neural_studio_hd: {
+    ko: {
+      female: { voice: 'ko-KR-SunHiNeural', pitchOffset: -2, rateOffset: 2, stability: 0.60, style: 0.10 },
+      male:   { voice: 'ko-KR-InJoonNeural', pitchOffset: -7, rateOffset: 2, stability: 0.60, style: 0.10 }
+    },
+    ja: {
+      female: { voice: 'ja-JP-NanamiNeural', pitchOffset: -3, rateOffset: 2, stability: 0.60, style: 0.10 },
+      male:   { voice: 'ja-JP-KeitaNeural', pitchOffset: -7, rateOffset: 2, stability: 0.60, style: 0.10 }
+    }
+  },
+  eleven_flash_v2: {
+    ko: {
+      female: { voice: 'ko-KR-SunHiNeural', pitchOffset: 8, rateOffset: 8, stability: 0.48, style: 0.14 },
+      male:   { voice: 'ko-KR-HyunsuMultilingualNeural', pitchOffset: 5, rateOffset: 7, stability: 0.50, style: 0.14 }
+    },
+    ja: {
+      female: { voice: 'ja-JP-NanamiNeural', pitchOffset: 8, rateOffset: 8, stability: 0.48, style: 0.14 },
+      male:   { voice: 'ja-JP-KeitaNeural', pitchOffset: 5, rateOffset: 7, stability: 0.50, style: 0.14 }
+    }
+  }
 };
 
 /**
@@ -86,6 +172,7 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     vocalWeight = null,
     pitchFactor = null,
     model = '',
+    modelId = '',
     voice = ''
   } = options;
 
@@ -95,15 +182,19 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   else if (/[\u0900-\u097F]/.test(text) || lang === 'ne') targetLang = 'ne';
   else if (lang === 'en') targetLang = 'en';
 
+  const effectiveModelId = modelId || (AI_MODEL_ACOUSTIC_PROFILES[model] ? model : '');
+
   // Explicitly determine male vs female (ensures 'female' is never falsely detected as 'male')
   const isExplicitFemale = gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(model) || (/female/i.test(voice) && !/male/i.test(voice.replace(/female/gi, ''))) || /SunHi|Nanami|Jenny|Hemkala|Kyoko|Ayumi|Heami|Yuna/i.test(voice);
   const isExplicitMale = gender === 'male' || (/(?:^|[-_])male(?:[-_\d]|$)/i.test(model) && !/(?:^|[-_])female(?:[-_\d]|$)/i.test(model)) || /InJoon|Keita|Daichi|Hyunsu|Sagar|Christopher|David|George|Minho/i.test(voice);
   const isMale = !isExplicitFemale && (isExplicitMale || gender === 'male');
 
+  const modelAcoustic = effectiveModelId ? AI_MODEL_ACOUSTIC_PROFILES[effectiveModelId]?.[targetLang]?.[isMale ? 'male' : 'female'] : null;
+
   // 1. Resolve Voice Tone Profile for Model
   const matchedTone = MODEL_VOICE_TONES[model];
 
-  let neuralVoice = matchedTone?.voice;
+  let neuralVoice = modelAcoustic?.voice || matchedTone?.voice;
   if (!neuralVoice) {
     if (voice && !voice.includes('undefined')) {
       neuralVoice = voice;
@@ -119,10 +210,20 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   }
 
   // 2. Resolve Pitch String
-  let pitchStr = matchedTone?.pitch || options.pitch || '+0Hz';
-  if (options.pitch && options.pitch.includes('Hz')) {
+  let basePitchHz = 0;
+  if (matchedTone?.pitch) {
+    const m = matchedTone.pitch.match(/([+-]?\d+)/);
+    if (m) basePitchHz = parseInt(m[1], 10);
+  }
+  const modelPitchOffset = modelAcoustic?.pitchOffset || 0;
+  let totalPitchHz = basePitchHz + modelPitchOffset;
+
+  let pitchStr = '+0Hz';
+  if (options.pitch && options.pitch.includes('Hz') && !options.pitch.includes('+0Hz') && !options.pitch.includes('-0Hz')) {
     pitchStr = options.pitch;
-  } else if (!matchedTone) {
+  } else if (matchedTone || modelAcoustic) {
+    pitchStr = totalPitchHz >= 0 ? `+${totalPitchHz}Hz` : `${totalPitchHz}Hz`;
+  } else {
     let pitchOffset = 0;
     if (pitchFactor !== null && !isNaN(pitchFactor)) {
       pitchOffset += Math.round((pitchFactor - 1.0) * 35);
@@ -140,10 +241,20 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   }
 
   // 3. Resolve Rate String
-  let rateStr = matchedTone?.rate || options.rate || '+0%';
-  if (options.rate && options.rate.includes('%')) {
+  let baseRatePct = 0;
+  if (matchedTone?.rate) {
+    const m = matchedTone.rate.match(/([+-]?\d+)/);
+    if (m) baseRatePct = parseInt(m[1], 10);
+  }
+  const modelRateOffset = modelAcoustic?.rateOffset || 0;
+  let totalRatePct = baseRatePct + modelRateOffset;
+
+  let rateStr = '+0%';
+  if (options.rate && options.rate.includes('%') && !options.rate.includes('+0%') && !options.rate.includes('-0%')) {
     rateStr = options.rate;
-  } else if (!matchedTone) {
+  } else if (matchedTone || modelAcoustic) {
+    rateStr = totalRatePct >= 0 ? `+${totalRatePct}%` : `${totalRatePct}%`;
+  } else {
     if (speechMode === 'slow_learning') rateStr = '-18%';
     else if (speechMode === 'teacher') rateStr = '-8%';
     else if (speechMode === 'natural_conversation') rateStr = '+0%';
@@ -549,6 +660,7 @@ export async function synthesizeSpeechBuffer({
   pitch = '',
   rate = '',
   model = '',
+  modelId = '',
   ageStyle = '',
   personality = '',
   speechMode = 'natural_conversation',
@@ -567,8 +679,9 @@ export async function synthesizeSpeechBuffer({
   const selectedRate  = rate  || cfg.rate;
   const explicitPitch = pitchFactor !== null ? parseFloat(pitchFactor) : null;
   const numericWeight = vocalWeight !== null ? parseFloat(vocalWeight) : null;
+  const effectiveModelId = modelId || (AI_MODEL_ACOUSTIC_PROFILES[model] ? model : '');
 
-  const cacheKey = `${text.trim()}|${langKey}|${gender}|${selectedVoice}|${selectedPitch}|${selectedRate}|${model}`;
+  const cacheKey = `${text.trim()}|${langKey}|${gender}|${selectedVoice}|${selectedPitch}|${selectedRate}|${model}|${effectiveModelId}`;
   if (ttsMemoryCache.has(cacheKey)) {
     return ttsMemoryCache.get(cacheKey);
   }
@@ -578,6 +691,7 @@ export async function synthesizeSpeechBuffer({
     const neuralResult = await generateNeuralSpeech(text, lang, gender, {
       voice: selectedVoice,
       model,
+      modelId: effectiveModelId,
       pitch: selectedPitch,
       rate: selectedRate,
       ageStyle,
