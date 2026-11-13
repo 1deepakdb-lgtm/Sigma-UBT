@@ -113,126 +113,126 @@ function createEpsExamBellBuffer(ctx) {
   return buffer;
 }
 
-// Sample EPS-TOPIK Q21-Q40 Question Scripts
+// Sample EPS-TOPIK Q21-Q40 Question Scripts (Pure question text; Question numbers are kept separate!)
 const SAMPLE_EPS_LISTENING_DATA = [
   {
     qNum: 21,
     title: "21번 문제입니다. 들은 것을 고르십시오.",
-    questionText: "21번 문제입니다. 들은 것을 고르십시오. [가방]",
+    questionText: "들은 것을 고르십시오. [가방]",
     options: ["가방", "공책", "지갑", "모자"]
   },
   {
     qNum: 22,
     title: "22번 문제입니다. 들은 것을 고르십시오.",
-    questionText: "22번 문제입니다. 들은 것을 고르십시오. [선풍기]",
+    questionText: "들은 것을 고르십시오. [선풍기]",
     options: ["세탁기", "선풍기", "냉장고", "청소기"]
   },
   {
     qNum: 23,
     title: "23번 문제입니다. 그림을 보고 알맞은 것을 고르십시오.",
-    questionText: "23번 문제입니다. 이것은 무엇입니까?",
+    questionText: "이것은 무엇입니까?",
     options: ["안경입니다.", "모자입니다.", "시계입니다.", "신발입니다."]
   },
   {
     qNum: 24,
     title: "24번 문제입니다. 그림을 보고 알맞은 것을 고르십시오.",
-    questionText: "24번 문제입니다. 이 사람은 지금 무엇을 하고 있습니까?",
+    questionText: "이 사람은 지금 무엇을 하고 있습니까?",
     options: ["잠을 자고 있습니다.", "청소를 하고 있습니다.", "밥을 먹고 있습니다.", "전화를 걸고 있습니다."]
   },
   {
     qNum: 25,
     title: "25번 문제입니다. 질문을 듣고 알맞은 대답을 고르십시오.",
-    questionText: "25번 문제입니다. 언제 한국에 왔습니까?",
+    questionText: "언제 한국에 왔습니까?",
     options: ["작년 3월에 왔습니다.", "비행기를 타고 왔습니다.", "친구와 함께 왔습니다.", "한국말을 배우러 왔습니다."]
   },
   {
     qNum: 26,
     title: "26번 문제입니다. 질문을 듣고 알맞은 대답을 고르십시오.",
-    questionText: "26번 문제입니다. 오늘 저녁에 시간 있어요?",
+    questionText: "오늘 저녁에 시간 있어요?",
     options: ["네, 오늘 저녁에 바빠요.", "네, 같이 영화 봐요.", "아니요, 내일 갈 거예요.", "네, 어제 만났어요."]
   },
   {
     qNum: 27,
     title: "27번 문제입니다. 잘 듣고 내용과 관계있는 그림을 고르십시오.",
-    questionText: "27번 문제입니다. 지금 몇 시예요? 세 시 삼십 분이에요.",
+    questionText: "지금 몇 시예요? 세 시 삼십 분이에요.",
     options: ["2시 30분", "3시 30분", "4시 30분", "3시 정각"]
   },
   {
     qNum: 28,
     title: "28번 문제입니다. 잘 듣고 내용과 관계있는 것을 고르십시오.",
-    questionText: "28번 문제입니다. 수루 씨는 어디에서 일해요? 저는 가구 공장에서 일해요.",
+    questionText: "수루 씨는 어디에서 일해요? 저는 가구 공장에서 일해요.",
     options: ["가구 공장", "식당", "병원", "은행"]
   },
   {
     qNum: 29,
     title: "29번 문제입니다. 대화를 듣고 알맞은 것을 고르십시오.",
-    questionText: "29번 문제입니다. 남자는 어디가 아픕니까? 머리가 아프고 열이 나요.",
+    questionText: "남자는 어디가 아픕니까? 머리가 아프고 열이 나요.",
     options: ["다리가 아픕니다.", "머리가 아픕니다.", "배가 아픕니다.", "눈이 아픕니다."]
   },
   {
     qNum: 30,
     title: "30번 문제입니다. 대화를 듣고 알맞은 것을 고르십시오.",
-    questionText: "30번 문제입니다. 이 사람은 주말에 무엇을 했습니까? 친구와 등산을 갔어요.",
+    questionText: "이 사람은 주말에 무엇을 했습니까? 친구와 등산을 갔어요.",
     options: ["수영을 했습니다.", "등산을 했습니다.", "쇼핑을 했습니다.", "집에서 잤습니다."]
   },
   {
     qNum: 31,
     title: "31번 문제입니다. 이야기를 듣고 질문에 알맞은 대답을 고르십시오.",
-    questionText: "31번 문제입니다. 두 사람은 내일 무엇을 할 것입니까? 내일 같이 축구하러 가요.",
+    questionText: "두 사람은 내일 무엇을 할 것입니까? 내일 같이 축구하러 가요.",
     options: ["축구를 합니다.", "영화를 봅니다.", "공부합니다.", "등산합니다."]
   },
   {
     qNum: 32,
     title: "32번 문제입니다. 이야기를 듣고 질문에 알맞은 대답을 고르십시오.",
-    questionText: "32번 문제입니다. 여자는 왜 늦었습니까? 길이 많이 막혀서 늦었습니다.",
+    questionText: "여자는 왜 늦었습니까? 길이 많이 막혀서 늦었습니다.",
     options: ["차가 막혀서", "늦잠을 자서", "길을 잃어서", "비가 많이 와서"]
   },
   {
     qNum: 33,
     title: "33번 문제입니다. 이야기를 듣고 질문에 알맞은 대답을 고르십시오.",
-    questionText: "33번 문제입니다. 남자의 직업은 무엇입니까? 저는 농장에서 과일을 재배합니다.",
+    questionText: "남자의 직업은 무엇입니까? 저는 농장에서 과일을 재배합니다.",
     options: ["농부", "의사", "경찰관", "요리사"]
   },
   {
     qNum: 34,
     title: "34번 문제입니다. 이야기를 듣고 질문에 알맞은 대답을 고르십시오.",
-    questionText: "34번 문제입니다. 회식은 언제입니까? 이번 주 금요일 저녁 7시입니다.",
+    questionText: "회식은 언제입니까? 이번 주 금요일 저녁 7시입니다.",
     options: ["금요일 저녁", "토요일 점심", "목요일 저녁", "일요일 저녁"]
   },
   {
     qNum: 35,
     title: "35번 문제입니다. 이야기를 듣고 질문에 알맞은 대답을 고르십시오.",
-    questionText: "35번 문제입니다. 남자는 오늘 무엇을 해야 합니까? 상자를 창고로 옮겨야 합니다.",
+    questionText: "남자는 오늘 무엇을 해야 합니까? 상자를 창고로 옮겨야 합니다.",
     options: ["상자를 옮깁니다.", "청소를 합니다.", "서류를 복사합니다.", "기계를 고칩니다."]
   },
   {
     qNum: 36,
     title: "36번 문제입니다. 이야기를 듣고 질문에 알맞은 대답을 고르십시오.",
-    questionText: "36번 문제입니다. 여자는 휴가 때 어디에 갈 것입니까? 제주도에 갈 생각이에요.",
+    questionText: "여자는 휴가 때 어디에 갈 것입니까? 제주도에 갈 생각이에요.",
     options: ["제주도", "부산", "설악산", "경주"]
   },
   {
     qNum: 37,
     title: "37번 문제입니다. 하나의 이야기를 듣고 두 개의 질문에 답하십시오.",
-    questionText: "37번 문제입니다. 기숙사 규칙에 대한 안내 방송입니다. 밤 10시 이후에는 조용히 해 주십시오.",
+    questionText: "기숙사 규칙에 대한 안내 방송입니다. 밤 10시 이후에는 조용히 해 주십시오.",
     options: ["기숙사 시설 안내", "청소 당번 안내", "야간 규칙 안내", "외출 시간 안내"]
   },
   {
     qNum: 38,
     title: "38번 문제입니다. 안내 방송을 듣고 질문에 답하십시오.",
-    questionText: "38번 문제입니다. 이 방송은 누구를 위한 것입니까? 새로 입사한 외국인 근로자 여러분 환영합니다.",
+    questionText: "이 방송은 누구를 위한 것입니까? 새로 입사한 외국인 근로자 여러분 환영합니다.",
     options: ["신입 외국인 근로자", "기숙사 관리인", "병원 환자", "공항 승객"]
   },
   {
     qNum: 39,
     title: "39번 문제입니다. 담화를 듣고 질문에 답하십시오.",
-    questionText: "39번 문제입니다. 공장에서 작업할 때 주의해야 할 점은 무엇입니까? 반드시 안전모와 안전화를 착용하세요.",
+    questionText: "공장에서 작업할 때 주의해야 할 점은 무엇입니까? 반드시 안전모와 안전화를 착용하세요.",
     options: ["안전 장비 착용", "기계 청소", "휴식 시간 준수", "출근 시간 엄수"]
   },
   {
     qNum: 40,
     title: "40번 문제입니다. 담화를 듣고 질문에 답하십시오.",
-    questionText: "40번 문제입니다. 월급날은 언제입니까? 매월 25일에 통장으로 입금됩니다.",
+    questionText: "월급날은 언제입니까? 매월 25일에 통장으로 입금됩니다.",
     options: ["매월 25일", "매월 10일", "매월 마지막 날", "매월 15일"]
   }
 ];
@@ -472,6 +472,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
 
         const qText = (found.description || found.questionHeading || found.mainHeading || '')
           .replace(/^\[\s*\d+\s*\]\s*/, '')
+          .replace(/^[0-9]+번\s*(?:문제입니다)?[\.\,\s]*/, '')
           .trim();
 
         const rawOpts = Array.isArray(found.options) ? found.options : [];
@@ -513,8 +514,11 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
       const cleanSetName = (targetSet.name || '').trim().toUpperCase();
       const cleanPkgName = targetSet.packageName || 'Full Set UBT';
 
-      // Text fields:
-      const qText = (qData.questionText || '').trim();
+      // Text fields: pure question prompt text without question number prefixes ("21번 문제입니다.")
+      const qText = (qData.questionText || '')
+        .replace(/^\[\s*\d+\s*\]\s*/, '')
+        .replace(/^[0-9]+번\s*(?:문제입니다)?[\.\,\s]*/, '')
+        .trim();
 
       // Options: strictly pure text and audio, NO option numbers ("1번.") and NO bell chimes!
       const cleanOptions = qData.options.map((opt) => {
@@ -802,8 +806,12 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         setPreviewStage('prompt');
         let promptUrl = q.questionAudioUrl;
         if (!promptUrl && q.questionText?.trim()) {
+          const purePrompt = q.questionText
+            .replace(/^\[\s*\d+\s*\]\s*/, '')
+            .replace(/^[0-9]+번\s*(?:문제입니다)?[\.\,\s]*/, '')
+            .trim();
           const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-          promptUrl = `/api/tts?text=${encodeURIComponent(q.questionText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+          promptUrl = `/api/tts?text=${encodeURIComponent(purePrompt || q.questionText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
         }
         if (promptUrl) {
           await playAndWait(promptUrl);
@@ -958,8 +966,12 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     setGeneratingKey('q');
     try {
       const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-      const cleanPrompt = currentQuestion.questionText.trim();
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanPrompt)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+      // Strictly separate Question Number: synthesize speech ONLY for pure prompt content!
+      const purePrompt = currentQuestion.questionText
+        .replace(/^\[\s*\d+\s*\]\s*/, '')
+        .replace(/^[0-9]+번\s*(?:문제입니다)?[\.\,\s]*/, '')
+        .trim();
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(purePrompt || currentQuestion.questionText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
 
       const res = await fetch(ttsUrl);
       if (!res.ok) throw new Error('Speech synthesis failed');
@@ -1287,9 +1299,13 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
         if (q.questionAudioUrl) {
           qBuffer = await fetchAndDecodeAudio(decodeCtx, q.questionAudioUrl);
         } else if (!hasSingleAudio && q.questionText?.trim()) {
-          // Auto synthesize question prompt only when not single word question
+          // Auto synthesize question prompt (pure content without question number)
+          const purePrompt = q.questionText
+            .replace(/^\[\s*\d+\s*\]\s*/, '')
+            .replace(/^[0-9]+번\s*(?:문제입니다)?[\.\,\s]*/, '')
+            .trim();
           const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-          const ttsUrl = `/api/tts?text=${encodeURIComponent(q.questionText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+          const ttsUrl = `/api/tts?text=${encodeURIComponent(purePrompt || q.questionText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
           qBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
         }
 
@@ -2177,9 +2193,38 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
 
         {/* QUESTION AUDIO PROMPT */}
         <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px', marginBottom: '18px' }}>
+          {/* Dedicated Separate Question Number Announcement */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', backgroundColor: '#e0f2fe', padding: '7px 12px', borderRadius: '6px', border: '1px solid #bae6fd', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '12px', fontWeight: '800', color: '#0369a1' }}>
+              🔢 Separate Question Number:
+            </span>
+            <span style={{ fontSize: '12px', fontWeight: '800', color: '#0c4a6e', backgroundColor: '#ffffff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #7dd3fc' }}>
+              {qNumFormat === 'full' ? `${activeQNum}번 문제입니다.` : `${activeQNum}번.`}
+            </span>
+            <button
+              type="button"
+              onClick={() => handlePlayPreview(`qnum-${activeQNum}`, getQuestionNumberUrl(activeQNum))}
+              style={{
+                backgroundColor: playingItemKey === `qnum-${activeQNum}` ? '#0284c7' : '#ffffff',
+                color: playingItemKey === `qnum-${activeQNum}` ? '#ffffff' : '#0284c7',
+                border: '1px solid #0284c7',
+                borderRadius: '4px',
+                padding: '2px 8px',
+                fontSize: '11px',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              {playingItemKey === `qnum-${activeQNum}` ? '■ Stop' : '▶ Play Number'}
+            </button>
+            <span style={{ fontSize: '11px', color: '#0284c7', fontStyle: 'italic', marginLeft: 'auto' }}>
+              (Kept separate from pure question content)
+            </span>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
             <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e3a8a' }}>
-              Question Prompt Audio
+              Question Prompt Content (Pure Audio &amp; Text)
             </label>
             {currentQuestion.questionDuration > 0 && (
               <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#0284c7' }}>
@@ -2198,7 +2243,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
                   syncQuestionToTargetSet(activeQNum, currentQuestion, selectedSetRef.current);
                 }
               }}
-              placeholder="Enter Korean question text (e.g. 21번 문제입니다. 들은 것을 고르십시오.)"
+              placeholder="Enter Korean question text (e.g. 들은 것을 고르십시오.) — Question number is kept separate!"
               style={{ width: '100%', padding: '8px 12px', borderRadius: '5px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
             />
           </div>
