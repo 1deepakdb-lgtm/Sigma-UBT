@@ -344,21 +344,8 @@ const StudentExam = () => {
   }, [isStarted]);
 
   const handleGetStarted = () => {
-    // Enter fullscreen and lock orientation to landscape display on full screen
+    // Lock orientation to landscape mode on student device without requesting native fullscreen (which avoids the system exit banner)
     if (typeof window !== "undefined") {
-      try {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          docEl.requestFullscreen().catch(() => {});
-        } else if (docEl.webkitRequestFullscreen) {
-          docEl.webkitRequestFullscreen();
-        } else if (docEl.mozRequestFullScreen) {
-          docEl.mozRequestFullScreen();
-        } else if (docEl.msRequestFullscreen) {
-          docEl.msRequestFullscreen();
-        }
-      } catch (e) {}
-
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
           screen.orientation.lock("landscape").catch(() => {});
@@ -1298,7 +1285,7 @@ const StudentExam = () => {
           margin: auto;
           justify-content: center;
           min-height: 0;
-          border-radius: 16px;
+          border-radius: 24px;
           overflow: hidden;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
         }
@@ -1306,7 +1293,7 @@ const StudentExam = () => {
           background-color: rgba(255, 255, 255, 0.95);
           border: 1px solid #cbd5e1;
           border-top: none;
-          border-radius: 0 0 16px 16px;
+          border-radius: 0 0 24px 24px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.06);
           display: flex;
           flex-direction: column;
@@ -1344,7 +1331,7 @@ const StudentExam = () => {
           background-color: #0284c7;
           color: white;
           padding: 14px 22px;
-          border-radius: 16px 16px 0 0;
+          border-radius: 24px 24px 0 0;
           justify-content: space-between;
           font-weight: bold;
           font-size: 15.5px;
@@ -1355,7 +1342,7 @@ const StudentExam = () => {
           padding: 14px 24px;
           background-color: #f8fafc;
           border-top: 1px solid #cbd5e1;
-          border-radius: 0 0 16px 16px;
+          border-radius: 0 0 24px 24px;
           justify-content: space-between;
           align-items: center;
           gap: 12px;
@@ -1382,7 +1369,7 @@ const StudentExam = () => {
           border: 1px solid #cbd5e1;
           border-top: none;
           padding: 25px 30px;
-          border-radius: 0 0 16px 16px;
+          border-radius: 0 0 24px 24px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.06);
           overflow-y: auto;
           max-height: 80vh;
@@ -1405,13 +1392,13 @@ const StudentExam = () => {
             height: 100% !important;
             max-width: 100% !important;
             justify-content: center !important;
-            border-radius: 14px !important;
+            border-radius: 22px !important;
           }
           .ubt-exam-card {
             height: calc(100dvh - 8px) !important;
             min-height: 0 !important;
             max-height: calc(100dvh - 8px) !important;
-            border-radius: 0 0 14px 14px !important;
+            border-radius: 0 0 22px 22px !important;
           }
           .ubt-exam-columns {
             flex-direction: row !important;
@@ -1444,11 +1431,11 @@ const StudentExam = () => {
           .ubt-exam-header-bar {
             padding: 7px 16px !important;
             font-size: 13px !important;
-            border-radius: 14px 14px 0 0 !important;
+            border-radius: 22px 22px 0 0 !important;
           }
           .ubt-exam-nav-bar {
             padding: 7px 16px !important;
-            border-radius: 0 0 14px 14px !important;
+            border-radius: 0 0 22px 22px !important;
           }
           .ubt-exam-nav-bar button {
             padding: 9px 20px !important;
@@ -1458,7 +1445,7 @@ const StudentExam = () => {
           }
           .ubt-overview-box {
             padding: 10px 14px !important;
-            border-radius: 0 0 14px 14px !important;
+            border-radius: 0 0 22px 22px !important;
             max-height: calc(100dvh - 45px) !important;
           }
           .ubt-overview-flex {
@@ -1481,12 +1468,12 @@ const StudentExam = () => {
           .ubt-exam-main {
             height: 100% !important;
             justify-content: flex-start !important;
-            border-radius: 14px !important;
+            border-radius: 20px !important;
           }
           .ubt-exam-header-bar {
             padding: 10px 14px !important;
             font-size: 13px !important;
-            border-radius: 14px 14px 0 0 !important;
+            border-radius: 20px 20px 0 0 !important;
             flex-wrap: wrap !important;
           }
           .ubt-exam-card {
@@ -1494,7 +1481,7 @@ const StudentExam = () => {
             min-height: 0 !important;
             flex: 1 !important;
             max-height: calc(100dvh - 75px) !important;
-            border-radius: 0 0 14px 14px !important;
+            border-radius: 0 0 20px 20px !important;
           }
           .ubt-exam-columns {
             flex-direction: column !important;
@@ -1520,7 +1507,7 @@ const StudentExam = () => {
           }
           .ubt-exam-nav-bar {
             padding: 10px 14px !important;
-            border-radius: 0 0 14px 14px !important;
+            border-radius: 0 0 20px 20px !important;
             gap: 8px !important;
           }
           .ubt-exam-nav-bar button {
@@ -1531,7 +1518,7 @@ const StudentExam = () => {
           }
           .ubt-overview-box {
             padding: 16px 14px !important;
-            border-radius: 0 0 14px 14px !important;
+            border-radius: 0 0 20px 20px !important;
             max-height: calc(100dvh - 75px) !important;
           }
           .ubt-overview-flex {
@@ -1578,15 +1565,15 @@ const StudentExam = () => {
       )}
 
       {viewMode === "overview" ? (
-        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "850px", width: "100%", height: "100%", margin: "auto", justifyContent: "center", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
+        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "850px", width: "100%", height: "100%", margin: "auto", justifyContent: "center", borderRadius: "24px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
           
-          <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "16px 16px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15.5px" }}>
+          <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "24px 24px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15.5px" }}>
             <span>Remaining Questions: 40</span>
             <span>{exactExamName}</span>
             <span>Time Remaining: {formatTime(timeLeft)}</span>
           </div>
 
-          <div className="ubt-overview-box" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", padding: "25px 30px", borderRadius: "0 0 16px 16px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)" }}>
+          <div className="ubt-overview-box" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", padding: "25px 30px", borderRadius: "0 0 24px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)" }}>
             <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "space-between", gap: "25px" }}>
               
               <div style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "15px" }}>
@@ -1666,19 +1653,19 @@ const StudentExam = () => {
 
         </div>
       ) : (
-        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "1050px", width: "100%", height: "100%", margin: "auto", justifyContent: "center", borderRadius: "16px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
+        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "1050px", width: "100%", height: "100%", margin: "auto", justifyContent: "center", borderRadius: "24px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
           
           {(() => {
             const currentQ = questions[currentQuestion];
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-                <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "16px 16px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15.5px" }}>
+                <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "24px 24px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15.5px" }}>
                   <span>Remaining Questions: 40</span>
                   <span>{exactExamName}</span>
                   <span>Time Remaining: {formatTime(timeLeft)}</span>
                 </div>
 
-                <div className="ubt-exam-card" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", borderRadius: "0 0 16px 16px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", justifyContent: "space-between", height: "550px", minHeight: "550px" }}>
+                <div className="ubt-exam-card" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", borderRadius: "0 0 24px 24px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", justifyContent: "space-between", height: "550px", minHeight: "550px" }}>
                   <div className="ubt-exam-columns" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
                     
                     <div className="ubt-exam-left" style={{ flex: 1.2, padding: "20px 25px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%" }}>
@@ -1958,7 +1945,7 @@ const StudentExam = () => {
                     </div>
                   </div>
 
-                  <div className="ubt-exam-nav-bar" style={{ display: "flex", padding: "14px 24px", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", borderRadius: "0 0 16px 16px", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                  <div className="ubt-exam-nav-bar" style={{ display: "flex", padding: "14px 24px", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", borderRadius: "0 0 24px 24px", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
                     <button 
                       type="button"
                       onClick={() => {

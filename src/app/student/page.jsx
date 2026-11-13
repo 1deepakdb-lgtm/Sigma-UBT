@@ -1495,19 +1495,6 @@ const StudentDashboard = () => {
   const enforceLandscapeMode = () => {
     if (typeof window !== "undefined") {
       try {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          docEl.requestFullscreen().catch(() => {});
-        } else if (docEl.webkitRequestFullscreen) {
-          docEl.webkitRequestFullscreen();
-        } else if (docEl.mozRequestFullScreen) {
-          docEl.mozRequestFullScreen();
-        } else if (docEl.msRequestFullscreen) {
-          docEl.msRequestFullscreen();
-        }
-      } catch (e) {}
-
-      try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
           screen.orientation.lock("landscape").catch(() => {});
         } else if (screen.lockOrientation) {
