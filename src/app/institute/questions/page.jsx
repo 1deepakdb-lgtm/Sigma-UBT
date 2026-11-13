@@ -1096,17 +1096,24 @@ function InstituteQuestionManagerContent() {
                       return (
                         <tr
                           key={s.id || idx}
+                          onClick={() => {
+                            setViewingSet(s.name);
+                            const el = document.getElementById("institute-questions-list-section");
+                            if (el) el.scrollIntoView({ behavior: "smooth" });
+                          }}
                           style={{
                             borderBottom: "1px solid #e2e8f0",
                             backgroundColor: isSelectedForView ? "#f0fdf4" : "transparent",
                             transition: "background-color 0.15s ease",
-                            textAlign: "center"
+                            textAlign: "center",
+                            cursor: "pointer"
                           }}
+                          title={`Click to view questions in ${s.name}`}
                         >
                           <td style={{ padding: "12px 14px", fontWeight: "bold", color: "#64748b", textAlign: "center" }}>
                             {idx + 1}
                           </td>
-                          <td style={{ padding: "12px 14px", fontWeight: "bold", color: "#1e3a8a", textAlign: "center" }}>
+                          <td style={{ padding: "12px 14px", fontWeight: "bold", color: isSelectedForView ? "#15803d" : "#1e3a8a", textAlign: "center" }}>
                             {s.name}
                           </td>
                           <td style={{ padding: "12px 14px", color: "#475569", textAlign: "center" }}>
@@ -1151,7 +1158,7 @@ function InstituteQuestionManagerContent() {
                               {counts.total} / 40 {counts.isComplete ? "Ready" : "Incomplete"}
                             </span>
                           </td>
-                          <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                          <td style={{ padding: "12px 14px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
                             <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", justifyContent: "center" }}>
                               <span style={{
                                 display: "inline-block",
@@ -1184,7 +1191,7 @@ function InstituteQuestionManagerContent() {
                               </button>
                             </div>
                           </td>
-                          <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                          <td style={{ padding: "12px 14px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
                             <div style={{ display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
                               <button
                                 type="button"

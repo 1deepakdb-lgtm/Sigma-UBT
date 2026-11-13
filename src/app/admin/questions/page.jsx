@@ -1729,7 +1729,7 @@ function AdminQuestionManagerContent() {
                     <thead>
                       <tr style={{ backgroundColor: "#1e3a8a", color: "#ffffff", textAlign: "center", fontSize: "11px", letterSpacing: "0.2px" }}>
                         <th style={{ padding: "6px 4px", width: "30px", textAlign: "center" }}>S.N.</th>
-                        <th style={{ padding: "6px 6px", textAlign: "left", whiteSpace: "nowrap" }}>Set Name</th>
+                        <th style={{ padding: "6px 8px", textAlign: "left", whiteSpace: "nowrap" }}>UBT Set Name (Click to View)</th>
                         <th style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Package</th>
                         <th style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Creator</th>
                         <th style={{ padding: "6px 5px", textAlign: "center", whiteSpace: "nowrap" }}>Access</th>
@@ -1747,28 +1747,48 @@ function AdminQuestionManagerContent() {
                         return (
                           <tr
                             key={setObj.id || idx}
+                            onClick={() => {
+                              setSelectedUbtSetForView(setObj.name);
+                              const el = document.getElementById("admin-ubt-questions-section");
+                              if (el) el.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelectedForView) e.currentTarget.style.backgroundColor = "#e0f2fe";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelectedForView) e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#ffffff" : "#f8fafc";
+                            }}
                             style={{
                               borderBottom: "1px solid #e2e8f0",
-                              backgroundColor: isSelectedForView ? "#f0fdf4" : (idx % 2 === 0 ? "#ffffff" : "#f8fafc"),
+                              backgroundColor: isSelectedForView ? "#ecfdf5" : (idx % 2 === 0 ? "#ffffff" : "#f8fafc"),
                               transition: "background-color 0.15s ease",
-                              textAlign: "center"
+                              textAlign: "center",
+                              cursor: "pointer"
                             }}
+                            title={`Click on ${setObj.name} to view its 40 questions below`}
                           >
-                            <td style={{ padding: "5px 3px", fontWeight: "600", color: "#64748b", textAlign: "center" }}>{idx + 1}</td>
-                            <td style={{ padding: "5px 6px", fontWeight: "700", color: "#1e3a8a", textAlign: "left", whiteSpace: "nowrap", fontSize: "11.5px" }}>
-                              {setObj.name}
+                            <td style={{ padding: "6px 3px", fontWeight: "600", color: "#64748b", textAlign: "center" }}>{idx + 1}</td>
+                            <td style={{ padding: "6px 8px", fontWeight: "700", color: isSelectedForView ? "#047857" : "#1e3a8a", textAlign: "left", whiteSpace: "nowrap", fontSize: "12px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ textDecoration: isSelectedForView ? "underline" : "none" }}>{setObj.name}</span>
+                                {isSelectedForView && (
+                                  <span style={{ fontSize: "9px", backgroundColor: "#047857", color: "#ffffff", padding: "1px 5px", borderRadius: "3px", fontWeight: "700" }}>
+                                    ✓ Viewing Qs
+                                  </span>
+                                )}
+                              </div>
                             </td>
-                            <td style={{ padding: "5px 4px", color: "#475569", textAlign: "center", whiteSpace: "nowrap", fontSize: "11px" }}>{setObj.packageName || "Full Set UBT"}</td>
-                            <td style={{ padding: "5px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
+                            <td style={{ padding: "6px 4px", color: "#475569", textAlign: "center", whiteSpace: "nowrap", fontSize: "11px" }}>{setObj.packageName || "Full Set UBT"}</td>
+                            <td style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
                               {renderCreatorBadge(setObj)}
                             </td>
-                            <td style={{ padding: "5px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
+                            <td style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
                               {renderVisibilityBadge(setObj)}
                             </td>
-                            <td style={{ padding: "5px 4px", textAlign: "center", whiteSpace: "nowrap" }}>
+                            <td style={{ padding: "6px 4px", textAlign: "center", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                               {renderFreeBadgeAndToggle(setObj)}
                             </td>
-                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
+                            <td style={{ padding: "6px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
                                 display: "inline-block",
                                 padding: "2px 5px",
@@ -1781,7 +1801,7 @@ function AdminQuestionManagerContent() {
                                 {counts.reading}/20
                               </span>
                             </td>
-                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
+                            <td style={{ padding: "6px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
                                 display: "inline-block",
                                 padding: "2px 5px",
@@ -1794,7 +1814,7 @@ function AdminQuestionManagerContent() {
                                 {counts.listening}/20
                               </span>
                             </td>
-                            <td style={{ padding: "5px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
+                            <td style={{ padding: "6px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                               <span style={{
                                 display: "inline-block",
                                 padding: "2px 5px",
@@ -1807,34 +1827,9 @@ function AdminQuestionManagerContent() {
                                 {counts.total}/40 {counts.isComplete ? "Ready" : "Inc."}
                               </span>
                             </td>
-                            <td style={{ padding: "5px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
+                            <td style={{ padding: "6px 6px", textAlign: "center", whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                               <div style={{ display: "inline-flex", gap: "3px", justifyContent: "center", alignItems: "center", flexWrap: "nowrap" }}>
                                 {renderPublishAuthorityButton(setObj)}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedUbtSetForView(setObj.name);
-                                    const el = document.getElementById("admin-ubt-questions-section");
-                                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                                  }}
-                                  style={{
-                                    backgroundColor: isSelectedForView ? "#15803d" : "#f1f5f9",
-                                    color: isSelectedForView ? "#ffffff" : "#1e3a8a",
-                                    border: isSelectedForView ? "1px solid #166534" : "1px solid #cbd5e1",
-                                    padding: "3px 6px",
-                                    borderRadius: "3px",
-                                    cursor: "pointer",
-                                    fontSize: "10.5px",
-                                    fontWeight: "700",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "2px",
-                                    whiteSpace: "nowrap"
-                                  }}
-                                >
-                                  <EyeIcon size={10} />
-                                  <span>{isSelectedForView ? "Viewing" : "View"}</span>
-                                </button>
                                 <button
                                   onClick={() => handleSelectSetForUpload(setObj)}
                                   style={{
