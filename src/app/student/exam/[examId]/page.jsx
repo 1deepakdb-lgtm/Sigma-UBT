@@ -1405,12 +1405,12 @@ const StudentExam = () => {
   };
 
   return (
+    <div className="ubt-exam-landscape-enforcer">
     <div className="ubt-exam-wrapper" style={containerExamStyle} onContextMenu={(e) => e.preventDefault()}>
       <style dangerouslySetInnerHTML={{ __html: `
         .ubt-exam-wrapper {
-          width: 100vw;
-          min-height: 100dvh;
-          height: 100vh;
+          width: 100%;
+          height: 100%;
           display: flex;
           flex-direction: column;
           box-sizing: border-box;
@@ -1598,6 +1598,35 @@ const StudentExam = () => {
           .ubt-overview-flex button {
             padding: 6px 0 !important;
             font-size: 11.5px !important;
+          }
+        }
+
+        /* =====================================================
+           FORCE LANDSCAPE: rotate entire exam when device is
+           held in portrait — works on ALL mobile browsers
+           even when screen.orientation.lock() is unavailable
+        ====================================================== */
+        @media (orientation: portrait) {
+          .ubt-exam-landscape-enforcer {
+            position: fixed !important;
+            top: 0; left: 0;
+            width: 100vh !important;
+            height: 100vw !important;
+            transform: rotate(90deg) !important;
+            transform-origin: top left !important;
+            left: 100vw !important;
+            overflow: hidden !important;
+            z-index: 9999 !important;
+          }
+        }
+        @media (orientation: landscape) {
+          .ubt-exam-landscape-enforcer {
+            position: fixed !important;
+            top: 0; left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+            z-index: 9999 !important;
           }
         }
 
@@ -2178,6 +2207,7 @@ const StudentExam = () => {
           })()}
         </div>
       )}
+    </div>
     </div>
   );
 };
