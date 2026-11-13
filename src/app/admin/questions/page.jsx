@@ -982,6 +982,202 @@ function AdminQuestionManagerContent() {
     }
   };
 
+  const uploadOrProcessFile = async (file, setter) => {
+    if (!file) return;
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          setter(data.url);
+          return data.url;
+        }
+      }
+    } catch (e) {
+      console.warn("Upload to /api/upload failed, falling back to dataURL:", e);
+    }
+    processFileToDataURL(file, setter);
+  };
+
+  const handleTableOptionAudioUpload = async (q, oIdx, file) => {
+    if (!file) return;
+    try {
+      let finalAudio = "";
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) finalAudio = data.url;
+        }
+      } catch (e) {}
+
+      if (!finalAudio) {
+        finalAudio = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const updatedOptions = (q.options || []).map((opt, idx) => {
+        const base = typeof opt === "string" ? { text: opt, audio: "", image: "", video: "" } : { ...opt };
+        if (idx === oIdx) {
+          return { ...base, audio: finalAudio };
+        }
+        return base;
+      });
+
+      const updatedQ = { ...q, options: updatedOptions };
+
+      setQuestions(prev => prev.map(item => (item.id === q.id ? updatedQ : item)));
+
+      let localBank = [];
+      try {
+        localBank = JSON.parse(localStorage.getItem("questionBank") || "[]");
+      } catch (e) {}
+      const bIdx = localBank.findIndex(item => item.id === q.id);
+      if (bIdx >= 0) {
+        localBank[bIdx] = { ...localBank[bIdx], options: updatedOptions };
+        localStorage.setItem("questionBank", JSON.stringify(localBank));
+      }
+
+      if (q.id && !String(q.id).startsWith("q-")) {
+        await fetch("/api/admin/questions", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: q.id,
+            options: updatedOptions
+          })
+        });
+      }
+    } catch (err) {
+      alert("Error uploading option audio: " + err.message);
+    }
+  };
+
+  const handleTableOptionAudioRemove = async (q, oIdx) => {
+    try {
+      const updatedOptions = (q.options || []).map((opt, idx) => {
+        const base = typeof opt === "string" ? { text: opt, audio: "", image: "", video: "" } : { ...opt };
+        if (idx === oIdx) {
+          return { ...base, audio: "" };
+        }
+        return base;
+      });
+
+      const updatedQ = { ...q, options: updatedOptions };
+
+      setQuestions(prev => prev.map(item => (item.id === q.id ? updatedQ : item)));
+
+      let localBank = [];
+      try {
+        localBank = JSON.parse(localStorage.getItem("questionBank") || "[]");
+      } catch (e) {}
+      const bIdx = localBank.findIndex(item => item.id === q.id);
+      if (bIdx >= 0) {
+        localBank[bIdx] = { ...localBank[bIdx], options: updatedOptions };
+        localStorage.setItem("questionBank", JSON.stringify(localBank));
+      }
+
+      if (q.id && !String(q.id).startsWith("q-")) {
+        await fetch("/api/admin/questions", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: q.id,
+            options: updatedOptions
+          })
+        });
+      }
+    } catch (err) {
+      alert("Error removing option audio: " + err.message);
+    }
+  };
+
+  const handleTableQuestionAudioUpload = async (q, file) => {
+    if (!file) return;
+    try {
+      let finalAudio = "";
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) finalAudio = data.url;
+        }
+      } catch (e) {}
+
+      if (!finalAudio) {
+        finalAudio = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const updatedQ = { ...q, audio: finalAudio };
+
+      setQuestions(prev => prev.map(item => (item.id === q.id ? updatedQ : item)));
+
+      let localBank = [];
+      try {
+        localBank = JSON.parse(localStorage.getItem("questionBank") || "[]");
+      } catch (e) {}
+      const bIdx = localBank.findIndex(item => item.id === q.id);
+      if (bIdx >= 0) {
+        localBank[bIdx] = { ...localBank[bIdx], audio: finalAudio };
+        localStorage.setItem("questionBank", JSON.stringify(localBank));
+      }
+
+      if (q.id && !String(q.id).startsWith("q-")) {
+        await fetch("/api/admin/questions", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: q.id,
+            audio: finalAudio
+          })
+        });
+      }
+    } catch (err) {
+      alert("Error uploading question audio: " + err.message);
+    }
+  };
+
+  const handleTableQuestionAudioRemove = async (q) => {
+    try {
+      const updatedQ = { ...q, audio: "" };
+      setQuestions(prev => prev.map(item => (item.id === q.id ? updatedQ : item)));
+
+      let localBank = [];
+      try {
+        localBank = JSON.parse(localStorage.getItem("questionBank") || "[]");
+      } catch (e) {}
+      const bIdx = localBank.findIndex(item => item.id === q.id);
+      if (bIdx >= 0) {
+        localBank[bIdx] = { ...localBank[bIdx], audio: "" };
+        localStorage.setItem("questionBank", JSON.stringify(localBank));
+      }
+
+      if (q.id && !String(q.id).startsWith("q-")) {
+        await fetch("/api/admin/questions", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: q.id,
+            audio: ""
+          })
+        });
+      }
+    } catch (err) {}
+  };
+
   const handleImagePaste = (e, setter) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -2144,12 +2340,63 @@ function AdminQuestionManagerContent() {
                                   )}
 
                                   {q.audio && (
-                                    <div style={{ marginTop: "2px" }}>
-                                      <audio src={q.audio} controls style={{ height: "28px", width: "100%", maxWidth: "210px" }} />
+                                    <div style={{ marginTop: "2px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                      <audio src={q.audio} controls style={{ height: "28px", width: "100%", maxWidth: "190px" }} />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleTableQuestionAudioRemove(q)}
+                                        title="Remove question audio"
+                                        style={{
+                                          backgroundColor: "#fee2e2",
+                                          color: "#dc2626",
+                                          border: "1px solid #fca5a5",
+                                          borderRadius: "4px",
+                                          fontSize: "10px",
+                                          padding: "3px 6px",
+                                          cursor: "pointer",
+                                          fontWeight: "700"
+                                        }}
+                                      >
+                                        ✕
+                                      </button>
                                     </div>
                                   )}
 
-                                  {!q.description && !q.image && !q.audio && (
+                                  {isListening && (
+                                    <div style={{ marginTop: "4px" }}>
+                                      <label
+                                        title="Upload or change Question Prompt audio"
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          backgroundColor: q.audio ? "#f0fdf4" : "#f8fafc",
+                                          color: q.audio ? "#15803d" : "#2563eb",
+                                          border: q.audio ? "1px solid #86efac" : "1px dashed #93c5fd",
+                                          padding: "3px 8px",
+                                          borderRadius: "4px",
+                                          fontSize: "11px",
+                                          fontWeight: "700",
+                                          cursor: "pointer",
+                                          width: "fit-content"
+                                        }}
+                                      >
+                                        <span>{q.audio ? "🔄 Change Question Audio" : "🎙️ Upload Question Audio"}</span>
+                                        <input
+                                          type="file"
+                                          accept="audio/*"
+                                          style={{ display: "none" }}
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleTableQuestionAudioUpload(q, file);
+                                            e.target.value = "";
+                                          }}
+                                        />
+                                      </label>
+                                    </div>
+                                  )}
+
+                                  {!q.description && !q.image && !q.audio && !isListening && (
                                     <span style={{ color: "#94a3b8", fontSize: "12px", fontStyle: "italic" }}>
                                       No passage or media
                                     </span>
@@ -2166,82 +2413,143 @@ function AdminQuestionManagerContent() {
                                   padding: "8px 10px",
                                   display: "flex",
                                   flexDirection: "column",
-                                  gap: "4px",
-                                  minWidth: "220px"
+                                  gap: "6px",
+                                  minWidth: "260px"
                                 }}>
                                   {(q.options || []).map((opt, oIdx) => {
                                     const isCorrect = ansIdx === oIdx;
                                     const optText = typeof opt === "string" ? opt : (opt?.text || "");
                                     const optImg = typeof opt === "object" ? (opt?.image || "") : "";
+                                    const optAudio = typeof opt === "object" ? (opt?.audio || "") : "";
                                     return (
                                       <div
                                         key={oIdx}
                                         style={{
                                           display: "flex",
-                                          alignItems: "flex-start",
-                                          gap: "8px",
-                                          padding: "4px 8px",
-                                          borderRadius: "5px",
-                                          backgroundColor: isCorrect ? "#dcfce7" : "transparent",
-                                          border: isCorrect ? "1px solid #86efac" : "1px solid transparent",
+                                          flexDirection: "column",
+                                          gap: "3px",
+                                          padding: "5px 8px",
+                                          borderRadius: "6px",
+                                          backgroundColor: isCorrect ? "#dcfce7" : "#ffffff",
+                                          border: isCorrect ? "1px solid #86efac" : "1px solid #e2e8f0",
                                           fontSize: "12.5px",
                                           lineHeight: "1.4"
                                         }}
                                       >
-                                        <span style={{
-                                          fontWeight: "800",
-                                          color: isCorrect ? "#15803d" : "#0284c7",
-                                          fontSize: "13px",
-                                          minWidth: "18px",
-                                          flexShrink: 0
-                                        }}>
-                                          {ansSymbols[oIdx] || `${oIdx + 1}.`}
-                                        </span>
-                                        <div style={{ flex: 1, wordBreak: "break-word" }}>
+                                        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
                                           <span style={{
-                                            color: isCorrect ? "#14532d" : "#1e293b",
-                                            fontWeight: isCorrect ? "700" : "500"
+                                            fontWeight: "800",
+                                            color: isCorrect ? "#15803d" : "#0284c7",
+                                            fontSize: "13px",
+                                            minWidth: "18px",
+                                            flexShrink: 0
                                           }}>
-                                            {optText ? (
-                                              <span dangerouslySetInnerHTML={{ __html: optText }} />
-                                            ) : (
-                                              <span style={{ color: "#94a3b8", fontStyle: "italic" }}>[empty]</span>
-                                            )}
+                                            {ansSymbols[oIdx] || `${oIdx + 1}.`}
                                           </span>
-                                          {isCorrect && (
+                                          <div style={{ flex: 1, wordBreak: "break-word" }}>
                                             <span style={{
-                                              marginLeft: "8px",
-                                              fontSize: "10.5px",
-                                              fontWeight: "700",
-                                              color: "#16a34a",
-                                              backgroundColor: "#ffffff",
-                                              padding: "1px 6px",
-                                              borderRadius: "10px",
-                                              border: "1px solid #bbf7d0",
-                                              display: "inline-block"
+                                              color: isCorrect ? "#14532d" : "#1e293b",
+                                              fontWeight: isCorrect ? "700" : "500"
                                             }}>
-                                              ✓ Answer
+                                              {optText ? (
+                                                <span dangerouslySetInnerHTML={{ __html: optText }} />
+                                              ) : (
+                                                <span style={{ color: "#94a3b8", fontStyle: "italic" }}>[empty text]</span>
+                                              )}
                                             </span>
-                                          )}
-                                          {optImg && (
-                                            <div style={{ marginTop: "4px" }}>
-                                              <img
-                                                src={optImg}
-                                                alt={`Opt ${oIdx + 1}`}
-                                                onClick={() => setPreviewImage(optImg)}
-                                                style={{
-                                                  maxHeight: "45px",
-                                                  maxWidth: "100%",
-                                                  objectFit: "contain",
-                                                  borderRadius: "4px",
-                                                  border: "1px solid #cbd5e1",
-                                                  cursor: "pointer",
-                                                  marginTop: "2px"
+                                            {isCorrect && (
+                                              <span style={{
+                                                marginLeft: "8px",
+                                                fontSize: "10.5px",
+                                                fontWeight: "700",
+                                                color: "#16a34a",
+                                                backgroundColor: "#ffffff",
+                                                padding: "1px 6px",
+                                                borderRadius: "10px",
+                                                border: "1px solid #bbf7d0",
+                                                display: "inline-block"
+                                              }}>
+                                                ✓ Answer
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {optImg && (
+                                          <div style={{ paddingLeft: "26px", marginTop: "2px" }}>
+                                            <img
+                                              src={optImg}
+                                              alt={`Opt ${oIdx + 1}`}
+                                              onClick={() => setPreviewImage(optImg)}
+                                              style={{
+                                                maxHeight: "45px",
+                                                maxWidth: "100%",
+                                                objectFit: "contain",
+                                                borderRadius: "4px",
+                                                border: "1px solid #cbd5e1",
+                                                cursor: "pointer"
+                                              }}
+                                            />
+                                          </div>
+                                        )}
+
+                                        {/* Option Audio for Q21-Q40 Listening questions */}
+                                        {isListening && (
+                                          <div style={{ paddingLeft: "26px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "3px" }}>
+                                            {optAudio ? (
+                                              <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", backgroundColor: "#f3e8ff", border: "1px solid #d8b4fe", padding: "2px 6px", borderRadius: "4px" }}>
+                                                <audio src={optAudio} controls style={{ height: "24px", maxWidth: "160px" }} />
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleTableOptionAudioRemove(q, oIdx)}
+                                                  title="Remove option audio"
+                                                  style={{
+                                                    background: "#fee2e2",
+                                                    color: "#dc2626",
+                                                    border: "none",
+                                                    borderRadius: "3px",
+                                                    fontSize: "10px",
+                                                    padding: "2px 5px",
+                                                    cursor: "pointer",
+                                                    fontWeight: "bold"
+                                                  }}
+                                                >
+                                                  ✕
+                                                </button>
+                                              </div>
+                                            ) : null}
+
+                                            <label
+                                              title={`Upload audio for Option ${oIdx + 1}`}
+                                              style={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "3px",
+                                                backgroundColor: optAudio ? "#f5f3ff" : "#f8fafc",
+                                                color: optAudio ? "#7c3aed" : "#475569",
+                                                border: optAudio ? "1px solid #c4b5fd" : "1px dashed #94a3b8",
+                                                padding: "2px 7px",
+                                                borderRadius: "4px",
+                                                fontSize: "10.5px",
+                                                fontWeight: "700",
+                                                cursor: "pointer",
+                                                whiteSpace: "nowrap"
+                                              }}
+                                            >
+                                              <span>{optAudio ? "🔄 Change Audio" : "🎵 Upload Audio"}</span>
+                                              <input
+                                                type="file"
+                                                accept="audio/*"
+                                                style={{ display: "none" }}
+                                                onChange={(e) => {
+                                                  const file = e.target.files?.[0];
+                                                  if (file) handleTableOptionAudioUpload(q, oIdx, file);
+                                                  e.target.value = "";
                                                 }}
                                               />
-                                            </div>
-                                          )}
-                                        </div>
+                                            </label>
+                                          </div>
+                                        )}
                                       </div>
                                     );
                                   })}
@@ -3212,9 +3520,60 @@ function AdminQuestionManagerContent() {
                                 ✕
                               </button>
                             )}
+
+                            <label style={{
+                              backgroundColor: opt.audio ? "#f5f3ff" : "#f3e8ff",
+                              color: "#6b21a8",
+                              border: opt.audio ? "1px solid #c4b5fd" : "none",
+                              padding: "8px 10px",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              whiteSpace: "nowrap",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              flexShrink: 0
+                            }}>
+                              🎵 {opt.audio ? "Change Audio" : "Attach Audio"}
+                              <input
+                                type="file"
+                                accept="audio/*"
+                                style={{ display: "none" }}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    uploadOrProcessFile(file, (audioUrl) => {
+                                      const newOpts = [...qForm.options];
+                                      newOpts[idx] = { ...newOpts[idx], audio: audioUrl };
+                                      setQForm({ ...qForm, options: newOpts });
+                                    });
+                                  }
+                                }}
+                              />
+                            </label>
+
+                            {opt.audio && (
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                <audio src={opt.audio} controls style={{ height: "26px", maxWidth: "130px" }} />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newOpts = [...qForm.options];
+                                    newOpts[idx] = { ...newOpts[idx], audio: "" };
+                                    setQForm({ ...qForm, options: newOpts });
+                                  }}
+                                  style={{ background: "#fee2e2", color: "#dc2626", border: "none", fontSize: "11px", padding: "6px 8px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+                                  title="Remove Option Audio"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
                           </div>
 
-                          {(opt.text || opt.image) && (
+                          {(opt.text || opt.image || opt.audio) && (
                             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "4px", flexWrap: "wrap" }}>
                               {opt.text && (
                                 <div style={{ fontSize: "11.5px", color: "#64748b" }}>
@@ -3227,6 +3586,11 @@ function AdminQuestionManagerContent() {
                                   alt={`Opt ${idx + 1}`}
                                   style={{ maxHeight: "40px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
                                 />
+                              )}
+                              {opt.audio && (
+                                <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#6b21a8" }}>
+                                  🔊 Option Audio Attached
+                                </div>
                               )}
                             </div>
                           )}
