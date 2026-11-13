@@ -313,6 +313,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
   const [includeQuestionNumber, setIncludeQuestionNumber] = useState(true); // "21번", "22번", etc.
   const [qNumFormat, setQNumFormat] = useState('short'); // 'short' ("21번.") or 'full' ("21번 문제입니다.")
   const [qNumGapSec, setQNumGapSec] = useState(1.0); // 1.0s gap after question number announcement
+  const [includeOptionNumber, setIncludeOptionNumber] = useState(true); // Announce "1번.", "2번." separately in master track
   const [optionGapSec, setOptionGapSec] = useState(3.0); // 3 seconds between question and option, and between options
   const [questionGapSec, setQuestionGapSec] = useState(7.0); // 7 seconds (6 to 8s) between questions
 
@@ -706,6 +707,13 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     return `/api/tts?text=${encodeURIComponent(text)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
   };
 
+  // Helper to format separate option number announcement ("1번.", "2번.", etc.)
+  const getOptionNumberUrl = (optId) => {
+    const text = `${optId}번.`;
+    const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
+    return `/api/tts?text=${encodeURIComponent(text)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+  };
+
   // Stop sequence preview
   const stopSequencePreview = () => {
     previewCancelRef.current = true;
@@ -825,18 +833,28 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           await playAndWait(singleUrl);
         }
       } else {
-        // Standard flow: Options 1 to 4 with 3.0s gap
+        // Standard flow: Options 1 to 4 with separate option numbers
         for (let i = 0; i < q.options.length; i++) {
           if (previewCancelRef.current) break;
           const opt = q.options[i];
+
+          // 1. Separate Option Number announcement ("1번.", "2번." - separate audio!)
+          if (includeOptionNumber && !previewCancelRef.current) {
+            setPreviewStage(`optnum-${opt.id}`);
+            const optNumUrl = getOptionNumberUrl(opt.id);
+            await playAndWait(optNumUrl);
+            if (previewCancelRef.current) break;
+            await waitSeconds(0.6);
+          }
+
+          // 2. Pure Option Text Audio (NO option numbers / ilbeon in the option audio!)
           setPreviewStage(`opt-${opt.id}`);
 
           let optUrl = opt.audioUrl;
           if (!optUrl && opt.text?.trim()) {
-            const prefix = `${opt.id}번. `;
-            const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+            const pureText = opt.text.replace(/^[0-9]+번[\.\,\s]*/, '').replace(/^[0-9]+[\.\)\s]+/, '').trim();
             const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-            optUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+            optUrl = `/api/tts?text=${encodeURIComponent(pureText)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
           }
           if (optUrl) {
             await playAndWait(optUrl);
@@ -967,7 +985,7 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
     }
   };
 
-  // Generate Audio for an Option
+  // Generate Audio for an Option (PURE option text ONLY — strictly no option numbers / ilbeon / ibeon in the audio)
   const handleGenerateOptionAudio = async (optId, text) => {
     if (!text?.trim()) {
       alert(`Please enter text for Option ${optId}`);
@@ -976,12 +994,11 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
 
     setGeneratingKey(`opt-${optId}`);
     try {
+      // Pure text ONLY — no "1번.", "2번.", "ilbeon", "ibeon" inside the option audio!
       const pureText = text.replace(/^[0-9]+번[\.\,\s]*/, '').replace(/^[0-9]+[\.\)\s]+/, '').trim();
-      const prefix = `${optId}번. `;
-      const fullText = prefix + pureText;
 
       const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(pureText)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
 
       const res = await fetch(ttsUrl);
       if (!res.ok) throw new Error('Option speech synthesis failed');
@@ -1301,18 +1318,29 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
           // 4. Insert 3-second gap after question
           segmentsToStitch.push({ type: 'silence', durationSec: optionGapSec, label: `Q${q.qNum} 3s Gap` });
 
-          // 3. Process 4 Options with 3-second gap between each option
+          // 3. Process 4 Options with separate option number announcement & pure option audio
           for (let optIdx = 0; optIdx < q.options.length; optIdx++) {
             const opt = q.options[optIdx];
+
+            // 1. Separate Option Number announcement ("1번.", "2번.") in master track
+            if (includeOptionNumber) {
+              const optNumTtsUrl = getOptionNumberUrl(opt.id);
+              const optNumBuffer = await fetchAndDecodeAudio(decodeCtx, optNumTtsUrl);
+              if (optNumBuffer) {
+                segmentsToStitch.push({ type: 'audio', buffer: optNumBuffer, label: `Q${q.qNum} Opt ${opt.id} Number` });
+                segmentsToStitch.push({ type: 'silence', durationSec: 0.6, label: `Opt Number Gap` });
+              }
+            }
+
+            // 2. Pure Option Audio (NO option numbers baked into option audio!)
             let optBuffer = null;
 
             if (opt.audioUrl) {
               optBuffer = await fetchAndDecodeAudio(decodeCtx, opt.audioUrl);
             } else if (opt.text?.trim()) {
-              const prefix = `${opt.id}번. `;
-              const fullText = opt.text.startsWith(opt.id + '번') ? opt.text : prefix + opt.text;
+              const pureText = opt.text.replace(/^[0-9]+번[\.\,\s]*/, '').replace(/^[0-9]+[\.\)\s]+/, '').trim();
               const voice = voiceGender === 'female' ? 'ko-KR-SunHiNeural' : 'ko-KR-InJoonNeural';
-              const ttsUrl = `/api/tts?text=${encodeURIComponent(fullText.trim())}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
+              const ttsUrl = `/api/tts?text=${encodeURIComponent(pureText)}&lang=ko&gender=${voiceGender}&voice=${encodeURIComponent(voice)}&rate=${encodeURIComponent(speakingRate)}&pitch=+0Hz`;
               optBuffer = await fetchAndDecodeAudio(decodeCtx, ttsUrl);
             }
 
@@ -1880,7 +1908,25 @@ export default function ListeningExamSynchronizer({ instituteLanguage = 'korean'
             </div>
           </div>
 
-          {/* 3. OPTION GAP */}
+          {/* 3. OPTION NUMBER VOICE SEPARATION */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '7px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '800', color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={includeOptionNumber}
+                  onChange={(e) => setIncludeOptionNumber(e.target.checked)}
+                  style={{ accentColor: '#1e3a8a' }}
+                />
+                <span>Option Voice (1번, 2번...)</span>
+              </label>
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>
+              Separate in master track. UBT options receive pure text audio only.
+            </div>
+          </div>
+
+          {/* 4. OPTION GAP */}
           <div style={{ backgroundColor: '#ffffff', borderRadius: '7px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1e3a8a', marginBottom: '6px' }}>
               Option Gap
