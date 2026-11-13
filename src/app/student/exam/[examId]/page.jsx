@@ -23,6 +23,7 @@ const StudentExam = () => {
   const [logoWatermark, setLogoWatermark] = useState("");
 
   const [isStarted, setIsStarted] = useState(false);
+  const [forceLandscape, setForceLandscape] = useState(true);
   const [viewMode, setViewMode] = useState("overview"); 
   const [showConfirmModal, setShowConfirmModal] = useState(false); 
   
@@ -382,6 +383,7 @@ const StudentExam = () => {
         }
       } catch (e) {}
     }
+    setForceLandscape(true);
     setIsStarted(true);
   };
 
@@ -667,8 +669,8 @@ const StudentExam = () => {
         <style dangerouslySetInnerHTML={{ __html: `
           .ubt-pre-exam-dialog {
             background-color: #ffffff;
-            padding: 20px 24px;
-            border-radius: 16px;
+            padding: 22px 26px;
+            border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             border: 1px solid #e2e8f0;
             max-width: 760px;
@@ -760,7 +762,8 @@ const StudentExam = () => {
             .ubt-pre-exam-dialog {
               flex-direction: column !important;
               max-width: 440px !important;
-              padding: 18px 16px !important;
+              padding: 20px 18px !important;
+              border-radius: 24px !important;
               gap: 14px !important;
             }
             .ubt-pre-exam-buttons {
@@ -1122,7 +1125,7 @@ const StudentExam = () => {
             width: 100%;
             max-width: 500px;
             background-color: white;
-            border-radius: 16px;
+            border-radius: 24px;
             padding: 26px 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             border: 1px solid #e2e8f0;
@@ -1150,7 +1153,7 @@ const StudentExam = () => {
             color: #0f172a;
             font-size: 22px;
             margin: 0 0 8px 0;
-            fontWeight: 800;
+            font-weight: 800;
           }
           .exam-finish-badge {
             display: inline-block;
@@ -1168,7 +1171,7 @@ const StudentExam = () => {
           }
           .exam-finish-stats {
             background-color: #f8fafc;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 16px 20px;
             display: flex;
             flex-direction: column;
@@ -1184,58 +1187,67 @@ const StudentExam = () => {
           }
 
           /* LANDSCAPE MODE: FIT ON SCREEN CLEANLY WITHOUT SCROLL OR OVERFLOW */
-          @media (orientation: landscape) and (max-height: 650px) {
+          @media (orientation: landscape), (max-height: 650px) {
             .exam-finish-top-bar {
               display: none !important;
             }
             .exam-finish-wrap {
               padding: 6px 12px !important;
               height: 100vh !important;
-              min-height: 100vh !important;
+              height: 100dvh !important;
+              min-height: 0 !important;
               overflow: hidden !important;
-            }
-            .exam-finish-card {
-              max-width: 650px !important;
-              padding: 10px 16px !important;
-              max-height: 96vh !important;
-              border-radius: 12px !important;
-              display: flex !important;
-              flex-direction: column !important;
-              justify-content: center !important;
-            }
-            .exam-finish-header {
-              margin-bottom: 6px !important;
               display: flex !important;
               align-items: center !important;
               justify-content: center !important;
-              gap: 10px !important;
+            }
+            .exam-finish-card {
+              max-width: 660px !important;
+              width: 100% !important;
+              padding: 12px 20px !important;
+              max-height: calc(100dvh - 16px) !important;
+              border-radius: 24px !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: center !important;
+              box-sizing: border-box !important;
+              overflow-y: auto !important;
+            }
+            .exam-finish-header {
+              margin-bottom: 8px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              gap: 12px !important;
               text-align: left !important;
             }
             .exam-finish-trophy {
-              width: 32px !important;
-              height: 32px !important;
-              font-size: 18px !important;
+              width: 38px !important;
+              height: 38px !important;
+              font-size: 20px !important;
               margin: 0 !important;
               flex-shrink: 0 !important;
             }
             .exam-finish-title {
-              font-size: 15.5px !important;
+              font-size: 16px !important;
               margin: 0 !important;
             }
             .exam-finish-badge {
-              font-size: 11.5px !important;
-              padding: 2px 8px !important;
+              font-size: 12px !important;
+              padding: 2px 10px !important;
+              border-radius: 14px !important;
             }
             .exam-finish-grid {
               flex-direction: row !important;
               align-items: stretch !important;
-              gap: 12px !important;
+              gap: 14px !important;
             }
             .exam-finish-stats {
-              flex: 1.25 !important;
-              padding: 8px 12px !important;
+              flex: 1.3 !important;
+              padding: 8px 14px !important;
               gap: 4px !important;
               margin-bottom: 0 !important;
+              border-radius: 16px !important;
             }
             .exam-finish-stats > div {
               padding-bottom: 3px !important;
@@ -1248,14 +1260,15 @@ const StudentExam = () => {
               flex: 1 !important;
               flex-direction: column !important;
               justify-content: center !important;
-              gap: 8px !important;
+              gap: 10px !important;
             }
             .exam-finish-actions button {
               width: 100% !important;
               max-width: none !important;
               min-width: 0 !important;
-              padding: 9px 12px !important;
-              font-size: 13px !important;
+              padding: 10px 14px !important;
+              font-size: 13.5px !important;
+              border-radius: 12px !important;
             }
           }
         ` }} />
@@ -1350,7 +1363,7 @@ const StudentExam = () => {
   };
 
   return (
-    <div className="ubt-exam-wrapper" style={containerExamStyle} onContextMenu={(e) => e.preventDefault()}>
+    <div className={`ubt-exam-wrapper ${forceLandscape ? "force-landscape" : ""}`} style={containerExamStyle} onContextMenu={(e) => e.preventDefault()}>
       <style dangerouslySetInnerHTML={{ __html: `
         .ubt-exam-wrapper {
           width: 100vw;
@@ -1469,7 +1482,7 @@ const StudentExam = () => {
         }
 
         /* LANDSCAPE OPTIMIZED EXAM STYLING FOR ALL MOBILE & TABLET DEVICES */
-        @media (orientation: landscape) and (max-height: 600px) {
+        @media (orientation: landscape), (max-height: 650px) {
           .ubt-exam-wrapper {
             padding: 4px 8px !important;
             height: 100vh !important;
@@ -1541,6 +1554,91 @@ const StudentExam = () => {
             gap: 12px !important;
           }
           .ubt-overview-flex button {
+            padding: 6px 0 !important;
+            font-size: 11.5px !important;
+          }
+        }
+
+        /* DEFAULT ENFORCED LANDSCAPE MODE FOR PORTRAIT VIEWPORTS */
+        @media (orientation: portrait) and (max-width: 900px) {
+          .ubt-exam-wrapper.force-landscape {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            width: 100dvh !important;
+            height: 100dvw !important;
+            transform: translate(-50%, -50%) rotate(90deg) !important;
+            transform-origin: center center !important;
+            overflow: hidden !important;
+            padding: 4px 8px !important;
+            box-sizing: border-box !important;
+            z-index: 9999 !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-main {
+            height: 100% !important;
+            max-width: 100% !important;
+            justify-content: center !important;
+            border-radius: 20px !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-card {
+            height: calc(100dvw - 52px) !important;
+            min-height: 0 !important;
+            max-height: calc(100dvw - 52px) !important;
+            border-radius: 0 0 20px 20px !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-columns {
+            flex-direction: row !important;
+            flex: 1 !important;
+            overflow: hidden !important;
+            min-height: 0 !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-left {
+            flex: 1.25 !important;
+            padding: 8px 14px !important;
+            border-right: 1.5px solid #e2e8f0 !important;
+            border-bottom: none !important;
+            overflow-y: auto !important;
+            height: 100% !important;
+            max-height: none !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-left p {
+            font-size: 15.5px !important;
+            margin-bottom: 6px !important;
+            line-height: 1.35 !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-right {
+            flex: 1 !important;
+            padding: 8px 14px !important;
+            overflow-y: auto !important;
+            height: 100% !important;
+            max-height: none !important;
+            gap: 6px !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-header-bar {
+            padding: 7px 16px !important;
+            font-size: 13px !important;
+            border-radius: 20px 20px 0 0 !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-nav-bar {
+            padding: 7px 16px !important;
+            border-radius: 0 0 20px 20px !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-exam-nav-bar button {
+            padding: 8px 18px !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            border-radius: 8px !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-overview-box {
+            padding: 10px 14px !important;
+            border-radius: 0 0 20px 20px !important;
+            max-height: calc(100dvw - 52px) !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-overview-flex {
+            flex-direction: row !important;
+            gap: 12px !important;
+          }
+          .ubt-exam-wrapper.force-landscape .ubt-overview-flex button {
             padding: 6px 0 !important;
             font-size: 11.5px !important;
           }
@@ -1655,9 +1753,31 @@ const StudentExam = () => {
       {viewMode === "overview" ? (
         <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "850px", width: "100%", height: "100%", margin: "auto", justifyContent: "center", borderRadius: "24px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
           
-          <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "24px 24px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15.5px" }}>
+          <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "24px 24px 0 0", justifyContent: "space-between", alignItems: "center", fontWeight: "bold", fontSize: "15.5px" }}>
             <span>Remaining Questions: 40</span>
-            <span>{exactExamName}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>{exactExamName}</span>
+              <button
+                type="button"
+                onClick={() => setForceLandscape(prev => !prev)}
+                title="Rotate Screen (Landscape / Portrait)"
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.22)",
+                  color: "white",
+                  border: "1px solid rgba(255, 255, 255, 0.4)",
+                  borderRadius: "12px",
+                  padding: "3px 9px",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}
+              >
+                🔄 Rotate
+              </button>
+            </span>
             <span>Time Remaining: {formatTime(timeLeft)}</span>
           </div>
 
@@ -1747,9 +1867,31 @@ const StudentExam = () => {
             const currentQ = questions[currentQuestion];
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-                <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "24px 24px 0 0", justifyContent: "space-between", fontWeight: "bold", fontSize: "15.5px" }}>
+                <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "14px 22px", borderRadius: "24px 24px 0 0", justifyContent: "space-between", alignItems: "center", fontWeight: "bold", fontSize: "15.5px" }}>
                   <span>Remaining Questions: 40</span>
-                  <span>{exactExamName}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>{exactExamName}</span>
+                    <button
+                      type="button"
+                      onClick={() => setForceLandscape(prev => !prev)}
+                      title="Rotate Screen (Landscape / Portrait)"
+                      style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.22)",
+                        color: "white",
+                        border: "1px solid rgba(255, 255, 255, 0.4)",
+                        borderRadius: "12px",
+                        padding: "3px 9px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px"
+                      }}
+                    >
+                      🔄 Rotate
+                    </button>
+                  </span>
                   <span>Time Remaining: {formatTime(timeLeft)}</span>
                 </div>
 

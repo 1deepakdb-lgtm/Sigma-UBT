@@ -428,7 +428,7 @@ const StudentResult = () => {
           width: 100%;
           max-width: 500px;
           background-color: white;
-          border-radius: 16px;
+          border-radius: 24px;
           padding: 26px 24px;
           box-shadow: 0 10px 30px rgba(0,0,0,0.08);
           border: 1px solid #e2e8f0;
@@ -490,78 +490,88 @@ const StudentResult = () => {
         }
 
         /* LANDSCAPE MODE: FIT ON SCREEN CLEANLY WITHOUT SCROLL OR OVERFLOW */
-        @media (orientation: landscape) and (max-height: 650px) {
+        @media (orientation: landscape), (max-height: 650px) {
           .result-summary-top-bar {
             display: none !important;
           }
           .result-summary-wrap {
             padding: 6px 12px !important;
             height: 100vh !important;
-            min-height: 100vh !important;
+            height: 100dvh !important;
+            min-height: 0 !important;
             overflow: hidden !important;
-          }
-          .result-summary-card {
-            max-width: 650px !important;
-            padding: 10px 16px !important;
-            max-height: 96vh !important;
-            border-radius: 12px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-          }
-          .result-summary-header {
-            margin-bottom: 6px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 10px !important;
+          }
+          .result-summary-card {
+            max-width: 660px !important;
+            width: 100% !important;
+            padding: 12px 20px !important;
+            max-height: calc(100dvh - 16px) !important;
+            border-radius: 24px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            box-sizing: border-box !important;
+            overflow-y: auto !important;
+          }
+          .result-summary-header {
+            margin-bottom: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 12px !important;
             text-align: left !important;
           }
           .result-summary-trophy {
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 18px !important;
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 20px !important;
             margin: 0 !important;
             flex-shrink: 0 !important;
           }
           .result-summary-title {
-            font-size: 15.5px !important;
+            font-size: 16px !important;
             margin: 0 !important;
           }
           .result-summary-badge {
-            font-size: 11.5px !important;
-            padding: 2px 8px !important;
+            font-size: 12px !important;
+            padding: 2px 10px !important;
+            border-radius: 14px !important;
           }
           .result-summary-grid {
             flex-direction: row !important;
             align-items: stretch !important;
-            gap: 12px !important;
+            gap: 14px !important;
           }
           .result-summary-stats {
-            flex: 1.25 !important;
-            padding: 8px 12px !important;
+            flex: 1.3 !important;
+            padding: 8px 14px !important;
             gap: 4px !important;
             margin-bottom: 0 !important;
+            border-radius: 16px !important;
           }
           .result-summary-stats > div {
-            padding-bottom: 3px !important;
+            padding-bottom: 4px !important;
             max-width: 100% !important;
           }
           .result-summary-stats span {
-            font-size: 12.5px !important;
+            font-size: 13px !important;
           }
           .result-summary-actions {
             flex: 1 !important;
             flex-direction: column !important;
             justify-content: center !important;
-            gap: 8px !important;
+            gap: 10px !important;
           }
           .result-summary-actions button {
             width: 100% !important;
             max-width: none !important;
             min-width: 0 !important;
-            padding: 9px 12px !important;
-            font-size: 13px !important;
+            padding: 10px 14px !important;
+            font-size: 13.5px !important;
+            border-radius: 12px !important;
           }
         }
       ` }} />

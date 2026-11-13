@@ -330,7 +330,7 @@ export default function JlptMockExamModal({
           width: 100%;
           max-width: 1140px;
           height: 94vh;
-          border-radius: 18px;
+          border-radius: 24px;
           display: flex;
           flex-direction: column;
           overflow: hidden;
