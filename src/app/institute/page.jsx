@@ -3,9 +3,9 @@
 if (typeof globalThis !== 'undefined' && !globalThis.localStorage) {
   globalThis.localStorage = {
     getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-    clear: () => {},
+    setItem: () => { },
+    removeItem: () => { },
+    clear: () => { },
     key: () => null,
     length: 0
   };
@@ -32,8 +32,9 @@ const InstituteDashboard = () => {
   const [userRole, setUserRole] = useState("institute");
   const [mounted, setMounted] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("billing"); 
+  const [activeTab, setActiveTab] = useState("billing");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLandscapeBars, setShowLandscapeBars] = useState(false);
   const [students, setStudents] = useState([]);
   const [instituteLanguage, setInstituteLanguage] = useState("both");
   const [studentLangFilter, setStudentLangFilter] = useState("all"); // "all" | "korean" | "japanese"
@@ -44,14 +45,14 @@ const InstituteDashboard = () => {
       const params = new URLSearchParams(window.location.search);
       if (params.get("institute")) setInstituteName(decodeURIComponent(params.get("institute")));
       else setInstituteName(localStorage.getItem("currentInstitute") || "Language Institute");
-      
+
       // Set role from localStorage on client mount
       setUserRole(localStorage.getItem("role") || "institute");
-      
+
       // Set instituteLanguage from localStorage on client mount
       const storedLang = localStorage.getItem("instituteLanguage") || "both";
       setInstituteLanguage(storedLang);
-      
+
       // Update formData based on stored language
       const isJapanese = storedLang === "japanese" || window.location.search.includes("lang=japanese");
       setFormData(prev => ({
@@ -61,10 +62,10 @@ const InstituteDashboard = () => {
       }));
 
       if (params.get("instId")) setInstId(params.get("instId"));
-      
+
       if (params.get("tab")) setActiveTab(params.get("tab"));
       else if (localStorage.getItem("role") === "staff" || params.get("superadmin") === "true") setActiveTab("billing");
-      
+
       if (params.get("superadmin") === "true") setIsStudentsUnlocked(true);
       else setIsStudentsUnlocked(sessionStorage.getItem("instituteStudentsUnlocked") === "true");
     }
@@ -94,14 +95,14 @@ const InstituteDashboard = () => {
           loadData(verifiedInstId, verifiedInstName);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState(null); 
-  const [formData, setFormData] = useState({ 
-    name: "", 
-    phone: "", 
-    password: "", 
+  const [editId, setEditId] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    password: "",
     assignedPackage: "Full Set UBT",
     expiryDuration: "1 Month",
     customExpiryDate: "",
@@ -154,7 +155,7 @@ const InstituteDashboard = () => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const isUnlocked = sessionStorage.getItem("instituteStudentsUnlocked") === "true" ||
-                         sessionStorage.getItem("instituteBillingUnlocked") === "true";
+        sessionStorage.getItem("instituteBillingUnlocked") === "true";
       if (isUnlocked) {
         setIsStudentsUnlocked(true);
       }
@@ -293,7 +294,7 @@ const InstituteDashboard = () => {
               stored[idx].password = newCredPassword;
               localStorage.setItem(staffKey, JSON.stringify(stored));
             }
-          } catch (e) {}
+          } catch (e) { }
 
           setTimeout(() => {
             setShowCredModal(false);
@@ -784,7 +785,7 @@ const InstituteDashboard = () => {
           setNewsList(myNotices);
           try {
             localStorage.setItem("epsNewsList", JSON.stringify(myNotices));
-          } catch (e) {}
+          } catch (e) { }
           const livePopup = myNotices.find(n => n.isPopup);
           if (livePopup) {
             const lastShownId = localStorage.getItem("lastShownInstitutePopupId");
@@ -815,7 +816,7 @@ const InstituteDashboard = () => {
 
     try {
       if (screen.orientation && typeof screen.orientation.lock === "function") {
-        await screen.orientation.lock("landscape").catch(() => {});
+        await screen.orientation.lock("landscape").catch(() => { });
       } else if (screen.lockOrientation) {
         screen.lockOrientation("landscape");
       } else if (screen.mozLockOrientation) {
@@ -836,7 +837,7 @@ const InstituteDashboard = () => {
       } else if (screen.unlockOrientation) {
         screen.unlockOrientation();
       }
-    } catch (e) {}
+    } catch (e) { }
   };
 
   useEffect(() => {
@@ -896,6 +897,7 @@ const InstituteDashboard = () => {
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
     loadData();
+    setShowLandscapeBars(false);
     if (isMobileDevice() && (tabName === "billing" || tabName === "students")) {
       tryAutoRotateLandscape();
     } else {
@@ -1091,7 +1093,7 @@ const InstituteDashboard = () => {
     else if (duration === "3 Months") date.setMonth(date.getMonth() + 3);
     else if (duration === "6 Months") date.setMonth(date.getMonth() + 6);
     else if (duration === "1 Year") date.setFullYear(date.getFullYear() + 1);
-    return date.toISOString().split('T')[0]; 
+    return date.toISOString().split('T')[0];
   };
 
   const handleAddPackageItem = (itemToAdd) => {
@@ -1198,7 +1200,7 @@ const InstituteDashboard = () => {
       const cached = JSON.parse(localStorage.getItem(cacheKey)) || [];
       const updated = cached.filter(stu => stu.id !== id && stu.phone !== targetPhone);
       localStorage.setItem(cacheKey, JSON.stringify(updated));
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const res = await fetch(`/api/institute/students?id=${encodeURIComponent(id || '')}&phone=${encodeURIComponent(targetPhone)}`, {
@@ -1234,7 +1236,7 @@ const InstituteDashboard = () => {
       const cacheKey = activeInstId ? `instituteStudents_${activeInstId}` : `instituteStudents_${instituteName}`;
       try {
         localStorage.removeItem(cacheKey);
-      } catch (e) {}
+      } catch (e) { }
       alert(`Successfully deleted ${data.count || students.length} students.`);
       loadData(activeInstId, instituteName);
     } catch (err) {
@@ -1285,8 +1287,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     setTimeout(() => setCopiedAllStudents(false), 2500);
   };
 
-  const filteredSets = selectedPackageFilter === "All" 
-    ? examSets 
+  const filteredSets = selectedPackageFilter === "All"
+    ? examSets
     : examSets.filter(s => s.packageName === selectedPackageFilter);
 
   const isJpTrackEntity = (item) => {
@@ -1375,9 +1377,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     msUserSelect: "none"
   };
 
-  const containerStyle = { 
-    minHeight: "100vh", 
-    backgroundColor: "rgba(241, 245, 249, 0.92)", 
+  const containerStyle = {
+    minHeight: "100vh",
+    backgroundColor: "rgba(241, 245, 249, 0.92)",
     fontFamily: "Arial, sans-serif",
     position: "relative",
     backgroundImage: logoWatermark ? `url(${logoWatermark})` : "none",
@@ -1388,15 +1390,15 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     ...protectedStyle
   };
 
-  const topNavStyle = { 
-    backgroundColor: "#1e3a8a", 
-    color: "white", 
-    padding: "0 28px", 
+  const topNavStyle = {
+    backgroundColor: "#1e3a8a",
+    color: "white",
+    padding: "0 28px",
     height: "64px",
     minHeight: "64px",
     maxHeight: "64px",
-    display: "flex", 
-    alignItems: "center", 
+    display: "flex",
+    alignItems: "center",
     boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
     flexWrap: "nowrap",
     position: "fixed",
@@ -1431,11 +1433,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     fontWeight: "800"
   };
 
-  const menuContainerStyle = { 
+  const menuContainerStyle = {
     flex: "0 0 auto",
-    display: "flex", 
-    gap: "8px", 
-    flexWrap: "nowrap", 
+    display: "flex",
+    gap: "8px",
+    flexWrap: "nowrap",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -1451,7 +1453,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     flexShrink: 0,
     whiteSpace: "nowrap"
   };
-  
+
   const getNavBtnStyle = (tabName) => ({
     backgroundColor: activeTab === tabName ? "#2563eb" : "transparent",
     color: "#ffffff",
@@ -1492,7 +1494,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
   return (
     <div style={containerStyle} onContextMenu={(e) => e.preventDefault()} suppressHydrationWarning={true}>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         html, body {
           overflow-y: scroll !important;
           scrollbar-gutter: stable !important;
@@ -1548,7 +1551,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           border-color: #3b82f6 !important;
         }
       ` }} />
-      
+
       {showBannerPopup && popupNotice && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999999 }}>
           <div style={{ backgroundColor: "white", padding: "30px", borderRadius: "12px", width: "90%", maxWidth: "500px", boxShadow: "0 10px 30px rgba(0,0,0,0.3)", border: "3px solid #2563eb", position: "relative" }}>
@@ -1574,11 +1577,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             )}
             {popupNotice.fileUrl && (popupNotice.fileType === "document" || popupNotice.fileType === "pdf") && (
               <div style={{ marginBottom: "15px", textAlign: "center" }}>
-                <a 
-                  href={popupNotice.fileUrl} 
-                  download={popupNotice.fileName || "Notice_Document"} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={popupNotice.fileUrl}
+                  download={popupNotice.fileName || "Notice_Document"}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{ display: "inline-block", backgroundColor: "#0284c7", color: "white", padding: "8px 16px", borderRadius: "6px", textDecoration: "none", fontWeight: "bold", fontSize: "13px" }}
                 >
                   {popupNotice.fileType === "pdf" ? "📕 View / Download PDF" : "📥 Download Attached Document"}
@@ -1586,7 +1589,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               </div>
             )}
 
-            <button 
+            <button
               onClick={handleCloseBanner}
               style={{ width: "100%", backgroundColor: "#2563eb", color: "white", border: "none", padding: "12px", borderRadius: "6px", fontWeight: "bold", fontSize: "15px", cursor: "pointer" }}
             >
@@ -1596,7 +1599,37 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
         </div>
       )}
 
-      <div style={topNavStyle} className="institute-top-nav">
+      {/* Floating Touch-to-Reveal / Hide Menu Pill in Landscape Mobile */}
+      <button
+        type="button"
+        onClick={() => setShowLandscapeBars(prev => !prev)}
+        className="institute-landscape-menu-toggle"
+        title="Toggle Title and Navigation Menu"
+        style={{
+          display: "none",
+          position: "fixed",
+          top: "8px",
+          right: "8px",
+          zIndex: 9999999,
+          backgroundColor: showLandscapeBars ? "rgba(225, 29, 72, 0.9)" : "rgba(15, 23, 42, 0.85)",
+          color: "#ffffff",
+          border: "1px solid rgba(255, 255, 255, 0.35)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          padding: "5px 12px",
+          borderRadius: "20px",
+          fontSize: "12px",
+          fontWeight: "800",
+          cursor: "pointer",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.35)",
+          alignItems: "center",
+          gap: "6px"
+        }}
+      >
+        <span>{showLandscapeBars ? "✕ Hide Menu" : "☰ Menu"}</span>
+      </button>
+
+      <div style={topNavStyle} className={`institute-top-nav ${showLandscapeBars ? "revealed" : ""}`}>
         <div style={navInnerStyle} className="institute-nav-inner">
           <div style={navLeftSlotStyle} className="institute-nav-left">
             <span suppressHydrationWarning={true}>INSTITUTE PANEL ({instituteName || "sig"})</span>
@@ -1606,24 +1639,24 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               </span>
             )}
           </div>
-          
+
           <div style={menuContainerStyle} className="institute-desktop-tabs">
             <button onClick={() => handleTabChange("billing")} style={getNavBtnStyle("billing")}>
               Billing
             </button>
-            
+
             <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>
               Study Materials
             </button>
-            
+
             <button onClick={() => handleTabChange("dictionary")} style={getNavBtnStyle("dictionary")}>
               Dictionary
             </button>
-            
+
             <button onClick={() => handleTabChange("news")} style={getNavBtnStyle("news")}>
               Notice
             </button>
-            
+
             {userRole !== "staff" && (
               <button onClick={() => handleTabChange("students")} style={getNavBtnStyle("students")}>
                 Manage Students
@@ -1636,16 +1669,16 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           </div>
 
           <div style={navRightSlotStyle} className="institute-desktop-logout">
-            <button 
-              onClick={handleLogout} 
-              style={{ 
-                backgroundColor: "#ef4444", 
-                color: "white", 
-                border: "none", 
-                padding: "8px 18px", 
-                borderRadius: "6px", 
-                cursor: "pointer", 
-                fontWeight: "700", 
+            <button
+              onClick={handleLogout}
+              style={{
+                backgroundColor: "#ef4444",
+                color: "white",
+                border: "none",
+                padding: "8px 18px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "700",
                 fontSize: "13px",
                 flexShrink: 0,
                 whiteSpace: "nowrap",
@@ -1794,10 +1827,10 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       )}
 
       {/* Fixed Navbar Spacer: Keeps page content exactly in place without overlap */}
-      <div style={{ height: "64px", minHeight: "64px", flexShrink: 0 }} aria-hidden="true"></div>
+      <div style={{ height: "64px", minHeight: "64px", flexShrink: 0 }} aria-hidden="true" className="institute-nav-spacer"></div>
 
       <div className="institute-content-area" style={contentAreaStyle}>
-        
+
         {/* Landscape orientation reminder banner on mobile portrait for wide tables */}
         {(activeTab === "billing" || activeTab === "students") && isPortraitMobile && (
           <div style={{
@@ -1849,60 +1882,71 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
         {(activeTab === "students" || activeTab === "exams") && (
           !isStudentsUnlocked ? (
-            <div style={{
-              width: "100%",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "flex-start",
-              padding: "40px 16px 60px 16px",
-              boxSizing: "border-box"
-            }}>
-              <div style={{
+            <div 
+              className="manage-students-login-wrap"
+              style={{
                 width: "100%",
-                maxWidth: "420px",
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                boxShadow: "0 12px 30px rgba(5, 150, 105, 0.22), 0 4px 10px rgba(0, 0, 0, 0.05)",
-                border: "1.5px solid #a7f3d0",
-                overflow: "hidden",
-                flexShrink: 0
-              }}>
+                minHeight: "calc(100vh - 80px)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "20px 12px",
+                boxSizing: "border-box"
+              }}
+            >
+              <div 
+                className="manage-students-login-card"
+                style={{
+                  width: "100%",
+                  maxWidth: "420px",
+                  maxHeight: "94vh",
+                  overflowY: "auto",
+                  backgroundColor: "#ffffff",
+                  borderRadius: "14px",
+                  boxShadow: "0 12px 30px rgba(5, 150, 105, 0.22), 0 4px 10px rgba(0, 0, 0, 0.05)",
+                  border: "1.5px solid #a7f3d0",
+                  boxSizing: "border-box"
+                }}
+              >
                 {/* Header: Manage Students Distinct Emerald Green Theme */}
-                <div style={{
-                  backgroundColor: "#059669",
-                  backgroundImage: "linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)",
-                  padding: "26px 20px 22px 20px",
-                  textAlign: "center",
-                  color: "#ffffff"
-                }}>
-                  <div style={{
-                    width: "56px",
-                    height: "56px",
+                <div 
+                  className="manage-students-login-card-header"
+                  style={{
+                    backgroundColor: "#059669",
+                    backgroundImage: "linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)",
+                    padding: "20px 18px 16px 18px",
+                    textAlign: "center",
+                    color: "#ffffff"
+                  }}
+                >
+                  <div className="login-header-icon-wrap" style={{
+                    width: "48px",
+                    height: "48px",
                     borderRadius: "50%",
                     backgroundColor: "rgba(255, 255, 255, 0.22)",
                     border: "2px solid rgba(255, 255, 255, 0.6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    margin: "0 auto 12px auto",
+                    margin: "0 auto 10px auto",
                     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
                   }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
                       <polyline points="10 17 15 12 10 7" />
                       <line x1="15" y1="12" x2="3" y2="12" />
                     </svg>
                   </div>
-                  <h2 style={{ margin: 0, fontSize: "22px", fontWeight: "bold", color: "#ffffff", letterSpacing: "0.5px" }}>
+                  <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "bold", color: "#ffffff", letterSpacing: "0.5px" }}>
                     Login
                   </h2>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "rgba(255, 255, 255, 0.9)", fontWeight: "600" }}>
+                  <p style={{ margin: "3px 0 0 0", fontSize: "12px", color: "rgba(255, 255, 255, 0.9)", fontWeight: "600" }}>
                     Manage Students Access
                   </p>
                 </div>
 
                 {/* Form: White Background */}
-                <div style={{ padding: "26px 24px 30px 24px", backgroundColor: "#ffffff" }}>
+                <div className="manage-students-login-card-body" style={{ padding: "20px 20px 24px 20px", backgroundColor: "#ffffff" }}>
                   {unlockError && (
                     <div style={{
                       backgroundColor: "#fef2f2",
@@ -1912,7 +1956,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       borderRadius: "8px",
                       fontSize: "13px",
                       fontWeight: "600",
-                      marginBottom: "16px",
+                      marginBottom: "14px",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px"
@@ -1922,8 +1966,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                   )}
 
                   <form onSubmit={handleUnlockStudentsWithBilling} style={{ textAlign: "left" }}>
-                    <div style={{ marginBottom: "16px" }}>
-                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#065f46", marginBottom: "6px" }}>
+                    <div className="login-form-group" style={{ marginBottom: "14px" }}>
+                      <label style={{ display: "block", fontSize: "12.5px", fontWeight: "bold", color: "#065f46", marginBottom: "5px" }}>
                         User ID / Username *
                       </label>
                       <input
@@ -1935,11 +1979,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                         required
                         style={{
                           width: "100%",
-                          padding: "12px 14px",
+                          padding: "10px 12px",
                           borderRadius: "8px",
                           border: "1.5px solid #cbd5e1",
                           backgroundColor: "#f8fafc",
-                          fontSize: "14px",
+                          fontSize: "13.5px",
                           boxSizing: "border-box",
                           outline: "none",
                           transition: "border-color 0.2s, box-shadow 0.2s, background-color 0.2s"
@@ -1957,8 +2001,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       />
                     </div>
 
-                    <div style={{ marginBottom: "22px" }}>
-                      <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#065f46", marginBottom: "6px" }}>
+                    <div className="login-form-group" style={{ marginBottom: "16px" }}>
+                      <label style={{ display: "block", fontSize: "12.5px", fontWeight: "bold", color: "#065f46", marginBottom: "5px" }}>
                         Password *
                       </label>
                       <input
@@ -1969,11 +2013,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                         required
                         style={{
                           width: "100%",
-                          padding: "12px 14px",
+                          padding: "10px 12px",
                           borderRadius: "8px",
                           border: "1.5px solid #cbd5e1",
                           backgroundColor: "#f8fafc",
-                          fontSize: "14px",
+                          fontSize: "13.5px",
                           boxSizing: "border-box",
                           outline: "none",
                           transition: "border-color 0.2s, box-shadow 0.2s, background-color 0.2s"
@@ -2000,9 +2044,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                         backgroundImage: "linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%)",
                         color: "#ffffff",
                         border: "none",
-                        padding: "13px 20px",
+                        padding: "11px 18px",
                         borderRadius: "8px",
-                        fontSize: "15px",
+                        fontSize: "14.5px",
                         fontWeight: "bold",
                         cursor: unlockLoading ? "not-allowed" : "pointer",
                         display: "flex",
@@ -2588,700 +2632,700 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                             <tr><td colSpan="6" style={{ ...tdStyle, textAlign: "center", color: "#94a3b8" }}>No students registered under this track yet.</td></tr>
                           ) : (
                             displayedStudents.map((stu) => (
-                        <tr key={stu.id}>
-                          <td style={{ ...tdStyle, fontWeight: "bold" }}>{stu.name}</td>
-                          <td style={tdStyle}>{stu.phone}</td>
-                          <td style={tdStyle}>
-                            <span style={{
-                              display: "inline-block",
-                              padding: "4px 10px",
-                              borderRadius: "12px",
-                              fontSize: "12px",
-                              fontWeight: "800",
-                              backgroundColor: stu.language === "japanese" ? "#f3e8ff" : stu.language === "korean" ? "#eff6ff" : "#f1f5f9",
-                              color: stu.language === "japanese" ? "#7e22ce" : stu.language === "korean" ? "#1d4ed8" : "#334155",
-                              border: `1px solid ${stu.language === "japanese" ? "#d8b4fe" : stu.language === "korean" ? "#bfdbfe" : "#cbd5e1"}`
-                            }}>
-                              {stu.language === "japanese" ? "🇯🇵 Japanese" : stu.language === "korean" ? "🇰🇷 Korean" : "🌐 Both"}
-                            </span>
-                          </td>
-                          <td style={tdStyle}>
-                            <span style={{ fontWeight: "bold", color: "#2563eb" }}>{stu.assignedPackage}</span>
-                            <br/><span style={{ fontSize: "12px", color: "#ef4444" }}>Ends: {stu.expiryDate}</span>
-                          </td>
-                          <td style={tdStyle}><span style={{ backgroundColor: "#dcfce7", color: "#166534", padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold" }}>{stu.status || "Active"}</span></td>
-                          <td style={tdStyle}>
-                            <button onClick={() => handleEdit(stu)} style={{ backgroundColor: "#2563eb", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", marginRight: "5px", cursor: "pointer", fontSize: "12px" }}>Edit</button>
-                            <button onClick={() => handleDelete(stu.id, stu.phone)} style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Delete</button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile & Tablet Card View (Clear, Touch-Friendly, Never Squished) */}
-              <div className="manage-students-mobile-cards">
-                {displayedStudents.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "30px 16px", color: "#94a3b8", backgroundColor: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-                    No students registered under this track yet.
-                  </div>
-                ) : (
-                  displayedStudents.map((stu) => (
-                    <div
-                      key={stu.id}
-                      style={{
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "10px",
-                        padding: "14px 16px",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "10px"
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                        <div>
-                          <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
-                            {stu.name}
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "3px" }}>
-                            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>Login ID:</span>
-                            <span style={{ fontSize: "13px", fontWeight: "700", color: "#1e40af", letterSpacing: "0.3px" }}>{stu.phone}</span>
-                          </div>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-                          <span style={{
-                            backgroundColor: "#dcfce7",
-                            color: "#166534",
-                            padding: "3px 8px",
-                            borderRadius: "10px",
-                            fontSize: "11px",
-                            fontWeight: "800"
-                          }}>
-                            {stu.status || "Active"}
-                          </span>
-                          <span style={{
-                            padding: "2px 8px",
-                            borderRadius: "10px",
-                            fontSize: "11px",
-                            fontWeight: "700",
-                            backgroundColor: stu.language === "japanese" ? "#f3e8ff" : stu.language === "korean" ? "#eff6ff" : "#f1f5f9",
-                            color: stu.language === "japanese" ? "#7e22ce" : stu.language === "korean" ? "#1d4ed8" : "#334155",
-                            border: `1px solid ${stu.language === "japanese" ? "#d8b4fe" : stu.language === "korean" ? "#bfdbfe" : "#cbd5e1"}`
-                          }}>
-                            {stu.language === "japanese" ? "🇯🇵 Japanese" : stu.language === "korean" ? "🇰🇷 Korean" : "🌐 Both"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div style={{
-                        backgroundColor: "#f8fafc",
-                        padding: "8px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        gap: "6px"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ fontSize: "12px" }}>📦</span>
-                          <span style={{ fontSize: "13px", fontWeight: "700", color: "#1d4ed8" }}>{stu.assignedPackage}</span>
-                        </div>
-                        <div style={{ fontSize: "11.5px", color: "#dc2626", fontWeight: "700" }}>
-                          Ends: {stu.expiryDate}
-                        </div>
-                      </div>
-
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "2px" }}>
-                        <button
-                          onClick={() => handleEdit(stu)}
-                          style={{
-                            backgroundColor: "#2563eb",
-                            color: "#ffffff",
-                            border: "none",
-                            padding: "9px 12px",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            fontSize: "13px",
-                            fontWeight: "700",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px",
-                            minHeight: "38px"
-                          }}
-                        >
-                          <span>✏️ Edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(stu.id, stu.phone)}
-                          style={{
-                            backgroundColor: "#fee2e2",
-                            color: "#dc2626",
-                            border: "1px solid #fca5a5",
-                            padding: "9px 12px",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            fontSize: "13px",
-                            fontWeight: "700",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px",
-                            minHeight: "38px"
-                          }}
-                        >
-                          <span>🗑️ Delete</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
-              {/* UBT PACKAGES & PRICING MANAGEMENT (CREATED BY OWN CHOICE & CUSTOM PRICE) */}
-        {true && (
-          <div style={{ marginTop: "50px" }}>
-            
-
-            {/* Form to Create Custom Package */}
-            {showCreatePkgForm && (
-              <div style={cardStyle}>
-                <div style={{ paddingTop: "10px" }}>
-                  <h4 style={{ margin: "0 0 16px 0", fontSize: "16px", color: "#0f172a", fontWeight: "700" }}>
-                    🛠️ Design Custom {instituteLanguage === "japanese" ? "Mock Test" : "Exam"} Package Details
-                  </h4>
-
-                  <form onSubmit={handleCreateCustomPackage}>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px", marginBottom: "16px" }}>
-                      <div>
-                        <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
-                          Package Name *
-                        </label>
-                        <input
-                          type="text"
-                          placeholder={instituteLanguage === "japanese" ? "e.g. Special 20 Japanese Mock Test Sets or JLPT Bundle" : "e.g. Special 20 UBT Sets or Crash Course Bundle"}
-                          value={newPkgName}
-                          onChange={(e) => setNewPkgName(e.target.value)}
-                          style={inputStyle}
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
-                          Set Package Price (NPR) *
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Rs. 1,500 or 1500"
-                          value={newPkgPrice}
-                          onChange={(e) => setNewPkgPrice(e.target.value)}
-                          style={{ ...inputStyle, fontWeight: "700", color: "#166534" }}
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
-                          Package Category
-                        </label>
-                        <select
-                          value={newPkgType}
-                          onChange={(e) => setNewPkgType(e.target.value)}
-                          style={inputStyle}
-                        >
-                          {instituteLanguage === "japanese" ? (
-                            <>
-                              <option value="Full Mock Test">Full Mock Test</option>
-                              <option value="JLPT Mock Test">JLPT Mock Test</option>
-                              <option value="JFT-Basic Mock Test">JFT-Basic Mock Test</option>
-                              <option value="NAT-TEST Mock Test">NAT-TEST Mock Test</option>
-                              <option value="Combo Package">Combo Mock Package</option>
-                              <option value="Special Offer">Special Offer</option>
-                            </>
-                          ) : (
-                            <>
-                              <option value="UBT Full Exam">UBT Full Exam</option>
-                              <option value="Chapter Wise">Chapter Wise Practice</option>
-                              <option value="Combo Package">Combo Full Package</option>
-                              <option value="Special Offer">Special Offer</option>
-                            </>
-                          )}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
-                          Default Validity / Expiry Duration
-                        </label>
-                        <select
-                          value={newPkgDuration}
-                          onChange={(e) => setNewPkgDuration(e.target.value)}
-                          style={inputStyle}
-                        >
-                          <option value="15 Days">15 Days</option>
-                          <option value="1 Month">1 Month</option>
-                          <option value="3 Months">3 Months</option>
-                          <option value="6 Months">6 Months</option>
-                          <option value="Lifetime">Lifetime</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div style={{ marginBottom: "18px" }}>
-                      <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
-                        Package Description
-                      </label>
-                      <input
-                        type="text"
-                        placeholder={instituteLanguage === "japanese" ? "e.g. Intensive Japanese mock test sets with reading & listening questions." : "e.g. Intensive model test sets with 20 Reading + 20 Listening questions per set."}
-                        value={newPkgDesc}
-                        onChange={(e) => setNewPkgDesc(e.target.value)}
-                        style={inputStyle}
-                      />
-                    </div>
-
-                    {/* Sets Selection by Choice */}
-                    <div style={{ marginBottom: "20px", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
-                        <div>
-                          <label style={{ fontSize: "13px", fontWeight: "700", color: "#1e3a8a" }}>
-                            {instituteLanguage === "japanese" ? "⛩️ Choose Mock Test Sets to Bundle in this Package" : "🎯 Choose Exam Sets Included in this Package"} ({selectedSetsForPkg.length} selected)
-                          </label>
-                          <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" }}>
-                            {instituteLanguage === "japanese"
-                              ? "Select specific JLPT / JFT mock test sets to build a custom mock package. Students purchasing will auto-unlock these sets."
-                              : "Students who purchase or are assigned this package will have access to these sets."}
-                          </p>
-                        </div>
-
-                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                          {instituteLanguage === "japanese" || examSets.some(s => s.track === "japanese" || s.setType === "MOCK") ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={handleSelectAllMockSets}
-                                style={{ backgroundColor: "#faf5ff", color: "#7e22ce", border: "1px solid #e9d5ff", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}
-                              >
-                                ⛩️ All Mock Sets
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSelectMockByLevel("N5")}
-                                style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                + JLPT N5 (10)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSelectMockByLevel("N4")}
-                                style={{ backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                + JLPT N4 (10)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSelectMockByLevel("N3")}
-                                style={{ backgroundColor: "#fffbeb", color: "#b45309", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                + JLPT N3 (10)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSelectMockByLevel("N2")}
-                                style={{ backgroundColor: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                + JLPT N2 (10)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSelectMockByLevel("JFT")}
-                                style={{ backgroundColor: "#fdf4ff", color: "#a21caf", border: "1px solid #f0abfc", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                + JFT-Basic (10)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleSelectMockModel}
-                                style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "700", cursor: "pointer" }}
-                              >
-                                🎯 Model Exam / Simulation
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                onClick={handleSelectAllUbtSets}
-                                style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                + All UBT Sets
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleSelectAllChapterSets}
-                                style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                + All Chapter Sets
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleSelectAllModelSets}
-                                style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
-                              >
-                                + All Model Sets
-                              </button>
-                            </>
-                          )}
-                          <button
-                            type="button"
-                            onClick={handleSelectAllSets}
-                            style={{ backgroundColor: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
-                          >
-                            Select All
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleClearSelectedSets}
-                            style={{ backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      </div>
-
-                      {studentFormSpecificSets.length === 0 ? (
-                        <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>No sets available in the system yet.</p>
-                      ) : (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px", maxHeight: "250px", overflowY: "auto", padding: "4px" }}>
-                          {studentFormSpecificSets.map((s, idx) => {
-                            const isChecked = selectedSetsForPkg.includes(s.name);
-                            const isMock = s.setType === "MOCK" || s.track === "japanese" || s.isMock || (s.name && (s.name.toLowerCase().includes("mock") || s.name.toLowerCase().includes("jlpt") || s.name.toLowerCase().includes("jft") || s.name.toLowerCase().includes("nat")));
-                            const isChapter = (s.setType || "").toLowerCase().includes("chapter") || (s.name || "").toLowerCase().includes("chapter");
-                            const icon = isMock ? "⛩️" : (isChapter ? "📚" : "🎯");
-                            const levelBadge = s.level || (isMock ? "Mock" : (isChapter ? "Chapter" : "UBT"));
-                            return (
-                              <label
-                                key={idx}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "8px",
-                                  padding: "8px 10px",
-                                  borderRadius: "6px",
-                                  backgroundColor: isChecked ? (isMock ? "#faf5ff" : "#eff6ff") : "#ffffff",
-                                  border: isChecked ? (isMock ? "1.5px solid #9333ea" : "1.5px solid #2563eb") : "1px solid #cbd5e1",
-                                  cursor: "pointer",
-                                  fontSize: "12.5px",
-                                  fontWeight: isChecked ? "700" : "normal",
-                                  color: isChecked ? (isMock ? "#6b21a8" : "#1e40af") : "#1e293b"
-                                }}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() => handleToggleSetForPackage(s.name)}
-                                  style={{ cursor: "pointer" }}
-                                />
-                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  <span>{icon}</span>
-                                  <span style={{ fontSize: "10px", padding: "1px 5px", borderRadius: "3px", backgroundColor: isMock ? "#f3e8ff" : "#e0f2fe", color: isMock ? "#7e22ce" : "#0369a1", fontWeight: "700", flexShrink: 0 }}>
-                                    {levelBadge}
+                              <tr key={stu.id}>
+                                <td style={{ ...tdStyle, fontWeight: "bold" }}>{stu.name}</td>
+                                <td style={tdStyle}>{stu.phone}</td>
+                                <td style={tdStyle}>
+                                  <span style={{
+                                    display: "inline-block",
+                                    padding: "4px 10px",
+                                    borderRadius: "12px",
+                                    fontSize: "12px",
+                                    fontWeight: "800",
+                                    backgroundColor: stu.language === "japanese" ? "#f3e8ff" : stu.language === "korean" ? "#eff6ff" : "#f1f5f9",
+                                    color: stu.language === "japanese" ? "#7e22ce" : stu.language === "korean" ? "#1d4ed8" : "#334155",
+                                    border: `1px solid ${stu.language === "japanese" ? "#d8b4fe" : stu.language === "korean" ? "#bfdbfe" : "#cbd5e1"}`
+                                  }}>
+                                    {stu.language === "japanese" ? "🇯🇵 Japanese" : stu.language === "korean" ? "🇰🇷 Korean" : "🌐 Both"}
                                   </span>
-                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      )}
+                                </td>
+                                <td style={tdStyle}>
+                                  <span style={{ fontWeight: "bold", color: "#2563eb" }}>{stu.assignedPackage}</span>
+                                  <br /><span style={{ fontSize: "12px", color: "#ef4444" }}>Ends: {stu.expiryDate}</span>
+                                </td>
+                                <td style={tdStyle}><span style={{ backgroundColor: "#dcfce7", color: "#166534", padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold" }}>{stu.status || "Active"}</span></td>
+                                <td style={tdStyle}>
+                                  <button onClick={() => handleEdit(stu)} style={{ backgroundColor: "#2563eb", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", marginRight: "5px", cursor: "pointer", fontSize: "12px" }}>Edit</button>
+                                  <button onClick={() => handleDelete(stu.id, stu.phone)} style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" }}>Delete</button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
 
-                    <button
-                      type="submit"
-                      style={{
-                        backgroundColor: "#16a34a",
-                        color: "#ffffff",
-                        border: "none",
-                        padding: "12px 24px",
-                        borderRadius: "6px",
-                        fontWeight: "700",
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)"
-                      }}
-                    >
-                      ✓ Save & Activate Custom Package
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* List & Cards of All UBT Packages with Set Price Action */}
-            <div style={cardStyle}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>
-                    {instituteLanguage === "japanese" ? "Configured Mock Test Packages" : "Configured UBT Packages"} ({examPackages.length})
-                  </h3>
-                  <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#64748b" }}>
-                    Click <strong>"✏️ Set / Edit Price"</strong> on any package to customize its fee for your students.
-                  </p>
-                </div>
-
-                <Link
-                  href={`/institute/questions?institute=${encodeURIComponent(instituteName)}${instId ? `&instId=${instId}` : ""}&lang=${encodeURIComponent(instituteLanguage || "korean")}`}
-                  style={{
-                    textDecoration: "none",
-                    background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "8px 16px",
-                    borderRadius: "6px",
-                    fontWeight: "700",
-                    fontSize: "13px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
-                  }}
-                  title={instituteLanguage === "japanese" ? "Create your own private Japanese Mock Tests & question bucket" : "Create your own private UBT sets & question bucket"}
-                >
-                  <span style={{ color: "#ffffff" }}>
-                    {instituteLanguage === "japanese" ? "Create Mock Test" : "Create UBT Set"}
-                  </span>
-                </Link>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
-                {examPackages.map((pkg, idx) => {
-                  const isCustom = pkg.isCustom || pkg.createdBy === instituteName;
-                  const isEditingPrice = editingPricePkgName === pkg.name;
-
-                  // Find how many sets are linked to this package
-                  const linkedSets = examSets.filter(s =>
-                    s.packageName === pkg.name ||
-                    (pkg.includedSets && pkg.includedSets.includes(s.name))
-                  );
-
-                  const bgColors = [
-                    "linear-gradient(145deg, #eff6ff, #dbeafe)",
-                    "linear-gradient(145deg, #f0fdf4, #dcfce7)",
-                    "linear-gradient(145deg, #fffbeb, #fef3c7)",
-                    "linear-gradient(145deg, #fdf4ff, #fae8ff)",
-                    "linear-gradient(145deg, #f0f9ff, #e0f2fe)",
-                    "linear-gradient(145deg, #fef2f2, #fee2e2)"
-                  ];
-
-                  return (
-                    <div
-                      className="pkg-card"
-                      key={pkg.id || idx}
-                      style={{
-                        background: bgColors[idx % bgColors.length],
-                        borderRadius: "12px",
-                        border: isCustom ? "2px solid #2563eb" : "1px solid #e2e8f0",
-                        boxShadow: "0 3px 10px rgba(0,0,0,0.06)",
-                        padding: "20px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        position: "relative"
-                      }}
-                    >
-                      <div>
-                        {/* Tags */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                          <span style={{
-                            fontSize: "11px",
-                            fontWeight: "700",
-                            padding: "3px 8px",
-                            borderRadius: "12px",
-                            backgroundColor: isCustom ? "#dbeafe" : "#f1f5f9",
-                            color: isCustom ? "#1e40af" : "#475569"
-                          }}>
-                            {isCustom ? "🏢 Institute Choice" : "Standard Package"}
-                          </span>
-
-                          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
-                            ⏳ {pkg.duration || "1 Month"}
-                          </span>
+                    {/* Mobile & Tablet Card View (Clear, Touch-Friendly, Never Squished) */}
+                    <div className="manage-students-mobile-cards">
+                      {displayedStudents.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "30px 16px", color: "#94a3b8", backgroundColor: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                          No students registered under this track yet.
                         </div>
-
-                        <h4 style={{ margin: "0 0 8px 0", fontSize: "18px", color: "#1e293b", fontWeight: "800" }}>
-                          {pkg.name}
-                        </h4>
-
-                        <p style={{ margin: "0 0 16px 0", fontSize: "13px", color: "#64748b", lineHeight: "1.5" }}>
-                          {pkg.desc || (instituteLanguage === "japanese" ? "Full simulated Japanese CBT Mock Test examination sets with audio and detailed scoring." : "Full EPS-TOPIK UBT examination sets with audio and detailed scoring.")}
-                        </p>
-
-                        {/* Sets preview */}
-                        <div style={{ marginBottom: "16px", backgroundColor: "#f8fafc", padding: "10px 12px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-                          <div style={{ fontSize: "12px", fontWeight: "700", color: "#1e3a8a", marginBottom: "6px" }}>
-                            Included Sets: {linkedSets.length > 0 ? `${linkedSets.length} Sets` : 'All Assigned Sets'}
-                          </div>
-                          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", maxHeight: "60px", overflowY: "auto" }}>
-                            {linkedSets.length > 0 ? (
-                              linkedSets.map((s, sIdx) => (
-                                <span key={sIdx} style={{ fontSize: "11px", backgroundColor: "#e2e8f0", padding: "2px 6px", borderRadius: "4px", color: "#334155" }}>
-                                  {s.name}
-                                </span>
-                              ))
-                            ) : (
-                              <span style={{ fontSize: "11px", color: "#94a3b8" }}>Inherits all sets under {pkg.name}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Pricing Section with Instant Price Modifier */}
-                      <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                          <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>Package Price:</span>
-                          <span style={{ fontSize: "20px", fontWeight: "800", color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#16a34a" : "#1e40af" }}>
-                            {pkg.price || "Rs. 1,500"}
-                          </span>
-                        </div>
-
-                        {/* Distribution Mode Badge & Quick Toggle */}
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", backgroundColor: "#f8fafc", padding: "6px 10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                          <span style={{ fontSize: "11px", fontWeight: "700", color: "#475569" }}>Student Access:</span>
-                          <span style={{
-                            fontSize: "11px",
-                            fontWeight: "800",
-                            padding: "2px 8px",
-                            borderRadius: "10px",
-                            backgroundColor: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#dcfce7" : "#ffedd5",
-                            color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#15803d" : "#c2410c"
-                          }}>
-                            {(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "🎁 FREE FOR ENROLLED STUDENTS" : "💳 PURCHASE REQUIRED"}
-                          </span>
-                        </div>
-
-                        {/* Distribution Toggle Button */}
-                        <div style={{ marginBottom: "10px" }}>
-                          <button
-                            type="button"
-                            onClick={() => handleTogglePackageDistribution(pkg.name)}
+                      ) : (
+                        displayedStudents.map((stu) => (
+                          <div
+                            key={stu.id}
                             style={{
-                              width: "100%",
-                              backgroundColor: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#fef2f2" : "#f0fdf4",
-                              color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#b91c1c" : "#166534",
-                              border: `1.5px solid ${(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#fca5a5" : "#86efac"}`,
-                              padding: "7px 10px",
-                              borderRadius: "6px",
-                              fontWeight: "700",
-                              fontSize: "12px",
-                              cursor: "pointer",
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "10px",
+                              padding: "14px 16px",
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                               display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "6px"
+                              flexDirection: "column",
+                              gap: "10px"
                             }}
                           >
-                            <span>{(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "💳 Switch to Purchase Required" : "🎁 Distribute Free to Our Students"}</span>
-                          </button>
-                        </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                              <div>
+                                <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
+                                  {stu.name}
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "3px" }}>
+                                  <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>Login ID:</span>
+                                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#1e40af", letterSpacing: "0.3px" }}>{stu.phone}</span>
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                <span style={{
+                                  backgroundColor: "#dcfce7",
+                                  color: "#166534",
+                                  padding: "3px 8px",
+                                  borderRadius: "10px",
+                                  fontSize: "11px",
+                                  fontWeight: "800"
+                                }}>
+                                  {stu.status || "Active"}
+                                </span>
+                                <span style={{
+                                  padding: "2px 8px",
+                                  borderRadius: "10px",
+                                  fontSize: "11px",
+                                  fontWeight: "700",
+                                  backgroundColor: stu.language === "japanese" ? "#f3e8ff" : stu.language === "korean" ? "#eff6ff" : "#f1f5f9",
+                                  color: stu.language === "japanese" ? "#7e22ce" : stu.language === "korean" ? "#1d4ed8" : "#334155",
+                                  border: `1px solid ${stu.language === "japanese" ? "#d8b4fe" : stu.language === "korean" ? "#bfdbfe" : "#cbd5e1"}`
+                                }}>
+                                  {stu.language === "japanese" ? "🇯🇵 Japanese" : stu.language === "korean" ? "🇰🇷 Korean" : "🌐 Both"}
+                                </span>
+                              </div>
+                            </div>
 
-                        {/* Price editing toggle */}
-                        {isEditingPrice ? (
-                          <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+                            <div style={{
+                              backgroundColor: "#f8fafc",
+                              padding: "8px 12px",
+                              borderRadius: "8px",
+                              border: "1px solid #e2e8f0",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                              gap: "6px"
+                            }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ fontSize: "12px" }}>📦</span>
+                                <span style={{ fontSize: "13px", fontWeight: "700", color: "#1d4ed8" }}>{stu.assignedPackage}</span>
+                              </div>
+                              <div style={{ fontSize: "11.5px", color: "#dc2626", fontWeight: "700" }}>
+                                Ends: {stu.expiryDate}
+                              </div>
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "2px" }}>
+                              <button
+                                onClick={() => handleEdit(stu)}
+                                style={{
+                                  backgroundColor: "#2563eb",
+                                  color: "#ffffff",
+                                  border: "none",
+                                  padding: "9px 12px",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  fontSize: "13px",
+                                  fontWeight: "700",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "6px",
+                                  minHeight: "38px"
+                                }}
+                              >
+                                <span>✏️ Edit</span>
+                              </button>
+                              <button
+                                onClick={() => handleDelete(stu.id, stu.phone)}
+                                style={{
+                                  backgroundColor: "#fee2e2",
+                                  color: "#dc2626",
+                                  border: "1px solid #fca5a5",
+                                  padding: "9px 12px",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  fontSize: "13px",
+                                  fontWeight: "700",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "6px",
+                                  minHeight: "38px"
+                                }}
+                              >
+                                <span>🗑️ Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* UBT PACKAGES & PRICING MANAGEMENT (CREATED BY OWN CHOICE & CUSTOM PRICE) */}
+              {true && (
+                <div style={{ marginTop: "50px" }}>
+
+
+                  {/* Form to Create Custom Package */}
+                  {showCreatePkgForm && (
+                    <div style={cardStyle}>
+                      <div style={{ paddingTop: "10px" }}>
+                        <h4 style={{ margin: "0 0 16px 0", fontSize: "16px", color: "#0f172a", fontWeight: "700" }}>
+                          🛠️ Design Custom {instituteLanguage === "japanese" ? "Mock Test" : "Exam"} Package Details
+                        </h4>
+
+                        <form onSubmit={handleCreateCustomPackage}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px", marginBottom: "16px" }}>
+                            <div>
+                              <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
+                                Package Name *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder={instituteLanguage === "japanese" ? "e.g. Special 20 Japanese Mock Test Sets or JLPT Bundle" : "e.g. Special 20 UBT Sets or Crash Course Bundle"}
+                                value={newPkgName}
+                                onChange={(e) => setNewPkgName(e.target.value)}
+                                style={inputStyle}
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
+                                Set Package Price (NPR) *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Rs. 1,500 or 1500"
+                                value={newPkgPrice}
+                                onChange={(e) => setNewPkgPrice(e.target.value)}
+                                style={{ ...inputStyle, fontWeight: "700", color: "#166534" }}
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
+                                Package Category
+                              </label>
+                              <select
+                                value={newPkgType}
+                                onChange={(e) => setNewPkgType(e.target.value)}
+                                style={inputStyle}
+                              >
+                                {instituteLanguage === "japanese" ? (
+                                  <>
+                                    <option value="Full Mock Test">Full Mock Test</option>
+                                    <option value="JLPT Mock Test">JLPT Mock Test</option>
+                                    <option value="JFT-Basic Mock Test">JFT-Basic Mock Test</option>
+                                    <option value="NAT-TEST Mock Test">NAT-TEST Mock Test</option>
+                                    <option value="Combo Package">Combo Mock Package</option>
+                                    <option value="Special Offer">Special Offer</option>
+                                  </>
+                                ) : (
+                                  <>
+                                    <option value="UBT Full Exam">UBT Full Exam</option>
+                                    <option value="Chapter Wise">Chapter Wise Practice</option>
+                                    <option value="Combo Package">Combo Full Package</option>
+                                    <option value="Special Offer">Special Offer</option>
+                                  </>
+                                )}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
+                                Default Validity / Expiry Duration
+                              </label>
+                              <select
+                                value={newPkgDuration}
+                                onChange={(e) => setNewPkgDuration(e.target.value)}
+                                style={inputStyle}
+                              >
+                                <option value="15 Days">15 Days</option>
+                                <option value="1 Month">1 Month</option>
+                                <option value="3 Months">3 Months</option>
+                                <option value="6 Months">6 Months</option>
+                                <option value="Lifetime">Lifetime</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div style={{ marginBottom: "18px" }}>
+                            <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "6px" }}>
+                              Package Description
+                            </label>
                             <input
                               type="text"
-                              value={editingPriceValue}
-                              onChange={(e) => setEditingPriceValue(e.target.value)}
-                              placeholder="New Price (e.g. Free or Rs. 2,000)"
-                              style={{ ...inputStyle, marginBottom: 0, padding: "8px 10px", fontSize: "13px", flex: 1 }}
-                              autoFocus
+                              placeholder={instituteLanguage === "japanese" ? "e.g. Intensive Japanese mock test sets with reading & listening questions." : "e.g. Intensive model test sets with 20 Reading + 20 Listening questions per set."}
+                              value={newPkgDesc}
+                              onChange={(e) => setNewPkgDesc(e.target.value)}
+                              style={inputStyle}
                             />
-                            <button
-                              onClick={() => handleSavePriceChange(pkg.name)}
-                              style={{ backgroundColor: "#16a34a", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", fontWeight: "700", fontSize: "12px", cursor: "pointer" }}
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingPricePkgName(null)}
-                              style={{ backgroundColor: "#e2e8f0", color: "#334155", border: "none", padding: "8px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
-                            >
-                              ✕
-                            </button>
                           </div>
-                        ) : (
-                          <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
-                            <button
-                              onClick={() => {
-                                setEditingPricePkgName(pkg.name);
-                                setEditingPriceValue(pkg.price || "Rs. 1,500");
-                              }}
-                              style={{
-                                flex: 1,
-                                backgroundColor: "#f0fdf4",
-                                color: "#166534",
-                                border: "1.5px solid #86efac",
-                                padding: "8px",
-                                borderRadius: "6px",
-                                fontWeight: "700",
-                                fontSize: "12px",
-                                cursor: "pointer"
-                              }}
-                            >
-                              ✏️ Set / Edit Price
-                            </button>
 
-                            <button
-                              onClick={() => {
-                                setFormData(prev => ({ ...prev, assignedPackage: pkg.name }));
-                                setShowForm(true);
-                                handleTabChange("students");
-                              }}
-                              style={{
-                                backgroundColor: "#eff6ff",
-                                color: "#1e40af",
-                                border: "1.5px solid #bfdbfe",
-                                padding: "8px 12px",
-                                borderRadius: "6px",
-                                fontWeight: "700",
-                                fontSize: "12px",
-                                cursor: "pointer"
-                              }}
-                            >
-                              + Assign to Student
-                            </button>
-                          </div>
-                        )}
+                          {/* Sets Selection by Choice */}
+                          <div style={{ marginBottom: "20px", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+                              <div>
+                                <label style={{ fontSize: "13px", fontWeight: "700", color: "#1e3a8a" }}>
+                                  {instituteLanguage === "japanese" ? "⛩️ Choose Mock Test Sets to Bundle in this Package" : "🎯 Choose Exam Sets Included in this Package"} ({selectedSetsForPkg.length} selected)
+                                </label>
+                                <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+                                  {instituteLanguage === "japanese"
+                                    ? "Select specific JLPT / JFT mock test sets to build a custom mock package. Students purchasing will auto-unlock these sets."
+                                    : "Students who purchase or are assigned this package will have access to these sets."}
+                                </p>
+                              </div>
 
-                        {isCustom && (
-                          <div style={{ textAlign: "right" }}>
-                            <button
-                              onClick={() => handleDeleteCustomPackage(pkg.id, pkg.name)}
-                              style={{ backgroundColor: "transparent", color: "#dc2626", border: "none", fontSize: "11px", cursor: "pointer", textDecoration: "underline" }}
-                            >
-                              Delete custom package
-                            </button>
+                              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                                {instituteLanguage === "japanese" || examSets.some(s => s.track === "japanese" || s.setType === "MOCK") ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={handleSelectAllMockSets}
+                                      style={{ backgroundColor: "#faf5ff", color: "#7e22ce", border: "1px solid #e9d5ff", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}
+                                    >
+                                      ⛩️ All Mock Sets
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSelectMockByLevel("N5")}
+                                      style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                                    >
+                                      + JLPT N5 (10)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSelectMockByLevel("N4")}
+                                      style={{ backgroundColor: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                                    >
+                                      + JLPT N4 (10)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSelectMockByLevel("N3")}
+                                      style={{ backgroundColor: "#fffbeb", color: "#b45309", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                                    >
+                                      + JLPT N3 (10)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSelectMockByLevel("N2")}
+                                      style={{ backgroundColor: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                                    >
+                                      + JLPT N2 (10)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSelectMockByLevel("JFT")}
+                                      style={{ backgroundColor: "#fdf4ff", color: "#a21caf", border: "1px solid #f0abfc", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "600", cursor: "pointer" }}
+                                    >
+                                      + JFT-Basic (10)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={handleSelectMockModel}
+                                      style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "4px 8px", borderRadius: "4px", fontSize: "11.5px", fontWeight: "700", cursor: "pointer" }}
+                                    >
+                                      🎯 Model Exam / Simulation
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={handleSelectAllUbtSets}
+                                      style={{ backgroundColor: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                                    >
+                                      + All UBT Sets
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={handleSelectAllChapterSets}
+                                      style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                                    >
+                                      + All Chapter Sets
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={handleSelectAllModelSets}
+                                      style={{ backgroundColor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                                    >
+                                      + All Model Sets
+                                    </button>
+                                  </>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={handleSelectAllSets}
+                                  style={{ backgroundColor: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                                >
+                                  Select All
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleClearSelectedSets}
+                                  style={{ backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                                >
+                                  Clear
+                                </button>
+                              </div>
+                            </div>
+
+                            {studentFormSpecificSets.length === 0 ? (
+                              <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>No sets available in the system yet.</p>
+                            ) : (
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px", maxHeight: "250px", overflowY: "auto", padding: "4px" }}>
+                                {studentFormSpecificSets.map((s, idx) => {
+                                  const isChecked = selectedSetsForPkg.includes(s.name);
+                                  const isMock = s.setType === "MOCK" || s.track === "japanese" || s.isMock || (s.name && (s.name.toLowerCase().includes("mock") || s.name.toLowerCase().includes("jlpt") || s.name.toLowerCase().includes("jft") || s.name.toLowerCase().includes("nat")));
+                                  const isChapter = (s.setType || "").toLowerCase().includes("chapter") || (s.name || "").toLowerCase().includes("chapter");
+                                  const icon = isMock ? "⛩️" : (isChapter ? "📚" : "🎯");
+                                  const levelBadge = s.level || (isMock ? "Mock" : (isChapter ? "Chapter" : "UBT"));
+                                  return (
+                                    <label
+                                      key={idx}
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                        padding: "8px 10px",
+                                        borderRadius: "6px",
+                                        backgroundColor: isChecked ? (isMock ? "#faf5ff" : "#eff6ff") : "#ffffff",
+                                        border: isChecked ? (isMock ? "1.5px solid #9333ea" : "1.5px solid #2563eb") : "1px solid #cbd5e1",
+                                        cursor: "pointer",
+                                        fontSize: "12.5px",
+                                        fontWeight: isChecked ? "700" : "normal",
+                                        color: isChecked ? (isMock ? "#6b21a8" : "#1e40af") : "#1e293b"
+                                      }}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => handleToggleSetForPackage(s.name)}
+                                        style={{ cursor: "pointer" }}
+                                      />
+                                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        <span>{icon}</span>
+                                        <span style={{ fontSize: "10px", padding: "1px 5px", borderRadius: "3px", backgroundColor: isMock ? "#f3e8ff" : "#e0f2fe", color: isMock ? "#7e22ce" : "#0369a1", fontWeight: "700", flexShrink: 0 }}>
+                                          {levelBadge}
+                                        </span>
+                                        <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
+                                      </span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                        )}
+
+                          <button
+                            type="submit"
+                            style={{
+                              backgroundColor: "#16a34a",
+                              color: "#ffffff",
+                              border: "none",
+                              padding: "12px 24px",
+                              borderRadius: "6px",
+                              fontWeight: "700",
+                              fontSize: "14px",
+                              cursor: "pointer",
+                              boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)"
+                            }}
+                          >
+                            ✓ Save & Activate Custom Package
+                          </button>
+                        </form>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
+                  )}
 
-        
+                  {/* List & Cards of All UBT Packages with Set Price Action */}
+                  <div style={cardStyle}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "10px" }}>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>
+                          {instituteLanguage === "japanese" ? "Configured Mock Test Packages" : "Configured UBT Packages"} ({examPackages.length})
+                        </h3>
+                        <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "#64748b" }}>
+                          Click <strong>"✏️ Set / Edit Price"</strong> on any package to customize its fee for your students.
+                        </p>
+                      </div>
+
+                      <Link
+                        href={`/institute/questions?institute=${encodeURIComponent(instituteName)}${instId ? `&instId=${instId}` : ""}&lang=${encodeURIComponent(instituteLanguage || "korean")}`}
+                        style={{
+                          textDecoration: "none",
+                          background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "8px 16px",
+                          borderRadius: "6px",
+                          fontWeight: "700",
+                          fontSize: "13px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)"
+                        }}
+                        title={instituteLanguage === "japanese" ? "Create your own private Japanese Mock Tests & question bucket" : "Create your own private UBT sets & question bucket"}
+                      >
+                        <span style={{ color: "#ffffff" }}>
+                          {instituteLanguage === "japanese" ? "Create Mock Test" : "Create UBT Set"}
+                        </span>
+                      </Link>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
+                      {examPackages.map((pkg, idx) => {
+                        const isCustom = pkg.isCustom || pkg.createdBy === instituteName;
+                        const isEditingPrice = editingPricePkgName === pkg.name;
+
+                        // Find how many sets are linked to this package
+                        const linkedSets = examSets.filter(s =>
+                          s.packageName === pkg.name ||
+                          (pkg.includedSets && pkg.includedSets.includes(s.name))
+                        );
+
+                        const bgColors = [
+                          "linear-gradient(145deg, #eff6ff, #dbeafe)",
+                          "linear-gradient(145deg, #f0fdf4, #dcfce7)",
+                          "linear-gradient(145deg, #fffbeb, #fef3c7)",
+                          "linear-gradient(145deg, #fdf4ff, #fae8ff)",
+                          "linear-gradient(145deg, #f0f9ff, #e0f2fe)",
+                          "linear-gradient(145deg, #fef2f2, #fee2e2)"
+                        ];
+
+                        return (
+                          <div
+                            className="pkg-card"
+                            key={pkg.id || idx}
+                            style={{
+                              background: bgColors[idx % bgColors.length],
+                              borderRadius: "12px",
+                              border: isCustom ? "2px solid #2563eb" : "1px solid #e2e8f0",
+                              boxShadow: "0 3px 10px rgba(0,0,0,0.06)",
+                              padding: "20px",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              position: "relative"
+                            }}
+                          >
+                            <div>
+                              {/* Tags */}
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                                <span style={{
+                                  fontSize: "11px",
+                                  fontWeight: "700",
+                                  padding: "3px 8px",
+                                  borderRadius: "12px",
+                                  backgroundColor: isCustom ? "#dbeafe" : "#f1f5f9",
+                                  color: isCustom ? "#1e40af" : "#475569"
+                                }}>
+                                  {isCustom ? "🏢 Institute Choice" : "Standard Package"}
+                                </span>
+
+                                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                                  ⏳ {pkg.duration || "1 Month"}
+                                </span>
+                              </div>
+
+                              <h4 style={{ margin: "0 0 8px 0", fontSize: "18px", color: "#1e293b", fontWeight: "800" }}>
+                                {pkg.name}
+                              </h4>
+
+                              <p style={{ margin: "0 0 16px 0", fontSize: "13px", color: "#64748b", lineHeight: "1.5" }}>
+                                {pkg.desc || (instituteLanguage === "japanese" ? "Full simulated Japanese CBT Mock Test examination sets with audio and detailed scoring." : "Full EPS-TOPIK UBT examination sets with audio and detailed scoring.")}
+                              </p>
+
+                              {/* Sets preview */}
+                              <div style={{ marginBottom: "16px", backgroundColor: "#f8fafc", padding: "10px 12px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                                <div style={{ fontSize: "12px", fontWeight: "700", color: "#1e3a8a", marginBottom: "6px" }}>
+                                  Included Sets: {linkedSets.length > 0 ? `${linkedSets.length} Sets` : 'All Assigned Sets'}
+                                </div>
+                                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", maxHeight: "60px", overflowY: "auto" }}>
+                                  {linkedSets.length > 0 ? (
+                                    linkedSets.map((s, sIdx) => (
+                                      <span key={sIdx} style={{ fontSize: "11px", backgroundColor: "#e2e8f0", padding: "2px 6px", borderRadius: "4px", color: "#334155" }}>
+                                        {s.name}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span style={{ fontSize: "11px", color: "#94a3b8" }}>Inherits all sets under {pkg.name}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Pricing Section with Instant Price Modifier */}
+                            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                                <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>Package Price:</span>
+                                <span style={{ fontSize: "20px", fontWeight: "800", color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#16a34a" : "#1e40af" }}>
+                                  {pkg.price || "Rs. 1,500"}
+                                </span>
+                              </div>
+
+                              {/* Distribution Mode Badge & Quick Toggle */}
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", backgroundColor: "#f8fafc", padding: "6px 10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                                <span style={{ fontSize: "11px", fontWeight: "700", color: "#475569" }}>Student Access:</span>
+                                <span style={{
+                                  fontSize: "11px",
+                                  fontWeight: "800",
+                                  padding: "2px 8px",
+                                  borderRadius: "10px",
+                                  backgroundColor: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#dcfce7" : "#ffedd5",
+                                  color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#15803d" : "#c2410c"
+                                }}>
+                                  {(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "🎁 FREE FOR ENROLLED STUDENTS" : "💳 PURCHASE REQUIRED"}
+                                </span>
+                              </div>
+
+                              {/* Distribution Toggle Button */}
+                              <div style={{ marginBottom: "10px" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleTogglePackageDistribution(pkg.name)}
+                                  style={{
+                                    width: "100%",
+                                    backgroundColor: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#fef2f2" : "#f0fdf4",
+                                    color: (pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#b91c1c" : "#166534",
+                                    border: `1.5px solid ${(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "#fca5a5" : "#86efac"}`,
+                                    padding: "7px 10px",
+                                    borderRadius: "6px",
+                                    fontWeight: "700",
+                                    fontSize: "12px",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "6px"
+                                  }}
+                                >
+                                  <span>{(pkg.distributionMode === "free" || (pkg.price || "").toLowerCase().includes("free") || pkg.price === "Rs. 0") ? "💳 Switch to Purchase Required" : "🎁 Distribute Free to Our Students"}</span>
+                                </button>
+                              </div>
+
+                              {/* Price editing toggle */}
+                              {isEditingPrice ? (
+                                <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+                                  <input
+                                    type="text"
+                                    value={editingPriceValue}
+                                    onChange={(e) => setEditingPriceValue(e.target.value)}
+                                    placeholder="New Price (e.g. Free or Rs. 2,000)"
+                                    style={{ ...inputStyle, marginBottom: 0, padding: "8px 10px", fontSize: "13px", flex: 1 }}
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => handleSavePriceChange(pkg.name)}
+                                    style={{ backgroundColor: "#16a34a", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", fontWeight: "700", fontSize: "12px", cursor: "pointer" }}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingPricePkgName(null)}
+                                    style={{ backgroundColor: "#e2e8f0", color: "#334155", border: "none", padding: "8px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ) : (
+                                <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                                  <button
+                                    onClick={() => {
+                                      setEditingPricePkgName(pkg.name);
+                                      setEditingPriceValue(pkg.price || "Rs. 1,500");
+                                    }}
+                                    style={{
+                                      flex: 1,
+                                      backgroundColor: "#f0fdf4",
+                                      color: "#166534",
+                                      border: "1.5px solid #86efac",
+                                      padding: "8px",
+                                      borderRadius: "6px",
+                                      fontWeight: "700",
+                                      fontSize: "12px",
+                                      cursor: "pointer"
+                                    }}
+                                  >
+                                    ✏️ Set / Edit Price
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setFormData(prev => ({ ...prev, assignedPackage: pkg.name }));
+                                      setShowForm(true);
+                                      handleTabChange("students");
+                                    }}
+                                    style={{
+                                      backgroundColor: "#eff6ff",
+                                      color: "#1e40af",
+                                      border: "1.5px solid #bfdbfe",
+                                      padding: "8px 12px",
+                                      borderRadius: "6px",
+                                      fontWeight: "700",
+                                      fontSize: "12px",
+                                      cursor: "pointer"
+                                    }}
+                                  >
+                                    + Assign to Student
+                                  </button>
+                                </div>
+                              )}
+
+                              {isCustom && (
+                                <div style={{ textAlign: "right" }}>
+                                  <button
+                                    onClick={() => handleDeleteCustomPackage(pkg.id, pkg.name)}
+                                    style={{ backgroundColor: "transparent", color: "#dc2626", border: "none", fontSize: "11px", cursor: "pointer", textDecoration: "underline" }}
+                                  >
+                                    Delete custom package
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
               {/* UBT EXAM SETS UNDER INSIDE MANAGE STUDENTS */}
               <div style={{ marginTop: "40px", borderTop: "2px solid #e2e8f0", paddingTop: "25px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", flexWrap: "wrap", gap: "10px" }}>
@@ -3334,7 +3378,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                                 instDist[set.id] = nextFree ? "free" : "paid";
                                 instDist[set.name] = nextFree ? "free" : "paid";
                                 localStorage.setItem(`instituteDistribution_${instituteName}`, JSON.stringify(instDist));
-                              } catch (e) {}
+                              } catch (e) { }
 
                               alert(nextFree ? `✅ Set "${set.name}" is now FREE for your students!` : `Set "${set.name}" now set to Purchase Required.`);
                             }}
@@ -3607,151 +3651,173 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                           </button>
                         </div>
 
-                      {/* Body — centered */}
-                      <div style={{ padding: "22px 24px", textAlign: "center" }}>
-                        {item.content && (
-                          <p style={{ margin: 0, fontSize: "14px", color: "#334155", lineHeight: "1.8", whiteSpace: "pre-line", marginBottom: (item.fileUrl ? "18px" : "0"), textAlign: "center" }}>{item.content}</p>
-                        )}
+                        {/* Body — centered */}
+                        <div style={{ padding: "22px 24px", textAlign: "center" }}>
+                          {item.content && (
+                            <p style={{ margin: 0, fontSize: "14px", color: "#334155", lineHeight: "1.8", whiteSpace: "pre-line", marginBottom: (item.fileUrl ? "18px" : "0"), textAlign: "center" }}>{item.content}</p>
+                          )}
 
-                        {/* Image poster — full view, adjusting width & height according to notice poster, centered */}
-                        {item.fileUrl && item.fileType === "image" && (
-                          <div style={{ display: "flex", justifyContent: "center", width: "100%", margin: "0 auto" }}>
-                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", maxWidth: "100%" }}>
-                              <img
-                                src={item.fileUrl}
-                                alt="Notice Poster"
-                                style={{
-                                  maxWidth: "100%",
-                                  width: "auto",
-                                  height: "auto",
-                                  maxHeight: "85vh",
-                                  display: "block",
-                                  margin: "0 auto",
-                                  borderRadius: "10px",
-                                  border: "1px solid #e2e8f0",
-                                  objectFit: "contain",
-                                  boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-                                  cursor: "pointer"
-                                }}
-                              />
-                            </a>
-                          </div>
-                        )}
+                          {/* Image poster — full view, adjusting width & height according to notice poster, centered */}
+                          {item.fileUrl && item.fileType === "image" && (
+                            <div style={{ display: "flex", justifyContent: "center", width: "100%", margin: "0 auto" }}>
+                              <a href={item.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", maxWidth: "100%" }}>
+                                <img
+                                  src={item.fileUrl}
+                                  alt="Notice Poster"
+                                  style={{
+                                    maxWidth: "100%",
+                                    width: "auto",
+                                    height: "auto",
+                                    maxHeight: "85vh",
+                                    display: "block",
+                                    margin: "0 auto",
+                                    borderRadius: "10px",
+                                    border: "1px solid #e2e8f0",
+                                    objectFit: "contain",
+                                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                                    cursor: "pointer"
+                                  }}
+                                />
+                              </a>
+                            </div>
+                          )}
 
-                        {/* Audio */}
-                        {item.fileUrl && item.fileType === "audio" && (
-                          <div style={{ maxWidth: "500px", margin: "14px auto 0 auto" }}>
-                            <audio controls src={item.fileUrl} style={{ width: "100%", height: "40px" }} />
-                          </div>
-                        )}
+                          {/* Audio */}
+                          {item.fileUrl && item.fileType === "audio" && (
+                            <div style={{ maxWidth: "500px", margin: "14px auto 0 auto" }}>
+                              <audio controls src={item.fileUrl} style={{ width: "100%", height: "40px" }} />
+                            </div>
+                          )}
 
-                        {/* Video — full width */}
-                        {item.fileUrl && item.fileType === "video" && (
-                          <div style={{ maxWidth: "700px", margin: "14px auto 0 auto" }}>
-                            <video controls src={item.fileUrl} style={{ width: "100%", height: "auto", borderRadius: "10px", backgroundColor: "#000", display: "block" }} />
-                          </div>
-                        )}
+                          {/* Video — full width */}
+                          {item.fileUrl && item.fileType === "video" && (
+                            <div style={{ maxWidth: "700px", margin: "14px auto 0 auto" }}>
+                              <video controls src={item.fileUrl} style={{ width: "100%", height: "auto", borderRadius: "10px", backgroundColor: "#000", display: "block" }} />
+                            </div>
+                          )}
 
-                        {/* PDF / Document */}
-                        {item.fileUrl && (item.fileType === "document" || item.fileType === "pdf") && (
-                          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center", marginTop: "16px" }}>
-                            <a href={item.fileUrl} target="_blank" rel="noopener noreferrer"
-                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "bold", background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "#fff", padding: "8px 18px", borderRadius: "8px", textDecoration: "none" }}>
-                              <span>{item.fileType === "pdf" ? "📕" : "📄"}</span> View {item.fileType === "pdf" ? "PDF" : "Document"}
-                            </a>
-                            <a href={item.fileUrl} download={item.fileName || "Notice_Document"}
-                              style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "bold", background: "linear-gradient(135deg, #0284c7, #0369a1)", color: "#fff", padding: "8px 18px", borderRadius: "8px", textDecoration: "none" }}>
-                              <span>📥</span> Download
-                            </a>
-                          </div>
-                        )}
+                          {/* PDF / Document */}
+                          {item.fileUrl && (item.fileType === "document" || item.fileType === "pdf") && (
+                            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center", marginTop: "16px" }}>
+                              <a href={item.fileUrl} target="_blank" rel="noopener noreferrer"
+                                style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "bold", background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "#fff", padding: "8px 18px", borderRadius: "8px", textDecoration: "none" }}>
+                                <span>{item.fileType === "pdf" ? "📕" : "📄"}</span> View {item.fileType === "pdf" ? "PDF" : "Document"}
+                              </a>
+                              <a href={item.fileUrl} download={item.fileName || "Notice_Document"}
+                                style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "bold", background: "linear-gradient(135deg, #0284c7, #0369a1)", color: "#fff", padding: "8px 18px", borderRadius: "8px", textDecoration: "none" }}>
+                                <span>📥</span> Download
+                              </a>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Shared Gate / Staff Password Modal */}
-      {showCredModal && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          backgroundColor: "rgba(15, 23, 42, 0.7)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 999999,
-          padding: "20px"
-        }}>
+        {/* Shared Gate / Staff Password Modal */}
+        {showCredModal && (
           <div style={{
-            backgroundColor: "white",
-            borderRadius: "14px",
-            width: "100%",
-            maxWidth: "420px",
-            padding: "26px",
-            boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
-            border: "1px solid #cbd5e1"
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(15, 23, 42, 0.7)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999999,
+            padding: "20px"
           }}>
-            <h3 style={{ margin: "0 0 8px 0", color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-              🔑 {(unlockedRole === "staff" || userRole === "staff") ? "Change Staff Password" : "Update Login Credentials"}
-            </h3>
-            <p style={{ margin: "0 0 18px 0", color: "#64748b", fontSize: "13px" }}>
-              {(unlockedRole === "staff" || userRole === "staff")
-                ? "Staff User: You can change your password only (User ID cannot be modified)."
-                : "Admin only: Updating this User ID and Password will immediately work for both Billing and Manage Students."}
-            </p>
+            <div style={{
+              backgroundColor: "white",
+              borderRadius: "14px",
+              width: "100%",
+              maxWidth: "420px",
+              padding: "26px",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+              border: "1px solid #cbd5e1"
+            }}>
+              <h3 style={{ margin: "0 0 8px 0", color: "#1e3a8a", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                🔑 {(unlockedRole === "staff" || userRole === "staff") ? "Change Staff Password" : "Update Login Credentials"}
+              </h3>
+              <p style={{ margin: "0 0 18px 0", color: "#64748b", fontSize: "13px" }}>
+                {(unlockedRole === "staff" || userRole === "staff")
+                  ? "Staff User: You can change your password only (User ID cannot be modified)."
+                  : "Admin only: Updating this User ID and Password will immediately work for both Billing and Manage Students."}
+              </p>
 
-            <form onSubmit={handleUpdateCredSubmit}>
-              <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: (unlockedRole === "staff" || userRole === "staff") ? "#64748b" : "#1e3a8a", marginBottom: "6px" }}>
-                  {(unlockedRole === "staff" || userRole === "staff")
-                    ? "User ID (Fixed - Staff cannot change ID)"
-                    : "User ID / Username *"}
-                </label>
-                {(unlockedRole === "staff" || userRole === "staff") ? (
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    backgroundColor: "#f1f5f9",
-                    border: "1px solid #cbd5e1",
-                    borderRadius: "6px",
-                    padding: "10px 12px",
-                    gap: "8px"
-                  }}>
-                    <span>🔒</span>
+              <form onSubmit={handleUpdateCredSubmit}>
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: (unlockedRole === "staff" || userRole === "staff") ? "#64748b" : "#1e3a8a", marginBottom: "6px" }}>
+                    {(unlockedRole === "staff" || userRole === "staff")
+                      ? "User ID (Fixed - Staff cannot change ID)"
+                      : "User ID / Username *"}
+                  </label>
+                  {(unlockedRole === "staff" || userRole === "staff") ? (
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor: "#f1f5f9",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "6px",
+                      padding: "10px 12px",
+                      gap: "8px"
+                    }}>
+                      <span>🔒</span>
+                      <input
+                        type="text"
+                        value={unlockedUserId || newCredUserId || "staff"}
+                        disabled
+                        readOnly
+                        style={{
+                          width: "100%",
+                          backgroundColor: "transparent",
+                          border: "none",
+                          fontSize: "14px",
+                          color: "#475569",
+                          fontWeight: "bold",
+                          cursor: "not-allowed",
+                          outline: "none"
+                        }}
+                      />
+                      <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>
+                        ID Locked
+                      </span>
+                    </div>
+                  ) : (
                     <input
                       type="text"
-                      value={unlockedUserId || newCredUserId || "staff"}
-                      disabled
-                      readOnly
+                      value={newCredUserId}
+                      onChange={(e) => setNewCredUserId(e.target.value)}
+                      placeholder="e.g. admin or custom ID"
+                      required
                       style={{
                         width: "100%",
-                        backgroundColor: "transparent",
-                        border: "none",
+                        padding: "10px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
                         fontSize: "14px",
-                        color: "#475569",
-                        fontWeight: "bold",
-                        cursor: "not-allowed",
-                        outline: "none"
+                        boxSizing: "border-box"
                       }}
                     />
-                    <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>
-                      ID Locked
-                    </span>
-                  </div>
-                ) : (
+                  )}
+                </div>
+
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                    {(unlockedRole === "staff" || userRole === "staff") ? "Current Password *" : "Current Password / Admin PIN *"}
+                  </label>
                   <input
-                    type="text"
-                    value={newCredUserId}
-                    onChange={(e) => setNewCredUserId(e.target.value)}
-                    placeholder="e.g. admin or custom ID"
+                    type="password"
+                    value={credCurrentPassword}
+                    onChange={(e) => setCredCurrentPassword(e.target.value)}
+                    placeholder={(unlockedRole === "staff" || userRole === "staff") ? "Enter your current password" : "Enter current admin password or PIN"}
                     required
                     style={{
                       width: "100%",
@@ -3762,124 +3828,102 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       boxSizing: "border-box"
                     }}
                   />
-                )}
-              </div>
-
-              <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
-                  {(unlockedRole === "staff" || userRole === "staff") ? "Current Password *" : "Current Password / Admin PIN *"}
-                </label>
-                <input
-                  type="password"
-                  value={credCurrentPassword}
-                  onChange={(e) => setCredCurrentPassword(e.target.value)}
-                  placeholder={(unlockedRole === "staff" || userRole === "staff") ? "Enter your current password" : "Enter current admin password or PIN"}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "14px",
-                    boxSizing: "border-box"
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
-                  New Password (Min 6 chars) *
-                </label>
-                <input
-                  type="password"
-                  value={newCredPassword}
-                  onChange={(e) => setNewCredPassword(e.target.value)}
-                  placeholder="Enter new password"
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "14px",
-                    boxSizing: "border-box"
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: "18px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
-                  Confirm New Password *
-                </label>
-                <input
-                  type="password"
-                  value={confirmCredPassword}
-                  onChange={(e) => setConfirmCredPassword(e.target.value)}
-                  placeholder="Re-enter new password"
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "14px",
-                    boxSizing: "border-box"
-                  }}
-                />
-              </div>
-
-              {credMsg && (
-                <div style={{
-                  backgroundColor: credMsg.startsWith("SUCCESS") ? "#dcfce7" : "#fee2e2",
-                  color: credMsg.startsWith("SUCCESS") ? "#166534" : "#991b1b",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  marginBottom: "16px",
-                  fontWeight: "600"
-                }}>
-                  {credMsg}
                 </div>
-              )}
 
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button
-                  type="button"
-                  onClick={() => setShowCredModal(false)}
-                  style={{
-                    flex: 1,
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                    New Password (Min 6 chars) *
+                  </label>
+                  <input
+                    type="password"
+                    value={newCredPassword}
+                    onChange={(e) => setNewCredPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "14px",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: "18px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "6px" }}>
+                    Confirm New Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmCredPassword}
+                    onChange={(e) => setConfirmCredPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "14px",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+
+                {credMsg && (
+                  <div style={{
+                    backgroundColor: credMsg.startsWith("SUCCESS") ? "#dcfce7" : "#fee2e2",
+                    color: credMsg.startsWith("SUCCESS") ? "#166534" : "#991b1b",
                     padding: "10px",
-                    backgroundColor: "#f1f5f9",
-                    color: "#475569",
-                    border: "none",
                     borderRadius: "6px",
-                    fontWeight: "bold",
-                    cursor: "pointer"
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={credLoading}
-                  style={{
-                    flex: 1,
-                    padding: "10px",
-                    backgroundColor: credLoading ? "#93c5fd" : "#1e3a8a",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontWeight: "bold",
-                    cursor: credLoading ? "not-allowed" : "pointer"
-                  }}
-                >
-                  {credLoading ? "Saving..." : (unlockedRole === "staff" || userRole === "staff") ? "Update My Password" : "Save for Both"}
-                </button>
-              </div>
-            </form>
+                    fontSize: "13px",
+                    marginBottom: "16px",
+                    fontWeight: "600"
+                  }}>
+                    {credMsg}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowCredModal(false)}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      backgroundColor: "#f1f5f9",
+                      color: "#475569",
+                      border: "none",
+                      borderRadius: "6px",
+                      fontWeight: "bold",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={credLoading}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      backgroundColor: credLoading ? "#93c5fd" : "#1e3a8a",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "6px",
+                      fontWeight: "bold",
+                      cursor: credLoading ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    {credLoading ? "Saving..." : (unlockedRole === "staff" || userRole === "staff") ? "Update My Password" : "Save for Both"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* ABOUT US TAB */}
         {activeTab === "about" && (
@@ -3890,31 +3934,124 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
       {/* ── MOBILE & TABLET BOTTOM BAR FOR INSTITUTE PORTAL ── */}
       <nav
-        className="institute-bottom-nav"
+        className={`institute-bottom-nav ${showLandscapeBars ? "revealed" : ""}`}
         suppressHydrationWarning={true}
+        style={{
+          display: 'none',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '62px',
+          backgroundColor: '#0f172a',
+          borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          zIndex: 99990,
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.4)',
+          padding: '4px 6px',
+          paddingBottom: 'calc(6px + env(safe-area-inset-bottom, 0px))',
+          boxSizing: 'border-box',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)'
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => handleTabChange("billing")}
           style={{
-            display: 'none',
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '62px',
-            backgroundColor: '#0f172a',
-            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-            justifyContent: 'space-around',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            zIndex: 99990,
-            boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.4)',
-            padding: '4px 6px',
-            paddingBottom: 'calc(6px + env(safe-area-inset-bottom, 0px))',
-            boxSizing: 'border-box',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)'
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 0',
+            color: activeTab === 'billing' ? '#38bdf8' : '#94a3b8'
           }}
         >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'billing' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+            <line x1="1" y1="10" x2="23" y2="10" />
+          </svg>
+          <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'billing' ? 800 : 600, marginTop: '3px' }}>Billing</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange("listening")}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 0',
+            color: activeTab === 'listening' ? '#38bdf8' : '#94a3b8'
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'listening' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+          </svg>
+          <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'listening' ? 800 : 600, marginTop: '3px' }}>Materials</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange("dictionary")}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 0',
+            color: activeTab === 'dictionary' ? '#38bdf8' : '#94a3b8'
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'dictionary' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
+          <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'dictionary' ? 800 : 600, marginTop: '3px' }}>Dictionary</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange("news")}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 0',
+            color: activeTab === 'news' ? '#38bdf8' : '#94a3b8'
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'news' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'news' ? 800 : 600, marginTop: '3px' }}>Notice</span>
+        </button>
+
+        {userRole !== "staff" ? (
           <button
             type="button"
-            onClick={() => handleTabChange("billing")}
+            onClick={() => handleTabChange("students")}
             style={{
               flex: 1,
               display: 'flex',
@@ -3925,19 +4062,21 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               border: 'none',
               cursor: 'pointer',
               padding: '4px 0',
-              color: activeTab === 'billing' ? '#38bdf8' : '#94a3b8'
+              color: activeTab === 'students' ? '#38bdf8' : '#94a3b8'
             }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'billing' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'students' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
-            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'billing' ? 800 : 600, marginTop: '3px' }}>Billing</span>
+            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'students' ? 800 : 600, marginTop: '3px' }}>Students</span>
           </button>
-
+        ) : (
           <button
             type="button"
-            onClick={() => handleTabChange("listening")}
+            onClick={handleLogout}
             style={{
               flex: 1,
               display: 'flex',
@@ -3948,109 +4087,14 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               border: 'none',
               cursor: 'pointer',
               padding: '4px 0',
-              color: activeTab === 'listening' ? '#38bdf8' : '#94a3b8'
+              color: '#ef4444'
             }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'listening' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-            </svg>
-            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'listening' ? 800 : 600, marginTop: '3px' }}>Materials</span>
+            <span style={{ fontSize: '18px' }}>🚪</span>
+            <span style={{ fontSize: '10.5px', fontWeight: 700, marginTop: '3px' }}>Logout</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("dictionary")}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px 0',
-              color: activeTab === 'dictionary' ? '#38bdf8' : '#94a3b8'
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'dictionary' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            </svg>
-            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'dictionary' ? 800 : 600, marginTop: '3px' }}>Dictionary</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("news")}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px 0',
-              color: activeTab === 'news' ? '#38bdf8' : '#94a3b8'
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'news' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-            <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'news' ? 800 : 600, marginTop: '3px' }}>Notice</span>
-          </button>
-
-          {userRole !== "staff" ? (
-            <button
-              type="button"
-              onClick={() => handleTabChange("students")}
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px 0',
-                color: activeTab === 'students' ? '#38bdf8' : '#94a3b8'
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={activeTab === 'students' ? '#38bdf8' : '#94a3b8'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              <span style={{ fontSize: '10.5px', fontWeight: activeTab === 'students' ? 800 : 600, marginTop: '3px' }}>Students</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleLogout}
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px 0',
-                color: '#ef4444'
-              }}
-            >
-              <span style={{ fontSize: '18px' }}>🚪</span>
-              <span style={{ fontSize: '10.5px', fontWeight: 700, marginTop: '3px' }}>Logout</span>
-            </button>
-          )}
-        </nav>
+        )}
+      </nav>
 
       <style jsx>{`
         :global(.manage-students-stats-grid) {
@@ -4111,11 +4155,88 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
         }
 
         @media (orientation: landscape) and (max-height: 550px) {
+          :global(.institute-landscape-menu-toggle) {
+            display: inline-flex !important;
+          }
+          :global(.institute-top-nav) {
+            transform: translateY(-100%) !important;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          }
+          :global(.institute-top-nav.revealed) {
+            transform: translateY(0) !important;
+          }
           :global(.institute-bottom-nav) {
-            height: 46px !important;
+            transform: translateY(100%) !important;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+          }
+          :global(.institute-bottom-nav.revealed) {
+            transform: translateY(0) !important;
+          }
+          :global(.institute-nav-spacer) {
+            height: 0px !important;
+            min-height: 0px !important;
           }
           :global(body) {
-            padding-bottom: 52px !important;
+            padding-bottom: 0px !important;
+          }
+          :global(.institute-content-area) {
+            padding: 8px 10px !important;
+          }
+          :global(.manage-students-login-wrap) {
+            min-height: 100vh !important;
+            padding: 6px !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+          :global(.manage-students-login-card) {
+            max-height: 96vh !important;
+            max-width: 440px !important;
+            border-radius: 10px !important;
+          }
+          :global(.manage-students-login-card-header) {
+            padding: 8px 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            text-align: left !important;
+          }
+          :global(.manage-students-login-card-header .login-header-icon-wrap) {
+            width: 30px !important;
+            height: 30px !important;
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+          }
+          :global(.manage-students-login-card-header .login-header-icon-wrap svg) {
+            width: 18px !important;
+            height: 18px !important;
+          }
+          :global(.manage-students-login-card-header h2) {
+            font-size: 15px !important;
+            line-height: 1.2 !important;
+          }
+          :global(.manage-students-login-card-header p) {
+            font-size: 10.5px !important;
+            margin-top: 1px !important;
+          }
+          :global(.manage-students-login-card-body) {
+            padding: 10px 16px 14px 16px !important;
+          }
+          :global(.manage-students-login-card-body .login-form-group) {
+            margin-bottom: 8px !important;
+          }
+          :global(.manage-students-login-card-body label) {
+            font-size: 11.5px !important;
+            margin-bottom: 3px !important;
+          }
+          :global(.manage-students-login-card-body input) {
+            padding: 7px 10px !important;
+            font-size: 13px !important;
+          }
+          :global(.manage-students-login-card-body button[type="submit"]) {
+            padding: 8px 14px !important;
+            font-size: 13.5px !important;
+            margin-top: 4px !important;
           }
         }
 
