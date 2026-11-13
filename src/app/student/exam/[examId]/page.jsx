@@ -368,21 +368,8 @@ const StudentExam = () => {
   }, [isStarted]);
 
   const handleGetStarted = async () => {
-    // Auto rotate screen to landscape on click of Get Start
+    // Attempt orientation lock to landscape without triggering Chrome's fullscreen exit popup
     if (typeof window !== "undefined") {
-      try {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          await docEl.requestFullscreen().catch(() => {});
-        } else if (docEl.webkitRequestFullscreen) {
-          docEl.webkitRequestFullscreen();
-        } else if (docEl.mozRequestFullScreen) {
-          docEl.mozRequestFullScreen();
-        } else if (docEl.msRequestFullscreen) {
-          docEl.msRequestFullscreen();
-        }
-      } catch (e) {}
-
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
           await screen.orientation.lock("landscape").catch(() => {});

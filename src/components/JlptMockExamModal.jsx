@@ -64,15 +64,6 @@ export default function JlptMockExamModal({
     if (typeof window !== "undefined") {
       const lockLandscape = async () => {
         try {
-          const docEl = document.documentElement;
-          if (docEl.requestFullscreen) {
-            await docEl.requestFullscreen().catch(() => {});
-          } else if (docEl.webkitRequestFullscreen) {
-            docEl.webkitRequestFullscreen();
-          }
-        } catch (e) {}
-
-        try {
           if (screen.orientation && typeof screen.orientation.lock === "function") {
             await screen.orientation.lock("landscape").catch(() => {});
           } else if (screen.lockOrientation) {
