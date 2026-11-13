@@ -152,18 +152,74 @@ const StudentResult = () => {
       const isCorrect = isAttempted && q.answer !== undefined && Number(studentAns) === Number(q.answer);
 
       return (
-        <div style={{ maxWidth: "1050px", margin: "40px auto", padding: "20px", fontFamily: "Arial, sans-serif" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-            <h2 style={{ color: "#1e293b", margin: 0 }}>Question {selectedQuestionIndex + 1} Review ({q.type})</h2>
+        <div className="result-review-outer" style={{ maxWidth: "1050px", margin: "20px auto", padding: "16px", fontFamily: "Arial, sans-serif", boxSizing: "border-box" }}>
+          <style dangerouslySetInnerHTML={{ __html: `
+            @media (orientation: landscape), (max-height: 650px) {
+              .result-review-outer {
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                padding: 4px 10px !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+              }
+              .result-review-header {
+                margin-bottom: 4px !important;
+              }
+              .result-review-header h2 {
+                font-size: 14px !important;
+              }
+              .result-review-header button {
+                padding: 4px 14px !important;
+                font-size: 12px !important;
+              }
+              .result-review-card {
+                padding: 10px 14px !important;
+                flex: 1 !important;
+                min-height: 0 !important;
+                overflow-y: auto !important;
+                border-radius: 12px !important;
+              }
+              .result-review-card p {
+                font-size: 13.5px !important;
+                margin-bottom: 3px !important;
+              }
+              .result-review-card img {
+                max-height: 85px !important;
+              }
+              .result-review-opt-list {
+                gap: 5px !important;
+                margin-top: 8px !important;
+              }
+              .result-review-opt-item {
+                padding: 5px 10px !important;
+              }
+              .result-review-opt-badge {
+                width: 22px !important;
+                height: 22px !important;
+                font-size: 11.5px !important;
+                margin-right: 8px !important;
+              }
+              .result-review-opt-text {
+                font-size: 13px !important;
+              }
+            }
+          ` }} />
+          <div className="result-review-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+            <h2 style={{ color: "#1e293b", margin: 0, fontSize: "18px" }}>Question {selectedQuestionIndex + 1} Review ({q.type})</h2>
             <button 
               onClick={() => setSelectedQuestionIndex(null)}
-              style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "10px 20px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
+              style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 18px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
             >
-              Go Back
+              ❮ Back to Grid
             </button>
           </div>
 
-          <div style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "30px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)" }}>
+          <div className="result-review-card" style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "12px", padding: "24px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)" }}>
             <p style={{ color: "#1e293b", fontSize: "15px", fontWeight: "bold", margin: "0 0 10px 0" }}>
               {q.mainHeading || (selectedQuestionIndex < 20 ? `[ ${selectedQuestionIndex + 1} ] 다음을 읽고 알맞은 것을 고르십시오.` : `[ ${selectedQuestionIndex + 1} ] 이야기를 듣고 질문에 알맞은 것을 고르십시오.`)}
             </p>
@@ -172,23 +228,23 @@ const StudentResult = () => {
                 {q.questionHeading}
               </p>
             )}
-            <p style={{ color: "#1e293b", fontSize: "18px", fontWeight: "bold", margin: "0 0 15px 0" }}>
+            <p style={{ color: "#1e293b", fontSize: "17px", fontWeight: "bold", margin: "0 0 12px 0" }}>
               {selectedQuestionIndex + 1}. {q.description || ""}
             </p>
 
             {q.image && (
-              <div style={{ margin: "15px 0", textAlign: "center" }}>
-                <img src={q.image} alt="Question Visual" style={{ maxHeight: "180px", maxWidth: "240px", objectFit: "contain", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
+              <div style={{ margin: "10px 0", textAlign: "center" }}>
+                <img src={q.image} alt="Question Visual" style={{ maxHeight: "160px", maxWidth: "240px", objectFit: "contain", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
               </div>
             )}
 
             {q.audio && (
-              <div style={{ margin: "15px 0" }}>
-                <audio controls controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} src={q.audio} style={{ width: "100%", height: "35px" }} />
+              <div style={{ margin: "10px 0" }}>
+                <audio controls controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} src={q.audio} style={{ width: "100%", height: "32px" }} />
               </div>
             )}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "25px" }}>
+            <div className="result-review-opt-list" style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "18px" }}>
               {Array.isArray(q.options) && q.options.map((opt, optIdx) => {
                 const optText = typeof opt === 'object' && opt !== null ? opt.text : opt;
                 const optImg = typeof opt === 'object' && opt !== null ? opt.image : null;
@@ -219,25 +275,25 @@ const StudentResult = () => {
                 }
 
                 return (
-                  <div key={optIdx} style={{ display: "flex", flexDirection: "column", padding: "12px 15px", backgroundColor: bg, color: color, border: border, borderRadius: "6px" }}>
+                  <div key={optIdx} className="result-review-opt-item" style={{ display: "flex", flexDirection: "column", padding: "10px 14px", backgroundColor: bg, color: color, border: border, borderRadius: "6px" }}>
                     <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                      <div style={{
-                        width: "30px", height: "30px", borderRadius: "50%", 
+                      <div className="result-review-opt-badge" style={{
+                        width: "28px", height: "28px", borderRadius: "50%", 
                         backgroundColor: badgeBg, color: badgeColor, border: badgeBorder,
                         display: "flex", alignItems: "center", justifyContent: "center", 
-                        fontWeight: "bold", fontSize: "14px", marginRight: "15px", flexShrink: 0
+                        fontWeight: "bold", fontSize: "13px", marginRight: "12px", flexShrink: 0
                       }}>
                         {optIdx + 1}
                       </div>
-                      <span style={{ fontSize: "16px", flex: 1 }}>{optText}</span>
+                      <span className="result-review-opt-text" style={{ fontSize: "15px", flex: 1 }}>{optText}</span>
                       {Number(optIdx) === Number(q.answer) && (
-                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#16a34a", marginLeft: "10px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#16a34a", marginLeft: "8px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          Correct Answer
+                          Correct
                         </span>
                       )}
                       {Number(optIdx) === Number(studentAns) && Number(optIdx) !== Number(q.answer) && (
-                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#ef4444", marginLeft: "10px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: "#ef4444", marginLeft: "8px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           Your Answer
                         </span>
@@ -245,12 +301,12 @@ const StudentResult = () => {
                     </div>
 
                     {optImg && (
-                      <div style={{ marginTop: "8px", paddingLeft: "45px" }}>
+                      <div style={{ marginTop: "6px", paddingLeft: "40px" }}>
                         <img src={optImg} alt={`Opt ${optIdx + 1}`} style={{ maxHeight: "50px", borderRadius: "4px" }} />
                       </div>
                     )}
                     {optAud && (
-                      <div style={{ marginTop: "8px", paddingLeft: "45px" }}>
+                      <div style={{ marginTop: "6px", paddingLeft: "40px" }}>
                         <audio controls controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} src={optAud} style={{ width: "100%", height: "25px" }} />
                       </div>
                     )}
@@ -281,30 +337,95 @@ const StudentResult = () => {
     }
 
     return (
-      <div style={{ maxWidth: "1000px", margin: "40px auto", padding: "20px", fontFamily: "Arial, sans-serif" }}>
-        <div style={{ marginBottom: "15px" }}>
+      <div className="result-grid-outer" style={{ maxWidth: "1000px", margin: "20px auto", padding: "16px", fontFamily: "Arial, sans-serif", boxSizing: "border-box" }}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media (orientation: landscape), (max-height: 650px) {
+            .result-grid-outer {
+              max-width: 100% !important;
+              margin: 0 auto !important;
+              padding: 3px 8px !important;
+              height: 100vh !important;
+              height: 100dvh !important;
+              max-height: 100dvh !important;
+              box-sizing: border-box !important;
+              display: flex !important;
+              flex-direction: column !important;
+              overflow: hidden !important;
+            }
+            .result-grid-top-bar {
+              margin-bottom: 3px !important;
+            }
+            .result-grid-back-btn {
+              padding: 4px 14px !important;
+              font-size: 12px !important;
+            }
+            .result-grid-card {
+              flex: 1 !important;
+              min-height: 0 !important;
+              display: flex !important;
+              flex-direction: column !important;
+              overflow: hidden !important;
+              border-radius: 10px !important;
+            }
+            .result-grid-header {
+              padding: 5px 12px !important;
+              font-size: 12px !important;
+              gap: 8px !important;
+              flex-shrink: 0 !important;
+            }
+            .result-grid-body {
+              padding: 5px 10px !important;
+              flex: 1 !important;
+              min-height: 0 !important;
+              overflow-y: auto !important;
+            }
+            .result-grid-columns {
+              gap: 10px !important;
+              flex-wrap: nowrap !important;
+            }
+            .result-grid-column {
+              min-width: 0 !important;
+              padding-right: 6px !important;
+            }
+            .result-grid-heading {
+              margin: 0 0 3px 0 !important;
+              font-size: 12.5px !important;
+            }
+            .result-grid-buttons {
+              gap: 3px !important;
+            }
+            .result-grid-btn {
+              padding: 4px 0 !important;
+              font-size: 11.5px !important;
+              min-height: 25px !important;
+              border-radius: 4px !important;
+            }
+          }
+        ` }} />
+        <div className="result-grid-top-bar" style={{ marginBottom: "12px" }}>
           <button 
+            className="result-grid-back-btn"
             onClick={() => setShowDetailedView(false)}
-            style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 18px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
+            style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 18px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
           >
-            Back
+            ❮ Back to Summary
           </button>
         </div>
 
-        <div style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.05)" }}>
-          <div style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "15px 20px", justifyContent: "space-between", fontWeight: "bold", fontSize: "15px", flexWrap: "wrap", gap: "10px" }}>
+        <div className="result-grid-card" style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "10px", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.05)" }}>
+          <div className="result-grid-header" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "12px 18px", justifyContent: "space-between", fontWeight: "bold", fontSize: "14px", flexWrap: "wrap", gap: "10px" }}>
             <span>Total Questions: {total}</span>
             <span>Exam: {examName}</span>
             <span>Solved: {calculatedAttempted}</span>
             <span>UnSolved: {unsolvedCount}</span>
           </div>
 
-          <div style={{ padding: "25px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
+          <div className="result-grid-body" style={{ padding: "18px" }}>
+            <div className="result-grid-columns" style={{ display: "flex", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
               
-              <div style={{ flex: 1, minWidth: "300px", borderRight: "2px solid #e2e8f0", paddingRight: "15px" }}>
-                <h3 style={{ textAlign: "center", color: "#0284c7", marginBottom: "15px", fontSize: "16px" }}>Reading Questions</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
+              <div className="result-grid-column" style={{ flex: 1, minWidth: "260px", borderRight: "2px solid #e2e8f0", paddingRight: "12px" }}>
+                <h3 className="result-grid-heading" style={{ textAlign: "center", color: "#0284c7", marginBottom: "10px", fontSize: "15px" }}>Reading Questions</h3>
+                <div className="result-grid-buttons" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
                   {displayedQuestions.slice(0, 20).map((q, idx) => {
                     const studentAns = getStudentAnswer(q, idx);
                     const isAttempted = studentAns !== undefined && studentAns !== null && studentAns !== "";
@@ -328,15 +449,16 @@ const StudentResult = () => {
 
                     return (
                       <button
+                        className="result-grid-btn"
                         key={q.id || idx}
                         onClick={() => setSelectedQuestionIndex(idx)}
                         style={{
-                          padding: "12px 0",
+                          padding: "10px 0",
                           backgroundColor: bgColor,
                           border: `1px solid ${borderColor}`,
                           borderRadius: "4px",
                           fontWeight: "bold",
-                          fontSize: "15px",
+                          fontSize: "14px",
                           cursor: "pointer",
                           color: textColor
                         }}
@@ -348,9 +470,9 @@ const StudentResult = () => {
                 </div>
               </div>
 
-              <div style={{ flex: 1, minWidth: "300px", paddingLeft: "5px" }}>
-                <h3 style={{ textAlign: "center", color: "#0284c7", marginBottom: "15px", fontSize: "16px" }}>Listening Questions</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
+              <div className="result-grid-column" style={{ flex: 1, minWidth: "260px", paddingLeft: "4px" }}>
+                <h3 className="result-grid-heading" style={{ textAlign: "center", color: "#0284c7", marginBottom: "10px", fontSize: "15px" }}>Listening Questions</h3>
+                <div className="result-grid-buttons" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
                   {displayedQuestions.slice(20, 40).map((q, idx) => {
                     const actualIndex = idx + 20;
                     const studentAns = getStudentAnswer(q, actualIndex);
@@ -375,15 +497,16 @@ const StudentResult = () => {
 
                     return (
                       <button
+                        className="result-grid-btn"
                         key={q.id || actualIndex}
                         onClick={() => setSelectedQuestionIndex(actualIndex)}
                         style={{
-                          padding: "12px 0",
+                          padding: "10px 0",
                           backgroundColor: bgColor,
                           border: `1px solid ${borderColor}`,
                           borderRadius: "4px",
                           fontWeight: "bold",
-                          fontSize: "15px",
+                          fontSize: "14px",
                           cursor: "pointer",
                           color: textColor
                         }}
