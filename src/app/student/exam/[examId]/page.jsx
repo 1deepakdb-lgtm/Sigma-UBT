@@ -54,38 +54,62 @@ const StudentExam = () => {
     } catch (e) {}
   }, []);
 
-  // Auto-rotate and lock screen to landscape mode on UBT Exam start
+  // Lock landscape + fullscreen when exam starts; re-lock on any rotation attempt
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (!isStarted) return;
+
+    const lockLandscape = async () => {
       try {
+        // Ensure fullscreen is active (re-enter if user dismissed it)
+        if (typeof document !== "undefined" && !document.fullscreenElement) {
+          const docEl = document.documentElement;
+          try {
+            if (docEl.requestFullscreen) await docEl.requestFullscreen().catch(() => {});
+            else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+            else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
+            else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
+          } catch (e) {}
+        }
+        // Re-lock orientation to landscape
         if (screen.orientation && typeof screen.orientation.lock === "function") {
-          screen.orientation.lock("landscape").catch(() => {
-            if (screen.orientation && typeof screen.orientation.unlock === "function") {
-              screen.orientation.unlock();
-            }
-          });
-        } else if (screen.orientation && typeof screen.orientation.unlock === "function") {
+          await screen.orientation.lock("landscape").catch(() => {});
+        } else if (screen.lockOrientation) {
+          screen.lockOrientation("landscape");
+        } else if (screen.webkitLockOrientation) {
+          screen.webkitLockOrientation("landscape");
+        } else if (screen.mozLockOrientation) {
+          screen.mozLockOrientation("landscape");
+        }
+      } catch (e) {}
+    };
+
+    // Listen for any rotation attempt and immediately re-lock landscape
+    window.addEventListener("orientationchange", lockLandscape);
+    if (screen.orientation) {
+      screen.orientation.addEventListener("change", lockLandscape);
+    }
+
+    // Initial lock (fullscreen already entered in handleGetStarted)
+    lockLandscape();
+
+    return () => {
+      window.removeEventListener("orientationchange", lockLandscape);
+      if (screen.orientation) {
+        screen.orientation.removeEventListener("change", lockLandscape);
+      }
+      try {
+        if (screen.orientation && typeof screen.orientation.unlock === "function") {
           screen.orientation.unlock();
         }
       } catch (e) {}
-    }
-    return () => {
-      if (typeof window !== "undefined") {
-        try {
-          if (screen.orientation && typeof screen.orientation.unlock === "function") {
-            screen.orientation.unlock();
-          }
-          if (document.fullscreenElement) {
-            if (document.exitFullscreen) {
-              document.exitFullscreen().catch(() => {});
-            } else if (document.webkitExitFullscreen) {
-              document.webkitExitFullscreen();
-            }
-          }
-        } catch (e) {}
-      }
+      try {
+        if (document.fullscreenElement) {
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+      } catch (e) {}
     };
-  }, []);
+  }, [isStarted]);
 
   const audioRef = useRef(null);
   const optionAudioRefs = useRef({});

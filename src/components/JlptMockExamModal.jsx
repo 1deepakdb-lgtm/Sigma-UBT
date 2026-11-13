@@ -64,17 +64,19 @@ export default function JlptMockExamModal({
     if (typeof window !== "undefined") {
       const lockLandscape = async () => {
         try {
-          const docEl = document.documentElement;
-          if (docEl.requestFullscreen) {
-            await docEl.requestFullscreen().catch(() => {});
-          } else if (docEl.webkitRequestFullscreen) {
-            docEl.webkitRequestFullscreen();
+          // Re-enter fullscreen if dismissed
+          if (!document.fullscreenElement) {
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) await docEl.requestFullscreen().catch(() => {});
+            else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+            else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
+            else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
           }
         } catch (e) {}
 
         try {
           if (screen.orientation && typeof screen.orientation.lock === "function") {
-            await screen.orientation.lock("landscape").catch(() => { });
+            await screen.orientation.lock("landscape").catch(() => {});
           } else if (screen.lockOrientation) {
             screen.lockOrientation("landscape");
           } else if (screen.webkitLockOrientation) {
@@ -82,23 +84,33 @@ export default function JlptMockExamModal({
           } else if (screen.mozLockOrientation) {
             screen.mozLockOrientation("landscape");
           }
-        } catch (e) { }
+        } catch (e) {}
       };
+
+      // Re-lock on every rotation attempt
+      window.addEventListener("orientationchange", lockLandscape);
+      if (screen.orientation) screen.orientation.addEventListener("change", lockLandscape);
+
+      // Initial lock
       lockLandscape();
-    }
-    return () => {
-      if (typeof window !== "undefined") {
+
+      return () => {
+        window.removeEventListener("orientationchange", lockLandscape);
+        if (screen.orientation) screen.orientation.removeEventListener("change", lockLandscape);
         try {
           if (screen.orientation && typeof screen.orientation.unlock === "function") {
             screen.orientation.unlock();
           }
+        } catch (e) {}
+        try {
           if (document.fullscreenElement) {
             if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
           }
-        } catch (e) { }
-      }
-    };
+        } catch (e) {}
+      };
+    }
+    return () => {};
   }, []);
 
   // Timer countdown for active exam
