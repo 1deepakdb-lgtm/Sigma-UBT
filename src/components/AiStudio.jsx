@@ -7,7 +7,8 @@ import {
   VOICE_CATEGORIES, 
   DIALOGUE_TEMPLATES, 
   ELEVENLABS_MODELS,
-  AVAILABLE_MODELS 
+  AVAILABLE_MODELS,
+  MODEL_SAMPLE_SPEECH
 } from '@/lib/elevenlabsConfig';
 import ListeningExamSynchronizer from './ListeningExamSynchronizer';
 
@@ -182,6 +183,8 @@ export default function AiStudio({
   const [isGeneratingDialogue, setIsGeneratingDialogue] = useState(false);
   const [dialogueAudioUrl, setDialogueAudioUrl] = useState(null);
   const [previewingLineIndex, setPreviewingLineIndex] = useState(null);
+  const [playingModelKey, setPlayingModelKey] = useState(null);
+  const [modelAudioUrls, setModelAudioUrls] = useState({});
 
   const audioRef = useRef(null);
   const previewAudioRef = useRef(null);
@@ -501,6 +504,144 @@ export default function AiStudio({
       if (!spoke) {
         setPreviewingVoiceId(null);
         setAudioError(err.message || 'Audio playback error');
+      }
+    }
+  };
+
+  // Dedicated Play Audio for AI Model Voice (Female and Male Separately)
+  const handlePlayModelVoice = async (modelId, gender, lang = dialogueLang, speakerRole = 'A') => {
+    const playKey = `${modelId}_${gender}_${speakerRole}`;
+
+    // If already playing this exact model voice, stop immediately (toggle off)
+    if (playingModelKey === playKey) {
+      if (previewAudioRef.current) {
+        try {
+          previewAudioRef.current.pause();
+          previewAudioRef.current.currentTime = 0;
+        } catch (e) {}
+      }
+      if (sourceNodeRef.current) {
+        try { sourceNodeRef.current.stop(); } catch (e) {}
+        sourceNodeRef.current = null;
+      }
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+      setPlayingModelKey(null);
+      setPreviewingVoiceId(null);
+      return;
+    }
+
+    // Stop currently running audio
+    if (previewAudioRef.current) {
+      try {
+        previewAudioRef.current.pause();
+        previewAudioRef.current.currentTime = 0;
+      } catch (e) {}
+    }
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch (e) {}
+      sourceNodeRef.current = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+
+    // Unlock Web Audio context synchronously during user tap
+    if (typeof window !== 'undefined') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx && !audioContextRef.current) {
+          audioContextRef.current = new AudioCtx();
+        }
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+      } catch (e) {}
+    }
+
+    setPlayingModelKey(playKey);
+    setPreviewingVoiceId(`model_${playKey}`);
+    setAudioError(null);
+
+    const targetLang = lang === 'ja' ? 'ja' : 'ko';
+    const sampleText = MODEL_SAMPLE_SPEECH[modelId]?.[targetLang]?.[gender] 
+      || (targetLang === 'ja' 
+          ? (gender === 'male' ? 'こんにちは！男性音声モデルのテストです。' : 'こんにちは！女性音声モデルのテストです。')
+          : (gender === 'male' ? '안녕하십니까! 남성 음성 모델 테스트입니다.' : '안녕하세요! 여성 음성 모델 테스트입니다.'));
+
+    const defaultVoiceProfile = targetLang === 'ja' 
+      ? (gender === 'male' ? 'ja-male-1' : 'ja-female-1')
+      : (gender === 'male' ? 'ko-male-1' : 'ko-female-1');
+
+    try {
+      const params = new URLSearchParams({
+        text: sampleText,
+        voiceProfileId: defaultVoiceProfile,
+        gender: gender,
+        modelId: modelId,
+        speechMode: 'natural_conversation',
+        speed: '1.0'
+      });
+      const url = `/api/elevenlabs/tts?${params.toString()}`;
+      setModelAudioUrls(prev => ({ ...prev, [playKey]: url }));
+
+      let audio = previewAudioRef.current;
+      if (!audio) {
+        audio = new Audio();
+        previewAudioRef.current = audio;
+      }
+      audio.src = url;
+      audio.playbackRate = 1.0;
+
+      audio.onended = () => {
+        setPlayingModelKey(null);
+        setPreviewingVoiceId(null);
+      };
+
+      const fallbackToWebAudio = () => {
+        playWebAudioStudio(
+          url,
+          gender,
+          () => {
+            setPlayingModelKey(null);
+            setPreviewingVoiceId(null);
+          },
+          () => {
+            const spoke = speakStudioNative(sampleText, targetLang === 'ja' ? 'ja-JP' : 'ko-KR', gender, () => {
+              setPlayingModelKey(null);
+              setPreviewingVoiceId(null);
+            });
+            if (!spoke) {
+              setPlayingModelKey(null);
+              setPreviewingVoiceId(null);
+              setAudioError('Failed to play model voice. Please check connection.');
+            }
+          }
+        );
+      };
+
+      audio.onerror = () => {
+        console.warn('HTML5 Audio error on mobile/tablet, attempting Web Audio fallback...');
+        fallbackToWebAudio();
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('HTML5 Audio play rejected, falling back to Web Audio:', err);
+          fallbackToWebAudio();
+        });
+      }
+    } catch (err) {
+      const spoke = speakStudioNative(sampleText, targetLang === 'ja' ? 'ja-JP' : 'ko-KR', gender, () => {
+        setPlayingModelKey(null);
+        setPreviewingVoiceId(null);
+      });
+      if (!spoke) {
+        setPlayingModelKey(null);
+        setPreviewingVoiceId(null);
+        setAudioError(err.message || 'Model voice playback error');
       }
     }
   };
@@ -1015,6 +1156,50 @@ export default function AiStudio({
 
               <button
                 type="button"
+                onClick={() => handlePlayModelVoice(selectedModel, 'female', selectedLang, 'tab1')}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #ec4899',
+                  background: playingModelKey === `${selectedModel}_female_tab1` ? '#ef4444' : '#fdf2f8',
+                  color: playingModelKey === `${selectedModel}_female_tab1` ? '#ffffff' : '#be185d',
+                  fontSize: '11px',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Test this Model's Female Voice"
+              >
+                {playingModelKey === `${selectedModel}_female_tab1` ? '⏹ Stop' : '👩 Model Female'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handlePlayModelVoice(selectedModel, 'male', selectedLang, 'tab1')}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #3b82f6',
+                  background: playingModelKey === `${selectedModel}_male_tab1` ? '#ef4444' : '#eff6ff',
+                  color: playingModelKey === `${selectedModel}_male_tab1` ? '#ffffff' : '#1d4ed8',
+                  fontSize: '11px',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Test this Model's Male Voice"
+              >
+                {playingModelKey === `${selectedModel}_male_tab1` ? '⏹ Stop' : '👨 Model Male'}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => handlePlayPreview(selectedProfile, selectedModel)}
                 style={{
                   padding: '8px 16px',
@@ -1032,7 +1217,7 @@ export default function AiStudio({
                   transition: 'all 0.15s ease'
                 }}
               >
-                {previewingVoiceId === `${selectedProfile.id}_${selectedModel}` ? '⏹ Stop Audio' : `▶ Play ${selectedProfile.name}`}
+                {previewingVoiceId === `${selectedProfile.id}_${selectedModel}` ? '⏹ Stop Profile' : `▶ Play ${selectedProfile.name}`}
               </button>
             </div>
           </div>
@@ -1654,31 +1839,109 @@ export default function AiStudio({
                 </optgroup>
               </select>
 
-              {/* Active Model Acoustic Character for Speaker A */}
-              {(() => {
-                const curModel = AVAILABLE_MODELS.find(m => m.id === dialogueModelA);
-                const voiceSpec = dialogueGenderA === 'male' ? curModel?.maleVoice : curModel?.femaleVoice;
-                return (
-                  <div style={{
-                    fontSize: '11px',
-                    color: '#15803d',
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: '7px',
-                    padding: '6px 8px',
-                    marginBottom: '10px',
-                    lineHeight: '1.3'
-                  }}>
-                    <div style={{ fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-                      <span>{dialogueGenderA === 'male' ? '👨 Model Male Voice:' : '👩 Model Female Voice:'} {voiceSpec?.name}</span>
-                      <span style={{ fontSize: '10px', color: '#166534' }}>({voiceSpec?.pitch}, {voiceSpec?.rate})</span>
-                    </div>
-                    <div style={{ fontSize: '10.5px', color: '#166534', marginTop: '2px' }}>
-                      {voiceSpec?.description}
-                    </div>
+              {/* SEPARATE PLAY AUDIO OF MODEL VOICE (FEMALE & MALE) */}
+              <div style={{
+                background: '#f0fdf4',
+                border: '1.5px solid #86efac',
+                borderRadius: '8px',
+                padding: '8px 10px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#166534', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>🎙️ Play Model Audio (Female / Male Separate):</span>
+                  <span style={{ fontSize: '10px', background: '#dcfce7', color: '#15803d', padding: '1px 6px', borderRadius: '4px' }}>
+                    {AVAILABLE_MODELS.find(m => m.id === dialogueModelA)?.shortName}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '6px' }}>
+                  {/* Female Model Voice Button */}
+                  <button
+                    type="button"
+                    onClick={() => handlePlayModelVoice(dialogueModelA, 'female', dialogueLang, 'A')}
+                    style={{
+                      padding: '7px 8px',
+                      borderRadius: '6px',
+                      border: '1.5px solid #86efac',
+                      background: playingModelKey === `${dialogueModelA}_female_A` ? '#ef4444' : '#ffffff',
+                      color: playingModelKey === `${dialogueModelA}_female_A` ? '#ffffff' : '#166534',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Play Model's Female Voice audio speech"
+                  >
+                    {playingModelKey === `${dialogueModelA}_female_A` ? '⏹ Stop' : '👩 Play Female Voice'}
+                  </button>
+
+                  {/* Male Model Voice Button */}
+                  <button
+                    type="button"
+                    onClick={() => handlePlayModelVoice(dialogueModelA, 'male', dialogueLang, 'A')}
+                    style={{
+                      padding: '7px 8px',
+                      borderRadius: '6px',
+                      border: '1.5px solid #86efac',
+                      background: playingModelKey === `${dialogueModelA}_male_A` ? '#ef4444' : '#ffffff',
+                      color: playingModelKey === `${dialogueModelA}_male_A` ? '#ffffff' : '#166534',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Play Model's Male Voice audio speech"
+                  >
+                    {playingModelKey === `${dialogueModelA}_male_A` ? '⏹ Stop' : '👨 Play Male Voice'}
+                  </button>
+                </div>
+
+                {/* Inline HTML5 Audio Player for Speaker A Model when URL is available */}
+                {(modelAudioUrls[`${dialogueModelA}_female_A`] || modelAudioUrls[`${dialogueModelA}_male_A`]) && (
+                  <div style={{ marginTop: '4px', marginBottom: '6px' }}>
+                    <audio
+                      key={playingModelKey || `${dialogueModelA}_${dialogueGenderA}_A`}
+                      controls
+                      src={modelAudioUrls[playingModelKey] || modelAudioUrls[`${dialogueModelA}_${dialogueGenderA}_A`] || modelAudioUrls[`${dialogueModelA}_female_A`] || modelAudioUrls[`${dialogueModelA}_male_A`]}
+                      style={{ width: '100%', height: '30px' }}
+                    />
                   </div>
-                );
-              })()}
+                )}
+
+                {/* Active Model Acoustic Character for Speaker A */}
+                {(() => {
+                  const curModel = AVAILABLE_MODELS.find(m => m.id === dialogueModelA);
+                  const voiceSpec = dialogueGenderA === 'male' ? curModel?.maleVoice : curModel?.femaleVoice;
+                  return (
+                    <div style={{
+                      fontSize: '10.5px',
+                      color: '#166534',
+                      borderTop: '1px dashed #bbf7d0',
+                      paddingTop: '5px',
+                      marginTop: '4px',
+                      lineHeight: '1.3'
+                    }}>
+                      <div style={{ fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                        <span>Role Voice ({dialogueGenderA === 'male' ? '👨 Male' : '👩 Female'}): {voiceSpec?.name}</span>
+                        <span style={{ fontSize: '10px', color: '#166534' }}>({voiceSpec?.pitch}, {voiceSpec?.rate})</span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#15803d', marginTop: '2px' }}>
+                        {voiceSpec?.description}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
 
               {/* Play / Test Speaker A */}
               <button
@@ -1848,31 +2111,109 @@ export default function AiStudio({
                 </optgroup>
               </select>
 
-              {/* Active Model Acoustic Character for Speaker B */}
-              {(() => {
-                const curModel = AVAILABLE_MODELS.find(m => m.id === dialogueModelB);
-                const voiceSpec = dialogueGenderB === 'female' ? curModel?.femaleVoice : curModel?.maleVoice;
-                return (
-                  <div style={{
-                    fontSize: '11px',
-                    color: '#1d4ed8',
-                    background: '#eff6ff',
-                    border: '1px solid #bfdbfe',
-                    borderRadius: '7px',
-                    padding: '6px 8px',
-                    marginBottom: '10px',
-                    lineHeight: '1.3'
-                  }}>
-                    <div style={{ fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-                      <span>{dialogueGenderB === 'female' ? '👩 Model Female Voice:' : '👨 Model Male Voice:'} {voiceSpec?.name}</span>
-                      <span style={{ fontSize: '10px', color: '#1e40af' }}>({voiceSpec?.pitch}, {voiceSpec?.rate})</span>
-                    </div>
-                    <div style={{ fontSize: '10.5px', color: '#1e40af', marginTop: '2px' }}>
-                      {voiceSpec?.description}
-                    </div>
+              {/* SEPARATE PLAY AUDIO OF MODEL VOICE (MALE & FEMALE) FOR SPEAKER B */}
+              <div style={{
+                background: '#eff6ff',
+                border: '1.5px solid #93c5fd',
+                borderRadius: '8px',
+                padding: '8px 10px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#1e40af', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>🎙️ Play Model Audio (Male / Female Separate):</span>
+                  <span style={{ fontSize: '10px', background: '#dbeafe', color: '#1d4ed8', padding: '1px 6px', borderRadius: '4px' }}>
+                    {AVAILABLE_MODELS.find(m => m.id === dialogueModelB)?.shortName}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '6px' }}>
+                  {/* Male Model Voice Button */}
+                  <button
+                    type="button"
+                    onClick={() => handlePlayModelVoice(dialogueModelB, 'male', dialogueLang, 'B')}
+                    style={{
+                      padding: '7px 8px',
+                      borderRadius: '6px',
+                      border: '1.5px solid #93c5fd',
+                      background: playingModelKey === `${dialogueModelB}_male_B` ? '#ef4444' : '#ffffff',
+                      color: playingModelKey === `${dialogueModelB}_male_B` ? '#ffffff' : '#1e40af',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Play Model's Male Voice audio speech"
+                  >
+                    {playingModelKey === `${dialogueModelB}_male_B` ? '⏹ Stop' : '👨 Play Male Voice'}
+                  </button>
+
+                  {/* Female Model Voice Button */}
+                  <button
+                    type="button"
+                    onClick={() => handlePlayModelVoice(dialogueModelB, 'female', dialogueLang, 'B')}
+                    style={{
+                      padding: '7px 8px',
+                      borderRadius: '6px',
+                      border: '1.5px solid #93c5fd',
+                      background: playingModelKey === `${dialogueModelB}_female_B` ? '#ef4444' : '#ffffff',
+                      color: playingModelKey === `${dialogueModelB}_female_B` ? '#ffffff' : '#1e40af',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Play Model's Female Voice audio speech"
+                  >
+                    {playingModelKey === `${dialogueModelB}_female_B` ? '⏹ Stop' : '👩 Play Female Voice'}
+                  </button>
+                </div>
+
+                {/* Inline HTML5 Audio Player for Speaker B Model when URL is available */}
+                {(modelAudioUrls[`${dialogueModelB}_female_B`] || modelAudioUrls[`${dialogueModelB}_male_B`]) && (
+                  <div style={{ marginTop: '4px', marginBottom: '6px' }}>
+                    <audio
+                      key={playingModelKey || `${dialogueModelB}_${dialogueGenderB}_B`}
+                      controls
+                      src={modelAudioUrls[playingModelKey] || modelAudioUrls[`${dialogueModelB}_${dialogueGenderB}_B`] || modelAudioUrls[`${dialogueModelB}_male_B`] || modelAudioUrls[`${dialogueModelB}_female_B`]}
+                      style={{ width: '100%', height: '30px' }}
+                    />
                   </div>
-                );
-              })()}
+                )}
+
+                {/* Active Model Acoustic Character for Speaker B */}
+                {(() => {
+                  const curModel = AVAILABLE_MODELS.find(m => m.id === dialogueModelB);
+                  const voiceSpec = dialogueGenderB === 'female' ? curModel?.femaleVoice : curModel?.maleVoice;
+                  return (
+                    <div style={{
+                      fontSize: '10.5px',
+                      color: '#1e40af',
+                      borderTop: '1px dashed #bfdbfe',
+                      paddingTop: '5px',
+                      marginTop: '4px',
+                      lineHeight: '1.3'
+                    }}>
+                      <div style={{ fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                        <span>Role Voice ({dialogueGenderB === 'female' ? '👩 Female' : '👨 Male'}): {voiceSpec?.name}</span>
+                        <span style={{ fontSize: '10px', color: '#1e40af' }}>({voiceSpec?.pitch}, {voiceSpec?.rate})</span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: '#1d4ed8', marginTop: '2px' }}>
+                        {voiceSpec?.description}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
 
               {/* Play / Test Speaker B */}
               <button
