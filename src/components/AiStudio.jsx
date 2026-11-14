@@ -446,6 +446,9 @@ export default function AiStudio({
         voiceProfileId: voice.id,
         gender: targetGender,
         modelId: effectiveModel,
+        pitch: voice.pitch || '+0Hz',
+        rate: voice.rate || '+0%',
+        voice: voice.voice || '',
         speechMode: voice.defaultSpeechMode || 'teacher',
         ageStyle: voice.ageStyle || '',
         personality: voice.personality || '',
@@ -460,7 +463,17 @@ export default function AiStudio({
         if (previewAudioRef.current) {
           try { previewAudioRef.current.pause(); } catch (e) { }
         }
-        const edgeUrl = `/api/tts?text=${encodeURIComponent(voice.sampleSentence)}&lang=${voice.language}&gender=${targetGender}&model=${encodeURIComponent(voice.id)}&voice=${encodeURIComponent(voice.voice || '')}`;
+        const edgeParams = new URLSearchParams({
+          text: voice.sampleSentence,
+          lang: voice.language,
+          gender: targetGender,
+          model: voice.id,
+          modelId: effectiveModel,
+          voice: voice.voice || '',
+          pitch: voice.pitch || '+0Hz',
+          rate: voice.rate || '+0%'
+        });
+        const edgeUrl = `/api/tts?${edgeParams.toString()}`;
         const fallbackAudio = new Audio(edgeUrl);
         previewAudioRef.current = fallbackAudio;
         fallbackAudio.playbackRate = 1.0;
@@ -666,6 +679,12 @@ export default function AiStudio({
   }
 
   const elUrl = `/api/elevenlabs/tts?${baseParams.toString()}`;
+  let audio = previewAudioRef.current;
+  if (!audio) {
+    audio = new Audio();
+    previewAudioRef.current = audio;
+  }
+  audio.src = elUrl;
   audio.playbackRate = 1.0;
 
   let started = false;
