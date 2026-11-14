@@ -1606,18 +1606,12 @@ const StudentDashboard = () => {
 
   const enforceLandscapeMode = async () => {
     if (typeof window !== "undefined") {
-      try {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          await docEl.requestFullscreen().catch(() => {});
-        } else if (docEl.webkitRequestFullscreen) {
-          docEl.webkitRequestFullscreen();
-        } else if (docEl.mozRequestFullScreen) {
-          docEl.mozRequestFullScreen();
-        } else if (docEl.msRequestFullscreen) {
-          docEl.msRequestFullscreen();
-        }
-      } catch (e) {}
+      // Gracefully exit native fullscreen to prevent browser "Drag from top to exit full screen" toast
+      if (typeof document !== "undefined" && document.fullscreenElement) {
+        try {
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        } catch (e) {}
+      }
 
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {

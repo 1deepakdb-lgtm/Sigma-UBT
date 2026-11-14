@@ -62,18 +62,14 @@ export default function JlptMockExamModal({
     }
 
     if (typeof window !== "undefined") {
-      const lockLandscape = async () => {
+      // Gracefully exit native fullscreen to prevent browser "Drag from top to exit full screen" toast
+      if (typeof document !== "undefined" && document.fullscreenElement) {
         try {
-          // Re-enter fullscreen if dismissed
-          if (!document.fullscreenElement) {
-            const docEl = document.documentElement;
-            if (docEl.requestFullscreen) await docEl.requestFullscreen().catch(() => {});
-            else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
-            else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
-            else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
-          }
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
         } catch (e) {}
+      }
 
+      const lockLandscape = async () => {
         try {
           if (screen.orientation && typeof screen.orientation.lock === "function") {
             await screen.orientation.lock("landscape").catch(() => {});
@@ -1328,7 +1324,7 @@ export default function JlptMockExamModal({
                       onClick={() => setCurrentQIndex(idx)}
                       style={{
                         padding: "8px 0",
-                        borderRadius: "8px",
+                        borderRadius: "10px",
                         border: `1.5px solid ${border}`,
                         backgroundColor: bg,
                         color: text,

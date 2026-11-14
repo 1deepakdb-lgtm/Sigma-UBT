@@ -455,12 +455,13 @@ const StudentResult = () => {
                         style={{
                           padding: "10px 0",
                           backgroundColor: bgColor,
-                          border: `1px solid ${borderColor}`,
-                          borderRadius: "4px",
+                          border: `1.5px solid ${borderColor}`,
+                          borderRadius: "10px",
                           fontWeight: "bold",
                           fontSize: "14px",
                           cursor: "pointer",
-                          color: textColor
+                          color: textColor,
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
                         }}
                       >
                         {idx + 1}
@@ -503,12 +504,13 @@ const StudentResult = () => {
                         style={{
                           padding: "10px 0",
                           backgroundColor: bgColor,
-                          border: `1px solid ${borderColor}`,
-                          borderRadius: "4px",
+                          border: `1.5px solid ${borderColor}`,
+                          borderRadius: "10px",
                           fontWeight: "bold",
                           fontSize: "14px",
                           cursor: "pointer",
-                          color: textColor
+                          color: textColor,
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
                         }}
                       >
                         {actualIndex + 1}
