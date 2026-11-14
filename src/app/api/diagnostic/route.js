@@ -37,7 +37,9 @@ export async function GET(request) {
     // Test running tts_engine.py directly with each python
     result.ttsEngineTest = {};
     const testScript = path.join(process.cwd(), 'scripts', 'tts_engine.py');
-    const testOut = '/tmp/test_diag_tts.mp3';
+    const diagTmpDir = path.join(process.cwd(), 'public', 'audio-cache', 'tmp');
+    try { if (!fs.existsSync(diagTmpDir)) fs.mkdirSync(diagTmpDir, { recursive: true }); } catch {}
+    const testOut = path.join(diagTmpDir, 'test_diag_tts.mp3');
     for (const py of ['/opt/alt/python311/bin/python3', 'python3', '/usr/bin/python3']) {
       try {
         if (fs.existsSync(testOut)) fs.unlinkSync(testOut);

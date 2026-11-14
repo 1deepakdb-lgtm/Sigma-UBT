@@ -106,7 +106,13 @@ async def main():
     try:
         communicate = edge_tts.Communicate(text, voice, pitch=pitch, rate=rate)
         if out_path:
-            await communicate.save(out_path)
+            out_dir = os.path.dirname(os.path.abspath(out_path))
+            if out_dir and not os.path.exists(out_dir):
+                os.makedirs(out_dir, exist_ok=True)
+            with open(out_path, "wb") as f:
+                async for chunk in communicate.stream():
+                    if chunk["type"] == "audio" and "data" in chunk:
+                        f.write(chunk["data"])
         else:
             async for chunk in communicate.stream():
                 if chunk["type"] == "audio" and "data" in chunk:
@@ -123,7 +129,13 @@ async def main():
             try:
                 communicate = edge_tts.Communicate(text, fallback_voice, pitch=pitch, rate=rate)
                 if out_path:
-                    await communicate.save(out_path)
+                    out_dir = os.path.dirname(os.path.abspath(out_path))
+                    if out_dir and not os.path.exists(out_dir):
+                        os.makedirs(out_dir, exist_ok=True)
+                    with open(out_path, "wb") as f:
+                        async for chunk in communicate.stream():
+                            if chunk["type"] == "audio" and "data" in chunk:
+                                f.write(chunk["data"])
                 else:
                     async for chunk in communicate.stream():
                         if chunk["type"] == "audio" and "data" in chunk:

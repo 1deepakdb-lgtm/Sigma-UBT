@@ -625,20 +625,21 @@ export default function AiStudio({
     const cleanText = turn.text.trim();
     const lang = assignedVoice?.language || (dialogueLang === 'ja' ? 'ja' : 'ko');
 
-    text: cleanText,
+    const baseParams = new URLSearchParams({
+      text: cleanText,
       lang,
       gender: targetGender,
-        model: assignedVoiceId,
-          modelId: assignedModelId,
-            voiceProfileId: assignedVoiceId,
-              voice: assignedVoice?.voice || '',
-                pitch: assignedVoice?.pitch || '+0Hz',
-                  rate: assignedVoice?.rate || '+0%',
-                    ageStyle: assignedVoice?.ageStyle || '',
-                      personality: assignedVoice?.personality || '',
-                        speechMode: assignedVoice?.defaultSpeechMode || 'natural_conversation',
-                          emotion: assignedVoice?.defaultEmotion || 'reassuring'
-  });
+      model: assignedVoiceId,
+      modelId: assignedModelId,
+      voiceProfileId: assignedVoiceId,
+      voice: assignedVoice?.voice || '',
+      pitch: assignedVoice?.pitch || '+0Hz',
+      rate: assignedVoice?.rate || '+0%',
+      ageStyle: assignedVoice?.ageStyle || '',
+      personality: assignedVoice?.personality || '',
+      speechMode: assignedVoice?.defaultSpeechMode || 'natural_conversation',
+      emotion: assignedVoice?.defaultEmotion || 'reassuring'
+    });
   const edgeUrl = `/api/tts?${baseParams.toString()}`;
 
   const playFallback = () => {
@@ -743,9 +744,15 @@ const handleGenerateDialogue = async () => {
             text: t.text.trim(),
             voiceProfileId: assignedVId,
             modelId: t.modelId || (t.speaker === 'A' ? (dialogueModelA || 'eleven_multilingual_v2') : (dialogueModelB || 'eleven_turbo_v2_5')),
-            style: 'natural_conversation',
-            download: canDownloadAudio
-          })
+            gender: vProf?.gender || (t.speaker === 'A' ? 'female' : 'male'),
+            pitch: vProf?.pitch || '+0Hz',
+            rate: vProf?.rate || '+0%'
+          };
+        }),
+        modelId: dialogueModelA || 'eleven_multilingual_v2',
+        style: 'natural_conversation',
+        download: canDownloadAudio
+      })
       });
 
       if(!res.ok) {
@@ -2061,22 +2068,23 @@ return (
                         }
                         setDialogueTurns(updated);
                       }}
-                      padding: '6px 12px',
-                    borderRadius: '7px',
-                    border: 'none',
-                    background: isSpeakerA ? '#16a34a' : '#2563eb',
-                    color: '#ffffff',
-                    fontSize: '11.5px',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    flexShrink: 0
-                        }}
-                      >
-                    {isSpeakerA ? '👩 Speaker A' : '👨 Speaker B'}
-                  </button>
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '7px',
+                        border: 'none',
+                        background: isSpeakerA ? '#16a34a' : '#2563eb',
+                        color: '#ffffff',
+                        fontSize: '11.5px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        flexShrink: 0
+                      }}
+                    >
+                      {isSpeakerA ? '👩 Speaker A' : '👨 Speaker B'}
+                    </button>
 
                   {/* Custom Voice selector for this specific line */}
                   <select
@@ -2110,24 +2118,28 @@ return (
                   </select>
 
                   {/* Model Selector for this specific line */}
-                  value={assignedModelId}
-                  onChange={(e) => {
-                    const updated = [...dialogueTurns];
-                    style = {{
+                  <select
+                    value={assignedModelId}
+                    onChange={(e) => {
+                      const updated = [...dialogueTurns];
+                      updated[index].modelId = e.target.value;
+                      setDialogueTurns(updated);
+                    }}
+                    style={{
                       padding: '5px 8px',
-                        borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '11px',
-                  fontWeight: '700',
-                  background: '#ffffff',
-                  color: '#334155',
-                  maxWidth: '140px'
-                        }}
-                      >
-                  {AVAILABLE_MODELS.map(m => (
-                    <option key={m.id} value={m.id}>{m.shortName || m.name}</option>
-                  ))}
-                </select>
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      background: '#ffffff',
+                      color: '#334155',
+                      maxWidth: '140px'
+                    }}
+                  >
+                    {AVAILABLE_MODELS.map(m => (
+                      <option key={m.id} value={m.id}>{m.shortName || m.name}</option>
+                    ))}
+                  </select>
                     </div>
 
           {/* Dialogue Line Input */}
@@ -2246,10 +2258,12 @@ return (
       alignItems: 'center',
       gap: '6px'
     }}
-  >
-    ➕ Add Dialogue Turn
-    {/* Synchronize and Merge All Dialogue Turns into Single Conversation Audio */}
-    <button
+            >
+              ➕ Add Dialogue Turn
+            </button>
+
+            {/* Synchronize and Merge All Dialogue Turns into Single Conversation Audio */}
+            <button
       type="button"
       onClick={handleGenerateDialogue}
       disabled={isGeneratingDialogue}

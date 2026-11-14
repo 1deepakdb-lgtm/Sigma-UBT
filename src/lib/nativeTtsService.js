@@ -178,7 +178,11 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   pitchStr = (pitchVal >= 0 ? `+${pitchVal}Hz` : `${pitchVal}Hz`);
   rateStr = (rateVal >= 0 ? `+${rateVal}%` : `${rateVal}%`);
 
-  const tmpOut = path.join(os.tmpdir(), `neural_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.mp3`);
+  const tmpDir = path.join(process.cwd(), 'public', 'audio-cache', 'tmp');
+  try {
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+  } catch {}
+  const tmpOut = path.join(tmpDir, `neural_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.mp3`);
   const scriptPath = path.join(process.cwd(), 'scripts', 'tts_engine.py');
 
   const userHome = process.env.HOME || '/home/examjkco';
