@@ -80,45 +80,44 @@ export default function AiStudio({
     }
   }, [userRole, activeTab]);
 
-  // Strict check: audio download is only allowed for Admin and Institute, NEVER for students
-  const [canDownloadAudio, setCanDownloadAudio] = useState(() => {
-    if (userRole) {
-      const r = String(userRole).toLowerCase();
-      if (r === 'student' || r === 'staff' || r === 'teacher') return false;
-      if (r === 'admin' || r === 'superadmin' || r === 'institute') return true;
-    }
+  // Strict role check: Audio download is exclusively available to Admin and Institute.
+  // Students and unauthorized users have listen-only restricted access.
+  const computeCanDownload = () => {
+    // 1. Explicit admin/institute userRole prop or superadmin flag
+    const r = String(userRole || '').toLowerCase().trim();
+    if (r === 'admin' || r === 'superadmin' || r === 'institute') return true;
+    if (r === 'student') return false;
+
     if (typeof window !== 'undefined') {
       try {
         const pathname = window.location.pathname || '';
-        if (pathname.includes('/student')) return false;
-        if (localStorage.getItem('currentStudentPhone') || localStorage.getItem('studentPhone')) return false;
+        // 2. Admin or Institute routes are strictly authorized for download
+        if (pathname.startsWith('/admin') || pathname.startsWith('/institute')) {
+          return true;
+        }
 
-        const r = (localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
-        if (r === 'student') return false;
-        if (r === 'admin' || r === 'superadmin' || r === 'institute') return true;
+        // 3. Student routes are strictly restricted
+        if (pathname.startsWith('/student') || pathname.includes('/student')) {
+          return false;
+        }
 
-        if (pathname.startsWith('/admin') || pathname.startsWith('/institute')) return true;
-      } catch (e) { }
+        // 4. Stored role verification
+        const storedRole = (localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase().trim();
+        if (storedRole === 'admin' || storedRole === 'superadmin' || storedRole === 'institute') {
+          return true;
+        }
+        if (storedRole === 'student' || localStorage.getItem('currentStudentPhone') || localStorage.getItem('studentPhone')) {
+          return false;
+        }
+      } catch (e) {}
     }
     return false;
-  });
+  };
+
+  const [canDownloadAudio, setCanDownloadAudio] = useState(computeCanDownload);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const pathname = window.location.pathname || '';
-      if (pathname.includes('/student') || localStorage.getItem('currentStudentPhone') || localStorage.getItem('studentPhone')) {
-        setCanDownloadAudio(false);
-        return;
-      }
-      const r = (userRole || localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
-      if (r === 'student') {
-        setCanDownloadAudio(false);
-      } else if (r === 'admin' || r === 'superadmin' || r === 'institute' || pathname.startsWith('/admin') || pathname.startsWith('/institute')) {
-        setCanDownloadAudio(true);
-      } else {
-        setCanDownloadAudio(false);
-      }
-    }
+    setCanDownloadAudio(computeCanDownload());
   }, [userRole]);
 
   // Determine effective student language ('korean' | 'japanese' | 'both')
@@ -2367,6 +2366,18 @@ return (
           <a
             href={dialogueAudioUrl}
             download={`synchronized_dialogue_${Date.now()}.mp3`}
+            onClick={(e) => {
+              if (!dialogueAudioUrl) return;
+              try {
+                const a = document.createElement('a');
+                a.href = dialogueAudioUrl;
+                a.download = `synchronized_dialogue_${Date.now()}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                e.preventDefault();
+              } catch (err) {}
+            }}
             style={{
               background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
               color: '#ffffff',
