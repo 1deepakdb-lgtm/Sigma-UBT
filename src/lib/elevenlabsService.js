@@ -64,7 +64,6 @@ async function fallbackSynthesis(text, lang, gender, options = {}) {
       vocalWeight: options.weight,
       pitchFactor: options.pitchFactor,
       model: options.model,
-      modelId: options.modelId,
       pitch: options.pitch,
       rate: options.rate,
       voice: options.voice
@@ -150,7 +149,6 @@ export async function synthesizeElevenLabs({
     weight: weight !== null ? weight : profile.baseVocalWeight,
     pitchFactor: pitchFactor !== null ? pitchFactor : profile.basePitchFactor,
     model: profile.id,
-    modelId: modelId,
     pitch: profile.pitch || '+0Hz',
     rate: profile.rate || '+0%',
     voice: profile.voice || ''
@@ -177,24 +175,13 @@ export async function synthesizeElevenLabs({
     }
   }
 
-  // 4. Check for Humanized Models, Neural Studio HD override, or ElevenLabs API Key
-  const isHumanizedOrLocalModel = [
-    'neural_studio_hd',
-    'humanized_conversational_v3',
-    'deep_human_neural_v2',
-    'humanized_pedagogical_v1',
-    'edge_neural_human'
-  ].includes(modelId);
-
+  // 4. Check for Neural Studio HD override or ElevenLabs API Key
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (isHumanizedOrLocalModel || !apiKey || apiKey === 'YOUR_ELEVENLABS_API_KEY') {
-    if (!isHumanizedOrLocalModel) {
+  if (modelId === 'neural_studio_hd' || !apiKey || apiKey === 'YOUR_ELEVENLABS_API_KEY') {
+    if (modelId !== 'neural_studio_hd') {
       console.info('ELEVENLABS_API_KEY not configured. Seamlessly activating local studio audio engine.');
     }
-    const fallback = await fallbackSynthesis(naturalized, lang, profile.gender, {
-      ...categoryMeta,
-      modelId
-    });
+    const fallback = await fallbackSynthesis(naturalized, lang, profile.gender, categoryMeta);
     if (fallback) {
       try {
         fs.writeFileSync(cacheFilePath, fallback.buffer);
@@ -204,7 +191,7 @@ export async function synthesizeElevenLabs({
       return {
         ...fallback,
         cached: false,
-        warning: isHumanizedOrLocalModel ? null : 'ELEVENLABS_API_KEY is not set in .env. Served via native high-fidelity audio engine.'
+        warning: modelId === 'neural_studio_hd' ? null : 'ELEVENLABS_API_KEY is not set in .env. Served via native high-fidelity audio engine.'
       };
     }
     throw new Error('Audio engine unavailable. Please try again.');
