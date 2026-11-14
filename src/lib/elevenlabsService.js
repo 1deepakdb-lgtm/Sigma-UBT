@@ -315,6 +315,7 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
       const res = await synthesizeElevenLabs({
         text: turn.text,
         voiceProfileId: voiceProfId,
+        gender: turn.gender || voiceProf?.gender || (turn.speaker === 'A' ? 'female' : 'male'),
         modelId: turn.modelId || modelId,
         style: turn.style || style
       });
@@ -327,13 +328,21 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
 
     if (!buf) {
       try {
-        const isMale = voiceProf?.gender === 'male' || (turn.speaker === 'B' && !voiceProf);
+        const isMale = voiceProf?.gender === 'male' || (turn.speaker === 'B' && (!voiceProf || voiceProf.gender !== 'female'));
         const fallback = await synthesizeSpeechBuffer({
           text: turn.text,
           lang: voiceProf?.language || 'ko',
           gender: isMale ? 'male' : 'female',
           model: voiceProfId,
-          voice: voiceProf?.voice || ''
+          voice: voiceProf?.voice || '',
+          pitch: voiceProf?.pitch || '+0Hz',
+          rate: voiceProf?.rate || '+0%',
+          ageStyle: voiceProf?.ageStyle,
+          personality: voiceProf?.personality,
+          speechMode: voiceProf?.defaultSpeechMode || 'natural_conversation',
+          emotion: voiceProf?.defaultEmotion || 'reassuring',
+          vocalWeight: voiceProf?.baseVocalWeight,
+          pitchFactor: voiceProf?.basePitchFactor
         });
         if (fallback && fallback.buffer && fallback.buffer.length > 0) {
           buf = fallback.buffer;

@@ -135,6 +135,17 @@ async function runDeployTasks(repoDir) {
     // node_modules check completed
   }
 
+  // 5b. Ensure Python edge-tts package is installed for cPanel user
+  try {
+    addLog(`🐍 Ensuring edge-tts python dependency is installed...`);
+    const pipRes = await execAsync('python3 -m pip install --user --upgrade edge-tts 2>&1 || pip3 install --user --upgrade edge-tts 2>&1', execOpts);
+    const pipOut = String(pipRes?.stdout || '').trim();
+    if (pipOut) addLog(`🐍 Pip details: ${pipOut.slice(0, 150)}`);
+    addLog(`✅ edge-tts package verified.`);
+  } catch (e) {
+    addLog(`ℹ️ edge-tts pip check notice: ${e.message}`);
+  }
+
   // 6. Phusion Passenger restart trigger
   const tmpDir = path.join(repoDir, 'tmp');
   const restartFile = path.join(tmpDir, 'restart.txt');

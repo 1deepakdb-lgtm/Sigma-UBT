@@ -48,54 +48,52 @@ const VOICE_CONFIG = {
 };
 
 // Master Model Voice Tone Profiles for Korean & Japanese
-// Model 1: Default baseline voice tone (+0Hz pitch, +0% rate)
-// Models 2 to 6: Distinct unique voice tone, pitch, speed, and acoustic timbre
 const MODEL_VOICE_TONES = {
   // ── Korean Female ──────────────────────────────────────
-  'ko-female-1': { voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '+0%' },  // DEFAULT BASELINE
-  'ko-female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+6Hz', rate: '+4%' },  // Bright & Cheerful
-  'ko-female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+2Hz', rate: '-3%' },  // Diction / Clear
-  'ko-female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-4Hz', rate: '+2%' },  // News Announcer
-  'ko-female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+10Hz', rate: '+5%' }, // Youthful Student
-  'ko-female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '-5%' },  // Warm Calming Mentor
+  'ko-female-1': { voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '+0%' },   // Teacher Baseline
+  'ko-female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+14Hz', rate: '+6%' },  // Bright & Cheerful
+  'ko-female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+5Hz', rate: '-6%' },   // Diction / Clear
+  'ko-female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-12Hz', rate: '+3%' },  // News Announcer
+  'ko-female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+22Hz', rate: '+8%' },  // Youthful Student
+  'ko-female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-18Hz', rate: '-8%' },  // Warm Calming Mentor
 
   'female-1': { voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '+0%' },
-  'female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+6Hz', rate: '+4%' },
-  'female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+2Hz', rate: '-3%' },
-  'female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-4Hz', rate: '+2%' },
-  'female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+10Hz', rate: '+5%' },
-  'female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-6Hz', rate: '-5%' },
+  'female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+14Hz', rate: '+6%' },
+  'female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+5Hz', rate: '-6%' },
+  'female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-12Hz', rate: '+3%' },
+  'female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+22Hz', rate: '+8%' },
+  'female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-18Hz', rate: '-8%' },
 
   // ── Korean Male ────────────────────────────────────────
-  'ko-male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },   // DEFAULT BASELINE
-  'ko-male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-10Hz', rate: '-4%' },  // Deep Bass & Calm
-  'ko-male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+0Hz', rate: '+3%' }, // Energetic Workplace Professional
-  'ko-male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-6Hz', rate: '+2%' },   // Resonant Broadcaster
-  'ko-male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+5%' }, // Friendly Travel Companion
-  'ko-male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-4Hz', rate: '-6%' },   // Senior Academic Lecturer
+  'ko-male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },    // Teacher Baseline
+  'ko-male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-24Hz', rate: '-6%' },   // Deep Bass & Calm
+  'ko-male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+4%' }, // Energetic Workplace Professional
+  'ko-male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-12Hz', rate: '+2%' },   // Resonant Broadcaster
+  'ko-male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+18Hz', rate: '+6%' }, // Friendly Travel Companion
+  'ko-male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-16Hz', rate: '-10%' },  // Senior Academic Lecturer
 
   'male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },
-  'male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-10Hz', rate: '-4%' },
-  'male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+0Hz', rate: '+3%' },
-  'male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-6Hz', rate: '+2%' },
-  'male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+5%' },
-  'male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-4Hz', rate: '-6%' },
+  'male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-24Hz', rate: '-6%' },
+  'male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+4%' },
+  'male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-12Hz', rate: '+2%' },
+  'male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+18Hz', rate: '+6%' },
+  'male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-16Hz', rate: '-10%' },
 
   // ── Japanese Female ────────────────────────────────────
-  'ja-female-1': { voice: 'ja-JP-NanamiNeural', pitch: '+0Hz', rate: '+0%' }, // DEFAULT BASELINE
-  'ja-female-2': { voice: 'ja-JP-NanamiNeural', pitch: '+6Hz', rate: '+4%' }, // Bright & Friendly
-  'ja-female-3': { voice: 'ja-JP-NanamiNeural', pitch: '+2Hz', rate: '-3%' }, // Soft Pronunciation
-  'ja-female-4': { voice: 'ja-JP-NanamiNeural', pitch: '-4Hz', rate: '+2%' }, // News Announcer
-  'ja-female-5': { voice: 'ja-JP-NanamiNeural', pitch: '+10Hz', rate: '+5%' },// Lively Campus Student
-  'ja-female-6': { voice: 'ja-JP-NanamiNeural', pitch: '-6Hz', rate: '-5%' }, // Warm Mentor & Storyteller
+  'ja-female-1': { voice: 'ja-JP-NanamiNeural', pitch: '+0Hz', rate: '+0%' },  // Teacher Baseline
+  'ja-female-2': { voice: 'ja-JP-NanamiNeural', pitch: '+16Hz', rate: '+6%' }, // Bright & Friendly
+  'ja-female-3': { voice: 'ja-JP-NanamiNeural', pitch: '+5Hz', rate: '-6%' },  // Soft Pronunciation
+  'ja-female-4': { voice: 'ja-JP-NanamiNeural', pitch: '-12Hz', rate: '+3%' }, // News Announcer
+  'ja-female-5': { voice: 'ja-JP-NanamiNeural', pitch: '+24Hz', rate: '+8%' }, // Lively Campus Student
+  'ja-female-6': { voice: 'ja-JP-NanamiNeural', pitch: '-18Hz', rate: '-8%' }, // Warm Mentor & Storyteller
 
   // ── Japanese Male ──────────────────────────────────────
-  'ja-male-1': { voice: 'ja-JP-KeitaNeural', pitch: '+0Hz', rate: '+0%' },    // DEFAULT BASELINE
-  'ja-male-2': { voice: 'ja-JP-KeitaNeural', pitch: '-10Hz', rate: '-4%' },   // Deep Calm Baritone
-  'ja-male-3': { voice: 'ja-JP-KeitaNeural', pitch: '+4Hz', rate: '+3%' },    // Energetic Business Keigo
-  'ja-male-4': { voice: 'ja-JP-KeitaNeural', pitch: '-6Hz', rate: '+2%' },    // Resonant Narrator
-  'ja-male-5': { voice: 'ja-JP-KeitaNeural', pitch: '+8Hz', rate: '+5%' },    // Friendly Casual Companion
-  'ja-male-6': { voice: 'ja-JP-KeitaNeural', pitch: '-4Hz', rate: '-6%' }     // Senior Academic Lecturer
+  'ja-male-1': { voice: 'ja-JP-KeitaNeural', pitch: '+0Hz', rate: '+0%' },     // Teacher Baseline
+  'ja-male-2': { voice: 'ja-JP-KeitaNeural', pitch: '-24Hz', rate: '-6%' },    // Deep Calm Baritone
+  'ja-male-3': { voice: 'ja-JP-KeitaNeural', pitch: '+8Hz', rate: '+4%' },     // Energetic Business Keigo
+  'ja-male-4': { voice: 'ja-JP-KeitaNeural', pitch: '-14Hz', rate: '+2%' },    // Resonant Narrator
+  'ja-male-5': { voice: 'ja-JP-KeitaNeural', pitch: '+18Hz', rate: '+6%' },    // Friendly Casual Companion
+  'ja-male-6': { voice: 'ja-JP-KeitaNeural', pitch: '-16Hz', rate: '-10%' }    // Senior Academic Lecturer
 };
 
 /**
@@ -196,7 +194,7 @@ async function generateNeuralSpeech(text, lang = 'ja', gender = 'female', option
     PYTHONUNBUFFERED: '1'
   };
 
-  const pyCandidates = ['python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3'];
+  const pyCandidates = ['python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3', '/home/examjkco/.local/bin/python3'];
   for (const py of pyCandidates) {
     try {
       execFileSync(py, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {

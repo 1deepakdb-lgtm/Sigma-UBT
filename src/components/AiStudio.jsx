@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  VOICE_PROFILES, 
-  SPEAKING_STYLES, 
-  VOICE_CATEGORIES, 
+import {
+  VOICE_PROFILES,
+  SPEAKING_STYLES,
+  VOICE_CATEGORIES,
   ELEVENLABS_MODELS,
   AVAILABLE_MODELS,
-  DIALOGUE_TEMPLATES 
+  DIALOGUE_TEMPLATES
 } from '@/lib/elevenlabsConfig';
 import ListeningExamSynchronizer from './ListeningExamSynchronizer';
 
@@ -57,7 +57,7 @@ export default function AiStudio({
           if (r === 'student' || r === 'institute') return false;
           return true;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     return false;
   });
@@ -98,7 +98,7 @@ export default function AiStudio({
         if (r === 'admin' || r === 'superadmin' || r === 'institute') return true;
 
         if (pathname.startsWith('/admin') || pathname.startsWith('/institute')) return true;
-      } catch (e) {}
+      } catch (e) { }
     }
     return false;
   });
@@ -145,7 +145,7 @@ export default function AiStudio({
   const [selectedStyle, setSelectedStyle] = useState('natural_conversation');
   const [inputText, setInputText] = useState(initialText || '');
   const [speakingSpeed, setSpeakingSpeed] = useState(1.0);
-  
+
   // Categorical States
   const [selectedAgeStyle, setSelectedAgeStyle] = useState('warm');
   const [selectedPersonality, setSelectedPersonality] = useState('friendly');
@@ -247,7 +247,7 @@ export default function AiStudio({
           setApiStatus({ hasApiKey: data.hasApiKey, ready: true });
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     const currentLang = effectiveInstLang === 'japanese' ? 'ja' : effectiveInstLang === 'korean' ? 'ko' : selectedLang;
     if (!initialText) {
@@ -336,7 +336,7 @@ export default function AiStudio({
     }
 
     if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop(); } catch (e) {}
+      try { sourceNodeRef.current.stop(); } catch (e) { }
       sourceNodeRef.current = null;
     }
 
@@ -393,14 +393,14 @@ export default function AiStudio({
         try {
           previewAudioRef.current.pause();
           previewAudioRef.current.currentTime = 0;
-        } catch (e) {}
+        } catch (e) { }
       }
       if (sourceNodeRef.current) {
-        try { sourceNodeRef.current.stop(); } catch (e) {}
+        try { sourceNodeRef.current.stop(); } catch (e) { }
         sourceNodeRef.current = null;
       }
       if (typeof window !== 'undefined' && window.speechSynthesis) {
-        try { window.speechSynthesis.cancel(); } catch (e) {}
+        try { window.speechSynthesis.cancel(); } catch (e) { }
       }
       setPreviewingVoiceId(null);
       return;
@@ -411,14 +411,14 @@ export default function AiStudio({
       try {
         previewAudioRef.current.pause();
         previewAudioRef.current.currentTime = 0;
-      } catch (e) {}
+      } catch (e) { }
     }
     if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop(); } catch (e) {}
+      try { sourceNodeRef.current.stop(); } catch (e) { }
       sourceNodeRef.current = null;
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      try { window.speechSynthesis.cancel(); } catch (e) {}
+      try { window.speechSynthesis.cancel(); } catch (e) { }
     }
 
     // Unlock Web Audio context synchronously during user tap (crucial for mobile/tablet Safari & Chrome)
@@ -431,7 +431,7 @@ export default function AiStudio({
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
           audioContextRef.current.resume();
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setPreviewingVoiceId(previewKey);
@@ -458,7 +458,7 @@ export default function AiStudio({
 
       const playFallbackAudio = () => {
         if (previewAudioRef.current) {
-          try { previewAudioRef.current.pause(); } catch (e) {}
+          try { previewAudioRef.current.pause(); } catch (e) { }
         }
         const edgeUrl = `/api/tts?text=${encodeURIComponent(voice.sampleSentence)}&lang=${voice.language}&gender=${targetGender}&model=${encodeURIComponent(voice.id)}&voice=${encodeURIComponent(voice.voice || '')}`;
         const fallbackAudio = new Audio(edgeUrl);
@@ -606,7 +606,7 @@ export default function AiStudio({
       try {
         previewAudioRef.current.pause();
         previewAudioRef.current.currentTime = 0;
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (previewingLineIndex === index) {
@@ -625,11 +625,26 @@ export default function AiStudio({
     const cleanText = turn.text.trim();
     const lang = assignedVoice?.language || (dialogueLang === 'ja' ? 'ja' : 'ko');
 
-    const edgeUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=${lang}&gender=${targetGender}&model=${encodeURIComponent(assignedVoiceId)}&voice=${encodeURIComponent(assignedVoice?.voice || '')}`;
+    const baseParams = new URLSearchParams({
+      text: cleanText,
+      lang,
+      gender: targetGender,
+      model: assignedVoiceId,
+      modelId: assignedModelId,
+      voiceProfileId: assignedVoiceId,
+      voice: assignedVoice?.voice || '',
+      pitch: assignedVoice?.pitch || '+0Hz',
+      rate: assignedVoice?.rate || '+0%',
+      ageStyle: assignedVoice?.ageStyle || '',
+      personality: assignedVoice?.personality || '',
+      speechMode: assignedVoice?.defaultSpeechMode || 'natural_conversation',
+      emotion: assignedVoice?.defaultEmotion || 'reassuring'
+    });
+    const edgeUrl = `/api/tts?${baseParams.toString()}`;
 
     const playFallback = () => {
       if (previewAudioRef.current) {
-        try { previewAudioRef.current.pause(); } catch (e) {}
+        try { previewAudioRef.current.pause(); } catch (e) { }
       }
       const fbAudio = new Audio(edgeUrl);
       previewAudioRef.current = fbAudio;
@@ -650,13 +665,7 @@ export default function AiStudio({
       return;
     }
 
-    const params = new URLSearchParams({
-      text: cleanText,
-      voiceProfileId: assignedVoiceId,
-      gender: targetGender,
-      modelId: assignedModelId
-    });
-    const elUrl = `/api/elevenlabs/tts?${params.toString()}`;
+    const elUrl = `/api/elevenlabs/tts?${baseParams.toString()}`;
 
     let audio = previewAudioRef.current;
     if (!audio) {
@@ -734,12 +743,19 @@ export default function AiStudio({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          turns: validTurns.map(t => ({
-            speaker: t.speaker,
-            text: t.text.trim(),
-            voiceProfileId: t.voiceProfileId || (t.speaker === 'A' ? dialogueSpeakerA : dialogueSpeakerB),
-            modelId: t.modelId || (t.speaker === 'A' ? dialogueModelA : dialogueModelB)
-          })),
+          turns: validTurns.map(t => {
+            const assignedVId = t.voiceProfileId || (t.speaker === 'A' ? (dialogueSpeakerA || 'ko-female-1') : (dialogueSpeakerB || 'ko-male-2'));
+            const vProf = VOICE_PROFILES.find(v => v.id === assignedVId);
+            return {
+              speaker: t.speaker,
+              text: t.text.trim(),
+              voiceProfileId: assignedVId,
+              modelId: t.modelId || (t.speaker === 'A' ? (dialogueModelA || 'eleven_multilingual_v2') : (dialogueModelB || 'eleven_turbo_v2_5')),
+              gender: vProf?.gender || (t.speaker === 'A' ? 'female' : 'male'),
+              pitch: vProf?.pitch || '+0Hz',
+              rate: vProf?.rate || '+0%'
+            };
+          }),
           modelId: dialogueModelA || 'eleven_multilingual_v2',
           style: 'natural_conversation',
           download: canDownloadAudio
@@ -765,7 +781,7 @@ export default function AiStudio({
       // Auto play merged conversation
       if (audioRef.current) {
         audioRef.current.src = url;
-        audioRef.current.play().catch(() => {});
+        audioRef.current.play().catch(() => { });
       }
     } catch (err) {
       console.error('Dialogue generation error:', err);
@@ -1697,8 +1713,18 @@ export default function AiStudio({
                           const nextSpk = isSpeakerA ? 'B' : 'A';
                           const updated = [...dialogueTurns];
                           updated[index].speaker = nextSpk;
-                          updated[index].voiceProfileId = nextSpk === 'A' ? dialogueSpeakerA : dialogueSpeakerB;
-                          updated[index].modelId = nextSpk === 'A' ? dialogueModelA : dialogueModelB;
+                          const currentVoice = VOICE_PROFILES.find(v => v.id === updated[index].voiceProfileId);
+                          if (nextSpk === 'A') {
+                            if (!currentVoice || currentVoice.gender === 'male') {
+                              updated[index].voiceProfileId = dialogueLang === 'ja' ? 'ja-female-1' : 'ko-female-1';
+                            }
+                            updated[index].modelId = dialogueModelA || 'eleven_multilingual_v2';
+                          } else {
+                            if (!currentVoice || currentVoice.gender === 'female') {
+                              updated[index].voiceProfileId = dialogueLang === 'ja' ? 'ja-male-2' : 'ko-male-2';
+                            }
+                            updated[index].modelId = dialogueModelB || 'eleven_turbo_v2_5';
+                          }
                           setDialogueTurns(updated);
                         }}
                         title="Click to toggle speaker between A and B"
@@ -1736,12 +1762,19 @@ export default function AiStudio({
                           fontWeight: '700',
                           background: '#ffffff',
                           color: '#334155',
-                          maxWidth: '160px'
+                          maxWidth: '210px'
                         }}
                       >
-                        {VOICE_PROFILES.filter(v => v.language === dialogueLang).map(v => (
-                          <option key={v.id} value={v.id}>{v.name}</option>
-                        ))}
+                        <optgroup label="👩 Female Voices">
+                          {VOICE_PROFILES.filter(v => v.language === dialogueLang && v.gender === 'female').map(v => (
+                            <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="👨 Male Voices">
+                          {VOICE_PROFILES.filter(v => v.language === dialogueLang && v.gender === 'male').map(v => (
+                            <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
+                          ))}
+                        </optgroup>
                       </select>
 
                       {/* Model Selector for this specific line */}
@@ -1856,13 +1889,19 @@ export default function AiStudio({
               type="button"
               onClick={() => {
                 const nextSpeaker = dialogueTurns.length % 2 === 0 ? 'A' : 'B';
+                const nextVoice = nextSpeaker === 'A'
+                  ? (dialogueSpeakerA || (dialogueLang === 'ja' ? 'ja-female-1' : 'ko-female-1'))
+                  : (dialogueSpeakerB || (dialogueLang === 'ja' ? 'ja-male-2' : 'ko-male-2'));
+                const nextModel = nextSpeaker === 'A'
+                  ? (dialogueModelA || 'eleven_multilingual_v2')
+                  : (dialogueModelB || 'eleven_turbo_v2_5');
                 setDialogueTurns([
                   ...dialogueTurns,
                   {
                     speaker: nextSpeaker,
                     text: '',
-                    voiceProfileId: nextSpeaker === 'A' ? dialogueSpeakerA : dialogueSpeakerB,
-                    modelId: nextSpeaker === 'A' ? dialogueModelA : dialogueModelB
+                    voiceProfileId: nextVoice,
+                    modelId: nextModel
                   }
                 ]);
               }}
