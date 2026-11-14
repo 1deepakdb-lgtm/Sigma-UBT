@@ -153,6 +153,23 @@ async function runDeployTasks(repoDir) {
     addLog(`ℹ️ edge-tts pip check notice: ${e.message}`);
   }
 
+  // 5c. Purge stale audio cache so new clean neural audio is always served
+  try {
+    const cacheDir = path.join(repoDir, 'public', 'audio-cache', 'elevenlabs');
+    if (fs.existsSync(cacheDir)) {
+      const files = fs.readdirSync(cacheDir);
+      let count = 0;
+      for (const f of files) {
+        if (f.endsWith('.mp3')) {
+          try { fs.unlinkSync(path.join(cacheDir, f)); count++; } catch {}
+        }
+      }
+      if (count > 0) addLog(`🧹 Purged ${count} stale audio cache files.`);
+    }
+  } catch (e) {
+    addLog(`ℹ️ Cache purge notice: ${e.message}`);
+  }
+
   // 6. Phusion Passenger restart trigger
   const tmpDir = path.join(repoDir, 'tmp');
   const restartFile = path.join(tmpDir, 'restart.txt');

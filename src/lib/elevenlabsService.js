@@ -275,20 +275,22 @@ export async function synthesizeElevenLabs({
 }
 
 /**
- * Generate standard compliant MP3 silence frames
- * Avoids raw zero-byte glitches in picky MP3 decoders
+ * Strips ID3v2 tags from subsequent MP3 buffers to ensure
+ * clean, contiguous MPEG frames without decoder interruption.
  */
-function getMp3SilenceBuffer(ms = 400) {
-  // A standard 128kbps 44.1kHz MP3 frame represents 1152 samples = ~26.12ms
-  const frameCount = Math.max(1, Math.round(ms / 26.12));
-  // 128kbps 44.1kHz frame length = 417 bytes
-  // Header: 0xFF 0xFB 0x90 0x64 (MPEG 1 Layer 3, 128 kbps, 44.1 kHz, no padding)
-  const frame = Buffer.alloc(417, 0);
-  frame[0] = 0xff;
-  frame[1] = 0xfb;
-  frame[2] = 0x90;
-  frame[3] = 0x64;
-  return Buffer.concat(Array.from({ length: frameCount }, () => frame));
+function stripId3Header(buffer) {
+  if (!buffer || buffer.length < 10) return buffer;
+  if (buffer[0] === 0x49 && buffer[1] === 0x44 && buffer[2] === 0x33) {
+    const size = ((buffer[6] & 0x7f) << 21) |
+                 ((buffer[7] & 0x7f) << 14) |
+                 ((buffer[8] & 0x7f) << 7)  |
+                 (buffer[9] & 0x7f);
+    const tagSize = 10 + size;
+    if (tagSize < buffer.length) {
+      return buffer.subarray(tagSize);
+    }
+  }
+  return buffer;
 }
 
 /**
@@ -363,12 +365,8 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
   const validBuffers = resolvedBuffers.filter(Boolean);
 
   for (let i = 0; i < validBuffers.length; i++) {
-    audioBuffers.push(validBuffers[i]);
-
-    // Add a natural 400ms acoustic silence gap between turns
-    if (i < validBuffers.length - 1) {
-      audioBuffers.push(getMp3SilenceBuffer(400));
-    }
+    const cleanBuf = i === 0 ? validBuffers[i] : stripId3Header(validBuffers[i]);
+    audioBuffers.push(cleanBuf);
   }
 
   if (audioBuffers.length === 0) {
