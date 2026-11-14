@@ -45,6 +45,9 @@ export async function GET(request) {
     const emotion = searchParams.get('emotion') || null;
     const weight = searchParams.get('weight') !== null ? parseFloat(searchParams.get('weight')) : null;
     const pitchFactor = searchParams.get('pitchFactor') !== null ? parseFloat(searchParams.get('pitchFactor')) : null;
+    const pitch = searchParams.get('pitch') || null;
+    const rate = searchParams.get('rate') || null;
+    const voice = searchParams.get('voice') || null;
 
     if (!text.trim()) {
       return new Response('Text parameter is required.', { status: 400 });
@@ -66,6 +69,9 @@ export async function GET(request) {
       emotion,
       weight,
       pitchFactor,
+      pitch,
+      rate,
+      voice,
       speed
     });
 
@@ -116,6 +122,9 @@ export async function POST(request) {
       emotion,
       weight,
       pitchFactor,
+      pitch = null,
+      rate = null,
+      voice = null,
       customSettings,
       speed = 1.0,
       download = false,
@@ -148,6 +157,9 @@ export async function POST(request) {
       emotion,
       weight,
       pitchFactor,
+      pitch,
+      rate,
+      voice,
       customSettings,
       speed
     });

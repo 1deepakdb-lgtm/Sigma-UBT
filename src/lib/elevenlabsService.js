@@ -20,6 +20,7 @@ try {
  */
 function computeCacheKey(text, voiceId, modelId, settings, categoryMeta = {}) {
   const payload = JSON.stringify({
+    version: 'v4_distinct_models',
     text: text.trim(),
     voiceId,
     modelId,
@@ -101,6 +102,9 @@ export async function synthesizeElevenLabs({
   emotion = null,
   weight = null,
   pitchFactor = null,
+  pitch = null,
+  rate = null,
+  voice = null,
   customSettings = null,
   speed = 1.0
 }) {
@@ -151,9 +155,9 @@ export async function synthesizeElevenLabs({
     pitchFactor: pitchFactor !== null ? pitchFactor : profile.basePitchFactor,
     model: profile.id,
     modelId: modelId,
-    pitch: profile.pitch || '+0Hz',
-    rate: profile.rate || '+0%',
-    voice: profile.voice || ''
+    pitch: pitch || profile.pitch || '+0Hz',
+    rate: rate || profile.rate || '+0%',
+    voice: voice || profile.voice || ''
   };
 
   // 3. Check disk cache
@@ -321,7 +325,10 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
         voiceProfileId: voiceProfId,
         gender: turn.gender || voiceProf?.gender || (turn.speaker === 'A' ? 'female' : 'male'),
         modelId: turn.modelId || modelId,
-        style: turn.style || style
+        style: turn.style || style,
+        pitch: turn.pitch || voiceProf?.pitch || '+0Hz',
+        rate: turn.rate || voiceProf?.rate || '+0%',
+        voice: turn.voice || voiceProf?.voice || ''
       });
       if (res && res.buffer && res.buffer.length > 0) {
         buf = res.buffer;
@@ -339,9 +346,9 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
           gender: isMale ? 'male' : 'female',
           model: voiceProfId,
           modelId: turn.modelId || modelId,
-          voice: voiceProf?.voice || '',
-          pitch: voiceProf?.pitch || '+0Hz',
-          rate: voiceProf?.rate || '+0%',
+          voice: turn.voice || voiceProf?.voice || '',
+          pitch: turn.pitch || voiceProf?.pitch || '+0Hz',
+          rate: turn.rate || voiceProf?.rate || '+0%',
           ageStyle: voiceProf?.ageStyle,
           personality: voiceProf?.personality,
           speechMode: voiceProf?.defaultSpeechMode || 'natural_conversation',

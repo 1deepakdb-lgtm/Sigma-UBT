@@ -29,49 +29,49 @@ export const VOICE_CONFIG = {
 export const MODEL_VOICE_TONES = {
   // ── Korean Female ──────────────────────────────────────
   'ko-female-1': { voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '+0%' },   // Teacher Baseline
-  'ko-female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+14Hz', rate: '+6%' },  // Bright & Cheerful
-  'ko-female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+5Hz', rate: '-6%' },   // Diction / Clear
-  'ko-female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-12Hz', rate: '+3%' },  // News Announcer
-  'ko-female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+22Hz', rate: '+8%' },  // Youthful Student
-  'ko-female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-18Hz', rate: '-8%' },  // Warm Calming Mentor
+  'ko-female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+18Hz', rate: '+8%' },  // Bright & Cheerful
+  'ko-female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+6Hz', rate: '-6%' },   // Diction / Clear
+  'ko-female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-14Hz', rate: '+4%' },  // News Announcer
+  'ko-female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+28Hz', rate: '+12%' }, // Youthful Student
+  'ko-female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-22Hz', rate: '-10%' }, // Warm Calming Mentor
 
   'female-1': { voice: 'ko-KR-SunHiNeural', pitch: '+0Hz', rate: '+0%' },
-  'female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+14Hz', rate: '+6%' },
-  'female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+5Hz', rate: '-6%' },
-  'female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-12Hz', rate: '+3%' },
-  'female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+22Hz', rate: '+8%' },
-  'female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-18Hz', rate: '-8%' },
+  'female-2': { voice: 'ko-KR-SunHiNeural', pitch: '+18Hz', rate: '+8%' },
+  'female-3': { voice: 'ko-KR-SunHiNeural', pitch: '+6Hz', rate: '-6%' },
+  'female-4': { voice: 'ko-KR-SunHiNeural', pitch: '-14Hz', rate: '+4%' },
+  'female-5': { voice: 'ko-KR-SunHiNeural', pitch: '+28Hz', rate: '+12%' },
+  'female-6': { voice: 'ko-KR-SunHiNeural', pitch: '-22Hz', rate: '-10%' },
 
   // ── Korean Male ────────────────────────────────────────
   'ko-male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },    // Teacher Baseline
-  'ko-male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-24Hz', rate: '-6%' },   // Deep Bass & Calm
-  'ko-male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+4%' }, // Energetic Workplace Professional
-  'ko-male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-12Hz', rate: '+2%' },   // Resonant Broadcaster
-  'ko-male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+18Hz', rate: '+6%' }, // Friendly Travel Companion
-  'ko-male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-16Hz', rate: '-10%' },  // Senior Academic Lecturer
+  'ko-male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-28Hz', rate: '-6%' },   // Deep Bass & Calm
+  'ko-male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+10Hz', rate: '+6%' }, // Energetic Workplace Professional
+  'ko-male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-16Hz', rate: '+2%' },   // Resonant Broadcaster
+  'ko-male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+20Hz', rate: '+8%' }, // Friendly Travel Companion
+  'ko-male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-22Hz', rate: '-10%' },  // Senior Academic Lecturer
 
   'male-1': { voice: 'ko-KR-InJoonNeural', pitch: '+0Hz', rate: '+0%' },
-  'male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-24Hz', rate: '-6%' },
-  'male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+6Hz', rate: '+4%' },
-  'male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-12Hz', rate: '+2%' },
-  'male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+18Hz', rate: '+6%' },
-  'male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-16Hz', rate: '-10%' },
+  'male-2': { voice: 'ko-KR-InJoonNeural', pitch: '-28Hz', rate: '-6%' },
+  'male-3': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+10Hz', rate: '+6%' },
+  'male-4': { voice: 'ko-KR-InJoonNeural', pitch: '-16Hz', rate: '+2%' },
+  'male-5': { voice: 'ko-KR-HyunsuMultilingualNeural', pitch: '+20Hz', rate: '+8%' },
+  'male-6': { voice: 'ko-KR-InJoonNeural', pitch: '-22Hz', rate: '-10%' },
 
   // ── Japanese Female ────────────────────────────────────
   'ja-female-1': { voice: 'ja-JP-NanamiNeural', pitch: '+0Hz', rate: '+0%' },  // Teacher Baseline
-  'ja-female-2': { voice: 'ja-JP-NanamiNeural', pitch: '+16Hz', rate: '+6%' }, // Bright & Friendly
-  'ja-female-3': { voice: 'ja-JP-NanamiNeural', pitch: '+5Hz', rate: '-6%' },  // Soft Pronunciation
-  'ja-female-4': { voice: 'ja-JP-NanamiNeural', pitch: '-12Hz', rate: '+3%' }, // News Announcer
-  'ja-female-5': { voice: 'ja-JP-NanamiNeural', pitch: '+24Hz', rate: '+8%' }, // Lively Campus Student
-  'ja-female-6': { voice: 'ja-JP-NanamiNeural', pitch: '-18Hz', rate: '-8%' }, // Warm Mentor & Storyteller
+  'ja-female-2': { voice: 'ja-JP-NanamiNeural', pitch: '+18Hz', rate: '+8%' }, // Bright & Friendly
+  'ja-female-3': { voice: 'ja-JP-NanamiNeural', pitch: '+6Hz', rate: '-6%' },  // Soft Pronunciation
+  'ja-female-4': { voice: 'ja-JP-NanamiNeural', pitch: '-14Hz', rate: '+4%' }, // News Announcer
+  'ja-female-5': { voice: 'ja-JP-NanamiNeural', pitch: '+26Hz', rate: '+12%' }, // Lively Campus Student
+  'ja-female-6': { voice: 'ja-JP-NanamiNeural', pitch: '-20Hz', rate: '-10%' }, // Warm Mentor & Storyteller
 
   // ── Japanese Male ──────────────────────────────────────
   'ja-male-1': { voice: 'ja-JP-KeitaNeural', pitch: '+0Hz', rate: '+0%' },     // Teacher Baseline
-  'ja-male-2': { voice: 'ja-JP-KeitaNeural', pitch: '-24Hz', rate: '-6%' },    // Deep Calm Baritone
-  'ja-male-3': { voice: 'ja-JP-KeitaNeural', pitch: '+8Hz', rate: '+4%' },     // Energetic Business Keigo
-  'ja-male-4': { voice: 'ja-JP-KeitaNeural', pitch: '-14Hz', rate: '+2%' },    // Resonant Narrator
-  'ja-male-5': { voice: 'ja-JP-KeitaNeural', pitch: '+18Hz', rate: '+6%' },    // Friendly Casual Companion
-  'ja-male-6': { voice: 'ja-JP-KeitaNeural', pitch: '-16Hz', rate: '-10%' }    // Senior Academic Lecturer
+  'ja-male-2': { voice: 'ja-JP-KeitaNeural', pitch: '-26Hz', rate: '-6%' },    // Deep Calm Baritone
+  'ja-male-3': { voice: 'ja-JP-KeitaNeural', pitch: '+10Hz', rate: '+6%' },    // Energetic Business Keigo
+  'ja-male-4': { voice: 'ja-JP-KeitaNeural', pitch: '-16Hz', rate: '+2%' },    // Resonant Narrator
+  'ja-male-5': { voice: 'ja-JP-KeitaNeural', pitch: '+20Hz', rate: '+8%' },    // Friendly Casual Companion
+  'ja-male-6': { voice: 'ja-JP-KeitaNeural', pitch: '-20Hz', rate: '-10%' }    // Senior Academic Lecturer
 };
 
 /**
@@ -86,6 +86,7 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     vocalWeight = null,
     pitchFactor = null,
     model = '',
+    modelId = '',
     voice = ''
   } = options;
 
@@ -99,6 +100,8 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   const isExplicitFemale = gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(model) || (/female/i.test(voice) && !/male/i.test(voice.replace(/female/gi, ''))) || /SunHi|Nanami|Jenny|Hemkala|Kyoko|Ayumi|Heami|Yuna/i.test(voice);
   const isExplicitMale = gender === 'male' || (/(?:^|[-_])male(?:[-_\d]|$)/i.test(model) && !/(?:^|[-_])female(?:[-_\d]|$)/i.test(model)) || /InJoon|Keita|Daichi|Hyunsu|Sagar|Christopher|David|George|Minho/i.test(voice);
   const isMale = !isExplicitFemale && (isExplicitMale || gender === 'male');
+
+  const aiModel = (options.modelId || modelId || '').toLowerCase();
 
   // 1. Resolve Voice Tone Profile for Model
   const matchedTone = MODEL_VOICE_TONES[model];
@@ -118,7 +121,19 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     }
   }
 
-  // 2. Resolve Pitch String
+  // Dynamic Male Voice Actor Differentiation for Korean based on AI Model:
+  // - Turbo v2.5 & Flash v2 dynamically use Hyunsu (modern, energetic, conversational tenor)
+  // - Multilingual v2 & Neural HD Studio use InJoon (authoritative, rich, traditional baritone)
+  if (targetLang === 'ko' && isMale) {
+    const isExplicitDeepBass = model === 'ko-male-2' || model === 'male-2' || model === 'ko-male-6' || model === 'male-6';
+    if (!isExplicitDeepBass && (aiModel.includes('turbo') || aiModel.includes('flash') || model === 'ko-male-3' || model === 'ko-male-5')) {
+      neuralVoice = 'ko-KR-HyunsuMultilingualNeural';
+    } else if (!voice || voice === 'ko-KR-InJoonNeural' || voice === 'ko-KR-SunHiNeural') {
+      neuralVoice = 'ko-KR-InJoonNeural';
+    }
+  }
+
+  // 2. Resolve Base Pitch String
   let pitchStr = matchedTone?.pitch || options.pitch || '+0Hz';
   if (options.pitch && options.pitch.includes('Hz')) {
     pitchStr = options.pitch;
@@ -127,19 +142,19 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     if (pitchFactor !== null && !isNaN(pitchFactor)) {
       pitchOffset += Math.round((pitchFactor - 1.0) * 35);
     } else if (ageStyle === 'deep') {
-      pitchOffset -= 12;
+      pitchOffset -= 14;
     } else if (ageStyle === 'bright') {
-      pitchOffset += 6;
+      pitchOffset += 8;
     }
     if (vocalWeight !== null && !isNaN(vocalWeight)) {
-      pitchOffset -= Math.round((vocalWeight - 0.5) * 12);
+      pitchOffset -= Math.round((vocalWeight - 0.5) * 14);
     }
-    if (emotion === 'happy') pitchOffset += 4;
-    else if (emotion === 'sad') pitchOffset -= 4;
+    if (emotion === 'happy') pitchOffset += 6;
+    else if (emotion === 'sad') pitchOffset -= 6;
     pitchStr = (pitchOffset >= 0 ? `+${pitchOffset}Hz` : `${pitchOffset}Hz`);
   }
 
-  // 3. Resolve Rate String
+  // 3. Resolve Base Rate String
   let rateStr = matchedTone?.rate || options.rate || '+0%';
   if (options.rate && options.rate.includes('%')) {
     rateStr = options.rate;
@@ -150,30 +165,29 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     else if (speechMode === 'news_announcer') rateStr = '+6%';
   }
 
-  // Ensure valid format (+/- sign and units) for edge-tts
-  pitchStr = pitchStr.trim();
-  if (!pitchStr.startsWith('+') && !pitchStr.startsWith('-')) pitchStr = `+${pitchStr}`;
-  if (!pitchStr.endsWith('Hz')) pitchStr = `${pitchStr}Hz`;
-
-  rateStr = rateStr.trim();
-  if (!rateStr.startsWith('+') && !rateStr.startsWith('-')) rateStr = `+${rateStr}`;
-  if (!rateStr.endsWith('%')) rateStr = `${rateStr}%`;
-
-  // Modulate Pitch and Rate based on AI Model ID (Turbo, Flash, Neural HD, Multilingual)
-  const aiModel = (options.modelId || '').toLowerCase();
+  // Modulate Pitch and Rate dramatically based on AI Model ID
+  // (Flash v2 = +20% rate / +26Hz pitch, Turbo v2.5 = +10% rate / +14Hz pitch, Studio HD = -8% rate / -20Hz pitch, Multilingual v2 = baseline)
   let pitchVal = parseInt(pitchStr.replace('Hz', ''), 10) || 0;
   let rateVal = parseInt(rateStr.replace('%', ''), 10) || 0;
 
-  if (aiModel.includes('turbo') || aiModel.includes('turbo_v2_5')) {
-    rateVal += 4;
-    pitchVal += 2;
-  } else if (aiModel.includes('flash') || aiModel.includes('flash_v2')) {
-    rateVal += 7;
-    pitchVal += 4;
+  if (aiModel.includes('flash') || aiModel.includes('flash_v2')) {
+    rateVal += 20;
+    pitchVal += isMale ? 18 : 26;
+  } else if (aiModel.includes('turbo') || aiModel.includes('turbo_v2_5')) {
+    rateVal += 10;
+    pitchVal += isMale ? 10 : 14;
   } else if (aiModel.includes('neural_studio_hd') || aiModel.includes('studio')) {
-    rateVal -= 3;
-    pitchVal -= 3;
+    rateVal -= 8;
+    pitchVal -= isMale ? 18 : 20;
   }
+
+  // Safe acoustic boundary clamp to keep audio pleasant, melodic, and natural
+  if (isMale) {
+    pitchVal = Math.max(-42, Math.min(32, pitchVal));
+  } else {
+    pitchVal = Math.max(-28, Math.min(42, pitchVal));
+  }
+  rateVal = Math.max(-18, Math.min(35, rateVal));
 
   pitchStr = (pitchVal >= 0 ? `+${pitchVal}Hz` : `${pitchVal}Hz`);
   rateStr = (rateVal >= 0 ? `+${rateVal}%` : `${rateVal}%`);
@@ -344,7 +358,17 @@ export async function generateMelodicVoice(text, lang = 'ja', gender = 'female',
       if (res.ok) {
         const arrayBuf = await res.arrayBuffer();
         if (arrayBuf.byteLength > 100) {
-          return { buffer: Buffer.from(arrayBuf), contentType: 'audio/mpeg', provider: 'google-tts' };
+          if (!isMale && pitchFactor >= 0.98 && pitchFactor <= 1.02) {
+            return { buffer: Buffer.from(arrayBuf), contentType: 'audio/mpeg', provider: 'google-tts' };
+          }
+          fs.writeFileSync(rawMp3Path, Buffer.from(arrayBuf));
+          try {
+            execFileSync('afconvert', [rawMp3Path, wavPath, '-f', 'WAVE', '-d', 'LEI16@24000', '-c', '1'], { timeout: 6000 });
+            gotAudio = true;
+          } catch {}
+          if (!gotAudio && !isMale) {
+            return { buffer: Buffer.from(arrayBuf), contentType: 'audio/mpeg', provider: 'google-tts' };
+          }
         }
       }
     } catch (fetchErr) {
@@ -594,7 +618,7 @@ export async function synthesizeSpeechBuffer({
   const explicitPitch = pitchFactor !== null ? parseFloat(pitchFactor) : null;
   const numericWeight = vocalWeight !== null ? parseFloat(vocalWeight) : null;
 
-  const cacheKey = `${text.trim()}|${langKey}|${gender}|${selectedVoice}|${selectedPitch}|${selectedRate}|${model}|${modelId}`;
+  const cacheKey = `${text.trim()}|${langKey}|${gender}|${selectedVoice}|${selectedPitch}|${selectedRate}|${model}|${modelId}|v4`;
   if (ttsMemoryCache.has(cacheKey)) {
     return ttsMemoryCache.get(cacheKey);
   }

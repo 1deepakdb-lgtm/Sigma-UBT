@@ -765,7 +765,8 @@ const handleGenerateDialogue = async () => {
             modelId: t.modelId || (t.speaker === 'A' ? (dialogueModelA || 'eleven_multilingual_v2') : (dialogueModelB || 'eleven_turbo_v2_5')),
             gender: vProf?.gender || (t.speaker === 'A' ? 'female' : 'male'),
             pitch: vProf?.pitch || '+0Hz',
-            rate: vProf?.rate || '+0%'
+            rate: vProf?.rate || '+0%',
+            voice: vProf?.voice || ''
           };
         }),
         modelId: dialogueModelA || 'eleven_multilingual_v2',
