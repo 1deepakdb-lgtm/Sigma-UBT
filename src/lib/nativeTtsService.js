@@ -164,29 +164,25 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
 
   const userHome = process.env.HOME || '/home/examjkco';
   const vendorDir = path.join(process.cwd(), 'scripts', 'vendor');
-  const customEnv = {
-    ...process.env,
-    PATH: `${userHome}/.local/bin:${userHome}/bin:/opt/alt/python311/bin:/opt/alt/python310/bin:/opt/alt/python39/bin:/opt/alt/python38/bin:/usr/local/bin:/usr/bin:/bin:${process.env.PATH || ''}`,
-    PYTHONPATH: `${vendorDir}:${userHome}/.local/lib/python3.11/site-packages:${userHome}/.local/lib/python3.10/site-packages:${userHome}/.local/lib/python3.9/site-packages:${userHome}/.local/lib/python3.8/site-packages:/opt/alt/python311/lib/python3.11/site-packages:/opt/alt/python310/lib/python3.10/site-packages:/opt/alt/python39/lib/python3.9/site-packages:${process.env.PYTHONPATH || ''}`,
-    PYTHONUNBUFFERED: '1'
-  };
 
   const pyCandidates = [
-    '/opt/alt/python311/bin/python3',
-    '/opt/alt/python310/bin/python3',
-    '/opt/alt/python39/bin/python3',
-    '/opt/alt/python38/bin/python3',
-    'python3',
-    '/usr/bin/python3',
-    '/usr/local/bin/python3',
-    `${userHome}/.local/bin/python3`,
-    'python'
+    { bin: '/opt/alt/python311/bin/python3', pyPath: `${userHome}/.local/lib/python3.11/site-packages:/opt/alt/python311/lib/python3.11/site-packages` },
+    { bin: 'python3', pyPath: `${userHome}/.local/lib/python3.9/site-packages:/usr/lib/python3.9/site-packages` },
+    { bin: '/usr/bin/python3', pyPath: `${userHome}/.local/lib/python3.9/site-packages:/usr/lib/python3.9/site-packages` },
+    { bin: '/opt/alt/python310/bin/python3', pyPath: `${userHome}/.local/lib/python3.10/site-packages` },
+    { bin: 'python', pyPath: '' }
   ];
-  for (const py of pyCandidates) {
+
+  for (const { bin, pyPath } of pyCandidates) {
     try {
-      execFileSync(py, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {
+      execFileSync(bin, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {
         timeout: 10000,
-        env: customEnv
+        env: {
+          ...process.env,
+          PATH: `/opt/alt/python311/bin:/usr/local/bin:/usr/bin:/bin:${process.env.PATH || ''}`,
+          PYTHONPATH: pyPath ? `${vendorDir}:${pyPath}:${process.env.PYTHONPATH || ''}` : `${vendorDir}:${process.env.PYTHONPATH || ''}`,
+          PYTHONUNBUFFERED: '1'
+        }
       });
       if (fs.existsSync(tmpOut)) {
         const buf = fs.readFileSync(tmpOut);

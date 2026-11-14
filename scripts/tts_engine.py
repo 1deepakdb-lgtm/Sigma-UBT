@@ -4,17 +4,18 @@ import asyncio
 import os
 import glob
 
-# 1. On Linux (e.g. cPanel), prioritize native user and system site-packages first
+# 1. On Linux (e.g. cPanel), prioritize native user and system site-packages for this EXACT python version
 home = os.path.expanduser("~")
+py_ver = f"python{sys.version_info.major}.{sys.version_info.minor}"
 if sys.platform != 'darwin':
     for pattern in [
-        os.path.join(home, ".local/lib/python*/site-packages"),
-        "/home/*/.local/lib/python*/site-packages",
-        "/opt/alt/python*/lib/python*/site-packages",
-        "/opt/alt/python*/lib64/python*/site-packages",
-        "/usr/local/lib/python*/site-packages",
-        "/usr/lib/python*/site-packages",
-        "/usr/lib64/python*/site-packages"
+        os.path.join(home, f".local/lib/{py_ver}/site-packages"),
+        f"/home/*/.local/lib/{py_ver}/site-packages",
+        f"/opt/alt/{py_ver}/lib/{py_ver}/site-packages",
+        f"/opt/alt/{py_ver}/lib64/{py_ver}/site-packages",
+        f"/usr/local/lib/{py_ver}/site-packages",
+        f"/usr/lib/{py_ver}/site-packages",
+        f"/usr/lib64/{py_ver}/site-packages"
     ]:
         for p in glob.glob(pattern):
             if p not in sys.path:
@@ -32,6 +33,14 @@ if os.path.exists(vendor_dir) and vendor_dir not in sys.path:
 for p in glob.glob(os.path.join(home, "Library/Python/*/lib/python/site-packages")):
     if p not in sys.path:
         sys.path.insert(0, p)
+
+# 4. Compatibility polyfill for Python 3.11/3.10 with newer aiohttp TypeVar default
+import typing
+try:
+    import typing_extensions
+    typing.TypeVar = typing_extensions.TypeVar
+except Exception:
+    pass
 
 try:
     import edge_tts
