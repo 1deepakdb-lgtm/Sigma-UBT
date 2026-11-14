@@ -143,15 +143,14 @@ async function runDeployTasks(repoDir) {
     if (pipOut) addLog(`🐍 Pip details: ${pipOut.slice(0, 150)}`);
     addLog(`✅ edge-tts package verified.`);
 
-    // Diagnostic test of tts_engine.py
-    const testOutPath = '/tmp/test_deploy_edge.mp3';
+    // Diagnostic test of python & edge_tts
     try {
-      const diagRes = await execAsync(`python3 scripts/tts_engine.py "안녕하세요" "ko-KR-InJoonNeural" "+0Hz" "+0%" "${testOutPath}" 2>&1`, execOpts);
-      const diagOut = String(diagRes?.stdout || '').trim();
-      const statExists = fs.existsSync(testOutPath);
-      addLog(`🔬 tts_engine test: exists=${statExists}, size=${statExists ? fs.statSync(testOutPath).size : 0}, out=${diagOut.slice(0, 200)}`);
-    } catch (diagErr) {
-      addLog(`❌ tts_engine error: ${diagErr.stdout || diagErr.stderr || diagErr.message}`);
+      const pInfo = await execAsync('python3 --version 2>&1', execOpts);
+      addLog(`🐍 Python version: ${String(pInfo.stdout || '').trim()}`);
+      const pyTest = await execAsync('python3 -c "import sys; print(sys.path); import edge_tts; print(edge_tts.__file__)" 2>&1', execOpts);
+      addLog(`🐍 Edge_tts file: ${String(pyTest.stdout || '').trim()}`);
+    } catch (pe) {
+      addLog(`❌ Python check error: ${pe.stdout || pe.stderr || pe.message}`);
     }
   } catch (e) {
     addLog(`ℹ️ edge-tts pip check notice: ${e.message}`);
