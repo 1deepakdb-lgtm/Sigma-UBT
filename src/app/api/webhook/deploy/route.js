@@ -145,10 +145,14 @@ async function runDeployTasks(repoDir) {
 
     // Diagnostic test of tts_engine.py
     const testOutPath = '/tmp/test_deploy_edge.mp3';
-    const diagRes = await execAsync(`python3 scripts/tts_engine.py "안녕하세요" "ko-KR-InJoonNeural" "+0Hz" "+0%" "${testOutPath}" 2>&1`, execOpts);
-    const diagOut = String(diagRes?.stdout || '').trim();
-    const statExists = fs.existsSync(testOutPath);
-    addLog(`🔬 tts_engine test: exists=${statExists}, size=${statExists ? fs.statSync(testOutPath).size : 0}, out=${diagOut.slice(0, 200)}`);
+    try {
+      const diagRes = await execAsync(`python3 scripts/tts_engine.py "안녕하세요" "ko-KR-InJoonNeural" "+0Hz" "+0%" "${testOutPath}" 2>&1`, execOpts);
+      const diagOut = String(diagRes?.stdout || '').trim();
+      const statExists = fs.existsSync(testOutPath);
+      addLog(`🔬 tts_engine test: exists=${statExists}, size=${statExists ? fs.statSync(testOutPath).size : 0}, out=${diagOut.slice(0, 200)}`);
+    } catch (diagErr) {
+      addLog(`❌ tts_engine error: ${diagErr.stdout || diagErr.stderr || diagErr.message}`);
+    }
   } catch (e) {
     addLog(`ℹ️ edge-tts pip check notice: ${e.message}`);
   }
