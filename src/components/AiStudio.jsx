@@ -446,31 +446,38 @@ export default function AiStudio({
         setPreviewingVoiceId(null);
       };
 
-      const fallbackToWebAudio = () => {
-        playWebAudioStudio(
-          url,
-          targetGender,
-          () => setPreviewingVoiceId(null),
-          () => {
-            const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
-            if (!spoke) {
-              setPreviewingVoiceId(null);
-              setAudioError('Failed to play voice preview. Please check connection.');
-            }
+      const playFallbackAudio = () => {
+        const edgeUrl = `/api/tts?text=${encodeURIComponent(voice.sampleSentence)}&lang=${voice.language}&gender=${targetGender}&model=${encodeURIComponent(voice.id)}`;
+        const fallbackAudio = new Audio(edgeUrl);
+        fallbackAudio.playbackRate = 1.0;
+        fallbackAudio.onended = () => {
+          setPreviewingVoiceId(null);
+        };
+        fallbackAudio.onerror = () => {
+          const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
+          if (!spoke) {
+            setPreviewingVoiceId(null);
+            setAudioError('Failed to play voice preview. Please check connection.');
           }
-        );
+        };
+        fallbackAudio.play().catch(() => {
+          const spoke = speakStudioNative(voice.sampleSentence, voice.language === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingVoiceId(null));
+          if (!spoke) {
+            setPreviewingVoiceId(null);
+            setAudioError('Audio playback error');
+          }
+        });
       };
 
       audio.onerror = () => {
-        console.warn('HTML5 Audio error on mobile/tablet, attempting Web Audio fallback...');
-        fallbackToWebAudio();
+        playFallbackAudio();
       };
 
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
-          console.warn('HTML5 Audio play rejected, falling back to Web Audio:', err);
-          fallbackToWebAudio();
+          console.warn('HTML5 Audio play rejected, trying fallback:', err);
+          playFallbackAudio();
         });
       }
     } catch (err) {

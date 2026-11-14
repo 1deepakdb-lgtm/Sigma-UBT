@@ -144,6 +144,11 @@ async function runDeployTasks(repoDir) {
     }
     fs.writeFileSync(restartFile, `Restart triggered by ExamJK Deploy at ${new Date().toISOString()}\n`);
     addLog(`🔄 Touched tmp/restart.txt — Phusion Passenger reload initiated.`);
+
+    try {
+      exec("nohup sh -c 'sleep 3 && pkill -9 -u examjkco node' >/dev/null 2>&1 &");
+      addLog(`⚡ Scheduled background node worker refresh (pkill) in 3s.`);
+    } catch {}
   } catch (e) {
     addLog(`⚠️ Restart touch warning: ${e.message}`);
   }

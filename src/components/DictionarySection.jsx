@@ -942,54 +942,54 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       setLoadingAudioId(id);
       setPlayingAudioId(null);
 
-      const speed = 1.0;
-
-      const cacheKey = `${url}_${targetGender}_${targetModel?.id || 'default'}`;
-      if (audioBufferCacheRef.current.has(cacheKey) && audioContextRef.current) {
-        const cached = audioBufferCacheRef.current.get(cacheKey);
-        playDecodedSource(cached.buffer, targetGender, cached.speed, id);
-        return;
+      let audio = audioRef.current;
+      if (!audio) {
+        audio = new Audio();
+        audioRef.current = audio;
       }
+      audio.src = url;
 
-      // Ultra-Fast Response Engine:
-      // Allow up to 4500ms for high-fidelity human neural audio to stream down from server
-      const abortController = new AbortController();
-      let hasResponded = false;
-      const abortTimer = setTimeout(() => {
-        if (!hasResponded) {
-          abortController.abort();
-          if (text) {
-            speakTextNative(text, targetLang, targetGender, id);
-          }
+      audio.onplay = () => {
+        setLoadingAudioId(null);
+        setPlayingAudioId(id);
+      };
+      audio.onplaying = () => {
+        setLoadingAudioId(null);
+        setPlayingAudioId(id);
+      };
+      audio.onended = () => {
+        setPlayingAudioId(null);
+        setLoadingAudioId(null);
+        audioRef.current = null;
+      };
+      audio.onerror = () => {
+        // Fallback to speech synthesis if network fails
+        if (text) {
+          speakTextNative(text, targetLang, targetGender, id);
+        } else {
+          setPlayingAudioId(null);
+          setLoadingAudioId(null);
+          audioRef.current = null;
         }
-      }, 4500);
+      };
 
-      fetch(url, { signal: abortController.signal })
-        .then(res => {
-          hasResponded = true;
-          clearTimeout(abortTimer);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.arrayBuffer();
-        })
-        .then(async (arrayBuf) => {
-          const ctx = audioContextRef.current;
-          if (!ctx) throw new Error('No AudioContext');
-
-          const decoded = await ctx.decodeAudioData(arrayBuf.slice(0));
-          audioBufferCacheRef.current.set(cacheKey, { buffer: decoded, speed });
-          playDecodedSource(decoded, targetGender, speed, id);
-        })
-        .catch(err => {
-          hasResponded = true;
-          clearTimeout(abortTimer);
-          if (err.name === 'AbortError') return; // already speaking instantly!
-          if (text) {
-            speakTextNative(text, targetLang, targetGender, id);
-          } else {
-            setPlayingAudioId(null);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
             setLoadingAudioId(null);
-          }
-        });
+            setPlayingAudioId(id);
+          })
+          .catch(() => {
+            if (text) {
+              speakTextNative(text, targetLang, targetGender, id);
+            } else {
+              setPlayingAudioId(null);
+              setLoadingAudioId(null);
+              audioRef.current = null;
+            }
+          });
+      }
       return;
     }
 
@@ -1102,7 +1102,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         : (isMale ? 'ko-male-1' : 'ko-female-1')
     );
     // Take authentic human voice from AI Studio with exact male/female profile
-    const url = `/api/elevenlabs/tts?text=${encodeURIComponent(textToSpeak)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=${isMale ? 'male' : 'female'}`;
+    const url = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=${lang}&gender=${isMale ? 'male' : 'female'}&model=${encodeURIComponent(voiceProfId)}&voice=${encodeURIComponent(activeModel?.voice || '')}`;
     handlePlayAudio(url, audioId, textToSpeak, lang, isMale ? 'male' : 'female', activeModel);
   }
 
@@ -1139,7 +1139,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     const activeModel = selectedVoiceModel || selectedFemaleModel || (langCode === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS[0] : KOREAN_FEMALE_VOICE_MODELS[0]);
     const isMale = activeModel?.gender === 'male';
     const voiceProfId = activeModel?.voiceProfileId || (langCode === 'ja' ? (isMale ? 'ja-male-1' : 'ja-female-1') : (isMale ? 'ko-male-1' : 'ko-female-1'));
-    const url = `/api/elevenlabs/tts?text=${encodeURIComponent(spoken || primary)}&voiceProfileId=${encodeURIComponent(voiceProfId)}&gender=${isMale ? 'male' : 'female'}`;
+    const url = `/api/tts?text=${encodeURIComponent(spoken || primary)}&lang=${langCode}&gender=${isMale ? 'male' : 'female'}&model=${encodeURIComponent(voiceProfId)}&voice=${encodeURIComponent(activeModel?.voice || '')}`;
     handlePlayAudio(url, audioId, spoken || primary, langCode, isMale ? 'male' : 'female', activeModel);
   }
 
