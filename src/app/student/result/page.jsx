@@ -337,95 +337,121 @@ const StudentResult = () => {
     }
 
     return (
-      <div className="result-grid-outer" style={{ maxWidth: "1000px", margin: "20px auto", padding: "16px", fontFamily: "Arial, sans-serif", boxSizing: "border-box" }}>
+      <div className="result-grid-outer" style={{ maxWidth: "100%", width: "100%", height: "100vh", height: "100dvh", margin: "0 auto", padding: "8px 14px", fontFamily: "Arial, sans-serif", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <style dangerouslySetInnerHTML={{ __html: `
-          @media (orientation: landscape), (max-height: 650px) {
-            .result-grid-outer {
-              max-width: 100% !important;
-              margin: 0 auto !important;
-              padding: 3px 8px !important;
-              height: 100vh !important;
-              height: 100dvh !important;
-              max-height: 100dvh !important;
-              box-sizing: border-box !important;
-              display: flex !important;
-              flex-direction: column !important;
-              overflow: hidden !important;
-            }
-            .result-grid-top-bar {
-              margin-bottom: 3px !important;
-            }
-            .result-grid-back-btn {
-              padding: 4px 14px !important;
-              font-size: 12px !important;
-            }
-            .result-grid-card {
-              flex: 1 !important;
-              min-height: 0 !important;
-              display: flex !important;
-              flex-direction: column !important;
-              overflow: hidden !important;
-              border-radius: 10px !important;
-            }
-            .result-grid-header {
-              padding: 5px 12px !important;
-              font-size: 12px !important;
-              gap: 8px !important;
-              flex-shrink: 0 !important;
-            }
-            .result-grid-body {
-              padding: 5px 10px !important;
-              flex: 1 !important;
-              min-height: 0 !important;
-              overflow-y: auto !important;
-            }
-            .result-grid-columns {
-              gap: 10px !important;
-              flex-wrap: nowrap !important;
-            }
-            .result-grid-column {
-              min-width: 0 !important;
-              padding-right: 6px !important;
-            }
-            .result-grid-heading {
-              margin: 0 0 3px 0 !important;
-              font-size: 12.5px !important;
-            }
-            .result-grid-buttons {
-              gap: 3px !important;
-            }
-            .result-grid-btn {
-              padding: 4px 0 !important;
-              font-size: 11.5px !important;
-              min-height: 25px !important;
-              border-radius: 4px !important;
-            }
+          .result-grid-outer {
+            max-width: 100% !important;
+            width: 100% !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            margin: 0 auto !important;
+            padding: 6px 12px !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
+          .result-grid-top-bar {
+            margin-bottom: 6px !important;
+            flex-shrink: 0 !important;
+          }
+          .result-grid-back-btn {
+            padding: 6px 16px !important;
+            font-size: 12.5px !important;
+            border-radius: 8px !important;
+          }
+          .result-grid-card {
+            flex: 1 !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            border-radius: 12px !important;
+          }
+          .result-grid-header {
+            padding: 8px 14px !important;
+            font-size: 13px !important;
+            gap: 10px !important;
+            flex-shrink: 0 !important;
+          }
+          .result-grid-body {
+            padding: 8px 12px !important;
+            flex: 1 !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
+          .result-grid-columns {
+            gap: 12px !important;
+            flex: 1 !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: row !important;
+            height: 100% !important;
+            overflow: hidden !important;
+          }
+          .result-grid-column {
+            flex: 1 !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            padding-right: 6px !important;
+          }
+          .result-grid-heading {
+            margin: 0 0 4px 0 !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            flex-shrink: 0 !important;
+          }
+          .result-grid-buttons {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            grid-template-rows: repeat(5, 1fr) !important;
+            gap: 5px !important;
+            flex: 1 !important;
+            height: 100% !important;
+            min-height: 0 !important;
+          }
+          .result-grid-btn {
+            height: 100% !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 8px !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
           }
         ` }} />
-        <div className="result-grid-top-bar" style={{ marginBottom: "12px" }}>
+        <div className="result-grid-top-bar" style={{ marginBottom: "6px", flexShrink: 0 }}>
           <button 
             className="result-grid-back-btn"
             onClick={() => setShowDetailedView(false)}
-            style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 18px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+            style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 18px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px", boxShadow: "0 2px 4px rgba(2, 132, 199, 0.25)" }}
           >
             ❮ Back to Summary
           </button>
         </div>
 
-        <div className="result-grid-card" style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "10px", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.05)" }}>
-          <div className="result-grid-header" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "12px 18px", justifyContent: "space-between", fontWeight: "bold", fontSize: "14px", flexWrap: "wrap", gap: "10px" }}>
+        <div className="result-grid-card" style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <div className="result-grid-header" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "10px 18px", justifyContent: "space-between", fontWeight: "bold", fontSize: "13.5px", flexShrink: 0 }}>
             <span>Total Questions: {total}</span>
             <span>Exam: {examName}</span>
             <span>Solved: {calculatedAttempted}</span>
             <span>UnSolved: {unsolvedCount}</span>
           </div>
 
-          <div className="result-grid-body" style={{ padding: "18px" }}>
-            <div className="result-grid-columns" style={{ display: "flex", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          <div className="result-grid-body" style={{ padding: "8px 14px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div className="result-grid-columns" style={{ display: "flex", justifyContent: "space-between", gap: "14px", flex: 1, minHeight: 0, height: "100%", overflow: "hidden" }}>
               
-              <div className="result-grid-column" style={{ flex: 1, minWidth: "260px", borderRight: "2px solid #e2e8f0", paddingRight: "12px" }}>
-                <h3 className="result-grid-heading" style={{ textAlign: "center", color: "#0284c7", marginBottom: "10px", fontSize: "15px" }}>Reading Questions</h3>
-                <div className="result-grid-buttons" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
+              <div className="result-grid-column" style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "14px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+                <h3 className="result-grid-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h3>
+                <div className="result-grid-buttons" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", flex: 1, height: "100%", minHeight: 0 }}>
                   {displayedQuestions.slice(0, 20).map((q, idx) => {
                     const studentAns = getStudentAnswer(q, idx);
                     const isAttempted = studentAns !== undefined && studentAns !== null && studentAns !== "";
@@ -453,15 +479,20 @@ const StudentResult = () => {
                         key={q.id || idx}
                         onClick={() => setSelectedQuestionIndex(idx)}
                         style={{
-                          padding: "10px 0",
+                          height: "100%",
+                          minHeight: 0,
+                          padding: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           backgroundColor: bgColor,
                           border: `1.5px solid ${borderColor}`,
-                          borderRadius: "10px",
-                          fontWeight: "bold",
-                          fontSize: "14px",
+                          borderRadius: "8px",
+                          fontWeight: "800",
+                          fontSize: "13px",
                           cursor: "pointer",
                           color: textColor,
-                          boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
                         }}
                       >
                         {idx + 1}
@@ -471,9 +502,9 @@ const StudentResult = () => {
                 </div>
               </div>
 
-              <div className="result-grid-column" style={{ flex: 1, minWidth: "260px", paddingLeft: "4px" }}>
-                <h3 className="result-grid-heading" style={{ textAlign: "center", color: "#0284c7", marginBottom: "10px", fontSize: "15px" }}>Listening Questions</h3>
-                <div className="result-grid-buttons" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px" }}>
+              <div className="result-grid-column" style={{ flex: 1, paddingLeft: "14px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+                <h3 className="result-grid-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h3>
+                <div className="result-grid-buttons" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", flex: 1, height: "100%", minHeight: 0 }}>
                   {displayedQuestions.slice(20, 40).map((q, idx) => {
                     const actualIndex = idx + 20;
                     const studentAns = getStudentAnswer(q, actualIndex);
@@ -502,15 +533,20 @@ const StudentResult = () => {
                         key={q.id || actualIndex}
                         onClick={() => setSelectedQuestionIndex(actualIndex)}
                         style={{
-                          padding: "10px 0",
+                          height: "100%",
+                          minHeight: 0,
+                          padding: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           backgroundColor: bgColor,
                           border: `1.5px solid ${borderColor}`,
-                          borderRadius: "10px",
-                          fontWeight: "bold",
-                          fontSize: "14px",
+                          borderRadius: "8px",
+                          fontWeight: "800",
+                          fontSize: "13px",
                           cursor: "pointer",
                           color: textColor,
-                          boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
                         }}
                       >
                         {actualIndex + 1}
@@ -704,16 +740,19 @@ const StudentResult = () => {
             border-radius: 14px !important;
           }
           .result-summary-grid {
-            flex-direction: row !important;
-            align-items: stretch !important;
-            gap: 14px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 12px !important;
+            width: 100% !important;
           }
           .result-summary-stats {
-            flex: 1.3 !important;
-            padding: 8px 14px !important;
+            width: 100% !important;
+            max-width: 420px !important;
+            padding: 8px 16px !important;
             gap: 4px !important;
             margin-bottom: 0 !important;
-            border-radius: 16px !important;
+            border-radius: 14px !important;
           }
           .result-summary-stats > div {
             padding-bottom: 4px !important;
@@ -723,18 +762,21 @@ const StudentResult = () => {
             font-size: 13px !important;
           }
           .result-summary-actions {
-            flex: 1 !important;
-            flex-direction: column !important;
+            display: flex !important;
+            flex-direction: row !important;
             justify-content: center !important;
-            gap: 10px !important;
+            gap: 12px !important;
+            width: 100% !important;
+            max-width: 420px !important;
           }
           .result-summary-actions button {
-            width: 100% !important;
+            flex: 1 !important;
+            width: auto !important;
             max-width: none !important;
             min-width: 0 !important;
-            padding: 10px 14px !important;
-            font-size: 13.5px !important;
-            border-radius: 12px !important;
+            padding: 10px 16px !important;
+            font-size: 13px !important;
+            border-radius: 8px !important;
           }
         }
 
@@ -744,9 +786,10 @@ const StudentResult = () => {
             padding: 4px 10px !important;
           }
           .result-summary-card {
-            padding: 8px 14px !important;
+            padding: 8px 16px !important;
             max-height: calc(100dvh - 8px) !important;
             border-radius: 16px !important;
+            max-width: 480px !important;
           }
           .result-summary-header {
             margin-bottom: 4px !important;
@@ -765,11 +808,15 @@ const StudentResult = () => {
             padding: 1px 8px !important;
           }
           .result-summary-grid {
-            gap: 8px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 6px !important;
+            width: 100% !important;
           }
           .result-summary-stats {
-            padding: 6px 10px !important;
+            padding: 6px 12px !important;
             gap: 2px !important;
+            max-width: 360px !important;
           }
           .result-summary-stats > div {
             padding-bottom: 2px !important;
@@ -778,10 +825,14 @@ const StudentResult = () => {
             font-size: 11.5px !important;
           }
           .result-summary-actions {
-            gap: 6px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 8px !important;
+            max-width: 360px !important;
           }
           .result-summary-actions button {
-            padding: 7px 10px !important;
+            flex: 1 !important;
+            padding: 7px 12px !important;
             font-size: 12px !important;
             border-radius: 8px !important;
           }

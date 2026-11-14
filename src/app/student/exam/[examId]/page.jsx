@@ -1078,91 +1078,89 @@ const StudentExam = () => {
     // 2. 40-Question Grid Overview
     if (inlineShowDetailed && inlineSelectedQIndex === null) {
       return (
-        <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", padding: "16px", boxSizing: "border-box", fontFamily: "Arial, sans-serif", overflowY: "auto" }}>
-          <div style={{ maxWidth: "980px", margin: "0 auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
-              <button
-                type="button"
-                onClick={() => setInlineShowDetailed(false)}
-                style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
-              >
-                ❮ Back to Summary
-              </button>
-              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", fontWeight: "700", color: "#16a34a" }}>● Correct ({res.score})</span>
-                <span style={{ fontSize: "13px", fontWeight: "700", color: "#ef4444" }}>● Incorrect ({res.attempted - res.score})</span>
-                <span style={{ fontSize: "13px", fontWeight: "700", color: "#64748b" }}>● Unanswered ({res.total - res.attempted})</span>
-              </div>
+        <div style={{ maxWidth: "100%", width: "100%", height: "100vh", height: "100dvh", margin: "0 auto", padding: "8px 12px", boxSizing: "border-box", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden", backgroundColor: "#f8fafc" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "8px", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => setInlineShowDetailed(false)}
+              style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "6px 16px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
+            >
+              ❮ Back to Summary
+            </button>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#16a34a" }}>● Correct ({res.score})</span>
+              <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#ef4444" }}>● Incorrect ({res.attempted - res.score})</span>
+              <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#64748b" }}>● Unanswered ({res.total - res.attempted})</span>
+            </div>
+          </div>
+
+          <div style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+            <div style={{ backgroundColor: "#0284c7", color: "white", padding: "8px 14px", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "13px", flexWrap: "wrap", gap: "6px", flexShrink: 0 }}>
+              <span>Exam: {res.examName}</span>
+              <span>Score: {res.score} / {res.total} ({res.percentage}%)</span>
+              <span>Click question number to review</span>
             </div>
 
-            <div style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "10px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-              <div style={{ backgroundColor: "#0284c7", color: "white", padding: "12px 20px", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "14px", flexWrap: "wrap", gap: "8px" }}>
-                <span>Exam: {res.examName}</span>
-                <span>Score: {res.score} / {res.total} ({res.percentage}%)</span>
-                <span>Click any question number to review</span>
-              </div>
+            <div style={{ padding: "8px 12px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flex: 1, minHeight: 0, height: "100%", overflow: "hidden" }}>
+                <div style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "10px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+                  <h4 style={{ textAlign: "center", color: "#0284c7", margin: "0 0 4px 0", fontSize: "13px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", flex: 1, height: "100%", minHeight: 0 }}>
+                    {allRevQuestions.slice(0, 20).map((q, idx) => {
+                      const ans = getAns(q, idx);
+                      const isAtt = ans !== undefined && ans !== null && ans !== "";
+                      const isCor = isAtt && q.answer !== undefined && Number(ans) === Number(q.answer);
 
-              <div style={{ padding: "20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
-                  <div style={{ flex: 1, minWidth: "280px" }}>
-                    <h4 style={{ textAlign: "center", color: "#0284c7", margin: "0 0 12px 0", fontSize: "15px" }}>Reading Questions (1 - 20)</h4>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
-                      {allRevQuestions.slice(0, 20).map((q, idx) => {
-                        const ans = getAns(q, idx);
-                        const isAtt = ans !== undefined && ans !== null && ans !== "";
-                        const isCor = isAtt && q.answer !== undefined && Number(ans) === Number(q.answer);
+                      let bg = "white";
+                      let border = "#cbd5e1";
+                      let text = "#1e293b";
+                      if (isAtt) {
+                        if (isCor) { bg = "#16a34a"; border = "#15803d"; text = "white"; }
+                        else { bg = "#ef4444"; border = "#dc2626"; text = "white"; }
+                      }
 
-                        let bg = "white";
-                        let border = "#cbd5e1";
-                        let text = "#1e293b";
-                        if (isAtt) {
-                          if (isCor) { bg = "#16a34a"; border = "#15803d"; text = "white"; }
-                          else { bg = "#ef4444"; border = "#dc2626"; text = "white"; }
-                        }
-
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => setInlineSelectedQIndex(idx)}
-                            style={{ padding: "10px 0", backgroundColor: bg, border: `1.5px solid ${border}`, borderRadius: "10px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", color: text, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-                          >
-                            {idx + 1}
-                          </button>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setInlineSelectedQIndex(idx)}
+                          style={{ height: "100%", minHeight: 0, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: bg, border: `1.5px solid ${border}`, borderRadius: "8px", fontWeight: "800", fontSize: "13px", cursor: "pointer", color: text, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
                   </div>
+                </div>
 
-                  <div style={{ flex: 1, minWidth: "280px" }}>
-                    <h4 style={{ textAlign: "center", color: "#0284c7", margin: "0 0 12px 0", fontSize: "15px" }}>Listening Questions (21 - 40)</h4>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
-                      {allRevQuestions.slice(20, 40).map((q, idx) => {
-                        const actualIdx = idx + 20;
-                        const ans = getAns(q, actualIdx);
-                        const isAtt = ans !== undefined && ans !== null && ans !== "";
-                        const isCor = isAtt && q.answer !== undefined && Number(ans) === Number(q.answer);
+                <div style={{ flex: 1, paddingLeft: "10px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+                  <h4 style={{ textAlign: "center", color: "#0284c7", margin: "0 0 4px 0", fontSize: "13px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", flex: 1, height: "100%", minHeight: 0 }}>
+                    {allRevQuestions.slice(20, 40).map((q, idx) => {
+                      const actualIdx = idx + 20;
+                      const ans = getAns(q, actualIdx);
+                      const isAtt = ans !== undefined && ans !== null && ans !== "";
+                      const isCor = isAtt && q.answer !== undefined && Number(ans) === Number(q.answer);
 
-                        let bg = "white";
-                        let border = "#cbd5e1";
-                        let text = "#1e293b";
-                        if (isAtt) {
-                          if (isCor) { bg = "#16a34a"; border = "#15803d"; text = "white"; }
-                          else { bg = "#ef4444"; border = "#dc2626"; text = "white"; }
-                        }
+                      let bg = "white";
+                      let border = "#cbd5e1";
+                      let text = "#1e293b";
+                      if (isAtt) {
+                        if (isCor) { bg = "#16a34a"; border = "#15803d"; text = "white"; }
+                        else { bg = "#ef4444"; border = "#dc2626"; text = "white"; }
+                      }
 
-                        return (
-                          <button
-                            key={actualIdx}
-                            type="button"
-                            onClick={() => setInlineSelectedQIndex(actualIdx)}
-                            style={{ padding: "10px 0", backgroundColor: bg, border: `1.5px solid ${border}`, borderRadius: "10px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", color: text, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-                          >
-                            {actualIdx + 1}
-                          </button>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <button
+                          key={actualIdx}
+                          type="button"
+                          onClick={() => setInlineSelectedQIndex(actualIdx)}
+                          style={{ height: "100%", minHeight: 0, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: bg, border: `1.5px solid ${border}`, borderRadius: "8px", fontWeight: "800", fontSize: "13px", cursor: "pointer", color: text, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
+                        >
+                          {actualIdx + 1}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -1312,37 +1310,43 @@ const StudentExam = () => {
               border-radius: 14px !important;
             }
             .exam-finish-grid {
-              flex-direction: row !important;
-              align-items: stretch !important;
-              gap: 14px !important;
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              gap: 12px !important;
+              width: 100% !important;
             }
             .exam-finish-stats {
-              flex: 1.3 !important;
-              padding: 8px 14px !important;
+              width: 100% !important;
+              max-width: 420px !important;
+              padding: 8px 16px !important;
               gap: 4px !important;
               margin-bottom: 0 !important;
-              border-radius: 16px !important;
+              border-radius: 14px !important;
             }
             .exam-finish-stats > div {
               padding-bottom: 3px !important;
               max-width: 100% !important;
             }
             .exam-finish-stats span {
-              font-size: 12.5px !important;
+              font-size: 13px !important;
             }
             .exam-finish-actions {
-              flex: 1 !important;
-              flex-direction: column !important;
+              display: flex !important;
+              flex-direction: row !important;
               justify-content: center !important;
-              gap: 10px !important;
+              gap: 12px !important;
+              width: 100% !important;
+              max-width: 420px !important;
             }
             .exam-finish-actions button {
-              width: 100% !important;
+              flex: 1 !important;
+              width: auto !important;
               max-width: none !important;
               min-width: 0 !important;
-              padding: 10px 14px !important;
-              font-size: 13.5px !important;
-              border-radius: 12px !important;
+              padding: 10px 16px !important;
+              font-size: 13px !important;
+              border-radius: 8px !important;
             }
           }
         ` }} />
@@ -1750,7 +1754,7 @@ const StudentExam = () => {
             overflow-y: auto !important;
           }
           .ubt-overview-box {
-            padding: 6px 14px !important;
+            padding: 4px 10px !important;
             border-radius: 0 0 16px 16px !important;
             flex: 1 !important;
             min-height: 0 !important;
@@ -1761,7 +1765,7 @@ const StudentExam = () => {
           }
           .ubt-overview-flex {
             flex-direction: row !important;
-            gap: 14px !important;
+            gap: 12px !important;
             flex: 1 !important;
             min-height: 0 !important;
             overflow: hidden !important;
@@ -1778,43 +1782,45 @@ const StudentExam = () => {
             min-height: 0 !important;
             display: flex !important;
             flex-direction: column !important;
-            overflow-y: auto !important;
+            overflow: hidden !important;
           }
           .ubt-overview-box h4, .ubt-overview-heading {
-            margin: 0 0 4px 0 !important;
-            font-size: 13px !important;
+            margin: 0 0 3px 0 !important;
+            font-size: 12px !important;
             font-weight: 800 !important;
+            flex-shrink: 0 !important;
           }
           .ubt-overview-grid {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
             grid-template-rows: repeat(5, 1fr) !important;
-            gap: 7px !important;
+            gap: 5px !important;
             height: 100% !important;
             flex: 1 !important;
+            min-height: 0 !important;
           }
           .ubt-overview-grid button {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             height: 100% !important;
-            min-height: 32px !important;
-            padding: 3px 0 !important;
+            min-height: 0 !important;
+            padding: 0 !important;
             font-size: 13px !important;
             font-weight: 800 !important;
-            border-radius: 10px !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
           }
           .ubt-overview-actions {
-            margin-top: 6px !important;
-            gap: 12px !important;
+            margin-top: 4px !important;
+            gap: 10px !important;
             flex-shrink: 0 !important;
           }
           .ubt-overview-actions button {
-            padding: 7px 18px !important;
-            font-size: 12.5px !important;
+            padding: 6px 14px !important;
+            font-size: 12px !important;
             font-weight: 800 !important;
-            border-radius: 8px !important;
+            border-radius: 6px !important;
           }
         }
 
@@ -1867,6 +1873,16 @@ const StudentExam = () => {
             padding: 5px 12px !important;
             gap: 4px !important;
           }
+          .ubt-exam-landscape-enforcer .ubt-overview-box {
+            padding: 4px 10px !important;
+            border-radius: 0 0 16px 16px !important;
+            flex: 1 !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            overflow: hidden !important;
+          }
           .ubt-exam-landscape-enforcer .ubt-overview-flex {
             flex-direction: row !important;
             gap: 10px !important;
@@ -1886,26 +1902,38 @@ const StudentExam = () => {
             min-height: 0 !important;
             display: flex !important;
             flex-direction: column !important;
-            overflow-y: auto !important;
+            overflow: hidden !important;
           }
           .ubt-exam-landscape-enforcer .ubt-overview-grid {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
             grid-template-rows: repeat(5, 1fr) !important;
-            gap: 6px !important;
+            gap: 4px !important;
             height: 100% !important;
             flex: 1 !important;
+            min-height: 0 !important;
           }
           .ubt-exam-landscape-enforcer .ubt-overview-grid button {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             height: 100% !important;
-            min-height: 32px !important;
-            padding: 2px 0 !important;
-            font-size: 12.5px !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            font-size: 13px !important;
             font-weight: 800 !important;
-            border-radius: 10px !important;
+            border-radius: 8px !important;
+          }
+          .ubt-exam-landscape-enforcer .ubt-overview-actions {
+            margin-top: 4px !important;
+            gap: 10px !important;
+            flex-shrink: 0 !important;
+          }
+          .ubt-exam-landscape-enforcer .ubt-overview-actions button {
+            padding: 6px 14px !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            border-radius: 6px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-header-bar {
             padding: 5px 14px !important;
@@ -2181,7 +2209,7 @@ const StudentExam = () => {
               <div className="ubt-overview-col" style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "14px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
                 <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 10px 0", fontSize: "15px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
                 <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
-                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "8px", flex: 1, height: "100%" }}>
+                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", flex: 1, height: "100%", minHeight: 0 }}>
                     {questions.slice(0, 20).map((q, idx) => (
                       <button
                         type="button"
@@ -2191,17 +2219,17 @@ const StudentExam = () => {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          padding: "6px 0",
+                          padding: 0,
                           height: "100%",
-                          minHeight: "38px",
+                          minHeight: 0,
                           backgroundColor: selectedAnswers[q.id] !== undefined ? "#dcfce7" : "white",
                           border: selectedAnswers[q.id] !== undefined ? "2px solid #16a34a" : "1.5px solid #0284c7",
-                          borderRadius: "10px",
+                          borderRadius: "8px",
                           fontWeight: "800",
-                          fontSize: "14px",
+                          fontSize: "13px",
                           cursor: "pointer",
                           color: selectedAnswers[q.id] !== undefined ? "#15803d" : "#0f172a",
-                          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                           transition: "0.15s"
                         }}
                       >
@@ -2215,7 +2243,7 @@ const StudentExam = () => {
               <div className="ubt-overview-col" style={{ flex: 1, paddingLeft: "14px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
                 <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 10px 0", fontSize: "15px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
                 <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
-                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "8px", flex: 1, height: "100%" }}>
+                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", flex: 1, height: "100%", minHeight: 0 }}>
                     {questions.slice(20, 40).map((q, idx) => {
                       const actualIndex = idx + 20;
                       return (
@@ -2227,17 +2255,17 @@ const StudentExam = () => {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            padding: "6px 0",
+                            padding: 0,
                             height: "100%",
-                            minHeight: "38px",
+                            minHeight: 0,
                             backgroundColor: selectedAnswers[q.id] !== undefined ? "#dcfce7" : "white",
                             border: selectedAnswers[q.id] !== undefined ? "2px solid #16a34a" : "1.5px solid #0284c7",
-                            borderRadius: "10px",
+                            borderRadius: "8px",
                             fontWeight: "800",
-                            fontSize: "14px",
+                            fontSize: "13px",
                             cursor: "pointer",
                             color: selectedAnswers[q.id] !== undefined ? "#15803d" : "#0f172a",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                             transition: "0.15s"
                           }}
                         >
