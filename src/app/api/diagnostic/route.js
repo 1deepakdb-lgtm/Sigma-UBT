@@ -34,7 +34,36 @@ export async function GET(request) {
       result.pyFind = `find error: ${fe.message}`;
     }
 
-    // Check python binaries and edge-tts
+    // Test running tts_engine.py directly with each python
+    result.ttsEngineTest = {};
+    const testScript = path.join(process.cwd(), 'scripts', 'tts_engine.py');
+    const testOut = '/tmp/test_diag_tts.mp3';
+    for (const py of ['/opt/alt/python311/bin/python3', 'python3', '/usr/bin/python3']) {
+      try {
+        if (fs.existsSync(testOut)) fs.unlinkSync(testOut);
+        const out = execSync(`${py} "${testScript}" "안녕하세요" "ko-KR-InJoonNeural" "+0Hz" "+0%" "${testOut}" 2>&1`, {
+          timeout: 8000,
+          env: {
+            ...process.env,
+            PATH: `/opt/alt/python311/bin:/opt/alt/python310/bin:/opt/alt/python39/bin:${process.env.PATH || ''}:/usr/local/bin:/usr/bin:/bin`,
+            PYTHONPATH: `/home/examjkco/.local/lib/python3.11/site-packages:/home/examjkco/.local/lib/python3.9/site-packages:${process.env.PYTHONPATH || ''}`
+          }
+        }).toString().trim();
+        const created = fs.existsSync(testOut);
+        result.ttsEngineTest[py] = {
+          success: created,
+          size: created ? fs.statSync(testOut).size : 0,
+          output: out
+        };
+      } catch (err) {
+        result.ttsEngineTest[py] = {
+          success: false,
+          error: err.message,
+          stdout: err.stdout?.toString(),
+          stderr: err.stderr?.toString()
+        };
+      }
+    }
     const pyBinaries = [
       'python3',
       '/usr/bin/python3',
