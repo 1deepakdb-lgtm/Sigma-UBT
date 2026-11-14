@@ -39,7 +39,6 @@ const ROUTE_PERMISSIONS = [
   { prefix: '/api/admin', allowedRoles: ['admin'] },
   { prefix: '/voice-studio', allowedRoles: ['admin', 'institute'] },
   { prefix: '/api/diagnostic', allowedRoles: ['admin'] },
-  { prefix: '/api/elevenlabs/dialogue', allowedRoles: ['admin', 'institute', 'staff', 'student'] },
   // Institute-level routes & subpaths
   { prefix: '/institute', allowedRoles: ['institute', 'admin', 'staff'] },
   { prefix: '/api/institute', allowedRoles: ['institute', 'admin', 'staff'] },

@@ -755,6 +755,13 @@ export default function AiStudio({
       const url = URL.createObjectURL(blob);
       setDialogueAudioUrl(url);
 
+      setTimeout(() => {
+        try {
+          const el = document.getElementById('merged-dialogue-player-section');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (e) {}
+      }, 150);
+
       // Auto play merged conversation
       if (audioRef.current) {
         audioRef.current.src = url;
@@ -1876,7 +1883,7 @@ export default function AiStudio({
               ➕ Add Dialogue Turn
             </button>
 
-            {/* Merge and Generate Full Conversation Audio */}
+            {/* Synchronize and Merge All Dialogue Turns into Single Conversation Audio */}
             <button
               type="button"
               onClick={handleGenerateDialogue}
@@ -1886,7 +1893,7 @@ export default function AiStudio({
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
-                padding: '11px 22px',
+                padding: '12px 24px',
                 fontSize: '14px',
                 fontWeight: '800',
                 cursor: isGeneratingDialogue ? 'not-allowed' : 'pointer',
@@ -1898,34 +1905,38 @@ export default function AiStudio({
               }}
             >
               <span>{isGeneratingDialogue ? '⏳' : '💬'}</span>
-              <span>{isGeneratingDialogue ? 'Merging & Synthesizing Conversation...' : 'Merge & Synthesize Full Dialogue'}</span>
+              <span>{isGeneratingDialogue ? 'Synchronizing All Dialogue Turns...' : 'Synchronize & Merge All Dialogue into One Audio'}</span>
             </button>
           </div>
 
-          {/* ── MERGED CONVERSATION AUDIO PLAYER & SECURE DOWNLOAD ── */}
+          {/* ── SYNCHRONIZED CONVERSATION AUDIO PLAYER & SECURE DOWNLOAD ── */}
           {dialogueAudioUrl && (
-            <div style={{
-              marginTop: '20px',
-              padding: '16px 18px',
-              borderRadius: '12px',
-              background: '#f0fdf4',
-              border: '1.5px solid #86efac',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '14px',
-              boxSizing: 'border-box',
-              width: '100%'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 240px', minWidth: '220px' }}>
-                <span style={{ fontSize: '24px' }}>🎧</span>
+            <div
+              id="merged-dialogue-player-section"
+              style={{
+                marginTop: '20px',
+                padding: '18px 20px',
+                borderRadius: '14px',
+                background: '#f0fdf4',
+                border: '2px solid #86efac',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '14px',
+                boxSizing: 'border-box',
+                width: '100%',
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.12)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 240px', minWidth: '220px' }}>
+                <span style={{ fontSize: '28px' }}>🎧</span>
                 <div>
-                  <span style={{ fontSize: '13.5px', fontWeight: '800', color: '#166534', display: 'block' }}>
-                    Merged Multi-Speaker Dialogue Ready!
+                  <span style={{ fontSize: '14px', fontWeight: '900', color: '#166534', display: 'block' }}>
+                    Synchronized Dialogue Audio Ready!
                   </span>
-                  <span style={{ fontSize: '11.5px', color: '#15803d' }}>
-                    Seamless turn-taking conversation with individual speaker models
+                  <span style={{ fontSize: '12px', color: '#15803d', fontWeight: '500' }}>
+                    All dialogue turns compiled into one continuous conversation track
                   </span>
                 </div>
               </div>
@@ -1933,15 +1944,16 @@ export default function AiStudio({
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '12px',
                 flexWrap: 'wrap',
-                flex: '1 1 320px',
+                flex: '1 1 340px',
                 justifyContent: 'flex-start'
               }}>
                 <audio
                   src={dialogueAudioUrl}
                   controls
-                  controlsList={!canDownloadAudio ? "nodownload" : undefined}
+                  controlsList={!canDownloadAudio ? "nodownload noplaybackrate" : undefined}
+                  onContextMenu={(e) => { if (!canDownloadAudio) e.preventDefault(); }}
                   style={{
                     height: '42px',
                     maxWidth: '100%',
@@ -1951,17 +1963,17 @@ export default function AiStudio({
                 />
 
                 {/* STRICT ROLE CHECK: Admin and Institute only. NEVER for students. */}
-                {canDownloadAudio && (
+                {canDownloadAudio ? (
                   <a
                     href={dialogueAudioUrl}
-                    download={`dialogue_conversation_${Date.now()}.mp3`}
+                    download={`synchronized_dialogue_${Date.now()}.mp3`}
                     style={{
                       background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                       color: '#ffffff',
-                      padding: '11px 18px',
+                      padding: '11px 20px',
                       borderRadius: '8px',
                       textDecoration: 'none',
-                      fontSize: '12.5px',
+                      fontSize: '13px',
                       fontWeight: '800',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -1970,12 +1982,31 @@ export default function AiStudio({
                       boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
                       whiteSpace: 'nowrap',
                       flex: '1 1 auto',
-                      minHeight: '40px',
-                      boxSizing: 'border-box'
+                      minHeight: '42px',
+                      boxSizing: 'border-box',
+                      cursor: 'pointer'
                     }}
                   >
-                    📥 Download Merged MP3
+                    📥 Download Synchronized Dialogue MP3
                   </a>
+                ) : (
+                  <span
+                    style={{
+                      background: '#f1f5f9',
+                      color: '#64748b',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      fontSize: '11.5px',
+                      fontWeight: '700',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      border: '1px solid #e2e8f0',
+                      userSelect: 'none'
+                    }}
+                  >
+                    🔒 Listen Only · Student Download Restricted
+                  </span>
                 )}
               </div>
             </div>

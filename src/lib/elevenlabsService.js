@@ -303,12 +303,9 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
     throw new Error('Dialogue cannot exceed 25 conversation turns per generation.');
   }
 
-  // Synthesize each turn with individual speaker voice profiles & robust fallback
-  const audioBuffers = [];
-
-  for (let i = 0; i < turns.length; i++) {
-    const turn = turns[i];
-    if (!turn.text || !turn.text.trim()) continue;
+  // Synthesize each turn concurrently in parallel for maximum speed & reliability
+  const turnPromises = turns.map(async (turn, i) => {
+    if (!turn.text || !turn.text.trim()) return null;
 
     const voiceProfId = turn.voiceProfileId || (turn.speaker === 'B' ? 'ko-male-2' : 'ko-female-1');
     const voiceProf = getVoiceProfile(voiceProfId);
@@ -346,13 +343,19 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
       }
     }
 
-    if (buf) {
-      audioBuffers.push(buf);
+    return buf;
+  });
 
-      // Add a natural 400ms acoustic silence gap between turns
-      if (i < turns.length - 1) {
-        audioBuffers.push(getMp3SilenceBuffer(400));
-      }
+  const resolvedBuffers = await Promise.all(turnPromises);
+  const audioBuffers = [];
+  const validBuffers = resolvedBuffers.filter(Boolean);
+
+  for (let i = 0; i < validBuffers.length; i++) {
+    audioBuffers.push(validBuffers[i]);
+
+    // Add a natural 400ms acoustic silence gap between turns
+    if (i < validBuffers.length - 1) {
+      audioBuffers.push(getMp3SilenceBuffer(400));
     }
   }
 

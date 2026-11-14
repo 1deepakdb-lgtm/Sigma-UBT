@@ -51,9 +51,9 @@ export async function POST(request) {
 
     const result = await synthesizeDialogue({ turns, modelId, style });
 
-    // Students are not permitted download option (audio must play inline only)
-    const isStudent = session?.role === 'student';
-    const isDownload = !isStudent && Boolean(download);
+    // Strict download protection: ONLY Admin and Institute can download. NEVER students.
+    const isPrivileged = session?.role === 'admin' || session?.role === 'institute';
+    const isDownload = isPrivileged && Boolean(download);
 
     const disposition = isDownload 
       ? `attachment; filename="${encodeURIComponent(filename)}"` 
