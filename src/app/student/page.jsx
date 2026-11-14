@@ -476,7 +476,7 @@ const StudentDashboard = () => {
     return activeStudentPackages.some((pkgName) => isSetInPackage(set, pkgName));
   };
 
-  // Helper: check if a specific exam set is individually unlocked (via Rs. 40 purchase or admin release)
+  // Helper: check if a specific exam set is individually unlocked (via Rs. 30 purchase or admin release)
   const isSetIndividuallyUnlocked = (set) => {
     if (!set) return false;
     const setId = set.id?.toString();
@@ -1653,7 +1653,7 @@ const StudentDashboard = () => {
     handleOpenEsewaModal({
       id: set.id,
       name: set.name,
-      price: 40,
+      price: 30,
       type: "set",
       packageName: set.packageName || (instituteLanguage === "japanese" ? "Japanese Mock Test" : "UBT Set")
     });
@@ -2732,7 +2732,7 @@ const StudentDashboard = () => {
                   borderRadius: "20px",
                   border: !hasPaidExamAccess ? (unlockedSets.length > 0 ? "1px solid #86efac" : "1px solid #fde68a") : isPackageExpired ? "1px solid #fecaca" : "1px solid #bbf7d0"
                 }}>
-                  {!hasPaidExamAccess ? (unlockedSets.length > 0 ? `${unlockedSets.length} Set(s) Unlocked (Rs. 40 each)` : "Locked · Purchase Required") : isPackageExpired ? "Expired" : "Active"}
+                  {!hasPaidExamAccess ? (unlockedSets.length > 0 ? `${unlockedSets.length} Set(s) Unlocked (Rs. 30 each)` : "Locked · Purchase Required") : isPackageExpired ? "Expired" : "Active"}
                 </span>
               </div>
             </div>
@@ -3012,7 +3012,7 @@ const StudentDashboard = () => {
                             </span>
                           ) : individuallyUnlocked ? (
                             <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
-                              UNLOCKED (Rs. 40)
+                              UNLOCKED (Rs. 30)
                             </span>
                           ) : packageCovered ? (
                             <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
@@ -3066,14 +3066,27 @@ const StudentDashboard = () => {
                           }
 
                           if (pending) {
-                            alert(`Your payment query for "${set.name}" (Rs. 40) is currently pending review by Admin.\n\nYour payment screenshot and eSewa transaction details have been submitted. Once Admin verifies and confirms the payment, your set will be released automatically.`);
+                            const sendWa = window.confirm(
+                              `Your payment for "${set.name}" (Rs. 30) is currently pending review by Admin.\n\nWould you like to send the release message to Admin on WhatsApp (9768444902)?`
+                            );
+                            if (sendWa) {
+                              const waMsg = encodeURIComponent(
+                                `🔔 *EXAM SET RELEASE REQUEST (Rs. 30)*\n\n` +
+                                `Hello Admin,\n\nI have submitted my payment of Rs. 30 for "${set.name}".\nPlease verify and release my exam set!\n\n` +
+                                `👤 Student: ${studentName || "Student"} (${currentStudentPhone || "N/A"})\n` +
+                                `📚 Exam: ${set.name}\n` +
+                                `💰 Amount: Rs. 30\n\n` +
+                                `Thank you!`
+                              );
+                              window.open(`https://wa.me/9779768444902?text=${waMsg}`, "_blank");
+                            }
                             return;
                           }
 
                           handleOpenEsewaModal({
                             id: set.id,
                             name: set.name,
-                            price: 40,
+                            price: 30,
                             type: "set",
                             packageName: set.packageName || (instituteLanguage === "japanese" ? "Japanese Mock Test" : "UBT Set")
                           });
@@ -3112,7 +3125,7 @@ const StudentDashboard = () => {
                             : "GET START ▶"
                           : pending
                           ? "⏳ PENDING CONFIRMATION"
-                          : "🔒 BUY TO UNLOCK ▶ (Rs. 40)"}
+                          : "🔒 BUY TO UNLOCK ▶ (Rs. 30)"}
                       </button>
                     </div>
                   );

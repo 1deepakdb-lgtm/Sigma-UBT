@@ -50,17 +50,19 @@ export default function EsewaCheckoutModal({
   // Determine effective price and name
   const isSet = selectedType === "set";
   const itemName = isSet ? (item.name || "Individual UBT Set") : (selectedPackage?.name || item.name || "UBT Exam Package");
-  const itemPrice = isSet ? 40 : (selectedPackage?.price || item.price || 1000);
+  const itemPrice = isSet ? 30 : (selectedPackage?.price || item.price || 1000);
   const formattedPrice = typeof itemPrice === "number" ? `Rs. ${itemPrice}` : itemPrice.toString().startsWith("Rs") ? itemPrice : `Rs. ${itemPrice}`;
 
-  // WhatsApp prefilled message URL for 9768444902
+  // WhatsApp prefilled release message URL for 9768444902
   const whatsappUrl = `https://wa.me/9779768444902?text=${encodeURIComponent(
+    `🔔 *EXAM SET RELEASE REQUEST (Rs. 30)*\n\n` +
     `Hello Admin,\n\nI have sent my payment request for "${itemName}" (${formattedPrice}).\n\n` +
-    `Student Name: ${studentName || "Student"}\n` +
-    `Phone: ${senderPhone || studentPhone || "N/A"}\n` +
-    (txnId ? `eSewa Txn ID: ${txnId}\n` : "") +
-    (screenshotUrl ? `Receipt Attached: Yes (${screenshotFile?.name || "Payment Screenshot"})\n` : "") +
-    `\nI am attaching my payment screenshot here. Please verify and release my UBT exam set. Thank you!`
+    `👤 Student Name: ${studentName || "Student"}\n` +
+    `📱 Phone: ${senderPhone || studentPhone || "N/A"}\n` +
+    `📚 Item: ${itemName} (${formattedPrice})\n` +
+    (txnId ? `🔢 eSewa Txn ID: ${txnId}\n` : "") +
+    (screenshotUrl ? `🧾 Receipt Attached: Yes (${screenshotFile?.name || "Payment Screenshot"})\n` : "") +
+    `\nPlease verify my payment and release my exam set on https://examjk.com/admin/notifications. Thank you!`
   )}`;
 
   const handleCopyNumber = () => {
@@ -126,16 +128,17 @@ export default function EsewaCheckoutModal({
       const curPhone = senderPhone.trim() || studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "9800000000" : "9800000000");
       const screenshotLocation = screenshotUrl || "";
 
-      // 1. One-click instant WhatsApp launch on user gesture
+      // 1. One-click instant WhatsApp release message launch on user gesture
       try {
         const waSendMsg = encodeURIComponent(
-          `Hello Admin,\n\nI have sent my payment query for "${itemName}" (${formattedPrice}).\n\n` +
-          `Student Name: ${studentName || "Student"}\n` +
-          `Phone: ${curPhone}\n` +
-          `Item: ${itemName} (${formattedPrice})\n` +
-          `eSewa Txn ID: ${cleanTxn}\n` +
-          (screenshotFile?.name ? `Payment Screenshot: ${screenshotFile.name} (eSewa/Bank Receipt Attached)\n` : "") +
-          `\nWait for 5-10 minute, Admin will verify payment and release UBT set. Thank you!`
+          `🔔 *EXAM SET RELEASE REQUEST (Rs. 30)*\n\n` +
+          `Hello Admin,\n\nI have sent my payment request for "${itemName}" (${formattedPrice}).\n\n` +
+          `👤 Student Name: ${studentName || "Student"}\n` +
+          `📱 Phone: ${curPhone}\n` +
+          `📚 Exam Set: ${itemName} (${formattedPrice})\n` +
+          `🔢 eSewa Txn ID: ${cleanTxn}\n` +
+          (screenshotFile?.name ? `🧾 Payment Screenshot: ${screenshotFile.name} (Attached)\n` : "") +
+          `\nPlease verify my payment and release my exam set on https://examjk.com/admin/notifications. Thank you!`
         );
         window.open(`https://wa.me/9779768444902?text=${waSendMsg}`, "_blank");
       } catch (waErr) {
@@ -152,7 +155,7 @@ export default function EsewaCheckoutModal({
           itemId: item.id || item.name,
           itemName,
           itemType: selectedType,
-          amount: typeof itemPrice === "number" ? itemPrice : 40,
+          amount: typeof itemPrice === "number" ? itemPrice : 30,
           txnId: cleanTxn,
           screenshotUrl: screenshotLocation
         })
@@ -207,7 +210,7 @@ export default function EsewaCheckoutModal({
         studentName: studentName || "Student",
         studentPhone: curPhone,
         item: itemName,
-        type: isSet ? "Individual UBT Set (Rs. 40)" : "UBT Package",
+        type: isSet ? "Individual UBT Set (Rs. 30)" : "UBT Package",
         amount: itemPrice,
         esewaNumber,
         status: "Pending Admin Confirmation",
@@ -436,7 +439,7 @@ export default function EsewaCheckoutModal({
                 }}
               >
                 <span>💬</span>
-                <span>Open WhatsApp Chat Again (9768444902) ↗</span>
+                <span>Send Release Message on WhatsApp (9768444902) ↗</span>
               </a>
 
               <button

@@ -12,7 +12,7 @@ export async function POST(req) {
       itemId,
       itemName,
       itemType = 'set',
-      amount = 40,
+      amount = 30,
       txnId,
       screenshotUrl,
       driveFolderUrl = 'https://drive.google.com/drive/folders/1ZaKiEPRNOusOvCZSpstWyWHGVRk-lRlE?usp=drive_link'
@@ -35,7 +35,7 @@ export async function POST(req) {
         itemId: itemId ? String(itemId) : itemName,
         itemName,
         itemType,
-        amount: Number(amount) || 40,
+        amount: Number(amount) || 30,
         status: 'PENDING',
         gateway: 'ESEWA_MANUAL',
         rawResponse: JSON.stringify({

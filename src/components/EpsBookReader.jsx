@@ -6886,7 +6886,7 @@ export default function EpsBookReader({
                                     </span>
                                   ) : individuallyUnlocked ? (
                                     <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 6px", borderRadius: "4px" }}>
-                                      ✓ UNLOCKED (Rs. 40)
+                                      ✓ UNLOCKED (Rs. 30)
                                     </span>
                                   ) : packageCovered ? (
                                     <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 6px", borderRadius: "4px" }}>
@@ -6898,7 +6898,7 @@ export default function EpsBookReader({
                                     </span>
                                   ) : (
                                     <span style={{ fontSize: "10px", fontWeight: "800", color: "#b45309", backgroundColor: "#fef3c7", border: "1px solid #fde68a", padding: "2px 6px", borderRadius: "4px" }}>
-                                      🔒 LOCKED · Rs. 40
+                                      🔒 LOCKED · Rs. 30
                                     </span>
                                   )
                                 )}
@@ -7048,7 +7048,19 @@ export default function EpsBookReader({
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      alert(`Your payment query for "${set.title}" (Rs. 40) is currently pending review by Admin.\n\nYour payment screenshot and transaction details were submitted. Once Admin verifies and confirms the payment, your set will unlock automatically.`);
+                                      const sendWa = window.confirm(
+                                        `Your payment for "${set.title}" (Rs. 30) is currently pending review by Admin.\n\nWould you like to send the release message to Admin on WhatsApp (9768444902)?`
+                                      );
+                                      if (sendWa) {
+                                        const waMsg = encodeURIComponent(
+                                          `🔔 *EXAM SET RELEASE REQUEST (Rs. 30)*\n\n` +
+                                          `Hello Admin,\n\nI have submitted my payment of Rs. 30 for "${set.title || set.name}".\nPlease verify and release my exam set!\n\n` +
+                                          `📚 Exam: ${set.title || set.name}\n` +
+                                          `💰 Amount: Rs. 30\n\n` +
+                                          `Thank you!`
+                                        );
+                                        window.open(`https://wa.me/9779768444902?text=${waMsg}`, "_blank");
+                                      }
                                     }}
                                     style={{
                                       width: "100%",
@@ -7077,7 +7089,7 @@ export default function EpsBookReader({
                                         onOpenEsewaModal({
                                           id: set.id,
                                           name: set.title || set.name,
-                                          price: 40,
+                                          price: 30,
                                           type: "set",
                                           packageName: set.level || "Japanese Mock Test"
                                         });
@@ -7102,7 +7114,7 @@ export default function EpsBookReader({
                                       boxShadow: "0 4px 12px rgba(217, 119, 6, 0.28)"
                                     }}
                                   >
-                                    <span>🔒 BUY TO UNLOCK ▶ (Rs. 40)</span>
+                                    <span>🔒 BUY TO UNLOCK ▶ (Rs. 30)</span>
                                   </button>
                                 )
                               ) : (

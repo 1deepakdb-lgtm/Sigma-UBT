@@ -631,7 +631,7 @@ const AdminNotifications = () => {
                       {selected.studentPhone && (
                         <a
                           href={`https://wa.me/977${selected.studentPhone.replace(/[^0-9]/g, "").slice(-10)}?text=${encodeURIComponent(
-                            `Hello ${selected.studentName}, regarding your UBT purchase query for "${selected.itemName}"...`
+                            `Hello ${selected.studentName}, your payment of Rs. ${selected.amount || 30} for "${selected.itemName}" has been confirmed and your exam set is now RELEASED! You can start your exam on https://examjk.com/student. Best wishes!`
                           )}`}
                           target="_blank"
                           rel="noreferrer"
@@ -700,7 +700,7 @@ const AdminNotifications = () => {
                         ) : (
                           <>
                             <span>✅</span>
-                            <span>Confirm Payment &amp; Release UBT Set (Rs. {selected.amount || 40})</span>
+                            <span>Confirm Payment &amp; Release UBT Set (Rs. {selected.amount || 30})</span>
                           </>
                         )}
                       </button>

@@ -9,7 +9,7 @@ export async function POST(req) {
 
     let parsedAmount = Number(amount);
     if (itemType === "set") {
-      parsedAmount = 40; // Strictly enforced official set price (prevents price manipulation)
+      parsedAmount = 30; // Strictly enforced official set price (Rs. 30)
     } else {
       // Package price cannot be tampered below minimum threshold
       if (isNaN(parsedAmount) || parsedAmount < 100) {
