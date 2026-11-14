@@ -42,8 +42,8 @@ export async function POST(request) {
       });
     }
 
-    if (turns.length > 10) {
-      return new Response(JSON.stringify({ error: 'Dialogue turn count exceeds maximum limit of 10 turns per request.' }), {
+    if (turns.length > 25) {
+      return new Response(JSON.stringify({ error: 'Dialogue turn count exceeds maximum limit of 25 turns per request.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });

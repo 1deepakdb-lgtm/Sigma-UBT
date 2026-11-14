@@ -210,33 +210,47 @@ export async function synthesizeElevenLabs({
     }
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'xi-api-key': apiKey,
-      'Content-Type': 'application/json',
-      'Accept': 'audio/mpeg'
-    },
-    body: JSON.stringify(bodyPayload)
-  });
+  // 5. Call ElevenLabs API with AbortController timeout & complete fallback
+  let response = null;
+  const abortCtrl = new AbortController();
+  const timeoutId = setTimeout(() => abortCtrl.abort(), 4000);
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error(`ElevenLabs API error (${response.status}):`, errorBody);
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg'
+      },
+      body: JSON.stringify(bodyPayload),
+      signal: abortCtrl.signal
+    });
+  } catch (netErr) {
+    console.warn(`ElevenLabs API fetch notice: ${netErr.message}. Gracefully switching to native engine.`);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
-    // If quota exhausted or rate limited, gracefully serve fallback
-    if (response.status === 401 || response.status === 429 || errorBody.includes('quota')) {
-      const fallback = await fallbackSynthesis(naturalized, lang, profile.gender, categoryMeta);
-      if (fallback) {
-        return {
-          ...fallback,
-          cached: false,
-          warning: `ElevenLabs quota or authorization notice: ${response.status}. Served via fallback engine.`
-        };
-      }
+  if (!response || !response.ok) {
+    if (response) {
+      try {
+        const errorBody = await response.text();
+        console.warn(`ElevenLabs API returned ${response.status}: ${errorBody}. Gracefully activating fallback.`);
+      } catch (e) {}
     }
-
-    throw new Error(`ElevenLabs API returned ${response.status}: ${errorBody}`);
+    const fallback = await fallbackSynthesis(naturalized, lang, profile.gender, categoryMeta);
+    if (fallback) {
+      try {
+        fs.writeFileSync(cacheFilePath, fallback.buffer);
+      } catch (writeErr) {}
+      return {
+        ...fallback,
+        cached: false,
+        warning: `Served via high-fidelity native audio engine.`
+      };
+    }
+    throw new Error('Audio engine unavailable. Please try again.');
   }
 
   const audioArrayBuffer = await response.arrayBuffer();
@@ -259,8 +273,25 @@ export async function synthesizeElevenLabs({
 }
 
 /**
+ * Generate standard compliant MP3 silence frames
+ * Avoids raw zero-byte glitches in picky MP3 decoders
+ */
+function getMp3SilenceBuffer(ms = 400) {
+  // A standard 128kbps 44.1kHz MP3 frame represents 1152 samples = ~26.12ms
+  const frameCount = Math.max(1, Math.round(ms / 26.12));
+  // 128kbps 44.1kHz frame length = 417 bytes
+  // Header: 0xFF 0xFB 0x90 0x64 (MPEG 1 Layer 3, 128 kbps, 44.1 kHz, no padding)
+  const frame = Buffer.alloc(417, 0);
+  frame[0] = 0xff;
+  frame[1] = 0xfb;
+  frame[2] = 0x90;
+  frame[3] = 0x64;
+  return Buffer.concat(Array.from({ length: frameCount }, () => frame));
+}
+
+/**
  * Synthesizes Multi-Speaker Dialogue
- * Takes an array of turns: [{ speaker: 'A', text: '...', voiceProfileId: 'ko-female-1' }, ...]
+ * Takes an array of turns: [{ speaker: 'A', text: '...', voiceProfileId: 'ko-female-1', modelId: '...' }, ...]
  * Returns a unified conversation audio buffer.
  */
 export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, style = 'natural_conversation' }) {
@@ -268,32 +299,65 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
     throw new Error('Dialogue turns must be a non-empty array.');
   }
 
-  if (turns.length > 20) {
-    throw new Error('Dialogue cannot exceed 20 conversation turns per generation.');
+  if (turns.length > 25) {
+    throw new Error('Dialogue cannot exceed 25 conversation turns per generation.');
   }
 
-  // Synthesize each turn with individual speaker voice profiles
+  // Synthesize each turn with individual speaker voice profiles & robust fallback
   const audioBuffers = [];
 
   for (let i = 0; i < turns.length; i++) {
     const turn = turns[i];
     if (!turn.text || !turn.text.trim()) continue;
 
-    const res = await synthesizeElevenLabs({
-      text: turn.text,
-      voiceProfileId: turn.voiceProfileId || (turn.speaker === 'B' ? 'ko-male-2' : 'ko-female-1'),
-      modelId: turn.modelId || modelId,
-      style: turn.style || style
-    });
+    const voiceProfId = turn.voiceProfileId || (turn.speaker === 'B' ? 'ko-male-2' : 'ko-female-1');
+    const voiceProf = getVoiceProfile(voiceProfId);
+    let buf = null;
 
-    audioBuffers.push(res.buffer);
-
-    // Add a natural 350ms acoustic silence gap between turns
-    if (i < turns.length - 1) {
-      // 350ms of silent MP3 frame padding
-      const silenceBytes = Buffer.alloc(1400); // Approximate MP3 silence padding
-      audioBuffers.push(silenceBytes);
+    try {
+      const res = await synthesizeElevenLabs({
+        text: turn.text,
+        voiceProfileId: voiceProfId,
+        modelId: turn.modelId || modelId,
+        style: turn.style || style
+      });
+      if (res && res.buffer && res.buffer.length > 0) {
+        buf = res.buffer;
+      }
+    } catch (turnErr) {
+      console.warn(`Turn ${i} ElevenLabs synthesis notice: ${turnErr.message}, activating native engine`);
     }
+
+    if (!buf) {
+      try {
+        const isMale = voiceProf?.gender === 'male' || (turn.speaker === 'B' && !voiceProf);
+        const fallback = await synthesizeSpeechBuffer({
+          text: turn.text,
+          lang: voiceProf?.language || 'ko',
+          gender: isMale ? 'male' : 'female',
+          model: voiceProfId,
+          voice: voiceProf?.voice || ''
+        });
+        if (fallback && fallback.buffer && fallback.buffer.length > 0) {
+          buf = fallback.buffer;
+        }
+      } catch (fbErr) {
+        console.warn(`Turn ${i} native fallback notice: ${fbErr.message}`);
+      }
+    }
+
+    if (buf) {
+      audioBuffers.push(buf);
+
+      // Add a natural 400ms acoustic silence gap between turns
+      if (i < turns.length - 1) {
+        audioBuffers.push(getMp3SilenceBuffer(400));
+      }
+    }
+  }
+
+  if (audioBuffers.length === 0) {
+    throw new Error('Could not synthesize any dialogue turns. Please check input text.');
   }
 
   const combined = Buffer.concat(audioBuffers);
@@ -301,6 +365,6 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
     buffer: combined,
     contentType: 'audio/mpeg',
     turnCount: audioBuffers.length,
-    provider: 'elevenlabs-dialogue'
+    provider: 'merged-dialogue'
   };
 }
