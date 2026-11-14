@@ -166,12 +166,22 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   const vendorDir = path.join(process.cwd(), 'scripts', 'vendor');
   const customEnv = {
     ...process.env,
-    PATH: `${userHome}/.local/bin:${userHome}/bin:${process.env.PATH || '/usr/local/bin:/usr/bin:/bin'}`,
-    PYTHONPATH: `${vendorDir}:${userHome}/.local/lib/python3.11/site-packages:${userHome}/.local/lib/python3.10/site-packages:${userHome}/.local/lib/python3.9/site-packages:${process.env.PYTHONPATH || ''}`,
+    PATH: `${userHome}/.local/bin:${userHome}/bin:/opt/alt/python311/bin:/opt/alt/python310/bin:/opt/alt/python39/bin:/opt/alt/python38/bin:/usr/local/bin:/usr/bin:/bin:${process.env.PATH || ''}`,
+    PYTHONPATH: `${vendorDir}:${userHome}/.local/lib/python3.11/site-packages:${userHome}/.local/lib/python3.10/site-packages:${userHome}/.local/lib/python3.9/site-packages:${userHome}/.local/lib/python3.8/site-packages:/opt/alt/python311/lib/python3.11/site-packages:/opt/alt/python310/lib/python3.10/site-packages:/opt/alt/python39/lib/python3.9/site-packages:${process.env.PYTHONPATH || ''}`,
     PYTHONUNBUFFERED: '1'
   };
 
-  const pyCandidates = ['python3', 'python', '/usr/bin/python3', '/usr/local/bin/python3', '/home/examjkco/.local/bin/python3'];
+  const pyCandidates = [
+    '/opt/alt/python311/bin/python3',
+    '/opt/alt/python310/bin/python3',
+    '/opt/alt/python39/bin/python3',
+    '/opt/alt/python38/bin/python3',
+    'python3',
+    '/usr/bin/python3',
+    '/usr/local/bin/python3',
+    `${userHome}/.local/bin/python3`,
+    'python'
+  ];
   for (const py of pyCandidates) {
     try {
       execFileSync(py, [scriptPath, text, neuralVoice, pitchStr, rateStr, tmpOut], {

@@ -7,12 +7,18 @@ import glob
 # 1. On Linux (e.g. cPanel), prioritize native user and system site-packages first
 home = os.path.expanduser("~")
 if sys.platform != 'darwin':
-    for p in glob.glob(os.path.join(home, ".local/lib/python*/site-packages")):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    for p in glob.glob("/home/*/.local/lib/python*/site-packages"):
-        if p not in sys.path:
-            sys.path.insert(0, p)
+    for pattern in [
+        os.path.join(home, ".local/lib/python*/site-packages"),
+        "/home/*/.local/lib/python*/site-packages",
+        "/opt/alt/python*/lib/python*/site-packages",
+        "/opt/alt/python*/lib64/python*/site-packages",
+        "/usr/local/lib/python*/site-packages",
+        "/usr/lib/python*/site-packages",
+        "/usr/lib64/python*/site-packages"
+    ]:
+        for p in glob.glob(pattern):
+            if p not in sys.path:
+                sys.path.insert(0, p)
 
 # 2. Add vendored packages in scripts/vendor (for darwin or fallback)
 vendor_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vendor')

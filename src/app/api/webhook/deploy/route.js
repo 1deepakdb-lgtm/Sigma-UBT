@@ -69,7 +69,7 @@ async function runDeployTasks(repoDir) {
     cwd: repoDir,
     env: {
       ...process.env,
-      PATH: `${process.env.PATH || ''}:/usr/local/bin:/usr/bin:/bin:/usr/local/cpanel/3rdparty/bin:/opt/cpanel/ea-git/bin`
+      PATH: `/opt/alt/python311/bin:/opt/alt/python310/bin:/opt/alt/python39/bin:/opt/alt/python38/bin:${process.env.PATH || ''}:/usr/local/bin:/usr/bin:/bin:/usr/local/cpanel/3rdparty/bin:/opt/cpanel/ea-git/bin`
     }
   };
 
@@ -138,20 +138,17 @@ async function runDeployTasks(repoDir) {
   // 5b. Ensure Python edge-tts package is installed for cPanel user
   try {
     addLog(`🐍 Ensuring edge-tts python dependency is installed...`);
-    const pipRes = await execAsync('python3 -m pip install --user --upgrade edge-tts 2>&1 || pip3 install --user --upgrade edge-tts 2>&1', execOpts);
+    const pipCmd = `
+      for p in /opt/alt/python311/bin/python3 /opt/alt/python310/bin/python3 /opt/alt/python39/bin/python3 /usr/bin/python3 python3; do
+        if [ -x "$p" ]; then
+          $p -m pip install --user --upgrade edge-tts 2>&1 && break
+        fi
+      done
+    `;
+    const pipRes = await execAsync(pipCmd, execOpts);
     const pipOut = String(pipRes?.stdout || '').trim();
     if (pipOut) addLog(`🐍 Pip details: ${pipOut.slice(0, 150)}`);
     addLog(`✅ edge-tts package verified.`);
-
-    // Diagnostic test of python & edge_tts
-    try {
-      const pInfo = await execAsync('python3 --version 2>&1', execOpts);
-      addLog(`🐍 Python version: ${String(pInfo.stdout || '').trim()}`);
-      const pyTest = await execAsync('python3 -c "import sys; print(sys.path); import edge_tts; print(edge_tts.__file__)" 2>&1', execOpts);
-      addLog(`🐍 Edge_tts file: ${String(pyTest.stdout || '').trim()}`);
-    } catch (pe) {
-      addLog(`❌ Python check error: ${pe.stdout || pe.stderr || pe.message}`);
-    }
   } catch (e) {
     addLog(`ℹ️ edge-tts pip check notice: ${e.message}`);
   }
@@ -177,7 +174,7 @@ async function runDeployTasks(repoDir) {
   // 7. Latest commit details
   let latestCommit = '';
   try {
-    const res = await execAsync('git log -1 --format="%h - %s (%cr) by %an"', execOpts);
+    const res = await execAsync('git log -1 --oneline', execOpts);
     latestCommit = String(res?.stdout || '').trim();
     addLog(`📌 Current deployed commit: ${latestCommit}`);
   } catch (e) {

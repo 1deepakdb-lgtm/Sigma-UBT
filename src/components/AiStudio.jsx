@@ -666,13 +666,6 @@ export default function AiStudio({
     }
 
     const elUrl = `/api/elevenlabs/tts?${baseParams.toString()}`;
-
-    let audio = previewAudioRef.current;
-    if (!audio) {
-      audio = new Audio();
-      previewAudioRef.current = audio;
-    }
-    audio.src = elUrl;
     audio.playbackRate = 1.0;
 
     let started = false;
@@ -775,7 +768,7 @@ export default function AiStudio({
         try {
           const el = document.getElementById('merged-dialogue-player-section');
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        } catch (e) {}
+        } catch (e) { }
       }, 150);
 
       // Auto play merged conversation
@@ -1640,6 +1633,354 @@ export default function AiStudio({
               >
                 🇯🇵 Japanese (日本語)
               </button>
+            </div>
+          </div>
+
+          {/* ── SPEAKERS & INDEPENDENT AI MODELS CONFIGURATION CARDS ── */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '16px',
+            marginBottom: '22px'
+          }}>
+            {/* SPEAKER A CARD (Lead Role) */}
+            <div style={{
+              background: '#f0fdf4',
+              border: '2px solid #86efac',
+              borderRadius: '14px',
+              padding: '16px',
+              boxShadow: '0 2px 8px rgba(22, 163, 74, 0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '6px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '900', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {dialogueGenderA === 'female' ? '👩' : '👨'} Speaker A (Lead Role)
+                  </span>
+                  {/* Voice Gender Mode Switcher for Speaker A */}
+                  <div style={{ display: 'flex', gap: '4px', background: '#dcfce7', padding: '3px', borderRadius: '8px' }}>
+                    {['female', 'male'].map(g => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => {
+                          setDialogueGenderA(g);
+                          const match = VOICE_PROFILES.find(v => v.language === dialogueLang && v.gender === g);
+                          if (match) {
+                            setDialogueSpeakerA(match.id);
+                            setDialogueTurns(prev => prev.map(t => t.speaker === 'A' ? { ...t, voiceProfileId: match.id } : t));
+                          }
+                        }}
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          background: dialogueGenderA === g ? '#ffffff' : 'transparent',
+                          color: dialogueGenderA === g ? '#166534' : '#4b5563',
+                          boxShadow: dialogueGenderA === g ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                        }}
+                      >
+                        {g === 'female' ? '👩 Female' : '👨 Male'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Speaker A Voice Profile */}
+                <label style={{ fontSize: '11px', fontWeight: '800', color: '#166534', display: 'block', marginBottom: '4px' }}>
+                  Voice Profile:
+                </label>
+                <select
+                  value={dialogueSpeakerA}
+                  onChange={(e) => {
+                    const newVoiceId = e.target.value;
+                    setDialogueSpeakerA(newVoiceId);
+                    setDialogueTurns(prev => prev.map(t => t.speaker === 'A' ? { ...t, voiceProfileId: newVoiceId } : t));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #86efac',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    marginBottom: '10px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {VOICE_PROFILES.filter(v => {
+                    const lMatch = v.language === dialogueLang;
+                    const gMatch = !dialogueGenderA || v.gender === dialogueGenderA;
+                    return lMatch && gMatch;
+                  }).map(v => (
+                    <option key={v.id} value={v.id}>{v.name} — {v.title || v.persona}</option>
+                  ))}
+                </select>
+
+                {/* Speaker A Model Selection */}
+                <label style={{ fontSize: '11px', fontWeight: '800', color: '#166534', display: 'block', marginBottom: '4px' }}>
+                  ⚡ AI Voice Model for Speaker A:
+                </label>
+                <select
+                  value={dialogueModelA}
+                  onChange={(e) => {
+                    const newModel = e.target.value;
+                    setDialogueModelA(newModel);
+                    setDialogueTurns(prev => prev.map(t => t.speaker === 'A' ? { ...t, modelId: newModel } : t));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #86efac',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    marginBottom: '12px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {AVAILABLE_MODELS.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                {/* Play / Test Speaker A */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const voice = VOICE_PROFILES.find(v => v.id === dialogueSpeakerA) || VOICE_PROFILES[0];
+                    handlePlayPreview(voice, dialogueModelA);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '9px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: previewingVoiceId === `${dialogueSpeakerA}_${dialogueModelA}` ? '#ef4444' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {previewingVoiceId === `${dialogueSpeakerA}_${dialogueModelA}` ? '⏹ Stop Speaker A' : '▶ Play Speaker A Voice'}
+                </button>
+
+                {onSelectVoiceModel && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const voice = VOICE_PROFILES.find(v => v.id === dialogueSpeakerA);
+                      if (voice) onSelectVoiceModel(voice);
+                    }}
+                    title={`Select Speaker A as active voice in Dictionary`}
+                    style={{
+                      width: '100%',
+                      marginTop: '8px',
+                      padding: '7px 10px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #16a34a',
+                      background: (dialogueGenderA === 'female' ? activeFemaleModelId === dialogueSpeakerA : activeMaleModelId === dialogueSpeakerA) ? '#16a34a' : '#ffffff',
+                      color: (dialogueGenderA === 'female' ? activeFemaleModelId === dialogueSpeakerA : activeMaleModelId === dialogueSpeakerA) ? '#ffffff' : '#166534',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {(dialogueGenderA === 'female' ? activeFemaleModelId === dialogueSpeakerA : activeMaleModelId === dialogueSpeakerA)
+                      ? `✓ Speaker A is Active in Dictionary (${dialogueGenderA === 'female' ? 'Female' : 'Male'})`
+                      : `★ Use Speaker A as ${dialogueGenderA === 'female' ? 'Female' : 'Male'} Voice in Dictionary`}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* SPEAKER B CARD (Response Role) */}
+            <div style={{
+              background: '#eff6ff',
+              border: '2px solid #93c5fd',
+              borderRadius: '14px',
+              padding: '16px',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '6px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '900', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {dialogueGenderB === 'male' ? '👨' : '👩'} Speaker B (Response Role)
+                  </span>
+                  {/* Voice Gender Mode Switcher for Speaker B */}
+                  <div style={{ display: 'flex', gap: '4px', background: '#dbeafe', padding: '3px', borderRadius: '8px' }}>
+                    {['male', 'female'].map(g => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => {
+                          setDialogueGenderB(g);
+                          const match = VOICE_PROFILES.find(v => v.language === dialogueLang && v.gender === g);
+                          if (match) {
+                            setDialogueSpeakerB(match.id);
+                            setDialogueTurns(prev => prev.map(t => t.speaker === 'B' ? { ...t, voiceProfileId: match.id } : t));
+                          }
+                        }}
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          background: dialogueGenderB === g ? '#ffffff' : 'transparent',
+                          color: dialogueGenderB === g ? '#1e40af' : '#4b5563',
+                          boxShadow: dialogueGenderB === g ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                        }}
+                      >
+                        {g === 'male' ? '👨 Male' : '👩 Female'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Speaker B Voice Profile */}
+                <label style={{ fontSize: '11px', fontWeight: '800', color: '#1e40af', display: 'block', marginBottom: '4px' }}>
+                  Voice Profile:
+                </label>
+                <select
+                  value={dialogueSpeakerB}
+                  onChange={(e) => {
+                    const newVoiceId = e.target.value;
+                    setDialogueSpeakerB(newVoiceId);
+                    setDialogueTurns(prev => prev.map(t => t.speaker === 'B' ? { ...t, voiceProfileId: newVoiceId } : t));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #93c5fd',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    marginBottom: '10px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {VOICE_PROFILES.filter(v => {
+                    const lMatch = v.language === dialogueLang;
+                    const gMatch = !dialogueGenderB || v.gender === dialogueGenderB;
+                    return lMatch && gMatch;
+                  }).map(v => (
+                    <option key={v.id} value={v.id}>{v.name} — {v.title || v.persona}</option>
+                  ))}
+                </select>
+
+                {/* Speaker B Model Selection */}
+                <label style={{ fontSize: '11px', fontWeight: '800', color: '#1e40af', display: 'block', marginBottom: '4px' }}>
+                  ⚡ AI Voice Model for Speaker B (Different Model):
+                </label>
+                <select
+                  value={dialogueModelB}
+                  onChange={(e) => {
+                    const newModel = e.target.value;
+                    setDialogueModelB(newModel);
+                    setDialogueTurns(prev => prev.map(t => t.speaker === 'B' ? { ...t, modelId: newModel } : t));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #93c5fd',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    marginBottom: '12px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {AVAILABLE_MODELS.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.tag})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                {/* Play / Test Speaker B */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const voice = VOICE_PROFILES.find(v => v.id === dialogueSpeakerB) || VOICE_PROFILES[1];
+                    handlePlayPreview(voice, dialogueModelB);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '9px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: previewingVoiceId === `${dialogueSpeakerB}_${dialogueModelB}` ? '#ef4444' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {previewingVoiceId === `${dialogueSpeakerB}_${dialogueModelB}` ? '⏹ Stop Speaker B' : '▶ Play Speaker B Voice'}
+                </button>
+
+                {onSelectVoiceModel && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const voice = VOICE_PROFILES.find(v => v.id === dialogueSpeakerB);
+                      if (voice) onSelectVoiceModel(voice);
+                    }}
+                    title={`Select Speaker B as active voice in Dictionary`}
+                    style={{
+                      width: '100%',
+                      marginTop: '8px',
+                      padding: '7px 10px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #2563eb',
+                      background: (dialogueGenderB === 'female' ? activeFemaleModelId === dialogueSpeakerB : activeMaleModelId === dialogueSpeakerB) ? '#2563eb' : '#ffffff',
+                      color: (dialogueGenderB === 'female' ? activeFemaleModelId === dialogueSpeakerB : activeMaleModelId === dialogueSpeakerB) ? '#ffffff' : '#1e40af',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {(dialogueGenderB === 'female' ? activeFemaleModelId === dialogueSpeakerB : activeMaleModelId === dialogueSpeakerB)
+                      ? `✓ Speaker B is Active in Dictionary (${dialogueGenderB === 'female' ? 'Female' : 'Male'})`
+                      : `★ Use Speaker B as ${dialogueGenderB === 'female' ? 'Female' : 'Male'} Voice in Dictionary`}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
