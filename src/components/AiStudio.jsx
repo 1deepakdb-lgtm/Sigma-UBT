@@ -2321,7 +2321,7 @@ return (
       }}
     >
       <span>{isGeneratingDialogue ? '⏳' : '💬'}</span>
-      <span>{isGeneratingDialogue ? 'Synchronizing All Dialogue Turns...' : 'Synchronize & Merge All Dialogue into One Audio'}</span>
+      <span>{isGeneratingDialogue ? 'Synchronizing Dialogue...' : 'Synchronize Dialogue'}</span>
     </button>
 </div>
 
