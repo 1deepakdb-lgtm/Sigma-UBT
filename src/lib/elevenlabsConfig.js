@@ -54,40 +54,40 @@ export const DEFAULT_MODEL_ID = process.env.ELEVENLABS_MODEL_ID || ELEVENLABS_MO
 // Multi-Dimensional Voice Categories
 export const VOICE_CATEGORIES = {
   genders: [
-    { id: 'female', label: 'Female', icon: '👩' },
-    { id: 'male', label: 'Male', icon: '👨' }
+    { id: 'female', label: 'Female', icon: '' },
+    { id: 'male', label: 'Male', icon: '' }
   ],
   ageStyles: [
-    { id: 'young_adult', label: 'Young Adult', icon: '🌱', desc: 'Youthful, energetic, high clarity', defaultPitch: 1.08, defaultWeight: 0.35 },
-    { id: 'mature', label: 'Mature', icon: '🏛️', desc: 'Distinguished, grounded, experienced', defaultPitch: 0.92, defaultWeight: 0.65 },
-    { id: 'warm', label: 'Warm', icon: '☕', desc: 'Rich, melodic, comforting mid-range', defaultPitch: 0.98, defaultWeight: 0.55 },
-    { id: 'deep', label: 'Deep', icon: '🌋', desc: 'Heavy chest resonance, deep low pitch', defaultPitch: 0.70, defaultWeight: 0.85 },
-    { id: 'soft', label: 'Soft', icon: '🌸', desc: 'Gentle, airy, delicate whisper-like tone', defaultPitch: 1.02, defaultWeight: 0.20 },
-    { id: 'bright', label: 'Bright', icon: '☀️', desc: 'Vibrant, open, higher pitch register', defaultPitch: 1.15, defaultWeight: 0.30 }
+    { id: 'young_adult', label: 'Young Adult', icon: '', desc: 'Youthful, energetic, high clarity', defaultPitch: 1.08, defaultWeight: 0.35 },
+    { id: 'mature', label: 'Mature', icon: '', desc: 'Distinguished, grounded, experienced', defaultPitch: 0.92, defaultWeight: 0.65 },
+    { id: 'warm', label: 'Warm', icon: '', desc: 'Rich, melodic, comforting mid-range', defaultPitch: 0.98, defaultWeight: 0.55 },
+    { id: 'deep', label: 'Deep', icon: '', desc: 'Heavy chest resonance, deep low pitch', defaultPitch: 0.70, defaultWeight: 0.85 },
+    { id: 'soft', label: 'Soft', icon: '', desc: 'Gentle, airy, delicate whisper-like tone', defaultPitch: 1.02, defaultWeight: 0.20 },
+    { id: 'bright', label: 'Bright', icon: '', desc: 'Vibrant, open, higher pitch register', defaultPitch: 1.15, defaultWeight: 0.30 }
   ],
   personalities: [
-    { id: 'friendly', label: 'Friendly', icon: '🤝', desc: 'Warm, smiling, approachable', stability: 0.44, style: 0.22 },
-    { id: 'professional', label: 'Professional', icon: '💼', desc: 'Clear, articulate, formal composure', stability: 0.56, style: 0.12 },
-    { id: 'calm', label: 'Calm', icon: '🍃', desc: 'Soothing, gentle breathing, relaxed cadence', stability: 0.54, style: 0.10 },
-    { id: 'confident', label: 'Confident', icon: '🎯', desc: 'Authoritative, firm assertion, decisive', stability: 0.50, style: 0.18 },
-    { id: 'expressive', label: 'Expressive', icon: '🎭', desc: 'Lively, dynamic, rich theatrical contour', stability: 0.38, style: 0.28 }
+    { id: 'friendly', label: 'Friendly', icon: '', desc: 'Warm, smiling, approachable', stability: 0.44, style: 0.22 },
+    { id: 'professional', label: 'Professional', icon: '', desc: 'Clear, articulate, formal composure', stability: 0.56, style: 0.12 },
+    { id: 'calm', label: 'Calm', icon: '', desc: 'Soothing, gentle breathing, relaxed cadence', stability: 0.54, style: 0.10 },
+    { id: 'confident', label: 'Confident', icon: '', desc: 'Authoritative, firm assertion, decisive', stability: 0.50, style: 0.18 },
+    { id: 'expressive', label: 'Expressive', icon: '', desc: 'Lively, dynamic, rich theatrical contour', stability: 0.38, style: 0.28 }
   ],
   speechModes: [
-    { id: 'natural_conversation', label: 'Natural Conversation', icon: '💬', speed: 1.00, pauseMs: 300, desc: 'Casual human turn-taking and conversational melody' },
-    { id: 'teacher', label: 'Teacher', icon: '👩‍🏫', speed: 0.94, pauseMs: 450, desc: 'Clear, measured pedagogical pronunciation' },
-    { id: 'slow_learning', label: 'Slow Learning', icon: '🐢', speed: 0.80, pauseMs: 650, desc: 'Slower syllable-by-syllable drill for beginners' },
-    { id: 'exam_listening', label: 'Exam Listening', icon: '🎧', speed: 1.04, pauseMs: 500, desc: 'Official EPS-TOPIK / JLPT listening test cadence' },
-    { id: 'storytelling', label: 'Storytelling', icon: '📖', speed: 0.96, pauseMs: 550, desc: 'Dramatic narrative pacing with expressive arc' },
-    { id: 'workplace_dialogue', label: 'Workplace Dialogue', icon: '🏢', speed: 1.02, pauseMs: 350, desc: 'Polite business honorifics and workplace communication' },
-    { id: 'news_announcer', label: 'News Announcer', icon: '🎙️', speed: 1.06, pauseMs: 400, desc: 'Formal broadcast speech with pristine diction' }
+    { id: 'natural_conversation', label: 'Natural Conversation', icon: '', speed: 1.00, pauseMs: 300, desc: 'Casual human turn-taking and conversational melody' },
+    { id: 'teacher', label: 'Teacher', icon: '', speed: 0.94, pauseMs: 450, desc: 'Clear, measured pedagogical pronunciation' },
+    { id: 'slow_learning', label: 'Slow Learning', icon: '', speed: 0.80, pauseMs: 650, desc: 'Slower syllable-by-syllable drill for beginners' },
+    { id: 'exam_listening', label: 'Exam Listening', icon: '', speed: 1.04, pauseMs: 500, desc: 'Official EPS-TOPIK / JLPT listening test cadence' },
+    { id: 'storytelling', label: 'Storytelling', icon: '', speed: 0.96, pauseMs: 550, desc: 'Dramatic narrative pacing with expressive arc' },
+    { id: 'workplace_dialogue', label: 'Workplace Dialogue', icon: '', speed: 1.02, pauseMs: 350, desc: 'Polite business honorifics and workplace communication' },
+    { id: 'news_announcer', label: 'News Announcer', icon: '', speed: 1.06, pauseMs: 400, desc: 'Formal broadcast speech with pristine diction' }
   ],
   emotions: [
-    { id: 'happy', label: 'Happy', icon: '😊', pitchMod: +0.06, speedMod: +0.04, desc: 'Joyful, bright, smiling melodic lift' },
-    { id: 'sad', label: 'Sad', icon: '😢', pitchMod: -0.05, speedMod: -0.08, desc: 'Gentle, breathy, falling somber cadence' },
-    { id: 'surprised', label: 'Surprised', icon: '😲', pitchMod: +0.10, speedMod: +0.05, desc: 'High pitch inflection, wide melodic leap' },
-    { id: 'excited', label: 'Excited', icon: '🤩', pitchMod: +0.08, speedMod: +0.08, desc: 'Vibrant, fast, high-energy enthusiasm' },
-    { id: 'serious', label: 'Serious', icon: '😐', pitchMod: -0.04, speedMod: -0.02, desc: 'Firm, grounded, disciplined, authoritative' },
-    { id: 'reassuring', label: 'Reassuring', icon: '🕊️', pitchMod: -0.02, speedMod: -0.04, desc: 'Comforting, warm, low-pressure soothing cadence' }
+    { id: 'happy', label: 'Happy', icon: '', pitchMod: +0.06, speedMod: +0.04, desc: 'Joyful, bright, smiling melodic lift' },
+    { id: 'sad', label: 'Sad', icon: '', pitchMod: -0.05, speedMod: -0.08, desc: 'Gentle, breathy, falling somber cadence' },
+    { id: 'surprised', label: 'Surprised', icon: '', pitchMod: +0.10, speedMod: +0.05, desc: 'High pitch inflection, wide melodic leap' },
+    { id: 'excited', label: 'Excited', icon: '', pitchMod: +0.08, speedMod: +0.08, desc: 'Vibrant, fast, high-energy enthusiasm' },
+    { id: 'serious', label: 'Serious', icon: '', pitchMod: -0.04, speedMod: -0.02, desc: 'Firm, grounded, disciplined, authoritative' },
+    { id: 'reassuring', label: 'Reassuring', icon: '', pitchMod: -0.02, speedMod: -0.04, desc: 'Comforting, warm, low-pressure soothing cadence' }
   ]
 };
 
@@ -142,7 +142,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '안녕하세요! 오늘부터 한국어 기초 문법을 쉽고 재미있게 배워보겠습니다.',
     sampleTranslation: 'Hello! From today, we will learn basic Korean grammar easily and fun.',
-    avatar: '👩‍🏫',
+    avatar: '',
     tag: 'Teacher · Default'
   },
   {
@@ -173,7 +173,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '주말에 시간 있으면 같이 맛있는 한국 음식 먹으러 갈까요?',
     sampleTranslation: 'If you have time this weekend, shall we go eat delicious Korean food together?',
-    avatar: '👩',
+    avatar: '',
     tag: 'Friendly · Bright'
   },
   {
@@ -204,7 +204,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '한국어 표준 발음과 받침 규칙을 정확하게 듣고 따라 해 보세요.',
     sampleTranslation: 'Listen carefully and practice the correct Korean standard pronunciation and batchim rules.',
-    avatar: '🎙️',
+    avatar: '',
     tag: 'Pronunciation · Diction'
   },
   {
@@ -235,7 +235,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '시청자 여러분 안녕하십니까. 오늘의 주요 한국어 학습 뉴스와 표준 발음을 전해드립니다.',
     sampleTranslation: "Good evening viewers. Here are today's major Korean learning news and standard pronunciations.",
-    avatar: '🎙️',
+    avatar: '',
     tag: 'Announcer · Polite'
   },
   {
@@ -266,7 +266,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '오늘 수업 끝나고 도서관에서 토픽 단어 같이 외울래? 맛있는 간식도 사줄게!',
     sampleTranslation: "Shall we memorize TOPIK vocabulary together at the library after class? I'll buy delicious snacks!",
-    avatar: '👧',
+    avatar: '',
     tag: 'Youthful · Energetic'
   },
   {
@@ -297,7 +297,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '처음에는 어려워도 매일 조금씩 꾸준히 연습하면 반드시 한국어 실력이 늘 거예요.',
     sampleTranslation: 'Even if it seems difficult at first, practicing a little every day will definitely improve your Korean skills.',
-    avatar: '🌸',
+    avatar: '',
     tag: 'Mentor · Gentle'
   },
   {
@@ -328,7 +328,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '여러분 반갑습니다. 이번 단원에서는 EPS-TOPIK 핵심 어휘를 집중 학습하겠습니다.',
     sampleTranslation: 'Welcome everyone. In this unit, we will study core EPS-TOPIK vocabulary.',
-    avatar: '👨‍🏫',
+    avatar: '',
     tag: 'Teacher · Default'
   },
   {
@@ -359,7 +359,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '오늘 하루도 수고 많으셨습니다. 차 한잔 마시면서 편안한 저녁 보내세요.',
     sampleTranslation: 'You worked hard today. Enjoy a comfortable evening with a warm cup of tea.',
-    avatar: '👨',
+    avatar: '',
     tag: 'Deep Bass · Calm'
   },
   {
@@ -390,7 +390,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '네, 오늘 작업 일정과 안전 수칙에 대해 현장 매뉴얼을 바탕으로 설명드리겠습니다.',
     sampleTranslation: "Yes, I will explain today's work schedule and safety guidelines based on the on-site manual.",
-    avatar: '🧑‍💼',
+    avatar: '',
     tag: 'Workplace · Energetic'
   },
   {
@@ -421,7 +421,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '한국어 능력시험 준비를 위해 핵심 단어와 관용 표현을 차근차근 점검해 나가겠습니다.',
     sampleTranslation: 'For TOPIK exam preparation, we will systematically review key vocabulary and idiomatic expressions.',
-    avatar: '🎙️',
+    avatar: '',
     tag: 'Broadcaster · Resonant'
   },
   {
@@ -452,7 +452,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '서울역에 도착하면 지하철 1호선이나 4호선으로 환승하는 게 가장 빠르고 편리해요.',
     sampleTranslation: 'When you arrive at Seoul Station, transferring to subway Line 1 or 4 is the fastest and most convenient.',
-    avatar: '👦',
+    avatar: '',
     tag: 'Friendly · Travel Guide'
   },
   {
@@ -483,7 +483,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '문장의 맥락을 정확하게 파악하고 문법 요소의 유기적 결합을 분석하는 것이 중요합니다.',
     sampleTranslation: 'It is essential to accurately grasp the sentence context and analyze the organic combination of grammatical elements.',
-    avatar: '👨‍🎓',
+    avatar: '',
     tag: 'Academic · Lecturer'
   },
 
@@ -516,7 +516,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '皆さん、こんにちは！今日から日本語の正しい発音と文法を一緒に学びましょう。',
     sampleTranslation: "Hello everyone! Let's learn correct Japanese pronunciation and grammar together.",
-    avatar: '👩‍🏫',
+    avatar: '',
     tag: 'Teacher · Default'
   },
   {
@@ -547,7 +547,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '今度の休みに、浅草へ美味しい抹茶スイーツを食べに行きませんか？',
     sampleTranslation: 'Would you like to go to Asakusa on our next day off to eat delicious matcha sweets?',
-    avatar: '👩',
+    avatar: '',
     tag: 'Friendly · Bright'
   },
   {
@@ -578,7 +578,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '日本語の五十音と濁音の正確な発音を、一つずつ丁寧に練習しましょう。',
     sampleTranslation: 'Let us practice the correct pronunciation of Japanese gojūon and dakuten carefully one by one.',
-    avatar: '🌸',
+    avatar: '',
     tag: 'Soft · Pronunciation'
   },
   {
@@ -609,7 +609,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '皆様、おはようございます。本日の主要な日本語ニュースと正しい敬語表現をお伝えいたします。',
     sampleTranslation: "Good morning everyone. Here is today's major Japanese news and correct honorific expressions.",
-    avatar: '🎙️',
+    avatar: '',
     tag: 'Announcer · NHK Standard'
   },
   {
@@ -640,7 +640,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '放課後に図書館でJLPTの模擬試験を一緒に解きませんか？終わったらカフェに行こう！',
     sampleTranslation: "Shall we solve JLPT practice tests together at the library after school? Let's go to a cafe afterwards!",
-    avatar: '👧',
+    avatar: '',
     tag: 'Lively · Campus'
   },
   {
@@ -671,7 +671,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '焦らずに一歩ずつ練習すれば、日本語のニュアンスも必ず自然に使いこなせるようになりますよ。',
     sampleTranslation: 'If you practice step by step without rushing, you will definitely master Japanese nuances naturally.',
-    avatar: '🍵',
+    avatar: '',
     tag: 'Warm · Mentor'
   },
   {
@@ -702,7 +702,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '皆さんお疲れ様です。JLPT試験に向けて、重要な漢字と語彙をしっかり復习しましょう。',
     sampleTranslation: "Good job everyone. Let's thoroughly review essential kanji and vocabulary for the JLPT.",
-    avatar: '👨‍🏫',
+    avatar: '',
     tag: 'Teacher · Default'
   },
   {
@@ -733,7 +733,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '夜遅くまで勉強お疲れ様でした。無理をせず、自分のペースで進めていきましょう。',
     sampleTranslation: "Thank you for studying until late. Don't push yourself too hard, let's proceed at your own pace.",
-    avatar: '👨',
+    avatar: '',
     tag: 'Deep Calm · Reassuring'
   },
   {
@@ -764,7 +764,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '本日のお打ち合わせの資料を用意いたしました。ご確認のほどよろしくお願い申し上げます。',
     sampleTranslation: "I have prepared the materials for today's meeting. Please review them at your convenience.",
-    avatar: '🧑‍💼',
+    avatar: '',
     tag: 'Business · Keigo'
   },
   {
@@ -795,7 +795,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '日本の四季折々の豊かな自然と、受け継がれてきた伝統文化の歴史を探求します。',
     sampleTranslation: "Exploring Japan's rich seasonal nature and the historical depth of inherited traditional culture.",
-    avatar: '🎙️',
+    avatar: '',
     tag: 'Deep · Documentary'
   },
   {
@@ -826,7 +826,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '次の電車が来るまでまだ時間があるから、駅前のカフェで温かいお茶でも飲もうよ。',
     sampleTranslation: "There is still time until the next train arrives, so let's drink some warm tea at the cafe in front of the station.",
-    avatar: '👦',
+    avatar: '',
     tag: 'Friendly · Casual'
   },
   {
@@ -857,7 +857,7 @@ export const VOICE_PROFILES = [
     },
     sampleSentence: '語彙の成り立ちと文脈におけるニュアンスの差異を体系的に理解することが肝要です。',
     sampleTranslation: 'It is vital to systematically understand the origin of vocabulary and differences in nuance within context.',
-    avatar: '👨‍🎓',
+    avatar: '',
     tag: 'Academic · Lecturer'
   }
 ];
@@ -869,7 +869,7 @@ export const DIALOGUE_TEMPLATES = {
   ko: [
     {
       id: 'ko-interview',
-      title: '💼 EPS-TOPIK Job Interview (면접)',
+      title: 'EPS-TOPIK Job Interview (면접)',
       description: 'Formal workplace dialogue between Examiner (Female Teacher) and Applicant (Male Student)',
       speakers: {
         A: { id: 'ko-female-1', label: 'Examiner (면접관)' },
@@ -886,7 +886,7 @@ export const DIALOGUE_TEMPLATES = {
     },
     {
       id: 'ko-restaurant',
-      title: '🍲 Ordering Korean Food (식당 주문)',
+      title: 'Ordering Korean Food (식당 주문)',
       description: 'Friendly casual dialogue between Customer and Restaurant Server',
       speakers: {
         A: { id: 'ko-female-2', label: 'Customer (손님)' },
@@ -903,7 +903,7 @@ export const DIALOGUE_TEMPLATES = {
   ja: [
     {
       id: 'ja-directions',
-      title: '🗺️ Asking Directions in Tokyo (道案内)',
+      title: 'Asking Directions in Tokyo (道案内)',
       description: 'Natural conversation asking for subway directions in Tokyo',
       speakers: {
         A: { id: 'ja-female-2', label: 'Tourist (観光客)' },
@@ -919,7 +919,7 @@ export const DIALOGUE_TEMPLATES = {
     },
     {
       id: 'ja-lesson',
-      title: '🎓 Japanese Language Consultation (学習相談)',
+      title: 'Japanese Language Consultation (学習相談)',
       description: 'Teacher and student discussing JLPT preparation',
       speakers: {
         A: { id: 'ja-male-1', label: 'Sensei (先生)' },

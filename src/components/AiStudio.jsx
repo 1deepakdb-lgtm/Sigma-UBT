@@ -83,25 +83,20 @@ export default function AiStudio({
   // Strict role check: Audio download is exclusively available to Admin and Institute.
   // Students and unauthorized users have listen-only restricted access.
   const computeCanDownload = () => {
-    // 1. Explicit admin/institute userRole prop or superadmin flag
-    const r = String(userRole || '').toLowerCase().trim();
-    if (r === 'admin' || r === 'superadmin' || r === 'institute') return true;
-    if (r === 'student') return false;
-
     if (typeof window !== 'undefined') {
       try {
         const pathname = window.location.pathname || '';
-        // 2. Admin, Institute, or Voice Studio routes are strictly authorized for download
+        // 1. Admin, Institute, or Voice Studio routes are strictly authorized for download
         if (pathname.startsWith('/admin') || pathname.startsWith('/institute') || pathname.startsWith('/voice-studio')) {
           return true;
         }
 
-        // 3. Student routes are strictly restricted
-        if (pathname.startsWith('/student') || pathname.includes('/student')) {
+        // 2. Student routes are strictly restricted
+        if (pathname.startsWith('/student') || pathname.includes('/student') || pathname.startsWith('/exam')) {
           return false;
         }
 
-        // 4. Stored role verification
+        // 3. Stored role verification
         const storedRole = (localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase().trim();
         if (storedRole === 'admin' || storedRole === 'superadmin' || storedRole === 'institute') {
           return true;
@@ -111,6 +106,12 @@ export default function AiStudio({
         }
       } catch (e) {}
     }
+
+    // 4. Explicit admin/institute userRole prop or superadmin flag
+    const r = String(userRole || '').toLowerCase().trim();
+    if (r === 'admin' || r === 'superadmin' || r === 'institute' || isSuperAdmin) return true;
+    if (r === 'student') return false;
+
     return false;
   };
 
@@ -136,7 +137,7 @@ export default function AiStudio({
         })
         .catch(() => {});
     }
-  }, [userRole]);
+  }, [userRole, isSuperAdmin]);
 
   // Determine effective student language ('korean' | 'japanese' | 'both')
   const [effectiveInstLang, setEffectiveInstLang] = useState(() => {
@@ -1036,7 +1037,7 @@ return (
                   textTransform: 'capitalize'
                 }}
               >
-                {g === 'all' ? '🌐 All Voices' : g === 'female' ? '👩 Female Voice Mode' : '👨 Male Voice Mode'}
+                {g === 'all' ? 'All Voices' : g === 'female' ? 'Female Voices' : 'Male Voices'}
               </button>
             ))}
           </div>
@@ -1059,7 +1060,7 @@ return (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '14px', fontWeight: '900', color: '#1e1b4b' }}>
-                ⚡ AI Voice Model:
+                AI Voice Model:
               </span>
               <span style={{
                 fontSize: '11px',
@@ -1299,8 +1300,8 @@ return (
                   }}
                 >
                   {(selectedProfile?.gender === 'female' ? activeFemaleModelId === selectedProfile?.id : activeMaleModelId === selectedProfile?.id)
-                    ? `✓ Current Active ${selectedProfile?.gender === 'female' ? 'Female' : 'Male'} Model`
-                    : `★ Use ${selectedProfile?.name || 'Voice'} in Dictionary`}
+                    ? `✓ Active ${selectedProfile?.gender === 'female' ? 'Female' : 'Male'} Model`
+                    : `Use ${selectedProfile?.name || 'Voice'} in Dictionary`}
                 </button>
               )}
 
@@ -1319,7 +1320,7 @@ return (
                   cursor: 'pointer'
                 }}
               >
-                ⚡ Insert Sample Sentence
+                Insert Sample Sentence
               </button>
             </div>
           </div>
@@ -1353,7 +1354,7 @@ return (
           <div style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <label style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b' }}>
-                🌱 1. Voice Age & Vocal Style:
+                1. Voice Age & Vocal Style:
               </label>
               <span style={{ fontSize: '11px', color: '#64748b' }}>
                 Select vocal character
@@ -1380,7 +1381,6 @@ return (
                     }}
                   >
                     <div style={{ fontSize: '12px', fontWeight: '800', color: isSelected ? '#4f46e5' : '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>{style.icon}</span>
                       <span>{style.label}</span>
                     </div>
                     <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: 1.2 }}>
@@ -1396,7 +1396,7 @@ return (
           <div style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <label style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b' }}>
-                🤝 2. Personality Archetype:
+                2. Personality Archetype:
               </label>
               <span style={{ fontSize: '11px', color: '#64748b' }}>
                 Attitude and warmth
@@ -1423,7 +1423,6 @@ return (
                     }}
                   >
                     <div style={{ fontSize: '12px', fontWeight: '800', color: isSelected ? '#0891b2' : '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>{p.icon}</span>
                       <span>{p.label}</span>
                     </div>
                     <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: 1.2 }}>
@@ -1439,7 +1438,7 @@ return (
           <div style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <label style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b' }}>
-                🎙️ 3. Speech Mode & Cadence:
+                3. Speech Mode & Cadence:
               </label>
               <span style={{ fontSize: '11px', color: '#64748b' }}>
                 Pacing and breath duration
@@ -1466,7 +1465,6 @@ return (
                     }}
                   >
                     <div style={{ fontSize: '12px', fontWeight: '800', color: isSelected ? '#7c3aed' : '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>{mode.icon}</span>
                       <span>{mode.label}</span>
                     </div>
                     <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: 1.2 }}>
@@ -1482,7 +1480,7 @@ return (
           <div style={{ marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <label style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b' }}>
-                🎭 4. Emotion & Expressiveness:
+                4. Emotion & Expressiveness:
               </label>
               <span style={{ fontSize: '11px', color: '#64748b' }}>
                 Melodic inflection
@@ -1505,7 +1503,6 @@ return (
                     }}
                   >
                     <div style={{ fontSize: '12px', fontWeight: '800', color: isSelected ? '#db2777' : '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>{emo.icon}</span>
                       <span>{emo.label}</span>
                     </div>
                     <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', lineHeight: 1.2 }}>
@@ -1522,7 +1519,7 @@ return (
           {/* Speaking Speed */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '22px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '10px 16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-              <span style={{ fontSize: '13px', fontWeight: '800', color: '#334155' }}>⚡ Speaking Speed:</span>
+              <span style={{ fontSize: '13px', fontWeight: '800', color: '#334155' }}>Speaking Speed:</span>
               {[0.75, 0.9, 1.0, 1.15, 1.25].map(s => (
                 <button
                   key={s}
@@ -1568,7 +1565,6 @@ return (
                 transition: 'all 0.15s ease'
               }}
             >
-              <span>🎙️</span>
               <span>{isGenerating ? 'Synthesizing Audio...' : 'Generate Human Speech'}</span>
             </button>
 
@@ -1598,7 +1594,7 @@ return (
                       gap: '6px'
                     }}
                   >
-                    📥 Download MP3
+                    Download MP3
                   </a>
                 )}
               </div>
@@ -1615,7 +1611,7 @@ return (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <h2 style={{ fontSize: '19px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>💬</span> Multi-Speaker Human Conversation Studio
+              Multi-Speaker Human Conversation Studio
             </h2>
             <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
               Assign distinct voice profiles & AI models for each speaker, customize turn-by-turn dialogue, preview individual lines, and merge into a single conversation track.
@@ -1645,7 +1641,7 @@ return (
                 boxShadow: dialogueLang === 'ko' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
               }}
             >
-              🇰🇷 Korean (한국어)
+              Korean (한국어)
             </button>
             <button
               type="button"
@@ -1668,7 +1664,7 @@ return (
                 boxShadow: dialogueLang === 'ja' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
               }}
             >
-              🇯🇵 Japanese (日本語)
+              Japanese (日本語)
             </button>
           </div>
         </div>
@@ -1694,7 +1690,7 @@ return (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '6px' }}>
                 <span style={{ fontSize: '14px', fontWeight: '900', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {dialogueGenderA === 'female' ? '👩' : '👨'} Speaker A (Lead Role)
+                  Speaker A (Lead Role)
                 </span>
                 {/* Voice Gender Mode Switcher for Speaker A */}
                 <div style={{ display: 'flex', gap: '4px', background: '#dcfce7', padding: '3px', borderRadius: '8px' }}>
@@ -1722,7 +1718,7 @@ return (
                         boxShadow: dialogueGenderA === g ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                       }}
                     >
-                      {g === 'female' ? '👩 Female' : '👨 Male'}
+                      {g === 'female' ? 'Female' : 'Male'}
                     </button>
                   ))}
                 </div>
@@ -1763,7 +1759,7 @@ return (
 
               {/* Speaker A Model Selection */}
               <label style={{ fontSize: '11px', fontWeight: '800', color: '#166534', display: 'block', marginBottom: '4px' }}>
-                ⚡ AI Voice Model for Speaker A:
+                AI Voice Model for Speaker A:
               </label>
               <select
                 value={dialogueModelA}
@@ -1844,7 +1840,7 @@ return (
                 >
                   {(dialogueGenderA === 'female' ? activeFemaleModelId === dialogueSpeakerA : activeMaleModelId === dialogueSpeakerA)
                     ? `✓ Speaker A is Active in Dictionary (${dialogueGenderA === 'female' ? 'Female' : 'Male'})`
-                    : `★ Use Speaker A as ${dialogueGenderA === 'female' ? 'Female' : 'Male'} Voice in Dictionary`}
+                    : `Use Speaker A as ${dialogueGenderA === 'female' ? 'Female' : 'Male'} Voice in Dictionary`}
                 </button>
               )}
             </div>
@@ -1864,7 +1860,7 @@ return (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '6px' }}>
                 <span style={{ fontSize: '14px', fontWeight: '900', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {dialogueGenderB === 'male' ? '👨' : '👩'} Speaker B (Response Role)
+                  Speaker B (Response Role)
                 </span>
                 {/* Voice Gender Mode Switcher for Speaker B */}
                 <div style={{ display: 'flex', gap: '4px', background: '#dbeafe', padding: '3px', borderRadius: '8px' }}>
@@ -1892,7 +1888,7 @@ return (
                         boxShadow: dialogueGenderB === g ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                       }}
                     >
-                      {g === 'male' ? '👨 Male' : '👩 Female'}
+                      {g === 'male' ? 'Male' : 'Female'}
                     </button>
                   ))}
                 </div>
@@ -1933,7 +1929,7 @@ return (
 
               {/* Speaker B Model Selection */}
               <label style={{ fontSize: '11px', fontWeight: '800', color: '#1e40af', display: 'block', marginBottom: '4px' }}>
-                ⚡ AI Voice Model for Speaker B (Different Model):
+                AI Voice Model for Speaker B:
               </label>
               <select
                 value={dialogueModelB}
@@ -2014,17 +2010,17 @@ return (
                 >
                   {(dialogueGenderB === 'female' ? activeFemaleModelId === dialogueSpeakerB : activeMaleModelId === dialogueSpeakerB)
                     ? `✓ Speaker B is Active in Dictionary (${dialogueGenderB === 'female' ? 'Female' : 'Male'})`
-                    : `★ Use Speaker B as ${dialogueGenderB === 'female' ? 'Female' : 'Male'} Voice in Dictionary`}
+                    : `Use Speaker B as ${dialogueGenderB === 'female' ? 'Female' : 'Male'} Voice in Dictionary`}
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* ── AUTHENTIC DIALOGUE TEMPLATES SELECTOR ── */}
+        {/* ── DIALOGUE TEMPLATES SELECTOR ── */}
         <div style={{ marginBottom: '20px', background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
           <span style={{ fontSize: '12px', fontWeight: '800', color: '#334155', display: 'block', marginBottom: '8px' }}>
-            📚 Load Authentic Benchmark Dialogue Template:
+            Load Dialogue Template:
           </span>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {(dialogueLang === 'ko'
@@ -2120,7 +2116,7 @@ return (
                         flexShrink: 0
                       }}
                     >
-                      {isSpeakerA ? '👩 Speaker A' : '👨 Speaker B'}
+                      {isSpeakerA ? 'Speaker A' : 'Speaker B'}
                     </button>
 
                   {/* Custom Voice selector for this specific line */}
@@ -2142,12 +2138,12 @@ return (
                       maxWidth: '210px'
                     }}
                   >
-                    <optgroup label="👩 Female Voices">
+                    <optgroup label="Female Voices">
                       {VOICE_PROFILES.filter(v => v.language === dialogueLang && v.gender === 'female').map(v => (
                         <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
                       ))}
                     </optgroup>
-                    <optgroup label="👨 Male Voices">
+                    <optgroup label="Male Voices">
                       {VOICE_PROFILES.filter(v => v.language === dialogueLang && v.gender === 'male').map(v => (
                         <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
                       ))}
@@ -2296,33 +2292,32 @@ return (
       gap: '6px'
     }}
             >
-              ➕ Add Dialogue Turn
+              + Add Dialogue Turn
             </button>
 
-            {/* Synchronize and Merge All Dialogue Turns into Single Conversation Audio */}
+            {/* Synchronize Dialogue */}
             <button
-      type="button"
-      onClick={handleGenerateDialogue}
-      disabled={isGeneratingDialogue}
-      style={{
-        background: isGeneratingDialogue ? '#94a3b8' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-        color: '#ffffff',
-        border: 'none',
-        borderRadius: '10px',
-        padding: '12px 24px',
-        fontSize: '14px',
-        fontWeight: '800',
-        cursor: isGeneratingDialogue ? 'not-allowed' : 'pointer',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
-        transition: 'all 0.15s ease'
-      }}
-    >
-      <span>{isGeneratingDialogue ? '⏳' : '💬'}</span>
-      <span>{isGeneratingDialogue ? 'Synchronizing Dialogue...' : 'Synchronize Dialogue'}</span>
-    </button>
+              type="button"
+              onClick={handleGenerateDialogue}
+              disabled={isGeneratingDialogue}
+              style={{
+                background: isGeneratingDialogue ? '#94a3b8' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '12px 24px',
+                fontSize: '14px',
+                fontWeight: '800',
+                cursor: isGeneratingDialogue ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>{isGeneratingDialogue ? 'Synchronizing Dialogue...' : 'Synchronize Dialogue'}</span>
+            </button>
 </div>
 
 {/* ── SYNCHRONIZED CONVERSATION AUDIO PLAYER & SECURE DOWNLOAD ── */ }
@@ -2347,10 +2342,25 @@ return (
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 240px', minWidth: '220px' }}>
-        <span style={{ fontSize: '28px' }}>🎧</span>
+        <div style={{
+          width: '38px',
+          height: '38px',
+          borderRadius: '50%',
+          backgroundColor: '#dcfce7',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#16a34a',
+          flexShrink: 0
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+          </svg>
+        </div>
         <div>
           <span style={{ fontSize: '14px', fontWeight: '900', color: '#166534', display: 'block' }}>
-            Synchronized Dialogue Audio Ready!
+            Synchronized Dialogue Audio Ready
           </span>
           <span style={{ fontSize: '12px', color: '#15803d', fontWeight: '500' }}>
             All dialogue turns compiled into one continuous conversation track
@@ -2416,7 +2426,12 @@ return (
               cursor: 'pointer'
             }}
           >
-            📥 Download Synchronized Dialogue MP3
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download Synchronized Dialogue MP3
           </a>
         ) : (
           <span
@@ -2434,7 +2449,11 @@ return (
               userSelect: 'none'
             }}
           >
-            🔒 Listen Only · Student Download Restricted
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            Listen Only · Student Download Restricted
           </span>
         )}
       </div>

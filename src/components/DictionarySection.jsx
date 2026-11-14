@@ -38,7 +38,11 @@ export function FemaleIcon({ size = 32, isPlaying = false, title = "Female Voice
       }}
       title={title}
     >
-      👩
+      <svg width={Math.max(12, Math.round(size * 0.55))} height={Math.max(12, Math.round(size * 0.55))} viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 20v-1a4 4 0 0 0-4-4h-4a4 4 0 0 0-4 4v1" />
+        <circle cx="12" cy="7" r="4" />
+        <path d="M9 10a3 3 0 0 0 6 0" />
+      </svg>
     </div>
   );
 }
@@ -70,7 +74,10 @@ export function MaleIcon({ size = 32, isPlaying = false, title = "Male Voice" })
       }}
       title={title}
     >
-      👨
+      <svg width={Math.max(12, Math.round(size * 0.55))} height={Math.max(12, Math.round(size * 0.55))} viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
     </div>
   );
 }
@@ -233,7 +240,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
     propUserRole ? String(propUserRole).toLowerCase() : 'student'
   );
 
-  const isStudent = Boolean(
+  const isExplicitAdminOrInstituteRoute = Boolean(
+    mounted && typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/admin') ||
+      window.location.pathname.startsWith('/institute') ||
+      window.location.pathname.startsWith('/voice-studio')
+    )
+  );
+
+  const isStudent = !isExplicitAdminOrInstituteRoute && Boolean(
     propUserRole === 'student' ||
     userRole === 'student' ||
     (mounted && typeof window !== 'undefined' && (
@@ -247,11 +262,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
   // Audio download is strictly for verified Admin and Institute users. NEVER for students or public visitors.
   const isStaffOrAdminOrInstitute = Boolean(
-    (propUserRole === 'admin' || propUserRole === 'institute' || userRole === 'admin' || userRole === 'institute') &&
-    (!mounted || (typeof window !== 'undefined' && (window.location.pathname.includes('/admin') || window.location.pathname.includes('/institute'))))
+    isExplicitAdminOrInstituteRoute ||
+    propUserRole === 'admin' || propUserRole === 'institute' || userRole === 'admin' || userRole === 'institute'
   );
 
-  const canDownloadAudio = mounted && !isStudent && isStaffOrAdminOrInstitute;
+  const canDownloadAudio = mounted && (isExplicitAdminOrInstituteRoute || (!isStudent && isStaffOrAdminOrInstitute));
 
   useEffect(() => {
     setMounted(true);
@@ -1450,7 +1465,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       id: `custom-${v.id || v.name}`,
       name: v.name || 'Custom Voice',
       gender: v.gender || 'female',
-      tag: `⭐ ${v.word || 'Custom'}`,
+      tag: v.word && v.word !== 'all' ? `Word: ${v.word}` : 'Custom Voice',
       isCustom: true,
       url: v.url
     }))
@@ -1653,7 +1668,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       <form onSubmit={handleSearch} className="dict-top-toolbar" style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px", width: "100%" }}>
         {/* Row 1 (TOP & CENTER): Shrunk Voice Controls & AI Studio */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", width: "100%", flexWrap: "wrap", margin: "0 auto" }}>
-          {/* 4. ⭐ MY VOICE BUTTON FOR THIS SEARCHED WORD (If uploaded voice matches searched word) */}
+          {/* 4. MY VOICE BUTTON FOR THIS SEARCHED WORD (If uploaded voice matches searched word) */}
         {matchingSearchedCustomVoice && (
           <div style={{ display: "inline-flex", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #86efac", background: "#f0fdf4", boxShadow: "0 1px 3px rgba(16, 185, 129, 0.12)", flexShrink: 0 }}>
             <button
@@ -1676,8 +1691,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 transition: "all 0.15s ease"
               }}
             >
-              <span style={{ fontSize: "11px" }}>⭐</span>
-              <span>{playingAudioId === 'search-custom-voice' ? "⏹ Stop" : `▶ My Voice (${matchingSearchedCustomVoice.word})`}</span>
+              <span>{playingAudioId === 'search-custom-voice' ? "Stop" : `Play My Voice (${matchingSearchedCustomVoice.word})`}</span>
             </button>
             {canDownloadAudio && (
               <button
@@ -1698,7 +1712,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   justifyContent: "center"
                 }}
               >
-                📥
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
               </button>
             )}
           </div>
@@ -1771,17 +1789,23 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           >
             {loadingAudioId === 'search-active-model' ? (
               <>
-                <span style={{ display: "inline-block", animation: "spin 0.8s linear infinite" }}>⏳</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: "spin 0.8s linear infinite" }}>
+                  <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" />
+                </svg>
                 <span>Wait</span>
               </>
             ) : playingAudioId === 'search-active-model' ? (
               <>
-                <span>⏹</span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                </svg>
                 <span>Stop</span>
               </>
             ) : (
               <>
-                <span>🔊</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
                 <span>Play</span>
               </>
             )}
@@ -1815,7 +1839,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 transition: "all 0.15s ease"
               }}
             >
-              📥
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
             </button>
           )}
 
@@ -1912,7 +1940,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 {model.name}
                               </span>
                               {model.isCustom && (
-                                <span style={{ fontSize: "8.5px", background: "#fef3c7", color: "#92400e", padding: "1px 4px", borderRadius: "3px", fontWeight: "700" }}>⭐</span>
+                                <span style={{ fontSize: "8.5px", background: "#fef3c7", color: "#92400e", padding: "1px 5px", borderRadius: "3px", fontWeight: "700" }}>Custom</span>
                               )}
                             </div>
                             <span style={{ fontSize: "10.5px", color: "#64748b", display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
@@ -1962,7 +1990,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               flexShrink: 0
                             }}
                           >
-                            {loadingAudioId === `preview-${model.id}` ? "⏳" : playingAudioId === `preview-${model.id}` || (isSelected && playingAudioId === 'search-active-model') ? "⏹" : "▶"}
+                            {loadingAudioId === `preview-${model.id}` ? (
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: "spin 0.8s linear infinite" }}><circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" /></svg>
+                            ) : playingAudioId === `preview-${model.id}` || (isSelected && playingAudioId === 'search-active-model') ? (
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" /></svg>
+                            ) : (
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 18 12 6 20 6 4" /></svg>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -2018,16 +2052,16 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "10.5px",
               flexShrink: 0
             }}
           >
-            🎙️
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="22" />
+            </svg>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.05, textAlign: "left" }}>
-            <span style={{ fontSize: "10.5px", fontWeight: "800", color: "#ffffff" }}>AI Studio</span>
-            <span style={{ fontSize: "8.5px", color: "rgba(255,255,255,0.85)", fontWeight: "600" }}>Voice Studio</span>
-          </div>
+          <span style={{ fontSize: "11px", fontWeight: "800", color: "#ffffff" }}>AI Studio</span>
         </button>
       </div>
 
@@ -2087,7 +2121,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           )}
         </div>
 
-        {/* 3. 🔍 GO BUTTON */}
+        {/* 3. GO BUTTON */}
         <button
           type="submit"
           disabled={loading}
@@ -2125,7 +2159,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           <ClientErrorBoundary fallbackTitle="AI Studio Interface">
             <AiStudio
               embedded={true}
-              userRole={userRole}
+              userRole={isExplicitAdminOrInstituteRoute ? (typeof window !== 'undefined' && window.location.pathname.startsWith('/institute') ? 'institute' : 'admin') : userRole}
               initialLang={activeLang}
               instituteLanguage={instLang}
               initialText={searchQuery || (activeLang === 'ja' ? selectedWord?.japanese : selectedWord?.korean) || ''}
@@ -2156,7 +2190,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         </div>
       )}
 
-      {/* 📚 SEARCHABLE VOCABULARY WORDS GALLERY & AUDIO PLAYERS */}
+      {/* SEARCHABLE VOCABULARY WORDS GALLERY & AUDIO PLAYERS */}
       {!showAiStudio ? (
         <div style={{ marginBottom: "28px" }}>
           {/* Search Results indicator if searching */}
@@ -2391,7 +2425,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             whiteSpace: "nowrap"
                           }}
                         >
-                          ⭐ My Voice
+                          My Voice
                         </span>
                       )}
 
@@ -2428,7 +2462,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                         marginLeft: "auto"
                       }}
                     >
-                      {isPlayingAny ? "⏹" : "🔊"}
+                      {isPlayingAny ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <rect x="4" y="4" width="16" height="16" rx="2" />
+                        </svg>
+                      ) : (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 );
@@ -2475,7 +2519,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           flexWrap: "wrap"
         }}>
           <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
-            ✨ Workspace Clean: Vocabulary list is hidden while AI Studio is active.
+            Workspace Clean: Vocabulary list is hidden while AI Studio is active.
           </span>
           <button
             type="button"
@@ -2503,7 +2547,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         <JapanesePronunciationGuide handlePlayAudio={handlePlayAudio} playingAudioId={playingAudioId} />
       )}
 
-      {/* 🎙️ USER OWN VOICE RECORDING, AUDIO UPLOAD & VOICE LIBRARY STUDIO MODAL */}
+      {/* USER OWN VOICE RECORDING, AUDIO UPLOAD & VOICE LIBRARY STUDIO MODAL */}
       {showVoiceStudio && (
         <div
           style={{
@@ -2574,7 +2618,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
               </div>
               {uploadWordScope === 'particular' && uploadTargetWord.trim() && (
                 <div style={{ marginTop: "6px", display: "inline-block", backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: "20px", padding: "2px 10px", fontSize: "11px", fontWeight: "800" }}>
-                  🎯 Voice will speak for &ldquo;{uploadTargetWord.trim()}&rdquo; on search
+                  Voice assigned for &ldquo;{uploadTargetWord.trim()}&rdquo; on search
                 </div>
               )}
             </div>
@@ -2596,7 +2640,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   cursor: "pointer"
                 }}
               >
-                📤 Upload Audio
+                Upload Audio
               </button>
               <button
                 type="button"
@@ -2613,7 +2657,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   cursor: "pointer"
                 }}
               >
-                🔴 Record Voice
+                Record Voice
               </button>
               <button
                 type="button"
@@ -2630,11 +2674,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   cursor: "pointer"
                 }}
               >
-                📚 Library ({voiceLibrary.length})
+                Library ({voiceLibrary.length})
               </button>
             </div>
 
-            {/* TAB 1: 📤 UPLOAD AUDIO FILE TO SET IN VOICE LIBRARY */}
+            {/* TAB 1: UPLOAD AUDIO FILE TO SET IN VOICE LIBRARY */}
             {voiceStudioTab === 'upload' && (
               <form onSubmit={handleUploadVoiceFile} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div style={{ border: "2px dashed #93c5fd", borderRadius: "12px", padding: "20px", textAlign: "center", backgroundColor: "#eff6ff" }}>
@@ -2654,7 +2698,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                     id="audio-upload-input"
                   />
                   <label htmlFor="audio-upload-input" style={{ cursor: "pointer", display: "block" }}>
-                    <div style={{ fontSize: "36px", marginBottom: "6px" }}>📁</div>
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        <line x1="12" y1="11" x2="12" y2="17" />
+                        <line x1="9" y1="14" x2="15" y2="14" />
+                      </svg>
+                    </div>
                     <div style={{ fontWeight: "800", color: "#1e40af", fontSize: "14px" }}>
                       {uploadFile ? uploadFile.name : "Click to select your Audio File"}
                     </div>
@@ -2664,7 +2714,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   </label>
                   {uploadFile && (
                     <div style={{ marginTop: "10px", fontSize: "12px", color: "#16a34a", fontWeight: "700" }}>
-                      ✓ File selected: {(uploadFile.size / (1024 * 1024)).toFixed(2)} MB
+                      File selected: {(uploadFile.size / (1024 * 1024)).toFixed(2)} MB
                     </div>
                   )}
                 </div>
@@ -2672,11 +2722,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 {/* Voice Profile Name */}
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
-                    Voice Profile Name (आवाजको नाम):
+                    Voice Profile Name:
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. My Seoul Accent, Bikash Voice, Morning Practice"
+                    placeholder="e.g. My Accent, Practice Voice"
                     value={uploadVoiceName}
                     onChange={(e) => setUploadVoiceName(e.target.value)}
                     style={{
@@ -2693,7 +2743,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 {/* Scope Selection: Particular Word vs All Words */}
                 <div style={{ backgroundColor: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: "10px", padding: "14px" }}>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: "800", color: "#1e293b", marginBottom: "8px" }}>
-                    🎯 Speech Setting (यो आवाज कहाँ प्रयोग गर्ने?):
+                    Speech Setting:
                   </label>
                   <div style={{ display: "flex", gap: "12px", marginBottom: "10px" }}>
                     <label style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderRadius: "8px", border: uploadWordScope === 'particular' ? "1.5px solid #10b981" : "1px solid #cbd5e1", backgroundColor: uploadWordScope === 'particular' ? "#f0fdf4" : "#ffffff", cursor: "pointer", transition: "all 0.15s ease" }}>
@@ -2707,7 +2757,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       />
                       <div>
                         <div style={{ fontSize: "13px", fontWeight: "800", color: uploadWordScope === 'particular' ? "#166534" : "#334155" }}>
-                          🎯 Particular Word
+                          Particular Word
                         </div>
                         <div style={{ fontSize: "11px", color: "#64748b" }}>
                           Use for a specific word speech
@@ -2726,7 +2776,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       />
                       <div>
                         <div style={{ fontSize: "13px", fontWeight: "800", color: uploadWordScope === 'all' ? "#1e40af" : "#334155" }}>
-                          🌐 All Words (Global)
+                          All Words (Global)
                         </div>
                         <div style={{ fontSize: "11px", color: "#64748b" }}>
                           Default voice for all words
@@ -2767,7 +2817,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             onClick={() => setUploadTargetWord(searchQuery.trim())}
                             style={{ backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
                           >
-                            🔍 Searched: &ldquo;{searchQuery.trim()}&rdquo;
+                            Searched: &ldquo;{searchQuery.trim()}&rdquo;
                           </button>
                         )}
                         {activeWordString && (
@@ -2776,7 +2826,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             onClick={() => setUploadTargetWord(activeWordString)}
                             style={{ backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
                           >
-                            📖 Active Word: &ldquo;{activeWordString}&rdquo;
+                            Active Word: &ldquo;{activeWordString}&rdquo;
                           </button>
                         )}
                         {uploadTargetWord && (
@@ -2791,7 +2841,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       </div>
 
                       <div style={{ fontSize: "11px", color: "#166534", marginTop: "7px" }}>
-                        💡 Searching for &ldquo;<strong>{uploadTargetWord.trim() || 'this word'}</strong>&rdquo; in the dictionary will automatically play this uploaded custom voice!
+                        Searching for &ldquo;<strong>{uploadTargetWord.trim() || 'this word'}</strong>&rdquo; in the dictionary will automatically play this uploaded custom voice.
                       </div>
                     </div>
                   )}
@@ -2814,9 +2864,9 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       fontWeight: "600"
                     }}
                   >
-                    <option value="female">👩 Female Library Slot</option>
-                    <option value="male">👨 Male Library Slot</option>
-                    <option value="user">🎙️ Personal Custom Slot</option>
+                    <option value="female">Female Library Slot</option>
+                    <option value="male">Male Library Slot</option>
+                    <option value="user">Personal Custom Slot</option>
                   </select>
                 </div>
 
@@ -2843,13 +2893,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                   <span>
                     {isUploading
                       ? "Uploading & Saving..."
-                      : `💾 Upload & Set Voice for ${uploadWordScope === 'particular' ? `"${uploadTargetWord.trim() || 'Particular Word'}"` : 'All Words'}`}
+                      : `Upload & Set Voice for ${uploadWordScope === 'particular' ? `"${uploadTargetWord.trim() || 'Particular Word'}"` : 'All Words'}`}
                   </span>
                 </button>
               </form>
             )}
 
-            {/* TAB 2: 🔴 RECORD VOICE DIRECTLY */}
+            {/* TAB 2: RECORD VOICE DIRECTLY */}
             {voiceStudioTab === 'record' && (
               <div style={{ textAlign: "center", padding: "10px 0" }}>
                 <div style={{ marginBottom: "20px" }}>
@@ -2872,7 +2922,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                         boxShadow: "0 4px 14px rgba(239, 68, 68, 0.4)"
                       }}
                     >
-                      <span>🔴</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#ffffff"><circle cx="12" cy="12" r="10"/></svg>
                       <span>Start Recording My Voice</span>
                     </button>
                   ) : (
@@ -2895,7 +2945,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                         animation: "micPulse 1s infinite"
                       }}
                     >
-                      <span>⏹</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#ffffff"><rect x="4" y="4" width="16" height="16" rx="2" /></svg>
                       <span>Stop Recording (00:{recordingDuration < 10 ? `0${recordingDuration}` : recordingDuration})</span>
                     </button>
                   )}
@@ -2921,7 +2971,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                           cursor: "pointer"
                         }}
                       >
-                        {playingAudioId === 'my-voice-recorded' ? "⏹ Stop" : "▶ Play Preview"}
+                        {playingAudioId === 'my-voice-recorded' ? "Stop" : "Play Preview"}
                       </button>
                       {canDownloadAudio && (
                         <button
@@ -2935,10 +2985,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                             padding: "8px 14px",
                             fontSize: "13px",
                             fontWeight: "700",
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px"
                           }}
                         >
-                          📥 Download
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          Download
                         </button>
                       )}
                     </div>
@@ -2946,7 +3004,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                     {/* Recording Target Word Scope */}
                     <div style={{ backgroundColor: "#ffffff", border: "1px solid #a7f3d0", borderRadius: "8px", padding: "10px", marginBottom: "10px" }}>
                       <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#065f46", marginBottom: "6px" }}>
-                        🎯 Apply Recording to Word:
+                        Apply Recording to Word:
                       </label>
                       <div style={{ display: "flex", gap: "10px", marginBottom: "6px" }}>
                         <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "700", color: "#065f46", cursor: "pointer" }}>
@@ -2988,7 +3046,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 onClick={() => setUploadTargetWord(searchQuery.trim())}
                                 style={{ backgroundColor: "#dcfce7", color: "#065f46", border: "1px solid #86efac", padding: "1px 6px", borderRadius: "3px", fontSize: "10px", cursor: "pointer" }}
                               >
-                                🔍 &ldquo;{searchQuery.trim()}&rdquo;
+                                Searched: &ldquo;{searchQuery.trim()}&rdquo;
                               </button>
                             )}
                             {activeWordString && (
@@ -2997,7 +3055,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 onClick={() => setUploadTargetWord(activeWordString)}
                                 style={{ backgroundColor: "#dcfce7", color: "#065f46", border: "1px solid #86efac", padding: "1px 6px", borderRadius: "3px", fontSize: "10px", cursor: "pointer" }}
                               >
-                                📖 &ldquo;{activeWordString}&rdquo;
+                                Active Word: &ldquo;{activeWordString}&rdquo;
                               </button>
                             )}
                           </div>
@@ -3033,19 +3091,24 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                     >
                       {isUploading
                         ? "Saving to Library..."
-                        : `💾 Save Recording for ${uploadWordScope === 'particular' ? `"${uploadTargetWord.trim() || 'Particular Word'}"` : 'All Words'}`}
+                        : `Save Recording for ${uploadWordScope === 'particular' ? `"${uploadTargetWord.trim() || 'Particular Word'}"` : 'All Words'}`}
                     </button>
                   </div>
                 )}
               </div>
             )}
 
-            {/* TAB 3: 📚 VOICE LIBRARY MANAGER */}
+            {/* TAB 3: VOICE LIBRARY MANAGER */}
             {voiceStudioTab === 'library' && (
               <div>
                 {voiceLibrary.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "30px 10px", backgroundColor: "#f8fafc", borderRadius: "10px", border: "1px dashed #cbd5e1" }}>
-                    <div style={{ fontSize: "28px", marginBottom: "6px" }}>📭</div>
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "8px" }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                        <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+                      </svg>
+                    </div>
                     <div style={{ fontWeight: "700", color: "#475569", fontSize: "14px" }}>No custom voices uploaded yet</div>
                     <p style={{ color: "#64748b", fontSize: "12px", margin: "4px 0 12px" }}>Upload an audio file or record your voice to build your personal library.</p>
                     <button
@@ -3078,7 +3141,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                         >
                           <div style={{ flex: "1 1 220px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                              <span style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>⭐ {voice.name}</span>
+                              <span style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>{voice.name}</span>
                               {isVoiceActive && (
                                 <span style={{ backgroundColor: "#10b981", color: "white", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "800" }}>
                                   ✓ ACTIVE
@@ -3086,11 +3149,11 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                               )}
                               {voice.word && voice.word !== 'all' ? (
                                 <span style={{ backgroundColor: "#dcfce7", color: "#15803d", border: "1px solid #86efac", padding: "1px 7px", borderRadius: "4px", fontSize: "11px", fontWeight: "800" }}>
-                                  🎯 Word: &ldquo;{voice.word}&rdquo;
+                                  Word: &ldquo;{voice.word}&rdquo;
                                 </span>
                               ) : (
                                 <span style={{ backgroundColor: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "1px 7px", borderRadius: "4px", fontSize: "11px", fontWeight: "800" }}>
-                                  🌐 All Words
+                                  All Words
                                 </span>
                               )}
                             </div>
@@ -3137,7 +3200,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   }}
                                   style={{ background: "none", border: "none", color: "#2563eb", fontSize: "11px", fontWeight: "700", cursor: "pointer", textDecoration: "underline", padding: 0 }}
                                 >
-                                  ✏️ Change Target Word
+                                  Change Target Word
                                 </button>
                                 {searchQuery.trim() && voice.word?.toLowerCase() !== searchQuery.trim().toLowerCase() && (
                                   <button
@@ -3149,7 +3212,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                     }}
                                     style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #93c5fd", borderRadius: "4px", padding: "1px 6px", fontSize: "10px", fontWeight: "700", cursor: "pointer" }}
                                   >
-                                    🎯 Set for Searched &ldquo;{searchQuery.trim()}&rdquo;
+                                    Set for Searched &ldquo;{searchQuery.trim()}&rdquo;
                                   </button>
                                 )}
                               </div>
@@ -3172,7 +3235,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 cursor: "pointer"
                               }}
                             >
-                              {playingAudioId === `library-${voice.id}` ? "⏹ Stop" : "▶ Play"}
+                              {playingAudioId === `library-${voice.id}` ? "Stop" : "Play"}
                             </button>
 
                             {/* Set as Active */}
@@ -3206,11 +3269,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                   borderRadius: "6px",
                                   padding: "5px 8px",
                                   fontSize: "12px",
-                                  cursor: "pointer"
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center"
                                 }}
                                 title="Download Audio"
                               >
-                                📥
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
                               </button>
                             )}
 
@@ -3225,11 +3295,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                                 borderRadius: "6px",
                                 padding: "5px 8px",
                                 fontSize: "12px",
-                                cursor: "pointer"
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center"
                               }}
                               title="Delete voice"
                             >
-                              🗑️
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
                             </button>
                           </div>
                         </div>
