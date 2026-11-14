@@ -36,11 +36,11 @@ for p in glob.glob(os.path.join(home, "Library/Python/*/lib/python/site-packages
 
 # 4. Compatibility polyfill for Python 3.11/3.10 with newer aiohttp TypeVar default
 import typing
-try:
-    import typing_extensions
-    typing.TypeVar = typing_extensions.TypeVar
-except Exception:
-    pass
+_orig_TypeVar = typing.TypeVar
+def _patched_TypeVar(*args, **kwargs):
+    kwargs.pop('default', None)
+    return _orig_TypeVar(*args, **kwargs)
+typing.TypeVar = _patched_TypeVar
 
 try:
     import edge_tts
@@ -83,14 +83,36 @@ async def main():
         if not rate.endswith("%"):
             rate = f"{rate}%"
 
-    communicate = edge_tts.Communicate(text, voice, pitch=pitch, rate=rate)
+    try:
+        communicate = edge_tts.Communicate(text, voice, pitch=pitch, rate=rate)
+        if out_path:
+            await communicate.save(out_path)
+        else:
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio" and "data" in chunk:
+                    sys.stdout.buffer.write(chunk["data"])
+    except Exception as e:
+        # Robust fallback: If a specific neural voice name fails, fallback to standard Korean/Japanese neural voice
+        is_female = any(x in voice.lower() for x in ["female", "sunhi", "nanami", "jenny", "hemkala"])
+        if is_female:
+            fallback_voice = "ko-KR-SunHiNeural" if "ko" in voice.lower() else "ja-JP-NanamiNeural"
+        else:
+            fallback_voice = "ko-KR-InJoonNeural" if "ko" in voice.lower() else "ja-JP-KeitaNeural"
 
-    if out_path:
-        await communicate.save(out_path)
-    else:
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio" and "data" in chunk:
-                sys.stdout.buffer.write(chunk["data"])
+        if fallback_voice and fallback_voice != voice:
+            try:
+                communicate = edge_tts.Communicate(text, fallback_voice, pitch=pitch, rate=rate)
+                if out_path:
+                    await communicate.save(out_path)
+                else:
+                    async for chunk in communicate.stream():
+                        if chunk["type"] == "audio" and "data" in chunk:
+                            sys.stdout.buffer.write(chunk["data"])
+                return
+            except Exception:
+                pass
+        sys.stderr.write(f"TTS generation error: {e}\n")
+        sys.exit(1)
 
 if __name__ == "__main__":
     asyncio.run(main())

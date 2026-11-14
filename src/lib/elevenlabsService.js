@@ -64,6 +64,7 @@ async function fallbackSynthesis(text, lang, gender, options = {}) {
       vocalWeight: options.weight,
       pitchFactor: options.pitchFactor,
       model: options.model,
+      modelId: options.modelId,
       pitch: options.pitch,
       rate: options.rate,
       voice: options.voice
@@ -149,6 +150,7 @@ export async function synthesizeElevenLabs({
     weight: weight !== null ? weight : profile.baseVocalWeight,
     pitchFactor: pitchFactor !== null ? pitchFactor : profile.basePitchFactor,
     model: profile.id,
+    modelId: modelId,
     pitch: profile.pitch || '+0Hz',
     rate: profile.rate || '+0%',
     voice: profile.voice || ''
@@ -334,6 +336,7 @@ export async function synthesizeDialogue({ turns, modelId = DEFAULT_MODEL_ID, st
           lang: voiceProf?.language || 'ko',
           gender: isMale ? 'male' : 'female',
           model: voiceProfId,
+          modelId: turn.modelId || modelId,
           voice: voiceProf?.voice || '',
           pitch: voiceProf?.pitch || '+0Hz',
           rate: voiceProf?.rate || '+0%',

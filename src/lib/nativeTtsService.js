@@ -159,6 +159,25 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
   if (!rateStr.startsWith('+') && !rateStr.startsWith('-')) rateStr = `+${rateStr}`;
   if (!rateStr.endsWith('%')) rateStr = `${rateStr}%`;
 
+  // Modulate Pitch and Rate based on AI Model ID (Turbo, Flash, Neural HD, Multilingual)
+  const aiModel = (options.modelId || '').toLowerCase();
+  let pitchVal = parseInt(pitchStr.replace('Hz', ''), 10) || 0;
+  let rateVal = parseInt(rateStr.replace('%', ''), 10) || 0;
+
+  if (aiModel.includes('turbo') || aiModel.includes('turbo_v2_5')) {
+    rateVal += 4;
+    pitchVal += 2;
+  } else if (aiModel.includes('flash') || aiModel.includes('flash_v2')) {
+    rateVal += 7;
+    pitchVal += 4;
+  } else if (aiModel.includes('neural_studio_hd') || aiModel.includes('studio')) {
+    rateVal -= 3;
+    pitchVal -= 3;
+  }
+
+  pitchStr = (pitchVal >= 0 ? `+${pitchVal}Hz` : `${pitchVal}Hz`);
+  rateStr = (rateVal >= 0 ? `+${rateVal}%` : `${rateVal}%`);
+
   const tmpOut = path.join(os.tmpdir(), `neural_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.mp3`);
   const scriptPath = path.join(process.cwd(), 'scripts', 'tts_engine.py');
 
@@ -551,6 +570,7 @@ export async function synthesizeSpeechBuffer({
   pitch = '',
   rate = '',
   model = '',
+  modelId = '',
   ageStyle = '',
   personality = '',
   speechMode = 'natural_conversation',
@@ -570,7 +590,7 @@ export async function synthesizeSpeechBuffer({
   const explicitPitch = pitchFactor !== null ? parseFloat(pitchFactor) : null;
   const numericWeight = vocalWeight !== null ? parseFloat(vocalWeight) : null;
 
-  const cacheKey = `${text.trim()}|${langKey}|${gender}|${selectedVoice}|${selectedPitch}|${selectedRate}|${model}`;
+  const cacheKey = `${text.trim()}|${langKey}|${gender}|${selectedVoice}|${selectedPitch}|${selectedRate}|${model}|${modelId}`;
   if (ttsMemoryCache.has(cacheKey)) {
     return ttsMemoryCache.get(cacheKey);
   }
@@ -580,6 +600,7 @@ export async function synthesizeSpeechBuffer({
     const neuralResult = await generateNeuralSpeech(text, lang, gender, {
       voice: selectedVoice,
       model,
+      modelId,
       pitch: selectedPitch,
       rate: selectedRate,
       ageStyle,

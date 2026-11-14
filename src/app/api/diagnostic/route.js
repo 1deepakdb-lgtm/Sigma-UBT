@@ -41,12 +41,13 @@ export async function GET(request) {
     for (const py of ['/opt/alt/python311/bin/python3', 'python3', '/usr/bin/python3']) {
       try {
         if (fs.existsSync(testOut)) fs.unlinkSync(testOut);
+        const pyVer = py.includes('311') ? '3.11' : '3.9';
         const out = execSync(`${py} "${testScript}" "안녕하세요" "ko-KR-InJoonNeural" "+0Hz" "+0%" "${testOut}" 2>&1`, {
           timeout: 8000,
           env: {
             ...process.env,
             PATH: `/opt/alt/python311/bin:/opt/alt/python310/bin:/opt/alt/python39/bin:${process.env.PATH || ''}:/usr/local/bin:/usr/bin:/bin`,
-            PYTHONPATH: `/home/examjkco/.local/lib/python3.11/site-packages:/home/examjkco/.local/lib/python3.9/site-packages:${process.env.PYTHONPATH || ''}`
+            PYTHONPATH: `/home/examjkco/.local/lib/python${pyVer}/site-packages:${process.env.PYTHONPATH || ''}`
           }
         }).toString().trim();
         const created = fs.existsSync(testOut);
