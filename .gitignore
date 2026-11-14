@@ -17,13 +17,10 @@ android/.gradle
 android/build
 android/app/build
 android/local.properties
-# Dynamic audio cache (keep pre-cached model voices)
-public/audio-cache/*
-!public/audio-cache/elevenlabs/
-!public/audio-cache/elevenlabs/*.mp3
+public/audio-cache
 # Allow pre-built .next cache for server deployment
 .next/cache/
 *.zip
 electron/
-scripts/vendor/
+scripts/
 
