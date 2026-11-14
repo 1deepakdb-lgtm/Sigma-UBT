@@ -442,7 +442,40 @@ export default function JlptMockExamModal({
             padding: 12px 10px !important;
           }
           .jlpt-confirm-card {
-            padding: 20px 16px !important;
+            padding: 18px 14px !important;
+          }
+        }
+        @media (orientation: landscape) and (max-height: 520px) {
+          .jlpt-confirm-card {
+            padding: 12px 16px !important;
+            border-radius: 12px !important;
+            max-height: 94dvh !important;
+          }
+          .jlpt-score-banner {
+            padding: 10px 14px !important;
+            margin-bottom: 12px !important;
+            gap: 12px !important;
+          }
+          .jlpt-score-banner h2 {
+            font-size: 16px !important;
+            margin: 4px 0 !important;
+          }
+          .jlpt-score-banner p {
+            font-size: 11.5px !important;
+          }
+          .jlpt-score-circle-card {
+            padding: 6px 14px !important;
+          }
+        }
+        @media (max-width: 600px) and (orientation: portrait) {
+          .jlpt-score-banner {
+            flex-direction: column !important;
+            padding: 14px 16px !important;
+            align-items: flex-start !important;
+          }
+          .jlpt-score-details-row {
+            flex-direction: column !important;
+            width: 100% !important;
           }
         }
       ` }} />
@@ -591,7 +624,7 @@ export default function JlptMockExamModal({
             backgroundColor: "#f8fafc"
           }}>
             {/* SCORE BANNER */}
-            <div style={{
+            <div className="jlpt-score-banner" style={{
               backgroundColor: "#ffffff",
               borderRadius: "16px",
               padding: "24px 30px",
@@ -614,7 +647,7 @@ export default function JlptMockExamModal({
                   fontWeight: "900",
                   letterSpacing: "0.5px"
                 }}>
-                  {examResult.isPassed ? "🎉 合格 (PASSED)" : "❌ 不合格 (FAILED)"}
+                  {examResult.isPassed ? "合格 (PASSED)" : "不合格 (FAILED)"}
                 </span>
 
                 <h2 style={{ margin: "12px 0 6px 0", fontSize: "24px", fontWeight: "900", color: "#0f172a" }}>
@@ -626,12 +659,12 @@ export default function JlptMockExamModal({
               </div>
 
               {/* Total Score Circle Card */}
-              <div style={{
+              <div className="jlpt-score-details-row" style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "20px"
               }}>
-                <div style={{
+                <div className="jlpt-score-circle-card" style={{
                   backgroundColor: levelTheme.bg,
                   border: `2px solid ${levelTheme.border}`,
                   borderRadius: "16px",
@@ -1361,7 +1394,7 @@ export default function JlptMockExamModal({
             <div className="jlpt-confirm-card" style={{
               backgroundColor: "#ffffff",
               borderRadius: "16px",
-              padding: "26px",
+              padding: "24px 22px",
               maxWidth: "420px",
               width: "100%",
               maxHeight: "92vh",
@@ -1370,7 +1403,25 @@ export default function JlptMockExamModal({
               textAlign: "center",
               boxSizing: "border-box"
             }}>
-              <div style={{ fontSize: "40px", marginBottom: "8px" }}>📝</div>
+              <div style={{
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                backgroundColor: "#e0f2fe",
+                color: "#0284c7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 10px auto"
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
               <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>
                 Submit Examination?
               </h3>
@@ -1378,7 +1429,7 @@ export default function JlptMockExamModal({
                 You have answered <strong>{answeredCount}</strong> of <strong>{totalQuestions}</strong> questions.
                 {totalQuestions - answeredCount > 0 && (
                   <span style={{ color: "#e11d48", display: "block", marginTop: "4px" }}>
-                    ⚠️ {totalQuestions - answeredCount} questions are still unanswered!
+                    Notice: {totalQuestions - answeredCount} questions are still unanswered.
                   </span>
                 )}
               </p>

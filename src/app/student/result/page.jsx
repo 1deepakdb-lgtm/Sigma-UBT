@@ -612,6 +612,44 @@ const StudentResult = () => {
           flex-wrap: wrap;
         }
 
+        /* RESPONSIVE PORTRAIT PHONES: FIT ALL DIALOG AND ACTION BUTTONS CLEANLY */
+        @media (max-width: 540px) and (orientation: portrait) {
+          .result-summary-wrap {
+            padding: 10px 12px !important;
+          }
+          .result-summary-card {
+            padding: 18px 16px !important;
+            border-radius: 20px !important;
+            max-height: calc(100dvh - 24px) !important;
+          }
+          .result-summary-trophy {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 24px !important;
+            margin-bottom: 6px !important;
+          }
+          .result-summary-title {
+            font-size: 19px !important;
+          }
+          .result-summary-stats {
+            padding: 12px 14px !important;
+            gap: 8px !important;
+          }
+          .result-summary-stats span {
+            font-size: 13px !important;
+          }
+          .result-summary-actions {
+            flex-direction: column !important;
+            width: 100% !important;
+            gap: 8px !important;
+          }
+          .result-summary-actions button {
+            width: 100% !important;
+            padding: 11px 16px !important;
+            font-size: 13.5px !important;
+          }
+        }
+
         /* LANDSCAPE MODE: FIT ON SCREEN CLEANLY WITHOUT SCROLL OR OVERFLOW */
         @media (orientation: landscape), (max-height: 650px) {
           .result-summary-top-bar {
@@ -695,6 +733,55 @@ const StudentResult = () => {
             padding: 10px 14px !important;
             font-size: 13.5px !important;
             border-radius: 12px !important;
+          }
+        }
+
+        /* ULTRA COMPACT FOR LANDSCAPE SMARTPHONES (HEIGHT <= 520px) */
+        @media (orientation: landscape) and (max-height: 520px) {
+          .result-summary-wrap {
+            padding: 4px 10px !important;
+          }
+          .result-summary-card {
+            padding: 8px 14px !important;
+            max-height: calc(100dvh - 8px) !important;
+            border-radius: 16px !important;
+          }
+          .result-summary-header {
+            margin-bottom: 4px !important;
+            gap: 8px !important;
+          }
+          .result-summary-trophy {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 15px !important;
+          }
+          .result-summary-title {
+            font-size: 14.5px !important;
+          }
+          .result-summary-badge {
+            font-size: 11px !important;
+            padding: 1px 8px !important;
+          }
+          .result-summary-grid {
+            gap: 8px !important;
+          }
+          .result-summary-stats {
+            padding: 6px 10px !important;
+            gap: 2px !important;
+          }
+          .result-summary-stats > div {
+            padding-bottom: 2px !important;
+          }
+          .result-summary-stats span {
+            font-size: 11.5px !important;
+          }
+          .result-summary-actions {
+            gap: 6px !important;
+          }
+          .result-summary-actions button {
+            padding: 7px 10px !important;
+            font-size: 12px !important;
+            border-radius: 8px !important;
           }
         }
       ` }} />

@@ -2316,7 +2316,7 @@ return (
                 transition: 'all 0.15s ease'
               }}
             >
-              <span>{isGeneratingDialogue ? 'Synchronizing Dialogue...' : 'Synchronize Dialogue'}</span>
+              <span>{isGeneratingDialogue ? 'Synchronizing...' : 'Synchronize'}</span>
             </button>
 </div>
 
@@ -2390,7 +2390,7 @@ return (
         />
 
         {/* STRICT ROLE CHECK: Admin and Institute only. NEVER for students. */}
-        {canDownloadAudio ? (
+        {(canDownloadAudio || (typeof window !== 'undefined' && (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/institute') || window.location.pathname.startsWith('/voice-studio'))) || userRole === 'admin' || userRole === 'institute' || isSuperAdmin) ? (
           <a
             href={dialogueAudioUrl}
             download={`synchronized_dialogue_${Date.now()}.mp3`}

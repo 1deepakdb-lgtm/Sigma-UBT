@@ -812,6 +812,52 @@ const StudentExam = () => {
               margin-top: 8px !important;
             }
           }
+
+          /* Compact fit on landscape mobile viewports */
+          @media (orientation: landscape) and (max-height: 540px) {
+            .ubt-pre-exam-dialog {
+              flex-direction: row !important;
+              max-width: 680px !important;
+              max-height: 96dvh !important;
+              padding: 10px 18px !important;
+              border-radius: 16px !important;
+              gap: 14px !important;
+            }
+            .ubt-pre-exam-icon {
+              width: 36px !important;
+              height: 36px !important;
+              margin: 0 auto 4px auto !important;
+            }
+            .ubt-pre-exam-icon svg {
+              width: 20px !important;
+              height: 20px !important;
+            }
+            .ubt-pre-exam-title {
+              font-size: 16px !important;
+              margin-bottom: 2px !important;
+            }
+            .ubt-pre-exam-subtitle {
+              font-size: 11px !important;
+              margin-bottom: 6px !important;
+            }
+            .ubt-pre-exam-table {
+              padding: 6px 12px !important;
+              border-radius: 8px !important;
+            }
+            .ubt-pre-exam-row {
+              padding-bottom: 4px !important;
+              margin-bottom: 4px !important;
+              font-size: 11.5px !important;
+            }
+            .ubt-pre-exam-btn {
+              padding: 7px 12px !important;
+              font-size: 12px !important;
+            }
+            .ubt-pre-exam-buttons {
+              margin-top: 6px !important;
+              gap: 8px !important;
+            }
+          }
         ` }} />
         <div className="ubt-pre-exam-dialog">
           <div className="ubt-pre-exam-col-info">
@@ -1895,29 +1941,149 @@ const StudentExam = () => {
             overflow: visible !important;
           }
         }
+
+        /* Responsive Confirm Submission Modal */
+        .ubt-confirm-modal-overlay {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          background-color: rgba(15, 23, 42, 0.72) !important;
+          backdrop-filter: blur(3px) !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          z-index: 99999999 !important;
+          padding: 12px !important;
+          box-sizing: border-box !important;
+        }
+        .ubt-confirm-modal-card {
+          background-color: #ffffff !important;
+          padding: 24px 22px !important;
+          border-radius: 18px !important;
+          max-width: min(420px, 94vw) !important;
+          width: 100% !important;
+          max-height: 92dvh !important;
+          overflow-y: auto !important;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
+          box-sizing: border-box !important;
+          text-align: center !important;
+        }
+        .ubt-confirm-modal-icon {
+          width: 44px !important;
+          height: 44px !important;
+          border-radius: 50% !important;
+          background-color: #e0f2fe !important;
+          color: #0284c7 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          margin: 0 auto 10px auto !important;
+        }
+        .ubt-confirm-modal-title {
+          margin: 0 0 6px 0 !important;
+          color: #0f172a !important;
+          font-size: 18px !important;
+          font-weight: 800 !important;
+        }
+        .ubt-confirm-modal-text {
+          color: #475569 !important;
+          font-size: 13.5px !important;
+          margin: 0 0 18px 0 !important;
+          line-height: 1.45 !important;
+        }
+        .ubt-confirm-modal-actions {
+          display: flex !important;
+          justify-content: center !important;
+          gap: 10px !important;
+        }
+        .ubt-confirm-btn-cancel {
+          flex: 1 !important;
+          background-color: #f1f5f9 !important;
+          color: #475569 !important;
+          border: 1px solid #cbd5e1 !important;
+          padding: 10px 14px !important;
+          border-radius: 8px !important;
+          font-weight: 700 !important;
+          font-size: 13px !important;
+          cursor: pointer !important;
+          transition: all 0.15s ease !important;
+        }
+        .ubt-confirm-btn-submit {
+          flex: 1 !important;
+          background-color: #0284c7 !important;
+          color: #ffffff !important;
+          border: none !important;
+          padding: 10px 16px !important;
+          border-radius: 8px !important;
+          font-weight: 700 !important;
+          font-size: 13px !important;
+          cursor: pointer !important;
+          box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+          transition: all 0.15s ease !important;
+        }
+
+        @media (orientation: landscape) and (max-height: 520px) {
+          .ubt-confirm-modal-card {
+            padding: 12px 18px !important;
+            border-radius: 14px !important;
+            max-height: 94dvh !important;
+          }
+          .ubt-confirm-modal-icon {
+            width: 32px !important;
+            height: 32px !important;
+            margin-bottom: 4px !important;
+          }
+          .ubt-confirm-modal-icon svg {
+            width: 17px !important;
+            height: 17px !important;
+          }
+          .ubt-confirm-modal-title {
+            font-size: 15px !important;
+            margin-bottom: 4px !important;
+          }
+          .ubt-confirm-modal-text {
+            font-size: 12px !important;
+            margin-bottom: 10px !important;
+          }
+          .ubt-confirm-btn-cancel,
+          .ubt-confirm-btn-submit {
+            padding: 7px 12px !important;
+            font-size: 12px !important;
+          }
+        }
       ` }} />
       
       {showConfirmModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.6)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999999, padding: "16px", boxSizing: "border-box" }}>
-          <div style={{ backgroundColor: "white", padding: "24px 20px", borderRadius: "12px", maxWidth: "420px", width: "100%", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", boxSizing: "border-box" }}>
-            <h3 style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: "18px", fontWeight: "700" }}>Confirm Submission</h3>
-            <p style={{ color: "#475569", fontSize: "14px", marginBottom: "20px", lineHeight: "1.4" }}>
-              Are you sure you want to submit and end the exam?
+        <div className="ubt-confirm-modal-overlay">
+          <div className="ubt-confirm-modal-card">
+            <div className="ubt-confirm-modal-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <h3 className="ubt-confirm-modal-title">Confirm Submission</h3>
+            <p className="ubt-confirm-modal-text">
+              Are you sure you want to submit and complete the exam? Your final score and answer breakdown will be calculated.
             </p>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <div className="ubt-confirm-modal-actions">
               <button 
                 type="button"
+                className="ubt-confirm-btn-cancel"
                 onClick={() => setShowConfirmModal(false)}
-                style={{ backgroundColor: "transparent", color: "#0284c7", border: "none", fontWeight: "bold", fontSize: "13px", cursor: "pointer", padding: "8px 14px", borderRadius: "4px" }}
               >
-                CANCEL
+                CONTINUE TEST
               </button>
               <button 
                 type="button"
+                className="ubt-confirm-btn-submit"
                 onClick={handleFinalSubmit}
-                style={{ backgroundColor: "#0284c7", color: "white", border: "none", fontWeight: "bold", fontSize: "13px", cursor: "pointer", padding: "8px 18px", borderRadius: "4px" }}
               >
-                AGREE
+                YES, SUBMIT
               </button>
             </div>
           </div>
