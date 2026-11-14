@@ -199,8 +199,7 @@ export default function AiStudio({
     }
 
     setSelectedLang(target);
-    setDialogueLang(target);
-    const match = VOICE_PROFILES.find(v => v.language === target);
+    const match = VOICE_PROFILES.find(v => v.language === target) || VOICE_PROFILES[0];
     if (match) {
       setSelectedProfile(match);
       if (!initialText) {
@@ -815,12 +814,12 @@ export default function AiStudio({
 
               <button
                 type="button"
-                onClick={() => handlePlayPreview(selectedProfile, selectedModel)}
+                onClick={() => selectedProfile && handlePlayPreview(selectedProfile, selectedModel)}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '8px',
                   border: 'none',
-                  background: previewingVoiceId === `${selectedProfile.id}_${selectedModel}` ? '#ef4444' : 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                  background: previewingVoiceId === `${selectedProfile?.id}_${selectedModel}` ? '#ef4444' : 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
                   color: '#ffffff',
                   fontSize: '12px',
                   fontWeight: '800',
@@ -832,7 +831,7 @@ export default function AiStudio({
                   transition: 'all 0.15s ease'
                 }}
               >
-                {previewingVoiceId === `${selectedProfile.id}_${selectedModel}` ? '⏹ Stop Audio' : `▶ Play ${selectedProfile.name}`}
+                {previewingVoiceId === `${selectedProfile?.id}_${selectedModel}` ? '⏹ Stop Audio' : `▶ Play ${selectedProfile?.name || 'Voice'}`}
               </button>
             </div>
           </div>
@@ -840,7 +839,7 @@ export default function AiStudio({
           {/* 10 Voice Cards Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px', marginBottom: '28px' }}>
             {filteredVoices.map(voice => {
-              const isSelected = selectedProfile.id === voice.id;
+              const isSelected = selectedProfile?.id === voice.id;
               const isPreviewing = previewingVoiceId === `${voice.id}_${selectedModel}`;
               const isActive = (voice.gender === 'female' ? activeFemaleModelId === voice.id : activeMaleModelId === voice.id);
 
@@ -849,7 +848,7 @@ export default function AiStudio({
                   key={voice.id}
                   onClick={() => {
                     setSelectedProfile(voice);
-                    if (!inputText || inputText === selectedProfile.sampleSentence) {
+                    if (!inputText || inputText === selectedProfile?.sampleSentence) {
                       setInputText(voice.sampleSentence);
                     }
                   }}
@@ -982,25 +981,25 @@ export default function AiStudio({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '800' }}>
-                    Synthesizing with {selectedProfile.name} ({selectedProfile.title})
+                    Synthesizing with {selectedProfile?.name || 'Selected Voice'} ({selectedProfile?.title || ''})
                   </h3>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>
-                    Target Language: {selectedProfile.languageName} · High-Fidelity Neural Output
+                    Target Language: {selectedProfile?.languageName || ''} · High-Fidelity Neural Output
                   </span>
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                {onSelectVoiceModel && (
+                {onSelectVoiceModel && selectedProfile && (
                   <button
                     type="button"
                     onClick={() => onSelectVoiceModel(selectedProfile)}
-                    title={`Set ${selectedProfile.name} as the active voice for dictionary`}
+                    title={`Set ${selectedProfile?.name || 'Voice'} as the active voice for dictionary`}
                     style={{
-                      background: (selectedProfile.gender === 'female' ? activeFemaleModelId === selectedProfile.id : activeMaleModelId === selectedProfile.id)
+                      background: (selectedProfile?.gender === 'female' ? activeFemaleModelId === selectedProfile?.id : activeMaleModelId === selectedProfile?.id)
                         ? '#059669'
                         : '#f0fdf4',
-                      color: (selectedProfile.gender === 'female' ? activeFemaleModelId === selectedProfile.id : activeMaleModelId === selectedProfile.id)
+                      color: (selectedProfile?.gender === 'female' ? activeFemaleModelId === selectedProfile?.id : activeMaleModelId === selectedProfile?.id)
                         ? '#ffffff'
                         : '#15803d',
                       border: '1.5px solid #059669',
@@ -1014,16 +1013,16 @@ export default function AiStudio({
                       gap: '4px'
                     }}
                   >
-                    {(selectedProfile.gender === 'female' ? activeFemaleModelId === selectedProfile.id : activeMaleModelId === selectedProfile.id)
-                      ? `✓ Current Active ${selectedProfile.gender === 'female' ? 'Female' : 'Male'} Model`
-                      : `★ Use ${selectedProfile.name} in Dictionary`}
+                    {(selectedProfile?.gender === 'female' ? activeFemaleModelId === selectedProfile?.id : activeMaleModelId === selectedProfile?.id)
+                      ? `✓ Current Active ${selectedProfile?.gender === 'female' ? 'Female' : 'Male'} Model`
+                      : `★ Use ${selectedProfile?.name || 'Voice'} in Dictionary`}
                   </button>
                 )}
 
                 {/* Quick Sample Button */}
                 <button
                   type="button"
-                  onClick={() => setInputText(selectedProfile.sampleSentence)}
+                  onClick={() => setInputText(selectedProfile?.sampleSentence || '')}
                   style={{
                     background: '#f1f5f9',
                     border: '1px solid #cbd5e1',
@@ -1045,7 +1044,7 @@ export default function AiStudio({
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder={`Type Korean or Japanese text here to generate natural human speech... (e.g. ${selectedProfile.sampleSentence})`}
+                placeholder={`Type Korean or Japanese text here to generate natural human speech... (e.g. ${selectedProfile?.sampleSentence || ''})`}
                 rows={3}
                 style={{
                   width: '100%',
@@ -1300,7 +1299,7 @@ export default function AiStudio({
                   {canDownloadAudio && (
                     <a
                       href={generatedAudioUrl}
-                      download={`voice_${selectedProfile.id}_${Date.now()}.mp3`}
+                      download={`voice_${selectedProfile?.id || 'speech'}_${Date.now()}.mp3`}
                       style={{
                         background: '#059669',
                         color: '#ffffff',

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import JapanesePronunciationGuide from '@/components/JapanesePronunciationGuide';
 import AiStudio from '@/components/AiStudio';
+import ClientErrorBoundary from '@/components/ClientErrorBoundary';
 import { VOICE_PROFILES } from '@/lib/elevenlabsConfig';
 
 /**
@@ -2118,35 +2119,37 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       {/* EMBEDDED AI STUDIO (Opens directly under dictionary toolbar when clicked) */}
       {showAiStudio && (
         <div ref={aiStudioRef} style={{ marginBottom: "20px" }}>
-          <AiStudio
-            embedded={true}
-            userRole={userRole}
-            initialLang={activeLang}
-            instituteLanguage={instLang}
-            initialText={searchQuery || (activeLang === 'ja' ? selectedWord?.japanese : selectedWord?.korean) || ''}
-            activeFemaleModelId={selectedFemaleModel?.id}
-            activeMaleModelId={selectedMaleModel?.id}
-            onSelectVoiceModel={(voice) => {
-              const isFemale = voice.gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(voice.id || '') || (voice.name && voice.name.toLowerCase().includes('female'));
-              const isMale = !isFemale && (voice.gender === 'male' || /(?:^|[-_])male(?:[-_\d]|$)/i.test(voice.id || ''));
-              if (isMale) {
-                const list = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
-                const match = list.find(m => m.id === voice.id) || voice;
-                setSelectedMaleModel(match);
-                try {
-                  localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(match));
-                } catch (e) {}
-              } else if (isFemale) {
-                const list = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
-                const match = list.find(m => m.id === voice.id) || voice;
-                setSelectedFemaleModel(match);
-                try {
-                  localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(match));
-                } catch (e) {}
-              }
-            }}
-            onClose={() => setShowAiStudio(false)}
-          />
+          <ClientErrorBoundary fallbackTitle="AI Studio Interface">
+            <AiStudio
+              embedded={true}
+              userRole={userRole}
+              initialLang={activeLang}
+              instituteLanguage={instLang}
+              initialText={searchQuery || (activeLang === 'ja' ? selectedWord?.japanese : selectedWord?.korean) || ''}
+              activeFemaleModelId={selectedFemaleModel?.id}
+              activeMaleModelId={selectedMaleModel?.id}
+              onSelectVoiceModel={(voice) => {
+                const isFemale = voice.gender === 'female' || /(?:^|[-_])female(?:[-_\d]|$)/i.test(voice.id || '') || (voice.name && voice.name.toLowerCase().includes('female'));
+                const isMale = !isFemale && (voice.gender === 'male' || /(?:^|[-_])male(?:[-_\d]|$)/i.test(voice.id || ''));
+                if (isMale) {
+                  const list = activeLang === 'ja' ? JAPANESE_MALE_VOICE_MODELS : KOREAN_MALE_VOICE_MODELS;
+                  const match = list.find(m => m.id === voice.id) || voice;
+                  setSelectedMaleModel(match);
+                  try {
+                    localStorage.setItem(`sigma_selected_male_model_${activeLang}`, JSON.stringify(match));
+                  } catch (e) {}
+                } else if (isFemale) {
+                  const list = activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS : KOREAN_FEMALE_VOICE_MODELS;
+                  const match = list.find(m => m.id === voice.id) || voice;
+                  setSelectedFemaleModel(match);
+                  try {
+                    localStorage.setItem(`sigma_selected_female_model_${activeLang}`, JSON.stringify(match));
+                  } catch (e) {}
+                }
+              }}
+              onClose={() => setShowAiStudio(false)}
+            />
+          </ClientErrorBoundary>
         </div>
       )}
 

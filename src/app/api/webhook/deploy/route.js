@@ -65,6 +65,14 @@ async function runDeployTasks(repoDir) {
   const logs = [];
   const addLog = (msg) => logs.push(`[${new Date().toISOString().slice(11, 19)}] ${msg}`);
 
+  const execOpts = {
+    cwd: repoDir,
+    env: {
+      ...process.env,
+      PATH: `${process.env.PATH || ''}:/usr/local/bin:/usr/bin:/bin:/usr/local/cpanel/3rdparty/bin:/opt/cpanel/ea-git/bin`
+    }
+  };
+
   addLog(`📁 Working directory: ${repoDir}`);
 
   // 1. Database backup
@@ -81,8 +89,9 @@ async function runDeployTasks(repoDir) {
 
   // 2. Git stash
   try {
-    const { stdout } = await execAsync('git stash --include-untracked', { cwd: repoDir });
-    addLog(`📦 Git stash: ${stdout.trim() || 'No local untracked conflicts'}`);
+    const res = await execAsync('git stash --include-untracked', execOpts);
+    const stashOut = String(res?.stdout || '').trim();
+    addLog(`📦 Git stash: ${stashOut || 'No local untracked conflicts'}`);
   } catch (e) {
     addLog(`⚠️ Git stash notice: ${e.message}`);
   }
@@ -91,9 +100,9 @@ async function runDeployTasks(repoDir) {
   try {
     addLog(`🌐 Fetching latest changes from origin/main...`);
     try {
-      await execAsync('rm -f .git/index.lock .git/refs/remotes/origin/*\\ *', { cwd: repoDir });
+      await execAsync('rm -f .git/index.lock .git/refs/remotes/origin/*\\ *', execOpts);
     } catch {}
-    const { stdout, stderr } = await execAsync('git fetch origin main --force', { cwd: repoDir });
+    const { stdout, stderr } = await execAsync('git fetch origin main --force', execOpts);
     const outStr = stdout ? String(stdout).trim() : '';
     const errStr = stderr ? String(stderr).trim() : '';
     if (outStr) addLog(`⬇️ Fetch output:\n${outStr}`);
@@ -106,7 +115,7 @@ async function runDeployTasks(repoDir) {
   // 4. Git reset --hard origin/main
   try {
     addLog(`🔄 Resetting local tree to origin/main...`);
-    const { stdout } = await execAsync('git reset --hard origin/main', { cwd: repoDir });
+    const { stdout } = await execAsync('git reset --hard origin/main', execOpts);
     const outStr = stdout ? String(stdout).trim() : '';
     addLog(`✅ Reset output:\n${outStr}`);
   } catch (e) {
@@ -142,8 +151,8 @@ async function runDeployTasks(repoDir) {
   // 7. Latest commit details
   let latestCommit = '';
   try {
-    const { stdout } = await execAsync('git log -1 --format="%h - %s (%cr) by %an"', { cwd: repoDir });
-    latestCommit = stdout.trim();
+    const res = await execAsync('git log -1 --format="%h - %s (%cr) by %an"', execOpts);
+    latestCommit = String(res?.stdout || '').trim();
     addLog(`📌 Current deployed commit: ${latestCommit}`);
   } catch (e) {
     addLog(`⚠️ Could not read latest commit: ${e.message}`);

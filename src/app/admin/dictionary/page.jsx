@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Navbar from "@/components/Navbar";
 import DictionarySection from "@/components/DictionarySection";
+import ClientErrorBoundary from "@/components/ClientErrorBoundary";
 
 export default function AdminDictionaryPage() {
   return (
@@ -12,7 +13,9 @@ export default function AdminDictionaryPage() {
 
       {/* Main Content Area */}
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "25px 20px" }}>
-        <DictionarySection instituteLanguage="both" userRole="admin" />
+        <ClientErrorBoundary fallbackTitle="Admin Dictionary Interface">
+          <DictionarySection instituteLanguage="both" userRole="admin" />
+        </ClientErrorBoundary>
       </div>
     </div>
   );
