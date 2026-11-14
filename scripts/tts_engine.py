@@ -8,6 +8,9 @@ import glob
 home = os.path.expanduser("~")
 py_ver = f"python{sys.version_info.major}.{sys.version_info.minor}"
 if sys.platform != 'darwin':
+    # Strip any cross-version site-packages from inherited PYTHONPATH (e.g. 3.9 path when running under 3.11)
+    sys.path = [p for p in sys.path if not any(f"python{v}" in p and f"python{v}" != py_ver for v in ["3.8", "3.9", "3.10", "3.11", "3.12"])]
+
     for pattern in [
         os.path.join(home, f".local/lib/{py_ver}/site-packages"),
         f"/home/*/.local/lib/{py_ver}/site-packages",
@@ -36,11 +39,28 @@ for p in glob.glob(os.path.join(home, "Library/Python/*/lib/python/site-packages
 
 # 4. Compatibility polyfill for Python 3.11/3.10 with newer aiohttp TypeVar default
 import typing
-_orig_TypeVar = typing.TypeVar
-def _patched_TypeVar(*args, **kwargs):
+_orig_init = typing.TypeVar.__init__
+def _patched_init(self, *args, **kwargs):
     kwargs.pop('default', None)
-    return _orig_TypeVar(*args, **kwargs)
-typing.TypeVar = _patched_TypeVar
+    return _orig_init(self, *args, **kwargs)
+try:
+    typing.TypeVar.__init__ = _patched_init
+except Exception:
+    pass
+
+try:
+    import typing_extensions
+    if hasattr(typing_extensions, 'TypeVar'):
+        try:
+            _te_orig = typing_extensions.TypeVar.__init__
+            def _te_patched(self, *args, **kwargs):
+                kwargs.pop('default', None)
+                return _te_orig(self, *args, **kwargs)
+            typing_extensions.TypeVar.__init__ = _te_patched
+        except Exception:
+            pass
+except Exception:
+    pass
 
 try:
     import edge_tts
