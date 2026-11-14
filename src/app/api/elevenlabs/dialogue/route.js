@@ -52,7 +52,8 @@ export async function POST(request) {
     const result = await synthesizeDialogue({ turns, modelId, style });
 
     // Strict download protection: ONLY Admin and Institute can download. NEVER students.
-    const isPrivileged = session?.role === 'admin' || session?.role === 'institute';
+    const userRole = session?.role || request.headers.get('x-user-role');
+    const isPrivileged = userRole === 'admin' || userRole === 'institute' || userRole === 'superadmin';
     const isDownload = isPrivileged && Boolean(download);
 
     const disposition = isDownload 

@@ -11,7 +11,7 @@ export default function VoiceStudioPage() {
 
       {/* Main Container */}
       <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '24px 20px' }}>
-        <AiStudio embedded={false} />
+        <AiStudio embedded={false} userRole="admin" />
       </div>
     </div>
   );

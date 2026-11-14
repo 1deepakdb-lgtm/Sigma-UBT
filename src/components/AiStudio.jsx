@@ -91,8 +91,8 @@ export default function AiStudio({
     if (typeof window !== 'undefined') {
       try {
         const pathname = window.location.pathname || '';
-        // 2. Admin or Institute routes are strictly authorized for download
-        if (pathname.startsWith('/admin') || pathname.startsWith('/institute')) {
+        // 2. Admin, Institute, or Voice Studio routes are strictly authorized for download
+        if (pathname.startsWith('/admin') || pathname.startsWith('/institute') || pathname.startsWith('/voice-studio')) {
           return true;
         }
 
@@ -117,7 +117,25 @@ export default function AiStudio({
   const [canDownloadAudio, setCanDownloadAudio] = useState(computeCanDownload);
 
   useEffect(() => {
-    setCanDownloadAudio(computeCanDownload());
+    const allowed = computeCanDownload();
+    setCanDownloadAudio(allowed);
+
+    // If not yet allowed and in browser, verify against session endpoint for admin/institute
+    if (!allowed && typeof window !== 'undefined') {
+      fetch('/api/auth/me')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.authenticated && data?.user?.role) {
+            const role = String(data.user.role).toLowerCase().trim();
+            if (role === 'admin' || role === 'superadmin' || role === 'institute') {
+              setCanDownloadAudio(true);
+            } else if (role === 'student') {
+              setCanDownloadAudio(false);
+            }
+          }
+        })
+        .catch(() => {});
+    }
   }, [userRole]);
 
   // Determine effective student language ('korean' | 'japanese' | 'both')
