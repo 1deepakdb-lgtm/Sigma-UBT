@@ -4,20 +4,26 @@ import asyncio
 import os
 import glob
 
-# 1. First priority: vendored packages in scripts/vendor
+# 1. On Linux (e.g. cPanel), prioritize native user and system site-packages first
+home = os.path.expanduser("~")
+if sys.platform != 'darwin':
+    for p in glob.glob(os.path.join(home, ".local/lib/python*/site-packages")):
+        if p not in sys.path:
+            sys.path.insert(0, p)
+    for p in glob.glob("/home/*/.local/lib/python*/site-packages"):
+        if p not in sys.path:
+            sys.path.insert(0, p)
+
+# 2. Add vendored packages in scripts/vendor (for darwin or fallback)
 vendor_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vendor')
 if os.path.exists(vendor_dir) and vendor_dir not in sys.path:
-    sys.path.insert(0, vendor_dir)
+    if sys.platform == 'darwin':
+        sys.path.insert(0, vendor_dir)
+    else:
+        sys.path.append(vendor_dir)
 
-# 2. Automatically add user and system site-packages so edge-tts is always found on cPanel & servers
-home = os.path.expanduser("~")
-for p in glob.glob(os.path.join(home, ".local/lib/python*/site-packages")):
-    if p not in sys.path:
-        sys.path.insert(0, p)
+# 3. Add macOS Library python site-packages
 for p in glob.glob(os.path.join(home, "Library/Python/*/lib/python/site-packages")):
-    if p not in sys.path:
-        sys.path.insert(0, p)
-for p in glob.glob("/home/*/.local/lib/python*/site-packages"):
     if p not in sys.path:
         sys.path.insert(0, p)
 

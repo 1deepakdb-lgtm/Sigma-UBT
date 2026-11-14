@@ -675,7 +675,7 @@ export async function GET(request) {
   const selectedVoice = searchParams.get('voice') || cfg.voice;
   const selectedPitch = searchParams.get('pitch') || cfg.pitch;
   const selectedRate  = searchParams.get('rate')  || cfg.rate;
-  const selectedModel = searchParams.get('model') || '';
+  const selectedModel = searchParams.get('model') || searchParams.get('modelId') || '';
   const ageStyle = searchParams.get('ageStyle') || '';
   const personality = searchParams.get('personality') || '';
   const speechMode = searchParams.get('speechMode') || 'natural_conversation';
@@ -693,6 +693,7 @@ export async function GET(request) {
     pitch: selectedPitch,
     rate: selectedRate,
     model: selectedModel,
+    modelId: selectedModel,
     ageStyle,
     personality,
     speechMode,

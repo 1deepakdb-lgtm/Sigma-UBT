@@ -64,6 +64,7 @@ async function fallbackSynthesis(text, lang, gender, options = {}) {
       vocalWeight: options.weight,
       pitchFactor: options.pitchFactor,
       model: options.model,
+      modelId: options.modelId,
       pitch: options.pitch,
       rate: options.rate,
       voice: options.voice
@@ -149,12 +150,42 @@ export async function synthesizeElevenLabs({
     weight: weight !== null ? weight : profile.baseVocalWeight,
     pitchFactor: pitchFactor !== null ? pitchFactor : profile.basePitchFactor,
     model: profile.id,
+    modelId: modelId,
     pitch: profile.pitch || '+0Hz',
     rate: profile.rate || '+0%',
     voice: profile.voice || ''
   };
 
-  // 3. Check disk cache
+  // 3. Check disk cache (Named Keys first for guaranteed zero-miss playback, then SHA256)
+  const targetGender = profile.gender || (isMaleId ? 'male' : 'female');
+  const namedCandidates = [
+    // 1. Direct profile + model combination (e.g. "ko-male-2_eleven_turbo_v2_5.mp3")
+    path.join(CACHE_DIR, `${resolvedVoiceProfileId}_${modelId}.mp3`),
+    // 2. Direct model audition sample (e.g. "model_eleven_turbo_v2_5_ko_male.mp3")
+    path.join(CACHE_DIR, `model_${modelId}_${lang}_${targetGender}.mp3`),
+    // 3. Fallback profile baseline (e.g. "ko-male-2_default.mp3")
+    path.join(CACHE_DIR, `${resolvedVoiceProfileId}_default.mp3`)
+  ];
+
+  for (const namedFile of namedCandidates) {
+    if (fs.existsSync(namedFile)) {
+      try {
+        const cachedBuffer = fs.readFileSync(namedFile);
+        if (cachedBuffer.length > 500) {
+          return {
+            buffer: cachedBuffer,
+            contentType: 'audio/mpeg',
+            cached: true,
+            provider: 'studio-cached',
+            cacheKey: path.basename(namedFile, '.mp3')
+          };
+        }
+      } catch (readErr) {
+        console.warn('Error reading named cached audio file:', readErr.message);
+      }
+    }
+  }
+
   const cacheKey = computeCacheKey(naturalized, voiceId, modelId, resolvedSettings, categoryMeta);
   const cacheFilePath = path.join(CACHE_DIR, `${cacheKey}.mp3`);
 
@@ -175,23 +206,38 @@ export async function synthesizeElevenLabs({
     }
   }
 
-  // 4. Check for Neural Studio HD override or ElevenLabs API Key
+  // 4. Check for Humanized Models, Neural Studio HD override, or ElevenLabs API Key
+  const isHumanizedOrLocalModel = [
+    'neural_studio_hd',
+    'humanized_conversational_v3',
+    'deep_human_neural_v2',
+    'humanized_pedagogical_v1',
+    'edge_neural_human'
+  ].includes(modelId);
+
   const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (modelId === 'neural_studio_hd' || !apiKey || apiKey === 'YOUR_ELEVENLABS_API_KEY') {
-    if (modelId !== 'neural_studio_hd') {
+  if (isHumanizedOrLocalModel || !apiKey || apiKey === 'YOUR_ELEVENLABS_API_KEY') {
+    if (!isHumanizedOrLocalModel) {
       console.info('ELEVENLABS_API_KEY not configured. Seamlessly activating local studio audio engine.');
     }
-    const fallback = await fallbackSynthesis(naturalized, lang, profile.gender, categoryMeta);
+    const fallback = await fallbackSynthesis(naturalized, lang, profile.gender, {
+      ...categoryMeta,
+      modelId
+    });
     if (fallback) {
       try {
         fs.writeFileSync(cacheFilePath, fallback.buffer);
+        const pModel = path.join(CACHE_DIR, `${resolvedVoiceProfileId}_${modelId}.mp3`);
+        const pDefault = path.join(CACHE_DIR, `${resolvedVoiceProfileId}_default.mp3`);
+        if (!fs.existsSync(pModel)) fs.writeFileSync(pModel, fallback.buffer);
+        if (!fs.existsSync(pDefault)) fs.writeFileSync(pDefault, fallback.buffer);
       } catch (writeErr) {
         console.warn('Failed to write audio cache:', writeErr.message);
       }
       return {
         ...fallback,
         cached: false,
-        warning: modelId === 'neural_studio_hd' ? null : 'ELEVENLABS_API_KEY is not set in .env. Served via native high-fidelity audio engine.'
+        warning: isHumanizedOrLocalModel ? null : 'ELEVENLABS_API_KEY is not set in .env. Served via native high-fidelity audio engine.'
       };
     }
     throw new Error('Audio engine unavailable. Please try again.');

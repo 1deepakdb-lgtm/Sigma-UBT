@@ -53,7 +53,11 @@ if [ ! -d "node_modules/next" ]; then
   npm install --omit=dev --no-audit --no-fund 2>/dev/null || true
 fi
 
-# 9. Ensure tmp directory exists and trigger passenger restart
+# 9. Ensure Python edge-tts is available for realistic neural model voices
+echo "🎙️ Ensuring neural voice TTS engine..."
+python3 -m pip install --user edge-tts --no-warn-script-location 2>/dev/null || pip3 install --user edge-tts 2>/dev/null || true
+
+# 10. Ensure tmp directory exists and trigger passenger restart
 mkdir -p tmp
 touch tmp/restart.txt
 

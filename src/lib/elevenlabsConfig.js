@@ -20,34 +20,248 @@ export const ELEVENLABS_MODELS = {
 
 export const AVAILABLE_MODELS = [
   {
+    id: 'humanized_conversational_v3',
+    name: 'Humanized Conversational v3',
+    shortName: 'Humanized Conv v3',
+    tag: 'Ultra-Humanized · Breath & Cadence',
+    category: 'humanized',
+    desc: 'Ultra-lifelike conversational cadence with subtle breathing pauses, natural micro-intonation, and relaxed turn-taking.',
+    femaleVoice: {
+      name: 'SunHi Warm Lifelike',
+      pitch: '+3Hz',
+      rate: '-2%',
+      stability: 0.40,
+      style: 0.28,
+      description: 'Warm breath cadence with expressive conversational melody'
+    },
+    maleVoice: {
+      name: 'Hyunsu Conversational Natural',
+      pitch: '-3Hz',
+      rate: '-1%',
+      stability: 0.42,
+      style: 0.26,
+      description: 'Relaxed everyday natural phrasing and warm chest resonance'
+    }
+  },
+  {
+    id: 'deep_human_neural_v2',
+    name: 'Deep Human Neural v2',
+    shortName: 'Deep Human v2',
+    tag: 'Warm Resonance · Natural Tone',
+    category: 'humanized',
+    desc: 'Rich chest warmth, organic low-frequency resonance, and soothing human inflection for authentic conversations.',
+    femaleVoice: {
+      name: 'SunHi Deep Warmth',
+      pitch: '-5Hz',
+      rate: '-4%',
+      stability: 0.55,
+      style: 0.16,
+      description: 'Soothing lower register with warm empathetic cadence'
+    },
+    maleVoice: {
+      name: 'InJoon Resonant Bass',
+      pitch: '-12Hz',
+      rate: '-4%',
+      stability: 0.58,
+      style: 0.15,
+      description: 'Deep resonant chest bass with steady authoritative presence'
+    }
+  },
+  {
+    id: 'humanized_pedagogical_v1',
+    name: 'Humanized Pedagogical v1',
+    shortName: 'Humanized Teacher',
+    tag: 'Patient Instructor · Crystal Diction',
+    category: 'humanized',
+    desc: 'Measured pedagogical pacing with crystal-clear syllable articulation, ideal for EPS-TOPIK & JLPT listening drills.',
+    femaleVoice: {
+      name: 'SunHi Clear Teacher',
+      pitch: '+1Hz',
+      rate: '-7%',
+      stability: 0.62,
+      style: 0.12,
+      description: 'Deliberate syllable-by-syllable diction and patient intonation'
+    },
+    maleVoice: {
+      name: 'InJoon Clear Instructor',
+      pitch: '-2Hz',
+      rate: '-6%',
+      stability: 0.64,
+      style: 0.12,
+      description: 'Crisp batchim articulation and formal classroom presence'
+    }
+  },
+  {
     id: 'eleven_multilingual_v2',
     name: 'Multilingual v2',
     shortName: 'Multilingual v2',
     tag: 'Ultra Lifelike · Expressive',
-    desc: 'Highest natural intonation, dynamic emotional contour, and authentic human cadence.'
+    category: 'neural',
+    desc: 'Highest natural intonation, dynamic emotional contour, and authentic human cadence.',
+    femaleVoice: {
+      name: 'SunHi Expressive Studio',
+      pitch: '+0Hz',
+      rate: '+0%',
+      stability: 0.50,
+      style: 0.18,
+      description: 'Balanced studio-quality expressive female voice'
+    },
+    maleVoice: {
+      name: 'InJoon Expressive Baritone',
+      pitch: '+0Hz',
+      rate: '+0%',
+      stability: 0.50,
+      style: 0.18,
+      description: 'Balanced studio-quality expressive male baritone'
+    }
   },
   {
     id: 'eleven_turbo_v2_5',
     name: 'Turbo v2.5',
     shortName: 'Turbo v2.5',
     tag: 'Low-Latency · Dynamic',
-    desc: 'Fast generation with natural conversational flow, perfect for responsive dialogue.'
-  },
-  {
-    id: 'eleven_flash_v2',
-    name: 'Flash v2',
-    shortName: 'Flash v2',
-    tag: 'Ultra-Fast · Sharp',
-    desc: 'Instant acoustic response, ideal for rapid vocabulary tests and syllable drills.'
+    category: 'neural',
+    desc: 'Fast generation with natural conversational flow and lively energy, perfect for responsive dialogue.',
+    femaleVoice: {
+      name: 'SunHi Dynamic Bright',
+      pitch: '+6Hz',
+      rate: '+4%',
+      stability: 0.44,
+      style: 0.22,
+      description: 'Lively, bright, and energetic fast turn-taking'
+    },
+    maleVoice: {
+      name: 'Hyunsu Dynamic Workplace',
+      pitch: '+3Hz',
+      rate: '+4%',
+      stability: 0.46,
+      style: 0.20,
+      description: 'Crisp, active young male workplace conversation'
+    }
   },
   {
     id: 'neural_studio_hd',
     name: 'Neural HD Studio',
     shortName: 'Neural HD',
-    tag: 'Studio Broadcast',
-    desc: 'Pristine broadcast-grade diction with precision pitch, rate, and batchim clarity.'
+    tag: 'Studio Broadcast Standard',
+    category: 'neural',
+    desc: 'Pristine broadcast-grade diction with precision pitch, rate, and batchim/kana clarity.',
+    femaleVoice: {
+      name: 'SunHi Broadcast Anchor',
+      pitch: '-2Hz',
+      rate: '+2%',
+      stability: 0.60,
+      style: 0.10,
+      description: 'Formal television news broadcast delivery'
+    },
+    maleVoice: {
+      name: 'InJoon Radio Broadcaster',
+      pitch: '-7Hz',
+      rate: '+2%',
+      stability: 0.60,
+      style: 0.10,
+      description: 'Resonant radio broadcaster with crisp diction'
+    }
+  },
+  {
+    id: 'eleven_flash_v2',
+    name: 'Flash v2',
+    shortName: 'Flash v2',
+    tag: 'Ultra-Fast · Sharp Drills',
+    category: 'neural',
+    desc: 'Instant acoustic response, ideal for rapid vocabulary tests, syllable drills, and listening speedruns.',
+    femaleVoice: {
+      name: 'SunHi Sharp Drill',
+      pitch: '+8Hz',
+      rate: '+8%',
+      stability: 0.48,
+      style: 0.14,
+      description: 'Rapid, sharp pronunciation for quick vocabulary drills'
+    },
+    maleVoice: {
+      name: 'Hyunsu Fast Response',
+      pitch: '+5Hz',
+      rate: '+7%',
+      stability: 0.50,
+      style: 0.14,
+      description: 'High-tempo masculine pacing for fast listening drills'
+    }
   }
 ];
+
+// Dedicated Sample Sentences for Testing Model Voices (Female and Male Separately)
+export const MODEL_SAMPLE_SPEECH = {
+  humanized_conversational_v3: {
+    ko: {
+      female: '안녕하세요! 휴머나이즈드 여성 음성 모델입니다. 자연스러운 호흡과 부드러운 억양으로 대화합니다.',
+      male: '안녕하십니까! 휴머나이즈드 남성 음성 모델입니다. 편안한 일상 대화 억양과 자연스러운 호흡으로 대화합니다.'
+    },
+    ja: {
+      female: 'こんにちは！ヒューマナイズド女性音声モデルです。自然な呼吸とイントネーションで会話します。',
+      male: 'こんにちは！ヒューマナイズド男性音声モデルです。日常の自然な抑揚と落ち着いた声で会話します。'
+    }
+  },
+  deep_human_neural_v2: {
+    ko: {
+      female: '안녕하세요. 딥 휴먼 여성 음성 모델입니다. 따뜻하고 차분한 공명으로 대화를 이끌어갑니다.',
+      male: '안녕하십니까. 딥 휴먼 남성 음성 모델입니다. 깊고 묵직한 중저음 톤으로 든든하게 대화합니다.'
+    },
+    ja: {
+      female: 'こんにちは。ディープヒューマン女性音声モデルです。温かく落ち着いた響きで対話します。',
+      male: 'こんにちは。ディープヒューマン男性音声モデルです。深みのある重低音のバリトンでお届けします。'
+    }
+  },
+  humanized_pedagogical_v1: {
+    ko: {
+      female: '안녕하세요. 휴머나이즈드 강의 여성 음성 모델입니다. 또렷하고 명확한 표준 발음으로 전달합니다.',
+      male: '안녕하십니까. 휴머나이즈드 강의 남성 음성 모델입니다. 정확한 받침과 또렷한 발음으로 설명합니다.'
+    },
+    ja: {
+      female: 'こんにちは。ヒューマナイズド講義の女性音声モデルです。明瞭で正確な発音をお届けします。',
+      male: 'こんにちは。ヒューマナイズド講義の男性音声モデルです。正確なイントネーションでわかりやすく説明します。'
+    }
+  },
+  eleven_multilingual_v2: {
+    ko: {
+      female: '안녕하세요! 멀티링구얼 v2 스튜디오 여성 음성입니다. 생생하고 균형 잡힌 억양을 들려드립니다.',
+      male: '안녕하십니까! 멀티링구얼 v2 남성 바리톤 음성입니다. 표준 한국어 억양을 또렷하게 전해드립니다.'
+    },
+    ja: {
+      female: 'こんにちは！マルチリンガルv2女性音声です。表現力豊かな発音をお届けします。',
+      male: 'こんにちは！マルチリンガルv2男性バリトン音声です。標準的な日本語でお届けします。'
+    }
+  },
+  eleven_turbo_v2_5: {
+    ko: {
+      female: '안녕하세요! 터보 v2.5 다이내믹 여성 음성입니다. 빠르고 활기찬 대화 턴테이킹을 경험해보세요.',
+      male: '안녕하십니까! 터보 v2.5 활기찬 남성 음성입니다. 신속하고 에너지 넘치는 직장 대화에 적합합니다.'
+    },
+    ja: {
+      female: 'こんにちは！ターボv2.5ダイナミック女性音声です。テンポの良い対話をお楽しみください。',
+      male: 'こんにちは！ターボv2.5アクティブ男性音声です。仕事や日常のスムーズな会話に最適です。'
+    }
+  },
+  neural_studio_hd: {
+    ko: {
+      female: '시청자 여러분 안녕하십니까. 뉴럴 HD 방송 표준 여성 앵커 음성입니다.',
+      male: '안녕하십니까. 뉴럴 HD 방송 표준 남성 라디오 아나운서 음성입니다.'
+    },
+    ja: {
+      female: '皆様、こんにちは。ニューラルHD放送標準の女性アナウンサー音声です。',
+      male: 'こんにちは。ニューラルHD放送標準の男性ナレーター音声です。'
+    }
+  },
+  eleven_flash_v2: {
+    ko: {
+      female: '안녕하세요! 플래시 v2 초고속 여성 음성입니다. 빠른 단어 암기와 발음 훈련에 최적입니다.',
+      male: '안녕하십니까! 플래시 v2 초고속 남성 음성입니다. 빠른 듣기 평가 훈련에 적합합니다.'
+    },
+    ja: {
+      female: 'こんにちは！フラッシュv2超高速女性音声です。単語の聞き取り練習に最適です。',
+      male: 'こんにちは！フラッシュv2超高速男性音声です。スピード感のある聴解練習に最適です。'
+    }
+  }
+};
 
 export const DEFAULT_MODEL_ID = process.env.ELEVENLABS_MODEL_ID || ELEVENLABS_MODELS.MULTILINGUAL_V2;
 
@@ -301,6 +515,68 @@ export const VOICE_PROFILES = [
     tag: 'Mentor · Gentle'
   },
   {
+    id: 'ko-female-7',
+    name: 'Korean Female 7',
+    title: 'Humanized Conversationalist',
+    language: 'ko',
+    languageName: 'Korean (한국어)',
+    gender: 'female',
+    pitch: '+3Hz',
+    rate: '-2%',
+    voice: 'ko-KR-SunHiNeural',
+    ageStyle: 'warm',
+    personality: 'friendly',
+    defaultSpeechMode: 'natural_conversation',
+    defaultEmotion: 'happy',
+    persona: 'Humanized conversationalist with micro-cadence',
+    description: 'Ultra-humanized conversational female voice with natural breathing pauses and realistic micro-cadence.',
+    defaultVoiceId: process.env.ELEVENLABS_VOICE_KO_FEMALE_7 || 'EXAVITQu4vr4xnSDxMaL',
+    basePitchFactor: 1.04,
+    baseVocalWeight: 0.35,
+    settings: {
+      stability: 0.40,
+      similarity_boost: 0.80,
+      style: 0.28,
+      use_speaker_boost: true,
+      speed: 0.98
+    },
+    sampleSentence: '진짜요? 오늘 날씨도 정말 화창한데, 수업 끝나고 시원한 아이스커피 한잔하러 가요!',
+    sampleTranslation: 'Really? The weather is so sunny today, shall we grab an iced coffee after class!',
+    avatar: '👩‍🦰',
+    tag: 'Humanized · Lifelike'
+  },
+  {
+    id: 'ko-female-8',
+    name: 'Korean Female 8',
+    title: 'Deep Human Resonance',
+    language: 'ko',
+    languageName: 'Korean (한국어)',
+    gender: 'female',
+    pitch: '-5Hz',
+    rate: '-4%',
+    voice: 'ko-KR-SunHiNeural',
+    ageStyle: 'deep',
+    personality: 'calm',
+    defaultSpeechMode: 'storytelling',
+    defaultEmotion: 'reassuring',
+    persona: 'Deep human resonance & soothing empathy',
+    description: 'Warm chest resonance and organic low-pitch contour for deep, calming conversational turns.',
+    defaultVoiceId: process.env.ELEVENLABS_VOICE_KO_FEMALE_8 || 'LcfcDJNUP1GQjkzn1xUU',
+    basePitchFactor: 0.92,
+    baseVocalWeight: 0.44,
+    settings: {
+      stability: 0.55,
+      similarity_boost: 0.84,
+      style: 0.16,
+      use_speaker_boost: true,
+      speed: 0.92
+    },
+    sampleSentence: '마음 편하게 들으세요. 차분하게 하나씩 익히다 보면 한국어가 자연스럽게 입에 익을 거예요.',
+    sampleTranslation: 'Listen comfortably. As you calmly learn one by one, Korean will naturally roll off your tongue.',
+    avatar: '🧕',
+    tag: 'Deep Warmth · Empathetic'
+  },
+  {
     id: 'ko-male-1',
     name: 'Korean Male 1',
     title: 'Natural Korean Male Teacher',
@@ -485,6 +761,68 @@ export const VOICE_PROFILES = [
     sampleTranslation: 'It is essential to accurately grasp the sentence context and analyze the organic combination of grammatical elements.',
     avatar: '👨‍🎓',
     tag: 'Academic · Lecturer'
+  },
+  {
+    id: 'ko-male-7',
+    name: 'Korean Male 7',
+    title: 'Humanized Conversationalist',
+    language: 'ko',
+    languageName: 'Korean (한국어)',
+    gender: 'male',
+    pitch: '-3Hz',
+    rate: '-1%',
+    voice: 'ko-KR-HyunsuMultilingualNeural',
+    ageStyle: 'warm',
+    personality: 'friendly',
+    defaultSpeechMode: 'natural_conversation',
+    defaultEmotion: 'happy',
+    persona: 'Authentic breath & casual Korean phrasing',
+    description: 'Humanized natural male baritone with authentic conversational micro-pauses and warm inflection.',
+    defaultVoiceId: process.env.ELEVENLABS_VOICE_KO_MALE_7 || 'g5CIjZEefAph4nQFvHAz',
+    basePitchFactor: 0.82,
+    baseVocalWeight: 0.60,
+    settings: {
+      stability: 0.42,
+      similarity_boost: 0.78,
+      style: 0.26,
+      use_speaker_boost: true,
+      speed: 0.98
+    },
+    sampleSentence: '아, 그렇군요! 그럼 이번 주말에 홍대 근처에서 만나서 맛있는 것도 먹고 같이 공부할까요?',
+    sampleTranslation: 'Ah, I see! Shall we meet around Hongdae this weekend to eat something good and study together?',
+    avatar: '🧑',
+    tag: 'Humanized · Natural'
+  },
+  {
+    id: 'ko-male-8',
+    name: 'Korean Male 8',
+    title: 'Deep Human Neural Bass',
+    language: 'ko',
+    languageName: 'Korean (한국어)',
+    gender: 'male',
+    pitch: '-12Hz',
+    rate: '-4%',
+    voice: 'ko-KR-InJoonNeural',
+    ageStyle: 'deep',
+    personality: 'confident',
+    defaultSpeechMode: 'storytelling',
+    defaultEmotion: 'serious',
+    persona: 'Deep resonant chest bass baritone',
+    description: 'Ultra-deep resonant baritone with rich acoustic chest warmth and reassuring low-end presence.',
+    defaultVoiceId: process.env.ELEVENLABS_VOICE_KO_MALE_8 || 'pNInz6obpgDQGcFmaJgB',
+    basePitchFactor: 0.65,
+    baseVocalWeight: 0.94,
+    settings: {
+      stability: 0.58,
+      similarity_boost: 0.85,
+      style: 0.15,
+      use_speaker_boost: true,
+      speed: 0.90
+    },
+    sampleSentence: '깊은 집중력이 학습의 성패를 가릅니다. 차분하게 기본기를 다지면 어려운 문제도 반드시 풀립니다.',
+    sampleTranslation: 'Deep focus determines success in learning. If you steadily build basics, difficult questions will definitely be solved.',
+    avatar: '🧔',
+    tag: 'Deep Bass · Resonant'
   },
 
   // ── JAPANESE VOICES ────────────────────────────────────────────────────────
@@ -675,6 +1013,68 @@ export const VOICE_PROFILES = [
     tag: 'Warm · Mentor'
   },
   {
+    id: 'ja-female-7',
+    name: 'Japanese Female 7',
+    title: 'Humanized Conversationalist',
+    language: 'ja',
+    languageName: 'Japanese (日本語)',
+    gender: 'female',
+    pitch: '+3Hz',
+    rate: '-2%',
+    voice: 'ja-JP-NanamiNeural',
+    ageStyle: 'warm',
+    personality: 'friendly',
+    defaultSpeechMode: 'natural_conversation',
+    defaultEmotion: 'happy',
+    persona: 'Humanized natural Tokyo conversationalist',
+    description: 'Ultra-humanized Tokyo conversational speech with natural breathing cadence and warm micro-inflection.',
+    defaultVoiceId: process.env.ELEVENLABS_VOICE_JA_FEMALE_7 || 'FGY2WhTYpPnrIDTdsKH5',
+    basePitchFactor: 1.05,
+    baseVocalWeight: 0.32,
+    settings: {
+      stability: 0.40,
+      similarity_boost: 0.80,
+      style: 0.28,
+      use_speaker_boost: true,
+      speed: 0.98
+    },
+    sampleSentence: '本当ですか！今日はお天気もいいですし、散歩がてら新しいカフェへ行ってみませんか？',
+    sampleTranslation: 'Really! The weather is great today, shall we walk over and check out that new cafe?',
+    avatar: '👩‍🦰',
+    tag: 'Humanized · Tokyo Lifelike'
+  },
+  {
+    id: 'ja-female-8',
+    name: 'Japanese Female 8',
+    title: 'Deep Japanese Human Mentor',
+    language: 'ja',
+    languageName: 'Japanese (日本語)',
+    gender: 'female',
+    pitch: '-6Hz',
+    rate: '-5%',
+    voice: 'ja-JP-NanamiNeural',
+    ageStyle: 'deep',
+    personality: 'calm',
+    defaultSpeechMode: 'storytelling',
+    defaultEmotion: 'reassuring',
+    persona: 'Deep Japanese human mentor',
+    description: 'Gentle, comforting lower register with reassuring phrasing to build listening confidence in Japanese.',
+    defaultVoiceId: process.env.ELEVENLABS_VOICE_JA_FEMALE_8 || 'XB0fDUnXU5powFXDhCwa',
+    basePitchFactor: 0.92,
+    baseVocalWeight: 0.42,
+    settings: {
+      stability: 0.55,
+      similarity_boost: 0.84,
+      style: 0.16,
+      use_speaker_boost: true,
+      speed: 0.92
+    },
+    sampleSentence: '落ち着いて耳を澄ませてみましょう。一つ一つの言葉の響きを感じれば、自然と聞き取れるようになります。',
+    sampleTranslation: 'Listen calmly and attentively. Feeling the resonance of each word will help you comprehend naturally.',
+    avatar: '🧕',
+    tag: 'Deep Warmth · Mentor'
+  },
+  {
     id: 'ja-male-1',
     name: 'Japanese Male 1',
     title: 'Natural Japanese Male Teacher',
@@ -859,6 +1259,68 @@ export const VOICE_PROFILES = [
     sampleTranslation: 'It is vital to systematically understand the origin of vocabulary and differences in nuance within context.',
     avatar: '👨‍🎓',
     tag: 'Academic · Lecturer'
+  },
+  {
+    id: 'ja-male-7',
+    name: 'Japanese Male 7',
+    title: 'Humanized Conversationalist',
+    language: 'ja',
+    languageName: 'Japanese (日本語)',
+    gender: 'male',
+    pitch: '-3Hz',
+    rate: '-1%',
+    voice: 'ja-JP-KeitaNeural',
+    ageStyle: 'warm',
+    personality: 'friendly',
+    defaultSpeechMode: 'natural_conversation',
+    defaultEmotion: 'happy',
+    persona: 'Humanized natural Tokyo conversationalist',
+    description: 'Ultra-humanized Tokyo conversational male cadence with natural breath, casual turn-taking, and micro-pauses.',
+    defaultVoiceId: process.env.ELEVENLABS_VOICE_JA_MALE_7 || 'TxGEqnHWrfWFTfGW9XjX',
+    basePitchFactor: 0.82,
+    baseVocalWeight: 0.62,
+    settings: {
+      stability: 0.42,
+      similarity_boost: 0.78,
+      style: 0.26,
+      use_speaker_boost: true,
+      speed: 0.98
+    },
+    sampleSentence: 'あ、そうなんですね！それじゃあ今度の土曜日、駅前のラーメン屋へ一緒に行ってみませんか？',
+    sampleTranslation: 'Ah, is that so! Then this coming Saturday, would you like to go check out the ramen place in front of the station together?',
+    avatar: '🧑',
+    tag: 'Humanized · Natural Tokyo'
+  },
+  {
+    id: 'ja-male-8',
+    name: 'Japanese Male 8',
+    title: 'Deep Japanese Human Resonance',
+    language: 'ja',
+    languageName: 'Japanese (日本語)',
+    gender: 'male',
+    pitch: '-11Hz',
+    rate: '-5%',
+    voice: 'ja-JP-KeitaNeural',
+    ageStyle: 'deep',
+    personality: 'calm',
+    defaultSpeechMode: 'storytelling',
+    defaultEmotion: 'reassuring',
+    persona: 'Deep Japanese human resonance baritone',
+    description: 'Resonant, deep baritone voice with calm warmth for deep narrative comprehension and relaxing listening.',
+    defaultVoiceId: process.env.ELEVENLABS_VOICE_JA_MALE_8 || 'VR6AewLTigWG4xSOukaG',
+    basePitchFactor: 0.66,
+    baseVocalWeight: 0.92,
+    settings: {
+      stability: 0.58,
+      similarity_boost: 0.85,
+      style: 0.15,
+      use_speaker_boost: true,
+      speed: 0.90
+    },
+    sampleSentence: '日々の積み重ねこそが力となります。焦らず着実に進めば、必ず目標を達成することができますよ。',
+    sampleTranslation: 'Daily accumulation is what builds strength. If you proceed steadily without rushing, you can definitely achieve your goal.',
+    avatar: '🧔',
+    tag: 'Deep Bass · Resonant'
   }
 ];
 
