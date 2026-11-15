@@ -1307,32 +1307,7 @@ function AdminQuestionManagerContent() {
   };
 
   const handleEditClick = (q) => {
-    setEditingQuestionId(q.id);
-    const num = Number(q.questionHeading) || Number(q.qIndex) || 1;
-    setQNumber(num);
-    setQuestionListType(q.type || (num <= 20 ? "Reading" : "Listening"));
-
-    const formattedOptions = (q.options || ["", "", "", ""]).map(opt => {
-      if (typeof opt === "string") return { text: opt, audio: "", image: "", video: "" };
-      return {
-        text: opt.text || "",
-        audio: opt.audio || "",
-        image: opt.image || "",
-        video: opt.video || ""
-      };
-    });
-
-    setQForm({
-      mainHeading: q.mainHeading || "",
-      questionHeading: String(num),
-      description: q.description || "",
-      image: q.image || "",
-      audio: q.audio || "",
-      options: formattedOptions,
-      answer: q.answer !== undefined ? q.answer : 0
-    });
-
-    window.scrollTo({ top: 350, behavior: "smooth" });
+    handleToggleInlineEdit(q);
   };
 
   const handleToggleInlineEdit = (q) => {
@@ -4186,8 +4161,11 @@ function AdminQuestionManagerContent() {
                       {displayedSetQuestions.map((q, idx) => {
                         const num = Number(q.questionHeading) || Number(q.qIndex) || idx + 1;
                         const isReading = q.type === "Reading";
+                        const isInlineEditing = inlineEditingQuestionId === q.id;
+
                         return (
-                          <tr key={q.id || idx} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                          <React.Fragment key={q.id || idx}>
+                          <tr style={{ borderBottom: isInlineEditing ? "none" : "1px solid #e2e8f0", backgroundColor: isInlineEditing ? "#f0f9ff" : "#ffffff" }}>
                             <td style={{ padding: "12px 14px", fontWeight: "700" }}>#{num}</td>
                             <td style={{ padding: "12px 14px" }}>
                               <span style={{
@@ -4222,12 +4200,28 @@ function AdminQuestionManagerContent() {
                             <td style={{ padding: "12px 14px", textAlign: "center" }}>
                               <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
                                 <button
-                                  onClick={() => handleEditClick(q)}
-                                  style={{ backgroundColor: "#2563eb", color: "#ffffff", border: "none", padding: "5px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "bold", cursor: "pointer" }}
+                                  type="button"
+                                  onClick={() => handleToggleInlineEdit(q)}
+                                  title={isInlineEditing ? "Close Inline Edit" : "Edit Question"}
+                                  style={{
+                                    backgroundColor: isInlineEditing ? "#0284c7" : "#2563eb",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    padding: "5px 10px",
+                                    borderRadius: "4px",
+                                    fontSize: "12px",
+                                    fontWeight: "bold",
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px"
+                                  }}
                                 >
-                                  Edit
+                                  <EditIcon size={12} color="#ffffff" />
+                                  {isInlineEditing ? "Close" : "Edit"}
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => handleDeleteQuestion(q.id)}
                                   style={{ backgroundColor: "#ef4444", color: "#ffffff", border: "none", padding: "5px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "bold", cursor: "pointer" }}
                                 >
@@ -4236,6 +4230,16 @@ function AdminQuestionManagerContent() {
                               </div>
                             </td>
                           </tr>
+
+                          {/* INLINE EDIT EXPANSION ROW */}
+                          {isInlineEditing && inlineForm && (
+                            <tr key={`inline-edit-upload-${q.id || idx}`} style={{ backgroundColor: "#f0f9ff", borderBottom: "2px solid #0284c7" }}>
+                              <td colSpan={6} style={{ padding: "14px 16px" }}>
+                                {renderInlineEditor(q)}
+                              </td>
+                            </tr>
+                          )}
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
