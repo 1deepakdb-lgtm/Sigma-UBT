@@ -22,6 +22,7 @@ export default function EsewaCheckoutModal({
   const [screenshotUrl, setScreenshotUrl] = useState("");
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isInitiatingEsewa, setIsInitiatingEsewa] = useState(false);
   const [isQuerySubmitted, setIsQuerySubmitted] = useState(false);
   const [selectedType, setSelectedType] = useState(item?.type || "set");
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -36,6 +37,7 @@ export default function EsewaCheckoutModal({
     if (isOpen) {
       setIsQuerySubmitted(false);
       setIsProcessing(false);
+      setIsInitiatingEsewa(false);
       setTxnId("");
       setScreenshotFile(null);
       setScreenshotPreview(null);
@@ -100,6 +102,55 @@ export default function EsewaCheckoutModal({
       console.warn("Screenshot local upload notice:", err.message);
     } finally {
       setUploadingScreenshot(false);
+    }
+  };
+
+  // Direct Online eSewa Payment Checkout (Logs in with eSewa Mobile Number & MPIN on esewa.com and auto-unlocks)
+  const handleEsewaOnlinePay = async () => {
+    setIsInitiatingEsewa(true);
+    try {
+      const curPhone = senderPhone.trim() || studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "" : "");
+
+      const payload = {
+        itemId: item.id || item.name,
+        itemName,
+        itemType: selectedType || "set",
+        amount: typeof itemPrice === "number" ? itemPrice : (selectedType === "set" ? 30 : 1000),
+        studentPhone: curPhone,
+        studentName: studentName || "Student"
+      };
+
+      const res = await fetch("/api/payment/esewa/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to initiate eSewa online payment");
+      }
+
+      // Automatically create and submit official eSewa EPAY HTML form to redirect to esewa.com.np
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = data.actionUrl;
+      form.style.display = "none";
+
+      Object.entries(data.formData).forEach(([k, v]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = k;
+        input.value = String(v);
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.error("[eSewa Online Payment Error]:", err);
+      alert("eSewa Gateway Error: " + (err.message || "Could not connect to eSewa."));
+      setIsInitiatingEsewa(false);
     }
   };
 
@@ -507,26 +558,88 @@ export default function EsewaCheckoutModal({
                 </div>
               </div>
 
-              {/* Step Info Banner - Compressed & Updated Text */}
+              {/* PRIMARY METHOD: ESEWA ONLINE CHECKOUT (DIRECT LOGIN WITH MPIN & AUTO-UNLOCK) */}
               <div
                 style={{
                   backgroundColor: "#f0fdf4",
-                  border: "1px solid #bbf7d0",
-                  borderRadius: "7px",
-                  padding: "6px 10px",
-                  marginBottom: "8px",
-                  fontSize: "11.5px",
-                  color: "#166534",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  lineHeight: "1.4"
+                  border: "2px solid #16a34a",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "12px",
+                  boxShadow: "0 4px 12px rgba(22, 163, 74, 0.12)"
                 }}
               >
-                <span style={{ fontSize: "14px", flexShrink: 0 }}>ℹ️</span>
-                <span>
-                  Scan the eSewa QR code below, upload your payment screenshot, enter your eSewa Transaction ID, and click <strong>Send Query</strong>. Wait for 5-10 minute, Admin will verify your payment and release your UBT set.
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "16px" }}>🟢</span>
+                    <strong style={{ fontSize: "13.5px", color: "#166534" }}>
+                      Method 1: Pay via eSewa.com Online
+                    </strong>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: "800",
+                      color: "#ffffff",
+                      backgroundColor: "#16a34a",
+                      padding: "2px 8px",
+                      borderRadius: "10px",
+                      letterSpacing: "0.2px"
+                    }}
+                  >
+                    ⚡ Instant Auto-Unlock
+                  </span>
+                </div>
+
+                <p style={{ margin: "0 0 10px 0", fontSize: "11.5px", color: "#15803d", lineHeight: "1.45" }}>
+                  Click below to open <strong>eSewa.com</strong>. Log in with your <strong>eSewa Mobile Number</strong> &amp; <strong>MPIN</strong> to pay <strong>{formattedPrice}</strong> directly to <strong>{esewaNumber}</strong> ({esewaAccountName}). Upon successful payment, it will return here and <strong>instantly unlock this UBT set!</strong>
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleEsewaOnlinePay}
+                  disabled={isInitiatingEsewa}
+                  style={{
+                    width: "100%",
+                    background: isInitiatingEsewa
+                      ? "#94a3b8"
+                      : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "11px 16px",
+                    borderRadius: "8px",
+                    fontWeight: "800",
+                    fontSize: "13.5px",
+                    cursor: isInitiatingEsewa ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  {isInitiatingEsewa ? (
+                    <>
+                      <span>⏳</span>
+                      <span>Redirecting to eSewa.com...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Pay {formattedPrice} with eSewa &amp; Unlock</span>
+                      <span style={{ fontSize: "14px" }}>↗</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* DIVIDER */}
+              <div style={{ display: "flex", alignItems: "center", margin: "10px 0 10px 0", gap: "8px" }}>
+                <div style={{ flex: 1, height: "1px", backgroundColor: "#e2e8f0" }} />
+                <span style={{ fontSize: "10.5px", color: "#64748b", fontWeight: "700" }}>
+                  OR METHOD 2: SCAN QR / MANUAL TRANSFER ({esewaNumber})
                 </span>
+                <div style={{ flex: 1, height: "1px", backgroundColor: "#e2e8f0" }} />
               </div>
 
               {/* QR CODE & SEND QUERY FLOW */}

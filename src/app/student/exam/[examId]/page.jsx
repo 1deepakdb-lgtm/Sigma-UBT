@@ -119,8 +119,11 @@ const StudentExam = () => {
   useEffect(() => {
     async function loadQuestions() {
       try {
+        const storedPhone = typeof window !== "undefined" ? (localStorage.getItem("currentStudentPhone") || localStorage.getItem("studentPhone") || "") : "";
         const res = await fetch(`/api/student/exams/${examId || "set-1-demo"}/start`, {
-          method: "POST"
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentPhone: storedPhone })
         });
         if (res.ok) {
           const data = await res.json();

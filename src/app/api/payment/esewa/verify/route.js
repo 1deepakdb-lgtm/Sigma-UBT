@@ -55,6 +55,10 @@ export async function GET(req) {
       const redirectUrl = new URL(`${origin}/student`);
       redirectUrl.searchParams.set("payment_status", "success");
       redirectUrl.searchParams.set("item_id", tx.itemId);
+      redirectUrl.searchParams.set("item_name", tx.itemName);
+      redirectUrl.searchParams.set("item_type", tx.itemType);
+      redirectUrl.searchParams.set("amount", String(tx.amount));
+      redirectUrl.searchParams.set("txn_code", tx.transactionCode || tx.transactionUuid);
       redirectUrl.searchParams.set("already_verified", "true");
       return NextResponse.redirect(redirectUrl.toString());
     }

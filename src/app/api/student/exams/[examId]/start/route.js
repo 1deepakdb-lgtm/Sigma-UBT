@@ -64,12 +64,58 @@ export async function POST(req, { params }) {
     );
 
     // Optional session check for free sets, required session check for paid sets
-    const { session } = await requireStudent(req);
+    const { session: realSession } = await requireStudent(req).catch(() => ({ session: null }));
 
-    if (!isFree) {
+    let studentPhone = '';
+    let txnCode = '';
+    try {
+      const clonedReq = req.clone();
+      const body = await clonedReq.json();
+      studentPhone = body?.studentPhone || '';
+      txnCode = body?.txnCode || '';
+    } catch {}
+
+    const cleanPhone = (studentPhone || realSession?.phone || realSession?.username || '').replace(/[^0-9]/g, '').slice(-10);
+    const targetSetName = (examSet.name || '').trim().toUpperCase();
+    const targetSetId = examSet.id ? String(examSet.id).trim() : '';
+    const setPkgName = (examSet.packageName || examSet.package?.name || '').trim();
+
+    // Check if student has an individually approved/released payment transaction for this set or package
+    let approvedTx = null;
+    if (realSession?.id || cleanPhone || txnCode) {
+      approvedTx = await prisma.paymentTransaction.findFirst({
+        where: {
+          OR: [
+            ...(realSession?.id ? [{ userId: realSession.id }] : []),
+            ...(studentPhone ? [{ studentPhone: studentPhone }] : []),
+            ...(cleanPhone ? [{ studentPhone: { contains: cleanPhone } }] : []),
+            ...(txnCode ? [{ transactionCode: txnCode }, { transactionUuid: txnCode }] : [])
+          ],
+          OR: [
+            { itemId: targetSetId },
+            { itemId: targetSetName },
+            { itemName: targetSetName },
+            { itemName: examSet.name },
+            ...(setPkgName ? [{ itemName: setPkgName }, { itemId: setPkgName }] : [])
+          ],
+          status: { in: ['COMPLETE', 'Released'] }
+        }
+      });
+    }
+
+    // Default guest session for free exams or verified paid guest
+    const session = realSession || (isFree || approvedTx ? {
+      id: approvedTx?.userId || 'f4f85796-a608-44ef-a0e9-57461f32d215',
+      role: 'student',
+      name: approvedTx?.studentName || 'Student',
+      phone: approvedTx?.studentPhone || studentPhone || '9800000000',
+      instituteId: 'examjk-open'
+    } : null);
+
+    if (!isFree && !approvedTx) {
       if (!session) {
         return NextResponse.json({
-          error: `Set "${examSet.name}" requires payment of Rs. 30. Please log in and unlock via eSewa.`,
+          error: `Set "${examSet.name}" requires payment of Rs. 30. Please unlock via eSewa.`,
           requiresPayment: true,
           price: 30
         }, { status: 401 });
@@ -156,31 +202,6 @@ export async function POST(req, { params }) {
         const parts = String(pkg).split(',').map(s => s.trim()).filter(Boolean);
         return parts.some(checkSinglePkg);
       };
-
-      // Check if student has an individually approved/released payment transaction for this set or package
-      const cleanPhone = (studentUser?.phone || session.phone || session.username || '').replace(/[^0-9]/g, '').slice(-10);
-      const targetSetName = (examSet.name || '').trim().toUpperCase();
-      const targetSetId = examSet.id ? String(examSet.id).trim() : '';
-      const setPkgName = (examSet.packageName || examSet.package?.name || '').trim();
-
-      const approvedTx = await prisma.paymentTransaction.findFirst({
-        where: {
-          OR: [
-            { userId: session.id },
-            ...(studentUser?.phone ? [{ studentPhone: studentUser.phone }] : []),
-            ...(cleanPhone ? [{ studentPhone: { contains: cleanPhone } }] : []),
-            ...(studentUser?.name ? [{ studentName: studentUser.name }] : [])
-          ],
-          OR: [
-            { itemId: targetSetId },
-            { itemId: targetSetName },
-            { itemName: targetSetName },
-            { itemName: examSet.name },
-            ...(setPkgName ? [{ itemName: setPkgName }, { itemId: setPkgName }] : [])
-          ],
-          status: { in: ['COMPLETE', 'Released'] }
-        }
-      });
 
       if (!approvedTx) {
         if (isInstituteStudent) {

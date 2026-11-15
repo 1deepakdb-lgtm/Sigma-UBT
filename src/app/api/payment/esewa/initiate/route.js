@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getEsewaConfig, generateEsewaSignature } from "@/lib/esewa";
+import { getSessionUser } from "@/lib/auth";
 
 export async function POST(req) {
   try {
@@ -21,6 +22,11 @@ export async function POST(req) {
       return NextResponse.json({ error: "Item name is required" }, { status: 400 });
     }
 
+    const session = await getSessionUser(req).catch(() => null);
+    const effectiveUserId = session?.id || null;
+    const effectivePhone = studentPhone || session?.phone || session?.username || null;
+    const effectiveName = studentName || session?.name || "Student";
+
     const config = await getEsewaConfig();
 
     // Unique transaction UUID: e.g. EJK-SET-1730274192000-A9X2
@@ -32,8 +38,9 @@ export async function POST(req) {
     await prisma.paymentTransaction.create({
       data: {
         transactionUuid,
-        studentPhone: studentPhone || null,
-        studentName: studentName || "Student",
+        userId: effectiveUserId,
+        studentPhone: effectivePhone,
+        studentName: effectiveName,
         itemId: itemId ? String(itemId) : itemName,
         itemName,
         itemType,
