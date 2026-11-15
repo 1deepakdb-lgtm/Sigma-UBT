@@ -131,7 +131,7 @@ async function runDeployTasks(repoDir) {
       const pyCmd = `
         for p in /opt/alt/python311/bin/python3 /opt/alt/python310/bin/python3 /opt/alt/python39/bin/python3 /usr/bin/python3 python3; do
           if [ -x "$p" ]; then
-            $p "${pyScript}" "${dbPath}" 2>&1 && break
+            $p "${pyScript}" "${repoDir}" 2>&1 && break
           fi
         done
       `;
