@@ -182,6 +182,13 @@ function AdminQuestionManagerContent() {
   const inlineOptInputRefs = useRef([]);
   const inlinePassageRef = useRef(null);
 
+  // Auto-save state for inline question updates
+  const [inlineAutoSaveStatus, setInlineAutoSaveStatus] = useState("saved"); // "saving" | "saved" | "error"
+  const [lastAutoSaveTime, setLastAutoSaveTime] = useState(null);
+  const inlineAutoSaveTimerRef = useRef(null);
+  const lastSavedInlineFormRef = useRef(null);
+  const activeInlineEditingQuestionRef = useRef(null);
+
   const [qForm, setQForm] = useState({
     mainHeading: "[1~2] 다음 내용과 관계있는 그림을 고르십시오.",
     questionHeading: "1",
@@ -1317,13 +1324,151 @@ function AdminQuestionManagerContent() {
     handleToggleInlineEdit(q);
   };
 
+  const executeInlineAutoSave = async (formData, sourceQuestion, shouldClose = false) => {
+    if (!formData) return;
+    const currentJson = JSON.stringify(formData);
+    if (!shouldClose && currentJson === lastSavedInlineFormRef.current) {
+      return;
+    }
+
+    setInlineAutoSaveStatus("saving");
+    setInlineIsSaving(true);
+
+    try {
+      const qNum = Number(formData.qIndex || formData.questionHeading) || 1;
+      const cleanOptions = (formData.options || []).map(opt => {
+        if (typeof opt === 'string') return { text: opt, audio: '', image: '', video: '' };
+        return {
+          text: opt?.text || '',
+          audio: opt?.audio || '',
+          image: opt?.image || '',
+          video: opt?.video || ''
+        };
+      });
+
+      const targetQ = sourceQuestion || activeInlineEditingQuestionRef.current || formData;
+      const targetId = formData.id || targetQ?.id;
+
+      const updatedPayload = {
+        ...targetQ,
+        id: targetId,
+        mainHeading: formData.mainHeading,
+        questionHeading: String(qNum),
+        description: formData.description,
+        image: formData.image,
+        audio: formData.audio,
+        options: cleanOptions,
+        answer: Number(formData.answer !== undefined ? formData.answer : 0),
+        qIndex: qNum,
+        type: formData.type || targetQ?.type || (qNum <= 20 ? 'Reading' : 'Listening'),
+        set: formData.set || targetQ?.set || filterSet || "",
+        package: formData.package || targetQ?.package || filterPackage || ""
+      };
+
+      // 1. Update questions in React state in place
+      setQuestions(prev => prev.map(item => {
+        const itemKey = item.id !== undefined && item.id !== null ? String(item.id) : `q-${item.qIndex || item.questionHeading}`;
+        const matchKey = targetId !== undefined && targetId !== null ? String(targetId) : `q-${qNum}`;
+        if (item.id === targetId || itemKey === matchKey) {
+          return { ...item, ...updatedPayload };
+        }
+        return item;
+      }));
+
+      // 2. Update local storage questionBank
+      try {
+        const localBank = JSON.parse(localStorage.getItem('questionBank') || '[]');
+        const idx = localBank.findIndex(item => item.id === targetId || (item.set === updatedPayload.set && Number(item.qIndex || item.questionHeading) === qNum));
+        if (idx >= 0) {
+          localBank[idx] = { ...localBank[idx], ...updatedPayload };
+        } else {
+          localBank.push(updatedPayload);
+        }
+        localStorage.setItem('questionBank', JSON.stringify(localBank));
+      } catch (e) { }
+
+      // 3. Update database via PUT /api/admin/questions if question has DB id
+      if (targetId && !String(targetId).startsWith('q-') && !String(targetId).startsWith('temp-')) {
+        await fetch('/api/admin/questions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: targetId,
+            qIndex: qNum,
+            type: updatedPayload.type,
+            mainHeading: updatedPayload.mainHeading,
+            questionHeading: updatedPayload.questionHeading,
+            description: updatedPayload.description,
+            image: updatedPayload.image,
+            audio: updatedPayload.audio,
+            options: cleanOptions,
+            answer: updatedPayload.answer
+          })
+        });
+      }
+
+      lastSavedInlineFormRef.current = currentJson;
+      setInlineAutoSaveStatus("saved");
+      setLastAutoSaveTime(new Date().toLocaleTimeString());
+
+      if (shouldClose) {
+        setInlineEditingQuestionId(null);
+        setInlineForm(null);
+        setInlineHistory([]);
+      }
+    } catch (err) {
+      console.error('Error auto-saving inline question:', err);
+      setInlineAutoSaveStatus("error");
+    } finally {
+      setInlineIsSaving(false);
+    }
+  };
+
+  const flushPendingInlineAutoSave = () => {
+    if (inlineAutoSaveTimerRef.current) {
+      clearTimeout(inlineAutoSaveTimerRef.current);
+      inlineAutoSaveTimerRef.current = null;
+    }
+    if (inlineForm && JSON.stringify(inlineForm) !== lastSavedInlineFormRef.current) {
+      executeInlineAutoSave(inlineForm, activeInlineEditingQuestionRef.current, false);
+    }
+  };
+
+  // Auto-save changes within 400 milliseconds whenever inlineForm changes
+  useEffect(() => {
+    if (!inlineForm || inlineEditingQuestionId === null) return;
+
+    const currentJson = JSON.stringify(inlineForm);
+    if (currentJson === lastSavedInlineFormRef.current) return;
+
+    setInlineAutoSaveStatus("saving");
+
+    if (inlineAutoSaveTimerRef.current) {
+      clearTimeout(inlineAutoSaveTimerRef.current);
+    }
+
+    inlineAutoSaveTimerRef.current = setTimeout(() => {
+      executeInlineAutoSave(inlineForm, activeInlineEditingQuestionRef.current, false);
+    }, 400);
+
+    return () => {
+      if (inlineAutoSaveTimerRef.current) {
+        clearTimeout(inlineAutoSaveTimerRef.current);
+      }
+    };
+  }, [inlineForm, inlineEditingQuestionId]);
+
   const handleToggleInlineEdit = (q) => {
     const qKey = q.id !== undefined && q.id !== null ? String(q.id) : `q-${q.qIndex || q.questionHeading}`;
     if (inlineEditingQuestionId !== null && String(inlineEditingQuestionId) === qKey) {
+      flushPendingInlineAutoSave();
       setInlineEditingQuestionId(null);
       setInlineForm(null);
+      setInlineHistory([]);
       return;
     }
+
+    flushPendingInlineAutoSave();
 
     const num = Number(q.qIndex || q.questionHeading) || 1;
     const qType = q.type || (num <= 20 ? "Reading" : "Listening");
@@ -1341,7 +1486,7 @@ function AdminQuestionManagerContent() {
       formattedOptions.push({ text: "", audio: "", image: "", video: "" });
     }
 
-    setInlineForm({
+    const initialForm = {
       id: q.id,
       qIndex: num,
       questionHeading: String(num),
@@ -1354,81 +1499,24 @@ function AdminQuestionManagerContent() {
       answer: q.answer !== undefined ? Number(q.answer) : 0,
       package: q.package || filterPackage || "",
       set: q.set || filterSet || ""
-    });
+    };
+
+    lastSavedInlineFormRef.current = JSON.stringify(initialForm);
+    activeInlineEditingQuestionRef.current = q;
+    setInlineForm(initialForm);
+    setInlineHistory([]);
     setInlineEditingQuestionId(qKey);
+    setInlineAutoSaveStatus("saved");
+    setLastAutoSaveTime(new Date().toLocaleTimeString());
   };
 
   const handleSaveInlineEdit = async (q) => {
     if (!inlineForm) return;
-    setInlineIsSaving(true);
-    try {
-      const qNum = Number(inlineForm.qIndex || inlineForm.questionHeading) || 1;
-      const cleanOptions = (inlineForm.options || []).map(opt => {
-        if (typeof opt === 'string') return { text: opt, audio: '', image: '', video: '' };
-        return {
-          text: opt?.text || '',
-          audio: opt?.audio || '',
-          image: opt?.image || '',
-          video: opt?.video || ''
-        };
-      });
-
-      const updatedPayload = {
-        ...q,
-        mainHeading: inlineForm.mainHeading,
-        questionHeading: String(qNum),
-        description: inlineForm.description,
-        image: inlineForm.image,
-        audio: inlineForm.audio,
-        options: cleanOptions,
-        answer: Number(inlineForm.answer !== undefined ? inlineForm.answer : 0),
-        qIndex: qNum,
-        type: inlineForm.type || q.type || (qNum <= 20 ? 'Reading' : 'Listening')
-      };
-
-      // 1. Update questions in state in place
-      setQuestions(prev => prev.map(item => (item.id === q.id ? updatedPayload : item)));
-
-      // 2. Update local storage questionBank
-      try {
-        const localBank = JSON.parse(localStorage.getItem('questionBank') || '[]');
-        const idx = localBank.findIndex(item => item.id === q.id);
-        if (idx >= 0) {
-          localBank[idx] = { ...localBank[idx], ...updatedPayload };
-        } else {
-          localBank.push(updatedPayload);
-        }
-        localStorage.setItem('questionBank', JSON.stringify(localBank));
-      } catch (e) { }
-
-      // 3. Update database via PUT /api/admin/questions if question has DB id
-      if (q.id && !String(q.id).startsWith('q-') && !String(q.id).startsWith('temp-')) {
-        await fetch('/api/admin/questions', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: q.id,
-            qIndex: qNum,
-            type: updatedPayload.type,
-            mainHeading: updatedPayload.mainHeading,
-            questionHeading: updatedPayload.questionHeading,
-            description: updatedPayload.description,
-            image: updatedPayload.image,
-            audio: updatedPayload.audio,
-            options: cleanOptions,
-            answer: updatedPayload.answer
-          })
-        });
-      }
-
-      setInlineEditingQuestionId(null);
-      setInlineForm(null);
-    } catch (err) {
-      console.error('Error saving inline question:', err);
-      alert('Error saving question: ' + err.message);
-    } finally {
-      setInlineIsSaving(false);
+    if (inlineAutoSaveTimerRef.current) {
+      clearTimeout(inlineAutoSaveTimerRef.current);
+      inlineAutoSaveTimerRef.current = null;
     }
+    await executeInlineAutoSave(inlineForm, q, true);
   };
 
   const handleInlineImageUpload = (e) => {
@@ -1681,14 +1769,68 @@ function AdminQuestionManagerContent() {
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid #e2e8f0" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid #e2e8f0", flexWrap: "wrap", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
             <span style={{ backgroundColor: "#0284c7", color: "#ffffff", padding: "4px 12px", borderRadius: "6px", fontWeight: "800", fontSize: "13px" }}>
               ✏️ Editing Question #{inlineForm.qIndex}
             </span>
             <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
               Type: <strong style={{ color: inlineForm.type === "Listening" ? "#7c3aed" : "#1e40af" }}>{inlineForm.type}</strong>
             </span>
+
+            {/* Live Auto-Save Indicator */}
+            {inlineAutoSaveStatus === "saving" && (
+              <span style={{
+                backgroundColor: "#fef3c7",
+                color: "#b45309",
+                border: "1px solid #fde68a",
+                padding: "3px 10px",
+                borderRadius: "12px",
+                fontSize: "11px",
+                fontWeight: "700",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px"
+              }}>
+                <span style={{
+                  display: "inline-block",
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  backgroundColor: "#d97706"
+                }} />
+                ⚡ Auto-saving in milliseconds...
+              </span>
+            )}
+            {inlineAutoSaveStatus === "saved" && (
+              <span style={{
+                backgroundColor: "#dcfce7",
+                color: "#15803d",
+                border: "1px solid #bbf7d0",
+                padding: "3px 10px",
+                borderRadius: "12px",
+                fontSize: "11px",
+                fontWeight: "700",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px"
+              }}>
+                ✓ Auto-saved {lastAutoSaveTime ? `(${lastAutoSaveTime})` : ""}
+              </span>
+            )}
+            {inlineAutoSaveStatus === "error" && (
+              <span style={{
+                backgroundColor: "#fee2e2",
+                color: "#b91c1c",
+                border: "1px solid #fca5a5",
+                padding: "3px 10px",
+                borderRadius: "12px",
+                fontSize: "11px",
+                fontWeight: "700"
+              }}>
+                ⚠️ Auto-save error - retrying...
+              </span>
+            )}
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <button
@@ -1729,12 +1871,18 @@ function AdminQuestionManagerContent() {
                 alignItems: "center",
                 gap: "5px"
               }}
+              title="All changes are auto-saved in milliseconds. Click to finish and close."
             >
-              {inlineIsSaving ? "Saving..." : "✓ Save Changes"}
+              {inlineIsSaving ? "Saving..." : "✓ Done / Close"}
             </button>
             <button
               type="button"
-              onClick={() => { setInlineEditingQuestionId(null); setInlineForm(null); setInlineHistory([]); }}
+              onClick={() => {
+                flushPendingInlineAutoSave();
+                setInlineEditingQuestionId(null);
+                setInlineForm(null);
+                setInlineHistory([]);
+              }}
               style={{
                 backgroundColor: "#f1f5f9",
                 color: "#475569",
@@ -1746,7 +1894,7 @@ function AdminQuestionManagerContent() {
                 cursor: "pointer"
               }}
             >
-              ✕ Cancel
+              ✕ Close
             </button>
           </div>
         </div>
@@ -2226,11 +2374,29 @@ function AdminQuestionManagerContent() {
                 </span>
               )}
             </button>
+
+            {/* Live Auto-Save status in footer */}
+            {inlineAutoSaveStatus === "saving" && (
+              <span style={{ fontSize: "11.5px", color: "#b45309", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#d97706" }} />
+                ⚡ Auto-saving in milliseconds...
+              </span>
+            )}
+            {inlineAutoSaveStatus === "saved" && (
+              <span style={{ fontSize: "11.5px", color: "#16a34a", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                ✓ All changes auto-saved
+              </span>
+            )}
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
             <button
               type="button"
-              onClick={() => { setInlineEditingQuestionId(null); setInlineForm(null); setInlineHistory([]); }}
+              onClick={() => {
+                flushPendingInlineAutoSave();
+                setInlineEditingQuestionId(null);
+                setInlineForm(null);
+                setInlineHistory([]);
+              }}
               style={{
                 backgroundColor: "#f1f5f9",
                 color: "#475569",
@@ -2242,7 +2408,7 @@ function AdminQuestionManagerContent() {
                 cursor: "pointer"
               }}
             >
-              Cancel
+              Close
             </button>
             <button
               type="button"
@@ -2262,8 +2428,9 @@ function AdminQuestionManagerContent() {
                 gap: "6px",
                 boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)"
               }}
+              title="All changes are auto-saved in milliseconds. Click to finish and close."
             >
-              {inlineIsSaving ? "Saving..." : "✓ Save Changes"}
+              {inlineIsSaving ? "Saving..." : "✓ Done / Close"}
             </button>
           </div>
         </div>
