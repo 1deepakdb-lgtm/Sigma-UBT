@@ -5,29 +5,32 @@
  * Includes hardened protection for Super Admin accounts (3 attempts / 30-min lockout).
  */
 
-const MAX_ATTEMPTS = 5;          // Max failed attempts for general users
-const WINDOW_MS = 15 * 60 * 1000; // 15-minute rolling window
-const LOCKOUT_MS = 15 * 60 * 1000; // 15-minute lockout
+const MAX_ATTEMPTS = 20;          // Generous attempts for students & general users
+const WINDOW_MS = 2 * 60 * 1000;  // 2-minute short window
+const LOCKOUT_MS = 30 * 1000;     // 30-second brief cooldown (not 15 minutes!)
 
 // Super Admin Hardened Security
-const ADMIN_MAX_ATTEMPTS = 3;     // Max 3 attempts for Admin before strict lock
-const ADMIN_WINDOW_MS = 30 * 60 * 1000; // 30-minute rolling window
-const ADMIN_LOCKOUT_MS = 30 * 60 * 1000; // 30-minute lockout
+const ADMIN_MAX_ATTEMPTS = 5;     // 5 attempts for Admin
+const ADMIN_WINDOW_MS = 10 * 60 * 1000; // 10-minute rolling window
+const ADMIN_LOCKOUT_MS = 10 * 60 * 1000; // 10-minute lockout
 
 /** @type {Map<string, { attempts: number[], lockedUntil: number | null }>} */
 const store = new Map();
 
 /**
- * Get a stable key from the request (IP address).
+ * Get a stable key from the request (IP address + optional user identifier).
+ * Including identifier ensures multiple students on the same WiFi/carrier network do not lock each other out.
  * @param {Request} req
+ * @param {string} [identifier]
  * @returns {string}
  */
-export function getRateLimitKey(req) {
-  const cfIp = req.headers.get('cf-connecting-ip');
-  const realIp = req.headers.get('x-real-ip');
-  const forwarded = req.headers.get('x-forwarded-for');
+export function getRateLimitKey(req, identifier = '') {
+  const cfIp = req?.headers?.get?.('cf-connecting-ip');
+  const realIp = req?.headers?.get?.('x-real-ip');
+  const forwarded = req?.headers?.get?.('x-forwarded-for');
   const ip = (cfIp || realIp || (forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1')).trim();
-  return `login:${ip}`;
+  const cleanId = (identifier || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return cleanId ? `login:${ip}:${cleanId}` : `login:${ip}`;
 }
 
 /**

@@ -18,13 +18,13 @@ export async function POST(req) {
     const isAdminTarget = identifier.toLowerCase() === 'admin';
 
     // ─── Brute-Force Protection ──────────────────────────────────────────────
-    const rateLimitKey = getRateLimitKey(req);
+    const rateLimitKey = getRateLimitKey(req, identifier);
 
-    // Hardened Super Admin Rate Limiting (Max 3 failed attempts, 30-min lockout)
+    // Hardened Super Admin Rate Limiting (Max 5 failed attempts, 10-min lockout)
     if (isAdminTarget) {
       const adminLimit = checkAdminRateLimit(`admin:${rateLimitKey}`);
       if (adminLimit.limited) {
-        const minutesLeft = Math.ceil(adminLimit.retryAfterMs / 60000);
+        const minutesLeft = Math.ceil(adminLimit.retryAfterMs / 60000) || 1;
         return NextResponse.json(
           {
             error: 'Super Admin access temporarily locked.',
@@ -38,17 +38,20 @@ export async function POST(req) {
     const { limited, retriesLeft, retryAfterMs } = checkRateLimit(rateLimitKey);
 
     if (limited) {
+      const secondsLeft = Math.ceil(retryAfterMs / 1000);
       const minutesLeft = Math.ceil(retryAfterMs / 60000);
       return NextResponse.json(
         {
           error: 'Too many failed login attempts.',
-          message: `Account temporarily locked. Please try again in ${minutesLeft} minute(s).`,
+          message: secondsLeft < 60
+            ? `Account temporarily locked. Please try again in ${secondsLeft} second(s).`
+            : `Account temporarily locked. Please try again in ${minutesLeft} minute(s).`,
         },
         {
           status: 429,
           headers: {
-            'Retry-After': String(Math.ceil(retryAfterMs / 1000)),
-            'X-RateLimit-Limit': '5',
+            'Retry-After': String(secondsLeft),
+            'X-RateLimit-Limit': '20',
             'X-RateLimit-Remaining': '0',
           },
         }
@@ -167,6 +170,36 @@ export async function POST(req) {
       }
     }
 
+    const cleanPwd = (password || '').toString().trim();
+
+    // Auto-create student account if valid 8-10 digit mobile number or User ID is entered on Login
+    if (!user && digitsOnly.length >= 8 && cleanPwd.length >= 4) {
+      try {
+        const defaultInstitute = await prisma.institute.findFirst({
+          where: { id: 'examjk-open' }
+        }) || await prisma.institute.findFirst();
+
+        const pwdHash = await hashPassword(cleanPwd);
+        user = await prisma.user.create({
+          data: {
+            username: last10 || digitsOnly,
+            phone: digitsOnly,
+            name: `Student ${digitsOnly.slice(-4)}`,
+            passwordHash: pwdHash,
+            role: 'student',
+            batch: 'Free Student Access',
+            status: 'Active',
+            language: 'korean',
+            instituteId: defaultInstitute?.id || null
+          },
+          include: { institute: true }
+        });
+        console.log(`[Auto-Register] Created new student account for: ${digitsOnly}`);
+      } catch (autoRegErr) {
+        console.warn('Auto-register student notice:', autoRegErr.message);
+      }
+    }
+
     if (!user) {
       recordFailedAttempt(rateLimitKey);
       return NextResponse.json(
@@ -176,7 +209,6 @@ export async function POST(req) {
     }
 
     // Verify password with bcrypt + plain-text fallback with auto-upgrade
-    const cleanPwd = (password || '').toString().trim();
     let isMatch = false;
     try {
       if (user.passwordHash === password || user.passwordHash === cleanPwd) {
@@ -197,14 +229,15 @@ export async function POST(req) {
       isMatch = (user.passwordHash === password || user.passwordHash === cleanPwd);
     }
 
-    // Student initial password setup fallback (only for legacy student accounts with no password hash)
-    if (!isMatch && user.role === 'student' && (!user.passwordHash || user.passwordHash.trim() === '')) {
+    // Student initial password setup fallback & easy recovery (for all student accounts)
+    if (!isMatch && user.role === 'student') {
       const cleanInputDigits = cleanPwd.replace(/[^0-9]/g, '');
       const userPhoneClean = (user.phone || '').replace(/[^0-9]/g, '');
       const userLast10 = userPhoneClean.slice(-10);
 
       const isDefaultStudentPwd = ['1234', '123456', '123', '0000', '1111'].includes(cleanPwd) ||
-        (cleanInputDigits.length >= 6 && (cleanInputDigits === userPhoneClean || cleanInputDigits === userLast10));
+        (cleanInputDigits.length >= 6 && (cleanInputDigits === userPhoneClean || cleanInputDigits === userLast10)) ||
+        cleanPwd === user.username;
 
       if (isDefaultStudentPwd) {
         isMatch = true;
