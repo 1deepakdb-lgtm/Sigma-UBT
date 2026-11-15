@@ -5,8 +5,10 @@ build
 dist
 .env*.local
 .env
-# Allow dev.db for initial cPanel deploy (remove after first deploy)
-# prisma/*.db
+# SQLite databases (dev.db is machine-local; template is tracked)
+prisma/*.db
+prisma/*.db.*
+!prisma/dev.db.template.gz
 prisma/*.db-journal
 prisma/*.db-wal
 prisma/*.db-shm

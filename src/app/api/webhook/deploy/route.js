@@ -61,7 +61,7 @@ function getRepoDir() {
 /**
  * Execute Git Sync and return output steps
  */
-async function runDeployTasks(repoDir) {
+async function runDeployTasks(repoDir, forceRestore = false) {
   const logs = [];
   const addLog = (msg) => logs.push(`[${new Date().toISOString().slice(11, 19)}] ${msg}`);
 
@@ -87,9 +87,9 @@ async function runDeployTasks(repoDir) {
     }
   }
 
-  // 2. Git stash
+  // 2. Git stash (tracked files only — do not touch untracked databases)
   try {
-    const res = await execAsync('git stash --include-untracked', execOpts);
+    const res = await execAsync('git stash', execOpts);
     const stashOut = String(res?.stdout || '').trim();
     addLog(`📦 Git stash: ${stashOut || 'No local untracked conflicts'}`);
   } catch (e) {
@@ -123,24 +123,38 @@ async function runDeployTasks(repoDir) {
     throw new Error(`Git reset failed: ${e.message}`);
   }
 
-  // 4b. Verify & Auto-repair SQLite Database
+  // 4b. Verify & Auto-restore SQLite Database from Template
   try {
-    addLog(`🔍 Checking SQLite database files in prisma/...`);
-    const prismaDir = path.join(repoDir, 'prisma');
-    if (fs.existsSync(prismaDir)) {
-      const files = fs.readdirSync(prismaDir);
-      addLog(`📁 Files in prisma/: ${files.join(', ')}`);
-      for (const f of files) {
-        if (f.endsWith('.db') || f.includes('backup')) {
-          try {
-            const stat = fs.statSync(path.join(prismaDir, f));
-            addLog(`   📄 ${f}: ${stat.size} bytes (modified: ${stat.mtime.toISOString().slice(11, 19)})`);
-          } catch {}
+    const templateGz = path.join(repoDir, 'prisma', 'dev.db.template.gz');
+    let shouldRestore = forceRestore || !fs.existsSync(dbPath);
+
+    if (!shouldRestore && fs.existsSync(dbPath)) {
+      try {
+        const stat = fs.statSync(dbPath);
+        if (stat.size < 10000) {
+          shouldRestore = true;
+        } else {
+          // Dynamic import of prisma to verify queries
+          const { default: prismaClient } = await import('@/lib/prisma');
+          const testSet = await prismaClient.examSet.findFirst({ select: { id: true, name: true, isFree: true } });
+          addLog(`✅ SQLite database verified (Active sample set: ${testSet?.name || 'Available'})`);
         }
+      } catch (checkErr) {
+        addLog(`⚠️ SQLite corrupt / malformed: ${checkErr.message}. Restoring from clean template...`);
+        shouldRestore = true;
       }
     }
-  } catch (fsErr) {
-    addLog(`⚠️ File inspect notice: ${fsErr.message}`);
+
+    if (shouldRestore && fs.existsSync(templateGz)) {
+      addLog(`📦 Restoring pristine SQLite database from dev.db.template.gz...`);
+      const zlib = await import('zlib');
+      const compressed = fs.readFileSync(templateGz);
+      const decompressed = zlib.gunzipSync(compressed);
+      fs.writeFileSync(dbPath, decompressed);
+      addLog(`🎉 Database successfully restored from template! (${decompressed.length} bytes, 100+ UBT & Chapterwise sets ready)`);
+    }
+  } catch (dbErr) {
+    addLog(`⚠️ Database verification notice: ${dbErr.message}`);
   }
 
   // 5. CloudLinux node_modules symlink check
@@ -243,9 +257,10 @@ export async function GET(req) {
   const repoDir = getRepoDir();
   const format = url.searchParams.get('format');
   const acceptHeader = req.headers.get('accept') || '';
+  const forceRestore = Boolean(url.searchParams.get('restore_db') || url.searchParams.get('reset_db'));
 
   try {
-    const result = await runDeployTasks(repoDir);
+    const result = await runDeployTasks(repoDir, forceRestore);
 
     if (format === 'json' || acceptHeader.includes('application/json')) {
       return NextResponse.json(result);
@@ -384,8 +399,10 @@ export async function POST(req) {
   }
 
   const repoDir = getRepoDir();
+  const url = new URL(req.url);
+  const forceRestore = Boolean(url.searchParams.get('restore_db') || url.searchParams.get('reset_db'));
   try {
-    const result = await runDeployTasks(repoDir);
+    const result = await runDeployTasks(repoDir, forceRestore);
     return NextResponse.json({
       success: true,
       user: auth.user,
