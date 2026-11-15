@@ -1308,10 +1308,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     setTimeout(() => setCopiedAllStudents(false), 2500);
   };
 
-  const filteredSets = selectedPackageFilter === "All"
-    ? examSets
-    : examSets.filter(s => s.packageName === selectedPackageFilter);
-
   const isJpTrackEntity = (item) => {
     if (!item) return false;
     const track = (item.track || "").toLowerCase();
@@ -1333,6 +1329,29 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       pkgName.includes("nat")
     );
   };
+
+  const displayedInstitutePackages = useMemo(() => {
+    if (instituteLanguage === "korean") {
+      return examPackages.filter(p => !isJpTrackEntity(p));
+    }
+    if (instituteLanguage === "japanese") {
+      return examPackages.filter(p => isJpTrackEntity(p));
+    }
+    return examPackages;
+  }, [examPackages, instituteLanguage]);
+
+  const filteredSets = useMemo(() => {
+    let sets = examSets;
+    if (instituteLanguage === "korean") {
+      sets = sets.filter(s => !isJpTrackEntity(s));
+    } else if (instituteLanguage === "japanese") {
+      sets = sets.filter(s => isJpTrackEntity(s));
+    }
+    if (selectedPackageFilter !== "All") {
+      sets = sets.filter(s => s.packageName === selectedPackageFilter);
+    }
+    return sets;
+  }, [examSets, selectedPackageFilter, instituteLanguage]);
 
   const studentFormPackages = useMemo(() => {
     const defaultKoreanPkgs = [
@@ -3129,7 +3148,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                     </div>
 
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
-                      {examPackages.map((pkg, idx) => {
+                      {displayedInstitutePackages.map((pkg, idx) => {
                         const isCustom = pkg.isCustom || pkg.createdBy === instituteName;
                         const isEditingPrice = editingPricePkgName === pkg.name;
 
@@ -3367,7 +3386,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
                 <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap", marginTop: "15px" }}>
                   <button onClick={() => setSelectedPackageFilter("All")} style={{ padding: "8px 16px", backgroundColor: selectedPackageFilter === "All" ? "#1e3a8a" : "white", color: selectedPackageFilter === "All" ? "white" : "#1e3a8a", border: "1px solid #1e3a8a", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>All Sets</button>
-                  {examPackages.map((pkg, idx) => (
+                  {displayedInstitutePackages.map((pkg, idx) => (
                     <button key={idx} onClick={() => setSelectedPackageFilter(pkg.name)} style={{ padding: "8px 16px", backgroundColor: selectedPackageFilter === pkg.name ? "#1e3a8a" : "white", color: selectedPackageFilter === pkg.name ? "white" : "#1e3a8a", border: "1px solid #1e3a8a", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>{pkg.name}</button>
                   ))}
                 </div>

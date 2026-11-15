@@ -229,6 +229,8 @@ const StudentExam = () => {
           currentExamSet.name.toLowerCase().includes("set 01") ||
           currentExamSet.name.toLowerCase().includes("set 1") ||
           currentExamSet.name.toLowerCase().includes("01~02") ||
+          currentExamSet.name.toLowerCase().includes("chapterwise 01") ||
+          currentExamSet.name.toLowerCase().includes("chapterwise 1") ||
           currentExamSet.name.toLowerCase().includes("demo")
         )) ||
         currentExamSet?.source === "model_question_bank" ||
@@ -239,6 +241,8 @@ const StudentExam = () => {
           targetSetName.toLowerCase().includes("set 01") ||
           targetSetName.toLowerCase().includes("set 1") ||
           targetSetName.toLowerCase().includes("01~02") ||
+          targetSetName.toLowerCase().includes("chapterwise 01") ||
+          targetSetName.toLowerCase().includes("chapterwise 1") ||
           targetSetName.toLowerCase().includes("demo")
         ))
       );

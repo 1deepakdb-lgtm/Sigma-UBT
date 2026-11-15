@@ -1598,16 +1598,16 @@ const StudentDashboard = () => {
       const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat") || (s.packageName && s.packageName.toLowerCase().includes("mock"));
 
       if (isPureKoreanStudent) {
-        return !isJp || isKorean;
+        return !isJp;
       }
       if (isPureJapaneseStudent) {
-        return isJp && !isKorean;
+        return isJp;
       }
       if (examCategoryFilter === "ubt") {
-        return !isJp || isKorean;
+        return !isJp;
       }
       if (examCategoryFilter === "mock") {
-        return isJp && !isKorean;
+        return isJp;
       }
       if (examCategoryFilter === "free") {
         return isSetUnlocked(s) || checkSetIsFree(s);
@@ -1630,10 +1630,10 @@ const StudentDashboard = () => {
         const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat") || (s.packageName && s.packageName.toLowerCase().includes("mock"));
 
         if (isPureKoreanStudent) {
-          return !isJp || isKorean;
+          return !isJp;
         }
         if (isPureJapaneseStudent) {
-          return isJp && !isKorean;
+          return isJp;
         }
         return true;
       })
@@ -2734,18 +2734,18 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Section 2: Korean UBT & Chapterwise Exam Sets (Free & Buy UBT: Pay – रु. ३०) */}
+            {/* Section 2: Korean UBT / Japanese Mock Tests (Separate per track) */}
             <div style={{ marginTop: "12px" }}>
               <div style={{ textAlign: "center", marginBottom: "16px" }}>
                 <h2 style={{ color: "#111827", fontSize: "20px", fontWeight: "800", margin: "0 0 6px 0", letterSpacing: "-0.2px" }}>
                   {isPureKoreanStudent
-                    ? "Korean UBT & Chapterwise Exam Sets"
+                    ? "🇰🇷 Korean UBT & Chapterwise Exam Sets"
                     : isPureJapaneseStudent
-                    ? "Japanese Mock Tests"
-                    : "UBT & Exam Sets"}
+                    ? "🇯🇵 Japanese CBT Mock Tests"
+                    : "🌐 UBT & Exam Sets"}
                 </h2>
                 <p style={{ margin: 0, fontSize: "12.5px", color: "#64748b" }}>
-                  🎁 <strong>Free Sets</strong> are open to all students · 🛒 <strong>Buy UBT</strong> (Pay – रु. ३०)
+                  🎁 <strong>Free Sets</strong> are open to all students · 🛒 <strong>{isPureJapaneseStudent ? "Buy Mock Test" : "Buy UBT"}</strong> (Pay – रु. ३०)
                 </p>
               </div>
 
@@ -2755,7 +2755,7 @@ const StudentDashboard = () => {
                   {[
                     { id: "all", label: `All Sets (${homeExamSets.length})` },
                     { id: "free", label: `🎁 Free (${homeFreeCount})` },
-                    { id: "paid", label: `🛒 Buy UBT (${homePaidCount})` },
+                    { id: "paid", label: isPureJapaneseStudent ? `🛒 Buy Mock Test (${homePaidCount})` : `🛒 Buy UBT (${homePaidCount})` },
                     { id: "unlocked", label: `✓ Unlocked (${homeUnlockedCount})` },
                   ].map((tab) => {
                     const isActive = homeFilter === tab.id;
@@ -3025,6 +3025,32 @@ const StudentDashboard = () => {
         {/* EXAMS TAB */}
         {activeTab === "exams" && (
           <div>
+            {/* Track Badge: Korean / Japanese / Both */}
+            {!isBothTrack && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "14px",
+                padding: "10px 16px",
+                borderRadius: "12px",
+                backgroundColor: isPureJapaneseStudent ? "#fef9f0" : "#f0f7ff",
+                border: isPureJapaneseStudent ? "1.5px solid #fbbf24" : "1.5px solid #93c5fd"
+              }}>
+                <span style={{ fontSize: "22px" }}>{isPureJapaneseStudent ? "🇯🇵" : "🇰🇷"}</span>
+                <div>
+                  <div style={{ fontWeight: "800", fontSize: "14px", color: isPureJapaneseStudent ? "#92400e" : "#1e3a8a" }}>
+                    {isPureJapaneseStudent ? "Japanese Track — CBT Mock Tests Only" : "Korean Track — EPS-TOPIK UBT Sets Only"}
+                  </div>
+                  <div style={{ fontSize: "11.5px", color: "#64748b", marginTop: "1px" }}>
+                    {isPureJapaneseStudent
+                      ? "Korean UBT sets are not shown for Japanese track students."
+                      : "Japanese mock tests are not shown for Korean track students."}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Student's Purchased Package Information Card */}
             <div
               style={{
