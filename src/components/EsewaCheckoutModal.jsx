@@ -359,10 +359,10 @@ export default function EsewaCheckoutModal({
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: "15.5px", fontWeight: "800", letterSpacing: "-0.2px" }}>
-                eSewa Payment &amp; Query
+                eSewa Online Payment &amp; Instant Auto-Unlock
               </h3>
               <p style={{ margin: "1px 0 0 0", fontSize: "11px", opacity: 0.95 }}>
-                Wait for 5-10 minute, Admin will verify payment and release your UBT set
+                ⚡ Pay via eSewa.com (9768444902) — Instant Automatic Unlock (No Waiting!)
               </p>
             </div>
           </div>

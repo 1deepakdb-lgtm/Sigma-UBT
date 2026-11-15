@@ -83,22 +83,28 @@ export async function POST(req, { params }) {
     // Check if student has an individually approved/released payment transaction for this set or package
     let approvedTx = null;
     if (realSession?.id || cleanPhone || txnCode) {
+      const userConditions = [
+        ...(realSession?.id ? [{ userId: realSession.id }] : []),
+        ...(studentPhone ? [{ studentPhone: studentPhone }] : []),
+        ...(cleanPhone ? [{ studentPhone: { contains: cleanPhone } }] : []),
+        ...(txnCode ? [{ transactionCode: txnCode }, { transactionUuid: txnCode }] : [])
+      ];
+
+      const itemConditions = [
+        ...(targetSetId ? [{ itemId: targetSetId }] : []),
+        { itemId: targetSetName },
+        { itemName: targetSetName },
+        { itemName: examSet.name },
+        ...(setPkgName ? [{ itemName: setPkgName }, { itemId: setPkgName }] : [])
+      ];
+
       approvedTx = await prisma.paymentTransaction.findFirst({
         where: {
-          OR: [
-            ...(realSession?.id ? [{ userId: realSession.id }] : []),
-            ...(studentPhone ? [{ studentPhone: studentPhone }] : []),
-            ...(cleanPhone ? [{ studentPhone: { contains: cleanPhone } }] : []),
-            ...(txnCode ? [{ transactionCode: txnCode }, { transactionUuid: txnCode }] : [])
-          ],
-          OR: [
-            { itemId: targetSetId },
-            { itemId: targetSetName },
-            { itemName: targetSetName },
-            { itemName: examSet.name },
-            ...(setPkgName ? [{ itemName: setPkgName }, { itemId: setPkgName }] : [])
-          ],
-          status: { in: ['COMPLETE', 'Released'] }
+          AND: [
+            ...(userConditions.length > 0 ? [{ OR: userConditions }] : []),
+            { OR: itemConditions },
+            { status: { in: ['COMPLETE', 'Released'] } }
+          ]
         }
       });
     }

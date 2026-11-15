@@ -677,6 +677,65 @@ const StudentDashboard = () => {
     setEsewaModalOpen(true);
   };
 
+  const [initiatingEsewaSetId, setInitiatingEsewaSetId] = useState(null);
+
+  const handleDirectEsewaBuy = async (set) => {
+    if (!set) return;
+    const setId = set.id || set.name;
+    setInitiatingEsewaSetId(setId);
+
+    try {
+      const curPhone = currentStudentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "" : "");
+      const payload = {
+        itemId: setId,
+        itemName: set.name,
+        itemType: "set",
+        amount: 30,
+        studentPhone: curPhone,
+        studentName: studentName || "Student"
+      };
+
+      const res = await fetch("/api/payment/esewa/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.actionUrl || !data.formData) {
+        throw new Error(data.error || "Failed to initiate eSewa online payment");
+      }
+
+      // Automatically construct and submit hidden POST form to eSewa gateway
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = data.actionUrl;
+      form.style.display = "none";
+
+      Object.entries(data.formData).forEach(([k, v]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = k;
+        input.value = String(v);
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.warn("Direct eSewa Buy notice, falling back to modal:", err.message);
+      handleOpenEsewaModal({
+        id: set.id,
+        name: set.name,
+        price: 30,
+        type: "set",
+        packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
+      });
+    } finally {
+      setInitiatingEsewaSetId(null);
+    }
+  };
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleEsewaSuccessUnlock = (res) => {
@@ -2902,36 +2961,70 @@ const StudentDashboard = () => {
                               ⏳ Pending
                             </button>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleOpenEsewaModal({
-                                  id: set.id,
-                                  name: set.name,
-                                  price: 30,
-                                  type: "set",
-                                  packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
-                                });
-                              }}
-                              title="Unlock this exam set for Rs. 30 via eSewa QR code"
-                              style={{
-                                backgroundColor: "#2d6a4f", // Forest Green from screenshot
-                                color: "#ffffff",
-                                border: "none",
-                                borderRadius: "24px",
-                                padding: "10px 24px",
-                                minWidth: "105px",
-                                textAlign: "center",
-                                fontSize: "15px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
-                                transition: "all 0.15s ease",
-                                whiteSpace: "nowrap"
-                              }}
-                            >
-                              Rs. 30
-                            </button>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <button
+                                type="button"
+                                onClick={() => handleDirectEsewaBuy(set)}
+                                disabled={initiatingEsewaSetId === (set.id || set.name)}
+                                title="Buy directly via eSewa.com Online (9768444902) — Instant Auto-Unlock"
+                                style={{
+                                  backgroundColor: "#2d6a4f", // Forest Green from screenshot
+                                  color: "#ffffff",
+                                  border: "none",
+                                  borderRadius: "24px",
+                                  padding: "10px 20px",
+                                  minWidth: "105px",
+                                  textAlign: "center",
+                                  fontSize: "15px",
+                                  fontWeight: "800",
+                                  cursor: initiatingEsewaSetId === (set.id || set.name) ? "wait" : "pointer",
+                                  boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
+                                  transition: "all 0.15s ease",
+                                  whiteSpace: "nowrap",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "5px"
+                                }}
+                              >
+                                {initiatingEsewaSetId === (set.id || set.name) ? (
+                                  <>
+                                    <span>⏳</span>
+                                    <span style={{ fontSize: "13px" }}>Connecting...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>Rs. 30</span>
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleOpenEsewaModal({
+                                    id: set.id,
+                                    name: set.name,
+                                    price: 30,
+                                    type: "set",
+                                    packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
+                                  });
+                                }}
+                                title="Open QR Code / Manual payment option"
+                                style={{
+                                  backgroundColor: "#ffffff",
+                                  color: "#166534",
+                                  border: "1.5px solid #86efac",
+                                  borderRadius: "20px",
+                                  padding: "7px 10px",
+                                  fontSize: "11.5px",
+                                  fontWeight: "700",
+                                  cursor: "pointer",
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                                }}
+                              >
+                                📷 QR
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -3372,14 +3465,9 @@ const StudentDashboard = () => {
                             return;
                           }
 
-                          handleOpenEsewaModal({
-                            id: set.id,
-                            name: set.name,
-                            price: 30,
-                            type: "set",
-                            packageName: set.packageName || (instituteLanguage === "japanese" ? "Japanese Mock Test" : "UBT Set")
-                          });
+                          handleDirectEsewaBuy(set);
                         }}
+                        disabled={initiatingEsewaSetId === (set.id || set.name)}
                         style={{
                           width: "100%",
                           background: isFree
@@ -3390,7 +3478,7 @@ const StudentDashboard = () => {
                               : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"
                             : pending
                             ? "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)"
-                            : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                            : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
                           color: "#ffffff",
                           border: "none",
                           padding: "9px",
@@ -3403,7 +3491,7 @@ const StudentDashboard = () => {
                             ? "none"
                             : pending
                             ? "0 2px 6px rgba(2, 132, 199, 0.3)"
-                            : "0 2px 6px rgba(217,119,6,0.25)"
+                            : "0 2px 6px rgba(22, 163, 74, 0.3)"
                         }}
                       >
                         {isFree
@@ -3414,8 +3502,38 @@ const StudentDashboard = () => {
                             : "GET START ▶"
                           : pending
                           ? "⏳ PENDING (Rs. 30)"
-                          : "🔒 Rs. 30"}
+                          : initiatingEsewaSetId === (set.id || set.name)
+                          ? "⏳ CONNECTING ESEWA..."
+                          : "🟢 BUY VIA ESEWA (RS. 30) ▶"}
                       </button>
+                      {!unlocked && !isFree && !pending && (
+                        <div style={{ textAlign: "center", marginTop: "4px" }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleOpenEsewaModal({
+                                id: set.id,
+                                name: set.name,
+                                price: 30,
+                                type: "set",
+                                packageName: set.packageName || (instituteLanguage === "japanese" ? "Japanese Mock Test" : "UBT Set")
+                              });
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#166534",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              textDecoration: "underline",
+                              padding: "2px 4px"
+                            }}
+                          >
+                            📷 Or Pay via QR Code / Manual Receipt
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })
