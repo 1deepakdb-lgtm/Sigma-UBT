@@ -3451,7 +3451,13 @@ const StudentDashboard = () => {
                             return;
                           }
 
-                          handleDirectEsewaBuy(set);
+                          handleOpenEsewaModal({
+                            id: set.id,
+                            name: set.name,
+                            price: 30,
+                            type: "set",
+                            packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
+                          });
                         }}
                         disabled={initiatingEsewaSetId === (set.id || set.name)}
                         style={{

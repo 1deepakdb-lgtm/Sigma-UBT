@@ -27,6 +27,7 @@ export default function EsewaCheckoutModal({
   const [selectedType, setSelectedType] = useState(item?.type || "set");
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isQrZoomed, setIsQrZoomed] = useState(false);
+  const [appJumpNotice, setAppJumpNotice] = useState(false);
 
   const esewaNumber = "9768444902";
   const esewaAccountName = "Deepak Bhatt";
@@ -154,21 +155,51 @@ export default function EsewaCheckoutModal({
     }
   };
 
-  // Direct Mobile eSewa App Launch (Opens eSewa App on Android/iOS and copies 9768444902)
-  const handleOpenEsewaApp = () => {
-    navigator.clipboard.writeText(esewaNumber);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
+  const isAndroid = typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
+  const isIOS = typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const esewaDeepLink = isAndroid
+    ? "intent://#Intent;action=android.intent.action.VIEW;scheme=esewa;package=com.f1soft.esewa;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.f1soft.esewa;end;"
+    : isIOS
+    ? "esewa://"
+    : "#";
 
-    const isAndroid = typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
-    const isIOS = typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
+  // Direct Mobile eSewa App Launch (Opens eSewa App on Android/iOS and copies 9768444902)
+  const handleOpenEsewaApp = (e) => {
+    // 1. Copy merchant phone number to clipboard immediately
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(esewaNumber);
+      }
+      setCopied(true);
+      setAppJumpNotice(true);
+      setTimeout(() => setCopied(false), 3000);
+      setTimeout(() => setAppJumpNotice(false), 8000);
+    } catch (clipErr) {
+      console.warn("Clipboard notice:", clipErr);
+    }
+
+    if (!isAndroid && !isIOS) {
+      if (e) e.preventDefault();
+      handleEsewaOnlinePay();
+      return;
+    }
+
+    if (isIOS) {
+      window.location.href = "esewa://";
+      return;
+    }
 
     if (isAndroid) {
-      window.location.href = "intent://#Intent;scheme=esewa;package=com.f1soft.esewa;end";
-    } else if (isIOS) {
+      // 1. Direct scheme jump
+      const start = Date.now();
       window.location.href = "esewa://";
-    } else {
-      handleEsewaOnlinePay();
+
+      // 2. Fallback to explicit intent URL if not switched within 350ms
+      setTimeout(() => {
+        if (Date.now() - start < 1500) {
+          window.location.href = "intent://#Intent;action=android.intent.action.VIEW;scheme=esewa;package=com.f1soft.esewa;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.f1soft.esewa;end;";
+        }
+      }, 350);
     }
   };
 
@@ -615,18 +646,20 @@ export default function EsewaCheckoutModal({
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {/* Option A: Open directly in eSewa Mobile App */}
-                  <button
-                    type="button"
+                  <a
+                    href={esewaDeepLink}
                     onClick={handleOpenEsewaApp}
                     style={{
                       width: "100%",
+                      boxSizing: "border-box",
+                      textDecoration: "none",
                       background: "linear-gradient(135deg, #15803d 0%, #166534 100%)",
                       color: "#ffffff",
                       border: "none",
-                      padding: "11px 16px",
+                      padding: "12px 16px",
                       borderRadius: "8px",
                       fontWeight: "800",
-                      fontSize: "13.5px",
+                      fontSize: "14px",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -638,7 +671,43 @@ export default function EsewaCheckoutModal({
                   >
                     <span>📱</span>
                     <span>eSewa App खोल्नुहोस् र भुक्तानी गर्नुहोस् ({formattedPrice})</span>
-                  </button>
+                  </a>
+
+                  {appJumpNotice && (
+                    <div style={{
+                      backgroundColor: "#ecfdf5",
+                      border: "1.5px solid #10b981",
+                      color: "#065f46",
+                      padding: "9px 12px",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      lineHeight: "1.4"
+                    }}>
+                      ✅ <strong>eSewa नम्बर ({esewaNumber})</strong> कपी भयो! eSewa एपमा <em>"Send Money"</em> मा पेस्ट गरी <strong>{formattedPrice}</strong> भुक्तानी गर्नुहोस्।
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "-2px", marginBottom: "4px", fontSize: "11px", padding: "0 2px" }}>
+                    <a
+                      href="esewa://"
+                      onClick={() => {
+                        try { navigator.clipboard.writeText(esewaNumber); } catch(e){}
+                        setCopied(true);
+                      }}
+                      style={{ color: "#15803d", textDecoration: "underline", fontWeight: "700" }}
+                    >
+                      🚀 सिधै eSewa खोल्नुहोस् (esewa://)
+                    </a>
+                    <a
+                      href="https://play.google.com/store/apps/details?id=com.f1soft.esewa"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "#64748b", textDecoration: "underline" }}
+                    >
+                      Play Store बाट eSewa ↗
+                    </a>
+                  </div>
 
                   {/* Option B: eSewa Web Gateway with Auto-Return */}
                   <button
