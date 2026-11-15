@@ -59,6 +59,11 @@ function InstituteQuestionManagerContent() {
   const [viewingSet, setViewingSet] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
 
+  // Inline Question Editing state in the table
+  const [inlineEditingQuestionId, setInlineEditingQuestionId] = useState(null);
+  const [inlineForm, setInlineForm] = useState(null);
+  const [inlineIsSaving, setInlineIsSaving] = useState(false);
+
   // Bulk import state
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showPdfModal, setShowPdfModal] = useState(false);
@@ -807,17 +812,17 @@ function InstituteQuestionManagerContent() {
     }
   };
 
-  // Edit question directly from table below set list
-  const handleEditQuestion = (q) => {
-    setFilterSet(q.set);
-    if (q.package) setFilterPackage(q.package);
-    setEditingQuestionId(q.id);
-    const num = Number(q.qIndex || q.questionHeading) || 1;
-    setQNumber(num);
-    const autoType = q.type || (num <= 20 ? "Reading" : "Listening");
-    setQuestionListType(autoType);
+  const handleToggleInlineEdit = (q) => {
+    if (inlineEditingQuestionId === q.id) {
+      setInlineEditingQuestionId(null);
+      setInlineForm(null);
+      return;
+    }
 
-    const formattedOptions = (q.options || ["", "", "", ""]).map(opt => {
+    const num = Number(q.qIndex || q.questionHeading) || 1;
+    const qType = q.type || (num <= 20 ? "Reading" : "Listening");
+
+    const formattedOptions = (q.options || []).map(opt => {
       if (typeof opt === "string") return { text: opt, audio: "", image: "", video: "" };
       return {
         text: opt?.text || "",
@@ -826,19 +831,467 @@ function InstituteQuestionManagerContent() {
         video: opt?.video || ""
       };
     });
+    while (formattedOptions.length < 4) {
+      formattedOptions.push({ text: "", audio: "", image: "", video: "" });
+    }
 
-    setQForm({
-      mainHeading: q.mainHeading || (autoType === "Reading" ? `[ ${num} ] 다음을 읽고 알맞은 것을 고르십시오.` : `[ ${num} ] 이야기를 듣고 알맞은 것을 고르십시오.`),
+    setInlineForm({
+      id: q.id,
+      qIndex: num,
       questionHeading: String(num),
+      type: qType,
+      mainHeading: q.mainHeading || (qType === "Reading" ? `[ ${num} ] 다음을 읽고 알맞은 것을 고르십시오.` : `[ ${num} ] 이야기를 듣고 알맞은 것을 고르십시오.`),
       description: q.description || "",
       image: q.image || "",
       audio: q.audio || "",
       options: formattedOptions,
-      answer: q.answer !== undefined ? q.answer : 0
+      answer: q.answer !== undefined ? Number(q.answer) : 0,
+      package: q.package || filterPackage || "",
+      set: q.set || filterSet || ""
     });
+    setInlineEditingQuestionId(q.id);
+  };
 
-    setActiveTab("uploadQuestions");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleSaveInlineEdit = async (q) => {
+    if (!inlineForm) return;
+    setInlineIsSaving(true);
+    try {
+      const qNum = Number(inlineForm.qIndex || inlineForm.questionHeading) || 1;
+      const cleanOptions = (inlineForm.options || []).map(opt => {
+        if (typeof opt === 'string') return { text: opt, audio: '', image: '', video: '' };
+        return {
+          text: opt?.text || '',
+          audio: opt?.audio || '',
+          image: opt?.image || '',
+          video: opt?.video || ''
+        };
+      });
+
+      const updatedPayload = {
+        ...q,
+        mainHeading: inlineForm.mainHeading,
+        questionHeading: String(qNum),
+        description: inlineForm.description,
+        image: inlineForm.image,
+        audio: inlineForm.audio,
+        options: cleanOptions,
+        answer: Number(inlineForm.answer !== undefined ? inlineForm.answer : 0),
+        qIndex: qNum,
+        type: inlineForm.type || q.type || (qNum <= 20 ? 'Reading' : 'Listening')
+      };
+
+      // 1. Update questions in state in place
+      setQuestions(prev => prev.map(item => (item.id === q.id ? updatedPayload : item)));
+
+      // 2. Update local storage questionBank
+      try {
+        const localBank = JSON.parse(localStorage.getItem('questionBank') || '[]');
+        const idx = localBank.findIndex(item => item.id === q.id);
+        if (idx >= 0) {
+          localBank[idx] = { ...localBank[idx], ...updatedPayload };
+        } else {
+          localBank.push(updatedPayload);
+        }
+        localStorage.setItem('questionBank', JSON.stringify(localBank));
+      } catch (e) {}
+
+      // 3. Update database via PUT /api/admin/questions if question has DB id
+      if (q.id && !String(q.id).startsWith('q-') && !String(q.id).startsWith('temp-')) {
+        await fetch('/api/admin/questions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: q.id,
+            qIndex: qNum,
+            type: updatedPayload.type,
+            mainHeading: updatedPayload.mainHeading,
+            questionHeading: updatedPayload.questionHeading,
+            description: updatedPayload.description,
+            image: updatedPayload.image,
+            audio: updatedPayload.audio,
+            options: cleanOptions,
+            answer: updatedPayload.answer
+          })
+        });
+      }
+
+      setInlineEditingQuestionId(null);
+      setInlineForm(null);
+    } catch (err) {
+      console.error('Error saving inline question:', err);
+      alert('Error saving question: ' + err.message);
+    } finally {
+      setInlineIsSaving(false);
+    }
+  };
+
+  const handleInlineImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadOrProcessFile(file, (url) => {
+        setInlineForm(prev => ({ ...prev, image: url }));
+      });
+    }
+    e.target.value = "";
+  };
+
+  const handleInlineAudioUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadOrProcessFile(file, (url) => {
+        setInlineForm(prev => ({ ...prev, audio: url }));
+      });
+    }
+    e.target.value = "";
+  };
+
+  const handleInlineOptImageUpload = (e, oIdx) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadOrProcessFile(file, (url) => {
+        setInlineForm(prev => {
+          const nextOpts = [...prev.options];
+          nextOpts[oIdx] = { ...nextOpts[oIdx], image: url };
+          return { ...prev, options: nextOpts };
+        });
+      });
+    }
+    e.target.value = "";
+  };
+
+  const handleInlineOptAudioUpload = (e, oIdx) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadOrProcessFile(file, (url) => {
+        setInlineForm(prev => {
+          const nextOpts = [...prev.options];
+          nextOpts[oIdx] = { ...nextOpts[oIdx], audio: url };
+          return { ...prev, options: nextOpts };
+        });
+      });
+    }
+    e.target.value = "";
+  };
+
+  const renderInlineEditor = (q) => {
+    if (!inlineForm) return null;
+    const ansSymbols = ["①", "②", "③", "④"];
+    return (
+      <div style={{
+        backgroundColor: "#ffffff",
+        border: "2px solid #38bdf8",
+        borderRadius: "10px",
+        padding: "16px 20px",
+        boxShadow: "0 4px 16px rgba(2, 132, 199, 0.12)"
+      }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid #e2e8f0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ backgroundColor: "#0284c7", color: "#ffffff", padding: "4px 12px", borderRadius: "6px", fontWeight: "800", fontSize: "13px" }}>
+              ✏️ Editing Question #{inlineForm.qIndex}
+            </span>
+            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+              Type: <strong style={{ color: inlineForm.type === "Listening" ? "#7c3aed" : "#1e40af" }}>{inlineForm.type}</strong>
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={() => handleSaveInlineEdit(q)}
+              disabled={inlineIsSaving}
+              style={{
+                backgroundColor: "#16a34a",
+                color: "#ffffff",
+                border: "none",
+                padding: "7px 16px",
+                borderRadius: "6px",
+                fontWeight: "700",
+                fontSize: "12px",
+                cursor: inlineIsSaving ? "not-allowed" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px"
+              }}
+            >
+              {inlineIsSaving ? "Saving..." : "✓ Save Changes"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setInlineEditingQuestionId(null); setInlineForm(null); }}
+              style={{
+                backgroundColor: "#f1f5f9",
+                color: "#475569",
+                border: "1px solid #cbd5e1",
+                padding: "7px 12px",
+                borderRadius: "6px",
+                fontWeight: "700",
+                fontSize: "12px",
+                cursor: "pointer"
+              }}
+            >
+              ✕ Cancel
+            </button>
+          </div>
+        </div>
+
+        {/* Content Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "18px" }}>
+          {/* Left Column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
+                Question Instruction / Heading (mainHeading):
+              </label>
+              <input
+                type="text"
+                value={inlineForm.mainHeading}
+                onChange={(e) => setInlineForm(prev => ({ ...prev, mainHeading: e.target.value }))}
+                placeholder="e.g. [1~2] 다음 내용과 관계있는 그림을 고르십시오."
+                style={{ width: "100%", padding: "8px 10px", fontSize: "13px", border: "1.5px solid #cbd5e1", borderRadius: "6px", outline: "none", fontWeight: "600" }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
+                Question Passage / Description Text:
+              </label>
+              <textarea
+                rows={3}
+                value={inlineForm.description}
+                onChange={(e) => setInlineForm(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Passage text, conversation dialogue, or vocabulary sentence..."
+                style={{ width: "100%", padding: "8px 10px", fontSize: "13px", border: "1.5px solid #cbd5e1", borderRadius: "6px", outline: "none", fontFamily: "inherit" }}
+              />
+            </div>
+
+            {/* Media Uploads */}
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", backgroundColor: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              {/* Question Image */}
+              <div style={{ flex: 1, minWidth: "150px" }}>
+                <label style={{ display: "block", fontSize: "11.5px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
+                  🖼️ Question Image:
+                </label>
+                {inlineForm.image ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <img src={inlineForm.image} alt="Q Visual" style={{ maxHeight: "55px", maxWidth: "90px", objectFit: "contain", border: "1px solid #cbd5e1", borderRadius: "4px" }} />
+                    <button
+                      type="button"
+                      onClick={() => setInlineForm(prev => ({ ...prev, image: "" }))}
+                      style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "4px", padding: "3px 7px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 10px", backgroundColor: "#ffffff", border: "1.5px dashed #94a3b8", borderRadius: "5px", cursor: "pointer", fontSize: "11.5px", fontWeight: "600", color: "#2563eb" }}>
+                    <span>📷 Upload Image</span>
+                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleInlineImageUpload} />
+                  </label>
+                )}
+              </div>
+
+              {/* Question Audio */}
+              <div style={{ flex: 1, minWidth: "170px" }}>
+                <label style={{ display: "block", fontSize: "11.5px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
+                  🎙️ Question Audio:
+                </label>
+                {inlineForm.audio ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <audio src={inlineForm.audio} controls style={{ height: "26px", maxWidth: "150px" }} />
+                    <button
+                      type="button"
+                      onClick={() => setInlineForm(prev => ({ ...prev, audio: "" }))}
+                      style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "4px", padding: "3px 7px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 10px", backgroundColor: "#ffffff", border: "1.5px dashed #94a3b8", borderRadius: "5px", cursor: "pointer", fontSize: "11.5px", fontWeight: "600", color: "#7c3aed" }}>
+                    <span>🎵 Upload MP3</span>
+                    <input type="file" accept="audio/*" style={{ display: "none" }} onChange={handleInlineAudioUpload} />
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: 4 Options */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155" }}>
+                Options (Click button to select Correct Answer):
+              </label>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: "#16a34a", backgroundColor: "#dcfce7", padding: "2px 7px", borderRadius: "4px" }}>
+                Correct: Option {inlineForm.answer + 1} ({ansSymbols[inlineForm.answer] || "①"})
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {inlineForm.options.map((opt, oIdx) => {
+                const isSelected = inlineForm.answer === oIdx;
+                return (
+                  <div
+                    key={oIdx}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      backgroundColor: isSelected ? "#f0fdf4" : "#ffffff",
+                      border: isSelected ? "1.5px solid #86efac" : "1px solid #cbd5e1"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setInlineForm(prev => ({ ...prev, answer: oIdx }))}
+                        style={{
+                          backgroundColor: isSelected ? "#16a34a" : "#f1f5f9",
+                          color: isSelected ? "#ffffff" : "#475569",
+                          border: isSelected ? "none" : "1px solid #cbd5e1",
+                          padding: "3px 8px",
+                          borderRadius: "4px",
+                          fontSize: "11px",
+                          fontWeight: "800",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px"
+                        }}
+                      >
+                        <span>{ansSymbols[oIdx]}</span>
+                        <span>{isSelected ? "✓ Answer" : "Set Answer"}</span>
+                      </button>
+
+                      <input
+                        type="text"
+                        value={opt.text}
+                        onChange={(e) => {
+                          const text = e.target.value;
+                          setInlineForm(prev => {
+                            const nextOpts = [...prev.options];
+                            nextOpts[oIdx] = { ...nextOpts[oIdx], text };
+                            return { ...prev, options: nextOpts };
+                          });
+                        }}
+                        placeholder={`Option ${oIdx + 1} text`}
+                        style={{
+                          flex: 1,
+                          padding: "6px 8px",
+                          fontSize: "12.5px",
+                          border: "1px solid #cbd5e1",
+                          borderRadius: "4px",
+                          outline: "none"
+                        }}
+                      />
+                    </div>
+
+                    {/* Image & Audio for option */}
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", paddingLeft: "4px" }}>
+                      {opt.image ? (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <img src={opt.image} alt={`Opt ${oIdx + 1}`} style={{ height: "24px", maxWidth: "40px", objectFit: "contain", border: "1px solid #cbd5e1", borderRadius: "2px" }} />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInlineForm(prev => {
+                                const nextOpts = [...prev.options];
+                                nextOpts[oIdx] = { ...nextOpts[oIdx], image: "" };
+                                return { ...prev, options: nextOpts };
+                              });
+                            }}
+                            style={{ border: "none", background: "none", color: "#dc2626", cursor: "pointer", fontSize: "10px", fontWeight: "bold" }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <label style={{ cursor: "pointer", color: "#64748b", fontSize: "10.5px" }}>
+                          + img
+                          <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleInlineOptImageUpload(e, oIdx)} />
+                        </label>
+                      )}
+
+                      {opt.audio ? (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          <audio src={opt.audio} controls style={{ height: "20px", maxWidth: "120px" }} />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInlineForm(prev => {
+                                const nextOpts = [...prev.options];
+                                nextOpts[oIdx] = { ...nextOpts[oIdx], audio: "" };
+                                return { ...prev, options: nextOpts };
+                              });
+                            }}
+                            style={{ border: "none", background: "none", color: "#dc2626", cursor: "pointer", fontSize: "10px", fontWeight: "bold" }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <label style={{ cursor: "pointer", color: "#7c3aed", fontSize: "10.5px" }}>
+                          + audio
+                          <input type="file" accept="audio/*" style={{ display: "none" }} onChange={(e) => handleInlineOptAudioUpload(e, oIdx)} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "14px", paddingTop: "10px", borderTop: "1px solid #e2e8f0" }}>
+          <button
+            type="button"
+            onClick={() => { setInlineEditingQuestionId(null); setInlineForm(null); }}
+            style={{
+              backgroundColor: "#f1f5f9",
+              color: "#475569",
+              border: "1px solid #cbd5e1",
+              padding: "7px 16px",
+              borderRadius: "6px",
+              fontWeight: "700",
+              fontSize: "12.5px",
+              cursor: "pointer"
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSaveInlineEdit(q)}
+            disabled={inlineIsSaving}
+            style={{
+              backgroundColor: "#16a34a",
+              color: "#ffffff",
+              border: "none",
+              padding: "7px 20px",
+              borderRadius: "6px",
+              fontWeight: "800",
+              fontSize: "13px",
+              cursor: inlineIsSaving ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)"
+            }}
+          >
+            {inlineIsSaving ? "Saving..." : "✓ Save Changes"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Edit question directly from table below set list
+  const handleEditQuestion = (q) => {
+    handleToggleInlineEdit(q);
   };
 
   // Delete question directly from table below set list
@@ -1630,9 +2083,11 @@ function InstituteQuestionManagerContent() {
                         const ansSymbols = ["①", "②", "③", "④"];
                         const rawAnsText = q.options?.[ansIdx];
                         const ansText = typeof rawAnsText === "string" ? rawAnsText : (rawAnsText?.text || "");
+                        const isInlineEditing = inlineEditingQuestionId === q.id;
 
                         return (
-                          <tr key={q.id || qIdx} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                          <React.Fragment key={q.id || qIdx}>
+                          <tr style={{ borderBottom: isInlineEditing ? "none" : "1px solid #e2e8f0", backgroundColor: isInlineEditing ? "#f0f9ff" : "#ffffff" }}>
                             {/* Q.No */}
                             <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
                               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
@@ -1979,9 +2434,9 @@ function InstituteQuestionManagerContent() {
                                 <button
                                   type="button"
                                   onClick={() => handleEditQuestion(q)}
-                                  title="Edit Question"
+                                  title={isInlineEditing ? "Close Inline Edit" : "Edit Question"}
                                   style={{
-                                    backgroundColor: "#2563eb",
+                                    backgroundColor: isInlineEditing ? "#0284c7" : "#2563eb",
                                     color: "#ffffff",
                                     border: "none",
                                     padding: "6px 10px",
@@ -1998,7 +2453,7 @@ function InstituteQuestionManagerContent() {
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                   </svg>
-                                  Edit
+                                  {isInlineEditing ? "Close" : "Edit"}
                                 </button>
                                 <button
                                   type="button"
@@ -2027,6 +2482,16 @@ function InstituteQuestionManagerContent() {
                               </div>
                             </td>
                           </tr>
+
+                          {/* INLINE EDIT EXPANSION ROW */}
+                          {isInlineEditing && inlineForm && (
+                            <tr key={`inline-edit-${q.id || qIdx}`} style={{ backgroundColor: "#f0f9ff", borderBottom: "2px solid #0284c7" }}>
+                              <td colSpan={6} style={{ padding: "14px 16px" }}>
+                                {renderInlineEditor(q)}
+                              </td>
+                            </tr>
+                          )}
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
