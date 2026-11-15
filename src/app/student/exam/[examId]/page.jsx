@@ -1430,7 +1430,7 @@ const StudentExam = () => {
     minHeight: 0,
     display: "flex",
     flexDirection: "column",
-    backgroundColor: "rgba(241, 245, 249, 0.92)",
+    backgroundColor: "#ffffff",
     fontFamily: "Arial, sans-serif",
     boxSizing: "border-box",
     padding: "0",
@@ -1452,24 +1452,25 @@ const StudentExam = () => {
           display: flex;
           flex-direction: column;
           box-sizing: border-box;
-          padding: 6px;
+          padding: 0;
           overflow: hidden;
           position: relative;
+          background-color: #ffffff;
         }
         .ubt-exam-main {
           flex: 1;
           display: flex;
           flex-direction: column;
-          max-width: 1050px;
+          max-width: 100%;
           width: 100%;
           height: 100%;
           max-height: 100%;
-          margin: auto;
+          margin: 0;
           justify-content: stretch;
           min-height: 0;
-          border-radius: 18px;
+          border-radius: 0;
           overflow: hidden;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+          box-shadow: none;
         }
         .ubt-exam-card {
           background-color: rgba(255, 255, 255, 0.95);
@@ -1620,7 +1621,8 @@ const StudentExam = () => {
         /* LANDSCAPE OPTIMIZED EXAM STYLING: ALWAYS FIT FULL DISPLAY SCREEN */
         @media (orientation: landscape), (max-height: 650px) {
           .ubt-exam-wrapper {
-            padding: 2px 6px !important;
+            padding: 0 !important;
+            margin: 0 !important;
             width: 100vw !important;
             width: 100dvw !important;
             height: 100vh !important;
@@ -1630,6 +1632,8 @@ const StudentExam = () => {
             overflow: hidden !important;
             display: flex !important;
             flex-direction: column !important;
+            border-radius: 0 !important;
+            background-color: #ffffff !important;
           }
           .ubt-exam-main {
             height: 100% !important;
@@ -1637,18 +1641,23 @@ const StudentExam = () => {
             max-width: 100% !important;
             width: 100% !important;
             justify-content: stretch !important;
-            border-radius: 14px !important;
+            border-radius: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
             flex: 1 !important;
             min-height: 0 !important;
             overflow: hidden !important;
-            margin: 0 auto !important;
+            margin: 0 !important;
           }
           .ubt-exam-card {
             flex: 1 !important;
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
-            border-radius: 0 0 14px 14px !important;
+            border-radius: 0 !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: none !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
@@ -1662,82 +1671,128 @@ const StudentExam = () => {
           }
           .ubt-exam-left {
             flex: 1.25 !important;
-            padding: 4px 12px !important;
+            padding: 10px 18px !important;
             border-right: 1.5px solid #e2e8f0 !important;
             border-bottom: none !important;
             max-height: none !important;
             overflow-y: auto !important;
             height: 100% !important;
             min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
           }
           .ubt-exam-left p {
-            font-size: 14px !important;
-            margin-bottom: 2px !important;
-            line-height: 1.25 !important;
+            font-size: 19px !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            margin-bottom: 8px !important;
+            line-height: 1.4 !important;
           }
           .ubt-exam-desc {
-            font-size: 13px !important;
-            padding: 4px 8px !important;
-            margin-bottom: 4px !important;
-            line-height: 1.25 !important;
+            font-size: 17px !important;
+            font-weight: 600 !important;
+            padding: 10px 14px !important;
+            margin-bottom: 8px !important;
+            line-height: 1.4 !important;
+            border-radius: 8px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            background-color: #f8fafc !important;
           }
           .ubt-exam-q-img {
-            max-height: 100px !important;
+            max-height: 125px !important;
+            object-fit: contain !important;
           }
           .ubt-exam-right {
             flex: 1 !important;
-            padding: 4px 12px !important;
+            padding: 10px 18px !important;
             overflow-y: auto !important;
             height: 100% !important;
             min-height: 0 !important;
             max-height: none !important;
-            gap: 4px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-evenly !important;
+            gap: 8px !important;
           }
           .ubt-opt-row {
-            padding: 3px 6px !important;
+            padding: 9px 14px !important;
+            border-radius: 10px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+          }
+          .ubt-opt-row:active {
+            transform: scale(0.99) !important;
+          }
+          .ubt-opt-selected {
+            background-color: #eff6ff !important;
+            border-color: #0284c7 !important;
+            border-width: 2px !important;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2) !important;
+          }
+          .ubt-opt-selected .ubt-opt-badge {
+            background-color: #0284c7 !important;
+            color: #ffffff !important;
+            border-color: #0284c7 !important;
+          }
+          .ubt-opt-selected .ubt-opt-text {
+            color: #0369a1 !important;
+            font-weight: 700 !important;
           }
           .ubt-opt-badge {
-            width: 20px !important;
-            height: 20px !important;
-            font-size: 11px !important;
-            margin-right: 6px !important;
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            margin-right: 12px !important;
+            border-radius: 50% !important;
+            border-width: 2px !important;
+            flex-shrink: 0 !important;
           }
           .ubt-opt-text {
-            font-size: 13px !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            color: #1e293b !important;
+            line-height: 1.35 !important;
           }
           .ubt-opt-grid-img {
-            max-height: 55px !important;
+            max-height: 75px !important;
           }
           .ubt-opt-blind-btn {
-            padding: 6px 8px !important;
+            padding: 12px 14px !important;
           }
           .ubt-opt-blind-symbol {
-            font-size: 22px !important;
+            font-size: 30px !important;
           }
           .ubt-exam-header-bar {
-            padding: 4px 12px !important;
-            font-size: 12px !important;
-            border-radius: 14px 14px 0 0 !important;
+            padding: 6px 18px !important;
+            font-size: 13.5px !important;
+            font-weight: 700 !important;
+            border-radius: 0 !important;
             flex-shrink: 0 !important;
           }
           .ubt-exam-nav-bar {
-            padding: 4px 12px !important;
-            border-radius: 0 0 14px 14px !important;
+            padding: 7px 18px !important;
+            border-radius: 0 !important;
             flex-shrink: 0 !important;
-            gap: 6px !important;
+            gap: 12px !important;
           }
           .ubt-exam-nav-bar button {
-            padding: 5px 14px !important;
-            font-size: 11.5px !important;
+            padding: 7px 22px !important;
+            font-size: 13px !important;
             font-weight: 800 !important;
-            border-radius: 6px !important;
+            border-radius: 8px !important;
             min-width: 0 !important;
           }
 
           /* OVERVIEW GRID: ALL 40 QUESTIONS VISIBLE FULL DISPLAY */
           .ubt-overview-box {
-            padding: 3px 10px !important;
-            border-radius: 0 0 14px 14px !important;
+            padding: 4px 12px !important;
+            border-radius: 0 !important;
+            border: none !important;
             flex: 1 !important;
             min-height: 0 !important;
             height: 100% !important;
@@ -1749,7 +1804,7 @@ const StudentExam = () => {
           }
           .ubt-overview-flex {
             flex-direction: row !important;
-            gap: 10px !important;
+            gap: 12px !important;
             flex: 1 !important;
             min-height: 0 !important;
             height: 100% !important;
@@ -1773,7 +1828,7 @@ const StudentExam = () => {
           }
           .ubt-overview-box h4, .ubt-overview-heading {
             margin: 0 0 2px 0 !important;
-            font-size: 11.5px !important;
+            font-size: 12px !important;
             font-weight: 800 !important;
             flex-shrink: 0 !important;
             text-align: center !important;
@@ -1790,7 +1845,7 @@ const StudentExam = () => {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
             grid-template-rows: repeat(5, 1fr) !important;
-            gap: 3.5px !important;
+            gap: 4px !important;
             height: 100% !important;
             flex: 1 !important;
             min-height: 0 !important;
@@ -1803,22 +1858,22 @@ const StudentExam = () => {
             min-height: 0 !important;
             max-height: none !important;
             padding: 0 !important;
-            font-size: 13px !important;
+            font-size: 13.5px !important;
             font-weight: 800 !important;
             border-radius: 12px !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
           }
           .ubt-overview-actions {
             margin-top: 3px !important;
-            gap: 8px !important;
+            gap: 12px !important;
             flex-shrink: 0 !important;
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
           }
           .ubt-overview-actions button {
-            padding: 5px 14px !important;
-            font-size: 11.5px !important;
+            padding: 6px 18px !important;
+            font-size: 12.5px !important;
             font-weight: 800 !important;
             border-radius: 8px !important;
           }
@@ -1848,11 +1903,14 @@ const StudentExam = () => {
             max-width: 100% !important;
             height: 100% !important;
             max-height: 100% !important;
-            padding: 2px 6px !important;
+            padding: 0 !important;
+            margin: 0 !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
             display: flex !important;
             flex-direction: column !important;
+            border-radius: 0 !important;
+            background-color: #ffffff !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-main {
             width: 100% !important;
@@ -1861,8 +1919,10 @@ const StudentExam = () => {
             max-height: 100% !important;
             flex: 1 !important;
             min-height: 0 !important;
-            margin: 0 auto !important;
-            border-radius: 14px !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
             overflow: hidden !important;
             display: flex !important;
             flex-direction: column !important;
@@ -1874,7 +1934,10 @@ const StudentExam = () => {
             max-height: none !important;
             display: flex !important;
             flex-direction: column !important;
-            border-radius: 0 0 14px 14px !important;
+            border-radius: 0 !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: none !important;
             overflow: hidden !important;
             justify-content: space-between !important;
           }
@@ -1891,73 +1954,113 @@ const StudentExam = () => {
             height: 100% !important;
             max-height: none !important;
             overflow-y: auto !important;
-            padding: 4px 10px !important;
+            padding: 8px 16px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-left p {
-            font-size: 13.5px !important;
-            margin-bottom: 2px !important;
-            line-height: 1.25 !important;
+            font-size: 18.5px !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            margin-bottom: 6px !important;
+            line-height: 1.35 !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-desc {
-            font-size: 12.5px !important;
-            padding: 4px 8px !important;
-            margin-bottom: 4px !important;
+            font-size: 16.5px !important;
+            font-weight: 600 !important;
+            padding: 8px 12px !important;
+            margin-bottom: 6px !important;
+            border-radius: 8px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            background-color: #f8fafc !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-q-img {
-            max-height: 95px !important;
+            max-height: 115px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-right {
             flex: 1 !important;
             height: 100% !important;
             max-height: none !important;
             overflow-y: auto !important;
-            padding: 4px 10px !important;
-            gap: 3px !important;
+            padding: 8px 16px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-evenly !important;
+            gap: 6px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-opt-row {
-            padding: 3px 6px !important;
+            padding: 8px 12px !important;
+            border-radius: 10px !important;
+            border: 1.5px solid #cbd5e1 !important;
+            background-color: #ffffff !important;
+            cursor: pointer !important;
+          }
+          .ubt-exam-landscape-enforcer .ubt-opt-selected {
+            background-color: #eff6ff !important;
+            border-color: #0284c7 !important;
+            border-width: 2px !important;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2) !important;
+          }
+          .ubt-exam-landscape-enforcer .ubt-opt-selected .ubt-opt-badge {
+            background-color: #0284c7 !important;
+            color: #ffffff !important;
+            border-color: #0284c7 !important;
+          }
+          .ubt-exam-landscape-enforcer .ubt-opt-selected .ubt-opt-text {
+            color: #0369a1 !important;
+            font-weight: 700 !important;
           }
           .ubt-exam-landscape-enforcer .ubt-opt-badge {
-            width: 20px !important;
-            height: 20px !important;
-            font-size: 11px !important;
-            margin-right: 6px !important;
+            width: 26px !important;
+            height: 26px !important;
+            font-size: 13.5px !important;
+            font-weight: 800 !important;
+            margin-right: 10px !important;
+            border-radius: 50% !important;
+            border-width: 2px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-opt-text {
-            font-size: 13px !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            color: #1e293b !important;
+            line-height: 1.35 !important;
           }
           .ubt-exam-landscape-enforcer .ubt-opt-grid-img {
-            max-height: 50px !important;
+            max-height: 70px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-opt-blind-btn {
-            padding: 6px 8px !important;
+            padding: 10px 12px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-opt-blind-symbol {
-            font-size: 20px !important;
+            font-size: 28px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-header-bar {
-            padding: 4px 12px !important;
-            font-size: 11.5px !important;
-            border-radius: 14px 14px 0 0 !important;
+            padding: 6px 16px !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            border-radius: 0 !important;
             flex-shrink: 0 !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-nav-bar {
-            padding: 4px 12px !important;
-            border-radius: 0 0 14px 14px !important;
+            padding: 6px 16px !important;
+            border-radius: 0 !important;
             flex-shrink: 0 !important;
-            gap: 6px !important;
+            gap: 10px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-nav-bar button {
-            padding: 5px 12px !important;
-            font-size: 11px !important;
+            padding: 6px 18px !important;
+            font-size: 12.5px !important;
+            font-weight: 800 !important;
             min-width: 0 !important;
-            border-radius: 6px !important;
+            border-radius: 8px !important;
           }
 
           /* ROTATED OVERVIEW: ZERO CUT-OFF, ALL 40 QUESTIONS 100% VISIBLE */
           .ubt-exam-landscape-enforcer .ubt-overview-box {
-            padding: 3px 8px !important;
-            border-radius: 0 0 14px 14px !important;
+            padding: 4px 10px !important;
+            border-radius: 0 !important;
+            border: none !important;
             flex: 1 !important;
             min-height: 0 !important;
             height: 100% !important;
@@ -1969,7 +2072,7 @@ const StudentExam = () => {
           }
           .ubt-exam-landscape-enforcer .ubt-overview-flex {
             flex-direction: row !important;
-            gap: 8px !important;
+            gap: 10px !important;
             flex: 1 !important;
             min-height: 0 !important;
             height: 100% !important;
@@ -1994,7 +2097,7 @@ const StudentExam = () => {
           .ubt-exam-landscape-enforcer .ubt-overview-box h4,
           .ubt-exam-landscape-enforcer .ubt-overview-heading {
             margin: 0 0 2px 0 !important;
-            font-size: 11px !important;
+            font-size: 11.5px !important;
             font-weight: 800 !important;
             flex-shrink: 0 !important;
             text-align: center !important;
@@ -2011,7 +2114,7 @@ const StudentExam = () => {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
             grid-template-rows: repeat(5, 1fr) !important;
-            gap: 3px !important;
+            gap: 3.5px !important;
             height: 100% !important;
             flex: 1 !important;
             min-height: 0 !important;
@@ -2024,14 +2127,14 @@ const StudentExam = () => {
             min-height: 0 !important;
             max-height: none !important;
             padding: 0 !important;
-            font-size: 12.5px !important;
+            font-size: 13px !important;
             font-weight: 800 !important;
             border-radius: 12px !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.06) !important;
           }
           .ubt-exam-landscape-enforcer .ubt-overview-actions {
-            margin-top: 2px !important;
-            gap: 8px !important;
+            margin-top: 3px !important;
+            gap: 10px !important;
             flex-shrink: 0 !important;
             padding: 0 !important;
             display: flex !important;
@@ -2039,8 +2142,8 @@ const StudentExam = () => {
             align-items: center !important;
           }
           .ubt-exam-landscape-enforcer .ubt-overview-actions button {
-            padding: 4px 12px !important;
-            font-size: 11px !important;
+            padding: 5px 16px !important;
+            font-size: 12px !important;
             font-weight: 800 !important;
             border-radius: 8px !important;
           }
@@ -2207,15 +2310,15 @@ const StudentExam = () => {
       )}
 
       {viewMode === "overview" ? (
-        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "100%", width: "100%", height: "100%", margin: "0 auto", justifyContent: "stretch", borderRadius: "18px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
+        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "100%", width: "100%", height: "100%", margin: "0", justifyContent: "stretch", borderRadius: "0", overflow: "hidden" }}>
           
-          <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "10px 18px", borderRadius: "18px 18px 0 0", justifyContent: "space-between", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
+          <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", borderRadius: "0", justifyContent: "space-between", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
             <span>Remaining Questions: {unsolvedCount}</span>
             <span>{exactExamName}</span>
             <span>Time Remaining: {formatTime(timeLeft)}</span>
           </div>
 
-          <div className="ubt-overview-box" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", padding: "6px 12px", borderRadius: "0 0 18px 18px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", overflow: "hidden" }}>
+          <div className="ubt-overview-box" style={{ backgroundColor: "#ffffff", border: "none", padding: "6px 12px", borderRadius: "0", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", overflow: "hidden" }}>
             <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "space-between", gap: "14px", flex: 1, minHeight: 0, overflow: "hidden" }}>
               
               <div className="ubt-overview-col" style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "10px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
@@ -2311,22 +2414,22 @@ const StudentExam = () => {
 
         </div>
       ) : (
-        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "1050px", width: "100%", height: "100%", margin: "auto", justifyContent: "stretch", borderRadius: "18px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0, 0, 0, 0.12)" }}>
+        <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "100%", width: "100%", height: "100%", margin: "0", justifyContent: "stretch", borderRadius: "0", overflow: "hidden" }}>
           
           {(() => {
             const currentQ = questions[currentQuestion];
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-                <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "9px 18px", borderRadius: "18px 18px 0 0", justifyContent: "space-between", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
+                <div className="ubt-exam-header-bar" style={{ display: "flex", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", borderRadius: "0", justifyContent: "space-between", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
                   <span>Remaining Questions: {unsolvedCount}</span>
                   <span>{exactExamName}</span>
                   <span>Time Remaining: {formatTime(timeLeft)}</span>
                 </div>
 
-                <div className="ubt-exam-card" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)", border: "1px solid #cbd5e1", borderTop: "none", borderRadius: "0 0 18px 18px", boxShadow: "0 4px 15px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 0, overflow: "hidden" }}>
+                <div className="ubt-exam-card" style={{ backgroundColor: "#ffffff", border: "none", borderRadius: "0", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 0, overflow: "hidden" }}>
                   <div className="ubt-exam-columns" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
                     
-                    <div className="ubt-exam-left" style={{ flex: 1.2, padding: "20px 25px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%" }}>
+                    <div className="ubt-exam-left" style={{ flex: 1.2, padding: "16px 20px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%" }}>
                       <p style={{ color: "#1e293b", fontSize: "20px", fontWeight: "bold", margin: "0 0 10px 0" }}>
                         {currentQ.mainHeading || (currentQuestion < 20 ? "[ 1 - 20 ] 다음을 읽고 알맞은 것을 고르십시오." : "[ 21 - 40 ] 이야기를 듣고 질문에 알맞은 것을 고르십시오.")}
                       </p>
@@ -2398,7 +2501,7 @@ const StudentExam = () => {
                       )}
                     </div>
 
-                    <div className="ubt-exam-right" style={{ flex: 1, padding: "20px 25px", display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: "10px", overflowY: "auto", height: "100%" }}>
+                    <div className="ubt-exam-right" style={{ flex: 1, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "space-evenly", gap: "8px", overflowY: "auto", height: "100%" }}>
                       {(() => {
                         const rawOptions = currentQ.options || [];
                         const hasImageOptions = rawOptions.some(o => Boolean(typeof o === 'object' && o !== null && o.image));
@@ -2535,15 +2638,18 @@ const StudentExam = () => {
                           return (
                             <div 
                               key={index}
-                              className="ubt-opt-row"
+                              className={`ubt-opt-row ${isSelected ? "ubt-opt-selected" : ""}`}
                               onClick={() => handleOptionSelect(index)}
                               style={{
                                 display: "flex",
                                 flexDirection: "column",
-                                padding: "8px 12px",
-                                borderBottom: "1px solid #e2e8f0",
+                                padding: "10px 14px",
+                                borderRadius: "10px",
+                                border: isSelected ? "2px solid #0284c7" : "1.5px solid #cbd5e1",
                                 cursor: "pointer",
-                                backgroundColor: isSelected ? "#eff6ff" : "transparent"
+                                backgroundColor: isSelected ? "#eff6ff" : "#ffffff",
+                                boxShadow: isSelected ? "0 2px 8px rgba(2, 132, 199, 0.18)" : "0 1px 3px rgba(0,0,0,0.03)",
+                                transition: "all 0.15s ease"
                               }}
                             >
                               <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
@@ -2557,7 +2663,7 @@ const StudentExam = () => {
                                 </div>
                                 <span 
                                   className="ubt-opt-text"
-                                  style={{ fontSize: "17px", fontWeight: "normal", color: "#1e293b", flex: 1 }} 
+                                  style={{ fontSize: "18px", fontWeight: "600", color: isSelected ? "#0369a1" : "#1e293b", flex: 1 }} 
                                   dangerouslySetInnerHTML={{ __html: optText }} 
                                 />
                               </div>
@@ -2606,7 +2712,7 @@ const StudentExam = () => {
                     </div>
                   </div>
 
-                  <div className="ubt-exam-nav-bar" style={{ display: "flex", padding: "14px 24px", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", borderRadius: "0 0 24px 24px", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                  <div className="ubt-exam-nav-bar" style={{ display: "flex", padding: "10px 20px", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", borderRadius: "0", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
                     <button 
                       type="button"
                       onClick={() => {
