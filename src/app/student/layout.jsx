@@ -19,7 +19,7 @@ const ALLOWED_ROLES = ['student', 'admin', 'institute'];
 export default async function StudentLayout({ children }) {
   const session = await getSessionUser();
 
-  if (!session || !ALLOWED_ROLES.includes(session.role)) {
+  if (session && !ALLOWED_ROLES.includes(session.role)) {
     redirect('/?error=unauthorized');
   }
 

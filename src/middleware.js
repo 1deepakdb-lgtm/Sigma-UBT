@@ -197,6 +197,11 @@ export async function middleware(req) {
     return NextResponse.next();
   }
 
+  // Allow student exams API and exam taking page so free UBT exams are accessible to all users
+  if (pathname === '/api/student/exams' || pathname.startsWith('/api/student/exams/') || pathname.startsWith('/student/exam/')) {
+    return NextResponse.next();
+  }
+
   const matchedRule = ROUTE_PERMISSIONS.find((rule) => pathname.startsWith(rule.prefix));
 
   if (matchedRule) {

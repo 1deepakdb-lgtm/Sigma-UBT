@@ -39,6 +39,15 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
         }
 
         if (res.status === 401) {
+          // If taking an exam or accessing free exam sets, DO NOT redirect out
+          if (typeof window !== 'undefined' && (window.location.pathname.startsWith('/student/exam') || window.location.pathname === '/student')) {
+            const hasLocalUser = localStorage.getItem('currentUser') || localStorage.getItem('sigma_session');
+            if (hasLocalUser) {
+              console.warn('[ClientAuthGuard] Active local student session found. Preserving access.');
+              return;
+            }
+          }
+
           // Explicitly unauthenticated: clear cookies properly via logout endpoint
           sessionStorage.setItem('last_auth_redirect_ts', String(Date.now()));
           try {
