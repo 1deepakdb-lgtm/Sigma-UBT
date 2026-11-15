@@ -751,6 +751,27 @@ const InstituteDashboard = () => {
 
     setExamPackages(savedPackages);
     setExamSets(combinedExamSets);
+
+    // Sync all sets from server database to ensure institutes see all UBT sets and their real-time free status
+    fetch("/api/admin/packages")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.sets && Array.isArray(data.sets) && data.sets.length > 0) {
+          setExamSets((prev) => {
+            const map = new Map((prev || []).map((s) => [s.id || s.name, s]));
+            data.sets.forEach((srvSet) => {
+              const key = srvSet.id || srvSet.name;
+              const existing = map.get(key);
+              map.set(key, { ...existing, ...srvSet });
+            });
+            const updated = Array.from(map.values());
+            try { localStorage.setItem("examSets", JSON.stringify(updated)); } catch (e) {}
+            return updated;
+          });
+        }
+      })
+      .catch((err) => console.warn("Could not fetch server exam sets for institute:", err));
+
     setFolderMaterials(allFoldersData[activeBookFolder] || []);
     setNewsList(savedNews);
 

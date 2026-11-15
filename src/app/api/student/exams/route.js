@@ -121,6 +121,34 @@ export async function GET(req) {
       orderBy: { createdAt: 'desc' }
     });
 
+    // Fetch individual approved/released purchases for this student
+    const studentPhone = studentUser?.phone || studentUser?.username || '';
+    const cleanPhone = studentPhone.replace(/[^0-9]/g, '').slice(-10);
+
+    const paidTransactions = await prisma.paymentTransaction.findMany({
+      where: {
+        OR: [
+          { userId: session.id },
+          ...(studentPhone ? [{ studentPhone: studentPhone }] : []),
+          ...(cleanPhone ? [{ studentPhone: { contains: cleanPhone } }] : []),
+          ...(studentUser?.name ? [{ studentName: studentUser.name }] : [])
+        ],
+        status: { in: ['COMPLETE', 'Released'] }
+      }
+    });
+
+    const releasedSetKeys = new Set();
+    const releasedPkgKeys = new Set();
+    paidTransactions.forEach((pt) => {
+      if (pt.itemType === 'package') {
+        if (pt.itemName) releasedPkgKeys.add(pt.itemName.toLowerCase().trim());
+        if (pt.itemId) releasedPkgKeys.add(pt.itemId.toLowerCase().trim());
+      } else {
+        if (pt.itemId) releasedSetKeys.add(pt.itemId.toLowerCase().trim());
+        if (pt.itemName) releasedSetKeys.add(pt.itemName.toLowerCase().trim());
+      }
+    });
+
     // Check student language track for strict Korean vs Japanese isolation
     const studentLang = (studentUser?.institute?.language && studentUser.institute.language !== 'both')
       ? studentUser.institute.language
@@ -185,8 +213,18 @@ export async function GET(req) {
           assignedPkg && isSetCoveredByPackage(set, assignedPkg)
         );
 
+        const isIndividuallyReleased = Boolean(
+          (set.id && releasedSetKeys.has(set.id.toLowerCase().trim())) ||
+          (set.name && releasedSetKeys.has(set.name.toLowerCase().trim()))
+        );
+
+        const isCoveredByReleasedPkg = Boolean(
+          releasedPkgKeys.size > 0 &&
+          Array.from(releasedPkgKeys).some((pkgKey) => isSetCoveredBySinglePackage(set, pkgKey))
+        );
+
         let isUnlocked = false;
-        if (isFree) {
+        if (isFree || isIndividuallyReleased || isCoveredByReleasedPkg) {
           isUnlocked = true;
         } else if (isInstituteStudent) {
           // Institute student: unlocked if created by institute, released to institute, or in assigned package

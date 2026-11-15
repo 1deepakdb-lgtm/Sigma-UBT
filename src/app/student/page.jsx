@@ -732,8 +732,28 @@ const StudentDashboard = () => {
               }
             });
 
+            if (data.queries && Array.isArray(data.queries)) {
+              setPendingQueries(data.queries.map(q => ({
+                id: q.id,
+                txnId: q.transactionCode || q.transactionUuid,
+                phone: q.studentPhone,
+                itemId: q.itemId,
+                itemName: q.itemName,
+                itemType: q.itemType,
+                amount: q.amount,
+                status: q.status === 'COMPLETE' ? 'Released' : q.status === 'FAILED' ? 'Rejected' : 'Pending'
+              })));
+            }
+
             if (completeSets.length > 0) {
               setUnlockedSets((prev) => Array.from(new Set([...prev, ...completeSets])));
+              try {
+                const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+                localStorage.setItem("unlockedStudentExamSets", JSON.stringify(Array.from(new Set([...u1, ...completeSets]))));
+                const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+                localStorage.setItem("releasedStudentExamSets", JSON.stringify(Array.from(new Set([...u2, ...completeSets]))));
+              } catch (e) {}
+              setPaidAccessTrigger((prev) => prev + 1);
             }
 
             if (completePackages.length > 0) {
@@ -1325,34 +1345,6 @@ const StudentDashboard = () => {
           return false;
         }
       }
-
-      // 2. Package Access Filter
-      if (allowedPackages.length > 0) {
-        const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        const normAllowed = allowedPackages.map(norm);
-        const setPkgNorm = norm(set.packageName);
-
-        if (normAllowed.includes(setPkgNorm)) return true;
-        const isMatch = normAllowed.some(ap => {
-          if (ap === setPkgNorm) return true;
-          if (ap.includes('chapter') && setPkgNorm.includes('chapter')) return true;
-          if (ap.includes('full') && setPkgNorm.includes('full')) return true;
-          if (ap.includes('mock') && setPkgNorm.includes('mock')) return true;
-          if (ap.includes('jlpt') && setPkgNorm.includes('jlpt')) return true;
-          if (ap.includes('jft') && setPkgNorm.includes('jft')) return true;
-          if (ap.includes('nat') && setPkgNorm.includes('nat')) return true;
-          if (ap.includes('full') && (setPkgNorm.includes('mock') || setPkgNorm.includes('jlpt') || setPkgNorm.includes('jft') || setPkgNorm.includes('nat'))) return true;
-          return false;
-        });
-        if (isMatch) return true;
-
-        const matchingPkgs = packages.filter((p) => normAllowed.includes(norm(p.name)));
-        for (const mp of matchingPkgs) {
-          if (mp.includedSets && mp.includedSets.includes(set.name)) return true;
-        }
-        return false;
-      }
-
       return true;
     });
 
@@ -2885,7 +2877,7 @@ const StudentDashboard = () => {
                     fontSize: "12px"
                   }}
                 >
-                  All My Sets ({examSets.length})
+                  All Sets ({sortedExamSets.length})
                 </button>
                 {purchasedPackages.map((pkgName, idx) => (
                   <button
@@ -3011,18 +3003,22 @@ const StudentDashboard = () => {
                               🎁 FREE DEMO
                             </span>
                           ) : individuallyUnlocked ? (
-                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
-                              UNLOCKED (Rs. 30)
+                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", border: "1px solid #86efac", padding: "2px 6px", borderRadius: "4px" }}>
+                              ✓ UNLOCKED (Rs. 30)
                             </span>
                           ) : packageCovered ? (
-                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", padding: "2px 6px", borderRadius: "4px" }}>
+                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#166534", backgroundColor: "#dcfce7", border: "1px solid #86efac", padding: "2px 6px", borderRadius: "4px" }}>
                               PACKAGE UNLOCKED
                             </span>
                           ) : pending ? (
-                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#0369a1", backgroundColor: "#e0f2fe", padding: "2px 6px", borderRadius: "4px" }}>
-                              ⏳ PENDING
+                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#0369a1", backgroundColor: "#e0f2fe", border: "1px solid #bae6fd", padding: "2px 6px", borderRadius: "4px" }}>
+                              ⏳ PENDING (Rs. 30)
                             </span>
-                          ) : null}
+                          ) : (
+                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#c2410c", backgroundColor: "#fff7ed", border: "1px solid #fed7aa", padding: "2px 6px", borderRadius: "4px" }}>
+                              🔒 Rs. 30
+                            </span>
+                          )}
                         </div>
                         <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a", fontWeight: "800" }}>
                           {set.name}
@@ -3124,8 +3120,8 @@ const StudentDashboard = () => {
                             ? "PACKAGE EXPIRED"
                             : "GET START ▶"
                           : pending
-                          ? "⏳ PENDING CONFIRMATION"
-                          : "🔒 BUY TO UNLOCK ▶ (Rs. 30)"}
+                          ? "⏳ PENDING (Rs. 30)"
+                          : "🔒 Rs. 30"}
                       </button>
                     </div>
                   );

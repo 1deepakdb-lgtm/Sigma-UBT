@@ -4817,7 +4817,7 @@ export default function EpsBookReader({
                                   ? "▶ START FREE UBT EXAM"
                                   : unlocked
                                   ? "▶ START UBT EXAM"
-                                  : "🔒 UNLOCK SET"}
+                                  : "🔒 Rs. 30"}
                               </span>
                             </button>
                           </div>
@@ -7114,7 +7114,7 @@ export default function EpsBookReader({
                                       boxShadow: "0 4px 12px rgba(217, 119, 6, 0.28)"
                                     }}
                                   >
-                                    <span>🔒 BUY TO UNLOCK ▶ (Rs. 30)</span>
+                                    <span>🔒 Rs. 30</span>
                                   </button>
                                 )
                               ) : (
