@@ -150,11 +150,14 @@ const StudentExam = () => {
             return;
           }
         } else {
-          // If backend denies access (e.g. 403 Forbidden because this is a paid set of Rs. 30)
+          // If backend denies access (e.g. 401 Unauthorized or 403 Forbidden because this is a paid set of Rs. 30)
           const errData = await res.json().catch(() => ({}));
-          alert(errData.error || "This exam set requires payment of Rs. 30. Please unlock via eSewa to take this test.");
-          router.push("/student");
-          return;
+          if (res.status === 401 || res.status === 403) {
+            alert(errData.error || "This exam set requires payment of Rs. 30. Please unlock via eSewa to take this test.");
+            router.push("/student");
+            return;
+          }
+          console.warn("Backend start API status:", res.status, errData);
         }
       } catch (err) {
         console.warn("Backend start API network error (attempting offline cache):", err);
