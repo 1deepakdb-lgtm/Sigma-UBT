@@ -249,7 +249,7 @@ export async function GET(req) {
           creatorInstituteName: set.creatorInstituteName,
           isPrivate: set.isPrivate,
           isPublished: set.isPublished,
-          isFree: set.isFree,
+          isFree: Boolean(isFree || set.isFree),
           setType: set.setType,
           duration: set.duration,
           questionsCount: set._count?.questions || 40,

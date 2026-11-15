@@ -88,6 +88,26 @@ const BuildingIcon = ({ size = 20, color = "#0f766e" }) => (
 const SHIFT_NAMES = ['morning', 'day', 'evening', 'night', 'afternoon'];
 const isShift = (str) => SHIFT_NAMES.includes((str || '').toLowerCase().trim());
 
+export const checkSetIsFree = (s) => Boolean(
+  s?.isFree === true ||
+  s?.isFree === "true" ||
+  s?.isFree === 1 ||
+  s?.isFree === "1" ||
+  s?.setType === "FREE" ||
+  s?.distributionMode === "free" ||
+  s?.isFreeForInstituteStudents === true ||
+  s?.price === 0 ||
+  s?.price === "0" ||
+  s?.price === "Rs. 0" ||
+  (typeof s?.price === "string" && s.price.toLowerCase().includes("free")) ||
+  (s?.name && s.name.toLowerCase().includes("free")) ||
+  (s?.title && s.title.toLowerCase().includes("free")) ||
+  (s?.packageName && s.packageName.toLowerCase().includes("free")) ||
+  (s?.packageName && s.packageName.toLowerCase().includes("model")) ||
+  s?.source === "model_question_bank" ||
+  s?.folder === "Model Question Bank"
+);
+
 const StudentDashboard = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -101,6 +121,11 @@ const StudentDashboard = () => {
   const [examSetsSearch, setExamSetsSearch] = useState("");
   const [activeJlptExamSet, setActiveJlptExamSet] = useState(null);
   const SETS_PER_PAGE = 20;
+
+  // Home Tab Exam Sets Filter & Search State
+  const [homeFilter, setHomeFilter] = useState("all"); // "all" | "free" | "paid" | "unlocked"
+  const [homeSearch, setHomeSearch] = useState("");
+  const [homeVisibleLimit, setHomeVisibleLimit] = useState(24);
 
   const [activeBookFolder, setActiveBookFolder] = useState("EPS Book");
   const [folderMaterials, setFolderMaterials] = useState([]);
@@ -584,27 +609,13 @@ const StudentDashboard = () => {
       return false;
     }
 
-    const isFree = Boolean(
-      set.isFree === true ||
-      set.isFree === "true" ||
-      set.isFree === 1 ||
-      set.isFree === "1" ||
-      set.setType === "FREE" ||
-      set.distributionMode === "free" ||
-      set.isFreeForInstituteStudents === true ||
-      set.price === 0 ||
-      set.price === "0" ||
-      set.price === "Rs. 0" ||
-      (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
-      (set.name && set.name.toLowerCase().includes("free")) ||
-      (set.title && set.title.toLowerCase().includes("free")) ||
-      (set.packageName && set.packageName.toLowerCase().includes("free")) ||
-      (set.packageName && set.packageName.toLowerCase().includes("model")) ||
-      set.source === "model_question_bank" ||
-      set.folder === "Model Question Bank"
-    );
+    // Free sets are 100% unlocked for ALL users (both institute and direct students)
+    if (checkSetIsFree(set)) {
+      return true;
+    }
 
-    if (isFree) {
+    // Already marked unlocked by backend API (e.g. released by admin or institute)
+    if (set.isUnlocked === true) {
       return true;
     }
 
@@ -1148,18 +1159,38 @@ const StudentDashboard = () => {
         if (data.sets && Array.isArray(data.sets) && data.sets.length > 0) {
           setExamSets(prev => {
             const serverMap = new Map(data.sets.map(s => [s.id, s]));
-            return prev.map(item => {
-              const match = serverMap.get(item.id);
+            const serverNameMap = new Map(data.sets.map(s => [(s.name || "").trim().toLowerCase(), s]));
+
+            const updatedPrev = prev.map(item => {
+              const match = serverMap.get(item.id) || serverNameMap.get((item.name || "").trim().toLowerCase());
               if (match) {
+                const freeVal = match.isFree !== undefined ? Boolean(match.isFree) : checkSetIsFree(item);
                 return {
                   ...item,
                   creatorInstituteId: match.creatorInstituteId || item.creatorInstituteId,
                   creatorInstituteName: match.creatorInstituteName || item.creatorInstituteName,
-                  isUnlocked: match.isUnlocked !== undefined ? match.isUnlocked : item.isUnlocked
+                  isUnlocked: match.isUnlocked !== undefined ? Boolean(match.isUnlocked) : item.isUnlocked,
+                  isFree: freeVal
                 };
               }
               return item;
             });
+
+            // Append any new server sets that were not in prev
+            const existingIds = new Set(updatedPrev.map(p => p.id));
+            const existingNames = new Set(updatedPrev.map(p => (p.name || "").trim().toLowerCase()));
+            data.sets.forEach(s => {
+              const sNameNorm = (s.name || "").trim().toLowerCase();
+              if (!existingIds.has(s.id) && !existingNames.has(sNameNorm)) {
+                updatedPrev.push({
+                  ...s,
+                  isFree: Boolean(s.isFree) || checkSetIsFree(s),
+                  isUnlocked: Boolean(s.isUnlocked)
+                });
+              }
+            });
+
+            return updatedPrev;
           });
         }
         const localResults = JSON.parse(localStorage.getItem("examResults") || "[]");
@@ -1500,25 +1531,7 @@ const StudentDashboard = () => {
         return isJp && !isKorean;
       }
       if (examCategoryFilter === "free") {
-        return isSetUnlocked(s) || Boolean(
-          s.isFree === true ||
-          s.isFree === "true" ||
-          s.isFree === 1 ||
-          s.isFree === "1" ||
-          s.setType === "FREE" ||
-          s.distributionMode === "free" ||
-          s.isFreeForInstituteStudents === true ||
-          s.price === 0 ||
-          s.price === "0" ||
-          s.price === "Rs. 0" ||
-          (typeof s.price === "string" && s.price.toLowerCase().includes("free")) ||
-          (s.name && s.name.toLowerCase().includes("free")) ||
-          (s.title && s.title.toLowerCase().includes("free")) ||
-          (s.packageName && s.packageName.toLowerCase().includes("free")) ||
-          (s.packageName && s.packageName.toLowerCase().includes("model")) ||
-          s.source === "model_question_bank" ||
-          s.folder === "Model Question Bank"
-        );
+        return isSetUnlocked(s) || checkSetIsFree(s);
       }
       return true;
     })
@@ -1527,6 +1540,56 @@ const StudentDashboard = () => {
       const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
       return numA - numB;
     });
+
+  const homeExamSets = useMemo(() => {
+    return [...examSets]
+      .filter(s => {
+        if (!s) return false;
+        const name = (s.name || s.title || "").toLowerCase();
+        const sType = (s.setType || "").toUpperCase();
+        const isKorean = s.track === "korean" || sType === "UBT" || sType === "CHAPTERWISE" || name.includes("ubt") || name.includes("eps") || name.includes("chapter") || name.includes("topik") || name.includes("reading") || name.includes("listening");
+        const isJp = s.track === "japanese" || sType === "MOCK" || s.isMock === true || name.includes("mock") || name.includes("jlpt") || name.includes("jft") || name.includes("nat") || (s.packageName && s.packageName.toLowerCase().includes("mock"));
+
+        if (isPureKoreanStudent) {
+          return !isJp || isKorean;
+        }
+        if (isPureJapaneseStudent) {
+          return isJp && !isKorean;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
+        const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
+        return numA - numB;
+      });
+  }, [examSets, isPureKoreanStudent, isPureJapaneseStudent]);
+
+  const displayedHomeSets = useMemo(() => {
+    let list = homeExamSets;
+
+    if (homeSearch.trim()) {
+      const q = homeSearch.toLowerCase().trim();
+      list = list.filter(s =>
+        (s.name || "").toLowerCase().includes(q) ||
+        (s.packageName || "").toLowerCase().includes(q)
+      );
+    }
+
+    if (homeFilter === "free") {
+      list = list.filter(s => checkSetIsFree(s));
+    } else if (homeFilter === "paid") {
+      list = list.filter(s => !checkSetIsFree(s) && !isSetUnlocked(s));
+    } else if (homeFilter === "unlocked") {
+      list = list.filter(s => isSetUnlocked(s));
+    }
+
+    return list;
+  }, [homeExamSets, homeSearch, homeFilter, unlockedSets, activeStudentPackages, examPackages]);
+
+  const homeFreeCount = useMemo(() => homeExamSets.filter(s => checkSetIsFree(s)).length, [homeExamSets]);
+  const homePaidCount = useMemo(() => homeExamSets.filter(s => !checkSetIsFree(s) && !isSetUnlocked(s)).length, [homeExamSets, unlockedSets, activeStudentPackages]);
+  const homeUnlockedCount = useMemo(() => homeExamSets.filter(s => isSetUnlocked(s)).length, [homeExamSets, unlockedSets, activeStudentPackages]);
 
   const baseFilteredSets = (() => {
     let list = (selectedPackageFilter === "All" || purchasedPackages.length <= 1)
@@ -2592,63 +2655,291 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Section 2: Exam you have Access */}
-            <div>
-              <h2 style={{ color: "#111827", fontSize: "20px", fontWeight: "800", textAlign: "center", margin: "0 0 16px 0", letterSpacing: "-0.2px" }}>
-                {isPureKoreanStudent
-                  ? "Korean UBT Exams you have Access"
-                  : isPureJapaneseStudent
-                  ? "Japanese Mock Tests you have Access"
-                  : "Exams you have Access"}
-              </h2>
+            {/* Section 2: Korean UBT & Chapterwise Exam Sets (Free & Paid Rs. 30) */}
+            <div style={{ marginTop: "12px" }}>
+              <div style={{ textAlign: "center", marginBottom: "16px" }}>
+                <h2 style={{ color: "#111827", fontSize: "20px", fontWeight: "800", margin: "0 0 6px 0", letterSpacing: "-0.2px" }}>
+                  {isPureKoreanStudent
+                    ? "Korean UBT & Chapterwise Exam Sets"
+                    : isPureJapaneseStudent
+                    ? "Japanese Mock Tests"
+                    : "UBT & Exam Sets"}
+                </h2>
+                <p style={{ margin: 0, fontSize: "12.5px", color: "#64748b" }}>
+                  🎁 <strong>Free Sets</strong> are open to all students · 🔒 <strong>Paid Sets</strong> available for Rs. 30
+                </p>
+              </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {accessibleSetsList.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "24px", backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
-                    <p style={{ color: "#64748b", margin: 0, fontSize: "14px" }}>No unlocked exams available currently.</p>
+              {/* Filter Pills & Live Search Bar */}
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "16px" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {[
+                    { id: "all", label: `All Sets (${homeExamSets.length})` },
+                    { id: "free", label: `🎁 Free (${homeFreeCount})` },
+                    { id: "paid", label: `🔒 Paid Rs. 30 (${homePaidCount})` },
+                    { id: "unlocked", label: `✓ Unlocked (${homeUnlockedCount})` },
+                  ].map((tab) => {
+                    const isActive = homeFilter === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => { setHomeFilter(tab.id); setHomeVisibleLimit(24); }}
+                        style={{
+                          padding: "6px 13px",
+                          borderRadius: "20px",
+                          fontSize: "12.5px",
+                          fontWeight: isActive ? "800" : "600",
+                          backgroundColor: isActive ? "#0a2e6b" : "#ffffff",
+                          color: isActive ? "#ffffff" : "#475569",
+                          border: isActive ? "1.5px solid #0a2e6b" : "1.5px solid #cbd5e1",
+                          cursor: "pointer",
+                          boxShadow: isActive ? "0 2px 6px rgba(10, 46, 107, 0.25)" : "none",
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ position: "relative", minWidth: "190px", flex: "1 1 190px", maxWidth: "320px" }}>
+                  <input
+                    type="text"
+                    value={homeSearch}
+                    onChange={(e) => { setHomeSearch(e.target.value); setHomeVisibleLimit(50); }}
+                    placeholder="Search sets (e.g. Chapterwise 01)..."
+                    style={{
+                      width: "100%",
+                      padding: "7px 12px",
+                      borderRadius: "18px",
+                      border: "1.5px solid #cbd5e1",
+                      fontSize: "12.5px",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      backgroundColor: "#ffffff"
+                    }}
+                  />
+                  {homeSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setHomeSearch("")}
+                      style={{
+                        position: "absolute",
+                        right: "8px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "transparent",
+                        border: "none",
+                        color: "#94a3b8",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        padding: "2px 6px"
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Cards List matching media_1794736877642_9ce09c39.jpg */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {displayedHomeSets.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "32px 16px", backgroundColor: "#ffffff", borderRadius: "14px", border: "1px solid #e2e8f0" }}>
+                    <div style={{ fontSize: "28px", marginBottom: "6px" }}>🔍</div>
+                    <p style={{ color: "#64748b", margin: 0, fontSize: "14px", fontWeight: "600" }}>No exam sets match your filter.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setHomeFilter("all"); setHomeSearch(""); }}
+                      style={{ marginTop: "10px", padding: "6px 14px", borderRadius: "6px", backgroundColor: "#0a2e6b", color: "#ffffff", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "700" }}
+                    >
+                      Reset Filters
+                    </button>
                   </div>
                 ) : (
-                  accessibleSetsList.map((set, idx) => {
-                    const isBlue = idx % 2 === 0;
-                    const bg = isBlue ? "#dbeafe" : "#ffedd5";
-                    const border = isBlue ? "#bfdbfe" : "#fed7aa";
+                  displayedHomeSets.slice(0, homeVisibleLimit).map((set, idx) => {
+                    const isEven = idx % 2 === 0;
+                    // Alternating soft colors matching media_1794736877642_9ce09c39.jpg
+                    const cardBg = isEven ? "#dbeafe" : "#ffedd5";
+                    const cardBorder = isEven ? "#bfdbfe" : "#fed7aa";
+
+                    const isFree = checkSetIsFree(set);
+                    const unlocked = isFree || isSetUnlocked(set);
+                    const pending = isSetPending(set);
+
                     return (
                       <div
-                        key={set.id || idx}
+                        key={set.id || set.name || idx}
                         style={{
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
-                          backgroundColor: bg,
-                          border: `1.5px solid ${border}`,
-                          borderRadius: "14px",
-                          padding: "14px 18px",
-                          boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
+                          backgroundColor: cardBg,
+                          border: `1.5px solid ${cardBorder}`,
+                          borderRadius: "16px",
+                          padding: "16px 22px",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                          gap: "14px",
+                          transition: "all 0.15s ease"
                         }}
                       >
-                        <div style={{ fontSize: "16px", fontWeight: "700", color: "#1e293b", letterSpacing: "0.2px" }}>
-                          {set.name}
+                        {/* Left Title & Info */}
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: "17.5px", fontWeight: "700", color: "#1e293b", letterSpacing: "0.2px", lineHeight: "1.3" }}>
+                            {set.name}
+                          </div>
+                          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "3px", fontWeight: "500" }}>
+                            {set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "Full Set UBT")} · {set.totalQs || set.questionsCount || 40} Questions · {set.timeMin || set.duration || 50} Min
+                          </div>
                         </div>
-                        <button
-                          onClick={() => handleStartExam(set)}
-                          style={{
-                            backgroundColor: "#0f3b82",
-                            color: "#ffffff",
-                            border: "none",
-                            borderRadius: "10px",
-                            padding: "9px 24px",
-                            fontSize: "14px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                            boxShadow: "0 2px 6px rgba(15, 59, 130, 0.3)",
-                            transition: "all 0.15s"
-                          }}
-                        >
-                          Start
-                        </button>
+
+                        {/* Right Pill Button matching screenshot */}
+                        <div style={{ flexShrink: 0 }}>
+                          {isFree ? (
+                            <button
+                              type="button"
+                              onClick={() => handleStartExam(set)}
+                              title="Free Demo Set: Instant full access for all students!"
+                              style={{
+                                backgroundColor: "#0a2e6b", // Deep Navy Blue from screenshot
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "24px",
+                                padding: "10px 26px",
+                                minWidth: "105px",
+                                textAlign: "center",
+                                fontSize: "15px",
+                                fontWeight: "800",
+                                cursor: "pointer",
+                                boxShadow: "0 3px 8px rgba(10, 46, 107, 0.35)",
+                                transition: "all 0.15s ease",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              Free
+                            </button>
+                          ) : unlocked ? (
+                            <button
+                              type="button"
+                              onClick={() => handleStartExam(set)}
+                              title="You have access to this exam set. Click to start!"
+                              style={{
+                                backgroundColor: "#16a34a", // Vibrant Green
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "24px",
+                                padding: "10px 26px",
+                                minWidth: "105px",
+                                textAlign: "center",
+                                fontSize: "15px",
+                                fontWeight: "800",
+                                cursor: "pointer",
+                                boxShadow: "0 3px 8px rgba(22, 163, 74, 0.35)",
+                                transition: "all 0.15s ease",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              Start
+                            </button>
+                          ) : pending ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const sendWa = window.confirm(
+                                  `Your payment of Rs. 30 for "${set.name}" is pending review by Admin.\n\nWould you like to message Admin on WhatsApp (9768444902) to verify & release?`
+                                );
+                                if (sendWa) {
+                                  const waMsg = encodeURIComponent(
+                                    `🔔 *EXAM SET RELEASE REQUEST (Rs. 30)*\n\n` +
+                                    `Hello Admin,\n\nI have submitted my payment of Rs. 30 for "${set.name}".\nPlease verify and release my exam set!\n\n` +
+                                    `👤 Student: ${studentName || "Student"} (${currentStudentPhone || "N/A"})\n` +
+                                    `📚 Exam: ${set.name}\n` +
+                                    `💰 Amount: Rs. 30\n\n` +
+                                    `Thank you!`
+                                  );
+                                  window.open(`https://wa.me/9779768444902?text=${waMsg}`, "_blank");
+                                }
+                              }}
+                              title="Payment is pending review. Click to contact Admin on WhatsApp."
+                              style={{
+                                backgroundColor: "#0284c7", // Sky blue for pending
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "24px",
+                                padding: "10px 18px",
+                                minWidth: "105px",
+                                textAlign: "center",
+                                fontSize: "13.5px",
+                                fontWeight: "800",
+                                cursor: "pointer",
+                                boxShadow: "0 3px 8px rgba(2, 132, 199, 0.35)",
+                                transition: "all 0.15s ease",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              ⏳ Pending
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleOpenEsewaModal({
+                                  id: set.id,
+                                  name: set.name,
+                                  price: 30,
+                                  type: "set",
+                                  packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
+                                });
+                              }}
+                              title="Unlock this exam set for Rs. 30 via eSewa QR code"
+                              style={{
+                                backgroundColor: "#2d6a4f", // Forest Green from screenshot
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "24px",
+                                padding: "10px 24px",
+                                minWidth: "105px",
+                                textAlign: "center",
+                                fontSize: "15px",
+                                fontWeight: "800",
+                                cursor: "pointer",
+                                boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
+                                transition: "all 0.15s ease",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              Rs. 30
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })
+                )}
+
+                {/* Show More Button if more sets than limit */}
+                {displayedHomeSets.length > homeVisibleLimit && (
+                  <div style={{ textAlign: "center", marginTop: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setHomeVisibleLimit(prev => prev + 30)}
+                      style={{
+                        padding: "9px 24px",
+                        borderRadius: "20px",
+                        backgroundColor: "#ffffff",
+                        color: "#0a2e6b",
+                        border: "1.5px solid #0a2e6b",
+                        fontSize: "13px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.05)"
+                      }}
+                    >
+                      Show More Exam Sets ({displayedHomeSets.length - homeVisibleLimit} remaining) ▼
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -2954,25 +3245,7 @@ const StudentDashboard = () => {
                 </div>
               ) : (
                 paginatedSets.map((set, idx) => {
-                  const isFree = Boolean(
-                    set.isFree === true ||
-                    set.isFree === "true" ||
-                    set.isFree === 1 ||
-                    set.isFree === "1" ||
-                    set.setType === "FREE" ||
-                    set.distributionMode === "free" ||
-                    set.isFreeForInstituteStudents === true ||
-                    set.price === 0 ||
-                    set.price === "0" ||
-                    set.price === "Rs. 0" ||
-                    (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
-                    (set.name && set.name.toLowerCase().includes("free")) ||
-                    (set.title && set.title.toLowerCase().includes("free")) ||
-                    (set.packageName && set.packageName.toLowerCase().includes("free")) ||
-                    (set.packageName && set.packageName.toLowerCase().includes("model")) ||
-                    set.source === "model_question_bank" ||
-                    set.folder === "Model Question Bank"
-                  );
+                  const isFree = checkSetIsFree(set);
                   const unlocked = isFree || isSetUnlocked(set);
                   const individuallyUnlocked = isSetIndividuallyUnlocked(set);
                   const packageCovered = isSetCoveredByStudentPackage(set);
