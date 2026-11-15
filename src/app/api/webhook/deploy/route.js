@@ -125,25 +125,22 @@ async function runDeployTasks(repoDir) {
 
   // 4b. Verify & Auto-repair SQLite Database
   try {
-    addLog(`🔍 Checking SQLite database integrity and repairing if malformed...`);
-    try {
-      const diagRes = await execAsync('which sqlite3 2>&1; ls -la prisma/dev.db* 2>&1', execOpts);
-      addLog(`🔍 SQLite diag: ${String(diagRes?.stdout || '').replace(/\n/g, ' | ')}`);
-    } catch (e) {
-      addLog(`🔍 SQLite diag error: ${e.message}`);
+    addLog(`🔍 Checking SQLite database files in prisma/...`);
+    const prismaDir = path.join(repoDir, 'prisma');
+    if (fs.existsSync(prismaDir)) {
+      const files = fs.readdirSync(prismaDir);
+      addLog(`📁 Files in prisma/: ${files.join(', ')}`);
+      for (const f of files) {
+        if (f.endsWith('.db') || f.includes('backup')) {
+          try {
+            const stat = fs.statSync(path.join(prismaDir, f));
+            addLog(`   📄 ${f}: ${stat.size} bytes (modified: ${stat.mtime.toISOString().slice(11, 19)})`);
+          } catch {}
+        }
+      }
     }
-
-    const pyScript = path.join(repoDir, 'scripts', 'repair_sqlite.py');
-    if (fs.existsSync(pyScript)) {
-      const pyCmd = `/usr/bin/python3 "${pyScript}" "${repoDir}" 2>&1 || python3 "${pyScript}" "${repoDir}" 2>&1 || /opt/alt/python311/bin/python3 "${pyScript}" "${repoDir}" 2>&1`;
-      const pyRes = await execAsync(pyCmd, execOpts);
-      const pyOut = String(pyRes?.stdout || '').trim();
-      addLog(`🛠️ Database repair output:\n${pyOut || 'No output from python'}`);
-    } else {
-      addLog(`⚠️ repair_sqlite.py not found at ${pyScript}`);
-    }
-  } catch (dbRepairErr) {
-    addLog(`⚠️ Database repair notice: ${dbRepairErr.message}`);
+  } catch (fsErr) {
+    addLog(`⚠️ File inspect notice: ${fsErr.message}`);
   }
 
   // 5. CloudLinux node_modules symlink check
