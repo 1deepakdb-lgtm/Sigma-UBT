@@ -22,5 +22,7 @@ public/audio-cache
 .next/cache/
 *.zip
 electron/
-scripts/
+scripts/*
+!scripts/repair_sqlite.py
+!scripts/tts_engine.py
 
