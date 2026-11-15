@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPassword, signToken, hashPassword } from '@/lib/auth';
+import { getOrCreateOpenInstitute } from '@/lib/openInstitute';
 import { getRateLimitKey, checkRateLimit, recordFailedAttempt, clearRateLimit, checkAdminRateLimit, recordAdminFailedAttempt } from '@/lib/rateLimiter';
 
 export async function POST(req) {
@@ -175,10 +176,7 @@ export async function POST(req) {
     // Auto-create student account if valid 8-10 digit mobile number or User ID is entered on Login
     if (!user && digitsOnly.length >= 8 && cleanPwd.length >= 4) {
       try {
-        const defaultInstitute = await prisma.institute.findFirst({
-          where: { id: 'examjk-open' }
-        }) || await prisma.institute.findFirst();
-
+        const openInst = await getOrCreateOpenInstitute('both');
         const pwdHash = await hashPassword(cleanPwd);
         user = await prisma.user.create({
           data: {
@@ -189,8 +187,8 @@ export async function POST(req) {
             role: 'student',
             batch: 'Free Student Access',
             status: 'Active',
-            language: 'korean',
-            instituteId: defaultInstitute?.id || null
+            language: 'both',
+            instituteId: openInst?.id || null
           },
           include: { institute: true }
         });

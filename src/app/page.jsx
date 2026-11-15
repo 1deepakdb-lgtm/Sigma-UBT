@@ -797,7 +797,12 @@ export default function LoginPage() {
               textAlign: "left"
             }}
           >
-            {error}
+            <div>{error}</div>
+            {error.toLowerCase().includes("too many failed") && (
+              <div style={{ marginTop: "6px", fontSize: "12px", color: "#7f1d1d", fontWeight: "normal" }}>
+                💡 नयाँ विद्यार्थी हुनुहुन्छ भने माथिको <strong>[ Sign Up ]</strong> ट्याब थिचेर सिधै दर्ता गर्नुहोस् वा केही सेकेन्डपछि पुन: प्रयास गर्नुहोस्।
+              </div>
+            )}
           </div>
         )}
 
