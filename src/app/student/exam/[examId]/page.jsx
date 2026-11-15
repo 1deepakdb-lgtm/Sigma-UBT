@@ -127,8 +127,25 @@ const StudentExam = () => {
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.questions && data.questions.length >= 40) {
-            setQuestions(data.questions);
+          if (data.questions && data.questions.length > 0) {
+            let finalQs = [...data.questions];
+            if (finalQs.length < 40) {
+              for (let i = finalQs.length + 1; i <= 40; i++) {
+                finalQs.push({
+                  id: `q_gen_${i}`,
+                  qIndex: i,
+                  type: i <= 20 ? "Reading" : "Listening",
+                  mainHeading: i <= 20 ? `[ ${i} ] 다음을 읽고 알맞은 것을 고르십시오.` : `[ ${i} ] 이야기를 듣고 질문에 알맞은 것을 고르십시오.`,
+                  questionHeading: "",
+                  description: "",
+                  image: "",
+                  audio: "",
+                  options: ["1", "2", "3", "4"],
+                  answer: 0
+                });
+              }
+            }
+            setQuestions(finalQs);
             if (data.answerSheet) setAnswerSheet(data.answerSheet);
             setBackendSessionId(data.sessionId);
             if (data.examName) setExactExamName(data.examName);
@@ -136,7 +153,7 @@ const StudentExam = () => {
             // DOWNLOAD & CACHE QUESTIONS + ANSWERSHEET FOR COMPLETE OFFLINE TAKE & REVIEW
             try {
               localStorage.setItem(`offline_ubt_exam_${examId || "set-1-demo"}`, JSON.stringify({
-                questions: data.questions,
+                questions: finalQs,
                 answerSheet: data.answerSheet || {},
                 sessionId: data.sessionId,
                 examName: data.examName,

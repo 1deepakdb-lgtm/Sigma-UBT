@@ -105,8 +105,8 @@ export const checkSetIsFree = (s) => Boolean(
   (s?.packageName && s.packageName.toLowerCase().includes("free")) ||
   (s?.packageName && s.packageName.toLowerCase().includes("model")) ||
   (s?.name && (
-    s.name.toLowerCase().includes("set 01") ||
-    s.name.toLowerCase().includes("set 1") ||
+    /\bset\s*0?1\b/i.test(s.name) ||
+    /\bchapterwise\s*0?1\b/i.test(s.name) ||
     s.name.toLowerCase().includes("01~02") ||
     s.name.toLowerCase().includes("demo")
   )) ||
@@ -1147,6 +1147,12 @@ const StudentDashboard = () => {
       (s?.title && s.title.toLowerCase().includes("free")) ||
       (s?.packageName && s.packageName.toLowerCase().includes("free")) ||
       (s?.packageName && s.packageName.toLowerCase().includes("model")) ||
+      (s?.name && (
+        /\bset\s*0?1\b/i.test(s.name) ||
+        /\bchapterwise\s*0?1\b/i.test(s.name) ||
+        s.name.toLowerCase().includes("01~02") ||
+        s.name.toLowerCase().includes("demo")
+      )) ||
       s?.source === "model_question_bank" ||
       s?.folder === "Model Question Bank"
     );
@@ -1615,6 +1621,18 @@ const StudentDashboard = () => {
       return true;
     })
     .sort((a, b) => {
+      const aFree = checkSetIsFree(a);
+      const bFree = checkSetIsFree(b);
+      // Free sets ALWAYS stay at the very beginning (suru ma)
+      if (aFree && !bFree) return -1;
+      if (!aFree && bFree) return 1;
+
+      // Among paid sets: unlocked sets come before locked sets
+      const aUnlocked = isSetUnlocked(a);
+      const bUnlocked = isSetUnlocked(b);
+      if (aUnlocked && !bUnlocked) return -1;
+      if (!aUnlocked && bUnlocked) return 1;
+
       const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
       const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
       return numA - numB;
@@ -1638,11 +1656,23 @@ const StudentDashboard = () => {
         return true;
       })
       .sort((a, b) => {
+        const aFree = checkSetIsFree(a);
+        const bFree = checkSetIsFree(b);
+        // Free sets ALWAYS stay at the very beginning (suru ma)
+        if (aFree && !bFree) return -1;
+        if (!aFree && bFree) return 1;
+
+        // Among paid sets: unlocked sets come before locked sets
+        const aUnlocked = isSetUnlocked(a);
+        const bUnlocked = isSetUnlocked(b);
+        if (aUnlocked && !bUnlocked) return -1;
+        if (!aUnlocked && bUnlocked) return 1;
+
         const numA = parseInt((a.name || '').replace(/\D/g, '')) || 9999;
         const numB = parseInt((b.name || '').replace(/\D/g, '')) || 9999;
         return numA - numB;
       });
-  }, [examSets, isPureKoreanStudent, isPureJapaneseStudent]);
+  }, [examSets, isPureKoreanStudent, isPureJapaneseStudent, unlockedSets, activeStudentPackages]);
 
   const displayedHomeSets = useMemo(() => {
     let list = homeExamSets;
@@ -1657,14 +1687,10 @@ const StudentDashboard = () => {
 
     if (homeFilter === "free") {
       list = list.filter(s => checkSetIsFree(s));
-    } else if (homeFilter === "paid") {
-      list = list.filter(s => !checkSetIsFree(s) && !isSetUnlocked(s));
-    } else if (homeFilter === "unlocked") {
-      list = list.filter(s => isSetUnlocked(s));
     }
 
     return list;
-  }, [homeExamSets, homeSearch, homeFilter, unlockedSets, activeStudentPackages, examPackages]);
+  }, [homeExamSets, homeSearch, homeFilter]);
 
   const homeFreeCount = useMemo(() => homeExamSets.filter(s => checkSetIsFree(s)).length, [homeExamSets]);
   const homePaidCount = useMemo(() => homeExamSets.filter(s => !checkSetIsFree(s) && !isSetUnlocked(s)).length, [homeExamSets, unlockedSets, activeStudentPackages]);
@@ -2745,7 +2771,7 @@ const StudentDashboard = () => {
                     : "🌐 UBT & Exam Sets"}
                 </h2>
                 <p style={{ margin: 0, fontSize: "12.5px", color: "#64748b" }}>
-                  🎁 <strong>Free Sets</strong> are open to all students · 🛒 <strong>{isPureJapaneseStudent ? "Buy Mock Test" : "Buy UBT"}</strong> (Pay – रु. ३०)
+                  🎁 <strong>Free Sets</strong> are open to all students · Pay – रु. ३० to unlock more sets
                 </p>
               </div>
 
@@ -2755,8 +2781,6 @@ const StudentDashboard = () => {
                   {[
                     { id: "all", label: `All Sets (${homeExamSets.length})` },
                     { id: "free", label: `🎁 Free (${homeFreeCount})` },
-                    { id: "paid", label: isPureJapaneseStudent ? `🛒 Buy Mock Test (${homePaidCount})` : `🛒 Buy UBT (${homePaidCount})` },
-                    { id: "unlocked", label: `✓ Unlocked (${homeUnlockedCount})` },
                   ].map((tab) => {
                     const isActive = homeFilter === tab.id;
                     return (

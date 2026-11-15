@@ -74,10 +74,8 @@ export async function POST(req, { params }) {
       setNameLower.includes('free') ||
       setPkgLower.includes('free') ||
       setNameLower.includes('01~02') ||
-      setNameLower.includes('chapterwise 01') ||
-      setNameLower.includes('chapterwise 1') ||
-      setNameLower.includes('set 01') ||
-      setNameLower.includes('set 1') ||
+      /\bchapterwise\s*0?1\b/i.test(setNameLower) ||
+      /\bset\s*0?1\b/i.test(setNameLower) ||
       setNameLower.includes('demo') ||
       setPkgLower.includes('model') ||
       examSet.source === 'model_question_bank' ||
