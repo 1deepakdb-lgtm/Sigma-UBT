@@ -104,6 +104,12 @@ export const checkSetIsFree = (s) => Boolean(
   (s?.title && s.title.toLowerCase().includes("free")) ||
   (s?.packageName && s.packageName.toLowerCase().includes("free")) ||
   (s?.packageName && s.packageName.toLowerCase().includes("model")) ||
+  (s?.name && (
+    s.name.toLowerCase().includes("set 01") ||
+    s.name.toLowerCase().includes("set 1") ||
+    s.name.toLowerCase().includes("01~02") ||
+    s.name.toLowerCase().includes("demo")
+  )) ||
   s?.source === "model_question_bank" ||
   s?.folder === "Model Question Bank"
 );

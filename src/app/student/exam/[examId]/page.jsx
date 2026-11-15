@@ -147,9 +147,9 @@ const StudentExam = () => {
             return;
           }
         } else {
-          // STRICT SECURITY: If backend denies access (e.g. 403 Forbidden), halt immediately and redirect
+          // If backend denies access (e.g. 403 Forbidden because this is a paid set of Rs. 30)
           const errData = await res.json().catch(() => ({}));
-          alert(errData.error || "Access Denied: You do not have authorization to access this exam.");
+          alert(errData.error || "This exam set requires payment of Rs. 30. Please unlock via eSewa to take this test.");
           router.push("/student");
           return;
         }
@@ -219,10 +219,22 @@ const StudentExam = () => {
         (currentExamSet?.title && currentExamSet.title.toLowerCase().includes("free")) ||
         (currentExamSet?.packageName && currentExamSet.packageName.toLowerCase().includes("free")) ||
         (currentExamSet?.packageName && currentExamSet.packageName.toLowerCase().includes("model")) ||
+        (currentExamSet?.name && (
+          currentExamSet.name.toLowerCase().includes("set 01") ||
+          currentExamSet.name.toLowerCase().includes("set 1") ||
+          currentExamSet.name.toLowerCase().includes("01~02") ||
+          currentExamSet.name.toLowerCase().includes("demo")
+        )) ||
         currentExamSet?.source === "model_question_bank" ||
         currentExamSet?.folder === "Model Question Bank" ||
         (targetSetName && targetSetName.toLowerCase().includes("free")) ||
-        (targetSetName && targetSetName.toLowerCase().includes("model"))
+        (targetSetName && targetSetName.toLowerCase().includes("model")) ||
+        (targetSetName && (
+          targetSetName.toLowerCase().includes("set 01") ||
+          targetSetName.toLowerCase().includes("set 1") ||
+          targetSetName.toLowerCase().includes("01~02") ||
+          targetSetName.toLowerCase().includes("demo")
+        ))
       );
 
       const hasPaidExam = Boolean(
@@ -235,7 +247,7 @@ const StudentExam = () => {
       );
 
       if (!isExamSetFree && isFreeGuest && !hasPaidExam) {
-        alert("Access Restricted: UBT & Mock tests require a purchased package or individual set unlock. Please unlock this set via eSewa to take the exam.");
+        alert("This exam set requires payment of Rs. 30. Please unlock via eSewa to take this test.");
         router.push("/student");
         return;
       }

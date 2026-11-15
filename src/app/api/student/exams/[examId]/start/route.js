@@ -4,9 +4,6 @@ import { requireStudent } from '@/lib/rbac';
 
 export async function POST(req, { params }) {
   try {
-    const { session, errorResponse } = await requireStudent(req);
-    if (errorResponse) return errorResponse;
-
     const { examId } = params;
 
     // Find exam set by ID or name
@@ -41,53 +38,6 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'Exam set not found' }, { status: 404 });
     }
 
-    // Strict Institute Isolation:
-    // If set is private to another institute, prevent access
-    if (examSet.isPrivate && examSet.creatorInstituteId && examSet.creatorInstituteId !== session.instituteId) {
-      return NextResponse.json({ error: 'Access denied: This exam set is private to its creator institute.' }, { status: 403 });
-    }
-
-    // Fetch student profile including institute details
-    const studentUser = await prisma.user.findUnique({
-      where: { id: session.id },
-      include: {
-        institute: {
-          include: { examSets: true }
-        }
-      }
-    });
-
-    // Check student language track for strict Korean vs Japanese isolation
-    const studentLang = (studentUser?.institute?.language && studentUser.institute.language !== 'both')
-      ? studentUser.institute.language
-      : (studentUser?.language && studentUser.language !== 'both' ? studentUser.language : (studentUser?.institute?.language || studentUser?.language || 'both'));
-
-    const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const setPkgNorm = norm(examSet.packageName || examSet.package?.name || '');
-    const setNameNorm = norm(examSet.name || '');
-    const isJp = Boolean(
-      examSet.setType === 'MOCK' ||
-      examSet.track === 'japanese' ||
-      setNameNorm.includes('mock') ||
-      setNameNorm.includes('jlpt') ||
-      setNameNorm.includes('jft') ||
-      setNameNorm.includes('nat') ||
-      setPkgNorm.includes('mock')
-    );
-
-    // Strict Track Gate
-    if (studentLang === 'korean' && isJp) {
-      return NextResponse.json({
-        error: 'Access denied: Korean track students cannot access Japanese mock tests.'
-      }, { status: 403 });
-    }
-
-    if (studentLang === 'japanese' && !isJp) {
-      return NextResponse.json({
-        error: 'Access denied: Japanese track students cannot access Korean UBT exams.'
-      }, { status: 403 });
-    }
-
     // Access authorization check for student: All free sets are accessible by everyone across all devices
     const isFree = Boolean(
       examSet.isFree === true ||
@@ -103,11 +53,75 @@ export async function POST(req, { params }) {
       (examSet.name && examSet.name.toLowerCase().includes('free')) ||
       (examSet.packageName && examSet.packageName.toLowerCase().includes('free')) ||
       (examSet.packageName && examSet.packageName.toLowerCase().includes('model')) ||
+      (examSet.name && (
+        examSet.name.toLowerCase().includes('set 01') ||
+        examSet.name.toLowerCase().includes('set 1') ||
+        examSet.name.toLowerCase().includes('01~02') ||
+        examSet.name.toLowerCase().includes('demo')
+      )) ||
       examSet.source === 'model_question_bank' ||
       examSet.folder === 'Model Question Bank'
     );
 
+    // Optional session check for free sets, required session check for paid sets
+    const { session } = await requireStudent(req);
+
     if (!isFree) {
+      if (!session) {
+        return NextResponse.json({
+          error: `Set "${examSet.name}" requires payment of Rs. 30. Please log in and unlock via eSewa.`,
+          requiresPayment: true,
+          price: 30
+        }, { status: 401 });
+      }
+
+      // Strict Institute Isolation:
+      // If set is private to another institute, prevent access
+      if (examSet.isPrivate && examSet.creatorInstituteId && examSet.creatorInstituteId !== session.instituteId) {
+        return NextResponse.json({ error: 'Access denied: This exam set is private to its creator institute.' }, { status: 403 });
+      }
+
+      // Fetch student profile including institute details
+      const studentUser = await prisma.user.findUnique({
+        where: { id: session.id },
+        include: {
+          institute: {
+            include: { examSets: true }
+          }
+        }
+      });
+
+      // Check student language track for strict Korean vs Japanese isolation
+      const studentLang = (studentUser?.institute?.language && studentUser.institute.language !== 'both')
+        ? studentUser.institute.language
+        : (studentUser?.language && studentUser.language !== 'both' ? studentUser.language : (studentUser?.institute?.language || studentUser?.language || 'both'));
+
+      const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const setPkgNorm = norm(examSet.packageName || examSet.package?.name || '');
+      const setNameNorm = norm(examSet.name || '');
+      const isJp = Boolean(
+        examSet.setType === 'MOCK' ||
+        examSet.track === 'japanese' ||
+        setNameNorm.includes('mock') ||
+        setNameNorm.includes('jlpt') ||
+        setNameNorm.includes('jft') ||
+        setNameNorm.includes('nat') ||
+        setPkgNorm.includes('mock')
+      );
+
+      // Strict Track Gate
+      if (studentLang === 'korean' && isJp) {
+        return NextResponse.json({
+          error: 'Access denied: Korean track students cannot access Japanese mock tests.'
+        }, { status: 403 });
+      }
+
+      if (studentLang === 'japanese' && !isJp) {
+        return NextResponse.json({
+          error: 'Access denied: Japanese track students cannot access Korean UBT exams.'
+        }, { status: 403 });
+      }
+
       const isInstituteStudent = Boolean(
         studentUser?.instituteId &&
         !studentUser.instituteId.startsWith('examjk-open') &&
@@ -170,8 +184,6 @@ export async function POST(req, { params }) {
 
       if (!approvedTx) {
         if (isInstituteStudent) {
-          // Enrolled under an accredited Institute:
-          // Access is ONLY granted to exams/packages the institute assigned to them
           const assignedPkg = (studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim()) && !studentBatch.toLowerCase().includes('free'))
             ? studentBatch
             : (studentUser?.institute?.examPackage || null);
@@ -189,13 +201,14 @@ export async function POST(req, { params }) {
 
           if (!hasInstituteAccess) {
             return NextResponse.json({
-              error: 'Access denied: This exam is locked. It is not included in your institute\'s assigned package. Please contact your institute or buy to unlock.',
-              isLocked: true
+              error: `Set "${examSet.name}" requires payment of Rs. 30. Please unlock via eSewa to take this test.`,
+              isLocked: true,
+              requiresPayment: true,
+              price: 30
             }, { status: 403 });
           }
         } else {
-          // Self-registered / Google student:
-          // Access to paid/non-free sets can ONLY be granted by Super Admin!
+          // Self-registered student:
           const adminAssignedPkg = (studentBatch && !shiftNames.includes(studentBatch.toLowerCase().trim()) && !studentBatch.toLowerCase().includes('free') && !studentBatch.toLowerCase().includes('google') && !studentBatch.toLowerCase().includes('student'))
             ? studentBatch
             : null;
@@ -206,8 +219,10 @@ export async function POST(req, { params }) {
 
           if (!hasAdminAccess) {
             return NextResponse.json({
-              error: 'Access denied: Please buy to unlock this exam set for Rs. 30, or contact Super Admin.',
+              error: `Set "${examSet.name}" requires payment of Rs. 30. Please unlock via eSewa to take this test.`,
               isLocked: true,
+              requiresPayment: true,
+              price: 30,
               requiresAdminGrant: true
             }, { status: 403 });
           }
@@ -219,10 +234,11 @@ export async function POST(req, { params }) {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + durationSeconds * 1000);
 
-    // Create or retrieve ongoing exam session
+    // Create or retrieve ongoing exam session (use authenticated user ID or default student)
+    const activeUserId = session?.id || "f4f85796-a608-44ef-a0e9-57461f32d215";
     const examSession = await prisma.examSession.create({
       data: {
-        userId: session.id,
+        userId: activeUserId,
         examSetId: examSet.id,
         startedAt: now,
         expiresAt,
@@ -264,7 +280,7 @@ export async function POST(req, { params }) {
 
     // Fetch Institute Watermark if student has institute
     let watermark = '';
-    if (session.instituteId) {
+    if (session?.instituteId) {
       const inst = await prisma.institute.findUnique({
         where: { id: session.instituteId },
         select: { watermarkText: true, logoUrl: true }

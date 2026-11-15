@@ -65,8 +65,68 @@ function isSetCoveredByPackage(set, pkgName) {
 
 export async function GET(req) {
   try {
-    const { session, errorResponse } = await requireStudent(req);
-    if (errorResponse) return errorResponse;
+    const { session } = await requireStudent(req);
+
+    // If no active student session, return all public sets with free access enabled
+    if (!session) {
+      const publicSets = await prisma.examSet.findMany({
+        where: { isPublished: true, isPrivate: false },
+        include: {
+          package: true,
+          _count: { select: { questions: true } }
+        },
+        orderBy: { name: 'asc' }
+      });
+
+      const mapped = publicSets.map(set => {
+        const isFree = Boolean(
+          set.isFree === true ||
+          set.isFree === "true" ||
+          set.isFree === 1 ||
+          set.setType === 'FREE' ||
+          set.distributionMode === 'free' ||
+          set.isFreeForInstituteStudents === true ||
+          set.price === 0 ||
+          set.price === "0" ||
+          set.price === "Rs. 0" ||
+          (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
+          (set.name && set.name.toLowerCase().includes('free')) ||
+          (set.packageName && set.packageName.toLowerCase().includes('free')) ||
+          (set.packageName && set.packageName.toLowerCase().includes('model')) ||
+          (set.name && (
+            set.name.toLowerCase().includes('set 01') ||
+            set.name.toLowerCase().includes('set 1') ||
+            set.name.toLowerCase().includes('01~02') ||
+            set.name.toLowerCase().includes('demo')
+          )) ||
+          set.source === 'model_question_bank' ||
+          set.folder === 'Model Question Bank'
+        );
+
+        return {
+          id: set.id,
+          name: set.name,
+          packageName: set.packageName || set.package?.name || (set.setType === 'MOCK' ? 'Mock Test' : 'Full Set UBT'),
+          packageId: set.packageId,
+          creatorInstituteId: set.creatorInstituteId,
+          creatorInstituteName: set.creatorInstituteName,
+          isPrivate: set.isPrivate,
+          isPublished: set.isPublished,
+          isFree: isFree,
+          setType: set.setType,
+          duration: set.duration,
+          questionsCount: set._count?.questions || 40,
+          isUnlocked: isFree,
+          isInstituteSet: false
+        };
+      });
+
+      return NextResponse.json({
+        success: true,
+        sets: mapped,
+        pastResults: []
+      });
+    }
 
     // Fetch student profile including institute and assigned exam sets
     const studentUser = await prisma.user.findUnique({
@@ -197,6 +257,12 @@ export async function GET(req) {
           (set.name && set.name.toLowerCase().includes('free')) ||
           (set.packageName && set.packageName.toLowerCase().includes('free')) ||
           (set.packageName && set.packageName.toLowerCase().includes('model')) ||
+          (set.name && (
+            set.name.toLowerCase().includes('set 01') ||
+            set.name.toLowerCase().includes('set 1') ||
+            set.name.toLowerCase().includes('01~02') ||
+            set.name.toLowerCase().includes('demo')
+          )) ||
           set.source === 'model_question_bank' ||
           set.folder === 'Model Question Bank'
         );
