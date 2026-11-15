@@ -813,7 +813,8 @@ function InstituteQuestionManagerContent() {
   };
 
   const handleToggleInlineEdit = (q) => {
-    if (inlineEditingQuestionId === q.id) {
+    const qKey = q.id !== undefined && q.id !== null ? String(q.id) : `q-${q.qIndex || q.questionHeading}`;
+    if (inlineEditingQuestionId !== null && String(inlineEditingQuestionId) === qKey) {
       setInlineEditingQuestionId(null);
       setInlineForm(null);
       return;
@@ -849,7 +850,7 @@ function InstituteQuestionManagerContent() {
       package: q.package || filterPackage || "",
       set: q.set || filterSet || ""
     });
-    setInlineEditingQuestionId(q.id);
+    setInlineEditingQuestionId(qKey);
   };
 
   const handleSaveInlineEdit = async (q) => {
@@ -2083,7 +2084,8 @@ function InstituteQuestionManagerContent() {
                         const ansSymbols = ["①", "②", "③", "④"];
                         const rawAnsText = q.options?.[ansIdx];
                         const ansText = typeof rawAnsText === "string" ? rawAnsText : (rawAnsText?.text || "");
-                        const isInlineEditing = inlineEditingQuestionId === q.id;
+                        const qKey = q.id !== undefined && q.id !== null ? String(q.id) : `q-${q.qIndex || q.questionHeading || qIdx}`;
+                        const isInlineEditing = inlineEditingQuestionId !== null && String(inlineEditingQuestionId) === qKey;
 
                         return (
                           <React.Fragment key={q.id || qIdx}>

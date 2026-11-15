@@ -1311,7 +1311,8 @@ function AdminQuestionManagerContent() {
   };
 
   const handleToggleInlineEdit = (q) => {
-    if (inlineEditingQuestionId === q.id) {
+    const qKey = q.id !== undefined && q.id !== null ? String(q.id) : `q-${q.qIndex || q.questionHeading}`;
+    if (inlineEditingQuestionId !== null && String(inlineEditingQuestionId) === qKey) {
       setInlineEditingQuestionId(null);
       setInlineForm(null);
       return;
@@ -1347,7 +1348,7 @@ function AdminQuestionManagerContent() {
       package: q.package || filterPackage || "",
       set: q.set || filterSet || ""
     });
-    setInlineEditingQuestionId(q.id);
+    setInlineEditingQuestionId(qKey);
   };
 
   const handleSaveInlineEdit = async (q) => {
@@ -2700,7 +2701,8 @@ function AdminQuestionManagerContent() {
                           const ansSymbols = ["①", "②", "③", "④"];
                           const rawAnsText = q.options?.[ansIdx];
                           const ansText = typeof rawAnsText === "string" ? rawAnsText : (rawAnsText?.text || "");
-                          const isInlineEditing = inlineEditingQuestionId === q.id;
+                          const qKey = q.id !== undefined && q.id !== null ? String(q.id) : `q-${q.qIndex || q.questionHeading || qIdx}`;
+                          const isInlineEditing = inlineEditingQuestionId !== null && String(inlineEditingQuestionId) === qKey;
 
                           return (
                             <React.Fragment key={q.id || qIdx}>
@@ -4161,7 +4163,8 @@ function AdminQuestionManagerContent() {
                       {displayedSetQuestions.map((q, idx) => {
                         const num = Number(q.questionHeading) || Number(q.qIndex) || idx + 1;
                         const isReading = q.type === "Reading";
-                        const isInlineEditing = inlineEditingQuestionId === q.id;
+                        const qKey = q.id !== undefined && q.id !== null ? String(q.id) : `q-${q.qIndex || q.questionHeading || idx}`;
+                        const isInlineEditing = inlineEditingQuestionId !== null && String(inlineEditingQuestionId) === qKey;
 
                         return (
                           <React.Fragment key={q.id || idx}>
