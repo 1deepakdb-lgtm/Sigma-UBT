@@ -154,6 +154,24 @@ export default function EsewaCheckoutModal({
     }
   };
 
+  // Direct Mobile eSewa App Launch (Opens eSewa App on Android/iOS and copies 9768444902)
+  const handleOpenEsewaApp = () => {
+    navigator.clipboard.writeText(esewaNumber);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+
+    const isAndroid = typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
+    const isIOS = typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    if (isAndroid) {
+      window.location.href = "intent://#Intent;scheme=esewa;package=com.f1soft.esewa;end";
+    } else if (isIOS) {
+      window.location.href = "esewa://";
+    } else {
+      handleEsewaOnlinePay();
+    }
+  };
+
   // Student submits the query with payment screenshot and Txn ID (1-click to WhatsApp & Super Admin)
   const handleSendQuery = async () => {
     // Require payment screenshot from eSewa or any Bank
@@ -558,22 +576,22 @@ export default function EsewaCheckoutModal({
                 </div>
               </div>
 
-              {/* PRIMARY METHOD: ESEWA ONLINE CHECKOUT (DIRECT LOGIN WITH MPIN & AUTO-UNLOCK) */}
+              {/* PRIMARY METHOD: ESEWA APP & ESEWA ONLINE PAYMENT */}
               <div
                 style={{
                   backgroundColor: "#f0fdf4",
                   border: "2px solid #16a34a",
-                  borderRadius: "10px",
-                  padding: "12px 14px",
+                  borderRadius: "12px",
+                  padding: "14px 16px",
                   marginBottom: "12px",
                   boxShadow: "0 4px 12px rgba(22, 163, 74, 0.12)"
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "16px" }}>🟢</span>
-                    <strong style={{ fontSize: "13.5px", color: "#166534" }}>
-                      Method 1: Pay via eSewa.com Online
+                    <span style={{ fontSize: "18px" }}>📱</span>
+                    <strong style={{ fontSize: "14px", color: "#166534" }}>
+                      Method 1: eSewa एप वा अनलाइनबाट भुक्तानी
                     </strong>
                   </div>
                   <span
@@ -591,46 +609,76 @@ export default function EsewaCheckoutModal({
                   </span>
                 </div>
 
-                <p style={{ margin: "0 0 10px 0", fontSize: "11.5px", color: "#15803d", lineHeight: "1.45" }}>
-                  Click below to open <strong>eSewa.com</strong>. Log in with your <strong>eSewa Mobile Number</strong> &amp; <strong>MPIN</strong> to pay <strong>{formattedPrice}</strong> directly to <strong>{esewaNumber}</strong> ({esewaAccountName}). Upon successful payment, it will return here and <strong>instantly unlock this UBT set!</strong>
+                <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
+                  eSewa एपमार्फत वा eSewa अनलाइन लगइन गरी <strong>{formattedPrice}</strong> भुक्तानी गर्नुहोस्। भुक्तानी प्रमाणित हुनासाथ यो सेट <strong>स्वतः अनलक भई तुरुन्तै परीक्षा सुरु</strong> हुनेछ।
                 </p>
 
-                <button
-                  type="button"
-                  onClick={handleEsewaOnlinePay}
-                  disabled={isInitiatingEsewa}
-                  style={{
-                    width: "100%",
-                    background: isInitiatingEsewa
-                      ? "#94a3b8"
-                      : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "11px 16px",
-                    borderRadius: "8px",
-                    fontWeight: "800",
-                    fontSize: "13.5px",
-                    cursor: isInitiatingEsewa ? "not-allowed" : "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)",
-                    transition: "all 0.15s ease"
-                  }}
-                >
-                  {isInitiatingEsewa ? (
-                    <>
-                      <span>⏳</span>
-                      <span>Redirecting to eSewa.com...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Pay {formattedPrice} with eSewa &amp; Unlock</span>
-                      <span style={{ fontSize: "14px" }}>↗</span>
-                    </>
-                  )}
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {/* Option A: Open directly in eSewa Mobile App */}
+                  <button
+                    type="button"
+                    onClick={handleOpenEsewaApp}
+                    style={{
+                      width: "100%",
+                      background: "linear-gradient(135deg, #15803d 0%, #166534 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "11px 16px",
+                      borderRadius: "8px",
+                      fontWeight: "800",
+                      fontSize: "13.5px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    <span>📱</span>
+                    <span>eSewa App खोल्नुहोस् र भुक्तानी गर्नुहोस् ({formattedPrice})</span>
+                  </button>
+
+                  {/* Option B: eSewa Web Gateway with Auto-Return */}
+                  <button
+                    type="button"
+                    onClick={handleEsewaOnlinePay}
+                    disabled={isInitiatingEsewa}
+                    style={{
+                      width: "100%",
+                      background: isInitiatingEsewa
+                        ? "#94a3b8"
+                        : "#ffffff",
+                      color: "#166534",
+                      border: "1.5px solid #16a34a",
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      fontWeight: "800",
+                      fontSize: "13px",
+                      cursor: isInitiatingEsewa ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    {isInitiatingEsewa ? (
+                      <>
+                        <span>⏳</span>
+                        <span>eSewa मा जोडिँदै...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🌐</span>
+                        <span>eSewa लगइन गरी भुक्तानी (Auto-Return & Unlock)</span>
+                        <span style={{ fontSize: "14px" }}>↗</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* DIVIDER */}

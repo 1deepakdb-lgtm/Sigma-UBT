@@ -2734,7 +2734,7 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Section 2: Korean UBT & Chapterwise Exam Sets (Free & Paid Rs. 30) */}
+            {/* Section 2: Korean UBT & Chapterwise Exam Sets (Free & Buy UBT: Pay – रु. ३०) */}
             <div style={{ marginTop: "12px" }}>
               <div style={{ textAlign: "center", marginBottom: "16px" }}>
                 <h2 style={{ color: "#111827", fontSize: "20px", fontWeight: "800", margin: "0 0 6px 0", letterSpacing: "-0.2px" }}>
@@ -2745,7 +2745,7 @@ const StudentDashboard = () => {
                     : "UBT & Exam Sets"}
                 </h2>
                 <p style={{ margin: 0, fontSize: "12.5px", color: "#64748b" }}>
-                  🎁 <strong>Free Sets</strong> are open to all students · 🔒 <strong>Paid Sets</strong> available for Rs. 30
+                  🎁 <strong>Free Sets</strong> are open to all students · 🛒 <strong>Buy UBT</strong> (Pay – रु. ३०)
                 </p>
               </div>
 
@@ -2755,7 +2755,7 @@ const StudentDashboard = () => {
                   {[
                     { id: "all", label: `All Sets (${homeExamSets.length})` },
                     { id: "free", label: `🎁 Free (${homeFreeCount})` },
-                    { id: "paid", label: `🔒 Paid Rs. 30 (${homePaidCount})` },
+                    { id: "paid", label: `🛒 Buy UBT (${homePaidCount})` },
                     { id: "unlocked", label: `✓ Unlocked (${homeUnlockedCount})` },
                   ].map((tab) => {
                     const isActive = homeFilter === tab.id;
@@ -2864,13 +2864,10 @@ const StudentDashboard = () => {
                           transition: "all 0.15s ease"
                         }}
                       >
-                        {/* Left Title & Info */}
+                        {/* Left Title Only - Matching user specification (set name only, no question count or time) */}
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{ fontSize: "17.5px", fontWeight: "700", color: "#1e293b", letterSpacing: "0.2px", lineHeight: "1.3" }}>
                             {set.name}
-                          </div>
-                          <div style={{ fontSize: "12px", color: "#64748b", marginTop: "3px", fontWeight: "500" }}>
-                            {set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "Full Set UBT")} · {set.totalQs || set.questionsCount || 40} Questions · {set.timeMin || set.duration || 50} Min
                           </div>
                         </div>
 
@@ -2887,7 +2884,7 @@ const StudentDashboard = () => {
                                 border: "none",
                                 borderRadius: "24px",
                                 padding: "10px 26px",
-                                minWidth: "105px",
+                                minWidth: "110px",
                                 textAlign: "center",
                                 fontSize: "15px",
                                 fontWeight: "800",
@@ -2910,7 +2907,7 @@ const StudentDashboard = () => {
                                 border: "none",
                                 borderRadius: "24px",
                                 padding: "10px 26px",
-                                minWidth: "105px",
+                                minWidth: "110px",
                                 textAlign: "center",
                                 fontSize: "15px",
                                 fontWeight: "800",
@@ -2948,7 +2945,7 @@ const StudentDashboard = () => {
                                 border: "none",
                                 borderRadius: "24px",
                                 padding: "10px 18px",
-                                minWidth: "105px",
+                                minWidth: "110px",
                                 textAlign: "center",
                                 fontSize: "13.5px",
                                 fontWeight: "800",
@@ -2961,70 +2958,36 @@ const StudentDashboard = () => {
                               ⏳ Pending
                             </button>
                           ) : (
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <button
-                                type="button"
-                                onClick={() => handleDirectEsewaBuy(set)}
-                                disabled={initiatingEsewaSetId === (set.id || set.name)}
-                                title="Buy directly via eSewa.com Online (9768444902) — Instant Auto-Unlock"
-                                style={{
-                                  backgroundColor: "#2d6a4f", // Forest Green from screenshot
-                                  color: "#ffffff",
-                                  border: "none",
-                                  borderRadius: "24px",
-                                  padding: "10px 20px",
-                                  minWidth: "105px",
-                                  textAlign: "center",
-                                  fontSize: "15px",
-                                  fontWeight: "800",
-                                  cursor: initiatingEsewaSetId === (set.id || set.name) ? "wait" : "pointer",
-                                  boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
-                                  transition: "all 0.15s ease",
-                                  whiteSpace: "nowrap",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  gap: "5px"
-                                }}
-                              >
-                                {initiatingEsewaSetId === (set.id || set.name) ? (
-                                  <>
-                                    <span>⏳</span>
-                                    <span style={{ fontSize: "13px" }}>Connecting...</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <span>Rs. 30</span>
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleOpenEsewaModal({
-                                    id: set.id,
-                                    name: set.name,
-                                    price: 30,
-                                    type: "set",
-                                    packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
-                                  });
-                                }}
-                                title="Open QR Code / Manual payment option"
-                                style={{
-                                  backgroundColor: "#ffffff",
-                                  color: "#166534",
-                                  border: "1.5px solid #86efac",
-                                  borderRadius: "20px",
-                                  padding: "7px 10px",
-                                  fontSize: "11.5px",
-                                  fontWeight: "700",
-                                  cursor: "pointer",
-                                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-                                }}
-                              >
-                                📷 QR
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleOpenEsewaModal({
+                                  id: set.id,
+                                  name: set.name,
+                                  price: 30,
+                                  type: "set",
+                                  packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
+                                });
+                              }}
+                              title="Pay Rs. 30 via eSewa to unlock this exam set"
+                              style={{
+                                backgroundColor: "#2d6a4f", // Forest Green matching user's image
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "24px",
+                                padding: "10px 22px",
+                                minWidth: "115px",
+                                textAlign: "center",
+                                fontSize: "15px",
+                                fontWeight: "800",
+                                cursor: "pointer",
+                                boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
+                                transition: "all 0.15s ease",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              Pay – रु. ३०
+                            </button>
                           )}
                         </div>
                       </div>
@@ -3402,16 +3365,13 @@ const StudentDashboard = () => {
                             </span>
                           ) : (
                             <span style={{ fontSize: "10px", fontWeight: "800", color: "#c2410c", backgroundColor: "#fff7ed", border: "1px solid #fed7aa", padding: "2px 6px", borderRadius: "4px" }}>
-                              🔒 Rs. 30
+                              Pay – रु. ३०
                             </span>
                           )}
                         </div>
                         <h4 style={{ margin: 0, fontSize: "15px", color: "#0f172a", fontWeight: "800" }}>
                           {set.name}
                         </h4>
-                        <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#64748b" }}>
-                          {set.totalQs || 40} Questions · {set.timeMin || 50} Min
-                        </p>
                       </div>
 
                       <button
@@ -3504,7 +3464,7 @@ const StudentDashboard = () => {
                           ? "⏳ PENDING (Rs. 30)"
                           : initiatingEsewaSetId === (set.id || set.name)
                           ? "⏳ CONNECTING ESEWA..."
-                          : "🟢 BUY VIA ESEWA (RS. 30) ▶"}
+                          : "🟢 Pay – रु. ३० (eSewa) ▶"}
                       </button>
                       {!unlocked && !isFree && !pending && (
                         <div style={{ textAlign: "center", marginTop: "4px" }}>
