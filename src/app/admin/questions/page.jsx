@@ -172,6 +172,11 @@ function AdminQuestionManagerContent() {
   const [inlineEditingQuestionId, setInlineEditingQuestionId] = useState(null);
   const [inlineForm, setInlineForm] = useState(null);
   const [inlineIsSaving, setInlineIsSaving] = useState(false);
+  const [inlineHistory, setInlineHistory] = useState([]);
+  const [inlineImgDragOver, setInlineImgDragOver] = useState(false);
+  const [inlineAudioDragOver, setInlineAudioDragOver] = useState(false);
+  const [inlineOptImgDragOver, setInlineOptImgDragOver] = useState(null);
+  const [qFormHistory, setQFormHistory] = useState([]);
 
   const inputRefs = useRef([]);
 
@@ -1472,17 +1477,107 @@ function AdminQuestionManagerContent() {
     e.target.value = "";
   };
 
+  const pushInlineHistory = (currentForm) => {
+    if (!currentForm) return;
+    setInlineHistory(prev => [...prev.slice(-20), JSON.parse(JSON.stringify(currentForm))]);
+  };
+
+  const handleInlineUndo = () => {
+    if (!inlineHistory || inlineHistory.length === 0) return;
+    const last = inlineHistory[inlineHistory.length - 1];
+    setInlineHistory(prev => prev.slice(0, -1));
+    setInlineForm(last);
+  };
+
+  const pushQFormHistory = (currentForm) => {
+    if (!currentForm) return;
+    setQFormHistory(prev => [...prev.slice(-20), JSON.parse(JSON.stringify(currentForm))]);
+  };
+
+  const handleQFormUndo = () => {
+    if (!qFormHistory || qFormHistory.length === 0) return;
+    const last = qFormHistory[qFormHistory.length - 1];
+    setQFormHistory(prev => prev.slice(0, -1));
+    setQForm(last);
+  };
+
+  const handleInlinePaste = (e, target = "question") => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf("image") !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          pushInlineHistory(inlineForm);
+          uploadOrProcessFile(file, (url) => {
+            if (target === "question") {
+              setInlineForm(prev => ({ ...prev, image: url }));
+            } else if (typeof target === "number") {
+              setInlineForm(prev => {
+                const nextOpts = [...prev.options];
+                nextOpts[target] = { ...nextOpts[target], image: url };
+                return { ...prev, options: nextOpts };
+              });
+            }
+          });
+          break;
+        }
+      }
+    }
+  };
+
+  const handleQFormPaste = (e, optIdx = null) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf("image") !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          pushQFormHistory(qForm);
+          processFileToDataURL(file, (mediaUrl) => {
+            if (optIdx === null) {
+              setQForm(prev => ({ ...prev, image: mediaUrl }));
+            } else {
+              setQForm(prev => {
+                const nextOpts = [...prev.options];
+                nextOpts[optIdx] = { ...nextOpts[optIdx], image: mediaUrl };
+                return { ...prev, options: nextOpts };
+              });
+            }
+          });
+          break;
+        }
+      }
+    }
+  };
+
   const renderInlineEditor = (q) => {
     if (!inlineForm) return null;
     const ansSymbols = ["①", "②", "③", "④"];
     return (
-      <div style={{
-        backgroundColor: "#ffffff",
-        border: "2px solid #38bdf8",
-        borderRadius: "10px",
-        padding: "16px 20px",
-        boxShadow: "0 4px 16px rgba(2, 132, 199, 0.12)"
-      }}>
+      <div
+        onPaste={(e) => handleInlinePaste(e, "question")}
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+            const tag = document.activeElement?.tagName?.toLowerCase();
+            if (tag !== "input" && tag !== "textarea") {
+              e.preventDefault();
+              handleInlineUndo();
+            }
+          }
+        }}
+        tabIndex={0}
+        style={{
+          backgroundColor: "#ffffff",
+          border: "2px solid #38bdf8",
+          borderRadius: "10px",
+          padding: "16px 20px",
+          boxShadow: "0 4px 16px rgba(2, 132, 199, 0.12)",
+          outline: "none"
+        }}
+      >
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid #e2e8f0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1493,7 +1588,28 @@ function AdminQuestionManagerContent() {
               Type: <strong style={{ color: inlineForm.type === "Listening" ? "#7c3aed" : "#1e40af" }}>{inlineForm.type}</strong>
             </span>
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={handleInlineUndo}
+              disabled={inlineHistory.length === 0}
+              title="Undo last change (Ctrl+Z)"
+              style={{
+                backgroundColor: inlineHistory.length > 0 ? "#fef3c7" : "#f1f5f9",
+                color: inlineHistory.length > 0 ? "#b45309" : "#94a3b8",
+                border: inlineHistory.length > 0 ? "1px solid #fde68a" : "1px solid #cbd5e1",
+                padding: "7px 12px",
+                borderRadius: "6px",
+                fontWeight: "700",
+                fontSize: "12px",
+                cursor: inlineHistory.length > 0 ? "pointer" : "not-allowed",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px"
+              }}
+            >
+              ↺ Undo {inlineHistory.length > 0 ? `(${inlineHistory.length})` : ""}
+            </button>
             <button
               type="button"
               onClick={() => handleSaveInlineEdit(q)}
@@ -1516,7 +1632,7 @@ function AdminQuestionManagerContent() {
             </button>
             <button
               type="button"
-              onClick={() => { setInlineEditingQuestionId(null); setInlineForm(null); }}
+              onClick={() => { setInlineEditingQuestionId(null); setInlineForm(null); setInlineHistory([]); }}
               style={{
                 backgroundColor: "#f1f5f9",
                 color: "#475569",
@@ -1544,6 +1660,7 @@ function AdminQuestionManagerContent() {
               <input
                 type="text"
                 value={inlineForm.mainHeading}
+                onFocus={() => pushInlineHistory(inlineForm)}
                 onChange={(e) => setInlineForm(prev => ({ ...prev, mainHeading: e.target.value }))}
                 placeholder="e.g. [1~2] 다음 내용과 관계있는 그림을 고르십시오."
                 style={{ width: "100%", padding: "8px 10px", fontSize: "13px", border: "1.5px solid #cbd5e1", borderRadius: "6px", outline: "none", fontWeight: "600" }}
@@ -1557,6 +1674,7 @@ function AdminQuestionManagerContent() {
               <textarea
                 rows={3}
                 value={inlineForm.description}
+                onFocus={() => pushInlineHistory(inlineForm)}
                 onChange={(e) => setInlineForm(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Passage text, conversation dialogue, or vocabulary sentence..."
                 style={{ width: "100%", padding: "8px 10px", fontSize: "13px", border: "1.5px solid #cbd5e1", borderRadius: "6px", outline: "none", fontFamily: "inherit" }}
@@ -1565,51 +1683,167 @@ function AdminQuestionManagerContent() {
 
             {/* Media Uploads */}
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", backgroundColor: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-              {/* Question Image */}
-              <div style={{ flex: 1, minWidth: "150px" }}>
-                <label style={{ display: "block", fontSize: "11.5px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
-                  🖼️ Question Image:
-                </label>
+              {/* Question Image Drop Zone */}
+              <div style={{ flex: 1, minWidth: "160px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "11.5px", fontWeight: "700", color: "#475569" }}>
+                    🖼️ Question Image:
+                  </label>
+                  <span style={{ fontSize: "10px", color: "#0284c7", fontWeight: "600" }}>Drag & drop / Ctrl+V</span>
+                </div>
                 {inlineForm.image ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <img src={inlineForm.image} alt="Q Visual" style={{ maxHeight: "55px", maxWidth: "90px", objectFit: "contain", border: "1px solid #cbd5e1", borderRadius: "4px" }} />
-                    <button
-                      type="button"
-                      onClick={() => setInlineForm(prev => ({ ...prev, image: "" }))}
-                      style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "4px", padding: "3px 7px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
-                    >
-                      Remove
-                    </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "#ffffff", padding: "6px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
+                    <img
+                      src={inlineForm.image}
+                      alt="Q Visual"
+                      onClick={() => setPreviewImage(inlineForm.image)}
+                      style={{ maxHeight: "55px", maxWidth: "90px", objectFit: "contain", border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer" }}
+                    />
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pushInlineHistory(inlineForm);
+                          setInlineForm(prev => ({ ...prev, image: "" }));
+                        }}
+                        style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "4px", padding: "3px 7px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                      >
+                        Remove
+                      </button>
+                      <label style={{ fontSize: "10.5px", color: "#2563eb", cursor: "pointer", fontWeight: "600" }}>
+                        🔄 Replace
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            pushInlineHistory(inlineForm);
+                            handleInlineImageUpload(e);
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
                 ) : (
-                  <label style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 10px", backgroundColor: "#ffffff", border: "1.5px dashed #94a3b8", borderRadius: "5px", cursor: "pointer", fontSize: "11.5px", fontWeight: "600", color: "#2563eb" }}>
-                    <span>📷 Upload Image</span>
-                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleInlineImageUpload} />
-                  </label>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setInlineImgDragOver(true); }}
+                    onDragLeave={(e) => { e.preventDefault(); setInlineImgDragOver(false); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setInlineImgDragOver(false);
+                      const file = e.dataTransfer?.files?.[0];
+                      if (file) {
+                        pushInlineHistory(inlineForm);
+                        uploadOrProcessFile(file, (url) => setInlineForm(prev => ({ ...prev, image: url })));
+                      }
+                    }}
+                    onPaste={(e) => handleInlinePaste(e, "question")}
+                    tabIndex={0}
+                    style={{
+                      border: inlineImgDragOver ? "2px dashed #0284c7" : "1.5px dashed #94a3b8",
+                      backgroundColor: inlineImgDragOver ? "#e0f2fe" : "#ffffff",
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      outline: "none"
+                    }}
+                  >
+                    <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
+                      <span style={{ fontSize: "11.5px", fontWeight: "700", color: "#2563eb" }}>
+                        {inlineImgDragOver ? "📥 Drop Image Here!" : "📷 Drop image / Ctrl+V / Browse"}
+                      </span>
+                      <span style={{ fontSize: "10px", color: "#64748b" }}>PNG, JPG, WebP</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          pushInlineHistory(inlineForm);
+                          handleInlineImageUpload(e);
+                        }}
+                      />
+                    </label>
+                  </div>
                 )}
               </div>
 
-              {/* Question Audio */}
+              {/* Question Audio Drop Zone */}
               <div style={{ flex: 1, minWidth: "170px" }}>
-                <label style={{ display: "block", fontSize: "11.5px", fontWeight: "700", color: "#475569", marginBottom: "4px" }}>
-                  🎙️ Question Audio:
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "11.5px", fontWeight: "700", color: "#475569" }}>
+                    🎙️ Question Audio:
+                  </label>
+                  <span style={{ fontSize: "10px", color: "#7c3aed", fontWeight: "600" }}>Drag & drop .mp3</span>
+                </div>
                 {inlineForm.audio ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <audio src={inlineForm.audio} controls style={{ height: "26px", maxWidth: "150px" }} />
-                    <button
-                      type="button"
-                      onClick={() => setInlineForm(prev => ({ ...prev, audio: "" }))}
-                      style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "4px", padding: "3px 7px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
-                    >
-                      Remove
-                    </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "#ffffff", padding: "6px", borderRadius: "6px", border: "1px solid #cbd5e1" }}>
+                    <audio src={inlineForm.audio} controls style={{ height: "26px", maxWidth: "140px" }} />
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pushInlineHistory(inlineForm);
+                          setInlineForm(prev => ({ ...prev, audio: "" }));
+                        }}
+                        style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "4px", padding: "3px 6px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}
+                      >
+                        Remove
+                      </button>
+                      <label style={{ fontSize: "10.5px", color: "#7c3aed", cursor: "pointer", fontWeight: "600" }}>
+                        🔄 Replace
+                        <input
+                          type="file"
+                          accept="audio/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            pushInlineHistory(inlineForm);
+                            handleInlineAudioUpload(e);
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
                 ) : (
-                  <label style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 10px", backgroundColor: "#ffffff", border: "1.5px dashed #94a3b8", borderRadius: "5px", cursor: "pointer", fontSize: "11.5px", fontWeight: "600", color: "#7c3aed" }}>
-                    <span>🎵 Upload MP3</span>
-                    <input type="file" accept="audio/*" style={{ display: "none" }} onChange={handleInlineAudioUpload} />
-                  </label>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setInlineAudioDragOver(true); }}
+                    onDragLeave={(e) => { e.preventDefault(); setInlineAudioDragOver(false); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setInlineAudioDragOver(false);
+                      const file = e.dataTransfer?.files?.[0];
+                      if (file) {
+                        pushInlineHistory(inlineForm);
+                        uploadOrProcessFile(file, (url) => setInlineForm(prev => ({ ...prev, audio: url })));
+                      }
+                    }}
+                    tabIndex={0}
+                    style={{
+                      border: inlineAudioDragOver ? "2px dashed #7c3aed" : "1.5px dashed #c4b5fd",
+                      backgroundColor: inlineAudioDragOver ? "#f5f3ff" : "#ffffff",
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      outline: "none"
+                    }}
+                  >
+                    <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
+                      <span style={{ fontSize: "11.5px", fontWeight: "700", color: "#7c3aed" }}>
+                        {inlineAudioDragOver ? "📥 Drop MP3 Here!" : "🎵 Drop audio (.mp3) / Browse"}
+                      </span>
+                      <span style={{ fontSize: "10px", color: "#64748b" }}>MP3, WAV, OGG</span>
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          pushInlineHistory(inlineForm);
+                          handleInlineAudioUpload(e);
+                        }}
+                      />
+                    </label>
+                  </div>
                 )}
               </div>
             </div>
@@ -1629,23 +1863,50 @@ function AdminQuestionManagerContent() {
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {inlineForm.options.map((opt, oIdx) => {
                 const isSelected = inlineForm.answer === oIdx;
+                const isOptDrag = inlineOptImgDragOver === oIdx;
                 return (
                   <div
                     key={oIdx}
+                    onDragOver={(e) => { e.preventDefault(); setInlineOptImgDragOver(oIdx); }}
+                    onDragLeave={(e) => { e.preventDefault(); setInlineOptImgDragOver(null); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setInlineOptImgDragOver(null);
+                      const file = e.dataTransfer?.files?.[0];
+                      if (file) {
+                        pushInlineHistory(inlineForm);
+                        uploadOrProcessFile(file, (url) => {
+                          const isAudio = file.type?.startsWith("audio/") || file.name?.endsWith(".mp3");
+                          setInlineForm(prev => {
+                            const nextOpts = [...prev.options];
+                            if (isAudio) {
+                              nextOpts[oIdx] = { ...nextOpts[oIdx], audio: url };
+                            } else {
+                              nextOpts[oIdx] = { ...nextOpts[oIdx], image: url };
+                            }
+                            return { ...prev, options: nextOpts };
+                          });
+                        });
+                      }
+                    }}
+                    onPaste={(e) => handleInlinePaste(e, oIdx)}
                     style={{
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      backgroundColor: isSelected ? "#f0fdf4" : "#ffffff",
-                      border: isSelected ? "1.5px solid #86efac" : "1px solid #cbd5e1"
+                      backgroundColor: isOptDrag ? "#e0f2fe" : (isSelected ? "#f0fdf4" : "#ffffff"),
+                      border: isOptDrag ? "1.5px dashed #0284c7" : (isSelected ? "1.5px solid #86efac" : "1px solid #cbd5e1")
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <button
                         type="button"
-                        onClick={() => setInlineForm(prev => ({ ...prev, answer: oIdx }))}
+                        onClick={() => {
+                          pushInlineHistory(inlineForm);
+                          setInlineForm(prev => ({ ...prev, answer: oIdx }));
+                        }}
                         style={{
                           backgroundColor: isSelected ? "#16a34a" : "#f1f5f9",
                           color: isSelected ? "#ffffff" : "#475569",
@@ -1667,6 +1928,7 @@ function AdminQuestionManagerContent() {
                       <input
                         type="text"
                         value={opt.text}
+                        onFocus={() => pushInlineHistory(inlineForm)}
                         onChange={(e) => {
                           const text = e.target.value;
                           setInlineForm(prev => {
@@ -1688,13 +1950,14 @@ function AdminQuestionManagerContent() {
                     </div>
 
                     {/* Image & Audio for option */}
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center", paddingLeft: "4px" }}>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", paddingLeft: "4px", flexWrap: "wrap" }}>
                       {opt.image ? (
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                          <img src={opt.image} alt={`Opt ${oIdx + 1}`} style={{ height: "24px", maxWidth: "40px", objectFit: "contain", border: "1px solid #cbd5e1", borderRadius: "2px" }} />
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", backgroundColor: "#f8fafc", padding: "2px 6px", borderRadius: "4px", border: "1px solid #cbd5e1" }}>
+                          <img src={opt.image} alt={`Opt ${oIdx + 1}`} onClick={() => setPreviewImage(opt.image)} style={{ height: "24px", maxWidth: "40px", objectFit: "contain", borderRadius: "2px", cursor: "pointer" }} />
                           <button
                             type="button"
                             onClick={() => {
+                              pushInlineHistory(inlineForm);
                               setInlineForm(prev => {
                                 const nextOpts = [...prev.options];
                                 nextOpts[oIdx] = { ...nextOpts[oIdx], image: "" };
@@ -1707,18 +1970,27 @@ function AdminQuestionManagerContent() {
                           </button>
                         </div>
                       ) : (
-                        <label style={{ cursor: "pointer", color: "#64748b", fontSize: "10.5px" }}>
-                          + img
-                          <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleInlineOptImageUpload(e, oIdx)} />
+                        <label style={{ cursor: "pointer", color: "#64748b", fontSize: "10.5px", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                          <span>+ 📷 img (or drop/paste)</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: "none" }}
+                            onChange={(e) => {
+                              pushInlineHistory(inlineForm);
+                              handleInlineOptImageUpload(e, oIdx);
+                            }}
+                          />
                         </label>
                       )}
 
                       {opt.audio ? (
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", backgroundColor: "#f8fafc", padding: "2px 6px", borderRadius: "4px", border: "1px solid #cbd5e1" }}>
                           <audio src={opt.audio} controls style={{ height: "20px", maxWidth: "120px" }} />
                           <button
                             type="button"
                             onClick={() => {
+                              pushInlineHistory(inlineForm);
                               setInlineForm(prev => {
                                 const nextOpts = [...prev.options];
                                 nextOpts[oIdx] = { ...nextOpts[oIdx], audio: "" };
@@ -1731,9 +2003,17 @@ function AdminQuestionManagerContent() {
                           </button>
                         </div>
                       ) : (
-                        <label style={{ cursor: "pointer", color: "#7c3aed", fontSize: "10.5px" }}>
-                          + audio
-                          <input type="file" accept="audio/*" style={{ display: "none" }} onChange={(e) => handleInlineOptAudioUpload(e, oIdx)} />
+                        <label style={{ cursor: "pointer", color: "#7c3aed", fontSize: "10.5px", display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                          <span>+ 🎵 audio</span>
+                          <input
+                            type="file"
+                            accept="audio/*"
+                            style={{ display: "none" }}
+                            onChange={(e) => {
+                              pushInlineHistory(inlineForm);
+                              handleInlineOptAudioUpload(e, oIdx);
+                            }}
+                          />
                         </label>
                       )}
                     </div>
@@ -1745,44 +2025,74 @@ function AdminQuestionManagerContent() {
         </div>
 
         {/* Footer */}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "14px", paddingTop: "10px", borderTop: "1px solid #e2e8f0" }}>
-          <button
-            type="button"
-            onClick={() => { setInlineEditingQuestionId(null); setInlineForm(null); }}
-            style={{
-              backgroundColor: "#f1f5f9",
-              color: "#475569",
-              border: "1px solid #cbd5e1",
-              padding: "7px 16px",
-              borderRadius: "6px",
-              fontWeight: "700",
-              fontSize: "12.5px",
-              cursor: "pointer"
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSaveInlineEdit(q)}
-            disabled={inlineIsSaving}
-            style={{
-              backgroundColor: "#16a34a",
-              color: "#ffffff",
-              border: "none",
-              padding: "7px 20px",
-              borderRadius: "6px",
-              fontWeight: "800",
-              fontSize: "13px",
-              cursor: inlineIsSaving ? "not-allowed" : "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)"
-            }}
-          >
-            {inlineIsSaving ? "Saving..." : "✓ Save Changes"}
-          </button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "14px", paddingTop: "10px", borderTop: "1px solid #e2e8f0" }}>
+          <div>
+            <button
+              type="button"
+              onClick={handleInlineUndo}
+              disabled={inlineHistory.length === 0}
+              title="Undo last change (Ctrl+Z)"
+              style={{
+                backgroundColor: inlineHistory.length > 0 ? "#fef3c7" : "#f1f5f9",
+                color: inlineHistory.length > 0 ? "#b45309" : "#94a3b8",
+                border: inlineHistory.length > 0 ? "1px solid #fde68a" : "1px solid #cbd5e1",
+                padding: "7px 14px",
+                borderRadius: "6px",
+                fontWeight: "700",
+                fontSize: "12.5px",
+                cursor: inlineHistory.length > 0 ? "pointer" : "not-allowed",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px"
+              }}
+            >
+              <span>↺ Undo</span>
+              {inlineHistory.length > 0 && (
+                <span style={{ backgroundColor: "#d97706", color: "#ffffff", borderRadius: "10px", padding: "1px 6px", fontSize: "10px" }}>
+                  {inlineHistory.length}
+                </span>
+              )}
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              type="button"
+              onClick={() => { setInlineEditingQuestionId(null); setInlineForm(null); setInlineHistory([]); }}
+              style={{
+                backgroundColor: "#f1f5f9",
+                color: "#475569",
+                border: "1px solid #cbd5e1",
+                padding: "7px 16px",
+                borderRadius: "6px",
+                fontWeight: "700",
+                fontSize: "12.5px",
+                cursor: "pointer"
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveInlineEdit(q)}
+              disabled={inlineIsSaving}
+              style={{
+                backgroundColor: "#16a34a",
+                color: "#ffffff",
+                border: "none",
+                padding: "7px 20px",
+                borderRadius: "6px",
+                fontWeight: "800",
+                fontSize: "13px",
+                cursor: inlineIsSaving ? "not-allowed" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: "0 2px 6px rgba(22, 163, 74, 0.3)"
+              }}
+            >
+              {inlineIsSaving ? "Saving..." : "✓ Save Changes"}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -3659,15 +3969,21 @@ function AdminQuestionManagerContent() {
                         e.preventDefault();
                         setDragOver(false);
                         const file = e.dataTransfer?.files?.[0];
-                        if (file) processFileToDataURL(file, (img) => setQForm({ ...qForm, image: img }));
+                        if (file) {
+                          pushQFormHistory(qForm);
+                          processFileToDataURL(file, (img) => setQForm({ ...qForm, image: img }));
+                        }
                       }}
+                      onPaste={(e) => handleQFormPaste(e)}
+                      tabIndex={0}
                       style={{
                         border: dragOver ? "2px dashed #2563eb" : "2px dashed #cbd5e1",
                         backgroundColor: dragOver ? "#eff6ff" : "#f8fafc",
                         padding: "16px",
                         textAlign: "center",
                         borderRadius: "8px",
-                        cursor: "pointer"
+                        cursor: "pointer",
+                        outline: "none"
                       }}
                     >
                       <p style={{ margin: "0 0 6px 0", fontSize: "13px", color: "#475569", fontWeight: "600" }}>
@@ -3676,7 +3992,10 @@ function AdminQuestionManagerContent() {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => processFileToDataURL(e.target.files[0], (img) => setQForm({ ...qForm, image: img }))}
+                        onChange={(e) => {
+                          pushQFormHistory(qForm);
+                          processFileToDataURL(e.target.files[0], (img) => setQForm({ ...qForm, image: img }));
+                        }}
                         style={{ fontSize: "12px" }}
                       />
                     </div>
@@ -3686,11 +4005,15 @@ function AdminQuestionManagerContent() {
                         <img
                           src={qForm.image}
                           alt="Preview"
-                          style={{ maxHeight: "80px", maxWidth: "160px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                          onClick={() => setPreviewImage(qForm.image)}
+                          style={{ maxHeight: "80px", maxWidth: "160px", borderRadius: "6px", border: "1px solid #cbd5e1", cursor: "pointer" }}
                         />
                         <button
                           type="button"
-                          onClick={() => setQForm({ ...qForm, image: "" })}
+                          onClick={() => {
+                            pushQFormHistory(qForm);
+                            setQForm({ ...qForm, image: "" });
+                          }}
                           style={{ backgroundColor: "#fee2e2", color: "#dc2626", border: "none", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", cursor: "pointer", fontWeight: "bold" }}
                         >
                           Remove Image
@@ -3711,15 +4034,20 @@ function AdminQuestionManagerContent() {
                         e.preventDefault();
                         setAudioDragOver(false);
                         const file = e.dataTransfer?.files?.[0];
-                        if (file) processFileToDataURL(file, (aud) => setQForm({ ...qForm, audio: aud }));
+                        if (file) {
+                          pushQFormHistory(qForm);
+                          processFileToDataURL(file, (aud) => setQForm({ ...qForm, audio: aud }));
+                        }
                       }}
+                      tabIndex={0}
                       style={{
                         border: audioDragOver ? "2px dashed #16a34a" : "2px dashed #cbd5e1",
                         backgroundColor: audioDragOver ? "#f0fdf4" : "#f8fafc",
                         padding: "16px",
                         textAlign: "center",
                         borderRadius: "8px",
-                        cursor: "pointer"
+                        cursor: "pointer",
+                        outline: "none"
                       }}
                     >
                       <p style={{ margin: "0 0 6px 0", fontSize: "13px", color: "#475569", fontWeight: "600" }}>
@@ -3728,7 +4056,10 @@ function AdminQuestionManagerContent() {
                       <input
                         type="file"
                         accept="audio/*"
-                        onChange={(e) => processFileToDataURL(e.target.files[0], (aud) => setQForm({ ...qForm, audio: aud }))}
+                        onChange={(e) => {
+                          pushQFormHistory(qForm);
+                          processFileToDataURL(e.target.files[0], (aud) => setQForm({ ...qForm, audio: aud }));
+                        }}
                         style={{ fontSize: "12px" }}
                       />
                     </div>
@@ -4070,6 +4401,28 @@ function AdminQuestionManagerContent() {
                   <button type="submit" style={{ ...primaryBtnStyle, flex: 1, padding: "14px", fontSize: "15px" }}>
                     {editingQuestionId ? `Update Question #${qNumber}` : `Save Question #${qNumber} & Proceed`}
                   </button>
+                  {qFormHistory.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleQFormUndo}
+                      style={{
+                        backgroundColor: "#fef3c7",
+                        color: "#b45309",
+                        border: "1.5px solid #fde68a",
+                        padding: "14px 20px",
+                        borderRadius: "6px",
+                        fontWeight: "700",
+                        fontSize: "14px",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px"
+                      }}
+                      title="Undo recent changes to form"
+                    >
+                      ↺ Undo ({qFormHistory.length})
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
