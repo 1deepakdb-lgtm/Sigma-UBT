@@ -123,6 +123,28 @@ async function runDeployTasks(repoDir) {
     throw new Error(`Git reset failed: ${e.message}`);
   }
 
+  // 4b. Verify & Auto-repair SQLite Database
+  try {
+    addLog(`🔍 Checking SQLite database integrity and repairing if malformed...`);
+    const pyScript = path.join(repoDir, 'scripts', 'repair_sqlite.py');
+    if (fs.existsSync(pyScript)) {
+      const pyCmd = `
+        for p in /opt/alt/python311/bin/python3 /opt/alt/python310/bin/python3 /opt/alt/python39/bin/python3 /usr/bin/python3 python3; do
+          if [ -x "$p" ]; then
+            $p "${pyScript}" "${dbPath}" 2>&1 && break
+          fi
+        done
+      `;
+      const pyRes = await execAsync(pyCmd, execOpts);
+      const pyOut = String(pyRes?.stdout || '').trim();
+      if (pyOut) {
+        addLog(`🛠️ Database check/repair output:\n${pyOut}`);
+      }
+    }
+  } catch (dbRepairErr) {
+    addLog(`⚠️ Database repair notice: ${dbRepairErr.message}`);
+  }
+
   // 5. CloudLinux node_modules symlink check
   const nodeModulesPath = path.join(repoDir, 'node_modules');
   try {
