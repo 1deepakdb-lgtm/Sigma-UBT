@@ -970,9 +970,10 @@ const StudentExam = () => {
                   {q.questionHeading}
                 </p>
               )}
-              <p style={{ color: "#0f172a", fontSize: "17px", fontWeight: "bold", margin: "0 0 15px 0" }}>
-                {inlineSelectedQIndex + 1}. {q?.description || ""}
-              </p>
+              <p
+                style={{ color: "#0f172a", fontSize: "17px", fontWeight: "bold", margin: "0 0 15px 0" }}
+                dangerouslySetInnerHTML={{ __html: `${inlineSelectedQIndex + 1}. ${q?.description || ""}` }}
+              />
 
               {q?.image && (
                 <div style={{ margin: "15px 0", textAlign: "center" }}>
@@ -1024,7 +1025,7 @@ const StudentExam = () => {
                         <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: badgeBg, color: badgeColor, border: badgeBorder, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", marginRight: "12px", flexShrink: 0 }}>
                           {optIdx + 1}
                         </div>
-                        <span style={{ fontSize: "15px", flex: 1, color }}>{optText}</span>
+                        <span style={{ fontSize: "15px", flex: 1, color }} dangerouslySetInnerHTML={{ __html: optText }} />
                         {isThisCorrect && (
                           <span style={{ fontSize: "12px", fontWeight: "800", color: "#16a34a", marginLeft: "8px" }}>
                             ✓ Correct Answer
@@ -2440,20 +2441,22 @@ const StudentExam = () => {
                       )}
                       
                       {currentQ.description && (
-                        <div className="ubt-exam-desc" style={{ 
-                          border: "1px solid #94a3b8", 
-                          borderRadius: "6px", 
-                          padding: "12px 15px", 
-                          backgroundColor: "white", 
-                          color: "#1e293b", 
-                          fontSize: "18px", 
-                          fontWeight: "bold", 
-                          lineHeight: "1.4",
-                          whiteSpace: "pre-wrap",
-                          marginBottom: "10px"
-                        }}>
-                          {currentQ.description}
-                        </div>
+                        <div
+                          className="ubt-exam-desc"
+                          style={{ 
+                            border: "1px solid #94a3b8", 
+                            borderRadius: "6px", 
+                            padding: "12px 15px", 
+                            backgroundColor: "white", 
+                            color: "#1e293b", 
+                            fontSize: "18px", 
+                            fontWeight: "bold", 
+                            lineHeight: "1.4",
+                            whiteSpace: "pre-wrap",
+                            marginBottom: "10px"
+                          }}
+                          dangerouslySetInnerHTML={{ __html: currentQ.description }}
+                        />
                       )}
 
                       {currentQ.image && (
@@ -2616,9 +2619,10 @@ const StudentExam = () => {
                                       />
                                     )}
                                     {optText && !['①', '②', '③', '④', '1', '2', '3', '4'].includes(optText.trim()) && (
-                                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b", marginTop: "6px", textAlign: "center" }}>
-                                        {optText}
-                                      </span>
+                                      <span
+                                        style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b", marginTop: "6px", textAlign: "center" }}
+                                        dangerouslySetInnerHTML={{ __html: optText }}
+                                      />
                                     )}
                                   </div>
                                 );

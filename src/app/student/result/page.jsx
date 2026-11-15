@@ -228,9 +228,10 @@ const StudentResult = () => {
                 {q.questionHeading}
               </p>
             )}
-            <p style={{ color: "#1e293b", fontSize: "17px", fontWeight: "bold", margin: "0 0 12px 0" }}>
-              {selectedQuestionIndex + 1}. {q.description || ""}
-            </p>
+            <p
+              style={{ color: "#1e293b", fontSize: "17px", fontWeight: "bold", margin: "0 0 12px 0" }}
+              dangerouslySetInnerHTML={{ __html: `${selectedQuestionIndex + 1}. ${q.description || ""}` }}
+            />
 
             {q.image && (
               <div style={{ margin: "10px 0", textAlign: "center" }}>
@@ -285,7 +286,7 @@ const StudentResult = () => {
                       }}>
                         {optIdx + 1}
                       </div>
-                      <span className="result-review-opt-text" style={{ fontSize: "15px", flex: 1 }}>{optText}</span>
+                      <span className="result-review-opt-text" style={{ fontSize: "15px", flex: 1 }} dangerouslySetInnerHTML={{ __html: optText }} />
                       {Number(optIdx) === Number(q.answer) && (
                         <span style={{ fontSize: "12px", fontWeight: "700", color: "#16a34a", marginLeft: "8px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>

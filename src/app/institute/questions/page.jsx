@@ -3,9 +3,9 @@
 if (typeof globalThis !== 'undefined' && !globalThis.localStorage) {
   globalThis.localStorage = {
     getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-    clear: () => {},
+    setItem: () => { },
+    removeItem: () => { },
+    clear: () => { },
     key: () => null,
     length: 0
   };
@@ -83,6 +83,8 @@ function InstituteQuestionManagerContent() {
   const [selectedSetsForPkg, setSelectedSetsForPkg] = useState([]);
 
   const inputRefs = useRef([]);
+  const inlineOptInputRefs = useRef([]);
+  const inlinePassageRef = useRef(null);
 
   const [qForm, setQForm] = useState({
     mainHeading: "[1~2] 다음 내용과 관계있는 그림을 고르십시오.",
@@ -382,7 +384,7 @@ function InstituteQuestionManagerContent() {
           const data = await res.json();
           if (data.url) finalAudio = data.url;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       if (!finalAudio) {
         finalAudio = await new Promise((resolve) => {
@@ -407,7 +409,7 @@ function InstituteQuestionManagerContent() {
       let localBank = [];
       try {
         localBank = JSON.parse(localStorage.getItem("questionBank") || "[]");
-      } catch (e) {}
+      } catch (e) { }
       const bIdx = localBank.findIndex(item => item.id === q.id);
       if (bIdx >= 0) {
         localBank[bIdx] = { ...localBank[bIdx], options: updatedOptions };
@@ -446,7 +448,7 @@ function InstituteQuestionManagerContent() {
       let localBank = [];
       try {
         localBank = JSON.parse(localStorage.getItem("questionBank") || "[]");
-      } catch (e) {}
+      } catch (e) { }
       const bIdx = localBank.findIndex(item => item.id === q.id);
       if (bIdx >= 0) {
         localBank[bIdx] = { ...localBank[bIdx], options: updatedOptions };
@@ -480,7 +482,7 @@ function InstituteQuestionManagerContent() {
           const data = await res.json();
           if (data.url) finalAudio = data.url;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       if (!finalAudio) {
         finalAudio = await new Promise((resolve) => {
@@ -497,7 +499,7 @@ function InstituteQuestionManagerContent() {
       let localBank = [];
       try {
         localBank = JSON.parse(localStorage.getItem("questionBank") || "[]");
-      } catch (e) {}
+      } catch (e) { }
       const bIdx = localBank.findIndex(item => item.id === q.id);
       if (bIdx >= 0) {
         localBank[bIdx] = { ...localBank[bIdx], audio: finalAudio };
@@ -527,7 +529,7 @@ function InstituteQuestionManagerContent() {
       let localBank = [];
       try {
         localBank = JSON.parse(localStorage.getItem("questionBank") || "[]");
-      } catch (e) {}
+      } catch (e) { }
       const bIdx = localBank.findIndex(item => item.id === q.id);
       if (bIdx >= 0) {
         localBank[bIdx] = { ...localBank[bIdx], audio: "" };
@@ -544,7 +546,7 @@ function InstituteQuestionManagerContent() {
           })
         });
       }
-    } catch (err) {}
+    } catch (err) { }
   };
 
   // Helper to parse multi-options pasted together (circled ① ② ③ ④ or numbered 1. 2. 3. 4. / 1) 2) 3) 4))
@@ -899,7 +901,7 @@ function InstituteQuestionManagerContent() {
           localBank.push(updatedPayload);
         }
         localStorage.setItem('questionBank', JSON.stringify(localBank));
-      } catch (e) {}
+      } catch (e) { }
 
       // 3. Update database via PUT /api/admin/questions if question has DB id
       if (q.id && !String(q.id).startsWith('q-') && !String(q.id).startsWith('temp-')) {
@@ -1029,6 +1031,106 @@ function InstituteQuestionManagerContent() {
     }
   };
 
+  const applyInlineUnderline = (oIdx) => {
+    const inputEl = inlineOptInputRefs.current[oIdx];
+    if (!inputEl) return;
+
+    const start = inputEl.selectionStart;
+    const end = inputEl.selectionEnd;
+    const currentText = inlineForm?.options?.[oIdx]?.text || "";
+
+    if (start === null || end === null || start === end) {
+      alert("Please highlight/select any word or text inside the option box first to underline.");
+      return;
+    }
+
+    pushInlineHistory(inlineForm);
+
+    const selectedStr = currentText.substring(start, end);
+    let updatedText;
+    let newStart = start;
+    let newEnd = end;
+
+    if (selectedStr.startsWith("<u>") && selectedStr.endsWith("</u>")) {
+      const unwrapped = selectedStr.slice(3, -4);
+      updatedText = currentText.substring(0, start) + unwrapped + currentText.substring(end);
+      newEnd = start + unwrapped.length;
+    } else if (
+      start >= 3 &&
+      currentText.substring(start - 3, start) === "<u>" &&
+      currentText.substring(end, end + 4) === "</u>"
+    ) {
+      updatedText = currentText.substring(0, start - 3) + selectedStr + currentText.substring(end + 4);
+      newStart = start - 3;
+      newEnd = newStart + selectedStr.length;
+    } else {
+      const wrapped = `<u>${selectedStr}</u>`;
+      updatedText = currentText.substring(0, start) + wrapped + currentText.substring(end);
+      newEnd = start + wrapped.length;
+    }
+
+    setInlineForm(prev => {
+      const nextOpts = [...prev.options];
+      nextOpts[oIdx] = { ...nextOpts[oIdx], text: updatedText };
+      return { ...prev, options: nextOpts };
+    });
+
+    setTimeout(() => {
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.setSelectionRange(newStart, newEnd);
+      }
+    }, 10);
+  };
+
+  const applyInlinePassageUnderline = () => {
+    const inputEl = inlinePassageRef.current;
+    if (!inputEl) return;
+
+    const start = inputEl.selectionStart;
+    const end = inputEl.selectionEnd;
+    const currentText = inlineForm?.description || "";
+
+    if (start === null || end === null || start === end) {
+      alert("Please highlight/select any word or text inside the passage box first to underline.");
+      return;
+    }
+
+    pushInlineHistory(inlineForm);
+
+    const selectedStr = currentText.substring(start, end);
+    let updatedText;
+    let newStart = start;
+    let newEnd = end;
+
+    if (selectedStr.startsWith("<u>") && selectedStr.endsWith("</u>")) {
+      const unwrapped = selectedStr.slice(3, -4);
+      updatedText = currentText.substring(0, start) + unwrapped + currentText.substring(end);
+      newEnd = start + unwrapped.length;
+    } else if (
+      start >= 3 &&
+      currentText.substring(start - 3, start) === "<u>" &&
+      currentText.substring(end, end + 4) === "</u>"
+    ) {
+      updatedText = currentText.substring(0, start - 3) + selectedStr + currentText.substring(end + 4);
+      newStart = start - 3;
+      newEnd = newStart + selectedStr.length;
+    } else {
+      const wrapped = `<u>${selectedStr}</u>`;
+      updatedText = currentText.substring(0, start) + wrapped + currentText.substring(end);
+      newEnd = start + wrapped.length;
+    }
+
+    setInlineForm(prev => ({ ...prev, description: updatedText }));
+
+    setTimeout(() => {
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.setSelectionRange(newStart, newEnd);
+      }
+    }, 10);
+  };
+
   const renderInlineEditor = (q) => {
     if (!inlineForm) return null;
     const ansSymbols = ["①", "②", "③", "④"];
@@ -1144,10 +1246,35 @@ function InstituteQuestionManagerContent() {
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#334155", marginBottom: "4px" }}>
-                Question Passage / Description Text:
-              </label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155" }}>
+                  Question Passage / Description Text:
+                </label>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={applyInlinePassageUnderline}
+                  style={{
+                    backgroundColor: "#f8fafc",
+                    color: "#1e293b",
+                    border: "1.5px solid #cbd5e1",
+                    borderRadius: "4px",
+                    padding: "3px 8px",
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "3px"
+                  }}
+                  title="Highlight any text/word in this passage and click to underline (<u>word</u>)"
+                >
+                  <span style={{ textDecoration: "underline", fontWeight: "900", color: "#0284c7" }}>U</span>
+                  <span>Underline</span>
+                </button>
+              </div>
               <textarea
+                ref={inlinePassageRef}
                 rows={3}
                 value={inlineForm.description}
                 onFocus={() => pushInlineHistory(inlineForm)}
@@ -1155,6 +1282,12 @@ function InstituteQuestionManagerContent() {
                 placeholder="Passage text, conversation dialogue, or vocabulary sentence..."
                 style={{ width: "100%", padding: "8px 10px", fontSize: "13px", border: "1.5px solid #cbd5e1", borderRadius: "6px", outline: "none", fontFamily: "inherit" }}
               />
+              {inlineForm.description && (
+                <div style={{ fontSize: "11.5px", color: "#475569", marginTop: "3px" }}>
+                  <span style={{ fontSize: "10.5px", fontWeight: "700", color: "#64748b" }}>Passage Preview: </span>
+                  <span dangerouslySetInnerHTML={{ __html: inlineForm.description.replace(/\n/g, "<br/>") }} />
+                </div>
+              )}
             </div>
 
             {/* Media Uploads */}
@@ -1403,6 +1536,7 @@ function InstituteQuestionManagerContent() {
 
                       <input
                         type="text"
+                        ref={(el) => (inlineOptInputRefs.current[oIdx] = el)}
                         value={opt.text}
                         onFocus={() => pushInlineHistory(inlineForm)}
                         onChange={(e) => {
@@ -1423,7 +1557,46 @@ function InstituteQuestionManagerContent() {
                           outline: "none"
                         }}
                       />
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => applyInlineUnderline(oIdx)}
+                        style={{
+                          backgroundColor: "#f8fafc",
+                          color: "#1e293b",
+                          border: "1.5px solid #cbd5e1",
+                          borderRadius: "4px",
+                          padding: "5px 9px",
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0
+                        }}
+                        title="Highlight any text/word in this option box and click to underline (<u>word</u>)"
+                      >
+                        <span style={{ textDecoration: "underline", fontWeight: "900", fontSize: "12px", color: "#0284c7" }}>U</span>
+                        <span>Underline</span>
+                      </button>
                     </div>
+
+                    {opt.text && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", paddingLeft: "4px", marginTop: "1px" }}>
+                        <span style={{ fontSize: "10.5px", fontWeight: "700", color: "#64748b" }}>Preview:</span>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: isSelected ? "700" : "500",
+                            color: isSelected ? "#15803d" : "#1e293b"
+                          }}
+                          dangerouslySetInnerHTML={{ __html: opt.text }}
+                        />
+                      </div>
+                    )}
 
                     {/* Image & Audio for option */}
                     <div style={{ display: "flex", gap: "8px", alignItems: "center", paddingLeft: "4px", flexWrap: "wrap" }}>
@@ -2149,8 +2322,8 @@ function InstituteQuestionManagerContent() {
                                 }}
                               >
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                  <circle cx="12" cy="12" r="3"/>
+                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                  <circle cx="12" cy="12" r="3" />
                                 </svg>
                                 {isSelectedForView ? "Viewing Qs" : "View Questions"}
                               </button>
@@ -2313,8 +2486,8 @@ function InstituteQuestionManagerContent() {
                     }}
                   >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
                     <span>Open in Question Editor</span>
                   </button>
@@ -2373,410 +2546,411 @@ function InstituteQuestionManagerContent() {
 
                         return (
                           <React.Fragment key={q.id || qIdx}>
-                          <tr style={{ borderBottom: isInlineEditing ? "none" : "1px solid #e2e8f0", backgroundColor: isInlineEditing ? "#f0f9ff" : "#ffffff" }}>
-                            {/* Q.No */}
-                            <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
-                                <span style={{
-                                  backgroundColor: isListening ? "#7c3aed" : "#1e3a8a",
-                                  color: "#ffffff",
-                                  fontWeight: "800",
-                                  fontSize: "13px",
-                                  padding: "3px 8px",
-                                  borderRadius: "6px",
-                                  minWidth: "38px"
-                                }}>
-                                  #{qNum}
-                                </span>
-                                <span style={{
-                                  fontSize: "10.5px",
-                                  fontWeight: "700",
-                                  padding: "2px 7px",
-                                  borderRadius: "10px",
-                                  backgroundColor: isListening ? "#f3e8ff" : "#dbeafe",
-                                  color: isListening ? "#6b21a8" : "#1e40af"
-                                }}>
-                                  {isListening ? "Listening" : "Reading"}
-                                </span>
-                              </div>
-                            </td>
-
-                            {/* Question Heading / Instruction */}
-                            <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                              <div style={{ fontWeight: "700", color: "#0f172a", fontSize: "13.5px", lineHeight: "1.45" }}>
-                                {q.mainHeading || `[ ${qNum} ] 다음을 읽고 알맞은 것을 고르십시오.`}
-                              </div>
-                            </td>
-
-                            {/* Description & Media */}
-                            <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                {q.description ? (
-                                  <div style={{
-                                    backgroundColor: "#f8fafc",
-                                    padding: "8px 10px",
+                            <tr style={{ borderBottom: isInlineEditing ? "none" : "1px solid #e2e8f0", backgroundColor: isInlineEditing ? "#f0f9ff" : "#ffffff" }}>
+                              {/* Q.No */}
+                              <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
+                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px" }}>
+                                  <span style={{
+                                    backgroundColor: isListening ? "#7c3aed" : "#1e3a8a",
+                                    color: "#ffffff",
+                                    fontWeight: "800",
+                                    fontSize: "13px",
+                                    padding: "3px 8px",
                                     borderRadius: "6px",
-                                    border: "1px solid #e2e8f0",
-                                    fontSize: "12px",
-                                    color: "#334155",
-                                    maxHeight: "90px",
-                                    overflowY: "auto",
-                                    whiteSpace: "pre-wrap",
-                                    lineHeight: "1.4"
+                                    minWidth: "38px"
                                   }}>
-                                    {q.description}
-                                  </div>
-                                ) : null}
-
-                                {q.image && (
-                                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                    <img
-                                      src={q.image}
-                                      alt={`Q#${qNum} visual`}
-                                      onClick={() => setPreviewImage(q.image)}
-                                      style={{
-                                        maxHeight: "65px",
-                                        maxWidth: "120px",
-                                        objectFit: "contain",
-                                        borderRadius: "4px",
-                                        border: "1px solid #cbd5e1",
-                                        cursor: "pointer",
-                                        backgroundColor: "#ffffff"
-                                      }}
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => setPreviewImage(q.image)}
-                                      style={{
-                                        background: "none",
-                                        border: "none",
-                                        color: "#2563eb",
-                                        fontSize: "11px",
-                                        cursor: "pointer",
-                                        textDecoration: "underline",
-                                        padding: 0
-                                      }}
-                                    >
-                                      Enlarge
-                                    </button>
-                                  </div>
-                                )}
-
-                                {q.audio && (
-                                  <div style={{ marginTop: "2px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                    <audio src={q.audio} controls style={{ height: "28px", width: "100%", maxWidth: "190px" }} />
-                                    <button
-                                      type="button"
-                                      onClick={() => handleTableQuestionAudioRemove(q)}
-                                      title="Remove question audio"
-                                      style={{
-                                        backgroundColor: "#fee2e2",
-                                        color: "#dc2626",
-                                        border: "1px solid #fca5a5",
-                                        borderRadius: "4px",
-                                        fontSize: "10px",
-                                        padding: "3px 6px",
-                                        cursor: "pointer",
-                                        fontWeight: "700"
-                                      }}
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-                                )}
-
-                                {isListening && (
-                                  <div style={{ marginTop: "4px" }}>
-                                    <label
-                                      title="Upload or change Question Prompt audio"
-                                      style={{
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "4px",
-                                        backgroundColor: q.audio ? "#f0fdf4" : "#f8fafc",
-                                        color: q.audio ? "#15803d" : "#2563eb",
-                                        border: q.audio ? "1px solid #86efac" : "1px dashed #93c5fd",
-                                        padding: "3px 8px",
-                                        borderRadius: "4px",
-                                        fontSize: "11px",
-                                        fontWeight: "700",
-                                        cursor: "pointer",
-                                        width: "fit-content"
-                                      }}
-                                    >
-                                      <span>{q.audio ? "🔄 Change Question Audio" : "🎙️ Upload Question Audio"}</span>
-                                      <input
-                                        type="file"
-                                        accept="audio/*"
-                                        style={{ display: "none" }}
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) handleTableQuestionAudioUpload(q, file);
-                                          e.target.value = "";
-                                        }}
-                                      />
-                                    </label>
-                                  </div>
-                                )}
-
-                                {!q.description && !q.image && !q.audio && !isListening && (
-                                  <span style={{ color: "#94a3b8", fontSize: "12px", fontStyle: "italic" }}>
-                                    No passage or media
+                                    #{qNum}
                                   </span>
-                                )}
-                              </div>
-                            </td>
+                                  <span style={{
+                                    fontSize: "10.5px",
+                                    fontWeight: "700",
+                                    padding: "2px 7px",
+                                    borderRadius: "10px",
+                                    backgroundColor: isListening ? "#f3e8ff" : "#dbeafe",
+                                    color: isListening ? "#6b21a8" : "#1e40af"
+                                  }}>
+                                    {isListening ? "Listening" : "Reading"}
+                                  </span>
+                                </div>
+                              </td>
 
-                            {/* Options: All in ONE single unified box */}
-                            <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                              <div style={{
-                                backgroundColor: "#f8fafc",
-                                border: "1.5px solid #cbd5e1",
-                                borderRadius: "8px",
-                                padding: "8px 10px",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "6px",
-                                minWidth: "260px"
-                              }}>
-                                {(q.options || []).map((opt, oIdx) => {
-                                  const isCorrect = ansIdx === oIdx;
-                                  const optText = typeof opt === "string" ? opt : (opt?.text || "");
-                                  const optImg = typeof opt === "object" ? (opt?.image || "") : "";
-                                  const optAudio = typeof opt === "object" ? (opt?.audio || "") : "";
-                                  return (
+                              {/* Question Heading / Instruction */}
+                              <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                                <div style={{ fontWeight: "700", color: "#0f172a", fontSize: "13.5px", lineHeight: "1.45" }}>
+                                  {q.mainHeading || `[ ${qNum} ] 다음을 읽고 알맞은 것을 고르십시오.`}
+                                </div>
+                              </td>
+
+                              {/* Description & Media */}
+                              <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                                  {q.description ? (
                                     <div
-                                      key={oIdx}
                                       style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "3px",
-                                        padding: "5px 8px",
+                                        backgroundColor: "#f8fafc",
+                                        padding: "8px 10px",
                                         borderRadius: "6px",
-                                        backgroundColor: isCorrect ? "#dcfce7" : "#ffffff",
-                                        border: isCorrect ? "1px solid #86efac" : "1px solid #e2e8f0",
-                                        fontSize: "12.5px",
+                                        border: "1px solid #e2e8f0",
+                                        fontSize: "12px",
+                                        color: "#334155",
+                                        maxHeight: "90px",
+                                        overflowY: "auto",
+                                        whiteSpace: "pre-wrap",
                                         lineHeight: "1.4"
                                       }}
-                                    >
-                                      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                                        <span style={{
-                                          fontWeight: "800",
-                                          color: isCorrect ? "#15803d" : "#0284c7",
-                                          fontSize: "13px",
-                                          minWidth: "18px",
-                                          flexShrink: 0
-                                        }}>
-                                          {ansSymbols[oIdx] || `${oIdx + 1}.`}
-                                        </span>
-                                        <div style={{ flex: 1, wordBreak: "break-word" }}>
+                                      dangerouslySetInnerHTML={{ __html: q.description }}
+                                    />
+                                  ) : null}
+
+                                  {q.image && (
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                      <img
+                                        src={q.image}
+                                        alt={`Q#${qNum} visual`}
+                                        onClick={() => setPreviewImage(q.image)}
+                                        style={{
+                                          maxHeight: "65px",
+                                          maxWidth: "120px",
+                                          objectFit: "contain",
+                                          borderRadius: "4px",
+                                          border: "1px solid #cbd5e1",
+                                          cursor: "pointer",
+                                          backgroundColor: "#ffffff"
+                                        }}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => setPreviewImage(q.image)}
+                                        style={{
+                                          background: "none",
+                                          border: "none",
+                                          color: "#2563eb",
+                                          fontSize: "11px",
+                                          cursor: "pointer",
+                                          textDecoration: "underline",
+                                          padding: 0
+                                        }}
+                                      >
+                                        Enlarge
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {q.audio && (
+                                    <div style={{ marginTop: "2px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                      <audio src={q.audio} controls style={{ height: "28px", width: "100%", maxWidth: "190px" }} />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleTableQuestionAudioRemove(q)}
+                                        title="Remove question audio"
+                                        style={{
+                                          backgroundColor: "#fee2e2",
+                                          color: "#dc2626",
+                                          border: "1px solid #fca5a5",
+                                          borderRadius: "4px",
+                                          fontSize: "10px",
+                                          padding: "3px 6px",
+                                          cursor: "pointer",
+                                          fontWeight: "700"
+                                        }}
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {isListening && (
+                                    <div style={{ marginTop: "4px" }}>
+                                      <label
+                                        title="Upload or change Question Prompt audio"
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          backgroundColor: q.audio ? "#f0fdf4" : "#f8fafc",
+                                          color: q.audio ? "#15803d" : "#2563eb",
+                                          border: q.audio ? "1px solid #86efac" : "1px dashed #93c5fd",
+                                          padding: "3px 8px",
+                                          borderRadius: "4px",
+                                          fontSize: "11px",
+                                          fontWeight: "700",
+                                          cursor: "pointer",
+                                          width: "fit-content"
+                                        }}
+                                      >
+                                        <span>{q.audio ? "🔄 Change Question Audio" : "🎙️ Upload Question Audio"}</span>
+                                        <input
+                                          type="file"
+                                          accept="audio/*"
+                                          style={{ display: "none" }}
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleTableQuestionAudioUpload(q, file);
+                                            e.target.value = "";
+                                          }}
+                                        />
+                                      </label>
+                                    </div>
+                                  )}
+
+                                  {!q.description && !q.image && !q.audio && !isListening && (
+                                    <span style={{ color: "#94a3b8", fontSize: "12px", fontStyle: "italic" }}>
+                                      No passage or media
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Options: All in ONE single unified box */}
+                              <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                                <div style={{
+                                  backgroundColor: "#f8fafc",
+                                  border: "1.5px solid #cbd5e1",
+                                  borderRadius: "8px",
+                                  padding: "8px 10px",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "6px",
+                                  minWidth: "260px"
+                                }}>
+                                  {(q.options || []).map((opt, oIdx) => {
+                                    const isCorrect = ansIdx === oIdx;
+                                    const optText = typeof opt === "string" ? opt : (opt?.text || "");
+                                    const optImg = typeof opt === "object" ? (opt?.image || "") : "";
+                                    const optAudio = typeof opt === "object" ? (opt?.audio || "") : "";
+                                    return (
+                                      <div
+                                        key={oIdx}
+                                        style={{
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          gap: "3px",
+                                          padding: "5px 8px",
+                                          borderRadius: "6px",
+                                          backgroundColor: isCorrect ? "#dcfce7" : "#ffffff",
+                                          border: isCorrect ? "1px solid #86efac" : "1px solid #e2e8f0",
+                                          fontSize: "12.5px",
+                                          lineHeight: "1.4"
+                                        }}
+                                      >
+                                        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
                                           <span style={{
-                                            color: isCorrect ? "#14532d" : "#1e293b",
-                                            fontWeight: isCorrect ? "700" : "500"
+                                            fontWeight: "800",
+                                            color: isCorrect ? "#15803d" : "#0284c7",
+                                            fontSize: "13px",
+                                            minWidth: "18px",
+                                            flexShrink: 0
                                           }}>
-                                            {optText ? (
-                                              <span dangerouslySetInnerHTML={{ __html: optText }} />
-                                            ) : (
-                                              <span style={{ color: "#94a3b8", fontStyle: "italic" }}>[empty text]</span>
-                                            )}
+                                            {ansSymbols[oIdx] || `${oIdx + 1}.`}
                                           </span>
-                                          {isCorrect && (
+                                          <div style={{ flex: 1, wordBreak: "break-word" }}>
                                             <span style={{
-                                              marginLeft: "8px",
-                                              fontSize: "10.5px",
-                                              fontWeight: "700",
-                                              color: "#16a34a",
-                                              backgroundColor: "#ffffff",
-                                              padding: "1px 6px",
-                                              borderRadius: "10px",
-                                              border: "1px solid #bbf7d0",
-                                              display: "inline-block"
+                                              color: isCorrect ? "#14532d" : "#1e293b",
+                                              fontWeight: isCorrect ? "700" : "500"
                                             }}>
-                                              ✓ Answer
+                                              {optText ? (
+                                                <span dangerouslySetInnerHTML={{ __html: optText }} />
+                                              ) : (
+                                                <span style={{ color: "#94a3b8", fontStyle: "italic" }}>[empty text]</span>
+                                              )}
                                             </span>
-                                          )}
+                                            {isCorrect && (
+                                              <span style={{
+                                                marginLeft: "8px",
+                                                fontSize: "10.5px",
+                                                fontWeight: "700",
+                                                color: "#16a34a",
+                                                backgroundColor: "#ffffff",
+                                                padding: "1px 6px",
+                                                borderRadius: "10px",
+                                                border: "1px solid #bbf7d0",
+                                                display: "inline-block"
+                                              }}>
+                                                ✓ Answer
+                                              </span>
+                                            )}
+                                          </div>
                                         </div>
-                                      </div>
 
-                                      {optImg && (
-                                        <div style={{ paddingLeft: "26px", marginTop: "2px" }}>
-                                          <img
-                                            src={optImg}
-                                            alt={`Opt ${oIdx + 1}`}
-                                            onClick={() => setPreviewImage(optImg)}
-                                            style={{
-                                              maxHeight: "45px",
-                                              maxWidth: "100%",
-                                              objectFit: "contain",
-                                              borderRadius: "4px",
-                                              border: "1px solid #cbd5e1",
-                                              cursor: "pointer"
-                                            }}
-                                          />
-                                        </div>
-                                      )}
-
-                                      {/* Option Audio for Q21-Q40 Listening questions */}
-                                      {isListening && (
-                                        <div style={{ paddingLeft: "26px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "3px" }}>
-                                          {optAudio ? (
-                                            <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", backgroundColor: "#f3e8ff", border: "1px solid #d8b4fe", padding: "2px 6px", borderRadius: "4px" }}>
-                                              <audio src={optAudio} controls style={{ height: "24px", maxWidth: "160px" }} />
-                                              <button
-                                                type="button"
-                                                onClick={() => handleTableOptionAudioRemove(q, oIdx)}
-                                                title="Remove option audio"
-                                                style={{
-                                                  background: "#fee2e2",
-                                                  color: "#dc2626",
-                                                  border: "none",
-                                                  borderRadius: "3px",
-                                                  fontSize: "10px",
-                                                  padding: "2px 5px",
-                                                  cursor: "pointer",
-                                                  fontWeight: "bold"
-                                                }}
-                                              >
-                                                ✕
-                                              </button>
-                                            </div>
-                                          ) : null}
-
-                                          <label
-                                            title={`Upload audio for Option ${oIdx + 1}`}
-                                            style={{
-                                              display: "inline-flex",
-                                              alignItems: "center",
-                                              gap: "3px",
-                                              backgroundColor: optAudio ? "#f5f3ff" : "#f8fafc",
-                                              color: optAudio ? "#7c3aed" : "#475569",
-                                              border: optAudio ? "1px solid #c4b5fd" : "1px dashed #94a3b8",
-                                              padding: "2px 7px",
-                                              borderRadius: "4px",
-                                              fontSize: "10.5px",
-                                              fontWeight: "700",
-                                              cursor: "pointer",
-                                              whiteSpace: "nowrap"
-                                            }}
-                                          >
-                                            <span>{optAudio ? "🔄 Change Audio" : "🎵 Upload Audio"}</span>
-                                            <input
-                                              type="file"
-                                              accept="audio/*"
-                                              style={{ display: "none" }}
-                                              onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) handleTableOptionAudioUpload(q, oIdx, file);
-                                                e.target.value = "";
+                                        {optImg && (
+                                          <div style={{ paddingLeft: "26px", marginTop: "2px" }}>
+                                            <img
+                                              src={optImg}
+                                              alt={`Opt ${oIdx + 1}`}
+                                              onClick={() => setPreviewImage(optImg)}
+                                              style={{
+                                                maxHeight: "45px",
+                                                maxWidth: "100%",
+                                                objectFit: "contain",
+                                                borderRadius: "4px",
+                                                border: "1px solid #cbd5e1",
+                                                cursor: "pointer"
                                               }}
                                             />
-                                          </label>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </td>
+                                          </div>
+                                        )}
 
-                            {/* Answer */}
-                            <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
-                              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                                <span style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "5px",
-                                  backgroundColor: "#dcfce7",
-                                  color: "#15803d",
-                                  border: "1px solid #86efac",
-                                  padding: "4px 8px",
-                                  borderRadius: "6px",
-                                  fontWeight: "800",
-                                  fontSize: "12px",
-                                  width: "fit-content"
-                                }}>
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                    <polyline points="20 6 9 17 4 12"/>
-                                  </svg>
-                                  Option {ansIdx + 1} ({ansSymbols[ansIdx] || `${ansIdx + 1}`})
-                                </span>
-                                {ansText && (
+                                        {/* Option Audio for Q21-Q40 Listening questions */}
+                                        {isListening && (
+                                          <div style={{ paddingLeft: "26px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "3px" }}>
+                                            {optAudio ? (
+                                              <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", backgroundColor: "#f3e8ff", border: "1px solid #d8b4fe", padding: "2px 6px", borderRadius: "4px" }}>
+                                                <audio src={optAudio} controls style={{ height: "24px", maxWidth: "160px" }} />
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleTableOptionAudioRemove(q, oIdx)}
+                                                  title="Remove option audio"
+                                                  style={{
+                                                    background: "#fee2e2",
+                                                    color: "#dc2626",
+                                                    border: "none",
+                                                    borderRadius: "3px",
+                                                    fontSize: "10px",
+                                                    padding: "2px 5px",
+                                                    cursor: "pointer",
+                                                    fontWeight: "bold"
+                                                  }}
+                                                >
+                                                  ✕
+                                                </button>
+                                              </div>
+                                            ) : null}
+
+                                            <label
+                                              title={`Upload audio for Option ${oIdx + 1}`}
+                                              style={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "3px",
+                                                backgroundColor: optAudio ? "#f5f3ff" : "#f8fafc",
+                                                color: optAudio ? "#7c3aed" : "#475569",
+                                                border: optAudio ? "1px solid #c4b5fd" : "1px dashed #94a3b8",
+                                                padding: "2px 7px",
+                                                borderRadius: "4px",
+                                                fontSize: "10.5px",
+                                                fontWeight: "700",
+                                                cursor: "pointer",
+                                                whiteSpace: "nowrap"
+                                              }}
+                                            >
+                                              <span>{optAudio ? "🔄 Change Audio" : "🎵 Upload Audio"}</span>
+                                              <input
+                                                type="file"
+                                                accept="audio/*"
+                                                style={{ display: "none" }}
+                                                onChange={(e) => {
+                                                  const file = e.target.files?.[0];
+                                                  if (file) handleTableOptionAudioUpload(q, oIdx, file);
+                                                  e.target.value = "";
+                                                }}
+                                              />
+                                            </label>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+
+                              {/* Answer */}
+                              <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                                   <span style={{
-                                    fontSize: "11px",
-                                    color: "#334155",
-                                    fontWeight: "600",
-                                    lineHeight: "1.3",
-                                    wordBreak: "break-word"
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    backgroundColor: "#dcfce7",
+                                    color: "#15803d",
+                                    border: "1px solid #86efac",
+                                    padding: "4px 8px",
+                                    borderRadius: "6px",
+                                    fontWeight: "800",
+                                    fontSize: "12px",
+                                    width: "fit-content"
                                   }}>
-                                    {ansText}
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    Option {ansIdx + 1} ({ansSymbols[ansIdx] || `${ansIdx + 1}`})
                                   </span>
-                                )}
-                              </div>
-                            </td>
+                                  {ansText && (
+                                    <span style={{
+                                      fontSize: "11px",
+                                      color: "#334155",
+                                      fontWeight: "600",
+                                      lineHeight: "1.3",
+                                      wordBreak: "break-word"
+                                    }}>
+                                      {ansText}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
 
-                            {/* Actions */}
-                            <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
-                              <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
-                                <button
-                                  type="button"
-                                  onClick={() => handleEditQuestion(q)}
-                                  title={isInlineEditing ? "Close Inline Edit" : "Edit Question"}
-                                  style={{
-                                    backgroundColor: isInlineEditing ? "#0284c7" : "#2563eb",
-                                    color: "#ffffff",
-                                    border: "none",
-                                    padding: "6px 10px",
-                                    borderRadius: "4px",
-                                    cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: "700",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "4px"
-                                  }}
-                                >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                  </svg>
-                                  {isInlineEditing ? "Close" : "Edit"}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteSingleQuestion(q.id, qNum)}
-                                  title="Delete Question"
-                                  style={{
-                                    backgroundColor: "#fee2e2",
-                                    color: "#dc2626",
-                                    border: "1px solid #fecaca",
-                                    padding: "6px 9px",
-                                    borderRadius: "4px",
-                                    cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: "700",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "4px"
-                                  }}
-                                >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polyline points="3 6 5 6 21 6"/>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                  </svg>
-                                  Delete
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-
-                          {/* INLINE EDIT EXPANSION ROW */}
-                          {isInlineEditing && inlineForm && (
-                            <tr key={`inline-edit-${q.id || qIdx}`} style={{ backgroundColor: "#f0f9ff", borderBottom: "2px solid #0284c7" }}>
-                              <td colSpan={6} style={{ padding: "14px 16px" }}>
-                                {renderInlineEditor(q)}
+                              {/* Actions */}
+                              <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "top" }}>
+                                <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditQuestion(q)}
+                                    title={isInlineEditing ? "Close Inline Edit" : "Edit Question"}
+                                    style={{
+                                      backgroundColor: isInlineEditing ? "#0284c7" : "#2563eb",
+                                      color: "#ffffff",
+                                      border: "none",
+                                      padding: "6px 10px",
+                                      borderRadius: "4px",
+                                      cursor: "pointer",
+                                      fontSize: "12px",
+                                      fontWeight: "700",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "4px"
+                                    }}
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                    </svg>
+                                    {isInlineEditing ? "Close" : "Edit"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteSingleQuestion(q.id, qNum)}
+                                    title="Delete Question"
+                                    style={{
+                                      backgroundColor: "#fee2e2",
+                                      color: "#dc2626",
+                                      border: "1px solid #fecaca",
+                                      padding: "6px 9px",
+                                      borderRadius: "4px",
+                                      cursor: "pointer",
+                                      fontSize: "12px",
+                                      fontWeight: "700",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "4px"
+                                    }}
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <polyline points="3 6 5 6 21 6" />
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                </div>
                               </td>
                             </tr>
-                          )}
+
+                            {/* INLINE EDIT EXPANSION ROW */}
+                            {isInlineEditing && inlineForm && (
+                              <tr key={`inline-edit-${q.id || qIdx}`} style={{ backgroundColor: "#f0f9ff", borderBottom: "2px solid #0284c7" }}>
+                                <td colSpan={6} style={{ padding: "14px 16px" }}>
+                                  {renderInlineEditor(q)}
+                                </td>
+                              </tr>
+                            )}
                           </React.Fragment>
                         );
                       })}
@@ -3376,6 +3550,7 @@ function InstituteQuestionManagerContent() {
 
                             <button
                               type="button"
+                              onMouseDown={(e) => e.preventDefault()}
                               onClick={() => applyUnderline(idx)}
                               style={{
                                 backgroundColor: "#e2e8f0",
