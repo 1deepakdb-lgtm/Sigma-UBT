@@ -473,6 +473,13 @@
       return await downloadedBlob.arrayBuffer();
     }
 
+    function activateNativeFallback(docUrl) {
+      if (loadingView) loadingView.style.display = 'none';
+      if (errorView) errorView.style.display = 'none';
+      var safeDocUrl = sanitizeUrl(docUrl);
+      container.innerHTML = '<iframe src="' + safeDocUrl + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH" style="width:100%;height:100%;border:none;background:#ffffff;display:block;" allowfullscreen></iframe>';
+    }
+
     // =========================================================================
     // 2. DOCUMENT RENDERING ENGINE (RESPONSIVE: MOBILE, SMART BOARD, DESKTOP)
     // =========================================================================
@@ -503,13 +510,13 @@
         var mult = renderScaleMultiplier || 1.0;
         var viewport = page.getViewport({ scale: baseScale * mult });
 
-        var dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+        var outputScale = Math.min(window.devicePixelRatio || 1, 1.25);
 
         var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d', { alpha: false });
+        var ctx = canvas.getContext('2d');
 
-        var renderWidth = Math.floor(viewport.width * dpr);
-        var renderHeight = Math.floor(viewport.height * dpr);
+        var renderWidth = Math.floor(viewport.width * outputScale);
+        var renderHeight = Math.floor(viewport.height * outputScale);
 
         // Hardware texture limit protection for Smart Boards (e.g. Mali/Adreno TV GPUs)
         var maxCanvasDim = 3072;
@@ -517,6 +524,7 @@
           var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
           renderWidth = Math.floor(renderWidth * downscale);
           renderHeight = Math.floor(renderHeight * downscale);
+          outputScale = renderWidth / viewport.width;
         }
 
         canvas.width = renderWidth;
@@ -524,16 +532,17 @@
 
         canvas.style.width = Math.floor(viewport.width) + 'px';
         canvas.style.maxWidth = '100%';
-        canvas.style.height = 'auto';
+        canvas.style.height = Math.floor(viewport.height) + 'px';
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
 
-        var scaleX = renderWidth / viewport.width;
-        var scaleY = renderHeight / viewport.height;
-        ctx.scale(scaleX, scaleY);
+        var transform = outputScale !== 1
+          ? [outputScale, 0, 0, outputScale, 0, 0]
+          : null;
 
         await page.render({
           canvasContext: ctx,
+          transform: transform,
           viewport: viewport,
           intent: 'display'
         }).promise;
@@ -544,7 +553,32 @@
 
         renderedPages.add(pageNum);
       } catch (err) {
-        console.warn('Page render error page ' + pageNum + ':', err);
+        console.warn('Page render error page ' + pageNum + ', trying unscaled fallback:', err);
+        try {
+          var fbCanvas = document.createElement('canvas');
+          var fbCtx = fbCanvas.getContext('2d');
+          var fbScale = (targetWidth || getTargetWidth()) / 800;
+          var fbViewport = page.getViewport({ scale: fbScale });
+          fbCanvas.width = Math.floor(fbViewport.width);
+          fbCanvas.height = Math.floor(fbViewport.height);
+          fbCanvas.style.width = Math.floor(fbViewport.width) + 'px';
+          fbCanvas.style.height = Math.floor(fbViewport.height) + 'px';
+          fbCanvas.style.display = 'block';
+          fbCanvas.style.margin = '0 auto';
+
+          await page.render({
+            canvasContext: fbCtx,
+            viewport: fbViewport,
+            intent: 'display'
+          }).promise;
+
+          wrapper.innerHTML = '';
+          wrapper.style.minHeight = Math.floor(fbViewport.height) + 'px';
+          wrapper.appendChild(fbCanvas);
+          renderedPages.add(pageNum);
+        } catch (fbErr) {
+          console.error('Fatal render failure for page ' + pageNum + ':', fbErr);
+        }
       } finally {
         renderingPages.delete(pageNum);
       }
@@ -745,6 +779,10 @@
       var dataArray = pdfData instanceof Uint8Array ? pdfData : new Uint8Array(pdfData);
       var loadingTask = pdfjsLib.getDocument({
         data: dataArray,
+        cMapUrl: '/cmaps/',
+        cMapPacked: true,
+        standardFontDataUrl: '/standard_fonts/',
+        disableFontFace: true,
         isEvalSupported: false,
         useSystemFonts: true
       });
@@ -764,10 +802,16 @@
         zoomLayer.appendChild(wrapper);
       }
 
-      // Render first 2 pages immediately
-      for (var j = 1; j <= Math.min(totalPages, 2); j++) {
+      // Render first 2-3 pages immediately in sequence
+      for (var j = 1; j <= Math.min(totalPages, 3); j++) {
         var initialWrap = document.getElementById('page-wrapper-' + j);
-        if (initialWrap) renderPage(j, initialWrap, currentWidth);
+        if (initialWrap) {
+          try {
+            await renderPage(j, initialWrap, currentWidth);
+          } catch (e) {
+            console.warn('Initial page ' + j + ' error:', e);
+          }
+        }
       }
 
       // Progressive IntersectionObserver for remaining pages
@@ -790,12 +834,32 @@
           var wrapEl = document.getElementById('page-wrapper-' + k);
           if (wrapEl) observer.observe(wrapEl);
         }
-      } else {
-        for (var m = 3; m <= totalPages; m++) {
-          var w = document.getElementById('page-wrapper-' + m);
-          if (w) await renderPage(m, w, currentWidth);
+      }
+
+      // Scroll listener backup (vital for Smart Boards and older WebViews where IntersectionObserver may stall)
+      function checkVisiblePages() {
+        var screenW = getTargetWidth();
+        for (var p = 1; p <= totalPages; p++) {
+          if (!renderedPages.has(p)) {
+            var el = document.getElementById('page-wrapper-' + p);
+            if (el) {
+              var rect = el.getBoundingClientRect();
+              if (rect.top < window.innerHeight + 800 && rect.bottom > -800) {
+                renderPage(p, el, screenW);
+              }
+            }
+          }
         }
       }
+
+      var scrollTimer = null;
+      container.addEventListener('scroll', function() {
+        if (scrollTimer) return;
+        scrollTimer = setTimeout(function() {
+          scrollTimer = null;
+          checkVisiblePages();
+        }, 100);
+      }, { passive: true });
 
       // Handle window resize and screen orientation
       window.addEventListener('resize', function() {
@@ -814,6 +878,14 @@
           }
         }, 250);
       });
+
+      // Watchdog: If after 3 seconds no canvas pages rendered, switch to native viewer
+      setTimeout(function() {
+        if (renderedPages.size === 0) {
+          console.warn('Smart Board Watchdog: No pages rendered to canvas after 3s; switching to native fallback');
+          activateNativeFallback(cleanUrl);
+        }
+      }, 3000);
     }
 
     async function initViewer() {
@@ -834,21 +906,7 @@
           await startRenderingDoc(fallbackCopy);
         } catch (err2) {
           console.error('Fatal document error, attempting native viewer embed for Smart Board:', err2);
-          // Universal Native Smart Board / TV Fallback
-          try {
-            if (loadingView) loadingView.style.display = 'none';
-            if (errorView) errorView.style.display = 'none';
-            var embedFrame = document.createElement('iframe');
-            embedFrame.src = targetDocUrl + '#toolbar=0&navpanes=0';
-            embedFrame.style.width = '100%';
-            embedFrame.style.height = '100%';
-            embedFrame.style.border = 'none';
-            embedFrame.style.backgroundColor = '#ffffff';
-            container.innerHTML = '';
-            container.appendChild(embedFrame);
-          } catch (embedErr) {
-            showError('Unable to load document. Please check your connection and tap Retry.');
-          }
+          activateNativeFallback(targetDocUrl);
         }
       }
     }
