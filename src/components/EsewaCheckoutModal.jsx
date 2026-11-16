@@ -203,21 +203,15 @@ export default function EsewaCheckoutModal({
     }
   };
 
-  // Student submits the query with payment screenshot and Txn ID (1-click to WhatsApp & Super Admin)
+  // Student verifies payment with eSewa Transaction ID (Instant Server Verification & Unlock)
   const handleSendQuery = async () => {
-    // Require payment screenshot from eSewa or any Bank
-    if (!screenshotFile && !screenshotUrl) {
-      alert("Please upload your payment screenshot (successful payment receipt from eSewa or any Bank) to continue.");
+    if (!txnId.trim()) {
+      alert("कृपया eSewa मा भुक्तानी गरेपछिको Transaction ID / Reference Code राख्नुहोस्।");
       return;
     }
 
     if (uploadingScreenshot) {
       alert("Payment screenshot is still uploading. Please wait a moment.");
-      return;
-    }
-
-    if (!txnId.trim()) {
-      alert("Please enter the eSewa Transaction ID / Reference Code from your payment receipt.");
       return;
     }
 
@@ -228,25 +222,8 @@ export default function EsewaCheckoutModal({
       const curPhone = senderPhone.trim() || studentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "9800000000" : "9800000000");
       const screenshotLocation = screenshotUrl || "";
 
-      // 1. One-click instant WhatsApp release message launch on user gesture
-      try {
-        const waSendMsg = encodeURIComponent(
-          `🔔 *EXAM SET RELEASE REQUEST (Rs. 30)*\n\n` +
-          `Hello Admin,\n\nI have sent my payment request for "${itemName}" (${formattedPrice}).\n\n` +
-          `👤 Student Name: ${studentName || "Student"}\n` +
-          `📱 Phone: ${curPhone}\n` +
-          `📚 Exam Set: ${itemName} (${formattedPrice})\n` +
-          `🔢 eSewa Txn ID: ${cleanTxn}\n` +
-          (screenshotFile?.name ? `🧾 Payment Screenshot: ${screenshotFile.name} (Attached)\n` : "") +
-          `\nPlease verify my payment and release my exam set on https://examjk.com/admin/notifications. Thank you!`
-        );
-        window.open(`https://wa.me/9779768444902?text=${waSendMsg}`, "_blank");
-      } catch (waErr) {
-        console.warn("WhatsApp popup notice:", waErr);
-      }
-
-      // 2. Submit to server API
-      await fetch("/api/payment/query", {
+      // 1. Instant Server-Side Verification via /api/payment/verify-code
+      const verifyRes = await fetch("/api/payment/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -255,54 +232,47 @@ export default function EsewaCheckoutModal({
           itemId: item.id || item.name,
           itemName,
           itemType: selectedType,
-          amount: typeof itemPrice === "number" ? itemPrice : 30,
+          amount: typeof itemPrice === "number" ? itemPrice : (selectedType === "set" ? 30 : 1000),
           txnId: cleanTxn,
           screenshotUrl: screenshotLocation
         })
-      }).catch((e) => console.warn("API query notice:", e));
-
-      // 3. Add to studentNotifications so Super Admin receives real-time notification
-      const adminNotifs = JSON.parse(localStorage.getItem("studentNotifications") || "[]");
-      const newNotif = {
-        id: Date.now(),
-        type: "payment_query",
-        subject: `UBT Purchase Query: ${itemName} (${formattedPrice})`,
-        message: `Student ${studentName || "Student"} (${curPhone}) submitted an eSewa payment query.\n\n` +
-                 `Set/Package: ${itemName} (${formattedPrice})\n` +
-                 `eSewa Transaction ID: ${cleanTxn}\n` +
-                 (screenshotLocation ? `Screenshot Receipt: ${screenshotLocation}\n\n` : `\n`) +
-                 `Wait for 5-10 minute, Admin will verify your payment and release your UBT set.`,
-        studentName: studentName || "Student",
-        studentPhone: curPhone,
-        itemName,
-        itemId: item.id || item.name,
-        itemType: selectedType,
-        amount: itemPrice,
-        txnId: cleanTxn,
-        screenshotUrl: screenshotLocation,
-        status: "Pending", // "Pending" | "Released" | "Rejected"
-        read: false,
-        date: new Date().toLocaleString()
-      };
-      localStorage.setItem("studentNotifications", JSON.stringify([newNotif, ...adminNotifs]));
-
-      // 4. Save to studentPendingQueries for immediate button state update
-      const pendingQueries = JSON.parse(localStorage.getItem("studentPendingQueries") || "[]");
-      pendingQueries.unshift({
-        id: Date.now(),
-        itemId: item.id || item.name,
-        itemName,
-        phone: curPhone,
-        studentName: studentName || "Student",
-        amount: itemPrice,
-        txnId: cleanTxn,
-        screenshotUrl: screenshotLocation,
-        status: "Pending",
-        date: new Date().toLocaleString()
       });
-      localStorage.setItem("studentPendingQueries", JSON.stringify(pendingQueries));
 
-      // 5. Save to student's payment history
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        throw new Error(verifyData.error || "Failed to verify transaction code");
+      }
+
+      // 2. Immediately unlock the set or package locally
+      if (selectedType === "set") {
+        const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+        const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+        const updated = Array.from(new Set([...u1, ...u2, item.id, item.name, itemName].filter(Boolean)));
+        localStorage.setItem("unlockedStudentExamSets", JSON.stringify(updated));
+        localStorage.setItem("releasedStudentExamSets", JSON.stringify(updated));
+
+        if (curPhone) {
+          const studentSetMap = JSON.parse(localStorage.getItem("adminStudentUnlockedSetsMap") || "{}");
+          studentSetMap[curPhone] = Array.from(new Set([...(studentSetMap[curPhone] || []), item.id, item.name, itemName].filter(Boolean)));
+          localStorage.setItem("adminStudentUnlockedSetsMap", JSON.stringify(studentSetMap));
+        }
+      } else {
+        localStorage.setItem("currentStudentPackage", itemName);
+        if (curPhone) {
+          const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+          const existingPkgs = buyerMap[curPhone]?.packages || [];
+          buyerMap[curPhone] = {
+            ...(buyerMap[curPhone] || {}),
+            isBuyer: true,
+            hasPurchased: true,
+            packageName: itemName,
+            packages: Array.from(new Set([...existingPkgs, itemName]))
+          };
+          localStorage.setItem("adminBuyerStudentsMap", JSON.stringify(buyerMap));
+        }
+      }
+
+      // 3. Save to student's completed payment history
       const payments = JSON.parse(localStorage.getItem("studentPayments") || "[]");
       payments.unshift({
         id: Date.now(),
@@ -313,7 +283,7 @@ export default function EsewaCheckoutModal({
         type: isSet ? "Individual UBT Set (Rs. 30)" : "UBT Package",
         amount: itemPrice,
         esewaNumber,
-        status: "Pending Admin Confirmation",
+        status: "COMPLETED & UNLOCKED",
         screenshotUrl: screenshotLocation,
         date: new Date().toISOString(),
         formattedDate: new Date().toLocaleString()
@@ -327,14 +297,16 @@ export default function EsewaCheckoutModal({
         onSuccessUnlock({
           type: selectedType,
           item,
-          status: "Pending",
-          pendingQuery: true
+          status: "COMPLETE"
         });
       }
+
+      alert(`🎉 भुक्तानी प्रमाणित भयो (Payment Verified)!\n\nReference Code: ${cleanTxn}\nसेट "${itemName}" तुरुन्तै अनलक गरिएको छ।\n\nतपाईंले अब सिधै Start Exam थिचेर परीक्षा सुरु गर्न सक्नुहुन्छ!`);
+      onClose();
     } catch (err) {
-      console.error("Query submission error:", err);
+      console.error("Query verification error:", err);
       setIsProcessing(false);
-      alert("Failed to submit query: " + err.message);
+      alert("Verification Notice: " + err.message);
     }
   };
 
@@ -645,7 +617,7 @@ export default function EsewaCheckoutModal({
                 </p>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {/* Option A: Open directly in eSewa Mobile App */}
+                  {/* Option A: Open directly in native eSewa Mobile App (No Captcha / No Robot Check) */}
                   <a
                     href={esewaDeepLink}
                     onClick={handleOpenEsewaApp}
@@ -705,48 +677,9 @@ export default function EsewaCheckoutModal({
                       rel="noopener noreferrer"
                       style={{ color: "#64748b", textDecoration: "underline" }}
                     >
-                      Play Store बाट eSewa ↗
+                      Play Store बाट eSewa App ↗
                     </a>
                   </div>
-
-                  {/* Option B: eSewa Web Gateway with Auto-Return */}
-                  <button
-                    type="button"
-                    onClick={handleEsewaOnlinePay}
-                    disabled={isInitiatingEsewa}
-                    style={{
-                      width: "100%",
-                      background: isInitiatingEsewa
-                        ? "#94a3b8"
-                        : "#ffffff",
-                      color: "#166534",
-                      border: "1.5px solid #16a34a",
-                      padding: "10px 16px",
-                      borderRadius: "8px",
-                      fontWeight: "800",
-                      fontSize: "13px",
-                      cursor: isInitiatingEsewa ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                      transition: "all 0.15s ease"
-                    }}
-                  >
-                    {isInitiatingEsewa ? (
-                      <>
-                        <span>⏳</span>
-                        <span>eSewa मा जोडिँदै...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>🌐</span>
-                        <span>eSewa लगइन गरी भुक्तानी (Auto-Return & Unlock)</span>
-                        <span style={{ fontSize: "14px" }}>↗</span>
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
 

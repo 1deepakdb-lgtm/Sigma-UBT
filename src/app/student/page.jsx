@@ -3060,9 +3060,14 @@ const StudentDashboard = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                handleDirectEsewaBuy(set);
+                                handleOpenEsewaModal({
+                                  id: set.id,
+                                  name: set.name,
+                                  price: 30,
+                                  type: "set",
+                                  packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
+                                });
                               }}
-                              disabled={initiatingEsewaSetId === (set.id || set.name)}
                               title="Pay Rs. 30 via eSewa to unlock this exam set"
                               style={{
                                 backgroundColor: "#2d6a4f", // Forest Green matching user's image
@@ -3074,13 +3079,13 @@ const StudentDashboard = () => {
                                 textAlign: "center",
                                 fontSize: "15px",
                                 fontWeight: "800",
-                                cursor: initiatingEsewaSetId === (set.id || set.name) ? "wait" : "pointer",
+                                cursor: "pointer",
                                 boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
                                 transition: "all 0.15s ease",
                                 whiteSpace: "nowrap"
                               }}
                             >
-                              {initiatingEsewaSetId === (set.id || set.name) ? "⏳ Connecting..." : "Pay – Rs. 30"}
+                              Pay – Rs. 30
                             </button>
                           )}
                         </div>
@@ -3545,7 +3550,13 @@ const StudentDashboard = () => {
                             return;
                           }
 
-                          handleDirectEsewaBuy(set);
+                          handleOpenEsewaModal({
+                            id: set.id,
+                            name: set.name,
+                            price: 30,
+                            type: "set",
+                            packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
+                          });
                         }}
                         disabled={initiatingEsewaSetId === (set.id || set.name)}
                         style={{
@@ -4084,8 +4095,15 @@ const StudentDashboard = () => {
                       ) : (
                         <button
                           type="button"
-                          onClick={() => handleDirectEsewaBuyPackage(pkg)}
-                          disabled={initiatingEsewaSetId === (pkg.id || pkg.name)}
+                          onClick={() =>
+                            handleOpenEsewaModal({
+                              id: pkg.id,
+                              name: pkg.name,
+                              price: pkg.price || "Rs. 1,000",
+                              type: "package",
+                              desc: pkg.desc
+                            })
+                          }
                           style={{
                             width: "100%",
                             background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
@@ -4094,7 +4112,7 @@ const StudentDashboard = () => {
                             padding: "10px",
                             borderRadius: "6px",
                             fontWeight: "800",
-                            cursor: initiatingEsewaSetId === (pkg.id || pkg.name) ? "wait" : "pointer",
+                            cursor: "pointer",
                             fontSize: "13.5px",
                             boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
                             display: "flex",
@@ -4103,11 +4121,7 @@ const StudentDashboard = () => {
                             gap: "6px"
                           }}
                         >
-                          {initiatingEsewaSetId === (pkg.id || pkg.name) ? (
-                            <span>⏳ Connecting eSewa...</span>
-                          ) : (
-                            <span>🟢 Pay via eSewa ({pkg.price || "Buy"})</span>
-                          )}
+                          <span>🟢 Pay via eSewa ({pkg.price || "Buy"})</span>
                         </button>
                       )}
                     </div>
