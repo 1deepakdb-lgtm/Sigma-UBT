@@ -2771,7 +2771,7 @@ const StudentDashboard = () => {
                     : "🌐 UBT & Exam Sets"}
                 </h2>
                 <p style={{ margin: 0, fontSize: "12.5px", color: "#64748b" }}>
-                  🎁 <strong>Free Sets</strong> are open to all students · Pay – रु. ३० to unlock more sets
+                  🎁 <strong>Free Sets</strong> are open to all students · Pay – Rs. 30 to unlock more sets
                 </p>
               </div>
 
@@ -3010,7 +3010,7 @@ const StudentDashboard = () => {
                                 whiteSpace: "nowrap"
                               }}
                             >
-                              Pay – रु. ३०
+                              Pay – Rs. 30
                             </button>
                           )}
                         </div>
@@ -3415,7 +3415,7 @@ const StudentDashboard = () => {
                             </span>
                           ) : (
                             <span style={{ fontSize: "10px", fontWeight: "800", color: "#c2410c", backgroundColor: "#fff7ed", border: "1px solid #fed7aa", padding: "2px 6px", borderRadius: "4px" }}>
-                              Pay – रु. ३०
+                              Pay – Rs. 30
                             </span>
                           )}
                         </div>
@@ -3520,7 +3520,7 @@ const StudentDashboard = () => {
                           ? "⏳ PENDING (Rs. 30)"
                           : initiatingEsewaSetId === (set.id || set.name)
                           ? "⏳ CONNECTING ESEWA..."
-                          : "🟢 Pay – रु. ३० (eSewa) ▶"}
+                          : "🟢 Pay – Rs. 30 (eSewa) ▶"}
                       </button>
                       {!unlocked && !isFree && !pending && (
                         <div style={{ textAlign: "center", marginTop: "4px" }}>
