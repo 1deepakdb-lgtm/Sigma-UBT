@@ -677,6 +677,7 @@ const StudentDashboard = () => {
     setEsewaModalOpen(true);
   };
 
+  const [showQrModal, setShowQrModal] = useState(false);
   const [initiatingEsewaSetId, setInitiatingEsewaSetId] = useState(null);
 
   const handleDirectEsewaBuy = async (set) => {
@@ -2919,193 +2920,303 @@ const StudentDashboard = () => {
                 </div>
               </div>
 
-              {/* Cards List matching media_1794736877642_9ce09c39.jpg */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {displayedHomeSets.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "32px 16px", backgroundColor: "#ffffff", borderRadius: "14px", border: "1px solid #e2e8f0" }}>
-                    <div style={{ fontSize: "28px", marginBottom: "6px" }}>🔍</div>
-                    <p style={{ color: "#64748b", margin: 0, fontSize: "14px", fontWeight: "600" }}>No exam sets match your filter.</p>
-                    <button
-                      type="button"
-                      onClick={() => { setHomeFilter("all"); setHomeSearch(""); }}
-                      style={{ marginTop: "10px", padding: "6px 14px", borderRadius: "6px", backgroundColor: "#0a2e6b", color: "#ffffff", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "700" }}
-                    >
-                      Reset Filters
-                    </button>
-                  </div>
-                ) : (
-                  displayedHomeSets.slice(0, homeVisibleLimit).map((set, idx) => {
-                    const isEven = idx % 2 === 0;
-                    // Alternating soft colors matching media_1794736877642_9ce09c39.jpg
-                    const cardBg = isEven ? "#dbeafe" : "#ffedd5";
-                    const cardBorder = isEven ? "#bfdbfe" : "#fed7aa";
-
-                    const isFree = checkSetIsFree(set);
-                    const unlocked = isFree || isSetUnlocked(set);
-                    const pending = isSetPending(set);
-
-                    return (
-                      <div
-                        key={set.id || set.name || idx}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          backgroundColor: cardBg,
-                          border: `1.5px solid ${cardBorder}`,
-                          borderRadius: "16px",
-                          padding: "16px 22px",
-                          boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
-                          gap: "14px",
-                          transition: "all 0.15s ease"
-                        }}
+              {/* Responsive Container: Sets List (Left) + Fonepay/eSewa QR Card (One Side) */}
+              <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "20px", alignItems: "flex-start" }}>
+                {/* Left Column: Sets List */}
+                <div style={{ flex: "1 1 540px", minWidth: "280px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {displayedHomeSets.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "32px 16px", backgroundColor: "#ffffff", borderRadius: "14px", border: "1px solid #e2e8f0" }}>
+                      <div style={{ fontSize: "28px", marginBottom: "6px" }}>🔍</div>
+                      <p style={{ color: "#64748b", margin: 0, fontSize: "14px", fontWeight: "600" }}>No exam sets match your filter.</p>
+                      <button
+                        type="button"
+                        onClick={() => { setHomeFilter("all"); setHomeSearch(""); }}
+                        style={{ marginTop: "10px", padding: "6px 14px", borderRadius: "6px", backgroundColor: "#0a2e6b", color: "#ffffff", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "700" }}
                       >
-                        {/* Left Title Only - Matching user specification (set name only, no question count or time) */}
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: "17.5px", fontWeight: "700", color: "#1e293b", letterSpacing: "0.2px", lineHeight: "1.3" }}>
-                            {set.name}
+                        Reset Filters
+                      </button>
+                    </div>
+                  ) : (
+                    displayedHomeSets.slice(0, homeVisibleLimit).map((set, idx) => {
+                      const isEven = idx % 2 === 0;
+                      // Alternating soft colors matching media_1794736877642_9ce09c39.jpg
+                      const cardBg = isEven ? "#dbeafe" : "#ffedd5";
+                      const cardBorder = isEven ? "#bfdbfe" : "#fed7aa";
+
+                      const isFree = checkSetIsFree(set);
+                      const unlocked = isFree || isSetUnlocked(set);
+                      const pending = isSetPending(set);
+
+                      return (
+                        <div
+                          key={set.id || set.name || idx}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            backgroundColor: cardBg,
+                            border: `1.5px solid ${cardBorder}`,
+                            borderRadius: "16px",
+                            padding: "16px 22px",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                            gap: "14px",
+                            transition: "all 0.15s ease"
+                          }}
+                        >
+                          {/* Left Title Only - Matching user specification (set name only, no question count or time) */}
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: "17.5px", fontWeight: "700", color: "#1e293b", letterSpacing: "0.2px", lineHeight: "1.3" }}>
+                              {set.name}
+                            </div>
+                          </div>
+
+                          {/* Right Pill Button matching screenshot */}
+                          <div style={{ flexShrink: 0 }}>
+                            {isFree ? (
+                              <button
+                                type="button"
+                                onClick={() => handleStartExam(set)}
+                                title="Free Demo Set: Instant full access for all students!"
+                                style={{
+                                  backgroundColor: "#0a2e6b", // Deep Navy Blue from screenshot
+                                  color: "#ffffff",
+                                  border: "none",
+                                  borderRadius: "24px",
+                                  padding: "10px 26px",
+                                  minWidth: "110px",
+                                  textAlign: "center",
+                                  fontSize: "15px",
+                                  fontWeight: "800",
+                                  cursor: "pointer",
+                                  boxShadow: "0 3px 8px rgba(10, 46, 107, 0.35)",
+                                  transition: "all 0.15s ease",
+                                  whiteSpace: "nowrap"
+                                }}
+                              >
+                                Free
+                              </button>
+                            ) : unlocked ? (
+                              <button
+                                type="button"
+                                onClick={() => handleStartExam(set)}
+                                title="You have access to this exam set. Click to start!"
+                                style={{
+                                  backgroundColor: "#16a34a", // Vibrant Green
+                                  color: "#ffffff",
+                                  border: "none",
+                                  borderRadius: "24px",
+                                  padding: "10px 26px",
+                                  minWidth: "110px",
+                                  textAlign: "center",
+                                  fontSize: "15px",
+                                  fontWeight: "800",
+                                  cursor: "pointer",
+                                  boxShadow: "0 3px 8px rgba(22, 163, 74, 0.35)",
+                                  transition: "all 0.15s ease",
+                                  whiteSpace: "nowrap"
+                                }}
+                              >
+                                Start
+                              </button>
+                            ) : pending ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const sendWa = window.confirm(
+                                    `Your payment of Rs. 30 for "${set.name}" is pending review by Admin.\n\nWould you like to message Admin on WhatsApp (9768444902) to verify & release?`
+                                  );
+                                  if (sendWa) {
+                                    const waMsg = encodeURIComponent(
+                                      `🔔 *EXAM SET RELEASE REQUEST (Rs. 30)*\n\n` +
+                                      `Hello Admin,\n\nI have submitted my payment of Rs. 30 for "${set.name}".\nPlease verify and release my exam set!\n\n` +
+                                      `👤 Student: ${studentName || "Student"} (${currentStudentPhone || "N/A"})\n` +
+                                      `📚 Exam: ${set.name}\n` +
+                                      `💰 Amount: Rs. 30\n\n` +
+                                      `Thank you!`
+                                    );
+                                    window.open(`https://wa.me/9779768444902?text=${waMsg}`, "_blank");
+                                  }
+                                }}
+                                title="Payment is pending review. Click to contact Admin on WhatsApp."
+                                style={{
+                                  backgroundColor: "#0284c7", // Sky blue for pending
+                                  color: "#ffffff",
+                                  border: "none",
+                                  borderRadius: "24px",
+                                  padding: "10px 18px",
+                                  minWidth: "110px",
+                                  textAlign: "center",
+                                  fontSize: "13.5px",
+                                  fontWeight: "800",
+                                  cursor: "pointer",
+                                  boxShadow: "0 3px 8px rgba(2, 132, 199, 0.35)",
+                                  transition: "all 0.15s ease",
+                                  whiteSpace: "nowrap"
+                                }}
+                              >
+                                ⏳ Pending
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleDirectEsewaBuy(set)}
+                                disabled={initiatingEsewaSetId === (set.id || set.name)}
+                                title="Pay Rs. 30 via eSewa to unlock this exam set"
+                                style={{
+                                  backgroundColor: "#2d6a4f", // Forest Green matching user's image
+                                  color: "#ffffff",
+                                  border: "none",
+                                  borderRadius: "24px",
+                                  padding: "10px 22px",
+                                  minWidth: "115px",
+                                  textAlign: "center",
+                                  fontSize: "15px",
+                                  fontWeight: "800",
+                                  cursor: initiatingEsewaSetId === (set.id || set.name) ? "wait" : "pointer",
+                                  boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
+                                  transition: "all 0.15s ease",
+                                  whiteSpace: "nowrap"
+                                }}
+                              >
+                                {initiatingEsewaSetId === (set.id || set.name) ? "⏳ Connecting..." : "Pay – Rs. 30"}
+                              </button>
+                            )}
                           </div>
                         </div>
+                      );
+                    })
+                  )}
 
-                        {/* Right Pill Button matching screenshot */}
-                        <div style={{ flexShrink: 0 }}>
-                          {isFree ? (
-                            <button
-                              type="button"
-                              onClick={() => handleStartExam(set)}
-                              title="Free Demo Set: Instant full access for all students!"
-                              style={{
-                                backgroundColor: "#0a2e6b", // Deep Navy Blue from screenshot
-                                color: "#ffffff",
-                                border: "none",
-                                borderRadius: "24px",
-                                padding: "10px 26px",
-                                minWidth: "110px",
-                                textAlign: "center",
-                                fontSize: "15px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                boxShadow: "0 3px 8px rgba(10, 46, 107, 0.35)",
-                                transition: "all 0.15s ease",
-                                whiteSpace: "nowrap"
-                              }}
-                            >
-                              Free
-                            </button>
-                          ) : unlocked ? (
-                            <button
-                              type="button"
-                              onClick={() => handleStartExam(set)}
-                              title="You have access to this exam set. Click to start!"
-                              style={{
-                                backgroundColor: "#16a34a", // Vibrant Green
-                                color: "#ffffff",
-                                border: "none",
-                                borderRadius: "24px",
-                                padding: "10px 26px",
-                                minWidth: "110px",
-                                textAlign: "center",
-                                fontSize: "15px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                boxShadow: "0 3px 8px rgba(22, 163, 74, 0.35)",
-                                transition: "all 0.15s ease",
-                                whiteSpace: "nowrap"
-                              }}
-                            >
-                              Start
-                            </button>
-                          ) : pending ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const sendWa = window.confirm(
-                                  `Your payment of Rs. 30 for "${set.name}" is pending review by Admin.\n\nWould you like to message Admin on WhatsApp (9768444902) to verify & release?`
-                                );
-                                if (sendWa) {
-                                  const waMsg = encodeURIComponent(
-                                    `🔔 *EXAM SET RELEASE REQUEST (Rs. 30)*\n\n` +
-                                    `Hello Admin,\n\nI have submitted my payment of Rs. 30 for "${set.name}".\nPlease verify and release my exam set!\n\n` +
-                                    `👤 Student: ${studentName || "Student"} (${currentStudentPhone || "N/A"})\n` +
-                                    `📚 Exam: ${set.name}\n` +
-                                    `💰 Amount: Rs. 30\n\n` +
-                                    `Thank you!`
-                                  );
-                                  window.open(`https://wa.me/9779768444902?text=${waMsg}`, "_blank");
-                                }
-                              }}
-                              title="Payment is pending review. Click to contact Admin on WhatsApp."
-                              style={{
-                                backgroundColor: "#0284c7", // Sky blue for pending
-                                color: "#ffffff",
-                                border: "none",
-                                borderRadius: "24px",
-                                padding: "10px 18px",
-                                minWidth: "110px",
-                                textAlign: "center",
-                                fontSize: "13.5px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                boxShadow: "0 3px 8px rgba(2, 132, 199, 0.35)",
-                                transition: "all 0.15s ease",
-                                whiteSpace: "nowrap"
-                              }}
-                            >
-                              ⏳ Pending
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleDirectEsewaBuy(set)}
-                              disabled={initiatingEsewaSetId === (set.id || set.name)}
-                              title="Pay Rs. 30 via eSewa to unlock this exam set"
-                              style={{
-                                backgroundColor: "#2d6a4f", // Forest Green matching user's image
-                                color: "#ffffff",
-                                border: "none",
-                                borderRadius: "24px",
-                                padding: "10px 22px",
-                                minWidth: "115px",
-                                textAlign: "center",
-                                fontSize: "15px",
-                                fontWeight: "800",
-                                cursor: initiatingEsewaSetId === (set.id || set.name) ? "wait" : "pointer",
-                                boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
-                                transition: "all 0.15s ease",
-                                whiteSpace: "nowrap"
-                              }}
-                            >
-                              {initiatingEsewaSetId === (set.id || set.name) ? "⏳ Connecting..." : "Pay – Rs. 30"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+                  {/* Show More Button if more sets than limit */}
+                  {displayedHomeSets.length > homeVisibleLimit && (
+                    <div style={{ textAlign: "center", marginTop: "8px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setHomeVisibleLimit(prev => prev + 30)}
+                        style={{
+                          padding: "9px 24px",
+                          borderRadius: "20px",
+                          backgroundColor: "#ffffff",
+                          color: "#0a2e6b",
+                          border: "1.5px solid #0a2e6b",
+                          fontSize: "13px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.05)"
+                        }}
+                      >
+                        Show More Exam Sets ({displayedHomeSets.length - homeVisibleLimit} remaining) ▼
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-                {/* Show More Button if more sets than limit */}
-                {displayedHomeSets.length > homeVisibleLimit && (
-                  <div style={{ textAlign: "center", marginTop: "8px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setHomeVisibleLimit(prev => prev + 30)}
+                {/* Right Column: Fonepay / eSewa Merchant QR Card & WhatsApp Upload Instruction */}
+                <div style={{ flex: "0 0 290px", width: "290px", maxWidth: "100%", position: "sticky", top: "16px", margin: "0 auto" }}>
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      border: "2px solid #16a34a",
+                      borderRadius: "16px",
+                      padding: "16px 14px",
+                      boxShadow: "0 4px 14px rgba(22, 163, 74, 0.12)",
+                      textAlign: "center"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "16px" }}>📱</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: "800", color: "#166534" }}>
+                        Fonepay / eSewa QR भुक्तानी
+                      </span>
+                    </div>
+
+                    <div
+                      onClick={() => setShowQrModal(true)}
+                      title="Click to zoom QR code"
                       style={{
-                        padding: "9px 24px",
-                        borderRadius: "20px",
-                        backgroundColor: "#ffffff",
-                        color: "#0a2e6b",
-                        border: "1.5px solid #0a2e6b",
-                        fontSize: "13px",
-                        fontWeight: "700",
                         cursor: "pointer",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.05)"
+                        border: "1.5px solid #86efac",
+                        borderRadius: "12px",
+                        padding: "8px",
+                        backgroundColor: "#f0fdf4",
+                        display: "inline-block",
+                        marginBottom: "8px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                        transition: "transform 0.15s ease"
                       }}
                     >
-                      Show More Exam Sets ({displayedHomeSets.length - homeVisibleLimit} remaining) ▼
-                    </button>
+                      <img
+                        src="/sigma-esewa-fonepay-qr.jpg"
+                        alt="Sigma Education Korean Bhasa Center Fonepay eSewa QR"
+                        style={{
+                          width: "100%",
+                          maxWidth: "200px",
+                          height: "auto",
+                          maxHeight: "270px",
+                          borderRadius: "8px",
+                          display: "block",
+                          margin: "0 auto",
+                          objectFit: "contain"
+                        }}
+                      />
+                      <span style={{ fontSize: "11px", color: "#15803d", fontWeight: "700", marginTop: "4px", display: "block" }}>
+                        🔍 क्लिक गरी QR ठूलो बनाउनुहोस्
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b", marginBottom: "2px" }}>
+                      Sigma Education Korean Bhasa Center
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "8px" }}>
+                      Terminal: 2222020018404471 · Tokha MC
+                    </div>
+
+                    <div style={{ backgroundColor: "#eff6ff", border: "1px dashed #3b82f6", borderRadius: "8px", padding: "8px 10px", marginBottom: "10px", textAlign: "left" }}>
+                      <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#1e40af", marginBottom: "2px" }}>
+                        💡 भुक्तानी दर (Payment Rate):
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#1e3a8a", fontWeight: "800" }}>
+                        • प्रति सेट: <span style={{ color: "#16a34a" }}>Rs. 30</span> (Pay – Rs. 30)
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Instruction & Button */}
+                    <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #22c55e", borderRadius: "10px", padding: "10px", textAlign: "center" }}>
+                      <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#166534", marginBottom: "4px", lineHeight: "1.35" }}>
+                        🧾 भुक्तानी गरिसकेपछि स्क्रिनसट यो WhatsApp नम्बरमा पठाउनुहोस्:
+                      </div>
+                      <div style={{ fontSize: "14px", fontWeight: "900", color: "#065f46", marginBottom: "8px", letterSpacing: "0.5px" }}>
+                        +977-9768444902
+                      </div>
+                      <a
+                        href="https://wa.me/9779768444902?text=Hello%20Admin%2C%20I%20have%20paid%20Rs.%2030%20via%20QR.%20Here%20is%20my%20payment%20screenshot%20to%20unlock%20my%20UBT%20exam%20set."
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          width: "100%",
+                          boxSizing: "border-box",
+                          padding: "10px 12px",
+                          backgroundColor: "#25d366",
+                          backgroundImage: "linear-gradient(135deg, #25d366 0%, #128c7e 100%)",
+                          color: "#ffffff",
+                          textDecoration: "none",
+                          borderRadius: "8px",
+                          fontWeight: "800",
+                          fontSize: "12.5px",
+                          boxShadow: "0 2px 8px rgba(37, 211, 102, 0.35)",
+                          cursor: "pointer"
+                        }}
+                      >
+                        <span>📲</span>
+                        <span>WhatsApp मा स्क्रिनसट पठाउनुहोस्</span>
+                      </a>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
@@ -3989,128 +4100,239 @@ const StudentDashboard = () => {
                 </div>
               )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
-                {displayedPackages.map((pkg, idx) => {
-                  const isMock = pkg.track === "japanese" || (pkg.name || "").toLowerCase().includes("mock") || (pkg.name || "").toLowerCase().includes("jft") || (pkg.name || "").toLowerCase().includes("jlpt") || (pkg.name || "").toLowerCase().includes("nat");
+              <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "20px", alignItems: "flex-start" }}>
+                <div style={{ flex: "1 1 540px", minWidth: "280px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
+                    {displayedPackages.map((pkg, idx) => {
+                      const isMock = pkg.track === "japanese" || (pkg.name || "").toLowerCase().includes("mock") || (pkg.name || "").toLowerCase().includes("jft") || (pkg.name || "").toLowerCase().includes("jlpt") || (pkg.name || "").toLowerCase().includes("nat");
 
-                  return (
-                    <div key={pkg.id || idx} style={{ backgroundColor: "#ffffff", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                      <div>
-                        <span style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", padding: "3px 8px", borderRadius: "4px" }}>
-                          {isMock ? "🇯🇵 MOCK TEST PACKAGE" : "🇰🇷 UBT PACKAGE"}
-                        </span>
-                        <h4 style={{ margin: "14px 0 8px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>{pkg.name}</h4>
-                        <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: pkg.includedSets?.length ? "10px" : "18px" }}>
-                          {pkg.desc || (isMock ? "Full simulated Japanese mock test sets with audio and timer." : "Full simulated exam practice sets with Korean audio and timer.")}
-                        </p>
-                        {pkg.includedSets && pkg.includedSets.length > 0 && (
-                          <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "8px 10px", marginBottom: "14px", fontSize: "12px" }}>
-                            <div style={{ fontWeight: "700", color: "#1e40af", marginBottom: "4px", fontSize: "11px" }}>
-                              📦 {pkg.includedSets.length} Included Sets:
-                            </div>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                              {pkg.includedSets.slice(0, 3).map((setName, sIdx) => (
-                                <span key={sIdx} style={{ fontSize: "10.5px", backgroundColor: "#e0f2fe", color: "#0369a1", padding: "1px 5px", borderRadius: "3px", fontWeight: "600" }}>
-                                  {setName}
-                                </span>
-                              ))}
-                              {pkg.includedSets.length > 3 && (
-                                <span style={{ fontSize: "10.5px", color: "#64748b", fontStyle: "italic", alignSelf: "center" }}>
-                                  +{pkg.includedSets.length - 3} more
-                                </span>
+                      return (
+                        <div key={pkg.id || idx} style={{ backgroundColor: "#ffffff", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", padding: "24px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                          <div>
+                            <span style={{ fontSize: "11px", fontWeight: "700", color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", padding: "3px 8px", borderRadius: "4px" }}>
+                              {isMock ? "🇯🇵 MOCK TEST PACKAGE" : "🇰🇷 UBT PACKAGE"}
+                            </span>
+                            <h4 style={{ margin: "14px 0 8px 0", fontSize: "18px", color: "#0f172a", fontWeight: "700" }}>{pkg.name}</h4>
+                            <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: pkg.includedSets?.length ? "10px" : "18px" }}>
+                              {pkg.desc || (isMock ? "Full simulated Japanese mock test sets with audio and timer." : "Full simulated exam practice sets with Korean audio and timer.")}
+                            </p>
+                            {pkg.includedSets && pkg.includedSets.length > 0 && (
+                              <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "8px 10px", marginBottom: "14px", fontSize: "12px" }}>
+                                <div style={{ fontWeight: "700", color: "#1e40af", marginBottom: "4px", fontSize: "11px" }}>
+                                  📦 {pkg.includedSets.length} Included Sets:
+                                </div>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                                  {pkg.includedSets.slice(0, 3).map((setName, sIdx) => (
+                                    <span key={sIdx} style={{ fontSize: "10.5px", backgroundColor: "#e0f2fe", color: "#0369a1", padding: "1px 5px", borderRadius: "3px", fontWeight: "600" }}>
+                                      {setName}
+                                    </span>
+                                  ))}
+                                  {pkg.includedSets.length > 3 && (
+                                    <span style={{ fontSize: "10.5px", color: "#64748b", fontStyle: "italic", alignSelf: "center" }}>
+                                      +{pkg.includedSets.length - 3} more
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: "16px", fontWeight: "800", color: "#16a34a", marginBottom: "14px" }}>{pkg.price || "Contact Institute"}</div>
+                            <div>
+                              {isPackageUnlocked(pkg) ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveTab("exams")}
+                                  style={{
+                                    width: "100%",
+                                    background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    padding: "10px",
+                                    borderRadius: "6px",
+                                    fontWeight: "800",
+                                    cursor: "pointer",
+                                    fontSize: "13.5px",
+                                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "6px"
+                                  }}
+                                >
+                                  <span>✓</span>
+                                  <span>ACCESS EXAMS ▶</span>
+                                </button>
+                              ) : isPackagePending(pkg) ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    alert(`Your payment request for "${pkg.name}" is currently in review by Admin.\n\nWait for 5-10 minute, Admin will verify your payment and release your ${isJapaneseTrack ? "Mock Test package" : "UBT package"}.`);
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    padding: "10px",
+                                    borderRadius: "6px",
+                                    fontWeight: "800",
+                                    cursor: "pointer",
+                                    fontSize: "13px",
+                                    boxShadow: "0 2px 6px rgba(2, 132, 199, 0.3)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "6px"
+                                  }}
+                                >
+                                  <span>⏳</span>
+                                  <span>IN REVIEW</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDirectEsewaBuyPackage(pkg)}
+                                  disabled={initiatingEsewaSetId === (pkg.id || pkg.name)}
+                                  style={{
+                                    width: "100%",
+                                    background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    padding: "10px",
+                                    borderRadius: "6px",
+                                    fontWeight: "800",
+                                    cursor: initiatingEsewaSetId === (pkg.id || pkg.name) ? "wait" : "pointer",
+                                    fontSize: "13.5px",
+                                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "6px"
+                                  }}
+                                >
+                                  {initiatingEsewaSetId === (pkg.id || pkg.name) ? (
+                                    <span>⏳ Connecting eSewa...</span>
+                                  ) : (
+                                    <span>🟢 Pay via eSewa ({pkg.price || "Buy"})</span>
+                                  )}
+                                </button>
                               )}
                             </div>
                           </div>
-                        )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Right Column: Fonepay / eSewa Merchant QR Card & WhatsApp Upload Instruction */}
+                <div style={{ flex: "0 0 290px", width: "290px", maxWidth: "100%", position: "sticky", top: "16px", margin: "0 auto" }}>
+                  <div
+                    style={{
+                      backgroundColor: "#ffffff",
+                      border: "2px solid #16a34a",
+                      borderRadius: "16px",
+                      padding: "16px 14px",
+                      boxShadow: "0 4px 14px rgba(22, 163, 74, 0.12)",
+                      textAlign: "center"
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "16px" }}>📱</span>
+                      <span style={{ fontSize: "13.5px", fontWeight: "800", color: "#166534" }}>
+                        Fonepay / eSewa QR भुक्तानी
+                      </span>
+                    </div>
+
+                    <div
+                      onClick={() => setShowQrModal(true)}
+                      title="Click to zoom QR code"
+                      style={{
+                        cursor: "pointer",
+                        border: "1.5px solid #86efac",
+                        borderRadius: "12px",
+                        padding: "8px",
+                        backgroundColor: "#f0fdf4",
+                        display: "inline-block",
+                        marginBottom: "8px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                        transition: "transform 0.15s ease"
+                      }}
+                    >
+                      <img
+                        src="/sigma-esewa-fonepay-qr.jpg"
+                        alt="Sigma Education Korean Bhasa Center Fonepay eSewa QR"
+                        style={{
+                          width: "100%",
+                          maxWidth: "200px",
+                          height: "auto",
+                          maxHeight: "270px",
+                          borderRadius: "8px",
+                          display: "block",
+                          margin: "0 auto",
+                          objectFit: "contain"
+                        }}
+                      />
+                      <span style={{ fontSize: "11px", color: "#15803d", fontWeight: "700", marginTop: "4px", display: "block" }}>
+                        🔍 क्लिक गरी QR ठूलो बनाउनुहोस्
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b", marginBottom: "2px" }}>
+                      Sigma Education Korean Bhasa Center
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "8px" }}>
+                      Terminal: 2222020018404471 · Tokha MC
+                    </div>
+
+                    <div style={{ backgroundColor: "#eff6ff", border: "1px dashed #3b82f6", borderRadius: "8px", padding: "8px 10px", marginBottom: "10px", textAlign: "left" }}>
+                      <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#1e40af", marginBottom: "2px" }}>
+                        💡 भुक्तानी निर्देशन (Payment Info):
                       </div>
-                  <div>
-                    <div style={{ fontSize: "16px", fontWeight: "800", color: "#16a34a", marginBottom: "14px" }}>{pkg.price || "Contact Institute"}</div>
-                    <div>
-                      {isPackageUnlocked(pkg) ? (
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab("exams")}
-                          style={{
-                            width: "100%",
-                            background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                            color: "#ffffff",
-                            border: "none",
-                            padding: "10px",
-                            borderRadius: "6px",
-                            fontWeight: "800",
-                            cursor: "pointer",
-                            fontSize: "13.5px",
-                            boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px"
-                          }}
-                        >
-                          <span>✓</span>
-                          <span>ACCESS EXAMS ▶</span>
-                        </button>
-                      ) : isPackagePending(pkg) ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            alert(`Your payment request for "${pkg.name}" is currently in review by Admin.\n\nWait for 5-10 minute, Admin will verify your payment and release your ${isJapaneseTrack ? "Mock Test package" : "UBT package"}.`);
-                          }}
-                          style={{
-                            width: "100%",
-                            background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
-                            color: "#ffffff",
-                            border: "none",
-                            padding: "10px",
-                            borderRadius: "6px",
-                            fontWeight: "800",
-                            cursor: "pointer",
-                            fontSize: "13px",
-                            boxShadow: "0 2px 6px rgba(2, 132, 199, 0.3)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px"
-                          }}
-                        >
-                          <span>⏳</span>
-                          <span>IN REVIEW</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleDirectEsewaBuyPackage(pkg)}
-                          disabled={initiatingEsewaSetId === (pkg.id || pkg.name)}
-                          style={{
-                            width: "100%",
-                            background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                            color: "#ffffff",
-                            border: "none",
-                            padding: "10px",
-                            borderRadius: "6px",
-                            fontWeight: "800",
-                            cursor: initiatingEsewaSetId === (pkg.id || pkg.name) ? "wait" : "pointer",
-                            fontSize: "13.5px",
-                            boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px"
-                          }}
-                        >
-                          {initiatingEsewaSetId === (pkg.id || pkg.name) ? (
-                            <span>⏳ Connecting eSewa...</span>
-                          ) : (
-                            <span>🟢 Pay via eSewa ({pkg.price || "Buy"})</span>
-                          )}
-                        </button>
-                      )}
+                      <div style={{ fontSize: "12px", color: "#1e3a8a", fontWeight: "700" }}>
+                        कुनै पनि Mobile Banking वा eSewa बाट QR स्क्यान गरी प्याकेज वा सेट भुक्तानी गर्नुहोस्।
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Instruction & Button */}
+                    <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #22c55e", borderRadius: "10px", padding: "10px", textAlign: "center" }}>
+                      <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#166534", marginBottom: "4px", lineHeight: "1.35" }}>
+                        🧾 भुक्तानी गरिसकेपछि स्क्रिनसट यो WhatsApp नम्बरमा पठाउनुहोस्:
+                      </div>
+                      <div style={{ fontSize: "14px", fontWeight: "900", color: "#065f46", marginBottom: "8px", letterSpacing: "0.5px" }}>
+                        +977-9768444902
+                      </div>
+                      <a
+                        href="https://wa.me/9779768444902?text=Hello%20Admin%2C%20I%20have%20paid%20via%20QR.%20Here%20is%20my%20payment%20screenshot%20to%20unlock%20my%20UBT%20package."
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          width: "100%",
+                          boxSizing: "border-box",
+                          padding: "10px 12px",
+                          backgroundColor: "#25d366",
+                          backgroundImage: "linear-gradient(135deg, #25d366 0%, #128c7e 100%)",
+                          color: "#ffffff",
+                          textDecoration: "none",
+                          borderRadius: "8px",
+                          fontWeight: "800",
+                          fontSize: "12.5px",
+                          boxShadow: "0 2px 8px rgba(37, 211, 102, 0.35)",
+                          cursor: "pointer"
+                        }}
+                      >
+                        <span>📲</span>
+                        <span>WhatsApp मा स्क्रिनसट पठाउनुहोस्</span>
+                      </a>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
         </div>
       );
     })()}
@@ -4472,6 +4694,116 @@ const StudentDashboard = () => {
             } catch (e) {}
           }}
         />
+      )}
+      {/* Fullscreen / Zoomed QR Code Modal */}
+      {showQrModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.8)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px"
+          }}
+          onClick={() => setShowQrModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "16px",
+              padding: "20px",
+              maxWidth: "420px",
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.35)",
+              position: "relative"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowQrModal(false)}
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "12px",
+                background: "#f1f5f9",
+                border: "none",
+                borderRadius: "50%",
+                width: "32px",
+                height: "32px",
+                cursor: "pointer",
+                fontWeight: "800",
+                fontSize: "16px",
+                color: "#475569"
+              }}
+            >
+              ✕
+            </button>
+
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#166534", marginBottom: "4px" }}>
+              Fonepay & eSewa Official QR
+            </div>
+            <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "12px" }}>
+              Sigma Education Korean Bhasa Center Pvt. Ltd. (Tokha MC)
+            </div>
+
+            <img
+              src="/sigma-esewa-fonepay-qr.jpg"
+              alt="Sigma Education Fonepay eSewa QR"
+              style={{
+                width: "100%",
+                maxHeight: "60vh",
+                objectFit: "contain",
+                borderRadius: "10px",
+                marginBottom: "12px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+              }}
+            />
+
+            <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #22c55e", borderRadius: "10px", padding: "10px", marginBottom: "10px" }}>
+              <div style={{ fontSize: "12px", fontWeight: "700", color: "#166534", marginBottom: "4px" }}>
+                🧾 भुक्तानी गरिसकेपछि स्क्रिनसट यो WhatsApp नम्बरमा पठाउनुहोस्:
+              </div>
+              <div style={{ fontSize: "16px", fontWeight: "900", color: "#065f46", letterSpacing: "0.5px" }}>
+                +977-9768444902
+              </div>
+            </div>
+
+            <a
+              href="https://wa.me/9779768444902?text=Hello%20Admin%2C%20I%20have%20paid%20Rs.%2030%20via%20QR.%20Here%20is%20my%20payment%20screenshot%20to%20unlock%20my%20UBT%20exam%20set."
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 16px",
+                backgroundColor: "#25d366",
+                backgroundImage: "linear-gradient(135deg, #25d366 0%, #128c7e 100%)",
+                color: "#ffffff",
+                textDecoration: "none",
+                borderRadius: "8px",
+                fontWeight: "800",
+                fontSize: "13.5px",
+                boxShadow: "0 2px 8px rgba(37, 211, 102, 0.35)",
+                cursor: "pointer"
+              }}
+            >
+              <span>📲</span>
+              <span>WhatsApp मा स्क्रिनसट पठाउनुहोस् (+977-9768444902)</span>
+            </a>
+          </div>
+        </div>
       )}
     </div>
   );

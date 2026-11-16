@@ -1063,8 +1063,8 @@ export default function EsewaCheckoutModal({
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
               <div style={{ textAlign: "left" }}>
-                <span style={{ fontSize: "15px", fontWeight: "800", color: "#16a34a" }}>eSewa Official QR</span>
-                <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#64748b" }}>Deepak Bhatt &middot; 9768444902</p>
+                <span style={{ fontSize: "15px", fontWeight: "800", color: "#16a34a" }}>Fonepay / eSewa QR</span>
+                <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#64748b" }}>Sigma Education Korean Bhasa Center &middot; Tokha MC</p>
               </div>
               <button
                 type="button"
@@ -1089,42 +1089,78 @@ export default function EsewaCheckoutModal({
             </div>
             <div style={{ padding: "8px", backgroundColor: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
               <img
-                src="/esewa-payment-qr.jpg"
-                alt="eSewa Payment QR Code"
+                src="/sigma-esewa-fonepay-qr.jpg"
+                alt="Fonepay eSewa QR Code"
                 style={{
                   width: "100%",
                   height: "auto",
-                  maxHeight: "300px",
+                  maxHeight: "360px",
                   objectFit: "contain",
                   display: "block",
                   borderRadius: "6px"
                 }}
                 onError={(e) => {
-                  e.currentTarget.src = "/images/esewa-payment-qr.jpg";
+                  e.currentTarget.src = "/esewa-payment-qr.jpg";
                 }}
               />
             </div>
-            <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <span style={{ fontSize: "12px", color: "#334155" }}>
-                Scan directly using your <strong>eSewa Mobile App</strong>
+                Scan directly using <strong>eSewa / Mobile Banking App</strong>
               </span>
-              <span style={{ fontSize: "11px", color: "#64748b" }}>
+              <span style={{ fontSize: "11.5px", color: "#15803d", fontWeight: "700" }}>
                 Amount: <strong>{formattedPrice}</strong>
               </span>
+              <span style={{ fontSize: "11px", color: "#64748b" }}>
+                Terminal: 2222020018404471
+              </span>
             </div>
+
+            <div style={{ marginTop: "12px", backgroundColor: "#f0fdf4", border: "1.5px solid #22c55e", borderRadius: "8px", padding: "10px" }}>
+              <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#166534", marginBottom: "4px" }}>
+                🧾 भुक्तानीपछि स्क्रिनसट यो WhatsApp नम्बरमा पठाउनुहोस्:
+              </div>
+              <div style={{ fontSize: "15px", fontWeight: "900", color: "#065f46", marginBottom: "8px" }}>
+                +977-9768444902
+              </div>
+              <a
+                href="https://wa.me/9779768444902?text=Hello%20Admin%2C%20I%20have%20paid%20via%20QR.%20Here%20is%20my%20payment%20screenshot%20to%20unlock%20my%20UBT%20exam%20set."
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "9px 12px",
+                  backgroundColor: "#25d366",
+                  color: "#ffffff",
+                  textDecoration: "none",
+                  borderRadius: "6px",
+                  fontWeight: "800",
+                  fontSize: "12.5px"
+                }}
+              >
+                <span>📲</span>
+                <span>WhatsApp मा स्क्रिनसट पठाउनुहोस्</span>
+              </a>
+            </div>
+
             <button
               type="button"
               onClick={() => setIsQrZoomed(false)}
               style={{
-                marginTop: "14px",
+                marginTop: "10px",
                 width: "100%",
-                padding: "10px",
-                backgroundColor: "#16a34a",
-                color: "#ffffff",
-                border: "none",
+                padding: "8px",
+                backgroundColor: "#f1f5f9",
+                color: "#475569",
+                border: "1px solid #cbd5e1",
                 borderRadius: "8px",
                 fontWeight: "700",
-                fontSize: "13px",
+                fontSize: "12.5px",
                 cursor: "pointer"
               }}
             >
