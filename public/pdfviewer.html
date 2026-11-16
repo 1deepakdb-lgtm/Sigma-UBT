@@ -173,6 +173,16 @@
   });
 
   (function() {
+    function sanitizeUrl(u) {
+      if (!u) return '';
+      var clean = String(u).split('#')[0].trim();
+      try {
+        return encodeURI(decodeURI(clean));
+      } catch (e) {
+        return encodeURI(clean);
+      }
+    }
+
     var params = new URLSearchParams(window.location.search);
     var rawUrl = params.get('url');
 
@@ -189,7 +199,7 @@
       return;
     }
 
-    var cleanUrl = rawUrl.split('#')[0].trim();
+    var cleanUrl = sanitizeUrl(rawUrl);
     var pdfDoc = null;
     var renderedPages = new Set();
     var renderingPages = new Set();
@@ -233,10 +243,13 @@
       var set = {};
       set[clean] = true;
       try {
-        var dec = decodeURIComponent(clean);
+        var dec = decodeURI(clean);
         set[dec] = true;
         set[encodeURI(dec)] = true;
         set[encodeURIComponent(dec)] = true;
+        var decFull = decodeURIComponent(clean);
+        set[decFull] = true;
+        set[encodeURI(decFull)] = true;
       } catch (e) {}
       return Object.keys(set);
     }
@@ -348,45 +361,47 @@
     }
 
     async function downloadPdfWithProgress(url, onProgress) {
+      var fetchUrl = sanitizeUrl(url);
+
       // 1. Try modern fetch with progressive stream reading (best for PWA & mobile apps)
       try {
-        var resp = await fetch(url);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var resp = await fetch(fetchUrl);
+        if (resp.ok) {
+          var contentLength = resp.headers.get('content-length');
+          var totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
 
-        var contentLength = resp.headers.get('content-length');
-        var totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
-
-        if (!resp.body || !window.ReadableStream) {
-          var directBlob = await resp.blob();
-          if (onProgress) onProgress(100);
-          return directBlob;
-        }
-
-        var reader = resp.body.getReader();
-        var receivedBytes = 0;
-        var chunks = [];
-
-        while (true) {
-          var res = await reader.read();
-          if (res.done) break;
-          chunks.push(res.value);
-          receivedBytes += res.value.length;
-          if (totalBytes > 0 && onProgress) {
-            var pct = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
-            onProgress(pct);
+          if (!resp.body || !window.ReadableStream) {
+            var directBlob = await resp.blob();
+            if (onProgress) onProgress(100);
+            return directBlob;
           }
-        }
 
-        if (onProgress) onProgress(100);
-        return new Blob(chunks, { type: 'application/pdf' });
+          var reader = resp.body.getReader();
+          var receivedBytes = 0;
+          var chunks = [];
+
+          while (true) {
+            var res = await reader.read();
+            if (res.done) break;
+            chunks.push(res.value);
+            receivedBytes += res.value.length;
+            if (totalBytes > 0 && onProgress) {
+              var pct = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
+              onProgress(pct);
+            }
+          }
+
+          if (onProgress) onProgress(100);
+          return new Blob(chunks, { type: 'application/pdf' });
+        }
       } catch (fetchErr) {
         console.warn('Fetch stream download notice, trying XMLHttpRequest fallback:', fetchErr);
       }
 
-      // 2. XMLHttpRequest fallback for older webviews
+      // 2. XMLHttpRequest fallback for older webviews and Smart Boards
       return new Promise(function(resolve, reject) {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', url, true);
+        xhr.open('GET', fetchUrl, true);
         xhr.responseType = 'blob';
         xhr.onprogress = function(e) {
           if (e.lengthComputable && e.total > 0) {
@@ -410,10 +425,12 @@
     }
 
     async function loadPdfDataForLifetime(url) {
+      var validUrl = sanitizeUrl(url);
+
       // 0. If directly passed a local blob: URL
-      if (url.startsWith('blob:')) {
+      if (url.startsWith('blob:') || validUrl.startsWith('blob:')) {
         try {
-          var blobResp = await fetch(url);
+          var blobResp = await fetch(validUrl);
           var blobObj = await blobResp.blob();
           if (loadingView) loadingView.style.display = 'none';
           return await blobObj.arrayBuffer();
@@ -423,10 +440,16 @@
       var db = await openOfflineDb();
 
       // Step 1: Check persistent IndexedDB
-      var blob = await getFromDb(db, url);
+      var blob = await getFromDb(db, validUrl);
+      if (!blob && validUrl !== url) {
+        blob = await getFromDb(db, url);
+      }
 
       // Step 2: Check persistent CacheStorage
       if (!blob) {
+        blob = await getFromCacheStorage(validUrl);
+      }
+      if (!blob && validUrl !== url) {
         blob = await getFromCacheStorage(url);
       }
 
@@ -439,23 +462,33 @@
 
       // Step 3: Fetch over network with progress bar and store permanently for lifetime
       if (loadingProgress) loadingProgress.textContent = 'Opening Document... 0%';
-      var downloadedBlob = await downloadPdfWithProgress(url, function(pct) {
+      var downloadedBlob = await downloadPdfWithProgress(validUrl, function(pct) {
         if (loadingProgress) loadingProgress.textContent = 'Opening Document... ' + pct + '%';
       });
 
       // Save to IndexedDB & CacheStorage in background for lifetime offline access
-      saveToDb(db, url, downloadedBlob);
-      saveToCacheStorage(url, downloadedBlob);
+      saveToDb(db, validUrl, downloadedBlob);
+      saveToCacheStorage(validUrl, downloadedBlob);
 
       return await downloadedBlob.arrayBuffer();
     }
 
     // =========================================================================
-    // 2. DOCUMENT RENDERING ENGINE
+    // 2. DOCUMENT RENDERING ENGINE (RESPONSIVE: MOBILE, SMART BOARD, DESKTOP)
     // =========================================================================
     function getTargetWidth() {
-      var w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
-      return w;
+      var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
+      var screenHeight = window.innerHeight || document.documentElement.clientHeight || 800;
+
+      // Smart Boards & Large Displays (width > 1024px and landscape):
+      // Neatly fit page height so whole A4 page displays without excessive vertical scrolling
+      if (screenWidth > 1024 && screenWidth > screenHeight) {
+        var pageAspect = 1.414;
+        var heightBasedWidth = Math.floor((screenHeight - 30) / pageAspect);
+        var optimalWidth = Math.max(780, Math.min(Math.floor(screenWidth * 0.65), 1100, Math.floor(heightBasedWidth * 1.15)));
+        return Math.min(optimalWidth, screenWidth);
+      }
+      return screenWidth;
     }
 
     async function renderPage(pageNum, wrapper, targetWidth, renderScaleMultiplier) {
@@ -470,18 +503,34 @@
         var mult = renderScaleMultiplier || 1.0;
         var viewport = page.getViewport({ scale: baseScale * mult });
 
-        var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        var dpr = Math.min(window.devicePixelRatio || 1, 2.0);
 
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d', { alpha: false });
 
-        canvas.width = Math.floor(viewport.width * dpr);
-        canvas.height = Math.floor(viewport.height * dpr);
+        var renderWidth = Math.floor(viewport.width * dpr);
+        var renderHeight = Math.floor(viewport.height * dpr);
 
-        canvas.style.width = '100%';
+        // Hardware texture limit protection for Smart Boards (e.g. Mali/Adreno TV GPUs)
+        var maxCanvasDim = 3072;
+        if (renderWidth > maxCanvasDim || renderHeight > maxCanvasDim) {
+          var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
+          renderWidth = Math.floor(renderWidth * downscale);
+          renderHeight = Math.floor(renderHeight * downscale);
+        }
+
+        canvas.width = renderWidth;
+        canvas.height = renderHeight;
+
+        canvas.style.width = Math.floor(viewport.width) + 'px';
+        canvas.style.maxWidth = '100%';
         canvas.style.height = 'auto';
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
 
-        ctx.scale(dpr, dpr);
+        var scaleX = renderWidth / viewport.width;
+        var scaleY = renderHeight / viewport.height;
+        ctx.scale(scaleX, scaleY);
 
         await page.render({
           canvasContext: ctx,
@@ -769,26 +818,37 @@
 
     async function initViewer() {
       var rawData = null;
+      var targetDocUrl = sanitizeUrl(cleanUrl);
       try {
-        rawData = await loadPdfDataForLifetime(cleanUrl);
+        rawData = await loadPdfDataForLifetime(targetDocUrl);
         // Create an independent copy so web worker postMessage does not detach the original ArrayBuffer
         var workingCopy = rawData.slice ? rawData.slice(0) : new Uint8Array(rawData).slice().buffer;
         await startRenderingDoc(workingCopy);
       } catch (err) {
-        console.warn('Primary worker render notice, attempting single-thread fallback:', err);
+        console.warn('Primary document render notice, attempting fallback:', err);
         try {
-          // Fallback if web worker is restricted by WebView sandbox
-          if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-          }
           if (!rawData) {
-            rawData = await loadPdfDataForLifetime(cleanUrl);
+            rawData = await loadPdfDataForLifetime(targetDocUrl);
           }
           var fallbackCopy = rawData.slice ? rawData.slice(0) : new Uint8Array(rawData).slice().buffer;
           await startRenderingDoc(fallbackCopy);
         } catch (err2) {
-          console.error('Fatal document error:', err2);
-          showError('Unable to load document. Please check your connection and tap Retry.');
+          console.error('Fatal document error, attempting native viewer embed for Smart Board:', err2);
+          // Universal Native Smart Board / TV Fallback
+          try {
+            if (loadingView) loadingView.style.display = 'none';
+            if (errorView) errorView.style.display = 'none';
+            var embedFrame = document.createElement('iframe');
+            embedFrame.src = targetDocUrl + '#toolbar=0&navpanes=0';
+            embedFrame.style.width = '100%';
+            embedFrame.style.height = '100%';
+            embedFrame.style.border = 'none';
+            embedFrame.style.backgroundColor = '#ffffff';
+            container.innerHTML = '';
+            container.appendChild(embedFrame);
+          } catch (embedErr) {
+            showError('Unable to load document. Please check your connection and tap Retry.');
+          }
         }
       }
     }
