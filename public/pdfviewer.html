@@ -60,11 +60,12 @@
   }
   canvas {
     display: block;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
+    max-width: 100%;
+    height: auto;
     background-color: #ffffff;
-    box-shadow: none;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    margin: 0 auto;
+    image-rendering: -webkit-optimize-contrast;
   }
   #loading-view {
     position: fixed;
@@ -514,12 +515,21 @@
       var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
       var screenHeight = window.innerHeight || document.documentElement.clientHeight || 800;
 
-      // Smart Boards & Large Displays (width >= 1024px and landscape):
-      // Neatly fit page height so whole A4 page displays clearly without excessive vertical scrolling
+      // Mobile screens: full screen width for maximum legibility and sharpness
+      if (screenWidth < 768) {
+        return screenWidth;
+      }
+
+      // Tablets / iPads (768 - 1024):
+      if (screenWidth < 1024) {
+        return Math.min(screenWidth, 850);
+      }
+
+      // Smart Boards & Large Displays (width >= 1024 and landscape):
       if (screenWidth >= 1024 && screenWidth > screenHeight) {
         var pageAspect = 1.414;
-        var heightBasedWidth = Math.floor((screenHeight - 20) / pageAspect);
-        var optimalWidth = Math.max(850, Math.min(Math.floor(screenWidth * 0.75), 1400, Math.floor(heightBasedWidth * 1.35)));
+        var heightBasedWidth = Math.floor((screenHeight - 16) / pageAspect);
+        var optimalWidth = Math.max(900, Math.min(Math.floor(screenWidth * 0.85), 1500, Math.floor(heightBasedWidth * 1.4)));
         return Math.min(optimalWidth, screenWidth);
       }
       return screenWidth;
@@ -536,8 +546,10 @@
         var baseScale = widthToUse / baseViewport.width;
 
         var dpr = window.devicePixelRatio || 1;
-        // Ultra HD scale: 1.8x - 2.2x for crisp 4K vector sharpness
-        var outputScale = Math.min(Math.max(dpr, 1.8), 2.2);
+        // 100% UNCOMPROMISED CRYSTAL CLARITY:
+        // Use full physical native pixel density (at least 2.5x on low-DPI displays)
+        // Never artificially compress or reduce quality!
+        var outputScale = Math.max(dpr, 2.5);
         var renderScale = baseScale * outputScale;
         var viewport = page.getViewport({ scale: renderScale });
 
@@ -547,8 +559,8 @@
         var renderWidth = Math.floor(viewport.width);
         var renderHeight = Math.floor(viewport.height);
 
-        // Hardware texture limit protection for Smart Boards (e.g. Mali/Adreno TV GPUs max 4096px)
-        var maxCanvasDim = 4096;
+        // Hardware texture limit protection (8192px safe for modern 4K/8K GPUs and Smart Boards)
+        var maxCanvasDim = 8192;
         if (renderWidth > maxCanvasDim || renderHeight > maxCanvasDim) {
           var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
           renderWidth = Math.floor(renderWidth * downscale);
