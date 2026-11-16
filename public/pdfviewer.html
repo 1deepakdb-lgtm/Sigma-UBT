@@ -28,7 +28,7 @@
     height: 100%;
     overflow-y: auto;
     overflow-x: auto;
-    background-color: #ffffff;
+    background-color: #f1f5f9;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y pinch-zoom;
     position: relative;
@@ -41,7 +41,6 @@
     align-items: center;
     transform-origin: 0 0;
     transition: transform 0.08s ease-out;
-    will-change: transform;
   }
   .pdf-page-wrapper {
     position: relative;
@@ -49,13 +48,13 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 2px;
-    background-color: #ffffff;
-    min-height: 200px;
+    padding: 6px 0;
+    background-color: transparent;
+    box-sizing: border-box;
   }
   @media (min-width: 768px) {
     .pdf-page-wrapper {
-      margin-bottom: 4px;
+      padding: 8px 0;
     }
   }
   canvas {
@@ -63,9 +62,8 @@
     max-width: 100%;
     height: auto;
     background-color: #ffffff;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin: 0 auto;
-    image-rendering: -webkit-optimize-contrast;
   }
   #loading-view {
     position: fixed;
@@ -540,30 +538,40 @@
     }
 
     // =========================================================================
-    // 2. DOCUMENT RENDERING ENGINE (RESPONSIVE: MOBILE, SMART BOARD, DESKTOP)
+    // 2. DOCUMENT RENDERING ENGINE (RESPONSIVE: SMART BOARD FIT & ULTRA HD)
     // =========================================================================
-    function getTargetWidth() {
+    function getTargetDimensions(baseViewport) {
       var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
       var screenHeight = window.innerHeight || document.documentElement.clientHeight || 800;
 
-      // Mobile screens: full screen width for maximum legibility and sharpness
-      if (screenWidth < 768) {
-        return screenWidth;
+      var pageW = (baseViewport && baseViewport.width) ? baseViewport.width : 595.28;
+      var pageH = (baseViewport && baseViewport.height) ? baseViewport.height : 841.89;
+      var pageAspect = pageH / pageW; // Standard ~1.414 for A4 textbooks
+
+      // 1. Mobile Portrait (Smartphones & small screens):
+      // Fit edge-to-edge horizontally for maximum readability
+      if (screenWidth < 768 && screenHeight >= screenWidth) {
+        var mobileW = screenWidth;
+        return { width: mobileW, height: Math.floor(mobileW * pageAspect) };
       }
 
-      // Tablets / iPads (768 - 1024):
-      if (screenWidth < 1024) {
-        return Math.min(screenWidth, 850);
+      // 2. Landscape Displays (Smart Boards, Large Monitors, Laptops, TV):
+      // FIT ON SCREEN: Constrain height to screen height so entire page fits cleanly vertically without cut-off!
+      if (screenWidth > screenHeight) {
+        var verticalMargin = screenHeight >= 1080 ? 20 : 12;
+        var maxH = Math.max(400, screenHeight - verticalMargin);
+        var wFromH = Math.floor(maxH / pageAspect);
+        var optimalW = Math.min(wFromH, Math.floor(screenWidth * 0.95));
+        return { width: optimalW, height: Math.floor(optimalW * pageAspect) };
       }
 
-      // Smart Boards & Large Displays (width >= 1024 and landscape):
-      if (screenWidth >= 1024 && screenWidth > screenHeight) {
-        var pageAspect = 1.414;
-        var heightBasedWidth = Math.floor((screenHeight - 16) / pageAspect);
-        var optimalWidth = Math.max(900, Math.min(Math.floor(screenWidth * 0.85), 1500, Math.floor(heightBasedWidth * 1.4)));
-        return Math.min(optimalWidth, screenWidth);
-      }
-      return screenWidth;
+      // 3. Tablet Portrait / Square displays:
+      var availW = Math.min(screenWidth - 16, 850);
+      return { width: availW, height: Math.floor(availW * pageAspect) };
+    }
+
+    function getTargetWidth(baseViewport) {
+      return getTargetDimensions(baseViewport).width;
     }
 
     async function renderPage(pageNum, wrapper, targetWidth) {
@@ -573,24 +581,22 @@
       try {
         var page = await pdfDoc.getPage(pageNum);
         var baseViewport = page.getViewport({ scale: 1.0 });
-        var widthToUse = targetWidth || getTargetWidth();
+        var dims = getTargetDimensions(baseViewport);
+        var widthToUse = targetWidth || dims.width;
         var baseScale = widthToUse / baseViewport.width;
 
         var dpr = window.devicePixelRatio || 1;
-        // 100% UNCOMPROMISED CRYSTAL CLARITY:
-        // Use true native pixel density (clamped between 1.5x and 2.2x to prevent Android GPU buffer overflow)
-        var outputScale = Math.min(Math.max(dpr, 1.5), 2.2);
+        // ULTRA HD VECTOR CLARITY (MATCH REAL R2 PDF QUALITY):
+        // 2.2x to 2.8x super-sampling renders vector fonts directly at ultra-sharp density
+        var outputScale = Math.min(Math.max(dpr * 1.25, 2.2), 2.8);
         var renderScale = baseScale * outputScale;
         var viewport = page.getViewport({ scale: renderScale });
-
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
 
         var renderWidth = Math.floor(viewport.width);
         var renderHeight = Math.floor(viewport.height);
 
-        // Hardware texture limit protection (3072px max prevents Android Smart Board blank screen bug)
-        var maxCanvasDim = 3072;
+        // Hardware texture limit protection (3200px max prevents Android Smart Board blank screen)
+        var maxCanvasDim = 3200;
         if (renderWidth > maxCanvasDim || renderHeight > maxCanvasDim) {
           var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
           renderWidth = Math.floor(renderWidth * downscale);
@@ -600,10 +606,11 @@
           viewport = page.getViewport({ scale: renderScale });
         }
 
+        var canvas = document.createElement('canvas');
         canvas.width = renderWidth;
         canvas.height = renderHeight;
 
-        var displayWidth = Math.floor(renderWidth / outputScale);
+        var displayWidth = widthToUse;
         var displayHeight = Math.floor(renderHeight / outputScale);
         canvas.style.width = displayWidth + 'px';
         canvas.style.maxWidth = '100%';
@@ -612,6 +619,7 @@
         canvas.style.margin = '0 auto';
         canvas.style.backgroundColor = '#ffffff';
 
+        var ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.imageSmoothingEnabled = true;
           if ('imageSmoothingQuality' in ctx) {
@@ -635,22 +643,23 @@
         try {
           var fbPage = await pdfDoc.getPage(pageNum);
           var fbBase = fbPage.getViewport({ scale: 1.0 });
-          var fbWidth = Math.min(targetWidth || getTargetWidth(), 1080);
-          var fbScale = fbWidth / fbBase.width;
+          var fbDims = getTargetDimensions(fbBase);
+          var fbW = fbDims.width;
+          var fbScale = fbW / fbBase.width;
           var fbViewport = fbPage.getViewport({ scale: fbScale });
           var fbCanvas = document.createElement('canvas');
           var fbCtx = fbCanvas.getContext('2d');
           fbCanvas.width = Math.floor(fbViewport.width);
           fbCanvas.height = Math.floor(fbViewport.height);
-          fbCanvas.style.width = Math.floor(fbViewport.width) + 'px';
+          fbCanvas.style.width = fbDims.width + 'px';
           fbCanvas.style.maxWidth = '100%';
-          fbCanvas.style.height = Math.floor(fbViewport.height) + 'px';
+          fbCanvas.style.height = fbDims.height + 'px';
           fbCanvas.style.display = 'block';
           fbCanvas.style.margin = '0 auto';
           fbCanvas.style.backgroundColor = '#ffffff';
           await fbPage.render({ canvasContext: fbCtx, viewport: fbViewport, intent: 'display' }).promise;
           wrapper.innerHTML = '';
-          wrapper.style.minHeight = Math.floor(fbViewport.height) + 'px';
+          wrapper.style.minHeight = fbDims.height + 'px';
           wrapper.appendChild(fbCanvas);
           renderedPages.add(pageNum);
         } catch (fbErr) {
