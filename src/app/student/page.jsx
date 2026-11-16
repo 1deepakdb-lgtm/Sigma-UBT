@@ -2838,16 +2838,13 @@ const StudentDashboard = () => {
             {/* Section 2: Korean UBT / Japanese Mock Tests (Separate per track) */}
             <div style={{ marginTop: "12px" }}>
               <div style={{ textAlign: "center", marginBottom: "16px" }}>
-                <h2 style={{ color: "#111827", fontSize: "20px", fontWeight: "800", margin: "0 0 6px 0", letterSpacing: "-0.2px" }}>
+                <h2 style={{ color: "#111827", fontSize: "20px", fontWeight: "800", margin: "0", letterSpacing: "-0.2px" }}>
                   {isPureKoreanStudent
                     ? "🇰🇷 Korean UBT & Chapterwise Exam Sets"
                     : isPureJapaneseStudent
                     ? "🇯🇵 Japanese CBT Mock Tests"
                     : "🌐 UBT & Exam Sets"}
                 </h2>
-                <p style={{ margin: 0, fontSize: "12.5px", color: "#64748b" }}>
-                  🎁 <strong>Free Sets</strong> are open to all students · Pay – Rs. 30 to unlock more sets
-                </p>
               </div>
 
               {/* Filter Pills & Live Search Bar */}
