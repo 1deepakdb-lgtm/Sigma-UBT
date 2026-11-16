@@ -112,6 +112,50 @@ export async function GET(req) {
       }
     });
 
+    // Permanent Persistence in DB: Update User record so access remains active across re-logins
+    try {
+      if (tx.userId) {
+        if (tx.itemType === "package") {
+          await prisma.user.update({
+            where: { id: tx.userId },
+            data: { batch: tx.itemName }
+          });
+        }
+      } else if (tx.studentPhone) {
+        if (tx.itemType === "package") {
+          await prisma.user.updateMany({
+            where: {
+              OR: [
+                { phone: tx.studentPhone },
+                { username: tx.studentPhone }
+              ]
+            },
+            data: { batch: tx.itemName }
+          });
+        }
+      }
+    } catch (userUpErr) {
+      console.warn("[eSewa Verify] User update notice:", userUpErr.message);
+    }
+
+    // Keep PaymentQuery in sync so Admin dashboard and notification panel see the completed purchase
+    try {
+      await prisma.paymentQuery.create({
+        data: {
+          studentName: tx.studentName || "Student",
+          phone: tx.studentPhone || "N/A",
+          itemName: tx.itemName,
+          itemType: tx.itemType,
+          amount: tx.amount,
+          status: "Released",
+          txnId: txCode,
+          notes: `Verified via official eSewa EPAY (Txn: ${txCode})`
+        }
+      });
+    } catch (pqErr) {
+      console.warn("[eSewa Verify] PaymentQuery sync notice:", pqErr.message);
+    }
+
     const itemId = tx.itemId;
     const itemName = tx.itemName;
     const itemType = tx.itemType;

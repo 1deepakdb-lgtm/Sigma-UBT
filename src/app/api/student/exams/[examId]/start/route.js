@@ -126,6 +126,36 @@ export async function POST(req, { params }) {
           ]
         }
       });
+
+      // If set is covered by a purchased and completed Package transaction
+      if (!approvedTx) {
+        try {
+          const pkgTxs = await prisma.paymentTransaction.findMany({
+            where: {
+              AND: [
+                ...(userConditions.length > 0 ? [{ OR: userConditions }] : []),
+                { itemType: 'package' },
+                { status: { in: ['COMPLETE', 'Released'] } }
+              ]
+            }
+          });
+          const normStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const sPkgNorm = normStr(examSet.packageName || examSet.package?.name || '');
+          const sNameNorm = normStr(examSet.name || '');
+          const covering = pkgTxs.find(pt => {
+            const pNorm = normStr(pt.itemName || pt.itemId || '');
+            if (pNorm === sPkgNorm || pNorm === sNameNorm) return true;
+            if (pNorm.includes('chapter') && (sPkgNorm.includes('chapter') || sNameNorm.includes('chapter'))) return true;
+            if (pNorm.includes('100') && (sPkgNorm.includes('100') || sNameNorm.includes('100'))) return true;
+            if (pNorm.includes('full') && !pNorm.includes('mock') && !sPkgNorm.includes('chapter')) return true;
+            if ((pNorm.includes('full') || pNorm.includes('all')) && pNorm.includes('mock')) return true;
+            return false;
+          });
+          if (covering) approvedTx = covering;
+        } catch (pkgTxErr) {
+          console.warn('[Start Exam] package transaction check notice:', pkgTxErr.message);
+        }
+      }
     }
 
     // Default guest session for free exams or verified paid guest

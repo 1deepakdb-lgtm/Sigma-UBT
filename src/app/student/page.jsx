@@ -736,6 +736,63 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleDirectEsewaBuyPackage = async (pkg) => {
+    if (!pkg) return;
+    const pkgId = pkg.id || pkg.name;
+    const rawPrice = typeof pkg.price === "number" ? pkg.price : parseInt(String(pkg.price || "").replace(/[^0-9]/g, "")) || 1000;
+    setInitiatingEsewaSetId(pkgId);
+
+    try {
+      const curPhone = currentStudentPhone || (typeof window !== "undefined" ? localStorage.getItem("currentStudentPhone") || "" : "");
+      const payload = {
+        itemId: String(pkgId),
+        itemName: pkg.name,
+        itemType: "package",
+        amount: rawPrice,
+        studentPhone: curPhone,
+        studentName: studentName || "Student"
+      };
+
+      const res = await fetch("/api/payment/esewa/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.actionUrl || !data.formData) {
+        throw new Error(data.error || "Failed to initiate eSewa online payment");
+      }
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = data.actionUrl;
+      form.style.display = "none";
+
+      Object.entries(data.formData).forEach(([k, v]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = k;
+        input.value = String(v);
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.warn("Direct eSewa Package Buy notice, falling back to modal:", err.message);
+      handleOpenEsewaModal({
+        id: pkg.id,
+        name: pkg.name,
+        price: rawPrice,
+        type: "package",
+        packageName: pkg.name
+      });
+    } finally {
+      setInitiatingEsewaSetId(null);
+    }
+  };
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleEsewaSuccessUnlock = (res) => {
@@ -1068,6 +1125,24 @@ const StudentDashboard = () => {
           } else {
             setStudentExpiryDate("");
             localStorage.removeItem("currentStudentExpiryDate");
+          }
+
+          // Permanent Access Sync: Automatically restore all completed eSewa sets and packages across logins
+          if (Array.isArray(data.user?.unlockedSets) && data.user.unlockedSets.length > 0) {
+            setUnlockedSets(prev => Array.from(new Set([...prev, ...data.user.unlockedSets])));
+            try {
+              const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+              const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+              const merged = Array.from(new Set([...u1, ...u2, ...data.user.unlockedSets]));
+              localStorage.setItem("unlockedStudentExamSets", JSON.stringify(merged));
+              localStorage.setItem("releasedStudentExamSets", JSON.stringify(merged));
+            } catch (e) {}
+          }
+
+          if (Array.isArray(data.user?.purchasedPackages) && data.user.purchasedPackages.length > 0) {
+            const joinedPkgs = data.user.purchasedPackages.join(", ");
+            setStudentPackage(joinedPkgs);
+            localStorage.setItem("currentStudentPackage", joinedPkgs);
           }
 
           localStorage.setItem("currentUser", uName);
@@ -2985,14 +3060,9 @@ const StudentDashboard = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                handleOpenEsewaModal({
-                                  id: set.id,
-                                  name: set.name,
-                                  price: 30,
-                                  type: "set",
-                                  packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
-                                });
+                                handleDirectEsewaBuy(set);
                               }}
+                              disabled={initiatingEsewaSetId === (set.id || set.name)}
                               title="Pay Rs. 30 via eSewa to unlock this exam set"
                               style={{
                                 backgroundColor: "#2d6a4f", // Forest Green matching user's image
@@ -3004,13 +3074,13 @@ const StudentDashboard = () => {
                                 textAlign: "center",
                                 fontSize: "15px",
                                 fontWeight: "800",
-                                cursor: "pointer",
+                                cursor: initiatingEsewaSetId === (set.id || set.name) ? "wait" : "pointer",
                                 boxShadow: "0 3px 8px rgba(45, 106, 79, 0.35)",
                                 transition: "all 0.15s ease",
                                 whiteSpace: "nowrap"
                               }}
                             >
-                              Pay – Rs. 30
+                              {initiatingEsewaSetId === (set.id || set.name) ? "⏳ Connecting..." : "Pay – Rs. 30"}
                             </button>
                           )}
                         </div>
@@ -3475,13 +3545,7 @@ const StudentDashboard = () => {
                             return;
                           }
 
-                          handleOpenEsewaModal({
-                            id: set.id,
-                            name: set.name,
-                            price: 30,
-                            type: "set",
-                            packageName: set.packageName || (isPureJapaneseStudent ? "Japanese Mock Test" : "UBT Set")
-                          });
+                          handleDirectEsewaBuy(set);
                         }}
                         disabled={initiatingEsewaSetId === (set.id || set.name)}
                         style={{
@@ -4020,33 +4084,30 @@ const StudentDashboard = () => {
                       ) : (
                         <button
                           type="button"
-                          onClick={() =>
-                            handleOpenEsewaModal({
-                              id: pkg.id,
-                              name: pkg.name,
-                              price: pkg.price || "Rs. 1,000",
-                              type: "package",
-                              desc: pkg.desc
-                            })
-                          }
+                          onClick={() => handleDirectEsewaBuyPackage(pkg)}
+                          disabled={initiatingEsewaSetId === (pkg.id || pkg.name)}
                           style={{
                             width: "100%",
-                            background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                            background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
                             color: "#ffffff",
                             border: "none",
                             padding: "10px",
                             borderRadius: "6px",
                             fontWeight: "800",
-                            cursor: "pointer",
+                            cursor: initiatingEsewaSetId === (pkg.id || pkg.name) ? "wait" : "pointer",
                             fontSize: "13.5px",
-                            boxShadow: "0 2px 6px rgba(37, 99, 235, 0.25)",
+                            boxShadow: "0 2px 6px rgba(22, 163, 74, 0.25)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             gap: "6px"
                           }}
                         >
-                          <span>Buy</span>
+                          {initiatingEsewaSetId === (pkg.id || pkg.name) ? (
+                            <span>⏳ Connecting eSewa...</span>
+                          ) : (
+                            <span>🟢 Pay via eSewa ({pkg.price || "Buy"})</span>
+                          )}
                         </button>
                       )}
                     </div>

@@ -121,6 +121,45 @@ export async function GET(req) {
         }
       }
 
+      // Permanent Persistence: Check paymentTransaction table for completed sets/packages
+      let serverUnlockedSets = [];
+      let serverPurchasedPackages = [];
+      try {
+        const userPhone = user.phone || user.username || '';
+        const cleanPhone = userPhone.replace(/[^0-9]/g, '').slice(-10);
+        const paidTxs = await prisma.paymentTransaction.findMany({
+          where: {
+            AND: [
+              {
+                OR: [
+                  { userId: user.id },
+                  ...(userPhone ? [{ studentPhone: userPhone }] : []),
+                  ...(cleanPhone ? [{ studentPhone: { contains: cleanPhone } }] : [])
+                ]
+              },
+              { status: { in: ['COMPLETE', 'Released'] } }
+            ]
+          }
+        });
+
+        paidTxs.forEach(pt => {
+          if (pt.itemType === 'set') {
+            if (pt.itemId) serverUnlockedSets.push(pt.itemId);
+            if (pt.itemName) serverUnlockedSets.push(pt.itemName);
+          } else if (pt.itemType === 'package') {
+            if (pt.itemName) serverPurchasedPackages.push(pt.itemName);
+            if (pt.itemId) serverPurchasedPackages.push(pt.itemId);
+          }
+        });
+
+        if (serverPurchasedPackages.length > 0) {
+          studentPackage = serverPurchasedPackages.join(', ');
+          isGoogleOrFree = false;
+        }
+      } catch (txErr) {
+        console.warn('[Me] paymentTransaction lookup notice:', txErr.message);
+      }
+
       if (isGoogleOrFree) {
         expiryDate = null;
       } else {
@@ -159,6 +198,8 @@ export async function GET(req) {
       user: {
         ...user,
         studentPackage,
+        unlockedSets: Array.from(new Set(serverUnlockedSets)),
+        purchasedPackages: Array.from(new Set(serverPurchasedPackages)),
         expiryDate: isGoogleOrFree ? null : expiryDate,
         isFreeStudent: Boolean(isGoogleOrFree),
         instituteLanguage: (user.role === 'student' && user.institute?.language && user.institute.language !== 'both')
