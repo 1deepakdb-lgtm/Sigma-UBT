@@ -34,13 +34,15 @@
     position: relative;
   }
   #viewer-zoom-layer {
-    width: 100%;
+    min-width: 100%;
+    width: max-content;
     min-height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     transform-origin: 0 0;
     transition: transform 0.08s ease-out;
+    margin: 0 auto;
   }
   .pdf-page-wrapper {
     position: relative;
@@ -54,13 +56,11 @@
   }
   @media (min-width: 768px) {
     .pdf-page-wrapper {
-      padding: 8px 0;
+      padding: 10px 0;
     }
   }
   canvas {
     display: block;
-    max-width: 100%;
-    height: auto;
     background-color: #ffffff;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin: 0 auto;
@@ -538,42 +538,36 @@
     }
 
     // =========================================================================
-    // 2. DOCUMENT RENDERING ENGINE (200% ZOOM SCREEN FIT & REAL ULTRA HD)
+    // 2. DOCUMENT RENDERING ENGINE (225% ZOOM SCREEN FIT & REAL ULTRA HD)
     // =========================================================================
     function getTargetDimensions(baseViewport) {
-      var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
-      var screenHeight = window.innerHeight || document.documentElement.clientHeight || 800;
+      var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1920;
+      var screenHeight = window.innerHeight || document.documentElement.clientHeight || 1080;
 
       var pageW = (baseViewport && baseViewport.width) ? baseViewport.width : 595.28;
       var pageH = (baseViewport && baseViewport.height) ? baseViewport.height : 841.89;
       var pageAspect = pageH / pageW; // Standard ~1.414 for A4 textbooks
 
-      // 1. Mobile Portrait (Smartphones & small screens):
-      // Fit edge-to-edge full width horizontally for maximum readability
-      if (screenWidth < 768 && screenHeight >= screenWidth) {
-        var mobileW = screenWidth;
-        return { width: mobileW, height: Math.floor(mobileW * pageAspect) };
-      }
-
-      // 2. Landscape Displays (Smart Boards, Large Monitors, Laptops, TV):
-      // 200% ZOOM FIT ON SCREEN:
-      // Base height-fit on 1080p is ~752px. 200% zoom expands to 2.0x (1504px),
-      // filling the wide screen with large, bold, crystal clear Korean text and diagrams!
-      if (screenWidth > screenHeight) {
+      // 1. Landscape Displays (Smart Boards, Large Monitors, Laptops, TV):
+      // 225% ZOOM OUTPUT FIT ON SCREEN:
+      // Base height-fit on 1080p is ~750px. 225% zoom expands to 2.25x (~1685px),
+      // filling 88-94% of the wide screen with large, bold, crystal clear Korean text and diagrams!
+      if (screenWidth >= screenHeight) {
         var verticalMargin = screenHeight >= 1080 ? 20 : 12;
         var maxH = Math.max(400, screenHeight - verticalMargin);
         var baseFitHWidth = Math.floor(maxH / pageAspect);
 
-        // 200% Zoom: double the standard height-fit width (capped comfortably within screen width)
-        var zoom200Width = Math.floor(baseFitHWidth * 2.0);
-        var optimalW = Math.min(zoom200Width, Math.floor(screenWidth * 0.94));
+        // 225% Zoom: 2.25x scale of standard height-fit width
+        var zoom225Width = Math.floor(baseFitHWidth * 2.25);
+        var optimalW = Math.min(zoom225Width, Math.floor(screenWidth * 0.94));
         optimalW = Math.max(optimalW, Math.min(screenWidth - 16, Math.floor(screenWidth * 0.88)));
         return { width: optimalW, height: Math.floor(optimalW * pageAspect) };
       }
 
-      // 3. Tablet Portrait / Square displays:
-      var availW = Math.min(screenWidth - 16, Math.floor(screenWidth * 0.96));
-      return { width: availW, height: Math.floor(availW * pageAspect) };
+      // 2. Mobile Portrait (Smartphones & small screens):
+      // Fit edge-to-edge full width horizontally for maximum readability
+      var mobileW = Math.min(screenWidth, 800);
+      return { width: mobileW, height: Math.floor(mobileW * pageAspect) };
     }
 
     function getTargetWidth(baseViewport) {
@@ -588,60 +582,61 @@
         var page = await pdfDoc.getPage(pageNum);
         var baseViewport = page.getViewport({ scale: 1.0 });
         var dims = getTargetDimensions(baseViewport);
-        var widthToUse = targetWidth || dims.width;
-
-        // Ensure display width strictly respects screen bounds to prevent aspect ratio distortion
-        var screenW = window.innerWidth || document.documentElement.clientWidth || 1000;
-        var displayWidth = Math.min(widthToUse, screenW - 8);
+        var displayWidth = Math.round(targetWidth || dims.width);
         var pageAspect = baseViewport.height / baseViewport.width;
-        var displayHeight = Math.floor(displayWidth * pageAspect);
+        var displayHeight = Math.round(displayWidth * pageAspect);
 
         var dpr = window.devicePixelRatio || 1;
         // ULTRA HD VECTOR CLARITY (100% MATCH REAL R2 FILE):
-        // Render canvas at 2x - 2.5x physical pixel scale for crisp, uncompressed vector lines
-        var superSample = Math.min(Math.max(dpr, 1.75), 2.5);
-        var baseScale = displayWidth / baseViewport.width;
-        var renderScale = baseScale * superSample;
-        var viewport = page.getViewport({ scale: renderScale });
+        // Backing store supersampled at high-density for pin-sharp subpixel vector curves & print intent
+        var targetBackingScale = Math.min(Math.max(dpr, 1.8), 2.5);
+        var maxBackingDim = 3840; // GPU safe texture limit for Smart Boards & 4K displays
 
-        var renderWidth = Math.floor(viewport.width);
-        var renderHeight = Math.floor(viewport.height);
+        var desiredBackingWidth = Math.round(displayWidth * targetBackingScale);
+        var desiredBackingHeight = Math.round(displayHeight * targetBackingScale);
 
-        // Hardware GPU Texture limit protection (3840px max ensures stability across all Smart Boards)
-        var maxCanvasDim = 3840;
-        if (renderWidth > maxCanvasDim || renderHeight > maxCanvasDim) {
-          var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
-          renderWidth = Math.floor(renderWidth * downscale);
-          renderHeight = Math.floor(renderHeight * downscale);
-          renderScale = renderScale * downscale;
-          viewport = page.getViewport({ scale: renderScale });
+        var backingScale = targetBackingScale;
+        if (desiredBackingWidth > maxBackingDim || desiredBackingHeight > maxBackingDim) {
+          var downFactor = Math.min(maxBackingDim / desiredBackingWidth, maxBackingDim / desiredBackingHeight);
+          backingScale = targetBackingScale * downFactor;
         }
 
+        var backingWidth = Math.round(displayWidth * backingScale);
+        var backingHeight = Math.round(displayHeight * backingScale);
+
         var canvas = document.createElement('canvas');
-        canvas.width = renderWidth;
-        canvas.height = renderHeight;
+        canvas.width = backingWidth;
+        canvas.height = backingHeight;
 
         // Set CSS display width and height in EXACT natural page aspect ratio:
         canvas.style.width = displayWidth + 'px';
         canvas.style.height = displayHeight + 'px';
-        canvas.style.maxWidth = '100%';
         canvas.style.aspectRatio = (baseViewport.width + ' / ' + baseViewport.height);
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.backgroundColor = '#ffffff';
 
-        var ctx = canvas.getContext('2d');
+        // alpha: false enables subpixel font antialiasing (no fuzzy/broken text)
+        var ctx = canvas.getContext('2d', { alpha: false });
         if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, backingWidth, backingHeight);
           ctx.imageSmoothingEnabled = true;
           if ('imageSmoothingQuality' in ctx) {
             ctx.imageSmoothingQuality = 'high';
           }
         }
 
+        var baseScale = displayWidth / baseViewport.width;
+        var viewport = page.getViewport({ scale: baseScale });
+        var transform = backingScale !== 1 ? [backingScale, 0, 0, backingScale, 0, 0] : null;
+
+        // intent: 'print' forces PDF.js to NOT downsample images and render vector paths at full 100% quality
         await page.render({
           canvasContext: ctx,
+          transform: transform,
           viewport: viewport,
-          intent: 'display'
+          intent: 'print'
         }).promise;
 
         wrapper.innerHTML = '';
@@ -655,22 +650,25 @@
           var fbPage = await pdfDoc.getPage(pageNum);
           var fbBase = fbPage.getViewport({ scale: 1.0 });
           var fbDims = getTargetDimensions(fbBase);
-          var fbW = Math.min(fbDims.width, (window.innerWidth || 1000) - 8);
-          var fbH = Math.floor(fbW * (fbBase.height / fbBase.width));
-          var fbScale = (fbW / fbBase.width) * 1.5;
+          var fbW = Math.round(targetWidth || fbDims.width);
+          var fbH = Math.round(fbW * (fbBase.height / fbBase.width));
+          var fbScale = fbW / fbBase.width;
           var fbViewport = fbPage.getViewport({ scale: fbScale });
           var fbCanvas = document.createElement('canvas');
-          var fbCtx = fbCanvas.getContext('2d');
-          fbCanvas.width = Math.floor(fbViewport.width);
-          fbCanvas.height = Math.floor(fbViewport.height);
+          var fbCtx = fbCanvas.getContext('2d', { alpha: false });
+          fbCanvas.width = Math.round(fbViewport.width);
+          fbCanvas.height = Math.round(fbViewport.height);
           fbCanvas.style.width = fbW + 'px';
           fbCanvas.style.height = fbH + 'px';
-          fbCanvas.style.maxWidth = '100%';
           fbCanvas.style.aspectRatio = (fbBase.width + ' / ' + fbBase.height);
           fbCanvas.style.display = 'block';
           fbCanvas.style.margin = '0 auto';
           fbCanvas.style.backgroundColor = '#ffffff';
-          await fbPage.render({ canvasContext: fbCtx, viewport: fbViewport, intent: 'display' }).promise;
+          if (fbCtx) {
+            fbCtx.fillStyle = '#ffffff';
+            fbCtx.fillRect(0, 0, fbCanvas.width, fbCanvas.height);
+          }
+          await fbPage.render({ canvasContext: fbCtx, viewport: fbViewport, intent: 'print' }).promise;
           wrapper.innerHTML = '';
           wrapper.style.minHeight = fbH + 'px';
           wrapper.appendChild(fbCanvas);
@@ -876,11 +874,13 @@
     // =========================================================================
     async function startRenderingDoc(pdfData) {
       var dataArray = pdfData instanceof Uint8Array ? pdfData : new Uint8Array(pdfData);
+      var baseOrigin = (window.location && window.location.origin && window.location.origin.startsWith('http') && !window.location.origin.includes('localhost'))
+        ? window.location.origin : 'https://examjk.com';
       var loadingTask = pdfjsLib.getDocument({
         data: dataArray,
-        cMapUrl: '/cmaps/',
+        cMapUrl: baseOrigin + '/cmaps/',
         cMapPacked: true,
-        standardFontDataUrl: '/standard_fonts/',
+        standardFontDataUrl: baseOrigin + '/standard_fonts/',
         disableFontFace: false,
         isEvalSupported: true,
         useSystemFonts: false
