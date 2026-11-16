@@ -77,7 +77,8 @@ export async function GET(req) {
       serverStatus.status === "COMPLETE";
 
     // 3. Verify amount paid matches or exceeds the initiated bill amount
-    const paidAmountNum = Number(total_amount);
+    const cleanTotalAmountStr = String(total_amount || "").replace(/,/g, "").trim();
+    const paidAmountNum = Number(cleanTotalAmountStr);
     const expectedAmountNum = Number(tx.amount);
     const isAmountCorrect = !isNaN(paidAmountNum) && paidAmountNum >= expectedAmountNum;
 

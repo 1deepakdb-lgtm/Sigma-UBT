@@ -680,6 +680,44 @@ export default function EsewaCheckoutModal({
                       Play Store बाट eSewa App ↗
                     </a>
                   </div>
+
+                  {/* Option B: Official eSewa ePay Gateway (developer.esewa.com.np/pages/Epay) */}
+                  <button
+                    type="button"
+                    onClick={handleEsewaOnlinePay}
+                    disabled={isInitiatingEsewa}
+                    style={{
+                      width: "100%",
+                      boxSizing: "border-box",
+                      backgroundColor: isInitiatingEsewa ? "#94a3b8" : "#ffffff",
+                      color: "#166534",
+                      border: "1.5px solid #16a34a",
+                      padding: "11px 16px",
+                      borderRadius: "8px",
+                      fontWeight: "800",
+                      fontSize: "13px",
+                      cursor: isInitiatingEsewa ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    {isInitiatingEsewa ? (
+                      <>
+                        <span>⏳</span>
+                        <span>eSewa Gateway मा जोडिँदै...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🌐</span>
+                        <span>eSewa ePay लगइन गरी भुक्तानी (Auto-Return & Unlock)</span>
+                        <span style={{ fontSize: "14px" }}>↗</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 

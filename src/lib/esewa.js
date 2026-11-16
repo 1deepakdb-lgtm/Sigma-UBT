@@ -32,18 +32,22 @@ export async function getEsewaConfig() {
   }
 
   const isLive = envMode === "live";
-  const baseUrl = isLive
-    ? "https://epay.esewa.com.np"
-    : "https://rc-epay.esewa.com.np";
+  const formUrl = isLive
+    ? "https://epay.esewa.com.np/api/epay/main/v2/form"
+    : "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
+
+  const statusUrl = isLive
+    ? "https://esewa.com.np/api/epay/transaction/status/"
+    : "https://rc.esewa.com.np/api/epay/transaction/status/";
 
   return {
     productCode,
     secretKey,
     envMode: isLive ? "live" : "test",
     isLive,
-    baseUrl,
-    formUrl: `${baseUrl}/api/epay/main/v2/form`,
-    statusUrl: `${baseUrl}/api/epay/transaction/status/`
+    baseUrl: isLive ? "https://epay.esewa.com.np" : "https://rc-epay.esewa.com.np",
+    formUrl,
+    statusUrl
   };
 }
 
@@ -83,7 +87,8 @@ export function verifyEsewaSignature(secretKey, data) {
  */
 export async function queryEsewaTransactionStatus(config, totalAmount, transactionUuid) {
   try {
-    const url = `${config.statusUrl}?product_code=${encodeURIComponent(config.productCode)}&total_amount=${encodeURIComponent(totalAmount)}&transaction_uuid=${encodeURIComponent(transactionUuid)}`;
+    const cleanAmount = String(totalAmount || "").replace(/,/g, "").trim();
+    const url = `${config.statusUrl}?product_code=${encodeURIComponent(config.productCode)}&total_amount=${encodeURIComponent(cleanAmount)}&transaction_uuid=${encodeURIComponent(transactionUuid)}`;
     const response = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" }
