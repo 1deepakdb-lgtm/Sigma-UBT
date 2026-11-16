@@ -891,14 +891,20 @@ export default function EpsBookReader({
   const [popupPos, setPopupPos] = useState({ x: 20, y: 20 });
   const [popupMode, setPopupMode] = useState("gesture"); // Default "gesture" (one-touch trigger) so chapter PDF opens in 100% clean full screen
   const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef({ startX: 0, startY: 0, initialX: 20, initialY: 20, moved: false });
+  const dragRef = useRef({ startX: 0, startY: 0, initialX: 20, initialY: 20, currentX: 20, currentY: 20, moved: false, isDown: false });
   const popupContainerRef = useRef(null);
   const playerOpenTimeRef = useRef(0);
 
-  // Movable Mini Circular AUDIO Button State (Default below Back button: x: 14, y: 58)
-  const [miniAudioPos, setMiniAudioPos] = useState({ x: 14, y: 58 });
+  // Movable Floating Back Button State (Default shrunk on side: x: 8, y: 12)
+  const [backBtnPos, setBackBtnPos] = useState({ x: 8, y: 12 });
+  const [isBackDragging, setIsBackDragging] = useState(false);
+  const backDragRef = useRef({ startX: 0, startY: 0, initialX: 8, initialY: 12, currentX: 8, currentY: 12, moved: false, isDown: false });
+  const backBtnRef = useRef(null);
+
+  // Movable Mini Circular AUDIO Button State (Default below Back button: x: 10, y: 56)
+  const [miniAudioPos, setMiniAudioPos] = useState({ x: 10, y: 56 });
   const [isMiniDragging, setIsMiniDragging] = useState(false);
-  const miniDragRef = useRef({ startX: 0, startY: 0, initialX: 14, initialY: 58, moved: false });
+  const miniDragRef = useRef({ startX: 0, startY: 0, initialX: 10, initialY: 56, currentX: 10, currentY: 56, moved: false, isDown: false });
   const miniAudioBtnRef = useRef(null);
 
   // Admin/Institute Upload & Edit Modal State
@@ -1817,115 +1823,218 @@ export default function EpsBookReader({
 
   const activeTrack = selectedChapter?.audioTracks?.[currentTrackIndex] || null;
 
-  // Drag & Drop Handler (Works smoothly anywhere on screen for mouse & touch)
-  const handleDragStart = (e) => {
-    // Only drag with left mouse button or touch
-    if (e.type === "mousedown" && e.button !== 0) return;
-    if (e.target.closest("button") || e.target.closest("input") || e.target.closest("select")) return;
+  // -------------------------------------------------------------
+  // HIGH-PERFORMANCE POINTER DRAGGING SYSTEM (Ultra-Smooth 120fps across all devices)
+  // Uses setPointerCapture + direct DOM manipulation to bypass React re-render bottlenecks
+  // -------------------------------------------------------------
 
-    const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
-    const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
-
-    dragRef.current = {
-      startX: clientX,
-      startY: clientY,
-      initialX: popupPos.x,
-      initialY: popupPos.y,
+  // 1. DOCKABLE & DRAGGABLE BACK BUTTON HANDLERS
+  const handleBackPointerDown = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch (err) {}
+    backDragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: backBtnPos.x,
+      initialY: backBtnPos.y,
+      currentX: backBtnPos.x,
+      currentY: backBtnPos.y,
       moved: false,
+      isDown: true,
     };
-    setIsDragging(true);
-
-    const onMove = (moveEvt) => {
-      if (moveEvt.cancelable) moveEvt.preventDefault();
-      const curX = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientX : moveEvt.clientX;
-      const curY = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientY : moveEvt.clientY;
-      const dx = curX - dragRef.current.startX;
-      const dy = curY - dragRef.current.startY;
-
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        dragRef.current.moved = true;
-      }
-
-      const elemWidth = popupContainerRef.current?.offsetWidth || 360;
-      const elemHeight = popupContainerRef.current?.offsetHeight || 60;
-      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-      const winH = typeof window !== "undefined" ? window.innerHeight : 800;
-
-      const maxX = Math.max(0, winW - elemWidth);
-      const maxY = Math.max(0, winH - elemHeight);
-
-      const nextX = Math.max(8, Math.min(maxX - 8, dragRef.current.initialX + dx));
-      const nextY = Math.max(8, Math.min(maxY - 8, dragRef.current.initialY + dy));
-
-      setPopupPos({ x: nextX, y: nextY });
-    };
-
-    const onEnd = () => {
-      setIsDragging(false);
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onEnd);
-      window.removeEventListener("touchmove", onMove);
-      window.removeEventListener("touchend", onEnd);
-    };
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onEnd);
-    window.addEventListener("touchmove", onMove, { passive: false });
-    window.addEventListener("touchend", onEnd);
+    setIsBackDragging(true);
   };
 
-  // Drag handler for Movable Circular AUDIO Button
-  const handleMiniDragStart = (e) => {
-    e.stopPropagation();
-    if (e.type === "mousedown" && e.button !== 0) return;
-    const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
-    const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+  const handleBackPointerMove = (e) => {
+    if (!backDragRef.current.isDown) return;
+    const dx = e.clientX - backDragRef.current.startX;
+    const dy = e.clientY - backDragRef.current.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      backDragRef.current.moved = true;
+    }
 
+    const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+    const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+    const btnW = backBtnRef.current?.offsetWidth || 72;
+    const btnH = backBtnRef.current?.offsetHeight || 30;
+
+    const nextX = Math.max(0, Math.min(winW - btnW, backDragRef.current.initialX + dx));
+    const nextY = Math.max(4, Math.min(winH - btnH - 4, backDragRef.current.initialY + dy));
+
+    backDragRef.current.currentX = nextX;
+    backDragRef.current.currentY = nextY;
+
+    if (backBtnRef.current) {
+      backBtnRef.current.style.left = `${nextX}px`;
+      backBtnRef.current.style.top = `${nextY}px`;
+    }
+  };
+
+  const handleBackPointerUp = (e) => {
+    if (!backDragRef.current.isDown) return;
+    backDragRef.current.isDown = false;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch (err) {}
+    setIsBackDragging(false);
+
+    if (!backDragRef.current.moved) {
+      closeFullScreen();
+    } else {
+      let finalX = backDragRef.current.currentX;
+      let finalY = backDragRef.current.currentY;
+      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+      const btnW = backBtnRef.current?.offsetWidth || 72;
+
+      // Auto-dock smoothly if released near left or right screen edges
+      if (finalX < 28) finalX = 4;
+      else if (finalX > winW - btnW - 28) finalX = winW - btnW - 4;
+
+      if (backBtnRef.current) {
+        backBtnRef.current.style.left = `${finalX}px`;
+        backBtnRef.current.style.top = `${finalY}px`;
+      }
+      setBackBtnPos({ x: finalX, y: finalY });
+    }
+  };
+
+  // 2. MOVABLE MINI CIRCULAR AUDIO BUTTON HANDLERS
+  const handleMiniPointerDown = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch (err) {}
     miniDragRef.current = {
-      startX: clientX,
-      startY: clientY,
+      startX: e.clientX,
+      startY: e.clientY,
       initialX: miniAudioPos.x,
       initialY: miniAudioPos.y,
+      currentX: miniAudioPos.x,
+      currentY: miniAudioPos.y,
       moved: false,
+      isDown: true,
     };
     setIsMiniDragging(true);
+  };
 
-    const onMove = (moveEvt) => {
-      if (moveEvt.cancelable) moveEvt.preventDefault();
-      const curX = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientX : moveEvt.clientX;
-      const curY = moveEvt.type === "touchmove" ? moveEvt.touches[0].clientY : moveEvt.clientY;
-      const dx = curX - miniDragRef.current.startX;
-      const dy = curY - miniDragRef.current.startY;
+  const handleMiniPointerMove = (e) => {
+    if (!miniDragRef.current.isDown) return;
+    const dx = e.clientX - miniDragRef.current.startX;
+    const dy = e.clientY - miniDragRef.current.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      miniDragRef.current.moved = true;
+    }
 
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-        miniDragRef.current.moved = true;
-      }
+    const btnSize = 56;
+    const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+    const winH = typeof window !== "undefined" ? window.innerHeight : 800;
 
-      const btnSize = 60;
+    const maxX = Math.max(0, winW - btnSize);
+    const maxY = Math.max(0, winH - btnSize);
+
+    const nextX = Math.max(4, Math.min(maxX - 4, miniDragRef.current.initialX + dx));
+    const nextY = Math.max(4, Math.min(maxY - 4, miniDragRef.current.initialY + dy));
+
+    miniDragRef.current.currentX = nextX;
+    miniDragRef.current.currentY = nextY;
+
+    if (miniAudioBtnRef.current) {
+      miniAudioBtnRef.current.style.left = `${nextX}px`;
+      miniAudioBtnRef.current.style.top = `${nextY}px`;
+    }
+  };
+
+  const handleMiniPointerUp = (e) => {
+    if (!miniDragRef.current.isDown) return;
+    miniDragRef.current.isDown = false;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch (err) {}
+    setIsMiniDragging(false);
+
+    if (!miniDragRef.current.moved) {
+      playerOpenTimeRef.current = Date.now();
       const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-      const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+      const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
+      const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
+      setPopupPos({ x: targetX, y: targetY });
+      setPopupMode("full");
+    } else {
+      let finalX = miniDragRef.current.currentX;
+      let finalY = miniDragRef.current.currentY;
+      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+      // Auto-snap if released near edge
+      if (finalX < 24) finalX = 6;
+      else if (finalX > winW - 62) finalX = winW - 62;
 
-      const maxX = Math.max(0, winW - btnSize);
-      const maxY = Math.max(0, winH - btnSize);
+      if (miniAudioBtnRef.current) {
+        miniAudioBtnRef.current.style.left = `${finalX}px`;
+        miniAudioBtnRef.current.style.top = `${finalY}px`;
+      }
+      setMiniAudioPos({ x: finalX, y: finalY });
+    }
+  };
 
-      const nextX = Math.max(6, Math.min(maxX - 6, miniDragRef.current.initialX + dx));
-      const nextY = Math.max(6, Math.min(maxY - 6, miniDragRef.current.initialY + dy));
-
-      setMiniAudioPos({ x: nextX, y: nextY });
+  // 3. FULL POPUP AUDIO PLAYER HANDLERS
+  const handlePopupPointerDown = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest("button") || e.target.closest("input") || e.target.closest("select")) return;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch (err) {}
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: popupPos.x,
+      initialY: popupPos.y,
+      currentX: popupPos.x,
+      currentY: popupPos.y,
+      moved: false,
+      isDown: true,
     };
+    setIsDragging(true);
+  };
 
-    const onEnd = () => {
-      setIsMiniDragging(false);
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onEnd);
-      window.removeEventListener("touchmove", onMove);
-      window.removeEventListener("touchend", onEnd);
-    };
+  const handlePopupPointerMove = (e) => {
+    if (!dragRef.current.isDown) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      dragRef.current.moved = true;
+    }
 
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onEnd);
-    window.addEventListener("touchmove", onMove, { passive: false });
-    window.addEventListener("touchend", onEnd);
+    const elemWidth = popupContainerRef.current?.offsetWidth || 360;
+    const elemHeight = popupContainerRef.current?.offsetHeight || 60;
+    const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+    const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+
+    const maxX = Math.max(0, winW - elemWidth);
+    const maxY = Math.max(0, winH - elemHeight);
+
+    const nextX = Math.max(4, Math.min(maxX - 4, dragRef.current.initialX + dx));
+    const nextY = Math.max(4, Math.min(maxY - 4, dragRef.current.initialY + dy));
+
+    dragRef.current.currentX = nextX;
+    dragRef.current.currentY = nextY;
+
+    if (popupContainerRef.current) {
+      popupContainerRef.current.style.left = `${nextX}px`;
+      popupContainerRef.current.style.top = `${nextY}px`;
+    }
+  };
+
+  const handlePopupPointerUp = (e) => {
+    if (!dragRef.current.isDown) return;
+    dragRef.current.isDown = false;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch (err) {}
+    setIsDragging(false);
+    if (dragRef.current.moved) {
+      setPopupPos({ x: dragRef.current.currentX, y: dragRef.current.currentY });
+    }
   };
 
   // Clean PDF URL without browser toolbar, page count or buttons - fit maximum screen universally
@@ -2888,8 +2997,10 @@ export default function EpsBookReader({
         {popupMode === "full" && (
           <div
             ref={popupContainerRef}
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
+            onPointerDown={handlePopupPointerDown}
+            onPointerMove={handlePopupPointerMove}
+            onPointerUp={handlePopupPointerUp}
+            onPointerCancel={handlePopupPointerUp}
             style={{
               position: "fixed",
               left: `${popupPos.x}px`,
@@ -2907,6 +3018,8 @@ export default function EpsBookReader({
                 : "0 10px 35px rgba(0, 0, 0, 0.25), 0 2px 10px rgba(37, 99, 235, 0.25)",
               cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
+              WebkitUserSelect: "none",
+              touchAction: "none",
               maxWidth: "calc(100vw - 20px)",
               boxSizing: "border-box",
               flexWrap: "wrap"
@@ -3458,41 +3571,22 @@ export default function EpsBookReader({
           }
         `}</style>
 
-        {/* ================= 2. MOVABLE CIRCULAR AUDIO BUTTON (DEFAULT BELOW BACK BUTTON) ================= */}
+        {/* ================= 2. MOVABLE CIRCULAR AUDIO BUTTON (ULTRA-SMOOTH DRAG & DROP FOR ALL DEVICES) ================= */}
         {hasAudio && popupMode !== "full" && (
           <div
             ref={miniAudioBtnRef}
-            onMouseDown={handleMiniDragStart}
-            onTouchStart={handleMiniDragStart}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!miniDragRef.current.moved) {
-                playerOpenTimeRef.current = Date.now();
-                const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-                const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
-                const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
-                setPopupPos({ x: targetX, y: targetY });
-                setPopupMode("full");
-              }
-            }}
-            onTouchEnd={() => {
-              if (!miniDragRef.current.moved) {
-                playerOpenTimeRef.current = Date.now();
-                const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-                const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
-                const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
-                setPopupPos({ x: targetX, y: targetY });
-                setPopupMode("full");
-              }
-            }}
-            title={isPlaying ? "Audio is Playing (Click to Open Controls, Drag to Move)" : "Audio (Click to Open Player, Drag to Move)"}
+            onPointerDown={handleMiniPointerDown}
+            onPointerMove={handleMiniPointerMove}
+            onPointerUp={handleMiniPointerUp}
+            onPointerCancel={handleMiniPointerUp}
+            title={isPlaying ? "Audio Playing (Tap for Controls, Drag to Move)" : "Audio (Tap to Open Player, Drag to Move)"}
             style={{
               position: "fixed",
               left: `${miniAudioPos.x}px`,
               top: `${miniAudioPos.y}px`,
               zIndex: 100015,
-              width: "58px",
-              height: "58px",
+              width: "56px",
+              height: "56px",
               borderRadius: "50%",
               display: "flex",
               flexDirection: "column",
@@ -3508,6 +3602,7 @@ export default function EpsBookReader({
                 : "0 8px 24px rgba(37, 99, 235, 0.45), 0 4px 10px rgba(0, 0, 0, 0.3)",
               cursor: isMiniDragging ? "grabbing" : "grab",
               userSelect: "none",
+              WebkitUserSelect: "none",
               touchAction: "none",
               transition: isMiniDragging ? "none" : "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
               animation: isPlaying ? "pulseAudioGlow 2s infinite ease-in-out" : "none"
@@ -3527,10 +3622,10 @@ export default function EpsBookReader({
               />
             )}
 
-            {/* Headphone SVG icon matching user mockup */}
+            {/* Headphone SVG icon */}
             <svg
-              width="24"
-              height="24"
+              width="23"
+              height="23"
               viewBox="0 0 24 24"
               fill="none"
               stroke="#ffffff"
@@ -3580,42 +3675,50 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 3. FLOATING DISCRETE BACK BUTTON (TOP-LEFT) ================= */}
-        <button
-          type="button"
-          onClick={closeFullScreen}
-          title="Exit Fullscreen (Esc)"
+        {/* ================= 3. DRAGGABLE & DOCKABLE SHRUNK BACK BUTTON (DRAG & DROP ANYWHERE, AUTO-DOCK ON SIDE) ================= */}
+        <div
+          ref={backBtnRef}
+          onPointerDown={handleBackPointerDown}
+          onPointerMove={handleBackPointerMove}
+          onPointerUp={handleBackPointerUp}
+          onPointerCancel={handleBackPointerUp}
+          title="Drag to move anywhere, Tap to return (Esc)"
           style={{
             position: "fixed",
-            top: "12px",
-            left: "12px",
-            zIndex: 100010,
-            backgroundColor: "rgba(15, 23, 42, 0.4)",
+            left: `${backBtnPos.x}px`,
+            top: `${backBtnPos.y}px`,
+            zIndex: 100020,
+            backgroundColor: isBackDragging ? "rgba(15, 23, 42, 0.78)" : "rgba(15, 23, 42, 0.42)",
             color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.25)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            padding: "4px 8px",
-            borderRadius: "14px",
+            border: "1px solid rgba(255, 255, 255, 0.28)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            padding: "4px 9px",
+            borderRadius: backBtnPos.x <= 8 ? "0 14px 14px 0" : "14px",
             fontSize: "11px",
             fontWeight: "700",
-            cursor: "pointer",
+            cursor: isBackDragging ? "grabbing" : "grab",
             display: "flex",
             alignItems: "center",
             gap: "4px",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-            transition: "all 0.15s ease",
-            lineHeight: 1
+            boxShadow: isBackDragging ? "0 8px 24px rgba(0, 0, 0, 0.4)" : "0 2px 8px rgba(0, 0, 0, 0.25)",
+            touchAction: "none",
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            lineHeight: 1,
+            transition: isBackDragging ? "none" : "background-color 0.2s ease, box-shadow 0.2s ease, border-radius 0.2s ease"
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.7)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; }}
+          onMouseEnter={(e) => { if (!isBackDragging) e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.7)"; }}
+          onMouseLeave={(e) => { if (!isBackDragging) e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.42)"; }}
         >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          {/* Subtle drag indicator */}
+          <span style={{ opacity: 0.55, fontSize: "9px", lineHeight: 1, letterSpacing: "-1px", marginRight: "1px", pointerEvents: "none" }}>⠿</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}>
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          <span>Back</span>
-        </button>
+          <span style={{ letterSpacing: "0.2px", pointerEvents: "none" }}>Back</span>
+        </div>
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
         <div style={{
