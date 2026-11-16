@@ -473,13 +473,6 @@
       return await downloadedBlob.arrayBuffer();
     }
 
-    function activateNativeFallback(docUrl) {
-      if (loadingView) loadingView.style.display = 'none';
-      if (errorView) errorView.style.display = 'none';
-      var safeDocUrl = sanitizeUrl(docUrl);
-      container.innerHTML = '<iframe src="' + safeDocUrl + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH" style="width:100%;height:100%;border:none;background:#ffffff;display:block;" allowfullscreen></iframe>';
-    }
-
     // =========================================================================
     // 2. DOCUMENT RENDERING ENGINE (RESPONSIVE: MOBILE, SMART BOARD, DESKTOP)
     // =========================================================================
@@ -781,7 +774,6 @@
         data: dataArray,
         cMapUrl: '/cmaps/',
         cMapPacked: true,
-        standardFontDataUrl: '/standard_fonts/',
         disableFontFace: true,
         isEvalSupported: false,
         useSystemFonts: true
@@ -878,14 +870,6 @@
           }
         }, 250);
       });
-
-      // Watchdog: If after 3 seconds no canvas pages rendered, switch to native viewer
-      setTimeout(function() {
-        if (renderedPages.size === 0) {
-          console.warn('Smart Board Watchdog: No pages rendered to canvas after 3s; switching to native fallback');
-          activateNativeFallback(cleanUrl);
-        }
-      }, 3000);
     }
 
     async function initViewer() {
@@ -905,8 +889,8 @@
           var fallbackCopy = rawData.slice ? rawData.slice(0) : new Uint8Array(rawData).slice().buffer;
           await startRenderingDoc(fallbackCopy);
         } catch (err2) {
-          console.error('Fatal document error, attempting native viewer embed for Smart Board:', err2);
-          activateNativeFallback(targetDocUrl);
+          console.error('Fatal document error:', err2);
+          showError('Unable to load document. Please check your internet connection and tap Retry.');
         }
       }
     }
