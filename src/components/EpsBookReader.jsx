@@ -12,6 +12,7 @@ import {
   autoSaveChapterOffline,
   getCachedBlobSync,
   getCachedFileBlob,
+  fetchAndCacheFile,
   preloadAllCachedBlobs,
   getAllOfflineChaptersStatus,
   isChapterOfflineReadySync
@@ -2104,6 +2105,17 @@ export default function EpsBookReader({
         setOfflineChaptersMap((prev) => ({ ...prev, [chId]: true }));
       }
     });
+
+    // Pre-warm adjacent chapter in background for instant 0ms transition
+    if (typeof chapter.chapter === "number") {
+      const nextChNum = chapter.chapter + 1;
+      const nextCh = chapters.find((c) => c.chapter === nextChNum);
+      if (nextCh) {
+        setTimeout(() => {
+          autoSaveChapterOffline(nextCh);
+        }, 1500);
+      }
+    }
   };
 
   // Close Full-Screen View and return to Chapter Grid (supports hardware mobile back)

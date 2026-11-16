@@ -13,7 +13,13 @@ const CACHE_NAME = 'sigma_pdf_cache_v1';
 
 // In-memory cache for instantaneous (0ms) access across current session
 const inMemoryBlobUrlCache = new Map();
+const inMemoryBufferCache = new Map();
 const inMemoryChapterStatusCache = new Map();
+
+if (typeof window !== 'undefined') {
+  window.__SIGMA_BLOB_CACHE__ = inMemoryBlobUrlCache;
+  window.__SIGMA_BUFFER_CACHE__ = inMemoryBufferCache;
+}
 
 let dbPromise = null;
 
@@ -42,6 +48,23 @@ export function getUrlVariants(url) {
     variants.add(encodeURIComponent(decoded));
   } catch (e) {}
   return Array.from(variants);
+}
+
+export function readBlobAsArrayBuffer(blob) {
+  if (!blob) return Promise.resolve(null);
+  if (typeof blob.arrayBuffer === 'function') {
+    return blob.arrayBuffer();
+  }
+  return new Promise((resolve, reject) => {
+    try {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('FileReader failed'));
+      reader.readAsArrayBuffer(blob);
+    } catch (e) {
+      resolve(null);
+    }
+  });
 }
 
 function getDB() {
@@ -131,6 +154,14 @@ export async function preloadAllCachedBlobs() {
           }
           if (blobUrl) {
             variants.forEach((v) => inMemoryBlobUrlCache.set(v, blobUrl));
+          }
+          // Convert blob to ArrayBuffer in RAM for instant 0ms PDF opening
+          if (item.url && item.url.includes('.pdf') && item.blob) {
+            readBlobAsArrayBuffer(item.blob).then((buf) => {
+              if (buf) {
+                variants.forEach((v) => inMemoryBufferCache.set(v, buf));
+              }
+            }).catch(() => {});
           }
         }
       });
@@ -261,6 +292,15 @@ export async function saveFileBlob(url, blob, meta = {}) {
         cache.put(v, resp.clone()).catch(() => {});
       });
     } catch (e) {}
+  }
+
+  // 3. Keep in RAM buffer cache for instant 0ms PDF opening
+  if (url.includes('.pdf') && blob) {
+    readBlobAsArrayBuffer(blob).then((buf) => {
+      if (buf) {
+        variants.forEach((v) => inMemoryBufferCache.set(v, buf));
+      }
+    }).catch(() => {});
   }
 
   return blobUrl;

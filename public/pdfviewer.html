@@ -222,8 +222,21 @@
       }
     }
 
+    function readBlobAsArrayBuffer(blob) {
+      if (!blob) return Promise.resolve(null);
+      if (typeof blob.arrayBuffer === 'function') {
+        return blob.arrayBuffer();
+      }
+      return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function() { resolve(reader.result); };
+        reader.onerror = function() { reject(reader.error || new Error('FileReader failed')); };
+        reader.readAsArrayBuffer(blob);
+      });
+    }
+
     // =========================================================================
-    // 1. LIFETIME OFFLINE STORAGE (Native IndexedDB + CacheStorage)
+    // 1. LIFETIME OFFLINE STORAGE (Native IndexedDB + CacheStorage + RAM Cache)
     // =========================================================================
     var DB_NAME = 'sigma_eps_offline_db';
     var DB_VERSION = 1;
@@ -363,50 +376,29 @@
     async function downloadPdfWithProgress(url, onProgress) {
       var fetchUrl = sanitizeUrl(url);
 
-      // 1. Try modern fetch with progressive stream reading (best for PWA & mobile apps)
+      // 1. Try modern fetch with direct arrayBuffer
       try {
         var resp = await fetch(fetchUrl);
         if (resp.ok) {
-          var contentLength = resp.headers.get('content-length');
-          var totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
-
-          if (!resp.body || !window.ReadableStream) {
-            var directBlob = await resp.blob();
-            if (onProgress) onProgress(100);
-            return directBlob;
-          }
-
-          var reader = resp.body.getReader();
-          var receivedBytes = 0;
-          var chunks = [];
-
-          while (true) {
-            var res = await reader.read();
-            if (res.done) break;
-            chunks.push(res.value);
-            receivedBytes += res.value.length;
-            if (totalBytes > 0 && onProgress) {
-              var pct = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
-              onProgress(pct);
-            }
-          }
-
           if (onProgress) onProgress(100);
-          return new Blob(chunks, { type: 'application/pdf' });
+          var buf = await resp.arrayBuffer();
+          if (buf && buf.byteLength > 1000) {
+            return buf;
+          }
         }
       } catch (fetchErr) {
-        console.warn('Fetch stream download notice, trying XMLHttpRequest fallback:', fetchErr);
+        console.warn('Fetch download notice, trying XMLHttpRequest fallback:', fetchErr);
       }
 
-      // 2. XMLHttpRequest fallback for older webviews and Smart Boards
+      // 2. XMLHttpRequest fallback with arraybuffer (100% compatible with older Smart Boards & WebViews)
       return new Promise(function(resolve, reject) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', fetchUrl, true);
-        xhr.responseType = 'blob';
+        xhr.responseType = 'arraybuffer';
         xhr.onprogress = function(e) {
-          if (e.lengthComputable && e.total > 0) {
-            var pct = Math.round((e.loaded / e.total) * 100);
-            if (onProgress) onProgress(pct);
+          if (e.lengthComputable && e.total > 0 && onProgress) {
+            var pct = Math.min(99, Math.round((e.loaded / e.total) * 100));
+            onProgress(pct);
           }
         };
         xhr.onload = function() {
@@ -426,14 +418,39 @@
 
     async function loadPdfDataForLifetime(url) {
       var validUrl = sanitizeUrl(url);
+      var variants = getUrlVariants(validUrl);
+      if (validUrl !== url) {
+        var origVariants = getUrlVariants(url);
+        for (var ov = 0; ov < origVariants.length; ov++) {
+          if (variants.indexOf(origVariants[ov]) === -1) variants.push(origVariants[ov]);
+        }
+      }
 
-      // 0. If directly passed a local blob: URL
+      // 0. Priority 0: Instant RAM in-memory cache check (0ms latency!)
+      try {
+        var ramCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
+          ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
+        if (ramCache) {
+          for (var r = 0; r < variants.length; r++) {
+            if (ramCache.has(variants[r])) {
+              var mBuf = ramCache.get(variants[r]);
+              if (mBuf && (mBuf.byteLength > 1000 || (mBuf.buffer && mBuf.buffer.byteLength > 1000))) {
+                if (loadingView) loadingView.style.display = 'none';
+                if (offlineBadge) offlineBadge.style.display = 'inline-block';
+                return mBuf.slice ? mBuf.slice(0) : mBuf;
+              }
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 0b. If directly passed a local blob: URL
       if (url.startsWith('blob:') || validUrl.startsWith('blob:')) {
         try {
           var blobResp = await fetch(validUrl);
           var blobObj = await blobResp.blob();
           if (loadingView) loadingView.style.display = 'none';
-          return await blobObj.arrayBuffer();
+          return await readBlobAsArrayBuffer(blobObj);
         } catch (e) {}
       }
 
@@ -454,23 +471,40 @@
       }
 
       if (blob) {
-        // Instant 0ms cached display!
+        // Instant 0ms cached display from persistent disk storage!
         if (loadingView) loadingView.style.display = 'none';
         if (offlineBadge) offlineBadge.style.display = 'inline-block';
-        return await blob.arrayBuffer();
+        var cachedArrBuf = await readBlobAsArrayBuffer(blob);
+        // Seed RAM cache for future 0ms instant opens
+        try {
+          var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
+            ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
+          if (pCache && cachedArrBuf) {
+            variants.forEach(function(v) { pCache.set(v, cachedArrBuf); });
+          }
+        } catch (e) {}
+        return cachedArrBuf;
       }
 
       // Step 3: Fetch over network with progress bar and store permanently for lifetime
       if (loadingProgress) loadingProgress.textContent = 'Opening Document... 0%';
-      var downloadedBlob = await downloadPdfWithProgress(validUrl, function(pct) {
+      var downloadedArrayBuffer = await downloadPdfWithProgress(validUrl, function(pct) {
         if (loadingProgress) loadingProgress.textContent = 'Opening Document... ' + pct + '%';
       });
 
       // Save to IndexedDB & CacheStorage in background for lifetime offline access
-      saveToDb(db, validUrl, downloadedBlob);
-      saveToCacheStorage(validUrl, downloadedBlob);
+      try {
+        var pdfBlob = new Blob([downloadedArrayBuffer], { type: 'application/pdf' });
+        saveToDb(db, validUrl, pdfBlob);
+        saveToCacheStorage(validUrl, pdfBlob);
+        var pCache2 = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
+          ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
+        if (pCache2) {
+          variants.forEach(function(v) { pCache2.set(v, downloadedArrayBuffer); });
+        }
+      } catch (e) {}
 
-      return await downloadedBlob.arrayBuffer();
+      return downloadedArrayBuffer;
     }
 
     // =========================================================================
@@ -480,18 +514,18 @@
       var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
       var screenHeight = window.innerHeight || document.documentElement.clientHeight || 800;
 
-      // Smart Boards & Large Displays (width > 1024px and landscape):
-      // Neatly fit page height so whole A4 page displays without excessive vertical scrolling
-      if (screenWidth > 1024 && screenWidth > screenHeight) {
+      // Smart Boards & Large Displays (width >= 1024px and landscape):
+      // Neatly fit page height so whole A4 page displays clearly without excessive vertical scrolling
+      if (screenWidth >= 1024 && screenWidth > screenHeight) {
         var pageAspect = 1.414;
-        var heightBasedWidth = Math.floor((screenHeight - 30) / pageAspect);
-        var optimalWidth = Math.max(780, Math.min(Math.floor(screenWidth * 0.65), 1100, Math.floor(heightBasedWidth * 1.15)));
+        var heightBasedWidth = Math.floor((screenHeight - 20) / pageAspect);
+        var optimalWidth = Math.max(850, Math.min(Math.floor(screenWidth * 0.75), 1400, Math.floor(heightBasedWidth * 1.35)));
         return Math.min(optimalWidth, screenWidth);
       }
       return screenWidth;
     }
 
-    async function renderPage(pageNum, wrapper, targetWidth, renderScaleMultiplier) {
+    async function renderPage(pageNum, wrapper, targetWidth) {
       if (renderingPages.has(pageNum)) return;
       renderingPages.add(pageNum);
 
@@ -500,78 +534,62 @@
         var baseViewport = page.getViewport({ scale: 1.0 });
         var widthToUse = targetWidth || getTargetWidth();
         var baseScale = widthToUse / baseViewport.width;
-        var mult = renderScaleMultiplier || 1.0;
-        var viewport = page.getViewport({ scale: baseScale * mult });
 
-        var outputScale = Math.min(window.devicePixelRatio || 1, 1.25);
+        var dpr = window.devicePixelRatio || 1;
+        // Ultra HD scale: 1.8x - 2.2x for crisp 4K vector sharpness
+        var outputScale = Math.min(Math.max(dpr, 1.8), 2.2);
+        var renderScale = baseScale * outputScale;
+        var viewport = page.getViewport({ scale: renderScale });
 
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d');
 
-        var renderWidth = Math.floor(viewport.width * outputScale);
-        var renderHeight = Math.floor(viewport.height * outputScale);
+        var renderWidth = Math.floor(viewport.width);
+        var renderHeight = Math.floor(viewport.height);
 
-        // Hardware texture limit protection for Smart Boards (e.g. Mali/Adreno TV GPUs)
-        var maxCanvasDim = 3072;
+        // Hardware texture limit protection for Smart Boards (e.g. Mali/Adreno TV GPUs max 4096px)
+        var maxCanvasDim = 4096;
         if (renderWidth > maxCanvasDim || renderHeight > maxCanvasDim) {
           var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
           renderWidth = Math.floor(renderWidth * downscale);
           renderHeight = Math.floor(renderHeight * downscale);
-          outputScale = renderWidth / viewport.width;
+          renderScale = renderScale * downscale;
+          outputScale = outputScale * downscale;
+          viewport = page.getViewport({ scale: renderScale });
         }
 
         canvas.width = renderWidth;
         canvas.height = renderHeight;
 
-        canvas.style.width = Math.floor(viewport.width) + 'px';
+        var displayWidth = Math.floor(renderWidth / outputScale);
+        var displayHeight = Math.floor(renderHeight / outputScale);
+        canvas.style.width = displayWidth + 'px';
         canvas.style.maxWidth = '100%';
-        canvas.style.height = Math.floor(viewport.height) + 'px';
+        canvas.style.height = displayHeight + 'px';
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
+        canvas.style.backgroundColor = '#ffffff';
 
-        var transform = outputScale !== 1
-          ? [outputScale, 0, 0, outputScale, 0, 0]
-          : null;
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          if ('imageSmoothingQuality' in ctx) {
+            ctx.imageSmoothingQuality = 'high';
+          }
+        }
 
         await page.render({
           canvasContext: ctx,
-          transform: transform,
           viewport: viewport,
           intent: 'display'
         }).promise;
 
         wrapper.innerHTML = '';
-        wrapper.style.minHeight = Math.floor(viewport.height / mult) + 'px';
+        wrapper.style.minHeight = displayHeight + 'px';
         wrapper.appendChild(canvas);
 
         renderedPages.add(pageNum);
       } catch (err) {
-        console.warn('Page render error page ' + pageNum + ', trying unscaled fallback:', err);
-        try {
-          var fbCanvas = document.createElement('canvas');
-          var fbCtx = fbCanvas.getContext('2d');
-          var fbScale = (targetWidth || getTargetWidth()) / 800;
-          var fbViewport = page.getViewport({ scale: fbScale });
-          fbCanvas.width = Math.floor(fbViewport.width);
-          fbCanvas.height = Math.floor(fbViewport.height);
-          fbCanvas.style.width = Math.floor(fbViewport.width) + 'px';
-          fbCanvas.style.height = Math.floor(fbViewport.height) + 'px';
-          fbCanvas.style.display = 'block';
-          fbCanvas.style.margin = '0 auto';
-
-          await page.render({
-            canvasContext: fbCtx,
-            viewport: fbViewport,
-            intent: 'display'
-          }).promise;
-
-          wrapper.innerHTML = '';
-          wrapper.style.minHeight = Math.floor(fbViewport.height) + 'px';
-          wrapper.appendChild(fbCanvas);
-          renderedPages.add(pageNum);
-        } catch (fbErr) {
-          console.error('Fatal render failure for page ' + pageNum + ':', fbErr);
-        }
+        console.error('Render page error page ' + pageNum + ':', err);
       } finally {
         renderingPages.delete(pageNum);
       }
@@ -774,19 +792,32 @@
         data: dataArray,
         cMapUrl: '/cmaps/',
         cMapPacked: true,
-        disableFontFace: true,
-        isEvalSupported: false,
-        useSystemFonts: true
+        isEvalSupported: false
       });
 
       pdfDoc = await loadingTask.promise;
-      if (loadingView) loadingView.style.display = 'none';
-
       var totalPages = pdfDoc.numPages;
       var currentWidth = getTargetWidth();
 
-      // Create placeholders for all pages for smooth continuous layout
-      for (var i = 1; i <= totalPages; i++) {
+      // Immediately render Page 1 first so user sees the document in milliseconds!
+      var wrap1 = document.createElement('div');
+      wrap1.className = 'pdf-page-wrapper';
+      wrap1.id = 'page-wrapper-1';
+      wrap1.setAttribute('data-page-num', '1');
+      zoomLayer.appendChild(wrap1);
+
+      try {
+        await renderPage(1, wrap1, currentWidth);
+      } catch (e1) {
+        console.warn('Page 1 render error:', e1);
+      }
+
+      // Hide loading view right away
+      if (loadingView) loadingView.style.display = 'none';
+      if (offlineBadge) offlineBadge.style.display = 'inline-block';
+
+      // Create placeholders for remaining pages for smooth continuous layout
+      for (var i = 2; i <= totalPages; i++) {
         var wrapper = document.createElement('div');
         wrapper.className = 'pdf-page-wrapper';
         wrapper.id = 'page-wrapper-' + i;
@@ -794,15 +825,11 @@
         zoomLayer.appendChild(wrapper);
       }
 
-      // Render first 2-3 pages immediately in sequence
-      for (var j = 1; j <= Math.min(totalPages, 3); j++) {
-        var initialWrap = document.getElementById('page-wrapper-' + j);
-        if (initialWrap) {
-          try {
-            await renderPage(j, initialWrap, currentWidth);
-          } catch (e) {
-            console.warn('Initial page ' + j + ' error:', e);
-          }
+      // Pre-render Page 2 immediately for smooth scrolling
+      if (totalPages >= 2) {
+        var initialWrap2 = document.getElementById('page-wrapper-2');
+        if (initialWrap2) {
+          renderPage(2, initialWrap2, currentWidth).catch(function() {});
         }
       }
 
@@ -819,7 +846,7 @@
           });
         }, {
           root: container,
-          rootMargin: '600px 0px 600px 0px'
+          rootMargin: '800px 0px 800px 0px'
         });
 
         for (var k = 1; k <= totalPages; k++) {
