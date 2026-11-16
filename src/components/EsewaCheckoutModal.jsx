@@ -346,7 +346,7 @@ export default function EsewaCheckoutModal({
           backgroundColor: "#ffffff",
           borderRadius: "14px",
           width: "100%",
-          maxWidth: "475px",
+          maxWidth: "430px",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
           overflow: "hidden",
           border: "1px solid #e2e8f0"
@@ -357,19 +357,19 @@ export default function EsewaCheckoutModal({
         <div
           style={{
             background: "linear-gradient(135deg, #15803d 0%, #16a34a 50%, #4ade80 100%)",
-            padding: "11px 16px",
+            padding: "8px 14px",
             color: "#ffffff",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between"
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <div
               style={{
                 backgroundColor: "#ffffff",
-                padding: "3px 6px",
-                borderRadius: "6px",
+                padding: "2px 5px",
+                borderRadius: "5px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -379,21 +379,21 @@ export default function EsewaCheckoutModal({
               <img
                 src="/esewa-official.svg"
                 alt="eSewa"
-                style={{ height: "20px", width: "auto" }}
+                style={{ height: "18px", width: "auto" }}
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
               />
-              <span style={{ color: "#16a34a", fontWeight: "900", fontSize: "14px", marginLeft: "2px" }}>
+              <span style={{ color: "#16a34a", fontWeight: "900", fontSize: "13px", marginLeft: "2px" }}>
                 eSewa
               </span>
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: "15.5px", fontWeight: "800", letterSpacing: "-0.2px" }}>
+              <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "800", letterSpacing: "-0.2px" }}>
                 eSewa Online Payment &amp; Instant Auto-Unlock
               </h3>
-              <p style={{ margin: "1px 0 0 0", fontSize: "11px", opacity: 0.95 }}>
-                ⚡ Pay via eSewa.com (9768444902) — Instant Automatic Unlock (No Waiting!)
+              <p style={{ margin: "1px 0 0 0", fontSize: "10.5px", opacity: 0.95 }}>
+                ⚡ Instant Automatic Unlock (No Waiting!)
               </p>
             </div>
           </div>
@@ -405,11 +405,11 @@ export default function EsewaCheckoutModal({
               background: "rgba(255,255,255,0.2)",
               border: "none",
               color: "#ffffff",
-              width: "28px",
-              height: "28px",
+              width: "26px",
+              height: "26px",
               borderRadius: "50%",
               cursor: "pointer",
-              fontSize: "15px",
+              fontSize: "14px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -421,7 +421,7 @@ export default function EsewaCheckoutModal({
         </div>
 
         {/* Modal Body - Compressed */}
-        <div style={{ padding: "12px 16px" }}>
+        <div style={{ padding: "8px 12px" }}>
           {isQuerySubmitted ? (
             /* SUCCESS QUERY SUBMISSION STATE */
             <div style={{ textAlign: "center", padding: "8px 4px" }}>
@@ -550,40 +550,40 @@ export default function EsewaCheckoutModal({
               <div
                 style={{
                   backgroundColor: "#f0fdf4",
-                  border: "1.5px solid #86efac",
-                  borderRadius: "10px",
-                  padding: "8px 12px",
+                  border: "1px solid #86efac",
+                  borderRadius: "8px",
+                  padding: "5px 10px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  marginBottom: "8px"
+                  marginBottom: "6px"
                 }}
               >
                 <div>
                   <span
                     style={{
-                      fontSize: "9.5px",
+                      fontSize: "9px",
                       fontWeight: "800",
                       color: "#166534",
                       backgroundColor: "#dcfce7",
-                      padding: "1px 6px",
-                      borderRadius: "4px",
+                      padding: "1px 5px",
+                      borderRadius: "3px",
                       textTransform: "uppercase",
-                      letterSpacing: "0.4px"
+                      letterSpacing: "0.3px"
                     }}
                   >
                     {isSet ? "INDIVIDUAL UBT SET" : "UBT PACKAGE"}
                   </span>
-                  <h4 style={{ margin: "2px 0 1px 0", fontSize: "14.5px", color: "#0f172a", fontWeight: "800" }}>
+                  <h4 style={{ margin: "1px 0 0 0", fontSize: "13.5px", color: "#0f172a", fontWeight: "800" }}>
                     {itemName}
                   </h4>
-                  <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>
+                  <p style={{ margin: 0, fontSize: "10.5px", color: "#64748b" }}>
                     {isSet ? "40 Questions, Audio & Timer practice" : "Full access to all included UBT sets"}
                   </p>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "10px", color: "#64748b", fontWeight: "600" }}>Price to Pay</div>
-                  <div style={{ fontSize: "19px", fontWeight: "900", color: "#16a34a" }}>
+                  <div style={{ fontSize: "9.5px", color: "#64748b", fontWeight: "600" }}>Price to Pay</div>
+                  <div style={{ fontSize: "17px", fontWeight: "900", color: "#16a34a" }}>
                     {formattedPrice}
                   </div>
                 </div>
@@ -593,17 +593,17 @@ export default function EsewaCheckoutModal({
               <div
                 style={{
                   backgroundColor: "#ffffff",
-                  border: "2px solid #16a34a",
-                  borderRadius: "14px",
-                  padding: "14px",
+                  border: "1.5px solid #16a34a",
+                  borderRadius: "10px",
+                  padding: "6px 8px",
                   textAlign: "center",
-                  marginBottom: "12px",
-                  boxShadow: "0 3px 12px rgba(22, 163, 74, 0.1)"
+                  marginBottom: "6px",
+                  boxShadow: "0 2px 8px rgba(22, 163, 74, 0.08)"
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "16px" }}>📱</span>
-                  <span style={{ fontSize: "14px", fontWeight: "800", color: "#166534" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", marginBottom: "4px" }}>
+                  <span style={{ fontSize: "13px" }}>📱</span>
+                  <span style={{ fontSize: "12.5px", fontWeight: "800", color: "#166534" }}>
                     Fonepay &amp; eSewa Official QR भुक्तानी
                   </span>
                 </div>
@@ -613,13 +613,13 @@ export default function EsewaCheckoutModal({
                   title="Click to zoom QR code"
                   style={{
                     cursor: "pointer",
-                    border: "1.5px solid #86efac",
-                    borderRadius: "10px",
-                    padding: "8px",
+                    border: "1px solid #86efac",
+                    borderRadius: "8px",
+                    padding: "4px",
                     backgroundColor: "#f0fdf4",
                     display: "inline-block",
-                    marginBottom: "8px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                    marginBottom: "4px",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                     transition: "transform 0.15s ease"
                   }}
                 >
@@ -628,10 +628,10 @@ export default function EsewaCheckoutModal({
                     alt="Sigma Education Korean Bhasa Center Fonepay eSewa QR"
                     style={{
                       width: "100%",
-                      maxWidth: "230px",
+                      maxWidth: "155px",
                       height: "auto",
-                      maxHeight: "280px",
-                      borderRadius: "6px",
+                      maxHeight: "155px",
+                      borderRadius: "4px",
                       display: "block",
                       margin: "0 auto",
                       objectFit: "contain"
@@ -640,39 +640,24 @@ export default function EsewaCheckoutModal({
                       e.currentTarget.src = "/sigma-esewa-fonepay-qr.jpg";
                     }}
                   />
-                  <span style={{ fontSize: "10.5px", color: "#15803d", fontWeight: "700", marginTop: "4px", display: "block" }}>
+                  <span style={{ fontSize: "9.5px", color: "#15803d", fontWeight: "700", marginTop: "2px", display: "block" }}>
                     🔍 क्लिक गरी QR ठूलो बनाउनुहोस्
                   </span>
                 </div>
 
-                <div style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b", marginBottom: "2px" }}>
+                <div style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b", marginBottom: "1px" }}>
                   Sigma Education Korean Bhasa Center Pvt. Ltd.
                 </div>
-                <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "6px" }}>
+                <div style={{ fontSize: "10px", color: "#64748b", marginBottom: "3px" }}>
                   Terminal: 2222020018404471 &middot; Tokha MC
                 </div>
-                <div style={{ fontSize: "12px", color: "#1e40af", fontWeight: "700", backgroundColor: "#eff6ff", borderRadius: "6px", padding: "4px 10px", display: "inline-block" }}>
+                <div style={{ fontSize: "11px", color: "#1e40af", fontWeight: "700", backgroundColor: "#eff6ff", borderRadius: "5px", padding: "2px 8px", display: "inline-block" }}>
                   भुक्तानी रकम: <strong style={{ color: "#16a34a" }}>{formattedPrice}</strong>
                 </div>
               </div>
 
-              {/* PROMINENT WHATSAPP CONFIRMATION SECTION */}
-              <div
-                style={{
-                  backgroundColor: "#f0fdf4",
-                  border: "2px solid #22c55e",
-                  borderRadius: "12px",
-                  padding: "12px",
-                  textAlign: "center",
-                  marginBottom: "12px"
-                }}
-              >
-                <div style={{ fontSize: "12.5px", fontWeight: "800", color: "#166534", marginBottom: "4px", lineHeight: "1.4" }}>
-                  🧾 भुक्तानी गरिसकेपछि स्क्रिनसट यो WhatsApp नम्बरमा पठाउनुहोस्:
-                </div>
-                <div style={{ fontSize: "16px", fontWeight: "900", color: "#065f46", marginBottom: "8px", letterSpacing: "0.5px" }}>
-                  +977-9768444902
-                </div>
+              {/* COMPACT ACTION BUTTONS: WHATSAPP SCREENSHOT & CLOSE */}
+              <div style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
                 <a
                   href={`https://wa.me/9779768444902?text=${encodeURIComponent(
                     `Hello Admin,\n\nI have paid ${formattedPrice} via Fonepay / eSewa QR for "${itemName}".\nHere is my payment screenshot to verify and unlock my set!\n\n` +
@@ -684,43 +669,41 @@ export default function EsewaCheckoutModal({
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
+                    flex: 1,
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "8px",
-                    width: "100%",
+                    gap: "6px",
                     boxSizing: "border-box",
-                    padding: "11px 16px",
+                    padding: "9px 10px",
                     backgroundColor: "#25d366",
                     backgroundImage: "linear-gradient(135deg, #25d366 0%, #128c7e 100%)",
                     color: "#ffffff",
                     textDecoration: "none",
                     borderRadius: "8px",
                     fontWeight: "800",
-                    fontSize: "13.5px",
-                    boxShadow: "0 3px 10px rgba(37, 211, 102, 0.35)",
+                    fontSize: "12px",
+                    boxShadow: "0 2px 8px rgba(37, 211, 102, 0.3)",
                     cursor: "pointer"
                   }}
                 >
-                  <WhatsAppIcon size={22} color="#ffffff" />
-                  <span>WhatsApp मा स्क्रिनसट पठाउनुहोस् (+977-9768444902)</span>
+                  <WhatsAppIcon size={18} color="#ffffff" />
+                  <span>WhatsApp मा स्क्रिनसट पठाउनुहोस्</span>
                 </a>
 
                 <button
                   type="button"
                   onClick={onClose}
                   style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    marginTop: "8px",
                     backgroundColor: "#f1f5f9",
                     color: "#475569",
                     border: "1px solid #cbd5e1",
-                    padding: "10px 14px",
+                    padding: "9px 14px",
                     borderRadius: "8px",
                     fontWeight: "700",
-                    fontSize: "12.5px",
-                    cursor: "pointer"
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    flexShrink: 0
                   }}
                 >
                   Close
@@ -918,13 +901,7 @@ export default function EsewaCheckoutModal({
               </span>
             </div>
 
-            <div style={{ marginTop: "12px", backgroundColor: "#f0fdf4", border: "1.5px solid #22c55e", borderRadius: "8px", padding: "10px" }}>
-              <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#166534", marginBottom: "4px" }}>
-                🧾 भुक्तानीपछि स्क्रिनसट यो WhatsApp नम्बरमा पठाउनुहोस्:
-              </div>
-              <div style={{ fontSize: "15px", fontWeight: "900", color: "#065f46", marginBottom: "8px" }}>
-                +977-9768444902
-              </div>
+            <div style={{ marginTop: "10px" }}>
               <a
                 href="https://wa.me/9779768444902?text=Hello%20Admin%2C%20I%20have%20paid%20via%20QR.%20Here%20is%20my%20payment%20screenshot%20to%20unlock%20my%20UBT%20exam%20set."
                 target="_blank"
@@ -946,7 +923,7 @@ export default function EsewaCheckoutModal({
                 }}
               >
                 <WhatsAppIcon size={20} color="#ffffff" />
-                <span>WhatsApp मा स्क्रिनसट पठाउनुहोस्</span>
+                <span>WhatsApp मा स्क्रिनसट पठाउनुहोस् (+977-9768444902)</span>
               </a>
             </div>
 
