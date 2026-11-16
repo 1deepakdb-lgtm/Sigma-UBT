@@ -3,6 +3,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
+function WhatsAppIcon({ size = 20, color = "#ffffff" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} style={{ flexShrink: 0 }}>
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2ZM12.05 20.15C10.57 20.15 9.12 19.76 7.85 19.01L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.81 13.47 3.81 11.91C3.81 7.37 7.5 3.68 12.05 3.68C14.25 3.68 16.31 4.54 17.87 6.1C19.42 7.66 20.28 9.72 20.28 11.92C20.28 16.46 16.59 20.15 12.05 20.15ZM16.56 14.39C16.31 14.26 15.1 13.67 14.87 13.58C14.64 13.5 14.48 13.46 14.31 13.71C14.15 13.96 13.67 14.52 13.52 14.69C13.38 14.86 13.23 14.88 12.98 14.76C12.73 14.63 11.93 14.37 10.98 13.52C10.24 12.86 9.74 12.05 9.6 11.8C9.45 11.55 9.58 11.42 9.71 11.29C9.82 11.18 9.96 11 10.08 10.86C10.21 10.71 10.25 10.61 10.33 10.44C10.41 10.28 10.37 10.13 10.31 10.01C10.25 9.88 9.76 8.68 9.55 8.19C9.36 7.71 9.16 7.77 9.01 7.76C8.87 7.76 8.71 7.75 8.54 7.75C8.38 7.75 8.11 7.81 7.88 8.06C7.66 8.31 7.02 8.91 7.02 10.12C7.02 11.34 7.91 12.51 8.03 12.68C8.16 12.84 9.77 15.34 12.26 16.41C12.85 16.66 13.31 16.82 13.67 16.93C14.26 17.12 14.8 17.09 15.22 17.03C15.7 16.96 16.68 16.43 16.88 15.86C17.09 15.29 17.09 14.8 17.03 14.69C16.97 14.59 16.81 14.52 16.56 14.39Z" />
+    </svg>
+  );
+}
+
 export default function EsewaCheckoutModal({
   isOpen,
   onClose,
@@ -512,7 +520,7 @@ export default function EsewaCheckoutModal({
                   boxSizing: "border-box"
                 }}
               >
-                <span>💬</span>
+                <WhatsAppIcon size={18} color="#ffffff" />
                 <span>Send Release Message on WhatsApp (9768444902) ↗</span>
               </a>
 
@@ -616,11 +624,11 @@ export default function EsewaCheckoutModal({
                   }}
                 >
                   <img
-                    src="/sigma-esewa-fonepay-qr.jpg"
+                    src="/sigma-esewa-clean-qr.jpg"
                     alt="Sigma Education Korean Bhasa Center Fonepay eSewa QR"
                     style={{
                       width: "100%",
-                      maxWidth: "220px",
+                      maxWidth: "230px",
                       height: "auto",
                       maxHeight: "280px",
                       borderRadius: "6px",
@@ -629,7 +637,7 @@ export default function EsewaCheckoutModal({
                       objectFit: "contain"
                     }}
                     onError={(e) => {
-                      e.currentTarget.src = "/esewa-payment-qr.jpg";
+                      e.currentTarget.src = "/sigma-esewa-fonepay-qr.jpg";
                     }}
                   />
                   <span style={{ fontSize: "10.5px", color: "#15803d", fontWeight: "700", marginTop: "4px", display: "block" }}>
@@ -694,225 +702,29 @@ export default function EsewaCheckoutModal({
                     cursor: "pointer"
                   }}
                 >
-                  <span style={{ fontSize: "16px" }}>📲</span>
+                  <WhatsAppIcon size={22} color="#ffffff" />
                   <span>WhatsApp मा स्क्रिनसट पठाउनुहोस् (+977-9768444902)</span>
                 </a>
-              </div>
 
-              {/* IN-APP PAYMENT VERIFICATION & SCREENSHOT SUBMISSION */}
-              <div
-                style={{
-                  backgroundColor: "#ffffff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "12px",
-                  padding: "12px",
-                  marginBottom: "12px"
-                }}
-              >
-                <div style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span>⚡</span>
-                  <span>वा यहाँ विवरण भरेर तुरुन्त अनलक गर्नुहोस् (Instant Unlock):</span>
-                </div>
-
-                {/* Screenshot Upload Section */}
-                <div
+                <button
+                  type="button"
+                  onClick={onClose}
                   style={{
-                    backgroundColor: "#f8fafc",
-                    border: "1.5px dashed #94a3b8",
-                    borderRadius: "10px",
-                    padding: "8px 12px",
-                    marginBottom: "8px",
-                    textAlign: "center"
+                    width: "100%",
+                    boxSizing: "border-box",
+                    marginTop: "8px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    border: "1px solid #cbd5e1",
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    fontWeight: "700",
+                    fontSize: "12.5px",
+                    cursor: "pointer"
                   }}
                 >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={handleScreenshotChange}
-                    style={{ display: "none" }}
-                  />
-
-                  {screenshotPreview ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-between", backgroundColor: "#f0fdf4", border: "1px solid #86efac", borderRadius: "8px", padding: "6px 10px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <img
-                          src={screenshotPreview}
-                          alt="Screenshot Preview"
-                          style={{ width: "38px", height: "38px", objectFit: "cover", borderRadius: "5px", border: "1px solid #bbf7d0" }}
-                        />
-                        <div style={{ textAlign: "left" }}>
-                          <div style={{ fontSize: "11.5px", fontWeight: "800", color: "#166534" }}>
-                            ✓ Payment Screenshot Attached (eSewa / Bank)
-                          </div>
-                          <div style={{ fontSize: "10px", color: "#64748b" }}>
-                            {screenshotFile?.name || "Ready to send"} &middot; Success Receipt
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{
-                          background: "#ffffff",
-                          border: "1px solid #cbd5e1",
-                          padding: "4px 8px",
-                          borderRadius: "5px",
-                          fontSize: "11px",
-                          fontWeight: "700",
-                          color: "#334155",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Change Photo
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
-                      <div style={{ textAlign: "left" }}>
-                        <div style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a" }}>
-                          📷 Payment Screenshot (eSewa / Any Bank) <span style={{ color: "#dc2626" }}>*</span>
-                        </div>
-                        <div style={{ fontSize: "10px", color: "#dc2626", fontWeight: "600" }}>
-                          * Must attach successful payment receipt
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingScreenshot}
-                        style={{
-                          backgroundColor: "#2563eb",
-                          color: "#ffffff",
-                          border: "none",
-                          padding: "6px 14px",
-                          borderRadius: "6px",
-                          fontSize: "11.5px",
-                          fontWeight: "800",
-                          cursor: uploadingScreenshot ? "wait" : "pointer",
-                          boxShadow: "0 2px 6px rgba(37,99,235,0.25)",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          flexShrink: 0
-                        }}
-                      >
-                        {uploadingScreenshot ? (
-                          <>
-                            <span>⏳</span>
-                            <span>Uploading...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>📁</span>
-                            <span>Upload Screenshot</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Transaction ID & Phone Inputs */}
-                <div style={{ marginBottom: "6px" }}>
-                  <label style={{ display: "block", fontSize: "11.5px", fontWeight: "700", color: "#0f172a", marginBottom: "3px" }}>
-                    eSewa Transaction ID / Ref Code <span style={{ color: "#dc2626" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 98A7B2X or 7-10 digit eSewa Txn ID"
-                    value={txnId}
-                    onChange={(e) => setTxnId(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "7px 10px",
-                      borderRadius: "6px",
-                      border: "1.5px solid #cbd5e1",
-                      fontSize: "13px",
-                      fontFamily: "monospace",
-                      boxSizing: "border-box",
-                      outline: "none"
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: "10px" }}>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: "600", color: "#64748b", marginBottom: "3px" }}>
-                    Sender Phone Number (eSewa Account)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Your 10-digit mobile number"
-                    value={senderPhone}
-                    onChange={(e) => setSenderPhone(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid #cbd5e1",
-                      fontSize: "12.5px",
-                      boxSizing: "border-box"
-                    }}
-                  />
-                </div>
-
-                {/* Action Buttons: Submit Verification */}
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={handleSendQuery}
-                    disabled={isProcessing}
-                    style={{
-                      flex: 1,
-                      background: isProcessing
-                        ? "#94a3b8"
-                        : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "10px 14px",
-                      borderRadius: "7px",
-                      fontWeight: "900",
-                      fontSize: "13.5px",
-                      letterSpacing: "0.2px",
-                      cursor: isProcessing ? "wait" : "pointer",
-                      boxShadow: "0 3px 10px rgba(22, 163, 74, 0.28)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "6px"
-                    }}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <span>⏳</span>
-                        <span>Verifying...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>📨</span>
-                        <span>Submit Details &amp; Unlock ({formattedPrice})</span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    disabled={isProcessing}
-                    style={{
-                      backgroundColor: "#f1f5f9",
-                      color: "#475569",
-                      border: "1px solid #cbd5e1",
-                      padding: "10px 14px",
-                      borderRadius: "7px",
-                      fontWeight: "600",
-                      fontSize: "12.5px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
+                  Close
+                </button>
               </div>
 
               {/* COLLAPSIBLE ALTERNATIVE: DIRECT ESEWA ONLINE / APP GATEWAY */}
@@ -1079,7 +891,7 @@ export default function EsewaCheckoutModal({
             </div>
             <div style={{ padding: "8px", backgroundColor: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
               <img
-                src="/sigma-esewa-fonepay-qr.jpg"
+                src="/sigma-esewa-clean-qr.jpg"
                 alt="Fonepay eSewa QR Code"
                 style={{
                   width: "100%",
@@ -1090,7 +902,7 @@ export default function EsewaCheckoutModal({
                   borderRadius: "6px"
                 }}
                 onError={(e) => {
-                  e.currentTarget.src = "/esewa-payment-qr.jpg";
+                  e.currentTarget.src = "/sigma-esewa-fonepay-qr.jpg";
                 }}
               />
             </div>
@@ -1133,7 +945,7 @@ export default function EsewaCheckoutModal({
                   fontSize: "12.5px"
                 }}
               >
-                <span>📲</span>
+                <WhatsAppIcon size={20} color="#ffffff" />
                 <span>WhatsApp मा स्क्रिनसट पठाउनुहोस्</span>
               </a>
             </div>
