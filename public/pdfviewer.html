@@ -141,9 +141,50 @@
     font-weight: 700;
     cursor: pointer;
   }
+  .download-fab {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    z-index: 100010;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(15, 23, 42, 0.62);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 5px 12px;
+    border-radius: 18px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    transition: background-color 0.2s ease, transform 0.15s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    line-height: 1;
+  }
+  .download-fab:hover {
+    background-color: rgba(15, 23, 42, 0.85);
+    transform: translateY(-1px);
+  }
+  .download-fab:active {
+    transform: translateY(1px);
+  }
 </style>
 </head>
 <body>
+
+<!-- Floating Direct Download Button for 100% Original Chapter PDF from R2 -->
+<button id="download-actual-pdf-btn" class="download-fab" title="Download Actual Chapter PDF (Original R2 Quality)">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="7 10 12 15 17 10"></polyline>
+    <line x1="12" y1="15" x2="12" y2="3"></line>
+  </svg>
+  <span>Download PDF</span>
+</button>
 
 <div id="loading-view">
   <div class="spinner"></div>
@@ -163,15 +204,6 @@
 
 <script src="/pdf.min.js"></script>
 <script>
-  // Strictly prevent right-click context menu (no save/download popup)
-  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-  // Disable common keyboard shortcuts for save / print
-  document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'p' || e.key === 'u')) {
-      e.preventDefault();
-    }
-  });
-
   (function() {
     function sanitizeUrl(u) {
       if (!u) return '';
@@ -515,11 +547,11 @@
       var screenHeight = window.innerHeight || document.documentElement.clientHeight || 800;
 
       // Smart Boards & Large Displays (width >= 1024px and landscape):
-      // Neatly fit page height so whole A4 page displays clearly without excessive vertical scrolling
+      // Full comfortable width without downscaling
       if (screenWidth >= 1024 && screenWidth > screenHeight) {
         var pageAspect = 1.414;
-        var heightBasedWidth = Math.floor((screenHeight - 20) / pageAspect);
-        var optimalWidth = Math.max(850, Math.min(Math.floor(screenWidth * 0.75), 1400, Math.floor(heightBasedWidth * 1.35)));
+        var heightBasedWidth = Math.floor((screenHeight - 16) / pageAspect);
+        var optimalWidth = Math.max(900, Math.min(Math.floor(screenWidth * 0.85), 1600, Math.floor(heightBasedWidth * 1.45)));
         return Math.min(optimalWidth, screenWidth);
       }
       return screenWidth;
@@ -536,8 +568,8 @@
         var baseScale = widthToUse / baseViewport.width;
 
         var dpr = window.devicePixelRatio || 1;
-        // Ultra HD scale: 1.8x - 2.2x for crisp 4K vector sharpness
-        var outputScale = Math.min(Math.max(dpr, 1.8), 2.2);
+        // Full uncompromised ultra-sharp quality: retain full device DPR (at least 2.0x, native on 3x screens)
+        var outputScale = Math.max(dpr, 2.0);
         var renderScale = baseScale * outputScale;
         var viewport = page.getViewport({ scale: renderScale });
 
@@ -547,8 +579,8 @@
         var renderWidth = Math.floor(viewport.width);
         var renderHeight = Math.floor(viewport.height);
 
-        // Hardware texture limit protection for Smart Boards (e.g. Mali/Adreno TV GPUs max 4096px)
-        var maxCanvasDim = 4096;
+        // Hardware texture limit protection (8192px max texture size for 4K / 8K devices)
+        var maxCanvasDim = 8192;
         if (renderWidth > maxCanvasDim || renderHeight > maxCanvasDim) {
           var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
           renderWidth = Math.floor(renderWidth * downscale);
@@ -921,6 +953,76 @@
         }
       }
     }
+
+    function downloadActualPdfFile() {
+      if (!cleanUrl) return;
+      var fetchUrl = sanitizeUrl(cleanUrl);
+      var filename = 'EPS_TOPIK_Chapter.pdf';
+      try {
+        var parts = fetchUrl.split('/');
+        var rawName = parts[parts.length - 1].split('?')[0].split('#')[0];
+        if (rawName) filename = decodeURIComponent(rawName);
+      } catch (e) {}
+
+      // If we already have the raw ArrayBuffer in memory, create a direct download link instantly with 0ms waiting
+      try {
+        var pBufs = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
+          ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
+        var variants = getUrlVariants(fetchUrl);
+        var matchedBuf = null;
+        if (pBufs) {
+          for (var i = 0; i < variants.length; i++) {
+            if (pBufs.has(variants[i])) {
+              matchedBuf = pBufs.get(variants[i]);
+              break;
+            }
+          }
+        }
+        if (matchedBuf) {
+          var blob = new Blob([matchedBuf], { type: 'application/pdf' });
+          var blobUrl = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function() {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+          }, 2000);
+          return;
+        }
+      } catch (e) {}
+
+      // Direct download of the actual original R2 file
+      var link = document.createElement('a');
+      link.href = fetchUrl;
+      link.download = filename;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(function() {
+        document.body.removeChild(link);
+      }, 1000);
+    }
+
+    var downloadBtn = document.getElementById('download-actual-pdf-btn');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        downloadActualPdfFile();
+      });
+    }
+
+    // Ctrl+S / Cmd+S downloads actual original PDF
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        downloadActualPdfFile();
+      }
+    });
 
     initViewer();
   })();

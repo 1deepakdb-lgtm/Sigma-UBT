@@ -3732,6 +3732,57 @@ export default function EpsBookReader({
           <span style={{ letterSpacing: "0.2px", pointerEvents: "none" }}>Back</span>
         </div>
 
+        {/* ================= 3b. FLOATING DOWNLOAD ACTUAL PDF BUTTON (ORIGINAL R2 QUALITY) ================= */}
+        {selectedChapter && (selectedChapter.pdfUrl || selectedChapter.pdf?.url) && (
+          <a
+            href={selectedChapter.pdfUrl || selectedChapter.pdf?.url}
+            download={`Chapter_${selectedChapter.chapter !== undefined ? selectedChapter.chapter : "EPS"}_${(selectedChapter.titleEn || selectedChapter.titleKo || "Book").replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Download Actual Chapter PDF (Original R2 Quality)"
+            style={{
+              position: "fixed",
+              top: "12px",
+              right: "12px",
+              zIndex: 100020,
+              backgroundColor: "rgba(15, 23, 42, 0.52)",
+              color: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.28)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              padding: "5px 12px",
+              borderRadius: "14px",
+              fontSize: "11px",
+              fontWeight: "700",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              textDecoration: "none",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease, transform 0.15s ease",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              lineHeight: 1
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.85)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.52)";
+              e.currentTarget.style.transform = "none";
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Download PDF</span>
+          </a>
+        )}
+
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
         <div style={{
           position: "absolute",
@@ -4531,7 +4582,41 @@ export default function EpsBookReader({
                       </div>
                     </div>
 
-                    <button className="chapter-unit-action-btn" type="button">Open</button>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "12px", width: "100%", alignItems: "center" }}>
+                      <button className="chapter-unit-action-btn" type="button" style={{ flex: 1, margin: 0 }}>Open</button>
+                      <a
+                        href="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
+                        download="EPS_TOPIK_Preliminary_Hangeul_and_Greetings.pdf"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Download Preliminary PDF (Original R2 Quality)"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "4px",
+                          padding: "8px 12px",
+                          backgroundColor: "#f8fafc",
+                          color: "#10b981",
+                          border: "1.5px solid #a7f3d0",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          textDecoration: "none",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                          whiteSpace: "nowrap",
+                          height: "36px",
+                          boxSizing: "border-box"
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span>PDF</span>
+                      </a>
+                    </div>
                   </div>
                 )}
                 {filteredChapters.map((c) => {
@@ -4611,7 +4696,43 @@ export default function EpsBookReader({
                         </div>
                       </div>
 
-                      <button className="chapter-unit-action-btn" type="button">Open</button>
+                      <div style={{ display: "flex", gap: "8px", marginTop: "12px", width: "100%", alignItems: "center" }}>
+                        <button className="chapter-unit-action-btn" type="button" style={{ flex: 1, margin: 0 }}>Open</button>
+                        {c.pdfUrl && (
+                          <a
+                            href={c.pdfUrl}
+                            download={`Chapter_${c.chapter}_${(c.titleEn || c.titleKo || "").replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`}
+                            onClick={(e) => e.stopPropagation()}
+                            title={`Download Chapter ${c.chapter} PDF (Original R2 Quality)`}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "4px",
+                              padding: "8px 12px",
+                              backgroundColor: "#f8fafc",
+                              color: "#2563eb",
+                              border: "1.5px solid #bfdbfe",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              textDecoration: "none",
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                              whiteSpace: "nowrap",
+                              height: "36px",
+                              boxSizing: "border-box"
+                            }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            <span>PDF</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -4706,7 +4827,41 @@ export default function EpsBookReader({
                       </div>
                     </div>
 
-                    <button className="chapter-unit-action-btn" type="button">Open</button>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "12px", width: "100%", alignItems: "center" }}>
+                      <button className="chapter-unit-action-btn" type="button" style={{ flex: 1, margin: 0 }}>Open</button>
+                      <a
+                        href="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
+                        download="EPS_TOPIK_Appendix_Answers_and_Index.pdf"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Download Appendix PDF (Original R2 Quality)"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "4px",
+                          padding: "8px 12px",
+                          backgroundColor: "#f8fafc",
+                          color: "#8b5cf6",
+                          border: "1.5px solid #ddd6fe",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          textDecoration: "none",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                          whiteSpace: "nowrap",
+                          height: "36px",
+                          boxSizing: "border-box"
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span>PDF</span>
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
