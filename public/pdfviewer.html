@@ -230,14 +230,15 @@
     function getUrlVariants(url) {
       if (!url) return [];
       var clean = String(url).split('#')[0].trim();
-      var map = {};
-      map[clean] = true;
+      var set = {};
+      set[clean] = true;
       try {
-        var decoded = decodeURIComponent(clean);
-        map[decoded] = true;
-        map[encodeURI(decoded)] = true;
+        var dec = decodeURIComponent(clean);
+        set[dec] = true;
+        set[encodeURI(dec)] = true;
+        set[encodeURIComponent(dec)] = true;
       } catch (e) {}
-      return Object.keys(map);
+      return Object.keys(set);
     }
 
     function openOfflineDb() {
@@ -346,7 +347,43 @@
       } catch (e) {}
     }
 
-    function downloadPdfWithProgress(url, onProgress) {
+    async function downloadPdfWithProgress(url, onProgress) {
+      // 1. Try modern fetch with progressive stream reading (best for PWA & mobile apps)
+      try {
+        var resp = await fetch(url);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+        var contentLength = resp.headers.get('content-length');
+        var totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+
+        if (!resp.body || !window.ReadableStream) {
+          var directBlob = await resp.blob();
+          if (onProgress) onProgress(100);
+          return directBlob;
+        }
+
+        var reader = resp.body.getReader();
+        var receivedBytes = 0;
+        var chunks = [];
+
+        while (true) {
+          var res = await reader.read();
+          if (res.done) break;
+          chunks.push(res.value);
+          receivedBytes += res.value.length;
+          if (totalBytes > 0 && onProgress) {
+            var pct = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
+            onProgress(pct);
+          }
+        }
+
+        if (onProgress) onProgress(100);
+        return new Blob(chunks, { type: 'application/pdf' });
+      } catch (fetchErr) {
+        console.warn('Fetch stream download notice, trying XMLHttpRequest fallback:', fetchErr);
+      }
+
+      // 2. XMLHttpRequest fallback for older webviews
       return new Promise(function(resolve, reject) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
@@ -359,6 +396,7 @@
         };
         xhr.onload = function() {
           if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
+            if (onProgress) onProgress(100);
             resolve(xhr.response);
           } else {
             reject(new Error('HTTP status ' + xhr.status));
@@ -395,6 +433,7 @@
       if (blob) {
         // Instant 0ms cached display!
         if (loadingView) loadingView.style.display = 'none';
+        if (offlineBadge) offlineBadge.style.display = 'inline-block';
         return await blob.arrayBuffer();
       }
 
@@ -654,12 +693,11 @@
     // 5. MAIN INITIALIZATION
     // =========================================================================
     async function startRenderingDoc(pdfData) {
+      var dataArray = pdfData instanceof Uint8Array ? pdfData : new Uint8Array(pdfData);
       var loadingTask = pdfjsLib.getDocument({
-        data: pdfData,
-        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
-        cMapPacked: true,
-        standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/',
-        withCredentials: false
+        data: dataArray,
+        isEvalSupported: false,
+        useSystemFonts: true
       });
 
       pdfDoc = await loadingTask.promise;
@@ -730,9 +768,12 @@
     }
 
     async function initViewer() {
+      var rawData = null;
       try {
-        var pdfData = await loadPdfDataForLifetime(cleanUrl);
-        await startRenderingDoc(pdfData);
+        rawData = await loadPdfDataForLifetime(cleanUrl);
+        // Create an independent copy so web worker postMessage does not detach the original ArrayBuffer
+        var workingCopy = rawData.slice ? rawData.slice(0) : new Uint8Array(rawData).slice().buffer;
+        await startRenderingDoc(workingCopy);
       } catch (err) {
         console.warn('Primary worker render notice, attempting single-thread fallback:', err);
         try {
@@ -740,8 +781,11 @@
           if (typeof pdfjsLib !== 'undefined') {
             pdfjsLib.GlobalWorkerOptions.workerSrc = '';
           }
-          var fallbackData = await loadPdfDataForLifetime(cleanUrl);
-          await startRenderingDoc(fallbackData);
+          if (!rawData) {
+            rawData = await loadPdfDataForLifetime(cleanUrl);
+          }
+          var fallbackCopy = rawData.slice ? rawData.slice(0) : new Uint8Array(rawData).slice().buffer;
+          await startRenderingDoc(fallbackCopy);
         } catch (err2) {
           console.error('Fatal document error:', err2);
           showError('Unable to load document. Please check your connection and tap Retry.');

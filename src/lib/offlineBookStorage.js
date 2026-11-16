@@ -39,6 +39,7 @@ export function getUrlVariants(url) {
     const decoded = decodeURIComponent(clean);
     variants.add(decoded);
     variants.add(encodeURI(decoded));
+    variants.add(encodeURIComponent(decoded));
   } catch (e) {}
   return Array.from(variants);
 }

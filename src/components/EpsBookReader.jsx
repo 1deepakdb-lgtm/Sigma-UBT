@@ -2941,22 +2941,31 @@ export default function EpsBookReader({
               onTouchStart={(e) => e.stopPropagation()}
               title="Return to Chapter List"
               style={{
-                background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                backgroundColor: "rgba(15, 23, 42, 0.35)",
                 color: "#ffffff",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: "8px",
-                fontWeight: "bold",
-                fontSize: "13px",
+                border: "1px solid rgba(255, 255, 255, 0.25)",
+                backdropFilter: "blur(6px)",
+                WebkitBackdropFilter: "blur(6px)",
+                padding: "4px 8px",
+                borderRadius: "14px",
+                fontWeight: "700",
+                fontSize: "11px",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "5px",
-                boxShadow: "0 2px 8px rgba(220, 38, 38, 0.35)",
-                flexShrink: 0
+                gap: "4px",
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                flexShrink: 0,
+                lineHeight: 1
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.65)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.35)"; }}
             >
-              <span>⬅</span> Back
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              <span>Back</span>
             </button>
 
             {/* CHAPTER TITLE & CRISP BADGE */}
@@ -3578,28 +3587,33 @@ export default function EpsBookReader({
           title="Exit Fullscreen (Esc)"
           style={{
             position: "fixed",
-            top: "14px",
-            left: "14px",
+            top: "12px",
+            left: "12px",
             zIndex: 100010,
-            background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+            backgroundColor: "rgba(15, 23, 42, 0.4)",
             color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.35)",
+            border: "1px solid rgba(255, 255, 255, 0.25)",
             backdropFilter: "blur(8px)",
-            padding: "6px 14px",
-            borderRadius: "20px",
-            fontSize: "12px",
-            fontWeight: "bold",
+            WebkitBackdropFilter: "blur(8px)",
+            padding: "4px 8px",
+            borderRadius: "14px",
+            fontSize: "11px",
+            fontWeight: "700",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
-            gap: "6px",
-            boxShadow: "0 4px 14px rgba(220, 38, 38, 0.45)",
-            transition: "all 0.15s ease"
+            gap: "4px",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+            transition: "all 0.15s ease",
+            lineHeight: 1
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#b91c1c"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.7)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; }}
         >
-          <span>⬅</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
           <span>Back</span>
         </button>
 
@@ -3616,7 +3630,7 @@ export default function EpsBookReader({
           padding: 0,
           zIndex: 1
         }}>
-          {(activePdfBlobUrl || selectedChapter.pdfUrl) ? (
+          {selectedChapter && (selectedChapter.pdfUrl || selectedChapter.pdf?.url) ? (
             <div style={{
               position: "relative",
               width: "100vw",
@@ -3624,8 +3638,8 @@ export default function EpsBookReader({
               overflow: "hidden"
             }}>
               <iframe
-                key={activePdfBlobUrl || selectedChapter.pdfUrl}
-                src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl)}
+                key={selectedChapter.chapter !== undefined ? `eps-ch-${selectedChapter.chapter}` : (selectedChapter.id || selectedChapter.folder || selectedChapter.pdfUrl)}
+                src={getCleanPdfUrl(selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
                 style={{
                   position: "absolute",
