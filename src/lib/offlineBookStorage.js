@@ -1,14 +1,15 @@
 /**
  * OfflineBookStorage
  * Ultra-fast client-side persistent storage for EPS-TOPIK Textbook PDFs and Audio Tracks.
- * Uses native IndexedDB for persistent binary storage (Blobs) + In-Memory ObjectURL cache.
- * Guarantees chapters open in milliseconds with zero download buttons needed.
+ * Uses native IndexedDB + CacheStorage for lifetime persistent storage + In-Memory ObjectURL cache.
+ * Guarantees chapters and audios open immediately in milliseconds with zero download buttons.
  */
 
 const DB_NAME = 'sigma_eps_offline_db';
 const DB_VERSION = 1;
 const STORE_FILES = 'offline_files';
 const STORE_CHAPTERS = 'offline_chapters';
+const CACHE_NAME = 'sigma_pdf_cache_v1';
 
 // In-memory cache for instantaneous (0ms) access across current session
 const inMemoryBlobUrlCache = new Map();
@@ -16,30 +17,60 @@ const inMemoryChapterStatusCache = new Map();
 
 let dbPromise = null;
 
+// Request permanent persistence from browser so OS never auto-cleans storage
+if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+  try {
+    navigator.storage.persist().then((persisted) => {
+      if (persisted) {
+        console.log('[Storage] Lifetime persistent storage granted.');
+      }
+    }).catch(() => {});
+  } catch (e) {}
+}
+
+/**
+ * Normalize and generate all encoding variants of a URL
+ */
+export function getUrlVariants(url) {
+  if (!url) return [];
+  const clean = String(url).split('#')[0].trim();
+  const variants = new Set([clean]);
+  try {
+    const decoded = decodeURIComponent(clean);
+    variants.add(decoded);
+    variants.add(encodeURI(decoded));
+  } catch (e) {}
+  return Array.from(variants);
+}
+
 function getDB() {
   if (typeof window === 'undefined' || !window.indexedDB) {
     return Promise.resolve(null);
   }
 
   if (!dbPromise) {
-    dbPromise = new Promise((resolve, reject) => {
-      const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+    dbPromise = new Promise((resolve) => {
+      try {
+        const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(STORE_FILES)) {
-          db.createObjectStore(STORE_FILES, { keyPath: 'url' });
-        }
-        if (!db.objectStoreNames.contains(STORE_CHAPTERS)) {
-          db.createObjectStore(STORE_CHAPTERS, { keyPath: 'chapterId' });
-        }
-      };
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_FILES)) {
+            db.createObjectStore(STORE_FILES, { keyPath: 'url' });
+          }
+          if (!db.objectStoreNames.contains(STORE_CHAPTERS)) {
+            db.createObjectStore(STORE_CHAPTERS, { keyPath: 'chapterId' });
+          }
+        };
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = (e) => {
-        console.warn('IndexedDB failed to open:', e);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => {
+          console.warn('IndexedDB failed to open:', e);
+          resolve(null);
+        };
+      } catch (err) {
         resolve(null);
-      };
+      }
     });
   }
   return dbPromise;
@@ -50,8 +81,12 @@ function getDB() {
  */
 export function getCachedBlobSync(url) {
   if (!url || typeof window === 'undefined') return null;
-  const cleanUrl = url.split('#')[0].trim();
-  return inMemoryBlobUrlCache.get(cleanUrl) || null;
+  const variants = getUrlVariants(url);
+  for (const v of variants) {
+    const hit = inMemoryBlobUrlCache.get(v);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 /**
@@ -64,7 +99,7 @@ export function isChapterOfflineReadySync(chapterId) {
 
 /**
  * Preload all stored blobs into inMemoryBlobUrlCache on app launch
- * Ensures all previously opened chapters open in milliseconds from memory
+ * Ensures all previously opened chapters and audios open in 0ms from memory
  */
 export async function preloadAllCachedBlobs() {
   if (typeof window === 'undefined') return;
@@ -79,11 +114,23 @@ export async function preloadAllCachedBlobs() {
     req.onsuccess = () => {
       const items = req.result || [];
       items.forEach((item) => {
-        if (item.url && item.blob && !inMemoryBlobUrlCache.has(item.url)) {
-          try {
-            const blobUrl = URL.createObjectURL(item.blob);
-            inMemoryBlobUrlCache.set(item.url, blobUrl);
-          } catch (e) {}
+        if (item.url && item.blob) {
+          const variants = getUrlVariants(item.url);
+          let blobUrl = null;
+          for (const v of variants) {
+            if (inMemoryBlobUrlCache.has(v)) {
+              blobUrl = inMemoryBlobUrlCache.get(v);
+              break;
+            }
+          }
+          if (!blobUrl) {
+            try {
+              blobUrl = URL.createObjectURL(item.blob);
+            } catch (e) {}
+          }
+          if (blobUrl) {
+            variants.forEach((v) => inMemoryBlobUrlCache.set(v, blobUrl));
+          }
         }
       });
     };
@@ -93,80 +140,129 @@ export async function preloadAllCachedBlobs() {
 }
 
 /**
- * Retrieve cached blob for a specific URL
+ * Retrieve cached blob for a specific URL across memory, IndexedDB, and CacheStorage
  */
 export async function getCachedFileBlob(url) {
   if (!url || typeof window === 'undefined') return null;
-  const cleanUrl = url.split('#')[0].trim();
+  const variants = getUrlVariants(url);
 
   // 1. Check in-memory first for 0ms lookup
-  if (inMemoryBlobUrlCache.has(cleanUrl)) {
-    return inMemoryBlobUrlCache.get(cleanUrl);
+  for (const v of variants) {
+    if (inMemoryBlobUrlCache.has(v)) {
+      return inMemoryBlobUrlCache.get(v);
+    }
   }
 
+  // 2. Check IndexedDB
   const db = await getDB();
-  if (!db) return null;
+  if (db) {
+    const blobFromDb = await new Promise((resolve) => {
+      try {
+        const tx = db.transaction(STORE_FILES, 'readonly');
+        const store = tx.objectStore(STORE_FILES);
+        let found = null;
+        let count = 0;
 
-  return new Promise((resolve) => {
-    try {
-      const tx = db.transaction(STORE_FILES, 'readonly');
-      const store = tx.objectStore(STORE_FILES);
-      const req = store.get(cleanUrl);
+        variants.forEach((v) => {
+          const req = store.get(v);
+          req.onsuccess = () => {
+            count++;
+            if (!found && req.result && req.result.blob) {
+              found = req.result.blob;
+            }
+            if (count === variants.length) resolve(found);
+          };
+          req.onerror = () => {
+            count++;
+            if (count === variants.length) resolve(found);
+          };
+        });
+      } catch (err) {
+        resolve(null);
+      }
+    });
 
-      req.onsuccess = () => {
-        if (req.result && req.result.blob) {
-          try {
-            const blobUrl = URL.createObjectURL(req.result.blob);
-            inMemoryBlobUrlCache.set(cleanUrl, blobUrl);
-            resolve(blobUrl);
-          } catch (e) {
-            resolve(null);
-          }
-        } else {
-          resolve(null);
-        }
-      };
-      req.onerror = () => resolve(null);
-    } catch (err) {
-      resolve(null);
+    if (blobFromDb) {
+      try {
+        const blobUrl = URL.createObjectURL(blobFromDb);
+        variants.forEach((v) => inMemoryBlobUrlCache.set(v, blobUrl));
+        return blobUrl;
+      } catch (e) {}
     }
-  });
+  }
+
+  // 3. Check CacheStorage
+  if (typeof caches !== 'undefined') {
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      for (const v of variants) {
+        const matched = await cache.match(v);
+        if (matched) {
+          const blob = await matched.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          variants.forEach((varKey) => inMemoryBlobUrlCache.set(varKey, blobUrl));
+          return blobUrl;
+        }
+      }
+    } catch (e) {}
+  }
+
+  return null;
 }
 
 /**
- * Save a file blob to IndexedDB
+ * Save a file blob to IndexedDB and CacheStorage for lifetime access
  */
 export async function saveFileBlob(url, blob, meta = {}) {
   if (!url || !blob || typeof window === 'undefined') return null;
-  const cleanUrl = url.split('#')[0].trim();
+  const variants = getUrlVariants(url);
 
   const db = await getDB();
-  if (!db) return null;
+  let blobUrl = null;
+  try {
+    blobUrl = URL.createObjectURL(blob);
+    variants.forEach((v) => inMemoryBlobUrlCache.set(v, blobUrl));
+  } catch (e) {}
 
-  return new Promise((resolve) => {
+  // 1. Save in IndexedDB under all variants
+  if (db) {
     try {
       const tx = db.transaction(STORE_FILES, 'readwrite');
       const store = tx.objectStore(STORE_FILES);
-      store.put({
-        url: cleanUrl,
-        blob,
-        mimeType: blob.type || meta.mimeType || 'application/octet-stream',
-        size: blob.size,
-        timestamp: Date.now(),
-        chapterId: meta.chapterId,
-        type: meta.type || 'file'
+      variants.forEach((v) => {
+        store.put({
+          url: v,
+          blob,
+          mimeType: blob.type || meta.mimeType || 'application/octet-stream',
+          size: blob.size,
+          timestamp: Date.now(),
+          chapterId: meta.chapterId,
+          type: meta.type || 'file'
+        });
       });
-
-      tx.oncomplete = () => {
-        const blobUrl = URL.createObjectURL(blob);
-        inMemoryBlobUrlCache.set(cleanUrl, blobUrl);
-        resolve(blobUrl);
-      };
-      tx.onerror = () => resolve(null);
     } catch (err) {
-      resolve(null);
+      console.warn('Save blob to IndexedDB notice:', err);
     }
-  });
+  }
+
+  // 2. Save in CacheStorage for lifetime
+  if (typeof caches !== 'undefined') {
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      const resp = new Response(blob, {
+        headers: {
+          'Content-Type': blob.type || meta.mimeType || 'application/octet-stream',
+          'Content-Length': String(blob.size),
+          'Cache-Control': 'public, max-age=31536000, immutable'
+        }
+      });
+      variants.forEach((v) => {
+        cache.put(v, resp.clone()).catch(() => {});
+      });
+    } catch (e) {}
+  }
+
+  return blobUrl;
 }
 
 /**
@@ -174,12 +270,12 @@ export async function saveFileBlob(url, blob, meta = {}) {
  */
 export async function fetchAndCacheFile(url, meta = {}) {
   if (!url || typeof window === 'undefined') return null;
-  const cleanUrl = url.split('#')[0].trim();
 
   // Check if already cached
-  const existing = await getCachedFileBlob(cleanUrl);
+  const existing = await getCachedFileBlob(url);
   if (existing) return existing;
 
+  const cleanUrl = url.split('#')[0].trim();
   try {
     const res = await fetch(cleanUrl, { cache: 'force-cache' });
     if (!res.ok) return null;
@@ -248,7 +344,7 @@ async function setChapterOfflineStatus(chapterId, status) {
 /**
  * Auto-Save Chapter Offline
  * Automatically called whenever a chapter is opened!
- * Caches PDF + all audio tracks in background silently.
+ * Caches PDF + all audio tracks in background silently for lifetime.
  * Returns cached URLs for PDF and tracks.
  */
 export async function autoSaveChapterOffline(chapter, onProgress) {

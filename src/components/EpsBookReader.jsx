@@ -1712,6 +1712,22 @@ export default function EpsBookReader({
     const data = loadEps60Chapters();
     setChapters(data);
 
+    // Silently pre-cache chapters in background during idle time for 0ms instant opening
+    if (typeof window !== "undefined" && Array.isArray(data) && data.length > 0) {
+      setTimeout(() => {
+        let qIdx = 0;
+        const prefetchNext = () => {
+          if (qIdx >= Math.min(data.length, 10)) return;
+          const ch = data[qIdx++];
+          if (ch) {
+            autoSaveChapterOffline(ch);
+          }
+          setTimeout(prefetchNext, 2500);
+        };
+        prefetchNext();
+      }, 3000);
+    }
+
     if (typeof window !== "undefined") {
       const storedRole = localStorage.getItem("role") || "";
       const isAuth = !isInstitute && mode !== "student" && (mode === "admin" || storedRole === "admin");
@@ -1932,11 +1948,26 @@ export default function EpsBookReader({
     setShowTrackDropdown(false);
     setPopupMode("gesture");
 
+    // Push history state so Android/mobile back button closes the reader cleanly
+    if (typeof window !== "undefined") {
+      window.history.pushState({ epsReaderModal: true }, "");
+    }
+
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
     const pdfTarget = chapter.pdfUrl || chapter.pdf?.url || "";
 
-    // Set official streamable server PDF URL immediately for 100% universal loading on Smartboards & Mobile
-    setActivePdfBlobUrl(pdfTarget);
+    // Instant 0ms check from persistent storage
+    const cachedBlobSync = getCachedBlobSync(pdfTarget);
+    if (cachedBlobSync) {
+      setActivePdfBlobUrl(cachedBlobSync);
+    } else {
+      setActivePdfBlobUrl(pdfTarget);
+      getCachedFileBlob(pdfTarget).then((blobUrl) => {
+        if (blobUrl) {
+          setActivePdfBlobUrl(blobUrl);
+        }
+      });
+    }
 
     // Pre-check audio tracks in memory cache
     if (chapter.audioTracks && chapter.audioTracks.length > 0) {
@@ -1952,8 +1983,11 @@ export default function EpsBookReader({
       }
     }
 
-    // Background offline cache sync (keeps server URL active for flawless rendering)
+    // Background offline cache sync (lifetime persistent storage)
     autoSaveChapterOffline(chapter, (progress) => {
+      if (progress.type === "pdf" && progress.blobUrl) {
+        setActivePdfBlobUrl(progress.blobUrl);
+      }
       if (progress.type === "audio" && progress.blobUrl && progress.trackUrl) {
         setCachedAudioUrls((prev) => ({ ...prev, [progress.trackUrl]: progress.blobUrl }));
       }
@@ -1963,13 +1997,16 @@ export default function EpsBookReader({
     });
   };
 
-  // Close Full-Screen View and return to Chapter Grid
-  const closeFullScreen = () => {
+  // Close Full-Screen View and return to Chapter Grid (supports hardware mobile back)
+  const closeFullScreen = (shouldPopHistory = true) => {
     if (audioRef.current) {
       audioRef.current.pause();
     }
     if (typeof document !== "undefined" && document.fullscreenElement && document.exitFullscreen) {
       document.exitFullscreen().catch(() => {});
+    }
+    if (shouldPopHistory && typeof window !== "undefined" && window.history.state?.epsReaderModal) {
+      window.history.back();
     }
     setSelectedChapter(null);
     setActivePdfBlobUrl("");
@@ -1978,14 +2015,35 @@ export default function EpsBookReader({
     setShowTrackDropdown(false);
   };
 
+  // Intercept Mobile Hardware Back Button, Escape Key, and Iframe Gestures
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && selectedChapter) {
-        closeFullScreen();
+        closeFullScreen(true);
       }
     };
+
+    const handlePopState = (e) => {
+      if (selectedChapter) {
+        closeFullScreen(false);
+      }
+    };
+
+    const handleWindowMessage = (e) => {
+      if (e.data === "EPS_READER_BACK" && selectedChapter) {
+        closeFullScreen(true);
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("message", handleWindowMessage);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("message", handleWindowMessage);
+    };
   }, [selectedChapter]);
 
   // Playable audio URL (checks offline cached blob first, then direct URL or TTS fallback)

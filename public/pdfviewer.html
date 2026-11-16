@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
-<title></title>
+<title>Document Viewer</title>
 <style>
   * {
     margin: 0;
@@ -200,7 +200,9 @@
       return;
     }
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+    } catch (e) {}
 
     function showError(msg) {
       if (loadingView) loadingView.style.display = 'none';
@@ -216,6 +218,27 @@
     var DB_NAME = 'sigma_eps_offline_db';
     var DB_VERSION = 1;
     var STORE_FILES = 'offline_files';
+    var CACHE_NAME = 'sigma_pdf_cache_v1';
+
+    // Request permanent persistence from browser so OS never auto-cleans storage
+    if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+      try {
+        navigator.storage.persist().catch(function() {});
+      } catch (e) {}
+    }
+
+    function getUrlVariants(url) {
+      if (!url) return [];
+      var clean = String(url).split('#')[0].trim();
+      var map = {};
+      map[clean] = true;
+      try {
+        var decoded = decodeURIComponent(clean);
+        map[decoded] = true;
+        map[encodeURI(decoded)] = true;
+      } catch (e) {}
+      return Object.keys(map);
+    }
 
     function openOfflineDb() {
       return new Promise(function(resolve) {
@@ -239,18 +262,27 @@
     function getFromDb(db, url) {
       return new Promise(function(resolve) {
         if (!db) return resolve(null);
+        var variants = getUrlVariants(url);
         try {
           var tx = db.transaction(STORE_FILES, 'readonly');
           var store = tx.objectStore(STORE_FILES);
-          var req = store.get(url);
-          req.onsuccess = function() {
-            if (req.result && req.result.blob) {
-              resolve(req.result.blob);
-            } else {
-              resolve(null);
-            }
-          };
-          req.onerror = function() { resolve(null); };
+          var found = null;
+          var count = 0;
+
+          variants.forEach(function(v) {
+            var req = store.get(v);
+            req.onsuccess = function() {
+              count++;
+              if (!found && req.result && req.result.blob) {
+                found = req.result.blob;
+              }
+              if (count === variants.length) resolve(found);
+            };
+            req.onerror = function() {
+              count++;
+              if (count === variants.length) resolve(found);
+            };
+          });
         } catch (e) {
           resolve(null);
         }
@@ -260,15 +292,18 @@
     function saveToDb(db, url, blob) {
       return new Promise(function(resolve) {
         if (!db || !blob) return resolve();
+        var variants = getUrlVariants(url);
         try {
           var tx = db.transaction(STORE_FILES, 'readwrite');
           var store = tx.objectStore(STORE_FILES);
-          store.put({
-            url: url,
-            blob: blob,
-            size: blob.size,
-            mimeType: blob.type || 'application/pdf',
-            updatedAt: Date.now()
+          variants.forEach(function(v) {
+            store.put({
+              url: v,
+              blob: blob,
+              size: blob.size,
+              mimeType: blob.type || 'application/pdf',
+              updatedAt: Date.now()
+            });
           });
           tx.oncomplete = function() { resolve(); };
           tx.onerror = function() { resolve(); };
@@ -280,11 +315,14 @@
 
     async function getFromCacheStorage(url) {
       if (typeof caches === 'undefined') return null;
+      var variants = getUrlVariants(url);
       try {
-        var cache = await caches.open('sigma_pdf_cache_v1');
-        var matched = await cache.match(url);
-        if (matched) {
-          return await matched.blob();
+        var cache = await caches.open(CACHE_NAME);
+        for (var i = 0; i < variants.length; i++) {
+          var matched = await cache.match(variants[i]);
+          if (matched) {
+            return await matched.blob();
+          }
         }
       } catch (e) {}
       return null;
@@ -292,8 +330,9 @@
 
     async function saveToCacheStorage(url, blob) {
       if (typeof caches === 'undefined' || !blob) return;
+      var variants = getUrlVariants(url);
       try {
-        var cache = await caches.open('sigma_pdf_cache_v1');
+        var cache = await caches.open(CACHE_NAME);
         var resp = new Response(blob, {
           headers: {
             'Content-Type': 'application/pdf',
@@ -301,7 +340,9 @@
             'Cache-Control': 'public, max-age=31536000, immutable'
           }
         });
-        await cache.put(url, resp);
+        variants.forEach(function(v) {
+          cache.put(v, resp.clone()).catch(function() {});
+        });
       } catch (e) {}
     }
 
@@ -331,6 +372,16 @@
     }
 
     async function loadPdfDataForLifetime(url) {
+      // 0. If directly passed a local blob: URL
+      if (url.startsWith('blob:')) {
+        try {
+          var blobResp = await fetch(url);
+          var blobObj = await blobResp.blob();
+          if (loadingView) loadingView.style.display = 'none';
+          return await blobObj.arrayBuffer();
+        } catch (e) {}
+      }
+
       var db = await openOfflineDb();
 
       // Step 1: Check persistent IndexedDB
@@ -342,8 +393,8 @@
       }
 
       if (blob) {
-        if (loadingProgress) loadingProgress.textContent = 'Opening Document (Instant Offline)...';
-        if (offlineBadge) offlineBadge.style.display = 'inline-block';
+        // Instant 0ms cached display!
+        if (loadingView) loadingView.style.display = 'none';
         return await blob.arrayBuffer();
       }
 
@@ -412,7 +463,7 @@
     }
 
     // =========================================================================
-    // 3. MOBILE PINCH-TO-ZOOM, PAN, & DOUBLE-TAP (NO BUTTONS NEEDED)
+    // 3. MOBILE PINCH-TO-ZOOM, PAN, & DOUBLE-TAP (TOUCH & GESTURES)
     // =========================================================================
     var currentScale = 1.0;
     var panX = 0;
@@ -426,7 +477,6 @@
     var lastTouchX = 0;
     var lastTouchY = 0;
     var lastTapTime = 0;
-    var sharpRerenderTimer = null;
 
     function applyTransform(animated) {
       zoomLayer.style.transition = animated ? 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none';
@@ -450,7 +500,6 @@
       panY = Math.min(0, Math.max(minPanY, panY));
     }
 
-    // Two-finger distance calculation
     function getTouchesDist(t1, t2) {
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     }
@@ -561,88 +610,142 @@
     }, { passive: false });
 
     // =========================================================================
-    // 4. MAIN INITIALIZATION
+    // 4. MOBILE BACK BUTTON & GESTURE COMMANDS
     // =========================================================================
+    function triggerMobileBack() {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage('EPS_READER_BACK', '*');
+        }
+      } catch (err) {}
+    }
+
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' || e.key === 'Backspace') {
+        triggerMobileBack();
+      }
+    });
+
+    window.addEventListener('popstate', function() {
+      triggerMobileBack();
+    });
+
+    // Edge-swipe right to close (standard mobile app gesture)
+    var edgeStartX = 0;
+    var edgeStartY = 0;
+    container.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        edgeStartX = e.touches[0].clientX;
+        edgeStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    container.addEventListener('touchend', function(e) {
+      if (e.changedTouches.length === 1 && edgeStartX < 45 && currentScale <= 1.05) {
+        var dx = e.changedTouches[0].clientX - edgeStartX;
+        var dy = Math.abs(e.changedTouches[0].clientY - edgeStartY);
+        if (dx > 85 && dy < 60) {
+          triggerMobileBack();
+        }
+      }
+    }, { passive: true });
+
+    // =========================================================================
+    // 5. MAIN INITIALIZATION
+    // =========================================================================
+    async function startRenderingDoc(pdfData) {
+      var loadingTask = pdfjsLib.getDocument({
+        data: pdfData,
+        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+        cMapPacked: true,
+        standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/',
+        withCredentials: false
+      });
+
+      pdfDoc = await loadingTask.promise;
+      if (loadingView) loadingView.style.display = 'none';
+
+      var totalPages = pdfDoc.numPages;
+      var currentWidth = getTargetWidth();
+
+      // Create placeholders for all pages for smooth continuous layout
+      for (var i = 1; i <= totalPages; i++) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'pdf-page-wrapper';
+        wrapper.id = 'page-wrapper-' + i;
+        wrapper.setAttribute('data-page-num', String(i));
+        zoomLayer.appendChild(wrapper);
+      }
+
+      // Render first 2 pages immediately
+      for (var j = 1; j <= Math.min(totalPages, 2); j++) {
+        var initialWrap = document.getElementById('page-wrapper-' + j);
+        if (initialWrap) renderPage(j, initialWrap, currentWidth);
+      }
+
+      // Progressive IntersectionObserver for remaining pages
+      if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              var pageNum = parseInt(entry.target.getAttribute('data-page-num'), 10);
+              if (!renderedPages.has(pageNum)) {
+                renderPage(pageNum, entry.target, getTargetWidth());
+              }
+            }
+          });
+        }, {
+          root: container,
+          rootMargin: '600px 0px 600px 0px'
+        });
+
+        for (var k = 1; k <= totalPages; k++) {
+          var wrapEl = document.getElementById('page-wrapper-' + k);
+          if (wrapEl) observer.observe(wrapEl);
+        }
+      } else {
+        for (var m = 3; m <= totalPages; m++) {
+          var w = document.getElementById('page-wrapper-' + m);
+          if (w) await renderPage(m, w, currentWidth);
+        }
+      }
+
+      // Handle window resize and screen orientation
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          var newWidth = getTargetWidth();
+          renderedPages.clear();
+          for (var p = 1; p <= totalPages; p++) {
+            var el = document.getElementById('page-wrapper-' + p);
+            if (el) {
+              var rect = el.getBoundingClientRect();
+              if (rect.top < window.innerHeight + 600 && rect.bottom > -600) {
+                renderPage(p, el, newWidth);
+              }
+            }
+          }
+        }, 250);
+      });
+    }
+
     async function initViewer() {
       try {
         var pdfData = await loadPdfDataForLifetime(cleanUrl);
-
-        var loadingTask = pdfjsLib.getDocument({
-          data: pdfData,
-          withCredentials: false
-        });
-
-        pdfDoc = await loadingTask.promise;
-        if (loadingView) loadingView.style.display = 'none';
-
-        var totalPages = pdfDoc.numPages;
-        var currentWidth = getTargetWidth();
-
-        // Create placeholders for all pages for smooth continuous layout
-        for (var i = 1; i <= totalPages; i++) {
-          var wrapper = document.createElement('div');
-          wrapper.className = 'pdf-page-wrapper';
-          wrapper.id = 'page-wrapper-' + i;
-          wrapper.setAttribute('data-page-num', String(i));
-          zoomLayer.appendChild(wrapper);
-        }
-
-        // Render first 2 pages immediately
-        for (var j = 1; j <= Math.min(totalPages, 2); j++) {
-          var initialWrap = document.getElementById('page-wrapper-' + j);
-          if (initialWrap) renderPage(j, initialWrap, currentWidth);
-        }
-
-        // Progressive IntersectionObserver for remaining pages
-        if ('IntersectionObserver' in window) {
-          var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-              if (entry.isIntersecting) {
-                var pageNum = parseInt(entry.target.getAttribute('data-page-num'), 10);
-                if (!renderedPages.has(pageNum)) {
-                  renderPage(pageNum, entry.target, getTargetWidth());
-                }
-              }
-            });
-          }, {
-            root: container,
-            rootMargin: '500px 0px 500px 0px'
-          });
-
-          for (var k = 1; k <= totalPages; k++) {
-            var wrapEl = document.getElementById('page-wrapper-' + k);
-            if (wrapEl) observer.observe(wrapEl);
-          }
-        } else {
-          for (var m = 3; m <= totalPages; m++) {
-            var w = document.getElementById('page-wrapper-' + m);
-            if (w) await renderPage(m, w, currentWidth);
-          }
-        }
-
-        // Handle window resize and screen orientation
-        window.addEventListener('resize', function() {
-          clearTimeout(resizeTimer);
-          resizeTimer = setTimeout(function() {
-            var newWidth = getTargetWidth();
-            renderedPages.clear();
-            for (var p = 1; p <= totalPages; p++) {
-              var el = document.getElementById('page-wrapper-' + p);
-              if (el) {
-                var rect = el.getBoundingClientRect();
-                if (rect.top < window.innerHeight + 600 && rect.bottom > -600) {
-                  renderPage(p, el, newWidth);
-                }
-              }
-            }
-          }, 250);
-        });
-
+        await startRenderingDoc(pdfData);
       } catch (err) {
-        console.warn('PDF load notice, switching to universal iframe fallback:', err);
-        if (loadingView) loadingView.style.display = 'none';
-        if (errorView) errorView.style.display = 'none';
-        container.innerHTML = '<iframe src="' + cleanUrl + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH" style="position:fixed;inset:0;width:100vw;height:100vh;border:none;background:#ffffff;"></iframe>';
+        console.warn('Primary worker render notice, attempting single-thread fallback:', err);
+        try {
+          // Fallback if web worker is restricted by WebView sandbox
+          if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+          }
+          var fallbackData = await loadPdfDataForLifetime(cleanUrl);
+          await startRenderingDoc(fallbackData);
+        } catch (err2) {
+          console.error('Fatal document error:', err2);
+          showError('Unable to load document. Please check your connection and tap Retry.');
+        }
       }
     }
 
