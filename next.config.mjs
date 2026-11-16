@@ -80,6 +80,20 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/api/r2/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, HEAD, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: '*' },
+        ],
+      },
+      {
+        source: '/pdfviewer.html',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: securityHeaders,
       },

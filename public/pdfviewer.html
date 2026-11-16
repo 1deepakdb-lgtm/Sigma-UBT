@@ -162,6 +162,7 @@
   <div id="viewer-zoom-layer"></div>
 </div>
 
+<script src="/pdf.worker.min.js"></script>
 <script src="/pdf.min.js"></script>
 <script>
   // Strictly prevent right-click context menu (no save/download popup)
@@ -182,6 +183,19 @@
       } catch (e) {
         return encodeURI(clean);
       }
+    }
+
+    function toAbsoluteUrl(u) {
+      if (!u) return '';
+      var clean = sanitizeUrl(u);
+      if (/^https?:\/\//i.test(clean) || clean.startsWith('blob:') || clean.startsWith('data:')) {
+        return clean;
+      }
+      var origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+      if (!origin || origin.indexOf('http') !== 0 || origin.includes('localhost') || origin.startsWith('file:') || origin.startsWith('capacitor:')) {
+        origin = 'https://examjk.com';
+      }
+      return origin + (clean.startsWith('/') ? clean : '/' + clean);
     }
 
     var params = new URLSearchParams(window.location.search);
@@ -375,7 +389,7 @@
     }
 
     async function downloadPdfWithProgress(url, onProgress) {
-      var fetchUrl = sanitizeUrl(url);
+      var fetchUrl = toAbsoluteUrl(url);
 
       // 1. Try modern fetch with direct arrayBuffer
       try {
@@ -393,27 +407,44 @@
 
       // 2. XMLHttpRequest fallback with arraybuffer (100% compatible with older Smart Boards & WebViews)
       return new Promise(function(resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', fetchUrl, true);
-        xhr.responseType = 'arraybuffer';
-        xhr.onprogress = function(e) {
-          if (e.lengthComputable && e.total > 0 && onProgress) {
-            var pct = Math.min(99, Math.round((e.loaded / e.total) * 100));
-            onProgress(pct);
-          }
-        };
-        xhr.onload = function() {
-          if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
-            if (onProgress) onProgress(100);
-            resolve(xhr.response);
+        function tryFetchUrl(targetUrl, onFail) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', targetUrl, true);
+          xhr.responseType = 'arraybuffer';
+          xhr.onprogress = function(e) {
+            if (e.lengthComputable && e.total > 0 && onProgress) {
+              var pct = Math.min(99, Math.round((e.loaded / e.total) * 100));
+              onProgress(pct);
+            }
+          };
+          xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
+              if (onProgress) onProgress(100);
+              resolve(xhr.response);
+            } else if (onFail) {
+              onFail();
+            } else {
+              reject(new Error('HTTP status ' + xhr.status));
+            }
+          };
+          xhr.onerror = function() {
+            if (onFail) {
+              onFail();
+            } else {
+              reject(new Error('Network connection error while fetching PDF.'));
+            }
+          };
+          xhr.send();
+        }
+
+        tryFetchUrl(fetchUrl, function() {
+          if (!fetchUrl.startsWith('https://examjk.com')) {
+            var directFallback = 'https://examjk.com' + (url.startsWith('/') ? url : '/' + url);
+            tryFetchUrl(directFallback, null);
           } else {
-            reject(new Error('HTTP status ' + xhr.status));
+            reject(new Error('Network connection error while fetching PDF.'));
           }
-        };
-        xhr.onerror = function() {
-          reject(new Error('Network connection error while fetching PDF.'));
-        };
-        xhr.send();
+        });
       });
     }
 
@@ -547,9 +578,8 @@
 
         var dpr = window.devicePixelRatio || 1;
         // 100% UNCOMPROMISED CRYSTAL CLARITY:
-        // Use full physical native pixel density (at least 2.5x on low-DPI displays)
-        // Never artificially compress or reduce quality!
-        var outputScale = Math.max(dpr, 2.5);
+        // Use true native pixel density (clamped between 1.5x and 2.2x to prevent Android GPU buffer overflow)
+        var outputScale = Math.min(Math.max(dpr, 1.5), 2.2);
         var renderScale = baseScale * outputScale;
         var viewport = page.getViewport({ scale: renderScale });
 
@@ -559,8 +589,8 @@
         var renderWidth = Math.floor(viewport.width);
         var renderHeight = Math.floor(viewport.height);
 
-        // Hardware texture limit protection (8192px safe for modern 4K/8K GPUs and Smart Boards)
-        var maxCanvasDim = 8192;
+        // Hardware texture limit protection (3072px max prevents Android Smart Board blank screen bug)
+        var maxCanvasDim = 3072;
         if (renderWidth > maxCanvasDim || renderHeight > maxCanvasDim) {
           var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
           renderWidth = Math.floor(renderWidth * downscale);
@@ -601,7 +631,31 @@
 
         renderedPages.add(pageNum);
       } catch (err) {
-        console.error('Render page error page ' + pageNum + ':', err);
+        console.warn('Page ' + pageNum + ' high-res render warning, executing safe fallback:', err);
+        try {
+          var fbPage = await pdfDoc.getPage(pageNum);
+          var fbBase = fbPage.getViewport({ scale: 1.0 });
+          var fbWidth = Math.min(targetWidth || getTargetWidth(), 1080);
+          var fbScale = fbWidth / fbBase.width;
+          var fbViewport = fbPage.getViewport({ scale: fbScale });
+          var fbCanvas = document.createElement('canvas');
+          var fbCtx = fbCanvas.getContext('2d');
+          fbCanvas.width = Math.floor(fbViewport.width);
+          fbCanvas.height = Math.floor(fbViewport.height);
+          fbCanvas.style.width = Math.floor(fbViewport.width) + 'px';
+          fbCanvas.style.maxWidth = '100%';
+          fbCanvas.style.height = Math.floor(fbViewport.height) + 'px';
+          fbCanvas.style.display = 'block';
+          fbCanvas.style.margin = '0 auto';
+          fbCanvas.style.backgroundColor = '#ffffff';
+          await fbPage.render({ canvasContext: fbCtx, viewport: fbViewport, intent: 'display' }).promise;
+          wrapper.innerHTML = '';
+          wrapper.style.minHeight = Math.floor(fbViewport.height) + 'px';
+          wrapper.appendChild(fbCanvas);
+          renderedPages.add(pageNum);
+        } catch (fbErr) {
+          console.error('Fatal render failure for page ' + pageNum + ':', fbErr);
+        }
       } finally {
         renderingPages.delete(pageNum);
       }
@@ -804,7 +858,10 @@
         data: dataArray,
         cMapUrl: '/cmaps/',
         cMapPacked: true,
-        isEvalSupported: false
+        standardFontDataUrl: '/standard_fonts/',
+        disableFontFace: true,
+        isEvalSupported: false,
+        useSystemFonts: true
       });
 
       pdfDoc = await loadingTask.promise;
@@ -909,6 +966,19 @@
           }
         }, 250);
       });
+
+      // Immediate check for visible pages (critical for Smart Boards where observer doesn't fire immediately)
+      setTimeout(checkVisiblePages, 50);
+      setTimeout(checkVisiblePages, 500);
+
+      // Smart Board Safety Watchdog: If after 3.5s page 1 is not rendered, force render page 1
+      setTimeout(function() {
+        if (renderedPages.size === 0) {
+          console.warn('Smart Board Watchdog: Forcing render of page 1');
+          var p1 = document.getElementById('page-wrapper-1');
+          if (p1) renderPage(1, p1, getTargetWidth());
+        }
+      }, 3500);
     }
 
     async function initViewer() {

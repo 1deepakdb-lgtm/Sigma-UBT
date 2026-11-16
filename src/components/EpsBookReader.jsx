@@ -2045,7 +2045,10 @@ export default function EpsBookReader({
     if (trimmed.includes("drive.google.com")) {
       return trimmed;
     }
-    return `/pdfviewer.html?url=${encodeURIComponent(trimmed)}`;
+    const fullUrl = (trimmed.startsWith('/') && typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin.startsWith('http') && !window.location.origin.includes('localhost'))
+      ? `${window.location.origin}${trimmed}`
+      : trimmed;
+    return `/pdfviewer.html?url=${encodeURIComponent(fullUrl)}`;
   };
 
   // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Universal Smartboard/Mobile Compatibility)

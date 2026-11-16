@@ -70,6 +70,9 @@ export async function GET(req, { params }) {
     headers.set('Accept-Ranges', 'bytes');
     headers.set('Cache-Control', 'public, max-age=31536000, immutable');
     headers.set('Content-Disposition', `inline; filename="${encodeURIComponent(filename)}"`);
+    headers.set('Access-Control-Allow-Origin', '*');
+    headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', '*');
 
     if (s3Res.ContentLength !== undefined) {
       headers.set('Content-Length', String(s3Res.ContentLength));
@@ -124,6 +127,9 @@ export async function HEAD(req, { params }) {
     headers.set('Accept-Ranges', 'bytes');
     headers.set('Cache-Control', 'public, max-age=31536000, immutable');
     headers.set('Content-Disposition', `inline; filename="${encodeURIComponent(filename)}"`);
+    headers.set('Access-Control-Allow-Origin', '*');
+    headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', '*');
 
     if (s3Res.ContentLength !== undefined) {
       headers.set('Content-Length', String(s3Res.ContentLength));
@@ -142,4 +148,13 @@ export async function HEAD(req, { params }) {
     }
     return new NextResponse(null, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  const headers = new Headers();
+  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', '*');
+  headers.set('Access-Control-Max-Age', '86400');
+  return new NextResponse(null, { status: 204, headers });
 }
