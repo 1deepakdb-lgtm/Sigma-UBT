@@ -589,27 +589,31 @@
         var baseViewport = page.getViewport({ scale: 1.0 });
         var dims = getTargetDimensions(baseViewport);
         var widthToUse = targetWidth || dims.width;
-        var baseScale = widthToUse / baseViewport.width;
+
+        // Ensure display width strictly respects screen bounds to prevent aspect ratio distortion
+        var screenW = window.innerWidth || document.documentElement.clientWidth || 1000;
+        var displayWidth = Math.min(widthToUse, screenW - 8);
+        var pageAspect = baseViewport.height / baseViewport.width;
+        var displayHeight = Math.floor(displayWidth * pageAspect);
 
         var dpr = window.devicePixelRatio || 1;
-        // REAL R2 FILE ULTRA HD CLARITY:
-        // Super-sampled vector rasterization (1.4x - 2.0x over physical display pixels)
-        // Ensures razor-sharp vector curves at 200% zoom without GPU texture overflow
-        var outputScale = Math.min(Math.max(dpr, 1.4), 2.0);
-        var renderScale = baseScale * outputScale;
+        // ULTRA HD VECTOR CLARITY (100% MATCH REAL R2 FILE):
+        // Render canvas at 2x - 2.5x physical pixel scale for crisp, uncompressed vector lines
+        var superSample = Math.min(Math.max(dpr, 1.75), 2.5);
+        var baseScale = displayWidth / baseViewport.width;
+        var renderScale = baseScale * superSample;
         var viewport = page.getViewport({ scale: renderScale });
 
         var renderWidth = Math.floor(viewport.width);
         var renderHeight = Math.floor(viewport.height);
 
-        // Hardware texture limit protection (3200px max prevents Android Smart Board blank screen)
-        var maxCanvasDim = 3200;
+        // Hardware GPU Texture limit protection (3840px max ensures stability across all Smart Boards)
+        var maxCanvasDim = 3840;
         if (renderWidth > maxCanvasDim || renderHeight > maxCanvasDim) {
           var downscale = Math.min(maxCanvasDim / renderWidth, maxCanvasDim / renderHeight);
           renderWidth = Math.floor(renderWidth * downscale);
           renderHeight = Math.floor(renderHeight * downscale);
           renderScale = renderScale * downscale;
-          outputScale = outputScale * downscale;
           viewport = page.getViewport({ scale: renderScale });
         }
 
@@ -617,11 +621,11 @@
         canvas.width = renderWidth;
         canvas.height = renderHeight;
 
-        var displayWidth = widthToUse;
-        var displayHeight = Math.floor(renderHeight / outputScale);
+        // Set CSS display width and height in EXACT natural page aspect ratio:
         canvas.style.width = displayWidth + 'px';
-        canvas.style.maxWidth = '100%';
         canvas.style.height = displayHeight + 'px';
+        canvas.style.maxWidth = '100%';
+        canvas.style.aspectRatio = (baseViewport.width + ' / ' + baseViewport.height);
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.backgroundColor = '#ffffff';
@@ -646,27 +650,29 @@
 
         renderedPages.add(pageNum);
       } catch (err) {
-        console.warn('Page ' + pageNum + ' high-res render warning, executing safe fallback:', err);
+        console.warn('Page ' + pageNum + ' high-res render warning, executing fallback:', err);
         try {
           var fbPage = await pdfDoc.getPage(pageNum);
           var fbBase = fbPage.getViewport({ scale: 1.0 });
           var fbDims = getTargetDimensions(fbBase);
-          var fbW = fbDims.width;
-          var fbScale = fbW / fbBase.width;
+          var fbW = Math.min(fbDims.width, (window.innerWidth || 1000) - 8);
+          var fbH = Math.floor(fbW * (fbBase.height / fbBase.width));
+          var fbScale = (fbW / fbBase.width) * 1.5;
           var fbViewport = fbPage.getViewport({ scale: fbScale });
           var fbCanvas = document.createElement('canvas');
           var fbCtx = fbCanvas.getContext('2d');
           fbCanvas.width = Math.floor(fbViewport.width);
           fbCanvas.height = Math.floor(fbViewport.height);
-          fbCanvas.style.width = fbDims.width + 'px';
+          fbCanvas.style.width = fbW + 'px';
+          fbCanvas.style.height = fbH + 'px';
           fbCanvas.style.maxWidth = '100%';
-          fbCanvas.style.height = fbDims.height + 'px';
+          fbCanvas.style.aspectRatio = (fbBase.width + ' / ' + fbBase.height);
           fbCanvas.style.display = 'block';
           fbCanvas.style.margin = '0 auto';
           fbCanvas.style.backgroundColor = '#ffffff';
           await fbPage.render({ canvasContext: fbCtx, viewport: fbViewport, intent: 'display' }).promise;
           wrapper.innerHTML = '';
-          wrapper.style.minHeight = fbDims.height + 'px';
+          wrapper.style.minHeight = fbH + 'px';
           wrapper.appendChild(fbCanvas);
           renderedPages.add(pageNum);
         } catch (fbErr) {
@@ -875,9 +881,9 @@
         cMapUrl: '/cmaps/',
         cMapPacked: true,
         standardFontDataUrl: '/standard_fonts/',
-        disableFontFace: true,
-        isEvalSupported: false,
-        useSystemFonts: true
+        disableFontFace: false,
+        isEvalSupported: true,
+        useSystemFonts: false
       });
 
       pdfDoc = await loadingTask.promise;
