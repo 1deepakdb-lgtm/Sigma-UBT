@@ -538,40 +538,33 @@
     }
 
     // =========================================================================
-    // 2. DOCUMENT RENDERING ENGINE (225% ZOOM SCREEN FIT & REAL ULTRA HD)
+    // 2. DOCUMENT RENDERING ENGINE (FIT ON SCREEN & REAL ULTRA HD PRINT INTENT)
     // =========================================================================
     function getTargetDimensions(baseViewport) {
-      var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1920;
-      var screenHeight = window.innerHeight || document.documentElement.clientHeight || 1080;
+      var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
+      var screenHeight = window.innerHeight || document.documentElement.clientHeight || 800;
 
       var pageW = (baseViewport && baseViewport.width) ? baseViewport.width : 595.28;
       var pageH = (baseViewport && baseViewport.height) ? baseViewport.height : 841.89;
       var pageAspect = pageH / pageW; // Standard ~1.414 for A4 textbooks
 
-      // 1. Landscape Displays (Smart Boards, Large Monitors, Laptops, TV):
-      // 225% ZOOM OUTPUT FIT ON SCREEN:
-      // Base height-fit on 1080p is ~750px. 225% zoom expands to 2.25x (~1685px),
-      // filling 88-94% of the wide screen with large, bold, crystal clear Korean text and diagrams!
-      if (screenWidth >= screenHeight) {
-        var verticalMargin = screenHeight >= 1080 ? 20 : 12;
-        var maxH = Math.max(400, screenHeight - verticalMargin);
-        var baseFitHWidth = Math.floor(maxH / pageAspect);
-
-        // 225% Zoom: 2.25x scale of standard height-fit width
-        var zoom225Width = Math.floor(baseFitHWidth * 2.25);
-        var optimalW = Math.min(zoom225Width, Math.floor(screenWidth * 0.94));
-        optimalW = Math.max(optimalW, Math.min(screenWidth - 16, Math.floor(screenWidth * 0.88)));
-        return { width: optimalW, height: Math.floor(optimalW * pageAspect) };
+      // 1. Mobile & Portrait Displays (Smartphones, Android App, iOS, Portrait Tablets):
+      // FIT ON SCREEN: Full edge-to-edge width fit so the entire textbook page width is visible immediately
+      if (screenWidth < screenHeight || screenWidth < 768) {
+        var fitWidth = Math.min(screenWidth, 800);
+        return { width: fitWidth, height: Math.floor(fitWidth * pageAspect) };
       }
 
-      // 2. Portrait Displays (All Mobile Apps, Android APK, iOS, Portrait Tablets):
-      // APPLY EXACT SAME 225% ZOOM OUTPUT CONDITION ACROSS ALL APPS:
-      // Base portrait width * 2.25x yields large, bold, pin-sharp text matching Smart Board clarity
-      var zoom225Portrait = Math.round(screenWidth * 2.25);
-      // Ensure at least 225% of standard A4 point width (595.28 * 2.25 = 1339px)
-      var standardA4_225 = Math.round(pageW * 2.25);
-      var optimalPortraitW = Math.max(zoom225Portrait, Math.min(standardA4_225, Math.round(screenWidth * 2.25)));
-      return { width: optimalPortraitW, height: Math.floor(optimalPortraitW * pageAspect) };
+      // 2. Landscape Displays (Smart Boards, Large Monitors, Laptops, TV):
+      // FIT ON SCREEN WITH 225% ULTRA HD ZOOM:
+      var verticalMargin = screenHeight >= 1080 ? 20 : 12;
+      var maxH = Math.max(400, screenHeight - verticalMargin);
+      var baseFitHWidth = Math.floor(maxH / pageAspect);
+
+      var zoom225Width = Math.floor(baseFitHWidth * 2.25);
+      var optimalW = Math.min(zoom225Width, Math.floor(screenWidth * 0.94));
+      optimalW = Math.max(optimalW, Math.min(screenWidth - 16, Math.floor(screenWidth * 0.88)));
+      return { width: optimalW, height: Math.floor(optimalW * pageAspect) };
     }
 
     function getTargetWidth(baseViewport) {
@@ -686,7 +679,7 @@
     }
 
     // =========================================================================
-    // 3. MOBILE PINCH-TO-ZOOM, PAN, & DOUBLE-TAP (TOUCH & GESTURES)
+    // 3. MOBILE PINCH-TO-ZOOM, PAN, & DOUBLE-TAP (FOCAL-POINT ANCHORED ZOOM)
     // =========================================================================
     var currentScale = 1.0;
     var panX = 0;
@@ -695,8 +688,8 @@
     var isPanning = false;
     var initialPinchDist = 0;
     var initialPinchScale = 1.0;
-    var initialPinchMidX = 0;
-    var initialPinchMidY = 0;
+    var lastMidX = 0;
+    var lastMidY = 0;
     var lastTouchX = 0;
     var lastTouchY = 0;
     var lastTapTime = 0;
@@ -714,28 +707,39 @@
         return;
       }
       var rect = container.getBoundingClientRect();
-      var maxPanX = 0;
-      var minPanX = rect.width * (1 - currentScale);
-      panX = Math.min(maxPanX, Math.max(minPanX, panX));
-
+      var layerWidth = zoomLayer.offsetWidth * currentScale;
       var layerHeight = zoomLayer.offsetHeight * currentScale;
-      var minPanY = Math.min(0, rect.height - layerHeight);
-      panY = Math.min(0, Math.max(minPanY, panY));
+
+      if (layerWidth > rect.width) {
+        var minPanX = rect.width - layerWidth;
+        var maxPanX = 0;
+        panX = Math.min(maxPanX, Math.max(minPanX, panX));
+      } else {
+        panX = (rect.width - layerWidth) / 2;
+      }
+
+      if (layerHeight > rect.height) {
+        var minPanY = rect.height - layerHeight;
+        var maxPanY = 0;
+        panY = Math.min(maxPanY, Math.max(minPanY, panY));
+      } else {
+        panY = 0;
+      }
     }
 
     function getTouchesDist(t1, t2) {
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     }
 
-    // Touch event listeners for natural mobile pinch zoom and pan
+    // Touch event listeners: Focal-point pinch zoom & pan ("zoom in garda jaha bata zoom garyo tyahi bata zoom hunchha")
     container.addEventListener('touchstart', function(e) {
       if (e.touches.length === 2) {
         isPinching = true;
         isPanning = false;
         initialPinchDist = getTouchesDist(e.touches[0], e.touches[1]);
         initialPinchScale = currentScale;
-        initialPinchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        initialPinchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        lastMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        lastMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       } else if (e.touches.length === 1) {
         isPinching = false;
         lastTouchX = e.touches[0].clientX;
@@ -744,9 +748,9 @@
           isPanning = true;
         }
 
-        // Double-tap to zoom in / reset
+        // Double-tap to zoom in directly at tap point or reset
         var now = Date.now();
-        if (now - lastTapTime < 300) {
+        if (now - lastTapTime < 320) {
           e.preventDefault();
           if (currentScale > 1.2) {
             currentScale = 1.0;
@@ -754,12 +758,14 @@
             panY = 0;
             applyTransform(true);
           } else {
-            currentScale = 2.4;
+            var targetScale = 2.4;
             var cRect = container.getBoundingClientRect();
             var tapX = e.touches[0].clientX - cRect.left;
             var tapY = e.touches[0].clientY - cRect.top;
-            panX = -(tapX * (currentScale - 1));
-            panY = -(tapY * (currentScale - 1));
+            var scaleRatio = targetScale / currentScale;
+            panX = tapX - (tapX - panX) * scaleRatio;
+            panY = tapY - (tapY - panY) * scaleRatio;
+            currentScale = targetScale;
             clampPan();
             applyTransform(true);
           }
@@ -777,12 +783,22 @@
         if (initialPinchDist > 0) {
           var factor = currentDist / initialPinchDist;
           var nextScale = Math.min(6.0, Math.max(1.0, initialPinchScale * factor));
-          currentScale = nextScale;
 
-          var midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-          var midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-          panX += (midX - initialPinchMidX) * 0.4;
-          panY += (midY - initialPinchMidY) * 0.4;
+          var currentMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          var currentMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+          var cRect = container.getBoundingClientRect();
+          var focalX = currentMidX - cRect.left;
+          var focalY = currentMidY - cRect.top;
+
+          // Focal-point zoom: Content directly under fingers stays stationary while zooming!
+          var scaleRatio = nextScale / currentScale;
+          panX = focalX - (focalX - panX) * scaleRatio + (currentMidX - lastMidX);
+          panY = focalY - (focalY - panY) * scaleRatio + (currentMidY - lastMidY);
+
+          currentScale = nextScale;
+          lastMidX = currentMidX;
+          lastMidY = currentMidY;
 
           clampPan();
           applyTransform(false);
@@ -820,15 +836,23 @@
       }
     });
 
-    // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops
+    // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops (focal point at mouse cursor)
     container.addEventListener('wheel', function(e) {
       if (e.ctrlKey) {
         e.preventDefault();
         var delta = -e.deltaY * 0.01;
         var nextScale = Math.min(6.0, Math.max(1.0, currentScale + delta));
-        currentScale = nextScale;
-        clampPan();
-        applyTransform(false);
+        if (nextScale !== currentScale) {
+          var cRect = container.getBoundingClientRect();
+          var mouseX = e.clientX - cRect.left;
+          var mouseY = e.clientY - cRect.top;
+          var scaleRatio = nextScale / currentScale;
+          panX = mouseX - (mouseX - panX) * scaleRatio;
+          panY = mouseY - (mouseY - panY) * scaleRatio;
+          currentScale = nextScale;
+          clampPan();
+          applyTransform(false);
+        }
       }
     }, { passive: false });
 
