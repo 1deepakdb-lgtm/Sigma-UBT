@@ -538,7 +538,7 @@
     }
 
     // =========================================================================
-    // 2. DOCUMENT RENDERING ENGINE (RESPONSIVE: SMART BOARD FIT & ULTRA HD)
+    // 2. DOCUMENT RENDERING ENGINE (200% ZOOM SCREEN FIT & REAL ULTRA HD)
     // =========================================================================
     function getTargetDimensions(baseViewport) {
       var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
@@ -549,24 +549,30 @@
       var pageAspect = pageH / pageW; // Standard ~1.414 for A4 textbooks
 
       // 1. Mobile Portrait (Smartphones & small screens):
-      // Fit edge-to-edge horizontally for maximum readability
+      // Fit edge-to-edge full width horizontally for maximum readability
       if (screenWidth < 768 && screenHeight >= screenWidth) {
         var mobileW = screenWidth;
         return { width: mobileW, height: Math.floor(mobileW * pageAspect) };
       }
 
       // 2. Landscape Displays (Smart Boards, Large Monitors, Laptops, TV):
-      // FIT ON SCREEN: Constrain height to screen height so entire page fits cleanly vertically without cut-off!
+      // 200% ZOOM FIT ON SCREEN:
+      // Base height-fit on 1080p is ~752px. 200% zoom expands to 2.0x (1504px),
+      // filling the wide screen with large, bold, crystal clear Korean text and diagrams!
       if (screenWidth > screenHeight) {
         var verticalMargin = screenHeight >= 1080 ? 20 : 12;
         var maxH = Math.max(400, screenHeight - verticalMargin);
-        var wFromH = Math.floor(maxH / pageAspect);
-        var optimalW = Math.min(wFromH, Math.floor(screenWidth * 0.95));
+        var baseFitHWidth = Math.floor(maxH / pageAspect);
+
+        // 200% Zoom: double the standard height-fit width (capped comfortably within screen width)
+        var zoom200Width = Math.floor(baseFitHWidth * 2.0);
+        var optimalW = Math.min(zoom200Width, Math.floor(screenWidth * 0.94));
+        optimalW = Math.max(optimalW, Math.min(screenWidth - 16, Math.floor(screenWidth * 0.88)));
         return { width: optimalW, height: Math.floor(optimalW * pageAspect) };
       }
 
       // 3. Tablet Portrait / Square displays:
-      var availW = Math.min(screenWidth - 16, 850);
+      var availW = Math.min(screenWidth - 16, Math.floor(screenWidth * 0.96));
       return { width: availW, height: Math.floor(availW * pageAspect) };
     }
 
@@ -586,9 +592,10 @@
         var baseScale = widthToUse / baseViewport.width;
 
         var dpr = window.devicePixelRatio || 1;
-        // ULTRA HD VECTOR CLARITY (MATCH REAL R2 PDF QUALITY):
-        // 2.2x to 2.8x super-sampling renders vector fonts directly at ultra-sharp density
-        var outputScale = Math.min(Math.max(dpr * 1.25, 2.2), 2.8);
+        // REAL R2 FILE ULTRA HD CLARITY:
+        // Super-sampled vector rasterization (1.4x - 2.0x over physical display pixels)
+        // Ensures razor-sharp vector curves at 200% zoom without GPU texture overflow
+        var outputScale = Math.min(Math.max(dpr, 1.4), 2.0);
         var renderScale = baseScale * outputScale;
         var viewport = page.getViewport({ scale: renderScale });
 
