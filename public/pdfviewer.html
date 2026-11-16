@@ -564,10 +564,14 @@
         return { width: optimalW, height: Math.floor(optimalW * pageAspect) };
       }
 
-      // 2. Mobile Portrait (Smartphones & small screens):
-      // Fit edge-to-edge full width horizontally for maximum readability
-      var mobileW = Math.min(screenWidth, 800);
-      return { width: mobileW, height: Math.floor(mobileW * pageAspect) };
+      // 2. Portrait Displays (All Mobile Apps, Android APK, iOS, Portrait Tablets):
+      // APPLY EXACT SAME 225% ZOOM OUTPUT CONDITION ACROSS ALL APPS:
+      // Base portrait width * 2.25x yields large, bold, pin-sharp text matching Smart Board clarity
+      var zoom225Portrait = Math.round(screenWidth * 2.25);
+      // Ensure at least 225% of standard A4 point width (595.28 * 2.25 = 1339px)
+      var standardA4_225 = Math.round(pageW * 2.25);
+      var optimalPortraitW = Math.max(zoom225Portrait, Math.min(standardA4_225, Math.round(screenWidth * 2.25)));
+      return { width: optimalPortraitW, height: Math.floor(optimalPortraitW * pageAspect) };
     }
 
     function getTargetWidth(baseViewport) {
