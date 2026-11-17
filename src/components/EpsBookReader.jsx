@@ -1837,8 +1837,97 @@ export default function EpsBookReader({
   // -------------------------------------------------------------
 
   // 2. MOVABLE MINI CIRCULAR AUDIO BUTTON HANDLERS
+  // Movable Mini Circular AUDIO Button Touch & Pointer Handlers (100% Pull-Down-Refresh Proof)
+  const handleMiniTouchStart = (e) => {
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    if (window.AndroidApp) {
+      try {
+        if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
+        if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
+      } catch (err) {}
+    }
+    const touch = e.touches[0];
+    miniDragRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      initialX: miniAudioPos.x,
+      initialY: miniAudioPos.y,
+      currentX: miniAudioPos.x,
+      currentY: miniAudioPos.y,
+      moved: false,
+      isDown: true,
+    };
+    setIsMiniDragging(true);
+  };
+
+  const handleMiniTouchMove = (e) => {
+    if (!miniDragRef.current.isDown) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    const dx = touch.clientX - miniDragRef.current.startX;
+    const dy = touch.clientY - miniDragRef.current.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      miniDragRef.current.moved = true;
+    }
+
+    const btnSize = 56;
+    const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+    const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+
+    const maxX = Math.max(0, winW - btnSize);
+    const maxY = Math.max(0, winH - btnSize);
+
+    const nextX = Math.max(4, Math.min(maxX - 4, miniDragRef.current.initialX + dx));
+    const nextY = Math.max(4, Math.min(maxY - 4, miniDragRef.current.initialY + dy));
+
+    miniDragRef.current.currentX = nextX;
+    miniDragRef.current.currentY = nextY;
+
+    if (miniAudioBtnRef.current) {
+      miniAudioBtnRef.current.style.left = `${nextX}px`;
+      miniAudioBtnRef.current.style.top = `${nextY}px`;
+    }
+  };
+
+  const handleMiniTouchEnd = (e) => {
+    if (!miniDragRef.current.isDown) return;
+    miniDragRef.current.isDown = false;
+    setIsMiniDragging(false);
+
+    if (!miniDragRef.current.moved) {
+      playerOpenTimeRef.current = Date.now();
+      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+      const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
+      const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
+      setPopupPos({ x: targetX, y: targetY });
+      setPopupMode("full");
+    } else {
+      let finalX = miniDragRef.current.currentX;
+      let finalY = miniDragRef.current.currentY;
+      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+      if (finalX < 24) finalX = 6;
+      else if (finalX > winW - 62) finalX = winW - 62;
+
+      if (miniAudioBtnRef.current) {
+        miniAudioBtnRef.current.style.left = `${finalX}px`;
+        miniAudioBtnRef.current.style.top = `${finalY}px`;
+      }
+      setMiniAudioPos({ x: finalX, y: finalY });
+    }
+  };
+
   const handleMiniPointerDown = (e) => {
     if (e.button !== undefined && e.button !== 0) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    if (window.AndroidApp) {
+      try {
+        if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
+        if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
+      } catch (err) {}
+    }
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch (err) {}
@@ -1857,6 +1946,8 @@ export default function EpsBookReader({
 
   const handleMiniPointerMove = (e) => {
     if (!miniDragRef.current.isDown) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
     const dx = e.clientX - miniDragRef.current.startX;
     const dy = e.clientY - miniDragRef.current.startY;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
@@ -2091,6 +2182,8 @@ export default function EpsBookReader({
   // Global lock for pull-down refresh and hardware back when ANY PDF is open
   useEffect(() => {
     const isAnyPdfOpen = !!(selectedChapter || viewingMaterial || viewingMeaningChapter);
+    let refreshLockInterval = null;
+
     if (typeof window !== "undefined") {
       window.__isPdfOpen = isAnyPdfOpen;
       if (isAnyPdfOpen) {
@@ -2098,16 +2191,31 @@ export default function EpsBookReader({
         document.body.style.overscrollBehaviorY = "none";
         document.documentElement.style.overscrollBehavior = "none";
         document.documentElement.style.overscrollBehaviorY = "none";
-        if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
-          try { window.AndroidApp.setSwipeRefreshEnabled(false); } catch (e) {}
+        if (window.AndroidApp) {
+          try {
+            if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
+            if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
+          } catch (e) {}
+        }
+        // Periodic lock check to prevent pull-to-refresh from reactivating during active PDF session
+        if (window.AndroidApp) {
+          refreshLockInterval = setInterval(() => {
+            try {
+              if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
+              if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
+            } catch (err) {}
+          }, 1000);
         }
       } else {
         document.body.style.overscrollBehavior = "";
         document.body.style.overscrollBehaviorY = "";
         document.documentElement.style.overscrollBehavior = "";
         document.documentElement.style.overscrollBehaviorY = "";
-        if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
-          try { window.AndroidApp.setSwipeRefreshEnabled(true); } catch (e) {}
+        if (window.AndroidApp) {
+          try {
+            if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(true);
+            if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(false);
+          } catch (e) {}
         }
       }
     }
@@ -2154,6 +2262,7 @@ export default function EpsBookReader({
     window.addEventListener("message", handleWindowMessage);
 
     return () => {
+      if (refreshLockInterval) clearInterval(refreshLockInterval);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("message", handleWindowMessage);
@@ -2641,7 +2750,9 @@ export default function EpsBookReader({
           zIndex: 999999,
           display: "flex",
           flexDirection: "column",
-          fontFamily: "Arial, sans-serif"
+          fontFamily: "Arial, sans-serif",
+          overscrollBehavior: "none",
+          overscrollBehaviorY: "none"
         }}
       >
         <div
@@ -2733,7 +2844,9 @@ export default function EpsBookReader({
           zIndex: 999999,
           display: "flex",
           flexDirection: "column",
-          fontFamily: "Arial, sans-serif"
+          fontFamily: "Arial, sans-serif",
+          overscrollBehavior: "none",
+          overscrollBehaviorY: "none"
         }}
       >
         {/* TOP BAR */}
@@ -2967,9 +3080,18 @@ export default function EpsBookReader({
           backgroundColor: "#ffffff",
           zIndex: 99999,
           overflow: "hidden",
-          fontFamily: "Arial, sans-serif"
+          fontFamily: "Arial, sans-serif",
+          overscrollBehavior: "none",
+          overscrollBehaviorY: "none",
+          touchAction: "pan-x pan-y"
         }}
       >
+        <style>{`
+          html, body {
+            overscroll-behavior: none !important;
+            overscroll-behavior-y: none !important;
+          }
+        `}</style>
         {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (SLEEK COMPACT FROSTED GLASS) ================= */}
         {popupMode === "full" && (
           <div
@@ -3522,6 +3644,10 @@ export default function EpsBookReader({
             onPointerMove={handleMiniPointerMove}
             onPointerUp={handleMiniPointerUp}
             onPointerCancel={handleMiniPointerUp}
+            onTouchStart={handleMiniTouchStart}
+            onTouchMove={handleMiniTouchMove}
+            onTouchEnd={handleMiniTouchEnd}
+            onTouchCancel={handleMiniTouchEnd}
             title={isPlaying ? "Audio Playing (Tap for Controls, Drag to Move)" : "Audio (Tap to Open Player, Drag to Move)"}
             style={{
               position: "fixed",

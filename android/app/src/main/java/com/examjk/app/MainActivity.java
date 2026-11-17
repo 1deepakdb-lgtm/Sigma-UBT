@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> filePathCallback;
     private long backPressedTime = 0;
     private SharedPreferences prefs;
+    private volatile boolean isPdfOpen = false;
 
     // Activity Result Launcher for file upload chooser
     private final ActivityResultLauncher<Intent> fileChooserLauncher =
@@ -161,11 +162,27 @@ public class MainActivity extends AppCompatActivity {
         webView.addJavascriptInterface(new Object() {
             @android.webkit.JavascriptInterface
             public void setSwipeRefreshEnabled(final boolean enabled) {
+                isPdfOpen = !enabled;
                 runOnUiThread(() -> {
                     if (swipeRefresh != null) {
                         swipeRefresh.setEnabled(enabled);
                     }
                 });
+            }
+
+            @android.webkit.JavascriptInterface
+            public void setPdfOpen(final boolean open) {
+                isPdfOpen = open;
+                runOnUiThread(() -> {
+                    if (swipeRefresh != null) {
+                        swipeRefresh.setEnabled(!open);
+                    }
+                });
+            }
+
+            @android.webkit.JavascriptInterface
+            public boolean isPdfOpen() {
+                return isPdfOpen;
             }
         }, "AndroidApp");
 
@@ -284,23 +301,48 @@ public class MainActivity extends AppCompatActivity {
     private void setupSwipeRefresh() {
         swipeRefresh.setColorSchemeResources(R.color.accent, R.color.primary);
         swipeRefresh.setOnRefreshListener(() -> {
-            String currentUrl = webView.getUrl();
-            if (currentUrl != null && (currentUrl.contains("pdfviewer.html") || currentUrl.contains(".pdf") || currentUrl.contains("/uploads/eps-chapters/"))) {
+            if (isPdfOpen || !swipeRefresh.isEnabled()) {
                 swipeRefresh.setRefreshing(false);
                 return;
             }
-            if (webView.getVisibility() == View.VISIBLE) {
-                webView.reload();
-            } else {
-                loadExamJK();
+            String currentUrl = webView.getUrl();
+            if (currentUrl != null && (
+                currentUrl.contains("pdfviewer.html") ||
+                currentUrl.contains(".pdf") ||
+                currentUrl.contains("/uploads/eps-chapters/")
+            )) {
+                swipeRefresh.setRefreshing(false);
+                return;
             }
+
+            // Also double check with JavaScript if any PDF viewer is mounted
+            webView.evaluateJavascript(
+                "(function() { return !!(window.__isPdfOpen || document.querySelector('iframe[src*=\"pdfviewer.html\"]')); })()",
+                value -> {
+                    if ("true".equalsIgnoreCase(value)) {
+                        isPdfOpen = true;
+                        swipeRefresh.setRefreshing(false);
+                        swipeRefresh.setEnabled(false);
+                        return;
+                    }
+                    if (webView.getVisibility() == View.VISIBLE) {
+                        webView.reload();
+                    } else {
+                        loadExamJK();
+                    }
+                }
+            );
         });
         swipeRefresh.setOnChildScrollUpCallback((parent, child) -> {
-            if (!swipeRefresh.isEnabled()) {
-                return true;
+            if (!swipeRefresh.isEnabled() || isPdfOpen) {
+                return true; // Never allow pull-down refresh to trigger when reading PDF
             }
             String currentUrl = webView.getUrl();
-            if (currentUrl != null && (currentUrl.contains("pdfviewer.html") || currentUrl.contains(".pdf") || currentUrl.contains("/uploads/eps-chapters/"))) {
+            if (currentUrl != null && (
+                currentUrl.contains("pdfviewer.html") ||
+                currentUrl.contains(".pdf") ||
+                currentUrl.contains("/uploads/eps-chapters/")
+            )) {
                 return true;
             }
             return webView.getScrollY() > 0;

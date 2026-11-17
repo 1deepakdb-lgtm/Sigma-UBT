@@ -716,14 +716,17 @@
     // Pull-Down-To-Refresh Neutralizer: When at top of PDF (scrollTop <= 0), prevent downward swipe reload
     function disableAppRefresh() {
       try {
-        if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
-          window.AndroidApp.setSwipeRefreshEnabled(false);
+        if (window.AndroidApp) {
+          if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
+          if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
         }
-        if (window.parent && window.parent.AndroidApp && typeof window.parent.AndroidApp.setSwipeRefreshEnabled === "function") {
-          window.parent.AndroidApp.setSwipeRefreshEnabled(false);
+        if (window.parent && window.parent.AndroidApp) {
+          if (typeof window.parent.AndroidApp.setSwipeRefreshEnabled === "function") window.parent.AndroidApp.setSwipeRefreshEnabled(false);
+          if (typeof window.parent.AndroidApp.setPdfOpen === "function") window.parent.AndroidApp.setPdfOpen(true);
         }
-        if (window.top && window.top.AndroidApp && typeof window.top.AndroidApp.setSwipeRefreshEnabled === "function") {
-          window.top.AndroidApp.setSwipeRefreshEnabled(false);
+        if (window.top && window.top.AndroidApp) {
+          if (typeof window.top.AndroidApp.setSwipeRefreshEnabled === "function") window.top.AndroidApp.setSwipeRefreshEnabled(false);
+          if (typeof window.top.AndroidApp.setPdfOpen === "function") window.top.AndroidApp.setPdfOpen(true);
         }
       } catch (err) {}
     }
