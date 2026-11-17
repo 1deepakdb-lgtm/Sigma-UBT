@@ -64,6 +64,9 @@
     background-color: #ffffff;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    image-rendering: auto;
   }
   #loading-view {
     position: fixed;
@@ -579,9 +582,9 @@
         var displayHeight = Math.round(displayWidth * pageAspect);
 
         var dpr = window.devicePixelRatio || 1;
-        // Adaptive backing scale: 1.5 - 2.2 on modern devices; capped at 1.25 on 1GB RAM to prevent memory crash
+        // Ultra-HD adaptive backing scale: minimum 2.0x for crisp vector text; up to 3.0x on Retina / 3x screens
         var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 1);
-        var targetBackingScale = isLowMem ? Math.min(dpr, 1.25) : Math.min(Math.max(dpr, 1.5), 2.2);
+        var targetBackingScale = isLowMem ? Math.min(dpr, 1.5) : Math.min(Math.max(dpr, 2.0), 3.0);
 
         var baseScale = displayWidth / baseViewport.width;
         var finalScale = baseScale * targetBackingScale;
