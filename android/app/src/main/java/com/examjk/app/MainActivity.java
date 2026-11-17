@@ -157,6 +157,18 @@ public class MainActivity extends AppCompatActivity {
         cookieManager.setAcceptCookie(true);
         cookieManager.setAcceptThirdPartyCookies(webView, true);
 
+        // Android bridge for app control (disabling swipe-to-refresh while reading PDFs)
+        webView.addJavascriptInterface(new Object() {
+            @android.webkit.JavascriptInterface
+            public void setSwipeRefreshEnabled(final boolean enabled) {
+                runOnUiThread(() -> {
+                    if (swipeRefresh != null) {
+                        swipeRefresh.setEnabled(enabled);
+                    }
+                });
+            }
+        }, "AndroidApp");
+
         // Hardware acceleration
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
@@ -277,6 +289,9 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 loadExamJK();
             }
+        });
+        swipeRefresh.setOnChildScrollUpCallback((parent, child) -> {
+            return webView.getScrollY() > 0;
         });
     }
 

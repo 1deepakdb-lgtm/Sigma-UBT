@@ -896,12 +896,6 @@ export default function EpsBookReader({
   const popupContainerRef = useRef(null);
   const playerOpenTimeRef = useRef(0);
 
-  // Movable Floating Back Button State (Default shrunk on side: x: 8, y: 12)
-  const [backBtnPos, setBackBtnPos] = useState({ x: 8, y: 12 });
-  const [isBackDragging, setIsBackDragging] = useState(false);
-  const backDragRef = useRef({ startX: 0, startY: 0, initialX: 8, initialY: 12, currentX: 8, currentY: 12, moved: false, isDown: false });
-  const backBtnRef = useRef(null);
-
   // Movable Mini Circular AUDIO Button State (Default below Back button: x: 10, y: 56)
   const [miniAudioPos, setMiniAudioPos] = useState({ x: 10, y: 56 });
   const [isMiniDragging, setIsMiniDragging] = useState(false);
@@ -1829,78 +1823,6 @@ export default function EpsBookReader({
   // Uses setPointerCapture + direct DOM manipulation to bypass React re-render bottlenecks
   // -------------------------------------------------------------
 
-  // 1. DOCKABLE & DRAGGABLE BACK BUTTON HANDLERS
-  const handleBackPointerDown = (e) => {
-    if (e.button !== undefined && e.button !== 0) return;
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch (err) {}
-    backDragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      initialX: backBtnPos.x,
-      initialY: backBtnPos.y,
-      currentX: backBtnPos.x,
-      currentY: backBtnPos.y,
-      moved: false,
-      isDown: true,
-    };
-    setIsBackDragging(true);
-  };
-
-  const handleBackPointerMove = (e) => {
-    if (!backDragRef.current.isDown) return;
-    const dx = e.clientX - backDragRef.current.startX;
-    const dy = e.clientY - backDragRef.current.startY;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-      backDragRef.current.moved = true;
-    }
-
-    const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-    const winH = typeof window !== "undefined" ? window.innerHeight : 800;
-    const btnW = backBtnRef.current?.offsetWidth || 72;
-    const btnH = backBtnRef.current?.offsetHeight || 30;
-
-    const nextX = Math.max(0, Math.min(winW - btnW, backDragRef.current.initialX + dx));
-    const nextY = Math.max(4, Math.min(winH - btnH - 4, backDragRef.current.initialY + dy));
-
-    backDragRef.current.currentX = nextX;
-    backDragRef.current.currentY = nextY;
-
-    if (backBtnRef.current) {
-      backBtnRef.current.style.left = `${nextX}px`;
-      backBtnRef.current.style.top = `${nextY}px`;
-    }
-  };
-
-  const handleBackPointerUp = (e) => {
-    if (!backDragRef.current.isDown) return;
-    backDragRef.current.isDown = false;
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch (err) {}
-    setIsBackDragging(false);
-
-    if (!backDragRef.current.moved) {
-      closeFullScreen();
-    } else {
-      let finalX = backDragRef.current.currentX;
-      let finalY = backDragRef.current.currentY;
-      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-      const btnW = backBtnRef.current?.offsetWidth || 72;
-
-      // Auto-dock smoothly if released near left or right screen edges
-      if (finalX < 28) finalX = 4;
-      else if (finalX > winW - btnW - 28) finalX = winW - btnW - 4;
-
-      if (backBtnRef.current) {
-        backBtnRef.current.style.left = `${finalX}px`;
-        backBtnRef.current.style.top = `${finalY}px`;
-      }
-      setBackBtnPos({ x: finalX, y: finalY });
-    }
-  };
-
   // 2. MOVABLE MINI CIRCULAR AUDIO BUTTON HANDLERS
   const handleMiniPointerDown = (e) => {
     if (e.button !== undefined && e.button !== 0) return;
@@ -2002,9 +1924,10 @@ export default function EpsBookReader({
     if (!dragRef.current.isDown) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
       dragRef.current.moved = true;
     }
+    if (!dragRef.current.moved) return;
 
     const elemWidth = popupContainerRef.current?.offsetWidth || 360;
     const elemHeight = popupContainerRef.current?.offsetHeight || 60;
@@ -2064,6 +1987,9 @@ export default function EpsBookReader({
     // Push history state so Android/mobile back button closes the reader cleanly
     if (typeof window !== "undefined") {
       window.history.pushState({ epsReaderModal: true }, "");
+      if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
+        try { window.AndroidApp.setSwipeRefreshEnabled(false); } catch (e) {}
+      }
     }
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
@@ -2131,6 +2057,9 @@ export default function EpsBookReader({
     }
     if (shouldPopHistory && typeof window !== "undefined" && window.history.state?.epsReaderModal) {
       window.history.back();
+    }
+    if (typeof window !== "undefined" && window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
+      try { window.AndroidApp.setSwipeRefreshEnabled(true); } catch (e) {}
     }
     setSelectedChapter(null);
     setActivePdfBlobUrl("");
@@ -3050,7 +2979,7 @@ export default function EpsBookReader({
               boxSizing: "border-box"
             }}
           >
-            {/* ROW 1: HEADER (DRAG HANDLE, BACK BUTTON, CHAPTER TITLE) */}
+            {/* ROW 1: HEADER (DRAG HANDLE, CHAPTER TITLE) */}
             <div style={{ display: "flex", alignItems: "center", width: "100%", gap: "8px" }}>
               {/* DRAG HANDLE */}
               <div
@@ -3069,45 +2998,6 @@ export default function EpsBookReader({
               >
                 ⠿
               </div>
-
-              {/* BACK BUTTON: Sleek, proportional height and width */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeFullScreen();
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                title="Return to Chapter List"
-                style={{
-                  backgroundColor: "#f1f5f9",
-                  color: "#0f172a",
-                  border: "1px solid #cbd5e1",
-                  height: "28px",
-                  padding: "0 10px",
-                  borderRadius: "8px",
-                  fontWeight: "700",
-                  fontSize: "11px",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-                  flexShrink: 0,
-                  lineHeight: 1,
-                  boxSizing: "border-box",
-                  transition: "all 0.15s ease"
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f1f5f9"; }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12" />
-                  <polyline points="12 19 5 12 12 5" />
-                </svg>
-                <span>Back</span>
-              </button>
 
               {/* CHAPTER TITLE & CRISP BADGE */}
               <div
@@ -3773,51 +3663,6 @@ export default function EpsBookReader({
             </div>
           </div>
         )}
-
-        {/* ================= 3. DRAGGABLE & DOCKABLE SHRUNK BACK BUTTON (DRAG & DROP ANYWHERE, AUTO-DOCK ON SIDE) ================= */}
-        <div
-          ref={backBtnRef}
-          onPointerDown={handleBackPointerDown}
-          onPointerMove={handleBackPointerMove}
-          onPointerUp={handleBackPointerUp}
-          onPointerCancel={handleBackPointerUp}
-          title="Drag to move anywhere, Tap to return (Esc)"
-          style={{
-            position: "fixed",
-            left: `${backBtnPos.x}px`,
-            top: `${backBtnPos.y}px`,
-            zIndex: 100020,
-            backgroundColor: isBackDragging ? "rgba(15, 23, 42, 0.78)" : "rgba(15, 23, 42, 0.42)",
-            color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.28)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            padding: "4px 9px",
-            borderRadius: backBtnPos.x <= 8 ? "0 14px 14px 0" : "14px",
-            fontSize: "11px",
-            fontWeight: "700",
-            cursor: isBackDragging ? "grabbing" : "grab",
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-            boxShadow: isBackDragging ? "0 8px 24px rgba(0, 0, 0, 0.4)" : "0 2px 8px rgba(0, 0, 0, 0.25)",
-            touchAction: "none",
-            userSelect: "none",
-            WebkitUserSelect: "none",
-            lineHeight: 1,
-            transition: isBackDragging ? "none" : "background-color 0.2s ease, box-shadow 0.2s ease, border-radius 0.2s ease"
-          }}
-          onMouseEnter={(e) => { if (!isBackDragging) e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.7)"; }}
-          onMouseLeave={(e) => { if (!isBackDragging) e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.42)"; }}
-        >
-          {/* Subtle drag indicator */}
-          <span style={{ opacity: 0.55, fontSize: "9px", lineHeight: 1, letterSpacing: "-1px", marginRight: "1px", pointerEvents: "none" }}>⠿</span>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}>
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-          <span style={{ letterSpacing: "0.2px", pointerEvents: "none" }}>Back</span>
-        </div>
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
         <div style={{
