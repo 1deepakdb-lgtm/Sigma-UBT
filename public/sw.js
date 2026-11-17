@@ -1,5 +1,5 @@
 // ExamJK Service Worker for Multi-Device Native App Experience
-const CACHE_NAME = 'examjk-cache-v3';
+const CACHE_NAME = 'examjk-cache-v4';
 
 const STATIC_ASSETS = [
   '/',
