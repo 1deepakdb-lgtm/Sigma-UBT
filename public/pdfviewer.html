@@ -566,7 +566,7 @@
       });
     }
 
-    async function loadPdfDataForLifetime(url) {
+    async function loadCachedPdfBuffer(url) {
       var validUrl = sanitizeUrl(url);
       var variants = getUrlVariants(validUrl);
       if (validUrl !== url) {
@@ -584,8 +584,6 @@
             if (ramCache.has(variants[r])) {
               var mBuf = ramCache.get(variants[r]);
               if (mBuf && (mBuf.byteLength > 1000 || (mBuf.buffer && mBuf.buffer.byteLength > 1000))) {
-                if (loadingView) loadingView.style.display = 'none';
-                if (offlineBadge) offlineBadge.style.display = 'inline-block';
                 return mBuf.slice ? mBuf.slice(0) : mBuf;
               }
             }
@@ -597,7 +595,6 @@
         try {
           var blobResp = await fetch(validUrl);
           var blobObj = await blobResp.blob();
-          if (loadingView) loadingView.style.display = 'none';
           return await readBlobAsArrayBuffer(blobObj);
         } catch (e) {}
       }
@@ -607,7 +604,6 @@
       if (!blob && validUrl !== url) {
         blob = await getFromDb(db, url);
       }
-
       if (!blob) {
         blob = await getFromCacheStorage(validUrl);
       }
@@ -616,8 +612,6 @@
       }
 
       if (blob) {
-        if (loadingView) loadingView.style.display = 'none';
-        if (offlineBadge) offlineBadge.style.display = 'inline-block';
         var cachedArrBuf = await readBlobAsArrayBuffer(blob);
         try {
           var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
@@ -629,23 +623,7 @@
         return cachedArrBuf;
       }
 
-      if (loadingProgress) loadingProgress.textContent = 'Opening Document... 0%';
-      var downloadedArrayBuffer = await downloadPdfWithProgress(validUrl, function(pct) {
-        if (loadingProgress) loadingProgress.textContent = 'Opening Document... ' + pct + '%';
-      });
-
-      try {
-        var pdfBlob = new Blob([downloadedArrayBuffer], { type: 'application/pdf' });
-        saveToDb(db, validUrl, pdfBlob);
-        saveToCacheStorage(validUrl, pdfBlob);
-        var pCache2 = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
-          ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
-        if (pCache2) {
-          variants.forEach(function(v) { pCache2.set(v, downloadedArrayBuffer); });
-        }
-      } catch (e) {}
-
-      return downloadedArrayBuffer;
+      return null;
     }
 
     // =========================================================================
@@ -668,13 +646,13 @@
         var fitScale = Math.min(scaleH, scaleW);
         var finalW = Math.max(320, Math.round(pageW * fitScale));
         return { width: finalW, height: Math.floor(finalW * pageAspect), scale: fitScale };
-      } else if (viewMode === 'custom') {
-        // User zoom (100% to 500%): True physical magnification
+      } else if (viewMode === 'custom' && userZoom > 1.05) {
+        // User zoom (magnification above 100%): True physical magnification
         var baseW = screenWidth < 768 ? screenWidth : Math.max(600, screenWidth - 24);
         var scaledW = Math.round(baseW * userZoom);
         return { width: scaledW, height: Math.floor(scaledW * pageAspect), scale: (scaledW / pageW) };
       } else {
-        // 'fit-width' (Default): Full width usage without artificial 940px caps!
+        // 'fit-width' (Default / Zoom Out): Full screen width fit with zero margins!
         var fitWidth = screenWidth < 768 ? screenWidth : Math.max(600, screenWidth - 24);
         return { width: fitWidth, height: Math.floor(fitWidth * pageAspect), scale: (fitWidth / pageW) };
       }
@@ -898,16 +876,22 @@
 
     btnZoomOut.addEventListener('click', function(e) {
       e.stopPropagation();
-      viewMode = 'custom';
-      var current = userZoom;
-      var prev = 0.4;
+      var current = (viewMode === 'custom') ? userZoom : 1.0;
+      var prev = 1.0;
       for (var i = ZOOM_LEVELS.length - 1; i >= 0; i--) {
         if (ZOOM_LEVELS[i] < current - 0.03) {
           prev = ZOOM_LEVELS[i];
           break;
         }
       }
-      userZoom = prev;
+      if (prev <= 1.05) {
+        viewMode = 'fit-width';
+        userZoom = 1.0;
+        container.scrollLeft = 0;
+      } else {
+        viewMode = 'custom';
+        userZoom = prev;
+      }
       updateToolbarUI();
       updateAllWrapperDimensions();
       debouncedReRender();
@@ -928,6 +912,7 @@
       } else {
         viewMode = 'fit-width';
         userZoom = 1.0;
+        container.scrollLeft = 0;
       }
       updateToolbarUI();
       updateAllWrapperDimensions();
@@ -935,42 +920,53 @@
     });
 
     // =========================================================================
-    // 4. SCREEN DOUBLE-CLICK / DOUBLE-TAP & PINCH-TO-ZOOM ENGINE
+    // 4. ANCHORED FOCAL-POINT ZOOM & RETURN-BACK ENGINE
     // =========================================================================
     var isPinching = false;
     var initialPinchDist = 0;
     var pinchStartZoom = 1.0;
     var currentPinchScale = 1.0;
+    var pinchMidX = 0;
+    var pinchMidY = 0;
+    var pinchStartScrollLeft = 0;
+    var pinchStartScrollTop = 0;
     var lastTapTime = 0;
 
     function getTouchesDist(t1, t2) {
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     }
 
-    // Double-click / double-tap anywhere on screen: Come directly to Fit Width!
+    // Double-click / double-tap anywhere on screen: Zoom from fixed point & return back to Fit Width!
     function handleScreenDoubleClick(clientX, clientY) {
-      var oldScrollTop = container.scrollTop;
+      var rect = container.getBoundingClientRect();
+      var vx = clientX - rect.left;
+      var vy = clientY - rect.top;
+      var px = container.scrollLeft + vx;
+      var py = container.scrollTop + vy;
       var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
 
       if (viewMode !== 'fit-width' || userZoom > 1.05) {
-        // Any time user double clicks while zoomed or in another mode: immediately COME ON WIDTH (Fit Width)
+        // Return back to Fit Width! Fits screen width 100% cleanly!
         viewMode = 'fit-width';
         userZoom = 1.0;
         var ratioDown = 1.0 / oldZoom;
         updateToolbarUI();
         updateAllWrapperDimensions();
         debouncedReRender();
-        container.scrollTop = Math.round(oldScrollTop * ratioDown);
+
         container.scrollLeft = 0;
+        container.scrollTop = Math.max(0, Math.round(py * ratioDown - vy));
       } else {
-        // If already at Fit Width, double click zooms in to Adobe Acrobat 288% clarity!
+        // Zoom in to 288% clarity anchored directly at the clicked / tapped fixed point!
         viewMode = 'custom';
         userZoom = 2.88;
         var ratioUp = 2.88 / oldZoom;
         updateToolbarUI();
         updateAllWrapperDimensions();
         debouncedReRender();
-        container.scrollTop = Math.round(oldScrollTop * ratioUp);
+
+        container.scrollLeft = Math.max(0, Math.round(px * ratioUp - vx));
+        container.scrollTop = Math.max(0, Math.round(py * ratioUp - vy));
       }
     }
 
@@ -983,13 +979,17 @@
       handleScreenDoubleClick(e.clientX, e.clientY);
     });
 
-    // Mobile & tablet touch double-tap anywhere on the screen
+    // Mobile & tablet touch double-tap and pinch-to-zoom
     container.addEventListener('touchstart', function(e) {
       if (e.touches.length === 2) {
         isPinching = true;
         initialPinchDist = getTouchesDist(e.touches[0], e.touches[1]);
         pinchStartZoom = (viewMode === 'custom') ? userZoom : 1.0;
         currentPinchScale = pinchStartZoom;
+        pinchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        pinchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        pinchStartScrollLeft = container.scrollLeft;
+        pinchStartScrollTop = container.scrollTop;
       } else if (e.touches.length === 1) {
         isPinching = false;
         var now = Date.now();
@@ -1009,11 +1009,14 @@
         var currentDist = getTouchesDist(e.touches[0], e.touches[1]);
         if (initialPinchDist > 0) {
           var factor = currentDist / initialPinchDist;
-          currentPinchScale = Math.min(5.0, Math.max(0.4, pinchStartZoom * factor));
-          // Stage 1: Fluid 60 FPS CSS visual scaling during touch
+          // Zoom out minimum snaps at 0.9x so it fits screen when released
+          currentPinchScale = Math.min(5.0, Math.max(0.85, pinchStartZoom * factor));
           var midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
           var midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-          zoomLayer.style.transformOrigin = midX + 'px ' + midY + 'px';
+          pinchMidX = midX;
+          pinchMidY = midY;
+          var containerRect = container.getBoundingClientRect();
+          zoomLayer.style.transformOrigin = (midX - containerRect.left) + 'px ' + (midY - containerRect.top) + 'px';
           zoomLayer.style.transform = 'scale(' + (currentPinchScale / pinchStartZoom) + ')';
         }
       }
@@ -1022,30 +1025,72 @@
     container.addEventListener('touchend', function(e) {
       if (isPinching) {
         isPinching = false;
-        if (initialPinchDist > 0 && Math.abs(currentPinchScale - userZoom) > 0.04) {
+        var rect = container.getBoundingClientRect();
+        var vx = pinchMidX - rect.left;
+        var vy = pinchMidY - rect.top;
+        var px = pinchStartScrollLeft + vx;
+        var py = pinchStartScrollTop + vy;
+
+        zoomLayer.style.transform = 'none';
+
+        if (currentPinchScale <= 1.05) {
+          // Zoomed out -> lock to 100% Fit Width with zero gaps!
+          viewMode = 'fit-width';
+          userZoom = 1.0;
+          updateToolbarUI();
+          updateAllWrapperDimensions();
+          debouncedReRender();
+          container.scrollLeft = 0;
+          var ratioDown = 1.0 / pinchStartZoom;
+          container.scrollTop = Math.max(0, Math.round(py * ratioDown - vy));
+        } else {
+          // Anchored zoom at the pinch midpoint
           viewMode = 'custom';
           userZoom = Math.round(currentPinchScale * 100) / 100;
+          var ratio = userZoom / pinchStartZoom;
+          updateToolbarUI();
+          updateAllWrapperDimensions();
+          debouncedReRender();
+          container.scrollLeft = Math.max(0, Math.round(px * ratio - vx));
+          container.scrollTop = Math.max(0, Math.round(py * ratio - vy));
         }
-        // Stage 2: Settle CSS transform and re-render sharp vector bezier curves!
-        zoomLayer.style.transform = 'none';
-        updateToolbarUI();
-        updateAllWrapperDimensions();
-        debouncedReRender();
         initialPinchDist = 0;
       }
     });
 
-    // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops (Mac trackpad smooth zoom)
+    // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops (Mac trackpad smooth zoom anchored at cursor)
     container.addEventListener('wheel', function(e) {
       if (e.ctrlKey) {
         e.preventDefault();
         var delta = -e.deltaY * 0.008;
-        viewMode = 'custom';
-        var nextZoom = Math.min(5.0, Math.max(0.4, userZoom + delta));
-        userZoom = Math.round(nextZoom * 100) / 100;
-        updateToolbarUI();
-        updateAllWrapperDimensions();
-        debouncedReRender();
+        var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
+        var nextZoom = Math.min(5.0, Math.max(1.0, oldZoom + delta));
+
+        var rect = container.getBoundingClientRect();
+        var vx = e.clientX - rect.left;
+        var vy = e.clientY - rect.top;
+        var px = container.scrollLeft + vx;
+        var py = container.scrollTop + vy;
+
+        if (nextZoom <= 1.05) {
+          viewMode = 'fit-width';
+          userZoom = 1.0;
+          updateToolbarUI();
+          updateAllWrapperDimensions();
+          debouncedReRender();
+          container.scrollLeft = 0;
+          var rDown = 1.0 / oldZoom;
+          container.scrollTop = Math.max(0, Math.round(py * rDown - vy));
+        } else {
+          viewMode = 'custom';
+          userZoom = Math.round(nextZoom * 100) / 100;
+          var rUp = userZoom / oldZoom;
+          updateToolbarUI();
+          updateAllWrapperDimensions();
+          debouncedReRender();
+          container.scrollLeft = Math.max(0, Math.round(px * rUp - vx));
+          container.scrollTop = Math.max(0, Math.round(py * rUp - vy));
+        }
       }
     }, { passive: false });
 
@@ -1092,21 +1137,30 @@
     // =========================================================================
     // 6. MAIN DOCUMENT INITIALIZATION & VIRTUALIZATION
     // =========================================================================
-    async function startRenderingDoc(pdfData) {
-      var dataArray = pdfData instanceof Uint8Array ? pdfData : new Uint8Array(pdfData);
+    async function startRenderingDoc(pdfSource) {
       var baseOrigin = (window.location && window.location.origin && window.location.origin.startsWith('http') && !window.location.origin.includes('localhost'))
         ? window.location.origin : 'https://examjk.com';
 
-      var loadingTask = pdfjsLib.getDocument({
-        data: dataArray,
+      var loadingParams = {
         cMapUrl: baseOrigin + '/cmaps/',
         cMapPacked: true,
         standardFontDataUrl: baseOrigin + '/standard_fonts/',
         disableFontFace: false,
         isEvalSupported: true,
         useSystemFonts: false
-      });
+      };
 
+      if (typeof pdfSource === 'string') {
+        loadingParams.url = pdfSource;
+        loadingParams.rangeChunkSize = 65536;
+        loadingParams.disableRange = false;
+        loadingParams.disableStream = false;
+      } else {
+        var dataArray = pdfSource instanceof Uint8Array ? pdfSource : new Uint8Array(pdfSource);
+        loadingParams.data = dataArray;
+      }
+
+      var loadingTask = pdfjsLib.getDocument(loadingParams);
       pdfDoc = await loadingTask.promise;
       var totalPages = pdfDoc.numPages;
 
@@ -1123,6 +1177,7 @@
         console.warn('Page 1 render warning:', e1);
       }
 
+      // Hide loading spinner in milliseconds!
       if (loadingView) loadingView.style.display = 'none';
       if (offlineBadge) offlineBadge.style.display = 'inline-block';
       updateToolbarUI();
@@ -1205,25 +1260,49 @@
     }
 
     async function initViewer() {
-      var rawData = null;
       var targetDocUrl = sanitizeUrl(cleanUrl);
+      var absUrl = toAbsoluteUrl(targetDocUrl);
+
+      // Fast Path 1: Check in-memory cache & persistent offline storage (0ms instant!)
       try {
-        rawData = await loadPdfDataForLifetime(targetDocUrl);
-        var workingCopy = rawData.slice ? rawData.slice(0) : new Uint8Array(rawData).slice().buffer;
-        await startRenderingDoc(workingCopy);
-      } catch (err) {
-        console.warn('Initial load notice, retrying:', err);
+        var cachedBuffer = await loadCachedPdfBuffer(targetDocUrl);
+        if (cachedBuffer) {
+          if (offlineBadge) offlineBadge.style.display = 'inline-block';
+          await startRenderingDoc(cachedBuffer);
+          return;
+        }
+      } catch (cacheErr) {
+        console.warn('Cache lookup notice:', cacheErr);
+      }
+
+      // Fast Path 2: Range Streaming (Page 1 in MILLISECONDS with zero UI blocking!)
+      try {
+        await startRenderingDoc(absUrl);
+      } catch (streamErr) {
+        console.warn('Streaming notice, downloading directly:', streamErr);
         try {
-          if (!rawData) {
-            rawData = await loadPdfDataForLifetime(targetDocUrl);
-          }
-          var fallbackCopy = rawData.slice ? rawData.slice(0) : new Uint8Array(rawData).slice().buffer;
-          await startRenderingDoc(fallbackCopy);
-        } catch (err2) {
-          console.error('Fatal document error:', err2);
+          var fallbackBuffer = await downloadPdfWithProgress(targetDocUrl);
+          await startRenderingDoc(fallbackBuffer);
+        } catch (downloadErr) {
           showError('Unable to load document. Please check your internet connection and tap Retry.');
+          return;
         }
       }
+
+      // Fast Path 3: Background non-blocking cache for subsequent 0ms opens
+      setTimeout(function() {
+        downloadPdfWithProgress(targetDocUrl).then(async function(buf) {
+          if (buf && buf.byteLength > 1000) {
+            var db = await openOfflineDb();
+            var pdfBlob = new Blob([buf], { type: 'application/pdf' });
+            saveToDb(db, targetDocUrl, pdfBlob);
+            saveToCacheStorage(targetDocUrl, pdfBlob);
+            var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
+              ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
+            if (pCache) pCache.set(targetDocUrl, buf);
+          }
+        }).catch(function() {});
+      }, 300);
     }
 
     initViewer();
