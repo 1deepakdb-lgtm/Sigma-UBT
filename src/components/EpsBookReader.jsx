@@ -1916,7 +1916,7 @@ export default function EpsBookReader({
   // 3. FULL POPUP AUDIO PLAYER HANDLERS
   const handlePopupPointerDown = (e) => {
     if (e.button !== undefined && e.button !== 0) return;
-    if (e.target.closest("button") || e.target.closest("input") || e.target.closest("select")) return;
+    if (e.target.closest("button") || e.target.closest("input") || e.target.closest("select") || e.target.closest(".no-drag")) return;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch (err) {}
@@ -1937,28 +1937,28 @@ export default function EpsBookReader({
     if (!dragRef.current.isDown) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
-    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
       dragRef.current.moved = true;
     }
     if (!dragRef.current.moved) return;
 
-    const elemWidth = popupContainerRef.current?.offsetWidth || 360;
-    const elemHeight = popupContainerRef.current?.offsetHeight || 60;
+    const elemWidth = popupContainerRef.current?.offsetWidth || 340;
+    const elemHeight = popupContainerRef.current?.offsetHeight || 80;
     const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
     const winH = typeof window !== "undefined" ? window.innerHeight : 800;
 
-    const maxX = Math.max(0, winW - elemWidth);
-    const maxY = Math.max(0, winH - elemHeight);
+    const maxX = Math.max(6, winW - elemWidth - 6);
+    const maxY = Math.max(6, winH - elemHeight - 6);
 
-    const nextX = Math.max(4, Math.min(maxX - 4, dragRef.current.initialX + dx));
-    const nextY = Math.max(4, Math.min(maxY - 4, dragRef.current.initialY + dy));
+    const nextX = Math.max(6, Math.min(maxX, dragRef.current.initialX + dx));
+    const nextY = Math.max(6, Math.min(maxY, dragRef.current.initialY + dy));
 
     dragRef.current.currentX = nextX;
     dragRef.current.currentY = nextY;
 
+    // Use GPU transform for butter-smooth 60fps dragging on low-capacity mobile devices
     if (popupContainerRef.current) {
-      popupContainerRef.current.style.left = `${nextX}px`;
-      popupContainerRef.current.style.top = `${nextY}px`;
+      popupContainerRef.current.style.transform = `translate3d(${nextX - dragRef.current.initialX}px, ${nextY - dragRef.current.initialY}px, 0)`;
     }
   };
 
@@ -1970,7 +1970,14 @@ export default function EpsBookReader({
     } catch (err) {}
     setIsDragging(false);
     if (dragRef.current.moved) {
-      setPopupPos({ x: dragRef.current.currentX, y: dragRef.current.currentY });
+      const finalX = dragRef.current.currentX;
+      const finalY = dragRef.current.currentY;
+      if (popupContainerRef.current) {
+        popupContainerRef.current.style.transform = "none";
+        popupContainerRef.current.style.left = `${finalX}px`;
+        popupContainerRef.current.style.top = `${finalY}px`;
+      }
+      setPopupPos({ x: finalX, y: finalY });
     }
   };
 
@@ -2151,36 +2158,7 @@ export default function EpsBookReader({
     }
   }, [currentTrackIndex]);
 
-  // Auto-shrink audio player to gesture trigger button when clicking outside or when PDF iframe gains focus
-  useEffect(() => {
-    if (popupMode !== "full") return;
 
-    const handleOutsideClick = (e) => {
-      // Ignore if opened within last 350ms to avoid mobile tap-through ghost clicks
-      if (Date.now() - playerOpenTimeRef.current < 350) return;
-      if (popupContainerRef.current && !popupContainerRef.current.contains(e.target)) {
-        setPopupMode("gesture");
-        setShowTrackDropdown(false);
-      }
-    };
-
-    const handleBlur = () => {
-      // When user clicks into the PDF iframe, window blurs
-      if (Date.now() - playerOpenTimeRef.current < 450) return;
-      setPopupMode("gesture");
-      setShowTrackDropdown(false);
-    };
-
-    window.addEventListener("mousedown", handleOutsideClick);
-    window.addEventListener("touchstart", handleOutsideClick);
-    window.addEventListener("blur", handleBlur);
-
-    return () => {
-      window.removeEventListener("mousedown", handleOutsideClick);
-      window.removeEventListener("touchstart", handleOutsideClick);
-      window.removeEventListener("blur", handleBlur);
-    };
-  }, [popupMode]);
 
   // Direct Track Selection with Instant Auto-Play & Auto-Hide Dialog
   const handleSelectTrack = (idx) => {
@@ -2930,35 +2908,7 @@ export default function EpsBookReader({
           fontFamily: "Arial, sans-serif"
         }}
       >
-        {/* ================= 0. TRANSPARENT BACKDROP TO SHRINK AUDIO PLAYER ON OUTSIDE CLICK ================= */}
-        {popupMode === "full" && (
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              if (Date.now() - playerOpenTimeRef.current < 350) return;
-              setPopupMode("gesture");
-              setShowTrackDropdown(false);
-            }}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              if (Date.now() - playerOpenTimeRef.current < 350) return;
-              setPopupMode("gesture");
-              setShowTrackDropdown(false);
-            }}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              zIndex: 100004,
-              background: "transparent",
-              cursor: "default"
-            }}
-          />
-        )}
-
-        {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (FULL FORMAT) ================= */}
+        {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (SLEEK COMPACT FROSTED GLASS) ================= */}
         {popupMode === "full" && (
           <div
             ref={popupContainerRef}
@@ -2973,159 +2923,43 @@ export default function EpsBookReader({
               zIndex: 100005,
               display: "flex",
               flexDirection: "column",
-              gap: "8px",
-              backgroundColor: "rgba(255, 255, 255, 0.98)",
+              gap: "6px",
+              backgroundColor: "rgba(255, 255, 255, 0.82)",
               backdropFilter: "blur(14px)",
               WebkitBackdropFilter: "blur(14px)",
-              border: isPlaying ? "2px solid #10b981" : "2px solid #2563eb",
-              borderRadius: "18px",
-              padding: "10px 14px",
+              border: isPlaying ? "1.5px solid rgba(16, 185, 129, 0.65)" : "1.5px solid rgba(37, 99, 235, 0.35)",
+              borderRadius: "16px",
+              padding: "7px 10px",
               boxShadow: isPlaying
-                ? "0 12px 35px rgba(0, 0, 0, 0.22), 0 2px 14px rgba(16, 185, 129, 0.35)"
-                : "0 12px 35px rgba(0, 0, 0, 0.22), 0 2px 10px rgba(37, 99, 235, 0.25)",
+                ? "0 10px 28px rgba(0, 0, 0, 0.16), 0 2px 10px rgba(16, 185, 129, 0.25)"
+                : "0 10px 28px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(37, 99, 235, 0.18)",
               cursor: isDragging ? "grabbing" : "grab",
               userSelect: "none",
               WebkitUserSelect: "none",
               touchAction: "none",
               width: "calc(100vw - 20px)",
-              maxWidth: "400px",
-              boxSizing: "border-box"
+              maxWidth: "340px",
+              boxSizing: "border-box",
+              willChange: "transform"
             }}
           >
-            {/* ROW 1: HEADER (DRAG HANDLE, BACK BUTTON, CHAPTER TITLE) */}
-            <div style={{ display: "flex", alignItems: "center", width: "100%", gap: "8px" }}>
-              {/* DRAG HANDLE */}
-              <div
-                title="Drag to move anywhere on screen"
-                style={{
-                  cursor: isDragging ? "grabbing" : "grab",
-                  color: "#94a3b8",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "16px",
-                  userSelect: "none",
-                  flexShrink: 0,
-                  padding: "0 2px"
-                }}
-              >
-                ⠿
-              </div>
-
-              {/* WEBSITE-ONLY GO BACK BUTTON (Hidden on Android/iOS Mobile Apps) */}
-              {!isMobileApp && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    closeFullScreen();
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  title="Return to Chapter List (Esc)"
-                  style={{
-                    backgroundColor: "#f1f5f9",
-                    color: "#0f172a",
-                    border: "1px solid #cbd5e1",
-                    height: "28px",
-                    padding: "0 10px",
-                    borderRadius: "8px",
-                    fontWeight: "700",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-                    flexShrink: 0,
-                    lineHeight: 1,
-                    boxSizing: "border-box",
-                    transition: "all 0.15s ease"
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f1f5f9"; }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12" />
-                    <polyline points="12 19 5 12 12 5" />
-                  </svg>
-                  <span>Back</span>
-                </button>
-              )}
-
-              {/* CHAPTER TITLE & CRISP BADGE */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  minWidth: 0,
-                  flex: 1
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
-                  <span
-                    style={{
-                      backgroundColor: "#2563eb",
-                      color: "#ffffff",
-                      fontSize: "11px",
-                      fontWeight: "800",
-                      padding: "2px 7px",
-                      borderRadius: "6px",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0
-                    }}
-                  >
-                    Ch {selectedChapter.chapter !== undefined ? selectedChapter.chapter : (selectedChapter.id || 1)}
-                  </span>
-                  <span
-                    style={{
-                      fontWeight: "800",
-                      fontSize: "13px",
-                      color: "#0f172a",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap"
-                    }}
-                  >
-                    {selectedChapter.titleKo || selectedChapter.title || ""}
-                  </span>
-                </div>
-                {(selectedChapter.titleNe || selectedChapter.subTitle) && (
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      color: "#1d4ed8",
-                      fontWeight: "600",
-                      marginTop: "1px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap"
-                    }}
-                  >
-                    {selectedChapter.titleNe || selectedChapter.subTitle}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ROW 2: PRIMARY AUDIO CONTROLS (BLUE PILL) + WINDOW ACTIONS (MINIMIZE, CLOSE) */}
+            {/* ROW 1: PRIMARY AUDIO CONTROLS (BLUE PILL) + WINDOW ACTIONS (MINIMIZE, CLOSE) */}
             {hasAudio && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
                 {/* BLUE PILL (PLAY/PAUSE + TRACK DROPDOWN) */}
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "6px",
+                    gap: "5px",
                     flex: 1,
                     minWidth: 0,
-                    height: "38px",
+                    height: "34px",
                     background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
                     color: "#ffffff",
                     border: "1.5px solid #93c5fd",
-                    borderRadius: "19px",
-                    padding: "3px 8px 3px 4px",
+                    borderRadius: "17px",
+                    padding: "2px 8px 2px 3px",
                     boxShadow: "0 2px 8px rgba(29, 78, 216, 0.25)",
                     boxSizing: "border-box"
                   }}
@@ -3138,8 +2972,8 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title={isPlaying ? "Click to Pause Audio" : "Click to Play Audio"}
                     style={{
-                      width: "30px",
-                      height: "30px",
+                      width: "28px",
+                      height: "28px",
                       borderRadius: "50%",
                       background: "#ffffff",
                       color: "#1d4ed8",
@@ -3148,7 +2982,7 @@ export default function EpsBookReader({
                       alignItems: "center",
                       justifyContent: "center",
                       cursor: "pointer",
-                      fontSize: isPlaying ? "11px" : "13px",
+                      fontSize: isPlaying ? "10px" : "12px",
                       fontWeight: "900",
                       boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
                       flexShrink: 0,
@@ -3174,17 +3008,17 @@ export default function EpsBookReader({
                       title="Select Audio Track"
                       style={{
                         width: "100%",
-                        height: "28px",
+                        height: "26px",
                         background: "rgba(255, 255, 255, 0.16)",
                         color: "#ffffff",
                         border: "1px solid rgba(255, 255, 255, 0.35)",
-                        borderRadius: "14px",
-                        padding: "0 8px",
+                        borderRadius: "13px",
+                        padding: "0 7px",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        gap: "5px",
+                        gap: "4px",
                         fontSize: "11px",
                         fontWeight: "700",
                         boxSizing: "border-box"
@@ -3234,12 +3068,12 @@ export default function EpsBookReader({
                           onTouchStart={(e) => e.stopPropagation()}
                           style={{
                             position: "absolute",
-                            top: "34px",
+                            top: "32px",
                             left: 0,
                             width: "280px",
                             maxWidth: "calc(100vw - 40px)",
                             backgroundColor: "#ffffff",
-                            border: "2px solid #2563eb",
+                            border: "1.5px solid #2563eb",
                             borderRadius: "12px",
                             boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
                             zIndex: 100010,
@@ -3257,32 +3091,29 @@ export default function EpsBookReader({
                             alignItems: "center",
                             justifyContent: "space-between"
                           }}>
-                            <span>Chapter {selectedChapter.chapter !== undefined ? selectedChapter.chapter : (selectedChapter.id || 1)} Audio Tracks:</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontSize: "10px", color: "#2563eb" }}>Auto-play</span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowTrackDropdown(false);
-                                }}
-                                style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  color: "#64748b",
-                                  cursor: "pointer",
-                                  fontSize: "14px",
-                                  fontWeight: "bold",
-                                  padding: "0 2px",
-                                  lineHeight: 1
-                                }}
-                                title="Close"
-                              >
-                                ✕
-                              </button>
-                            </div>
+                            <span>Chapter {selectedChapter.chapter !== undefined ? selectedChapter.chapter : (selectedChapter.id || 1)} Tracks:</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowTrackDropdown(false);
+                              }}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: "#64748b",
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                padding: "0 2px",
+                                lineHeight: 1
+                              }}
+                              title="Close"
+                            >
+                              ✕
+                            </button>
                           </div>
-                          <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                          <div style={{ maxHeight: "200px", overflowY: "auto" }}>
                             {selectedChapter.audioTracks.map((track, idx) => {
                               const isCurrent = idx === currentTrackIndex;
                               return (
@@ -3299,10 +3130,10 @@ export default function EpsBookReader({
                                     handleSelectTrack(idx);
                                   }}
                                   style={{
-                                    padding: "8px 10px",
+                                    padding: "7px 10px",
                                     background: isCurrent ? "#dbeafe" : "transparent",
                                     color: isCurrent ? "#1d4ed8" : "#1e293b",
-                                    fontSize: "12px",
+                                    fontSize: "11.5px",
                                     cursor: "pointer",
                                     borderBottom: "1px solid #f1f5f9",
                                     borderLeft: isCurrent ? "3px solid #1d4ed8" : "3px solid transparent",
@@ -3316,7 +3147,7 @@ export default function EpsBookReader({
                                     {isCurrent ? "▶ " : ""}{track.name}
                                   </span>
                                   <span style={{
-                                    fontSize: "10px",
+                                    fontSize: "9.5px",
                                     padding: "2px 5px",
                                     borderRadius: "4px",
                                     background: isCurrent ? "#1d4ed8" : "#f1f5f9",
@@ -3335,8 +3166,8 @@ export default function EpsBookReader({
                   </div>
                 </div>
 
-                {/* WINDOW ACTIONS GROUP: MATCHED 34x34px SQUARES */}
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                {/* WINDOW ACTIONS GROUP: MATCHED 30x30px SQUARES */}
+                <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
                   {isAdmin && (
                     <button
                       type="button"
@@ -3348,14 +3179,14 @@ export default function EpsBookReader({
                       onTouchStart={(e) => e.stopPropagation()}
                       title="Upload Chapter Audio / PDF"
                       style={{
-                        width: "34px",
-                        height: "34px",
-                        borderRadius: "9px",
+                        width: "30px",
+                        height: "30px",
+                        borderRadius: "8px",
                         backgroundColor: "#fef3c7",
                         color: "#b45309",
                         border: "1px solid #fde68a",
                         fontWeight: "bold",
-                        fontSize: "13px",
+                        fontSize: "12px",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
@@ -3368,7 +3199,7 @@ export default function EpsBookReader({
                     </button>
                   )}
 
-                  {/* MINIMIZE TO GESTURE TRIGGER (34x34px Square) */}
+                  {/* MINIMIZE TO GESTURE TRIGGER (30x30px Square) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -3379,16 +3210,16 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Minimize Player"
                     style={{
-                      width: "34px",
-                      height: "34px",
-                      borderRadius: "9px",
-                      backgroundColor: "#f1f5f9",
+                      width: "30px",
+                      height: "30px",
+                      borderRadius: "8px",
+                      backgroundColor: "rgba(241, 245, 249, 0.9)",
                       color: "#475569",
                       border: "1px solid #cbd5e1",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: "bold",
                       cursor: "pointer",
                       boxSizing: "border-box",
@@ -3397,12 +3228,12 @@ export default function EpsBookReader({
                       transition: "all 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f1f5f9"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(241, 245, 249, 0.9)"; }}
                   >
                     ─
                   </button>
 
-                  {/* CLOSE TO GESTURE TRIGGER (34x34px Square) */}
+                  {/* CLOSE TO GESTURE TRIGGER (30x30px Square) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -3413,16 +3244,16 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Close Player to Floating Icon"
                     style={{
-                      width: "34px",
-                      height: "34px",
-                      borderRadius: "9px",
-                      backgroundColor: "#fee2e2",
+                      width: "30px",
+                      height: "30px",
+                      borderRadius: "8px",
+                      backgroundColor: "rgba(254, 226, 226, 0.9)",
                       color: "#dc2626",
                       border: "1px solid #fca5a5",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "13px",
+                      fontSize: "12px",
                       fontWeight: "bold",
                       cursor: "pointer",
                       boxSizing: "border-box",
@@ -3431,7 +3262,7 @@ export default function EpsBookReader({
                       transition: "all 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fecaca"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#fee2e2"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(254, 226, 226, 0.9)"; }}
                   >
                     ✕
                   </button>
@@ -3439,11 +3270,11 @@ export default function EpsBookReader({
               </div>
             )}
 
-            {/* ROW 3: PROGRESS SEEKBAR + TIME DISPLAY (LEFT) + AUXILIARY CONTROLS (RIGHT) */}
+            {/* ROW 2: PROGRESS SEEKBAR + TIME DISPLAY (LEFT) + AUXILIARY CONTROLS (RIGHT) */}
             {hasAudio && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "0 2px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", padding: "0 1px" }}>
                 {/* LEFT: SEEKBAR + TIME */}
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px", flex: 1, minWidth: 0 }}>
                   <input
                     type="range"
                     min={0}
@@ -3458,19 +3289,19 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     style={{
                       flex: 1,
-                      minWidth: "60px",
+                      minWidth: "50px",
                       cursor: "pointer",
                       accentColor: "#2563eb",
-                      height: "5px"
+                      height: "4px"
                     }}
                   />
-                  <span style={{ fontSize: "11px", color: "#64748b", fontFamily: "monospace", fontWeight: "700", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <span style={{ fontSize: "10.5px", color: "#475569", fontFamily: "monospace", fontWeight: "700", whiteSpace: "nowrap", flexShrink: 0 }}>
                     {formatTime(currentTime)}
                   </span>
                 </div>
 
-                {/* RIGHT: REWIND (32x32), FORWARD (32x32), SPEED (34x32) */}
-                <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                {/* RIGHT: REWIND (28x28), FORWARD (28x28), SPEED (30x28) */}
+                <div style={{ display: "flex", alignItems: "center", gap: "3px", flexShrink: 0 }}>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -3481,13 +3312,13 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Rewind 5s"
                     style={{
-                      width: "32px",
-                      height: "32px",
-                      background: "#f8fafc",
+                      width: "28px",
+                      height: "28px",
+                      background: "rgba(248, 250, 252, 0.9)",
                       border: "1px solid #cbd5e1",
-                      borderRadius: "8px",
+                      borderRadius: "7px",
                       cursor: "pointer",
-                      fontSize: "11px",
+                      fontSize: "10px",
                       color: "#334155",
                       fontWeight: "bold",
                       display: "flex",
@@ -3499,7 +3330,7 @@ export default function EpsBookReader({
                       transition: "all 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(248, 250, 252, 0.9)"; }}
                   >
                     ⏪
                   </button>
@@ -3513,11 +3344,11 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Forward 5s"
                     style={{
-                      width: "32px",
-                      height: "32px",
-                      background: "#f8fafc",
+                      width: "28px",
+                      height: "28px",
+                      background: "rgba(248, 250, 252, 0.9)",
                       border: "1px solid #cbd5e1",
-                      borderRadius: "8px",
+                      borderRadius: "7px",
                       cursor: "pointer",
                       fontSize: "11px",
                       color: "#334155",
@@ -3531,7 +3362,7 @@ export default function EpsBookReader({
                       transition: "all 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f8fafc"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(248, 250, 252, 0.9)"; }}
                   >
                     ⏩
                   </button>
@@ -3545,13 +3376,13 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Playback Speed"
                     style={{
-                      width: "34px",
-                      height: "32px",
-                      background: "#eff6ff",
+                      height: "28px",
+                      padding: "0 6px",
+                      background: "rgba(239, 246, 255, 0.9)",
                       color: "#1d4ed8",
                       border: "1px solid #bfdbfe",
-                      borderRadius: "8px",
-                      fontSize: "11px",
+                      borderRadius: "7px",
+                      fontSize: "10.5px",
                       fontWeight: "800",
                       cursor: "pointer",
                       display: "flex",
@@ -3563,7 +3394,7 @@ export default function EpsBookReader({
                       transition: "all 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#dbeafe"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#eff6ff"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(239, 246, 255, 0.9)"; }}
                   >
                     {playbackRate}x
                   </button>
