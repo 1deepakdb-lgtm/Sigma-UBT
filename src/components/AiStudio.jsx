@@ -2566,29 +2566,7 @@ return (
             </svg>
             Download Synchronized Dialogue MP3
           </a>
-        ) : (
-          <span
-            style={{
-              background: '#f1f5f9',
-              color: '#64748b',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: '11.5px',
-              fontWeight: '700',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              border: '1px solid #e2e8f0',
-              userSelect: 'none'
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            Listen Only · Student Download Restricted
-          </span>
-        )}
+        ) : null}
       </div>
     </div>
   )
