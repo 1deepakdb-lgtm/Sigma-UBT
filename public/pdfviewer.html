@@ -450,7 +450,7 @@
         }
 
         tryFetchUrl(fetchUrl, function() {
-          if (!fetchUrl.startsWith('https://examjk.com')) {
+          if (!fetchUrl.startsWith('https://examjk.com') && !url.startsWith('blob:') && !url.startsWith('data:')) {
             var directFallback = 'https://examjk.com' + (url.startsWith('/') ? url : '/' + url);
             tryFetchUrl(directFallback, null);
           } else {
@@ -953,9 +953,6 @@
 
       if (typeof pdfSource === 'string') {
         loadingParams.url = pdfSource;
-        loadingParams.rangeChunkSize = 65536;
-        loadingParams.disableRange = false;
-        loadingParams.disableStream = false;
       } else {
         var dataArray = pdfSource instanceof Uint8Array ? pdfSource : new Uint8Array(pdfSource);
         loadingParams.data = dataArray;
@@ -1067,7 +1064,7 @@
       // Fast Path 1: Check in-memory cache & persistent offline storage (0ms instant!)
       try {
         var cachedBuffer = await loadCachedPdfBuffer(targetDocUrl);
-        if (cachedBuffer) {
+        if (cachedBuffer && (cachedBuffer.byteLength > 1000 || (cachedBuffer.buffer && cachedBuffer.buffer.byteLength > 1000))) {
           if (offlineBadge) offlineBadge.style.display = 'inline-block';
           await startRenderingDoc(cachedBuffer);
           return;
@@ -1076,34 +1073,37 @@
         console.warn('Cache lookup notice:', cacheErr);
       }
 
-      // Fast Path 2: Range Streaming (Page 1 in MILLISECONDS with zero UI blocking!)
+      // Fast Path 2: Fetch and render via ArrayBuffer (universal support across all web servers & browsers)
       try {
-        await startRenderingDoc(absUrl);
-      } catch (streamErr) {
-        console.warn('Streaming notice, downloading directly:', streamErr);
-        try {
-          var fallbackBuffer = await downloadPdfWithProgress(targetDocUrl);
+        var fallbackBuffer = await downloadPdfWithProgress(targetDocUrl, function(pct) {
+          if (loadingProgress) loadingProgress.textContent = 'Opening Document (' + pct + '%)...';
+        });
+        if (fallbackBuffer && (fallbackBuffer.byteLength > 1000 || (fallbackBuffer.buffer && fallbackBuffer.buffer.byteLength > 1000))) {
           await startRenderingDoc(fallbackBuffer);
-        } catch (downloadErr) {
-          showError('Unable to load document. Please check your internet connection and tap Retry.');
-          return;
-        }
-      }
 
-      // Fast Path 3: Background non-blocking cache for subsequent 0ms opens
-      setTimeout(function() {
-        downloadPdfWithProgress(targetDocUrl).then(async function(buf) {
-          if (buf && buf.byteLength > 1000) {
+          // Save to IndexedDB & CacheStorage in background for lifetime 0ms offline access
+          try {
             var db = await openOfflineDb();
-            var pdfBlob = new Blob([buf], { type: 'application/pdf' });
+            var pdfBlob = new Blob([fallbackBuffer], { type: 'application/pdf' });
             saveToDb(db, targetDocUrl, pdfBlob);
             saveToCacheStorage(targetDocUrl, pdfBlob);
             var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
               ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
-            if (pCache) pCache.set(targetDocUrl, buf);
-          }
-        }).catch(function() {});
-      }, 300);
+            if (pCache) pCache.set(targetDocUrl, fallbackBuffer);
+          } catch (saveErr) {}
+          return;
+        }
+      } catch (downloadErr) {
+        console.warn('Buffer download notice, trying direct URL:', downloadErr);
+      }
+
+      // Fast Path 3: Direct URL streaming fallback
+      try {
+        await startRenderingDoc(absUrl);
+      } catch (streamErr) {
+        console.error('Final PDF rendering failure:', streamErr);
+        showError('Unable to load document. Please check your internet connection and tap Retry.');
+      }
     }
 
     initViewer();

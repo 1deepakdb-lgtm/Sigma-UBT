@@ -3686,7 +3686,7 @@ export default function EpsBookReader({
             }}>
               <iframe
                 key={selectedChapter.chapter !== undefined ? `eps-ch-${selectedChapter.chapter}` : (selectedChapter.id || selectedChapter.folder || selectedChapter.pdfUrl)}
-                src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
+                src={getCleanPdfUrl(selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
                 style={{
                   position: "absolute",
