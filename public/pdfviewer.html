@@ -152,19 +152,24 @@
     z-index: 9999;
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(15, 23, 42, 0.88);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    gap: 5px;
+    background: rgba(15, 23, 42, 0.90);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 28px;
-    padding: 4px 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.3);
     transition: opacity 0.25s ease, transform 0.25s ease;
     user-select: none;
     -webkit-user-select: none;
-    max-width: calc(100vw - 24px);
+    max-width: calc(100vw - 20px);
     box-sizing: border-box;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #pdf-toolbar::-webkit-scrollbar {
+    display: none;
   }
   .toolbar-btn {
     background: transparent;
@@ -183,9 +188,10 @@
     transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
     line-height: 1;
     white-space: nowrap;
+    flex-shrink: 0;
   }
   .toolbar-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.18);
     color: #38bdf8;
   }
   .toolbar-btn:active {
@@ -200,14 +206,15 @@
     font-size: 12px;
     font-weight: 800;
     color: #38bdf8;
-    min-width: 50px;
+    min-width: 52px;
     text-align: center;
     padding: 0 4px;
+    background: rgba(56, 189, 248, 0.12);
   }
   .toolbar-divider {
     width: 1px;
     height: 18px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     margin: 0 2px;
     flex-shrink: 0;
   }
@@ -215,17 +222,17 @@
     #pdf-toolbar {
       bottom: 12px;
       gap: 3px;
-      padding: 3px 6px;
+      padding: 3px 5px;
     }
     .toolbar-btn {
       height: 28px;
       min-width: 28px;
-      padding: 0 6px;
+      padding: 0 5px;
       font-size: 11px;
     }
     #btn-zoom-level {
       font-size: 11px;
-      min-width: 42px;
+      min-width: 44px;
     }
   }
 </style>
@@ -250,12 +257,13 @@
 
 <!-- ================= ADOBE ACROBAT CONTROLS TOOLBAR ================= -->
 <div id="pdf-toolbar">
-  <button class="toolbar-btn" id="btn-zoom-out" title="Zoom Out (−25%)">">−</button>
-  <button class="toolbar-btn" id="btn-zoom-level" title="Click to cycle: Fit Width / Fit Page / 100%">100%</button>
-  <button class="toolbar-btn" id="btn-zoom-in" title="Zoom In (+25%)">+</button>
+  <button class="toolbar-btn" id="btn-zoom-out" title="Zoom Out (−)">−</button>
+  <button class="toolbar-btn" id="btn-zoom-level" title="Click to cycle: Fit Width / Fit Page / 100% / 288%">100%</button>
+  <button class="toolbar-btn" id="btn-zoom-in" title="Zoom In (+)">+</button>
   <div class="toolbar-divider"></div>
   <button class="toolbar-btn active" id="btn-fit-width" title="Fit to Available Width">⤢ Width</button>
   <button class="toolbar-btn" id="btn-fit-page" title="Fit Entire Page Vertically">↕ Page</button>
+  <button class="toolbar-btn" id="btn-zoom-acrobat" title="Adobe Acrobat 288% Razor-Sharp Vector Zoom">288%</button>
   <button class="toolbar-btn" id="btn-zoom-reset" title="Original 100% Size">1:1</button>
 </div>
 
@@ -311,7 +319,10 @@
     var btnZoomLevel = document.getElementById('btn-zoom-level');
     var btnFitWidth = document.getElementById('btn-fit-width');
     var btnFitPage = document.getElementById('btn-fit-page');
+    var btnZoomAcrobat = document.getElementById('btn-zoom-acrobat');
     var btnZoomReset = document.getElementById('btn-zoom-reset');
+
+    var ZOOM_LEVELS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.4, 2.88, 3.5, 4.0, 5.0];
 
     if (!rawUrl) {
       showError('No document URL specified.');
@@ -692,15 +703,18 @@
         var displayHeight = dims.height;
 
         var dpr = window.devicePixelRatio || 1;
-        // High-DPI backing scale: minimum 2.0x for razor-sharp vector text; up to 3.0x on Retina / OLED screens
+        // High-DPI backing scale:
+        // For Adobe Acrobat-level razor-sharp vector clarity:
+        // Use full screen DPR (e.g. 2.0x on Mac Retina / 3.0x on OLED phones), with minimum 2.0x for subpixel font anti-aliasing.
         var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 1);
-        var backingScale = isLowMem ? Math.min(dpr, 1.75) : Math.min(Math.max(dpr, 2.0), 3.0);
+        var backingScale = isLowMem ? Math.min(dpr, 1.5) : Math.max(dpr, 2.0);
 
         var finalScale = (displayWidth / baseViewport.width) * backingScale;
 
-        // Hardware safety guard: prevent canvas dimension from exceeding mobile GPU texture limit (4096px)
-        if (baseViewport.width * finalScale > 4096 || baseViewport.height * finalScale > 4096) {
-          finalScale = Math.min(4096 / baseViewport.width, 4096 / baseViewport.height);
+        // Hardware safety guard: prevent canvas dimension from exceeding hardware GPU texture limit (16384 on Mac/PC, 8192 on mobile, 4096 on 1GB RAM)
+        var maxDim = isLowMem ? 4096 : ((window.innerWidth < 768) ? 8192 : 16384);
+        if (baseViewport.width * finalScale > maxDim || baseViewport.height * finalScale > maxDim) {
+          finalScale = Math.min(maxDim / baseViewport.width, maxDim / baseViewport.height);
         }
 
         var scaledViewport = page.getViewport({ scale: finalScale });
@@ -769,6 +783,19 @@
       renderedPages.delete(pageNum);
     }
 
+    // Update all page wrapper placeholders to current target dimensions
+    function updateAllWrapperDimensions() {
+      if (!pdfDoc) return;
+      var dims = getTargetDimensions({ width: 595.28, height: 841.89 });
+      for (var p = 1; p <= pdfDoc.numPages; p++) {
+        var el = document.getElementById('page-wrapper-' + p);
+        if (el) {
+          el.style.width = dims.width + 'px';
+          el.style.minHeight = dims.height + 'px';
+        }
+      }
+    }
+
     // Re-render all currently visible pages at the new vector zoom scale
     function reRenderVisiblePages() {
       if (!pdfDoc) return;
@@ -791,7 +818,7 @@
       clearTimeout(reRenderDebounceTimer);
       reRenderDebounceTimer = setTimeout(function() {
         reRenderVisiblePages();
-      }, 200);
+      }, 150);
     }
 
     // =========================================================================
@@ -801,6 +828,9 @@
       btnFitWidth.classList.toggle('active', viewMode === 'fit-width');
       btnFitPage.classList.toggle('active', viewMode === 'fit-page');
       btnZoomReset.classList.toggle('active', viewMode === 'custom' && Math.abs(userZoom - 1.0) < 0.05);
+      if (btnZoomAcrobat) {
+        btnZoomAcrobat.classList.toggle('active', viewMode === 'custom' && Math.abs(userZoom - 2.88) < 0.05);
+      }
 
       if (viewMode === 'fit-width') {
         btnZoomLevel.textContent = 'Width';
@@ -816,6 +846,7 @@
       viewMode = 'fit-width';
       userZoom = 1.0;
       updateToolbarUI();
+      updateAllWrapperDimensions();
       debouncedReRender();
     });
 
@@ -824,6 +855,7 @@
       viewMode = 'fit-page';
       userZoom = 1.0;
       updateToolbarUI();
+      updateAllWrapperDimensions();
       debouncedReRender();
     });
 
@@ -832,22 +864,52 @@
       viewMode = 'custom';
       userZoom = 1.0;
       updateToolbarUI();
+      updateAllWrapperDimensions();
       debouncedReRender();
     });
+
+    if (btnZoomAcrobat) {
+      btnZoomAcrobat.addEventListener('click', function(e) {
+        e.stopPropagation();
+        viewMode = 'custom';
+        userZoom = 2.88;
+        updateToolbarUI();
+        updateAllWrapperDimensions();
+        debouncedReRender();
+      });
+    }
 
     btnZoomIn.addEventListener('click', function(e) {
       e.stopPropagation();
       viewMode = 'custom';
-      userZoom = Math.min(5.0, userZoom + 0.25);
+      var current = userZoom;
+      var next = 5.0;
+      for (var i = 0; i < ZOOM_LEVELS.length; i++) {
+        if (ZOOM_LEVELS[i] > current + 0.03) {
+          next = ZOOM_LEVELS[i];
+          break;
+        }
+      }
+      userZoom = next;
       updateToolbarUI();
+      updateAllWrapperDimensions();
       debouncedReRender();
     });
 
     btnZoomOut.addEventListener('click', function(e) {
       e.stopPropagation();
       viewMode = 'custom';
-      userZoom = Math.max(0.4, userZoom - 0.25);
+      var current = userZoom;
+      var prev = 0.4;
+      for (var i = ZOOM_LEVELS.length - 1; i >= 0; i--) {
+        if (ZOOM_LEVELS[i] < current - 0.03) {
+          prev = ZOOM_LEVELS[i];
+          break;
+        }
+      }
+      userZoom = prev;
       updateToolbarUI();
+      updateAllWrapperDimensions();
       debouncedReRender();
     });
 
@@ -855,13 +917,20 @@
       e.stopPropagation();
       if (viewMode === 'fit-width') {
         viewMode = 'fit-page';
+        userZoom = 1.0;
       } else if (viewMode === 'fit-page') {
         viewMode = 'custom';
         userZoom = 1.0;
+      } else if (viewMode === 'custom' && userZoom < 2.0) {
+        userZoom = 2.0;
+      } else if (viewMode === 'custom' && userZoom < 2.88) {
+        userZoom = 2.88;
       } else {
         viewMode = 'fit-width';
+        userZoom = 1.0;
       }
       updateToolbarUI();
+      updateAllWrapperDimensions();
       debouncedReRender();
     });
 
@@ -871,6 +940,7 @@
     var isPinching = false;
     var initialPinchDist = 0;
     var pinchStartZoom = 1.0;
+    var currentPinchScale = 1.0;
     var lastTapTime = 0;
 
     function getTouchesDist(t1, t2) {
@@ -881,21 +951,23 @@
       if (e.touches.length === 2) {
         isPinching = true;
         initialPinchDist = getTouchesDist(e.touches[0], e.touches[1]);
-        pinchStartZoom = userZoom;
+        pinchStartZoom = (viewMode === 'custom') ? userZoom : 1.0;
+        currentPinchScale = pinchStartZoom;
       } else if (e.touches.length === 1) {
         isPinching = false;
         var now = Date.now();
-        // Double-tap zoom toggle (e.g. 100% <-> 240%)
+        // Double-tap zoom toggle: toggles between Fit Width and Adobe Acrobat 288% zoom!
         if (now - lastTapTime < 320) {
           e.preventDefault();
-          if (viewMode === 'custom' && userZoom > 1.3) {
+          if (viewMode === 'custom' && userZoom > 1.5) {
             viewMode = 'fit-width';
             userZoom = 1.0;
           } else {
             viewMode = 'custom';
-            userZoom = 2.4;
+            userZoom = 2.88;
           }
           updateToolbarUI();
+          updateAllWrapperDimensions();
           debouncedReRender();
           lastTapTime = 0;
           return;
@@ -910,44 +982,42 @@
         var currentDist = getTouchesDist(e.touches[0], e.touches[1]);
         if (initialPinchDist > 0) {
           var factor = currentDist / initialPinchDist;
-          var tempScale = Math.min(5.0, Math.max(0.5, pinchStartZoom * factor));
+          currentPinchScale = Math.min(5.0, Math.max(0.4, pinchStartZoom * factor));
           // Stage 1: Fluid 60 FPS CSS visual scaling during touch
           var midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
           var midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
           zoomLayer.style.transformOrigin = midX + 'px ' + midY + 'px';
-          zoomLayer.style.transform = 'scale(' + (tempScale / pinchStartZoom) + ')';
+          zoomLayer.style.transform = 'scale(' + (currentPinchScale / pinchStartZoom) + ')';
         }
       }
     }, { passive: false });
 
     container.addEventListener('touchend', function(e) {
-      if (isPinching && e.touches.length < 2) {
+      if (isPinching) {
         isPinching = false;
-        if (e.changedTouches.length > 0 && initialPinchDist > 0) {
-          var factor = (e.touches.length === 1)
-            ? getTouchesDist(e.touches[0], e.changedTouches[0]) / initialPinchDist
-            : 1.0;
-          var nextZoom = Math.min(5.0, Math.max(0.5, pinchStartZoom * factor));
-          if (Math.abs(nextZoom - pinchStartZoom) > 0.05) {
-            viewMode = 'custom';
-            userZoom = nextZoom;
-          }
+        if (initialPinchDist > 0 && Math.abs(currentPinchScale - userZoom) > 0.04) {
+          viewMode = 'custom';
+          userZoom = Math.round(currentPinchScale * 100) / 100;
         }
         // Stage 2: Settle CSS transform and re-render sharp vector bezier curves!
         zoomLayer.style.transform = 'none';
         updateToolbarUI();
+        updateAllWrapperDimensions();
         debouncedReRender();
+        initialPinchDist = 0;
       }
     });
 
-    // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops
+    // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops (Mac trackpad smooth zoom)
     container.addEventListener('wheel', function(e) {
       if (e.ctrlKey) {
         e.preventDefault();
         var delta = -e.deltaY * 0.008;
         viewMode = 'custom';
-        userZoom = Math.min(5.0, Math.max(0.4, userZoom + delta));
+        var nextZoom = Math.min(5.0, Math.max(0.4, userZoom + delta));
+        userZoom = Math.round(nextZoom * 100) / 100;
         updateToolbarUI();
+        updateAllWrapperDimensions();
         debouncedReRender();
       }
     }, { passive: false });
@@ -1029,6 +1099,7 @@
       if (loadingView) loadingView.style.display = 'none';
       if (offlineBadge) offlineBadge.style.display = 'inline-block';
       updateToolbarUI();
+      updateAllWrapperDimensions();
 
       // Create placeholders for remaining pages
       for (var i = 2; i <= totalPages; i++) {
@@ -1038,6 +1109,7 @@
         wrapper.setAttribute('data-page-num', String(i));
         zoomLayer.appendChild(wrapper);
       }
+      updateAllWrapperDimensions();
 
       if (totalPages >= 2) {
         var initialWrap2 = document.getElementById('page-wrapper-2');
