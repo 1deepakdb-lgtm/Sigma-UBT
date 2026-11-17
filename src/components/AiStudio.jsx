@@ -22,7 +22,7 @@ export default function AiStudio({
   activeMaleModelId = null,
   onSelectVoiceModel = null
 }) {
-  const [activeTab, setActiveTab] = useState('generator'); // 'generator' | 'listeningBuilder'
+  const [activeTab, setActiveTab] = useState('dialogue'); // 'dialogue' | 'listeningBuilder'
 
   // Super Admin verification (Strictly exclude Institute and Student)
   const [isSuperAdmin, setIsSuperAdmin] = useState(() => {
@@ -67,13 +67,13 @@ export default function AiStudio({
       const pathname = window.location.pathname || '';
       if (pathname.includes('/student') || pathname.includes('/institute')) {
         setIsSuperAdmin(false);
-        if (activeTab === 'listeningBuilder') setActiveTab('generator');
+        if (activeTab === 'listeningBuilder') setActiveTab('dialogue');
         return;
       }
       const r = (userRole || localStorage.getItem('currentRole') || localStorage.getItem('role') || '').toLowerCase();
       if (r === 'student' || r === 'institute' || r === 'staff' || r === 'teacher') {
         setIsSuperAdmin(false);
-        if (activeTab === 'listeningBuilder') setActiveTab('generator');
+        if (activeTab === 'listeningBuilder') setActiveTab('dialogue');
       } else if (r === 'admin' || r === 'superadmin' || pathname.startsWith('/admin') || window.location.search?.includes('superadmin=true')) {
         setIsSuperAdmin(true);
       }
@@ -919,7 +919,6 @@ return (
     {/* Global Navigation Tabs */}
     <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #e2e8f0', marginBottom: '24px', flexWrap: 'wrap' }}>
       {[
-        { id: 'generator', label: 'Voice Profiles & Speech Generator' },
         { id: 'dialogue', label: 'Multi-Speaker Dialogue Studio' },
         ...(isSuperAdmin ? [{ id: 'listeningBuilder', label: 'EPS Listening Studio (Q21–Q40)' }] : [])
       ].map(tab => {
