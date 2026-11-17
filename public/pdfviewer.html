@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Document Viewer</title>
 <style>
   * {
@@ -20,7 +20,7 @@
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: pan-x pan-y pinch-zoom;
+    touch-action: pan-x pan-y;
     -webkit-text-size-adjust: 100%;
     overscroll-behavior: none !important;
     overscroll-behavior-y: none !important;
@@ -33,7 +33,7 @@
     overflow-x: auto;
     background-color: #334155;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pan-y pinch-zoom;
+    touch-action: pan-x pan-y;
     position: relative;
     overscroll-behavior: none !important;
     overscroll-behavior-y: none !important;
@@ -41,12 +41,11 @@
   }
   #viewer-zoom-layer {
     min-width: 100%;
-    width: max-content;
+    width: 100%;
     min-height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 auto;
     transform-origin: 0 0;
   }
   .pdf-page-wrapper {
@@ -591,31 +590,24 @@
 
         var scaledViewport = page.getViewport({ scale: finalScale });
 
-        var canvas = wrapper.querySelector('canvas');
-        if (!canvas) {
-          canvas = document.createElement('canvas');
-          wrapper.innerHTML = '';
-          wrapper.appendChild(canvas);
-        }
+        var existingCanvas = wrapper.querySelector('canvas');
 
-        canvas.width = Math.round(scaledViewport.width);
-        canvas.height = Math.round(scaledViewport.height);
+        // DOUBLE BUFFERING: Render onto an off-screen canvas in the background!
+        // The existing canvas stays visible on screen without interruption, completely eliminating flicker and white flash!
+        var newCanvas = document.createElement('canvas');
+        newCanvas.width = Math.round(scaledViewport.width);
+        newCanvas.height = Math.round(scaledViewport.height);
+        newCanvas.style.width = displayWidth + 'px';
+        newCanvas.style.height = displayHeight + 'px';
+        newCanvas.style.aspectRatio = (baseViewport.width + ' / ' + baseViewport.height);
+        newCanvas.style.display = 'block';
+        newCanvas.style.margin = '0 auto';
+        newCanvas.style.backgroundColor = '#ffffff';
 
-        // Enforce physical display styling
-        canvas.style.width = displayWidth + 'px';
-        canvas.style.height = displayHeight + 'px';
-        canvas.style.aspectRatio = (baseViewport.width + ' / ' + baseViewport.height);
-        canvas.style.display = 'block';
-        canvas.style.margin = '0 auto';
-        canvas.style.backgroundColor = '#ffffff';
-
-        wrapper.style.minHeight = displayHeight + 'px';
-        wrapper.style.width = displayWidth + 'px';
-
-        var ctx = canvas.getContext('2d', { alpha: false });
+        var ctx = newCanvas.getContext('2d', { alpha: false });
         if (ctx) {
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
           ctx.imageSmoothingEnabled = true;
           if ('imageSmoothingQuality' in ctx) {
             ctx.imageSmoothingQuality = 'high';
@@ -631,10 +623,23 @@
         activeRenderTasks.set(pageNum, renderTask);
         await renderTask.promise;
         activeRenderTasks.delete(pageNum);
+
+        // ATOMIC SWAP: Replace the visible canvas instantaneously when the new crisp render is ready!
+        if (existingCanvas && existingCanvas.parentNode === wrapper) {
+          wrapper.replaceChild(newCanvas, existingCanvas);
+          existingCanvas.width = 0;
+          existingCanvas.height = 0;
+        } else {
+          wrapper.innerHTML = '';
+          wrapper.appendChild(newCanvas);
+        }
+
+        wrapper.style.minHeight = displayHeight + 'px';
+        wrapper.style.width = displayWidth + 'px';
         renderedPages.add(pageNum);
       } catch (err) {
         if (err && err.name === 'RenderingCancelledException') {
-          return; // Normal cancellation during zoom change
+          return; // Normal cancellation during rapid zoom changes
         }
         console.warn('Page ' + pageNum + ' render notice:', err);
       }
@@ -659,11 +664,24 @@
     function updateAllWrapperDimensions() {
       if (!pdfDoc) return;
       var dims = getTargetDimensions({ width: 595.28, height: 841.89 });
+      var screenWidth = container.clientWidth || window.innerWidth || 1000;
+      if (dims.width > screenWidth) {
+        zoomLayer.style.alignItems = 'flex-start';
+        zoomLayer.style.width = dims.width + 'px';
+      } else {
+        zoomLayer.style.alignItems = 'center';
+        zoomLayer.style.width = '100%';
+      }
       for (var p = 1; p <= pdfDoc.numPages; p++) {
         var el = document.getElementById('page-wrapper-' + p);
         if (el) {
           el.style.width = dims.width + 'px';
           el.style.minHeight = dims.height + 'px';
+          var cv = el.querySelector('canvas');
+          if (cv) {
+            cv.style.width = dims.width + 'px';
+            cv.style.height = dims.height + 'px';
+          }
         }
       }
     }
@@ -776,13 +794,20 @@
       handleScreenDoubleClick(e.clientX, e.clientY);
     });
 
+    var pinchEndedJustNow = false;
+
     // Mobile & tablet touch double-tap and two-finger anchored pinch-to-zoom
     container.addEventListener('touchstart', function(e) {
       if (e.touches.length === 2) {
+        e.preventDefault();
         isPinching = true;
+        pinchEndedJustNow = false;
+
         var t1 = e.touches[0];
         var t2 = e.touches[1];
         initialPinchDist = getTouchesDist(t1, t2);
+        if (initialPinchDist < 10) return;
+
         pinchStartZoom = (viewMode === 'custom') ? userZoom : 1.0;
         currentPinchScale = pinchStartZoom;
 
@@ -797,9 +822,9 @@
         var vx = midX - rect.left;
         var vy = midY - rect.top;
 
-        // Exact document coordinates inside #viewer-zoom-layer directly beneath finger midpoint
-        pinchDocPointX = container.scrollLeft + vx;
-        pinchDocPointY = container.scrollTop + vy;
+        var layerRect = zoomLayer.getBoundingClientRect();
+        pinchDocPointX = midX - layerRect.left;
+        pinchDocPointY = midY - layerRect.top;
 
         // Normalized 1.0x document anchor
         pinchDocAnchorX = pinchDocPointX / pinchStartZoom;
@@ -808,8 +833,8 @@
         // Anchor the CSS transform directly at the physical touch point on the document
         zoomLayer.style.transformOrigin = pinchDocPointX + 'px ' + pinchDocPointY + 'px';
         zoomLayer.style.transform = 'none';
-      } else if (e.touches.length === 1) {
-        isPinching = false;
+        zoomLayer.style.willChange = 'transform';
+      } else if (e.touches.length === 1 && !isPinching && !pinchEndedJustNow) {
         var now = Date.now();
         if (now - lastTapTime < 350) {
           e.preventDefault();
@@ -843,24 +868,29 @@
           // Smooth continuous visual scaling locked to the touch point with zero drift
           zoomLayer.style.transform = 'translate3d(' + dx + 'px, ' + dy + 'px, 0) scale(' + relScale + ')';
         }
+      } else if (pinchEndedJustNow) {
+        e.preventDefault();
       }
     }, { passive: false });
 
     container.addEventListener('touchend', function(e) {
       if (isPinching) {
         isPinching = false;
+        pinchEndedJustNow = true;
+
         var rect = container.getBoundingClientRect();
         var vx = pinchMidX - rect.left;
         var vy = pinchMidY - rect.top;
-
-        zoomLayer.style.transform = 'none';
-        zoomLayer.style.transformOrigin = '0 0';
 
         if (currentPinchScale <= 1.05) {
           // Snap directly to 100% Fit Width! Zero margins!
           viewMode = 'fit-width';
           userZoom = 1.0;
           updateAllWrapperDimensions();
+          zoomLayer.style.transform = 'none';
+          zoomLayer.style.transformOrigin = '0 0';
+          zoomLayer.style.willChange = 'auto';
+
           container.scrollLeft = 0;
           var targetTop = Math.max(0, Math.round((pinchDocAnchorY * 1.0) - vy));
           container.scrollTop = targetTop;
@@ -870,6 +900,10 @@
           viewMode = 'custom';
           userZoom = Math.round(currentPinchScale * 100) / 100;
           updateAllWrapperDimensions();
+          zoomLayer.style.transform = 'none';
+          zoomLayer.style.transformOrigin = '0 0';
+          zoomLayer.style.willChange = 'auto';
+
           var targetLeft = Math.max(0, Math.round((pinchDocAnchorX * userZoom) - vx));
           var targetTop = Math.max(0, Math.round((pinchDocAnchorY * userZoom) - vy));
           container.scrollLeft = targetLeft;
@@ -878,6 +912,11 @@
         }
         initialPinchDist = 0;
       }
+      if (e.touches.length === 0) {
+        setTimeout(function() {
+          pinchEndedJustNow = false;
+        }, 120);
+      }
     });
 
     container.addEventListener('touchcancel', function(e) {
@@ -885,7 +924,11 @@
         isPinching = false;
         zoomLayer.style.transform = 'none';
         zoomLayer.style.transformOrigin = '0 0';
+        zoomLayer.style.willChange = 'auto';
         initialPinchDist = 0;
+      }
+      if (e.touches.length === 0) {
+        pinchEndedJustNow = false;
       }
     });
 
