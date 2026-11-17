@@ -902,6 +902,19 @@ export default function EpsBookReader({
   const miniDragRef = useRef({ startX: 0, startY: 0, initialX: 10, initialY: 56, currentX: 10, currentY: 56, moved: false, isDown: false });
   const miniAudioBtnRef = useRef(null);
 
+  // Platform detection: Website vs Android/iOS Mobile Apps
+  const [isMobileApp, setIsMobileApp] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isApp = !!window.AndroidApp ||
+                    !!window.Capacitor ||
+                    !!window._isNativeApp ||
+                    (window.location.search && window.location.search.includes("app=true")) ||
+                    /ExamJK-Android-App|ExamJKApp|Android.*Version\/[0-9.]+\s+Chrome\/[0-9.]+/i.test(navigator.userAgent);
+      setIsMobileApp(isApp);
+    }
+  }, []);
+
   // Admin/Institute Upload & Edit Modal State
   const [isAdmin, setIsAdmin] = useState(false);
   const [uploadModalChapter, setUploadModalChapter] = useState(null);
@@ -2979,7 +2992,7 @@ export default function EpsBookReader({
               boxSizing: "border-box"
             }}
           >
-            {/* ROW 1: HEADER (DRAG HANDLE, CHAPTER TITLE) */}
+            {/* ROW 1: HEADER (DRAG HANDLE, BACK BUTTON, CHAPTER TITLE) */}
             <div style={{ display: "flex", alignItems: "center", width: "100%", gap: "8px" }}>
               {/* DRAG HANDLE */}
               <div
@@ -2998,6 +3011,47 @@ export default function EpsBookReader({
               >
                 ⠿
               </div>
+
+              {/* WEBSITE-ONLY GO BACK BUTTON (Hidden on Android/iOS Mobile Apps) */}
+              {!isMobileApp && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeFullScreen();
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  title="Return to Chapter List (Esc)"
+                  style={{
+                    backgroundColor: "#f1f5f9",
+                    color: "#0f172a",
+                    border: "1px solid #cbd5e1",
+                    height: "28px",
+                    padding: "0 10px",
+                    borderRadius: "8px",
+                    fontWeight: "700",
+                    fontSize: "11px",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    flexShrink: 0,
+                    lineHeight: 1,
+                    boxSizing: "border-box",
+                    transition: "all 0.15s ease"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f1f5f9"; }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                  </svg>
+                  <span>Back</span>
+                </button>
+              )}
 
               {/* CHAPTER TITLE & CRISP BADGE */}
               <div
@@ -3662,6 +3716,50 @@ export default function EpsBookReader({
               )}
             </div>
           </div>
+        )}
+
+        {/* ================= 3. WEBSITE-ONLY FLOATING GO BACK BUTTON (Hidden on Mobile Apps) ================= */}
+        {!isMobileApp && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              closeFullScreen();
+            }}
+            title="Go Back to Chapter List (Esc)"
+            style={{
+              position: "fixed",
+              top: "14px",
+              left: "14px",
+              zIndex: 100018,
+              backgroundColor: "rgba(15, 23, 42, 0.88)",
+              color: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.28)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              borderRadius: "20px",
+              padding: "7px 14px",
+              fontSize: "12px",
+              fontWeight: "700",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+              lineHeight: 1,
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              transition: "all 0.15s ease"
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.98)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.88)"; }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            <span>Go Back</span>
+          </button>
         )}
 
         {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
