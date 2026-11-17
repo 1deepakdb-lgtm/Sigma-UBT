@@ -935,7 +935,7 @@
     });
 
     // =========================================================================
-    // 4. MOBILE PINCH-TO-ZOOM & TWO-STAGE VECTOR RESOLUTION SETTLE
+    // 4. SCREEN DOUBLE-CLICK / DOUBLE-TAP & PINCH-TO-ZOOM ENGINE
     // =========================================================================
     var isPinching = false;
     var initialPinchDist = 0;
@@ -947,6 +947,43 @@
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     }
 
+    // Double-click / double-tap anywhere on screen: Come directly to Fit Width!
+    function handleScreenDoubleClick(clientX, clientY) {
+      var oldScrollTop = container.scrollTop;
+      var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
+
+      if (viewMode !== 'fit-width' || userZoom > 1.05) {
+        // Any time user double clicks while zoomed or in another mode: immediately COME ON WIDTH (Fit Width)
+        viewMode = 'fit-width';
+        userZoom = 1.0;
+        var ratioDown = 1.0 / oldZoom;
+        updateToolbarUI();
+        updateAllWrapperDimensions();
+        debouncedReRender();
+        container.scrollTop = Math.round(oldScrollTop * ratioDown);
+        container.scrollLeft = 0;
+      } else {
+        // If already at Fit Width, double click zooms in to Adobe Acrobat 288% clarity!
+        viewMode = 'custom';
+        userZoom = 2.88;
+        var ratioUp = 2.88 / oldZoom;
+        updateToolbarUI();
+        updateAllWrapperDimensions();
+        debouncedReRender();
+        container.scrollTop = Math.round(oldScrollTop * ratioUp);
+      }
+    }
+
+    // Desktop & laptop mouse/trackpad double-click anywhere on the screen
+    container.addEventListener('dblclick', function(e) {
+      if (e.target && (e.target.closest('#pdf-toolbar') || e.target.closest('button'))) {
+        return;
+      }
+      e.preventDefault();
+      handleScreenDoubleClick(e.clientX, e.clientY);
+    });
+
+    // Mobile & tablet touch double-tap anywhere on the screen
     container.addEventListener('touchstart', function(e) {
       if (e.touches.length === 2) {
         isPinching = true;
@@ -956,19 +993,9 @@
       } else if (e.touches.length === 1) {
         isPinching = false;
         var now = Date.now();
-        // Double-tap zoom toggle: toggles between Fit Width and Adobe Acrobat 288% zoom!
-        if (now - lastTapTime < 320) {
+        if (now - lastTapTime < 350) {
           e.preventDefault();
-          if (viewMode === 'custom' && userZoom > 1.5) {
-            viewMode = 'fit-width';
-            userZoom = 1.0;
-          } else {
-            viewMode = 'custom';
-            userZoom = 2.88;
-          }
-          updateToolbarUI();
-          updateAllWrapperDimensions();
-          debouncedReRender();
+          handleScreenDoubleClick(e.touches[0].clientX, e.touches[0].clientY);
           lastTapTime = 0;
           return;
         }
