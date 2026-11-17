@@ -714,6 +714,22 @@
     function updateToolbarUI() {}
 
     // Pull-Down-To-Refresh Neutralizer: When at top of PDF (scrollTop <= 0), prevent downward swipe reload
+    function disableAppRefresh() {
+      try {
+        if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
+          window.AndroidApp.setSwipeRefreshEnabled(false);
+        }
+        if (window.parent && window.parent.AndroidApp && typeof window.parent.AndroidApp.setSwipeRefreshEnabled === "function") {
+          window.parent.AndroidApp.setSwipeRefreshEnabled(false);
+        }
+        if (window.top && window.top.AndroidApp && typeof window.top.AndroidApp.setSwipeRefreshEnabled === "function") {
+          window.top.AndroidApp.setSwipeRefreshEnabled(false);
+        }
+      } catch (err) {}
+    }
+    disableAppRefresh();
+    window.addEventListener('touchstart', disableAppRefresh, { passive: true });
+
     var singleTouchStartY = 0;
     container.addEventListener('touchstart', function(e) {
       if (e.touches.length === 1) {

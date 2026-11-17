@@ -2088,30 +2088,58 @@ export default function EpsBookReader({
     setShowTrackDropdown(false);
   };
 
-  // Intercept Mobile Hardware Back Button, Escape Key, and Iframe Gestures
+  // Global lock for pull-down refresh and hardware back when ANY PDF is open
   useEffect(() => {
+    const isAnyPdfOpen = !!(selectedChapter || viewingMaterial || viewingMeaningChapter);
+    if (typeof window !== "undefined") {
+      window.__isPdfOpen = isAnyPdfOpen;
+      if (isAnyPdfOpen) {
+        document.body.style.overscrollBehavior = "none";
+        document.body.style.overscrollBehaviorY = "none";
+        document.documentElement.style.overscrollBehavior = "none";
+        document.documentElement.style.overscrollBehaviorY = "none";
+        if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
+          try { window.AndroidApp.setSwipeRefreshEnabled(false); } catch (e) {}
+        }
+      } else {
+        document.body.style.overscrollBehavior = "";
+        document.body.style.overscrollBehaviorY = "";
+        document.documentElement.style.overscrollBehavior = "";
+        document.documentElement.style.overscrollBehaviorY = "";
+        if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
+          try { window.AndroidApp.setSwipeRefreshEnabled(true); } catch (e) {}
+        }
+      }
+    }
+
     const handleKeyDown = (e) => {
-      if (e.key === "Escape" && selectedChapter) {
-        closeFullScreen(true);
+      if (e.key === "Escape") {
+        if (viewingMaterial) { setViewingMaterial(null); return; }
+        if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
+        if (selectedChapter) { closeFullScreen(true); return; }
       }
     };
 
-    const handlePopState = (e) => {
-      if (selectedChapter) {
-        closeFullScreen(false);
-      }
+    const handlePopState = () => {
+      if (viewingMaterial) { setViewingMaterial(null); return; }
+      if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
+      if (selectedChapter) { closeFullScreen(false); return; }
     };
 
     const handleWindowMessage = (e) => {
-      if (e.data === "EPS_READER_BACK" && selectedChapter) {
-        closeFullScreen(true);
+      if (e.data === "EPS_READER_BACK") {
+        if (viewingMaterial) { setViewingMaterial(null); return; }
+        if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
+        if (selectedChapter) { closeFullScreen(true); return; }
       }
     };
 
-    if (selectedChapter) {
+    if (isAnyPdfOpen) {
       window.__handleAppBack = () => {
-        closeFullScreen(false);
-        return true;
+        if (viewingMaterial) { setViewingMaterial(null); return true; }
+        if (viewingMeaningChapter) { setViewingMeaningChapter(null); return true; }
+        if (selectedChapter) { closeFullScreen(false); return true; }
+        return false;
       };
     }
 
@@ -2124,8 +2152,14 @@ export default function EpsBookReader({
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("message", handleWindowMessage);
       if (window.__handleAppBack) window.__handleAppBack = null;
+      if (typeof window !== "undefined") {
+        document.body.style.overscrollBehavior = "";
+        document.body.style.overscrollBehaviorY = "";
+        document.documentElement.style.overscrollBehavior = "";
+        document.documentElement.style.overscrollBehaviorY = "";
+      }
     };
-  }, [selectedChapter]);
+  }, [selectedChapter, viewingMaterial, viewingMeaningChapter]);
 
   // Playable audio URL (checks offline cached blob first, then direct URL or TTS fallback)
   const getPlayableAudioUrl = (track) => {

@@ -284,6 +284,11 @@ public class MainActivity extends AppCompatActivity {
     private void setupSwipeRefresh() {
         swipeRefresh.setColorSchemeResources(R.color.accent, R.color.primary);
         swipeRefresh.setOnRefreshListener(() -> {
+            String currentUrl = webView.getUrl();
+            if (currentUrl != null && (currentUrl.contains("pdfviewer.html") || currentUrl.contains(".pdf") || currentUrl.contains("/uploads/eps-chapters/"))) {
+                swipeRefresh.setRefreshing(false);
+                return;
+            }
             if (webView.getVisibility() == View.VISIBLE) {
                 webView.reload();
             } else {
@@ -291,6 +296,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         swipeRefresh.setOnChildScrollUpCallback((parent, child) -> {
+            if (!swipeRefresh.isEnabled()) {
+                return true;
+            }
+            String currentUrl = webView.getUrl();
+            if (currentUrl != null && (currentUrl.contains("pdfviewer.html") || currentUrl.contains(".pdf") || currentUrl.contains("/uploads/eps-chapters/"))) {
+                return true;
+            }
             return webView.getScrollY() > 0;
         });
     }
