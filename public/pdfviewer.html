@@ -14,7 +14,7 @@
   html, body {
     width: 100%;
     height: 100%;
-    background-color: #ffffff;
+    background-color: #0f172a;
     color: #0f172a;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     overflow: hidden;
@@ -28,7 +28,7 @@
     height: 100%;
     overflow-y: auto;
     overflow-x: auto;
-    background-color: #f1f5f9;
+    background-color: #334155;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y pinch-zoom;
     position: relative;
@@ -40,29 +40,28 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    transform-origin: 0 0;
-    transition: transform 0.08s ease-out;
     margin: 0 auto;
+    transform-origin: 0 0;
   }
   .pdf-page-wrapper {
     position: relative;
-    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 6px 0;
+    padding: 8px 0;
     background-color: transparent;
     box-sizing: border-box;
+    margin: 0 auto;
   }
   @media (min-width: 768px) {
     .pdf-page-wrapper {
-      padding: 10px 0;
+      padding: 12px 0;
     }
   }
   canvas {
     display: block;
     background-color: #ffffff;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
     margin: 0 auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -76,14 +75,14 @@
     align-items: center;
     justify-content: center;
     gap: 16px;
-    background-color: #ffffff;
+    background-color: #0f172a;
     z-index: 100;
   }
   .spinner {
     width: 44px;
     height: 44px;
-    border: 3.5px solid rgba(0, 0, 0, 0.1);
-    border-top-color: #1e3a8a;
+    border: 3.5px solid rgba(255, 255, 255, 0.15);
+    border-top-color: #38bdf8;
     border-radius: 50%;
     animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
   }
@@ -93,7 +92,7 @@
   .loading-text {
     font-size: 14px;
     font-weight: 700;
-    color: #1e3a8a;
+    color: #f8fafc;
     letter-spacing: 0.3px;
     text-align: center;
     padding: 0 20px;
@@ -101,9 +100,9 @@
   .loading-badge {
     font-size: 11px;
     font-weight: 800;
-    color: #15803d;
-    background-color: #dcfce7;
-    border: 1px solid #bbf7d0;
+    color: #4ade80;
+    background-color: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
     padding: 3px 10px;
     border-radius: 12px;
     display: none;
@@ -143,6 +142,92 @@
     font-weight: 700;
     cursor: pointer;
   }
+
+  /* ================= FLOATING RESPONSIVE PDF TOOLBAR (ADOBE ACROBAT CONTROLS) ================= */
+  #pdf-toolbar {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 28px;
+    padding: 4px 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+  }
+  .toolbar-btn {
+    background: transparent;
+    border: none;
+    color: #f1f5f9;
+    height: 32px;
+    min-width: 32px;
+    padding: 0 8px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #38bdf8;
+  }
+  .toolbar-btn:active {
+    transform: scale(0.94);
+  }
+  .toolbar-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+  }
+  #btn-zoom-level {
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: 800;
+    color: #38bdf8;
+    min-width: 50px;
+    text-align: center;
+    padding: 0 4px;
+  }
+  .toolbar-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 2px;
+    flex-shrink: 0;
+  }
+  @media (max-width: 480px) {
+    #pdf-toolbar {
+      bottom: 12px;
+      gap: 3px;
+      padding: 3px 6px;
+    }
+    .toolbar-btn {
+      height: 28px;
+      min-width: 28px;
+      padding: 0 6px;
+      font-size: 11px;
+    }
+    #btn-zoom-level {
+      font-size: 11px;
+      min-width: 42px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -161,6 +246,17 @@
 
 <div id="viewer-scroll-container">
   <div id="viewer-zoom-layer"></div>
+</div>
+
+<!-- ================= ADOBE ACROBAT CONTROLS TOOLBAR ================= -->
+<div id="pdf-toolbar">
+  <button class="toolbar-btn" id="btn-zoom-out" title="Zoom Out (−25%)">">−</button>
+  <button class="toolbar-btn" id="btn-zoom-level" title="Click to cycle: Fit Width / Fit Page / 100%">100%</button>
+  <button class="toolbar-btn" id="btn-zoom-in" title="Zoom In (+25%)">+</button>
+  <div class="toolbar-divider"></div>
+  <button class="toolbar-btn active" id="btn-fit-width" title="Fit to Available Width">⤢ Width</button>
+  <button class="toolbar-btn" id="btn-fit-page" title="Fit Entire Page Vertically">↕ Page</button>
+  <button class="toolbar-btn" id="btn-zoom-reset" title="Original 100% Size">1:1</button>
 </div>
 
 <script src="/pdf.worker.min.js"></script>
@@ -210,6 +306,13 @@
     var container = document.getElementById('viewer-scroll-container');
     var zoomLayer = document.getElementById('viewer-zoom-layer');
 
+    var btnZoomOut = document.getElementById('btn-zoom-out');
+    var btnZoomIn = document.getElementById('btn-zoom-in');
+    var btnZoomLevel = document.getElementById('btn-zoom-level');
+    var btnFitWidth = document.getElementById('btn-fit-width');
+    var btnFitPage = document.getElementById('btn-fit-page');
+    var btnZoomReset = document.getElementById('btn-zoom-reset');
+
     if (!rawUrl) {
       showError('No document URL specified.');
       return;
@@ -219,7 +322,13 @@
     var pdfDoc = null;
     var renderedPages = new Set();
     var renderingPages = new Set();
+    var activeRenderTasks = new Map();
     var resizeTimer = null;
+    var reRenderDebounceTimer = null;
+
+    // View state
+    var viewMode = 'fit-width'; // 'fit-width', 'fit-page', 'custom'
+    var userZoom = 1.0; // 1.0 = 100%, 2.0 = 200%, 2.88 = 288%
 
     if (typeof pdfjsLib === 'undefined') {
       showError('PDF viewer engine failed to initialize.');
@@ -259,7 +368,6 @@
     var STORE_FILES = 'offline_files';
     var CACHE_NAME = 'sigma_pdf_cache_v1';
 
-    // Request permanent persistence from browser so OS never auto-cleans storage
     if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
       try {
         navigator.storage.persist().catch(function() {});
@@ -392,7 +500,6 @@
     async function downloadPdfWithProgress(url, onProgress) {
       var fetchUrl = toAbsoluteUrl(url);
 
-      // 1. Try modern fetch with direct arrayBuffer
       try {
         var resp = await fetch(fetchUrl);
         if (resp.ok) {
@@ -403,10 +510,9 @@
           }
         }
       } catch (fetchErr) {
-        console.warn('Fetch download notice, trying XMLHttpRequest fallback:', fetchErr);
+        console.warn('Fetch notice, trying XHR fallback:', fetchErr);
       }
 
-      // 2. XMLHttpRequest fallback with arraybuffer (100% compatible with older Smart Boards & WebViews)
       return new Promise(function(resolve, reject) {
         function tryFetchUrl(targetUrl, onFail) {
           var xhr = new XMLHttpRequest();
@@ -432,7 +538,7 @@
             if (onFail) {
               onFail();
             } else {
-              reject(new Error('Network connection error while fetching PDF.'));
+              reject(new Error('Network error fetching document.'));
             }
           };
           xhr.send();
@@ -443,7 +549,7 @@
             var directFallback = 'https://examjk.com' + (url.startsWith('/') ? url : '/' + url);
             tryFetchUrl(directFallback, null);
           } else {
-            reject(new Error('Network connection error while fetching PDF.'));
+            reject(new Error('Network error fetching document.'));
           }
         });
       });
@@ -459,7 +565,6 @@
         }
       }
 
-      // 0. Priority 0: Instant RAM in-memory cache check (0ms latency!)
       try {
         var ramCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
           ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
@@ -477,7 +582,6 @@
         }
       } catch (e) {}
 
-      // 0b. If directly passed a local blob: URL
       if (url.startsWith('blob:') || validUrl.startsWith('blob:')) {
         try {
           var blobResp = await fetch(validUrl);
@@ -488,14 +592,11 @@
       }
 
       var db = await openOfflineDb();
-
-      // Step 1: Check persistent IndexedDB
       var blob = await getFromDb(db, validUrl);
       if (!blob && validUrl !== url) {
         blob = await getFromDb(db, url);
       }
 
-      // Step 2: Check persistent CacheStorage
       if (!blob) {
         blob = await getFromCacheStorage(validUrl);
       }
@@ -504,11 +605,9 @@
       }
 
       if (blob) {
-        // Instant 0ms cached display from persistent disk storage!
         if (loadingView) loadingView.style.display = 'none';
         if (offlineBadge) offlineBadge.style.display = 'inline-block';
         var cachedArrBuf = await readBlobAsArrayBuffer(blob);
-        // Seed RAM cache for future 0ms instant opens
         try {
           var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
             ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
@@ -519,13 +618,11 @@
         return cachedArrBuf;
       }
 
-      // Step 3: Fetch over network with progress bar and store permanently for lifetime
       if (loadingProgress) loadingProgress.textContent = 'Opening Document... 0%';
       var downloadedArrayBuffer = await downloadPdfWithProgress(validUrl, function(pct) {
         if (loadingProgress) loadingProgress.textContent = 'Opening Document... ' + pct + '%';
       });
 
-      // Save to IndexedDB & CacheStorage in background for lifetime offline access
       try {
         var pdfBlob = new Blob([downloadedArrayBuffer], { type: 'application/pdf' });
         saveToDb(db, validUrl, pdfBlob);
@@ -541,66 +638,93 @@
     }
 
     // =========================================================================
-    // 2. DOCUMENT RENDERING ENGINE (RESPONSIVE FIT ON SCREEN & CRYSTAL CLEAR VECTOR INTENT)
+    // 2. DYNAMIC DIMENSIONS & VECTOR RENDERING ENGINE (ADOBE ACROBAT CLARITY)
     // =========================================================================
     function getTargetDimensions(baseViewport) {
-      var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
-      var screenHeight = window.innerHeight || document.documentElement.clientHeight || 800;
+      var screenWidth = container.clientWidth || window.innerWidth || 1000;
+      var screenHeight = container.clientHeight || window.innerHeight || 800;
 
       var pageW = (baseViewport && baseViewport.width) ? baseViewport.width : 595.28;
       var pageH = (baseViewport && baseViewport.height) ? baseViewport.height : 841.89;
-      var pageAspect = pageH / pageW; // Standard ~1.414 for A4 textbooks
+      var pageAspect = pageH / pageW;
 
-      // 1. Mobile & Portrait Displays (Smartphones, Android App, iOS, Portrait Tablets):
-      // Full edge-to-edge fit without horizontal overflow (0px margin, perfect 100% width)
-      if (screenWidth < 768 || screenWidth < screenHeight) {
-        var fitWidth = screenWidth;
-        return { width: fitWidth, height: Math.floor(fitWidth * pageAspect) };
+      if (viewMode === 'fit-page') {
+        // Fit entire page vertically and horizontally with zero clipping
+        var availH = screenHeight - 20;
+        var availW = screenWidth - 16;
+        var scaleH = availH / pageH;
+        var scaleW = availW / pageW;
+        var fitScale = Math.min(scaleH, scaleW);
+        var finalW = Math.max(320, Math.round(pageW * fitScale));
+        return { width: finalW, height: Math.floor(finalW * pageAspect), scale: fitScale };
+      } else if (viewMode === 'custom') {
+        // User zoom (100% to 500%): True physical magnification
+        var baseW = screenWidth < 768 ? screenWidth : Math.max(600, screenWidth - 24);
+        var scaledW = Math.round(baseW * userZoom);
+        return { width: scaledW, height: Math.floor(scaledW * pageAspect), scale: (scaledW / pageW) };
+      } else {
+        // 'fit-width' (Default): Full width usage without artificial 940px caps!
+        var fitWidth = screenWidth < 768 ? screenWidth : Math.max(600, screenWidth - 24);
+        return { width: fitWidth, height: Math.floor(fitWidth * pageAspect), scale: (fitWidth / pageW) };
       }
-
-      // 2. Landscape Displays (Laptops, Monitors, Smart Boards):
-      // Fit comfortably within available content width without awkward 225% blowup or side clipping
-      var availableW = Math.max(480, screenWidth - 32);
-      var optimalW = Math.min(availableW, 940);
-      return { width: optimalW, height: Math.floor(optimalW * pageAspect) };
     }
 
     function getTargetWidth(baseViewport) {
       return getTargetDimensions(baseViewport).width;
     }
 
-    async function renderPage(pageNum, wrapper, targetWidth) {
-      if (renderingPages.has(pageNum)) return;
-      renderingPages.add(pageNum);
+    async function renderPage(pageNum, wrapper) {
+      if (!pdfDoc) return;
+
+      // Cancel previous in-flight render task if zoom or layout changed
+      if (activeRenderTasks.has(pageNum)) {
+        try {
+          activeRenderTasks.get(pageNum).cancel();
+        } catch (e) {}
+        activeRenderTasks.delete(pageNum);
+      }
 
       try {
         var page = await pdfDoc.getPage(pageNum);
         var baseViewport = page.getViewport({ scale: 1.0 });
         var dims = getTargetDimensions(baseViewport);
-        var displayWidth = Math.round(targetWidth || dims.width);
-        var pageAspect = baseViewport.height / baseViewport.width;
-        var displayHeight = Math.round(displayWidth * pageAspect);
+        var displayWidth = dims.width;
+        var displayHeight = dims.height;
 
         var dpr = window.devicePixelRatio || 1;
-        // Ultra-HD adaptive backing scale: minimum 2.0x for crisp vector text; up to 3.0x on Retina / 3x screens
+        // High-DPI backing scale: minimum 2.0x for razor-sharp vector text; up to 3.0x on Retina / OLED screens
         var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 1);
-        var targetBackingScale = isLowMem ? Math.min(dpr, 1.5) : Math.min(Math.max(dpr, 2.0), 3.0);
+        var backingScale = isLowMem ? Math.min(dpr, 1.75) : Math.min(Math.max(dpr, 2.0), 3.0);
 
-        var baseScale = displayWidth / baseViewport.width;
-        var finalScale = baseScale * targetBackingScale;
+        var finalScale = (displayWidth / baseViewport.width) * backingScale;
+
+        // Hardware safety guard: prevent canvas dimension from exceeding mobile GPU texture limit (4096px)
+        if (baseViewport.width * finalScale > 4096 || baseViewport.height * finalScale > 4096) {
+          finalScale = Math.min(4096 / baseViewport.width, 4096 / baseViewport.height);
+        }
+
         var scaledViewport = page.getViewport({ scale: finalScale });
 
-        var canvas = document.createElement('canvas');
+        var canvas = wrapper.querySelector('canvas');
+        if (!canvas) {
+          canvas = document.createElement('canvas');
+          wrapper.innerHTML = '';
+          wrapper.appendChild(canvas);
+        }
+
         canvas.width = Math.round(scaledViewport.width);
         canvas.height = Math.round(scaledViewport.height);
 
-        // Display dimensions strictly enforce responsive layout
+        // Enforce physical display styling
         canvas.style.width = displayWidth + 'px';
         canvas.style.height = displayHeight + 'px';
         canvas.style.aspectRatio = (baseViewport.width + ' / ' + baseViewport.height);
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
         canvas.style.backgroundColor = '#ffffff';
+
+        wrapper.style.minHeight = displayHeight + 'px';
+        wrapper.style.width = displayWidth + 'px';
 
         var ctx = canvas.getContext('2d', { alpha: false });
         if (ctx) {
@@ -612,146 +736,167 @@
           }
         }
 
-        // Render PDF directly at physical backing resolution for 100% crisp, razor-sharp vector text
-        await page.render({
+        // Render PDF directly using PDF.js vector rasterizer at full physical device resolution
+        var renderTask = page.render({
           canvasContext: ctx,
-          viewport: scaledViewport,
-          intent: 'print'
-        }).promise;
+          viewport: scaledViewport
+        });
 
-        wrapper.innerHTML = '';
-        wrapper.style.minHeight = displayHeight + 'px';
-        wrapper.appendChild(canvas);
-
+        activeRenderTasks.set(pageNum, renderTask);
+        await renderTask.promise;
+        activeRenderTasks.delete(pageNum);
         renderedPages.add(pageNum);
       } catch (err) {
-        console.warn('Page ' + pageNum + ' high-res render warning, executing fallback:', err);
-        try {
-          var fbPage = await pdfDoc.getPage(pageNum);
-          var fbBase = fbPage.getViewport({ scale: 1.0 });
-          var fbDims = getTargetDimensions(fbBase);
-          var fbW = Math.round(targetWidth || fbDims.width);
-          var fbH = Math.round(fbW * (fbBase.height / fbBase.width));
-          var fbScale = fbW / fbBase.width;
-          var fbViewport = fbPage.getViewport({ scale: fbScale });
-          var fbCanvas = document.createElement('canvas');
-          var fbCtx = fbCanvas.getContext('2d', { alpha: false });
-          fbCanvas.width = Math.round(fbViewport.width);
-          fbCanvas.height = Math.round(fbViewport.height);
-          fbCanvas.style.width = fbW + 'px';
-          fbCanvas.style.height = fbH + 'px';
-          fbCanvas.style.aspectRatio = (fbBase.width + ' / ' + fbBase.height);
-          fbCanvas.style.display = 'block';
-          fbCanvas.style.margin = '0 auto';
-          fbCanvas.style.backgroundColor = '#ffffff';
-          if (fbCtx) {
-            fbCtx.fillStyle = '#ffffff';
-            fbCtx.fillRect(0, 0, fbCanvas.width, fbCanvas.height);
-          }
-          await fbPage.render({ canvasContext: fbCtx, viewport: fbViewport, intent: 'print' }).promise;
-          wrapper.innerHTML = '';
-          wrapper.style.minHeight = fbH + 'px';
-          wrapper.appendChild(fbCanvas);
-          renderedPages.add(pageNum);
-        } catch (fbErr) {
-          console.error('Fatal render failure for page ' + pageNum + ':', fbErr);
+        if (err && err.name === 'RenderingCancelledException') {
+          return; // Normal cancellation during zoom change
         }
-      } finally {
-        renderingPages.delete(pageNum);
+        console.warn('Page ' + pageNum + ' render notice:', err);
       }
     }
 
+    function unrenderPage(pageNum, wrapper) {
+      if (!renderedPages.has(pageNum)) return;
+      if (activeRenderTasks.has(pageNum)) {
+        try { activeRenderTasks.get(pageNum).cancel(); } catch (e) {}
+        activeRenderTasks.delete(pageNum);
+      }
+      var canvas = wrapper.querySelector('canvas');
+      if (canvas) {
+        canvas.width = 0;
+        canvas.height = 0;
+        wrapper.innerHTML = '';
+      }
+      renderedPages.delete(pageNum);
+    }
+
+    // Re-render all currently visible pages at the new vector zoom scale
+    function reRenderVisiblePages() {
+      if (!pdfDoc) return;
+      var total = pdfDoc.numPages;
+      renderedPages.clear();
+
+      for (var p = 1; p <= total; p++) {
+        var el = document.getElementById('page-wrapper-' + p);
+        if (el) {
+          var rect = el.getBoundingClientRect();
+          // Render if inside or close to visible window
+          if (rect.top < window.innerHeight + 800 && rect.bottom > -800) {
+            renderPage(p, el);
+          }
+        }
+      }
+    }
+
+    function debouncedReRender() {
+      clearTimeout(reRenderDebounceTimer);
+      reRenderDebounceTimer = setTimeout(function() {
+        reRenderVisiblePages();
+      }, 200);
+    }
+
     // =========================================================================
-    // 3. MOBILE PINCH-TO-ZOOM, PAN, & DOUBLE-TAP (FOCAL-POINT ANCHORED ZOOM)
+    // 3. TOOLBAR CONTROLS & DISPLAY MODES (FIT WIDTH, FIT PAGE, ZOOM + / -)
     // =========================================================================
-    var currentScale = 1.0;
-    var panX = 0;
-    var panY = 0;
+    function updateToolbarUI() {
+      btnFitWidth.classList.toggle('active', viewMode === 'fit-width');
+      btnFitPage.classList.toggle('active', viewMode === 'fit-page');
+      btnZoomReset.classList.toggle('active', viewMode === 'custom' && Math.abs(userZoom - 1.0) < 0.05);
+
+      if (viewMode === 'fit-width') {
+        btnZoomLevel.textContent = 'Width';
+      } else if (viewMode === 'fit-page') {
+        btnZoomLevel.textContent = 'Page';
+      } else {
+        btnZoomLevel.textContent = Math.round(userZoom * 100) + '%';
+      }
+    }
+
+    btnFitWidth.addEventListener('click', function(e) {
+      e.stopPropagation();
+      viewMode = 'fit-width';
+      userZoom = 1.0;
+      updateToolbarUI();
+      debouncedReRender();
+    });
+
+    btnFitPage.addEventListener('click', function(e) {
+      e.stopPropagation();
+      viewMode = 'fit-page';
+      userZoom = 1.0;
+      updateToolbarUI();
+      debouncedReRender();
+    });
+
+    btnZoomReset.addEventListener('click', function(e) {
+      e.stopPropagation();
+      viewMode = 'custom';
+      userZoom = 1.0;
+      updateToolbarUI();
+      debouncedReRender();
+    });
+
+    btnZoomIn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      viewMode = 'custom';
+      userZoom = Math.min(5.0, userZoom + 0.25);
+      updateToolbarUI();
+      debouncedReRender();
+    });
+
+    btnZoomOut.addEventListener('click', function(e) {
+      e.stopPropagation();
+      viewMode = 'custom';
+      userZoom = Math.max(0.4, userZoom - 0.25);
+      updateToolbarUI();
+      debouncedReRender();
+    });
+
+    btnZoomLevel.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (viewMode === 'fit-width') {
+        viewMode = 'fit-page';
+      } else if (viewMode === 'fit-page') {
+        viewMode = 'custom';
+        userZoom = 1.0;
+      } else {
+        viewMode = 'fit-width';
+      }
+      updateToolbarUI();
+      debouncedReRender();
+    });
+
+    // =========================================================================
+    // 4. MOBILE PINCH-TO-ZOOM & TWO-STAGE VECTOR RESOLUTION SETTLE
+    // =========================================================================
     var isPinching = false;
-    var isPanning = false;
     var initialPinchDist = 0;
-    var initialPinchScale = 1.0;
-    var lastMidX = 0;
-    var lastMidY = 0;
-    var lastTouchX = 0;
-    var lastTouchY = 0;
+    var pinchStartZoom = 1.0;
     var lastTapTime = 0;
-
-    function applyTransform(animated) {
-      zoomLayer.style.transition = animated ? 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none';
-      zoomLayer.style.transform = 'translate3d(' + panX + 'px, ' + panY + 'px, 0) scale(' + currentScale + ')';
-    }
-
-    function clampPan() {
-      if (currentScale <= 1.02) {
-        panX = 0;
-        panY = 0;
-        currentScale = 1.0;
-        return;
-      }
-      var rect = container.getBoundingClientRect();
-      var layerWidth = zoomLayer.offsetWidth * currentScale;
-      var layerHeight = zoomLayer.offsetHeight * currentScale;
-
-      if (layerWidth > rect.width) {
-        var minPanX = rect.width - layerWidth;
-        var maxPanX = 0;
-        panX = Math.min(maxPanX, Math.max(minPanX, panX));
-      } else {
-        panX = (rect.width - layerWidth) / 2;
-      }
-
-      if (layerHeight > rect.height) {
-        var minPanY = rect.height - layerHeight;
-        var maxPanY = 0;
-        panY = Math.min(maxPanY, Math.max(minPanY, panY));
-      } else {
-        panY = 0;
-      }
-    }
 
     function getTouchesDist(t1, t2) {
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     }
 
-    // Touch event listeners: Focal-point pinch zoom & pan ("zoom in garda jaha bata zoom garyo tyahi bata zoom hunchha")
     container.addEventListener('touchstart', function(e) {
       if (e.touches.length === 2) {
         isPinching = true;
-        isPanning = false;
         initialPinchDist = getTouchesDist(e.touches[0], e.touches[1]);
-        initialPinchScale = currentScale;
-        lastMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        lastMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        pinchStartZoom = userZoom;
       } else if (e.touches.length === 1) {
         isPinching = false;
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
-        if (currentScale > 1.05) {
-          isPanning = true;
-        }
-
-        // Double-tap to zoom in directly at tap point or reset
         var now = Date.now();
+        // Double-tap zoom toggle (e.g. 100% <-> 240%)
         if (now - lastTapTime < 320) {
           e.preventDefault();
-          if (currentScale > 1.2) {
-            currentScale = 1.0;
-            panX = 0;
-            panY = 0;
-            applyTransform(true);
+          if (viewMode === 'custom' && userZoom > 1.3) {
+            viewMode = 'fit-width';
+            userZoom = 1.0;
           } else {
-            var targetScale = 2.4;
-            var cRect = container.getBoundingClientRect();
-            var tapX = e.touches[0].clientX - cRect.left;
-            var tapY = e.touches[0].clientY - cRect.top;
-            var scaleRatio = targetScale / currentScale;
-            panX = tapX - (tapX - panX) * scaleRatio;
-            panY = tapY - (tapY - panY) * scaleRatio;
-            currentScale = targetScale;
-            clampPan();
-            applyTransform(true);
+            viewMode = 'custom';
+            userZoom = 2.4;
           }
+          updateToolbarUI();
+          debouncedReRender();
           lastTapTime = 0;
           return;
         }
@@ -765,82 +910,50 @@
         var currentDist = getTouchesDist(e.touches[0], e.touches[1]);
         if (initialPinchDist > 0) {
           var factor = currentDist / initialPinchDist;
-          var nextScale = Math.min(6.0, Math.max(1.0, initialPinchScale * factor));
-
-          var currentMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-          var currentMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-
-          var cRect = container.getBoundingClientRect();
-          var focalX = currentMidX - cRect.left;
-          var focalY = currentMidY - cRect.top;
-
-          // Focal-point zoom: Content directly under fingers stays stationary while zooming!
-          var scaleRatio = nextScale / currentScale;
-          panX = focalX - (focalX - panX) * scaleRatio + (currentMidX - lastMidX);
-          panY = focalY - (focalY - panY) * scaleRatio + (currentMidY - lastMidY);
-
-          currentScale = nextScale;
-          lastMidX = currentMidX;
-          lastMidY = currentMidY;
-
-          clampPan();
-          applyTransform(false);
+          var tempScale = Math.min(5.0, Math.max(0.5, pinchStartZoom * factor));
+          // Stage 1: Fluid 60 FPS CSS visual scaling during touch
+          var midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          var midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          zoomLayer.style.transformOrigin = midX + 'px ' + midY + 'px';
+          zoomLayer.style.transform = 'scale(' + (tempScale / pinchStartZoom) + ')';
         }
-      } else if (isPanning && e.touches.length === 1 && currentScale > 1.05) {
-        var dx = e.touches[0].clientX - lastTouchX;
-        var dy = e.touches[0].clientY - lastTouchY;
-        lastTouchX = e.touches[0].clientX;
-        lastTouchY = e.touches[0].clientY;
-
-        panX += dx;
-        panY += dy;
-        clampPan();
-        applyTransform(false);
-        e.preventDefault();
       }
     }, { passive: false });
 
     container.addEventListener('touchend', function(e) {
       if (isPinching && e.touches.length < 2) {
         isPinching = false;
-        if (currentScale <= 1.05) {
-          currentScale = 1.0;
-          panX = 0;
-          panY = 0;
-          applyTransform(true);
-        } else {
-          clampPan();
-          applyTransform(true);
+        if (e.changedTouches.length > 0 && initialPinchDist > 0) {
+          var factor = (e.touches.length === 1)
+            ? getTouchesDist(e.touches[0], e.changedTouches[0]) / initialPinchDist
+            : 1.0;
+          var nextZoom = Math.min(5.0, Math.max(0.5, pinchStartZoom * factor));
+          if (Math.abs(nextZoom - pinchStartZoom) > 0.05) {
+            viewMode = 'custom';
+            userZoom = nextZoom;
+          }
         }
-      } else if (isPanning && e.touches.length === 0) {
-        isPanning = false;
-        clampPan();
-        applyTransform(true);
+        // Stage 2: Settle CSS transform and re-render sharp vector bezier curves!
+        zoomLayer.style.transform = 'none';
+        updateToolbarUI();
+        debouncedReRender();
       }
     });
 
-    // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops (focal point at mouse cursor)
+    // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops
     container.addEventListener('wheel', function(e) {
       if (e.ctrlKey) {
         e.preventDefault();
-        var delta = -e.deltaY * 0.01;
-        var nextScale = Math.min(6.0, Math.max(1.0, currentScale + delta));
-        if (nextScale !== currentScale) {
-          var cRect = container.getBoundingClientRect();
-          var mouseX = e.clientX - cRect.left;
-          var mouseY = e.clientY - cRect.top;
-          var scaleRatio = nextScale / currentScale;
-          panX = mouseX - (mouseX - panX) * scaleRatio;
-          panY = mouseY - (mouseY - panY) * scaleRatio;
-          currentScale = nextScale;
-          clampPan();
-          applyTransform(false);
-        }
+        var delta = -e.deltaY * 0.008;
+        viewMode = 'custom';
+        userZoom = Math.min(5.0, Math.max(0.4, userZoom + delta));
+        updateToolbarUI();
+        debouncedReRender();
       }
     }, { passive: false });
 
     // =========================================================================
-    // 4. MOBILE BACK BUTTON & GESTURE COMMANDS
+    // 5. MOBILE BACK BUTTON & GESTURE COMMANDS
     // =========================================================================
     function triggerMobileBack() {
       try {
@@ -860,7 +973,6 @@
       triggerMobileBack();
     });
 
-    // Edge-swipe right to close (standard mobile app gesture)
     var edgeStartX = 0;
     var edgeStartY = 0;
     container.addEventListener('touchstart', function(e) {
@@ -871,22 +983,23 @@
     }, { passive: true });
 
     container.addEventListener('touchend', function(e) {
-      if (e.changedTouches.length === 1 && edgeStartX < 45 && currentScale <= 1.05) {
+      if (e.changedTouches.length === 1 && edgeStartX < 40 && userZoom <= 1.05) {
         var dx = e.changedTouches[0].clientX - edgeStartX;
         var dy = Math.abs(e.changedTouches[0].clientY - edgeStartY);
-        if (dx > 85 && dy < 60) {
+        if (dx > 80 && dy < 60) {
           triggerMobileBack();
         }
       }
     }, { passive: true });
 
     // =========================================================================
-    // 5. MAIN INITIALIZATION
+    // 6. MAIN DOCUMENT INITIALIZATION & VIRTUALIZATION
     // =========================================================================
     async function startRenderingDoc(pdfData) {
       var dataArray = pdfData instanceof Uint8Array ? pdfData : new Uint8Array(pdfData);
       var baseOrigin = (window.location && window.location.origin && window.location.origin.startsWith('http') && !window.location.origin.includes('localhost'))
         ? window.location.origin : 'https://examjk.com';
+
       var loadingTask = pdfjsLib.getDocument({
         data: dataArray,
         cMapUrl: baseOrigin + '/cmaps/',
@@ -899,9 +1012,8 @@
 
       pdfDoc = await loadingTask.promise;
       var totalPages = pdfDoc.numPages;
-      var currentWidth = getTargetWidth();
 
-      // Immediately render Page 1 first so user sees the document in milliseconds!
+      // Page 1 placeholder
       var wrap1 = document.createElement('div');
       wrap1.className = 'pdf-page-wrapper';
       wrap1.id = 'page-wrapper-1';
@@ -909,16 +1021,16 @@
       zoomLayer.appendChild(wrap1);
 
       try {
-        await renderPage(1, wrap1, currentWidth);
+        await renderPage(1, wrap1);
       } catch (e1) {
-        console.warn('Page 1 render error:', e1);
+        console.warn('Page 1 render warning:', e1);
       }
 
-      // Hide loading view right away
       if (loadingView) loadingView.style.display = 'none';
       if (offlineBadge) offlineBadge.style.display = 'inline-block';
+      updateToolbarUI();
 
-      // Create placeholders for remaining pages for smooth continuous layout
+      // Create placeholders for remaining pages
       for (var i = 2; i <= totalPages; i++) {
         var wrapper = document.createElement('div');
         wrapper.className = 'pdf-page-wrapper';
@@ -927,26 +1039,12 @@
         zoomLayer.appendChild(wrapper);
       }
 
-      // Pre-render Page 2 immediately for smooth scrolling
       if (totalPages >= 2) {
         var initialWrap2 = document.getElementById('page-wrapper-2');
-        if (initialWrap2) {
-          renderPage(2, initialWrap2, currentWidth).catch(function() {});
-        }
+        if (initialWrap2) renderPage(2, initialWrap2).catch(function() {});
       }
 
-      function unrenderPage(pageNum, wrapper) {
-        if (!renderedPages.has(pageNum)) return;
-        var canvas = wrapper.querySelector('canvas');
-        if (canvas) {
-          canvas.width = 0;
-          canvas.height = 0;
-          wrapper.innerHTML = '';
-        }
-        renderedPages.delete(pageNum);
-      }
-
-      // Progressive IntersectionObserver for remaining pages with canvas recycling
+      // IntersectionObserver for lazy page rendering and 1GB RAM memory virtualization
       if ('IntersectionObserver' in window) {
         var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 2);
         var observer = new IntersectionObserver(function(entries) {
@@ -954,10 +1052,10 @@
             var pageNum = parseInt(entry.target.getAttribute('data-page-num'), 10);
             if (entry.isIntersecting) {
               if (!renderedPages.has(pageNum)) {
-                renderPage(pageNum, entry.target, getTargetWidth());
+                renderPage(pageNum, entry.target);
               }
-            } else if (isLowMem && Math.abs(pageNum - (renderedPages.values().next().value || 1)) > 3) {
-              // Recycle off-screen canvas to guarantee zero OOM crashes on 1GB/2GB Android devices
+            } else if (isLowMem && Math.abs(pageNum - (renderedPages.values().next().value || 1)) > 2) {
+              // Unrender off-screen pages to prevent OOM tab terminations on 1GB RAM Android devices
               unrenderPage(pageNum, entry.target);
             }
           });
@@ -972,16 +1070,14 @@
         }
       }
 
-      // Scroll listener backup (vital for Smart Boards and older WebViews where IntersectionObserver may stall)
       function checkVisiblePages() {
-        var screenW = getTargetWidth();
         for (var p = 1; p <= totalPages; p++) {
           if (!renderedPages.has(p)) {
             var el = document.getElementById('page-wrapper-' + p);
             if (el) {
               var rect = el.getBoundingClientRect();
               if (rect.top < window.innerHeight + 800 && rect.bottom > -800) {
-                renderPage(p, el, screenW);
+                renderPage(p, el);
               }
             }
           }
@@ -994,39 +1090,19 @@
         scrollTimer = setTimeout(function() {
           scrollTimer = null;
           checkVisiblePages();
-        }, 100);
+        }, 120);
       }, { passive: true });
 
-      // Handle window resize and screen orientation
       window.addEventListener('resize', function() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
-          var newWidth = getTargetWidth();
-          renderedPages.clear();
-          for (var p = 1; p <= totalPages; p++) {
-            var el = document.getElementById('page-wrapper-' + p);
-            if (el) {
-              var rect = el.getBoundingClientRect();
-              if (rect.top < window.innerHeight + 600 && rect.bottom > -600) {
-                renderPage(p, el, newWidth);
-              }
-            }
-          }
-        }, 250);
+          updateToolbarUI();
+          debouncedReRender();
+        }, 200);
       });
 
-      // Immediate check for visible pages (critical for Smart Boards where observer doesn't fire immediately)
       setTimeout(checkVisiblePages, 50);
       setTimeout(checkVisiblePages, 500);
-
-      // Smart Board Safety Watchdog: If after 3.5s page 1 is not rendered, force render page 1
-      setTimeout(function() {
-        if (renderedPages.size === 0) {
-          console.warn('Smart Board Watchdog: Forcing render of page 1');
-          var p1 = document.getElementById('page-wrapper-1');
-          if (p1) renderPage(1, p1, getTargetWidth());
-        }
-      }, 3500);
     }
 
     async function initViewer() {
@@ -1034,11 +1110,10 @@
       var targetDocUrl = sanitizeUrl(cleanUrl);
       try {
         rawData = await loadPdfDataForLifetime(targetDocUrl);
-        // Create an independent copy so web worker postMessage does not detach the original ArrayBuffer
         var workingCopy = rawData.slice ? rawData.slice(0) : new Uint8Array(rawData).slice().buffer;
         await startRenderingDoc(workingCopy);
       } catch (err) {
-        console.warn('Primary document render notice, attempting fallback:', err);
+        console.warn('Initial load notice, retrying:', err);
         try {
           if (!rawData) {
             rawData = await loadPdfDataForLifetime(targetDocUrl);
