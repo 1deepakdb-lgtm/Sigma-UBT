@@ -3050,218 +3050,122 @@ export default function EpsBookReader({
               boxSizing: "border-box"
             }}
           >
-            {/* ROW 1: HEADER (DRAG HANDLE, BACK BUTTON, CHAPTER TITLE, ACTION BUTTONS) */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "8px" }}>
-              {/* LEFT GROUP: DRAG HANDLE + BACK BUTTON + TITLE */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: 1 }}>
-                {/* DRAG HANDLE */}
-                <div
-                  title="Drag to move anywhere on screen"
-                  style={{
-                    cursor: isDragging ? "grabbing" : "grab",
-                    color: "#94a3b8",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "16px",
-                    userSelect: "none",
-                    flexShrink: 0,
-                    padding: "0 2px"
-                  }}
-                >
-                  ⠿
-                </div>
-
-                {/* BACK BUTTON */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    closeFullScreen();
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  title="Return to Chapter List"
-                  style={{
-                    backgroundColor: "#f1f5f9",
-                    color: "#0f172a",
-                    border: "1px solid #cbd5e1",
-                    height: "28px",
-                    padding: "0 8px",
-                    borderRadius: "8px",
-                    fontWeight: "700",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-                    flexShrink: 0,
-                    lineHeight: 1,
-                    transition: "all 0.15s ease"
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f1f5f9"; }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12" />
-                    <polyline points="12 19 5 12 12 5" />
-                  </svg>
-                  <span>Back</span>
-                </button>
-
-                {/* CHAPTER TITLE & CRISP BADGE */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    minWidth: 0,
-                    flex: 1
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
-                    <span
-                      style={{
-                        backgroundColor: "#2563eb",
-                        color: "#ffffff",
-                        fontSize: "11px",
-                        fontWeight: "800",
-                        padding: "2px 7px",
-                        borderRadius: "8px",
-                        whiteSpace: "nowrap",
-                        flexShrink: 0
-                      }}
-                    >
-                      Ch {selectedChapter.chapter !== undefined ? selectedChapter.chapter : (selectedChapter.id || 1)}
-                    </span>
-                    <span
-                      style={{
-                        fontWeight: "800",
-                        fontSize: "13px",
-                        color: "#0f172a",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
-                      }}
-                    >
-                      {selectedChapter.titleKo || selectedChapter.title || ""}
-                    </span>
-                  </div>
-                  {(selectedChapter.titleNe || selectedChapter.subTitle) && (
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#1d4ed8",
-                        fontWeight: "600",
-                        marginTop: "1px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
-                      }}
-                    >
-                      {selectedChapter.titleNe || selectedChapter.subTitle}
-                    </div>
-                  )}
-                </div>
+            {/* ROW 1: HEADER (DRAG HANDLE, BACK BUTTON, CHAPTER TITLE) */}
+            <div style={{ display: "flex", alignItems: "center", width: "100%", gap: "8px" }}>
+              {/* DRAG HANDLE */}
+              <div
+                title="Drag to move anywhere on screen"
+                style={{
+                  cursor: isDragging ? "grabbing" : "grab",
+                  color: "#94a3b8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "16px",
+                  userSelect: "none",
+                  flexShrink: 0,
+                  padding: "0 2px"
+                }}
+              >
+                ⠿
               </div>
 
-              {/* RIGHT GROUP: WINDOW ACTIONS (UPLOAD, MINIMIZE, CLOSE) */}
-              <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openUploadModal(selectedChapter);
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    title="Upload Chapter Audio / PDF"
+              {/* BACK BUTTON: Sleek, proportional height and width */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closeFullScreen();
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                title="Return to Chapter List"
+                style={{
+                  backgroundColor: "#f1f5f9",
+                  color: "#0f172a",
+                  border: "1px solid #cbd5e1",
+                  height: "28px",
+                  padding: "0 10px",
+                  borderRadius: "8px",
+                  fontWeight: "700",
+                  fontSize: "11px",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                  flexShrink: 0,
+                  lineHeight: 1,
+                  boxSizing: "border-box",
+                  transition: "all 0.15s ease"
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f1f5f9"; }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+                <span>Back</span>
+              </button>
+
+              {/* CHAPTER TITLE & CRISP BADGE */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  minWidth: 0,
+                  flex: 1
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                  <span
                     style={{
-                      height: "30px",
-                      padding: "0 8px",
-                      borderRadius: "8px",
-                      backgroundColor: "#fef3c7",
-                      color: "#b45309",
-                      border: "1px solid #fde68a",
-                      fontWeight: "bold",
+                      backgroundColor: "#2563eb",
+                      color: "#ffffff",
                       fontSize: "11px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "3px"
+                      fontWeight: "800",
+                      padding: "2px 7px",
+                      borderRadius: "6px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0
                     }}
                   >
-                    📤
-                  </button>
+                    Ch {selectedChapter.chapter !== undefined ? selectedChapter.chapter : (selectedChapter.id || 1)}
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: "800",
+                      fontSize: "13px",
+                      color: "#0f172a",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    {selectedChapter.titleKo || selectedChapter.title || ""}
+                  </span>
+                </div>
+                {(selectedChapter.titleNe || selectedChapter.subTitle) && (
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "#1d4ed8",
+                      fontWeight: "600",
+                      marginTop: "1px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    {selectedChapter.titleNe || selectedChapter.subTitle}
+                  </div>
                 )}
-
-                {/* MINIMIZE TO GESTURE TRIGGER */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPopupMode("gesture");
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  title="Minimize Player"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    borderRadius: "8px",
-                    backgroundColor: "#f1f5f9",
-                    color: "#475569",
-                    border: "1px solid #cbd5e1",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "13px",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease"
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f1f5f9"; }}
-                >
-                  ─
-                </button>
-
-                {/* CLOSE TO GESTURE TRIGGER */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPopupMode("gesture");
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  title="Close Player to Floating Icon"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    borderRadius: "8px",
-                    backgroundColor: "#fee2e2",
-                    color: "#dc2626",
-                    border: "1px solid #fca5a5",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "11px",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease"
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fecaca"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#fee2e2"; }}
-                >
-                  ✕
-                </button>
               </div>
             </div>
 
-            {/* ROW 2: PRIMARY AUDIO CONTROLS (BLUE PILL + SKIP BUTTONS + SPEED) */}
+            {/* ROW 2: PRIMARY AUDIO CONTROLS (BLUE PILL) + WINDOW ACTIONS (MINIMIZE, CLOSE) */}
             {hasAudio && (
               <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%" }}>
                 {/* BLUE PILL (PLAY/PAUSE + TRACK DROPDOWN) */}
@@ -3304,6 +3208,7 @@ export default function EpsBookReader({
                       fontWeight: "900",
                       boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
                       flexShrink: 0,
+                      boxSizing: "border-box",
                       transition: "transform 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; }}
@@ -3486,7 +3391,141 @@ export default function EpsBookReader({
                   </div>
                 </div>
 
-                {/* AUXILIARY CONTROLS (REWIND, FORWARD, SPEED) */}
+                {/* WINDOW ACTIONS GROUP: MATCHED 34x34px SQUARES */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openUploadModal(selectedChapter);
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      title="Upload Chapter Audio / PDF"
+                      style={{
+                        width: "34px",
+                        height: "34px",
+                        borderRadius: "9px",
+                        backgroundColor: "#fef3c7",
+                        color: "#b45309",
+                        border: "1px solid #fde68a",
+                        fontWeight: "bold",
+                        fontSize: "13px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxSizing: "border-box",
+                        flexShrink: 0
+                      }}
+                    >
+                      📤
+                    </button>
+                  )}
+
+                  {/* MINIMIZE TO GESTURE TRIGGER (34x34px Square) */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPopupMode("gesture");
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    title="Minimize Player"
+                    style={{
+                      width: "34px",
+                      height: "34px",
+                      borderRadius: "9px",
+                      backgroundColor: "#f1f5f9",
+                      color: "#475569",
+                      border: "1px solid #cbd5e1",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      boxSizing: "border-box",
+                      flexShrink: 0,
+                      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                      transition: "all 0.15s ease"
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f1f5f9"; }}
+                  >
+                    ─
+                  </button>
+
+                  {/* CLOSE TO GESTURE TRIGGER (34x34px Square) */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPopupMode("gesture");
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    title="Close Player to Floating Icon"
+                    style={{
+                      width: "34px",
+                      height: "34px",
+                      borderRadius: "9px",
+                      backgroundColor: "#fee2e2",
+                      color: "#dc2626",
+                      border: "1px solid #fca5a5",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "13px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      boxSizing: "border-box",
+                      flexShrink: 0,
+                      boxShadow: "0 1px 2px rgba(220, 38, 38, 0.1)",
+                      transition: "all 0.15s ease"
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fecaca"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#fee2e2"; }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ROW 3: PROGRESS SEEKBAR + TIME DISPLAY (LEFT) + AUXILIARY CONTROLS (RIGHT) */}
+            {hasAudio && (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "0 2px" }}>
+                {/* LEFT: SEEKBAR + TIME */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1, minWidth: 0 }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration || 0}
+                    value={currentTime}
+                    onChange={(e) => {
+                      const newTime = Number(e.target.value);
+                      setCurrentTime(newTime);
+                      if (audioRef.current) audioRef.current.currentTime = newTime;
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    style={{
+                      flex: 1,
+                      minWidth: "60px",
+                      cursor: "pointer",
+                      accentColor: "#2563eb",
+                      height: "5px"
+                    }}
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b", fontFamily: "monospace", fontWeight: "700", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    {formatTime(currentTime)}
+                  </span>
+                </div>
+
+                {/* RIGHT: REWIND (32x32), FORWARD (32x32), SPEED (34x32) */}
                 <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                   <button
                     type="button"
@@ -3501,7 +3540,7 @@ export default function EpsBookReader({
                       width: "32px",
                       height: "32px",
                       background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid #cbd5e1",
                       borderRadius: "8px",
                       cursor: "pointer",
                       fontSize: "11px",
@@ -3510,6 +3549,9 @@ export default function EpsBookReader({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      flexShrink: 0,
+                      boxSizing: "border-box",
+                      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
                       transition: "all 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
@@ -3530,7 +3572,7 @@ export default function EpsBookReader({
                       width: "32px",
                       height: "32px",
                       background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid #cbd5e1",
                       borderRadius: "8px",
                       cursor: "pointer",
                       fontSize: "11px",
@@ -3539,6 +3581,9 @@ export default function EpsBookReader({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      flexShrink: 0,
+                      boxSizing: "border-box",
+                      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
                       transition: "all 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e2e8f0"; }}
@@ -3556,12 +3601,11 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Playback Speed"
                     style={{
-                      minWidth: "32px",
+                      width: "34px",
                       height: "32px",
                       background: "#eff6ff",
                       color: "#1d4ed8",
                       border: "1px solid #bfdbfe",
-                      padding: "0 6px",
                       borderRadius: "8px",
                       fontSize: "11px",
                       fontWeight: "800",
@@ -3569,6 +3613,9 @@ export default function EpsBookReader({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      flexShrink: 0,
+                      boxSizing: "border-box",
+                      boxShadow: "0 1px 2px rgba(29, 78, 216, 0.08)",
                       transition: "all 0.15s ease"
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#dbeafe"; }}
@@ -3577,34 +3624,6 @@ export default function EpsBookReader({
                     {playbackRate}x
                   </button>
                 </div>
-              </div>
-            )}
-
-            {/* ROW 3: PROGRESS SEEKBAR + TIME DISPLAY */}
-            {hasAudio && (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "0 2px" }}>
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 0}
-                  value={currentTime}
-                  onChange={(e) => {
-                    const newTime = Number(e.target.value);
-                    setCurrentTime(newTime);
-                    if (audioRef.current) audioRef.current.currentTime = newTime;
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  style={{
-                    flex: 1,
-                    cursor: "pointer",
-                    accentColor: "#2563eb",
-                    height: "5px"
-                  }}
-                />
-                <span style={{ fontSize: "11px", color: "#64748b", fontFamily: "monospace", fontWeight: "700", whiteSpace: "nowrap", flexShrink: 0 }}>
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
               </div>
             )}
           </div>
