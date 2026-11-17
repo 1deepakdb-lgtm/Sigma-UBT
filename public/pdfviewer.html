@@ -735,6 +735,19 @@
       if (e.touches.length === 1) {
         singleTouchStartY = e.touches[0].clientY;
       }
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage('EPS_AUDIO_COLLAPSE', '*');
+        }
+      } catch (err) {}
+    }, { passive: true });
+
+    container.addEventListener('mousedown', function(e) {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage('EPS_AUDIO_COLLAPSE', '*');
+        }
+      } catch (err) {}
     }, { passive: true });
 
     container.addEventListener('touchmove', function(e) {

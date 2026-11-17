@@ -2132,6 +2132,12 @@ export default function EpsBookReader({
         if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
         if (selectedChapter) { closeFullScreen(true); return; }
       }
+      if (e.data === "EPS_AUDIO_COLLAPSE" || (e.data && e.data.type === "EPS_AUDIO_COLLAPSE")) {
+        if (Date.now() - playerOpenTimeRef.current > 350) {
+          setPopupMode("gesture");
+          setShowTrackDropdown(false);
+        }
+      }
     };
 
     if (isAnyPdfOpen) {
@@ -2160,6 +2166,28 @@ export default function EpsBookReader({
       }
     };
   }, [selectedChapter, viewingMaterial, viewingMeaningChapter]);
+
+  // Auto-shrink audio popup to floating audio button when clicking or tapping outside
+  useEffect(() => {
+    if (popupMode !== "full") return;
+
+    const handleOutsideClick = (e) => {
+      if (Date.now() - playerOpenTimeRef.current < 350) return;
+      if (popupContainerRef.current && popupContainerRef.current.contains(e.target)) {
+        return;
+      }
+      setPopupMode("gesture");
+      setShowTrackDropdown(false);
+    };
+
+    window.addEventListener("pointerdown", handleOutsideClick, { capture: true });
+    window.addEventListener("touchstart", handleOutsideClick, { capture: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handleOutsideClick, { capture: true });
+      window.removeEventListener("touchstart", handleOutsideClick, { capture: true });
+    };
+  }, [popupMode]);
 
   // Playable audio URL (checks offline cached blob first, then direct URL or TTS fallback)
   const getPlayableAudioUrl = (track) => {
@@ -2988,12 +3016,12 @@ export default function EpsBookReader({
                     gap: "5px",
                     flex: 1,
                     minWidth: 0,
-                    height: "34px",
+                    height: "32px",
                     background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
                     color: "#ffffff",
                     border: "1.5px solid #93c5fd",
-                    borderRadius: "17px",
-                    padding: "2px 8px 2px 3px",
+                    borderRadius: "16px",
+                    padding: "2px 6px 2px 2px",
                     boxShadow: "0 2px 8px rgba(29, 78, 216, 0.25)",
                     boxSizing: "border-box"
                   }}
@@ -3008,7 +3036,12 @@ export default function EpsBookReader({
                     style={{
                       width: "28px",
                       height: "28px",
+                      minWidth: "28px",
+                      minHeight: "28px",
+                      maxWidth: "28px",
+                      maxHeight: "28px",
                       borderRadius: "50%",
+                      padding: 0,
                       background: "#ffffff",
                       color: "#1d4ed8",
                       border: "none",
@@ -3042,12 +3075,14 @@ export default function EpsBookReader({
                       title="Select Audio Track"
                       style={{
                         width: "100%",
-                        height: "26px",
+                        height: "28px",
+                        minHeight: "28px",
+                        maxHeight: "28px",
                         background: "rgba(255, 255, 255, 0.16)",
                         color: "#ffffff",
                         border: "1px solid rgba(255, 255, 255, 0.35)",
-                        borderRadius: "13px",
-                        padding: "0 7px",
+                        borderRadius: "14px",
+                        padding: "0 8px",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
