@@ -538,7 +538,7 @@
     }
 
     // =========================================================================
-    // 2. DOCUMENT RENDERING ENGINE (FIT ON SCREEN & REAL ULTRA HD PRINT INTENT)
+    // 2. DOCUMENT RENDERING ENGINE (RESPONSIVE FIT ON SCREEN & CRYSTAL CLEAR VECTOR INTENT)
     // =========================================================================
     function getTargetDimensions(baseViewport) {
       var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth || 1000;
@@ -549,21 +549,16 @@
       var pageAspect = pageH / pageW; // Standard ~1.414 for A4 textbooks
 
       // 1. Mobile & Portrait Displays (Smartphones, Android App, iOS, Portrait Tablets):
-      // FIT ON SCREEN: Full edge-to-edge width fit so the entire textbook page width is visible immediately
-      if (screenWidth < screenHeight || screenWidth < 768) {
-        var fitWidth = Math.min(screenWidth, 800);
+      // Full edge-to-edge fit without horizontal overflow (0px margin, perfect 100% width)
+      if (screenWidth < 768 || screenWidth < screenHeight) {
+        var fitWidth = screenWidth;
         return { width: fitWidth, height: Math.floor(fitWidth * pageAspect) };
       }
 
-      // 2. Landscape Displays (Smart Boards, Large Monitors, Laptops, TV):
-      // FIT ON SCREEN WITH 225% ULTRA HD ZOOM:
-      var verticalMargin = screenHeight >= 1080 ? 20 : 12;
-      var maxH = Math.max(400, screenHeight - verticalMargin);
-      var baseFitHWidth = Math.floor(maxH / pageAspect);
-
-      var zoom225Width = Math.floor(baseFitHWidth * 2.25);
-      var optimalW = Math.min(zoom225Width, Math.floor(screenWidth * 0.94));
-      optimalW = Math.max(optimalW, Math.min(screenWidth - 16, Math.floor(screenWidth * 0.88)));
+      // 2. Landscape Displays (Laptops, Monitors, Smart Boards):
+      // Fit comfortably within available content width without awkward 225% blowup or side clipping
+      var availableW = Math.max(480, screenWidth - 32);
+      var optimalW = Math.min(availableW, 940);
       return { width: optimalW, height: Math.floor(optimalW * pageAspect) };
     }
 
@@ -584,28 +579,19 @@
         var displayHeight = Math.round(displayWidth * pageAspect);
 
         var dpr = window.devicePixelRatio || 1;
-        // ULTRA HD VECTOR CLARITY (100% MATCH REAL R2 FILE):
-        // Backing store supersampled at high-density for pin-sharp subpixel vector curves & print intent
-        var targetBackingScale = Math.min(Math.max(dpr, 1.8), 2.5);
-        var maxBackingDim = 3840; // GPU safe texture limit for Smart Boards & 4K displays
+        // Adaptive backing scale: 1.5 - 2.2 on modern devices; capped at 1.25 on 1GB RAM to prevent memory crash
+        var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 1);
+        var targetBackingScale = isLowMem ? Math.min(dpr, 1.25) : Math.min(Math.max(dpr, 1.5), 2.2);
 
-        var desiredBackingWidth = Math.round(displayWidth * targetBackingScale);
-        var desiredBackingHeight = Math.round(displayHeight * targetBackingScale);
-
-        var backingScale = targetBackingScale;
-        if (desiredBackingWidth > maxBackingDim || desiredBackingHeight > maxBackingDim) {
-          var downFactor = Math.min(maxBackingDim / desiredBackingWidth, maxBackingDim / desiredBackingHeight);
-          backingScale = targetBackingScale * downFactor;
-        }
-
-        var backingWidth = Math.round(displayWidth * backingScale);
-        var backingHeight = Math.round(displayHeight * backingScale);
+        var baseScale = displayWidth / baseViewport.width;
+        var finalScale = baseScale * targetBackingScale;
+        var scaledViewport = page.getViewport({ scale: finalScale });
 
         var canvas = document.createElement('canvas');
-        canvas.width = backingWidth;
-        canvas.height = backingHeight;
+        canvas.width = Math.round(scaledViewport.width);
+        canvas.height = Math.round(scaledViewport.height);
 
-        // Set CSS display width and height in EXACT natural page aspect ratio:
+        // Display dimensions strictly enforce responsive layout
         canvas.style.width = displayWidth + 'px';
         canvas.style.height = displayHeight + 'px';
         canvas.style.aspectRatio = (baseViewport.width + ' / ' + baseViewport.height);
@@ -613,26 +599,20 @@
         canvas.style.margin = '0 auto';
         canvas.style.backgroundColor = '#ffffff';
 
-        // alpha: false enables subpixel font antialiasing (no fuzzy/broken text)
         var ctx = canvas.getContext('2d', { alpha: false });
         if (ctx) {
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, backingWidth, backingHeight);
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.imageSmoothingEnabled = true;
           if ('imageSmoothingQuality' in ctx) {
             ctx.imageSmoothingQuality = 'high';
           }
         }
 
-        var baseScale = displayWidth / baseViewport.width;
-        var viewport = page.getViewport({ scale: baseScale });
-        var transform = backingScale !== 1 ? [backingScale, 0, 0, backingScale, 0, 0] : null;
-
-        // intent: 'print' forces PDF.js to NOT downsample images and render vector paths at full 100% quality
+        // Render PDF directly at physical backing resolution for 100% crisp, razor-sharp vector text
         await page.render({
           canvasContext: ctx,
-          transform: transform,
-          viewport: viewport,
+          viewport: scaledViewport,
           intent: 'print'
         }).promise;
 
@@ -952,20 +932,35 @@
         }
       }
 
-      // Progressive IntersectionObserver for remaining pages
+      function unrenderPage(pageNum, wrapper) {
+        if (!renderedPages.has(pageNum)) return;
+        var canvas = wrapper.querySelector('canvas');
+        if (canvas) {
+          canvas.width = 0;
+          canvas.height = 0;
+          wrapper.innerHTML = '';
+        }
+        renderedPages.delete(pageNum);
+      }
+
+      // Progressive IntersectionObserver for remaining pages with canvas recycling
       if ('IntersectionObserver' in window) {
+        var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 2);
         var observer = new IntersectionObserver(function(entries) {
           entries.forEach(function(entry) {
+            var pageNum = parseInt(entry.target.getAttribute('data-page-num'), 10);
             if (entry.isIntersecting) {
-              var pageNum = parseInt(entry.target.getAttribute('data-page-num'), 10);
               if (!renderedPages.has(pageNum)) {
                 renderPage(pageNum, entry.target, getTargetWidth());
               }
+            } else if (isLowMem && Math.abs(pageNum - (renderedPages.values().next().value || 1)) > 3) {
+              // Recycle off-screen canvas to guarantee zero OOM crashes on 1GB/2GB Android devices
+              unrenderPage(pageNum, entry.target);
             }
           });
         }, {
           root: container,
-          rootMargin: '800px 0px 800px 0px'
+          rootMargin: '600px 0px 600px 0px'
         });
 
         for (var k = 1; k <= totalPages; k++) {

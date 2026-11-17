@@ -283,16 +283,25 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (webView.canGoBack()) {
-                    webView.goBack();
-                } else {
-                    if (System.currentTimeMillis() - backPressedTime < 2000) {
-                        finish();
-                    } else {
-                        backPressedTime = System.currentTimeMillis();
-                        Toast.makeText(MainActivity.this, getString(R.string.exit_prompt), Toast.LENGTH_SHORT).show();
+                webView.evaluateJavascript(
+                    "(function() { if (typeof window !== 'undefined' && typeof window.__handleAppBack === 'function') { return window.__handleAppBack(); } return false; })()",
+                    value -> {
+                        if ("true".equalsIgnoreCase(value)) {
+                            // Handled internally by web app (e.g. closed full-screen PDF, modal, or drawer)
+                            return;
+                        }
+                        if (webView.canGoBack()) {
+                            webView.goBack();
+                        } else {
+                            if (System.currentTimeMillis() - backPressedTime < 2000) {
+                                finish();
+                            } else {
+                                backPressedTime = System.currentTimeMillis();
+                                Toast.makeText(MainActivity.this, getString(R.string.exit_prompt), Toast.LENGTH_SHORT).show();
+                            }
+                        }
                     }
-                }
+                );
             }
         });
     }

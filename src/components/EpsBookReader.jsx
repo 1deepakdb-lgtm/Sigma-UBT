@@ -2159,6 +2159,13 @@ export default function EpsBookReader({
       }
     };
 
+    if (selectedChapter) {
+      window.__handleAppBack = () => {
+        closeFullScreen(false);
+        return true;
+      };
+    }
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("popstate", handlePopState);
     window.addEventListener("message", handleWindowMessage);
@@ -2167,6 +2174,7 @@ export default function EpsBookReader({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("message", handleWindowMessage);
+      if (window.__handleAppBack) window.__handleAppBack = null;
     };
   }, [selectedChapter]);
 
@@ -3037,8 +3045,8 @@ export default function EpsBookReader({
               userSelect: "none",
               WebkitUserSelect: "none",
               touchAction: "none",
-              width: "calc(100vw - 28px)",
-              maxWidth: "420px",
+              width: "calc(100vw - 20px)",
+              maxWidth: "400px",
               boxSizing: "border-box"
             }}
           >
@@ -3078,15 +3086,15 @@ export default function EpsBookReader({
                     backgroundColor: "#f1f5f9",
                     color: "#0f172a",
                     border: "1px solid #cbd5e1",
-                    height: "30px",
-                    padding: "0 10px",
+                    height: "28px",
+                    padding: "0 8px",
                     borderRadius: "8px",
                     fontWeight: "700",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "5px",
+                    gap: "4px",
                     boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                     flexShrink: 0,
                     lineHeight: 1,
@@ -3200,8 +3208,8 @@ export default function EpsBookReader({
                   onTouchStart={(e) => e.stopPropagation()}
                   title="Minimize Player"
                   style={{
-                    width: "30px",
-                    height: "30px",
+                    width: "28px",
+                    height: "28px",
                     borderRadius: "8px",
                     backgroundColor: "#f1f5f9",
                     color: "#475569",
@@ -3209,7 +3217,7 @@ export default function EpsBookReader({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     fontWeight: "bold",
                     cursor: "pointer",
                     transition: "all 0.15s ease"
@@ -3231,8 +3239,8 @@ export default function EpsBookReader({
                   onTouchStart={(e) => e.stopPropagation()}
                   title="Close Player to Floating Icon"
                   style={{
-                    width: "30px",
-                    height: "30px",
+                    width: "28px",
+                    height: "28px",
                     borderRadius: "8px",
                     backgroundColor: "#fee2e2",
                     color: "#dc2626",
@@ -3240,7 +3248,7 @@ export default function EpsBookReader({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: "bold",
                     cursor: "pointer",
                     transition: "all 0.15s ease"
@@ -3490,8 +3498,8 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Rewind 5s"
                     style={{
-                      width: "34px",
-                      height: "38px",
+                      width: "32px",
+                      height: "32px",
                       background: "#f8fafc",
                       border: "1px solid #e2e8f0",
                       borderRadius: "8px",
@@ -3519,8 +3527,8 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Forward 5s"
                     style={{
-                      width: "34px",
-                      height: "38px",
+                      width: "32px",
+                      height: "32px",
                       background: "#f8fafc",
                       border: "1px solid #e2e8f0",
                       borderRadius: "8px",
@@ -3548,8 +3556,8 @@ export default function EpsBookReader({
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Playback Speed"
                     style={{
-                      minWidth: "36px",
-                      height: "38px",
+                      minWidth: "32px",
+                      height: "32px",
                       background: "#eff6ff",
                       color: "#1d4ed8",
                       border: "1px solid #bfdbfe",
@@ -4510,7 +4518,7 @@ export default function EpsBookReader({
                         titleKo: "예비편 (한글과 인사말)",
                         titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
                         titleEn: "Preliminary - Hangeul and Greetings",
-                        pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
+                        pdfUrl: "/uploads/eps-chapters/Preliminary.pdf",
                         audioTracks: []
                       };
                       openChapterFullScreen(prelim);
@@ -4562,7 +4570,7 @@ export default function EpsBookReader({
                           titleKo="예비편 (한글과 인사말)"
                           titleNe="प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)"
                           coverImage="/uploads/eps-chapters/covers/cover_00.jpg"
-                          pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf"
+                          pdfUrl="/uploads/eps-chapters/Preliminary.pdf"
                           bookPart={1}
                           height="195px"
                           margin="10px 0 12px 0"
@@ -4573,7 +4581,7 @@ export default function EpsBookReader({
                               titleKo: "예비편 (한글과 인사말)",
                               titleNe: "प्रारम्भिक पाठ (कोरियन वर्णमाला र अभिवादन)",
                               titleEn: "Preliminary - Hangeul and Greetings",
-                              pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Preliminary/Preliminary%20-%20Hangeul%20and%20Greetings.pdf",
+                              pdfUrl: "/uploads/eps-chapters/Preliminary.pdf",
                               audioTracks: []
                             };
                             openChapterFullScreen(prelim);
@@ -4685,7 +4693,7 @@ export default function EpsBookReader({
                         titleKo: "부록",
                         titleNe: "परिशिष्ट",
                         titleEn: "Appendix",
-                        pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
+                        pdfUrl: "/uploads/eps-chapters/Appendix.pdf",
                         audioTracks: []
                       };
                       openChapterFullScreen(appendix);
@@ -4737,7 +4745,7 @@ export default function EpsBookReader({
                           titleKo="부록"
                           titleNe="परिशिष्ट"
                           coverImage="/uploads/eps-chapters/covers/cover_61.jpg"
-                          pdfUrl="/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf"
+                          pdfUrl="/uploads/eps-chapters/Appendix.pdf"
                           bookPart={2}
                           height="195px"
                           margin="10px 0 12px 0"
@@ -4748,7 +4756,7 @@ export default function EpsBookReader({
                               titleKo: "부록",
                               titleNe: "परिशिष्ट",
                               titleEn: "Appendix",
-                              pdfUrl: "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Appendix/Appendix%20-%20Answers%20and%20Index.pdf",
+                              pdfUrl: "/uploads/eps-chapters/Appendix.pdf",
                               audioTracks: []
                             };
                             openChapterFullScreen(appendix);

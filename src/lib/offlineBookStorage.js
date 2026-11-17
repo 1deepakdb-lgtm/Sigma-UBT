@@ -155,14 +155,6 @@ export async function preloadAllCachedBlobs() {
           if (blobUrl) {
             variants.forEach((v) => inMemoryBlobUrlCache.set(v, blobUrl));
           }
-          // Convert blob to ArrayBuffer in RAM for instant 0ms PDF opening
-          if (item.url && item.url.includes('.pdf') && item.blob) {
-            readBlobAsArrayBuffer(item.blob).then((buf) => {
-              if (buf) {
-                variants.forEach((v) => inMemoryBufferCache.set(v, buf));
-              }
-            }).catch(() => {});
-          }
         }
       });
     };
