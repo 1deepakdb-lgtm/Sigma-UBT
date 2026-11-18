@@ -1897,6 +1897,7 @@ export default function EpsBookReader({
     setIsMiniDragging(false);
 
     if (!miniDragRef.current.moved) {
+      if (e.cancelable) e.preventDefault();
       playerOpenTimeRef.current = Date.now();
       const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
       const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
@@ -1982,6 +1983,7 @@ export default function EpsBookReader({
     setIsMiniDragging(false);
 
     if (!miniDragRef.current.moved) {
+      if (e.cancelable) e.preventDefault();
       playerOpenTimeRef.current = Date.now();
       const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
       const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
@@ -2351,6 +2353,10 @@ export default function EpsBookReader({
   // Play / Pause toggle with 100% reliable hardware synchronization
   const togglePlayPause = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
+    // Prevent accidental auto-play when expanding the dialog from the floating audio button
+    if (Date.now() - playerOpenTimeRef.current < 500) {
+      return;
+    }
     setShowTrackDropdown(false);
     if (!audioRef.current) return;
 
