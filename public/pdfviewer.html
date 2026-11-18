@@ -47,30 +47,34 @@
     flex-direction: column;
     align-items: center;
     transform-origin: 0 0;
+    gap: 0;
   }
   .pdf-page-wrapper {
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 8px 0;
+    padding: 0;
     background-color: transparent;
     box-sizing: border-box;
     margin: 0 auto;
+    line-height: 0;
+    font-size: 0;
   }
   @media (min-width: 768px) {
     .pdf-page-wrapper {
-      padding: 12px 0;
+      padding: 0;
     }
   }
   canvas {
     display: block;
     background-color: #ffffff;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    box-shadow: none;
     margin: 0 auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     image-rendering: auto;
+    vertical-align: top;
   }
   #loading-view {
     position: fixed;
