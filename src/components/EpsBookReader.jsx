@@ -2227,6 +2227,8 @@ export default function EpsBookReader({
         if (viewingMaterial) { setViewingMaterial(null); return; }
         if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
         if (selectedChapter) { closeFullScreen(true); return; }
+        if (isKoreanFolderOpen) { setIsKoreanFolderOpen(false); return; }
+        if (isJapaneseFolderOpen) { setIsJapaneseFolderOpen(false); return; }
       }
     };
 
@@ -2234,6 +2236,8 @@ export default function EpsBookReader({
       if (viewingMaterial) { setViewingMaterial(null); return; }
       if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
       if (selectedChapter) { closeFullScreen(false); return; }
+      if (isKoreanFolderOpen) { setIsKoreanFolderOpen(false); return; }
+      if (isJapaneseFolderOpen) { setIsJapaneseFolderOpen(false); return; }
     };
 
     const handleWindowMessage = (e) => {
@@ -2241,6 +2245,8 @@ export default function EpsBookReader({
         if (viewingMaterial) { setViewingMaterial(null); return; }
         if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
         if (selectedChapter) { closeFullScreen(true); return; }
+        if (isKoreanFolderOpen) { setIsKoreanFolderOpen(false); return; }
+        if (isJapaneseFolderOpen) { setIsJapaneseFolderOpen(false); return; }
       }
       if (e.data === "EPS_AUDIO_COLLAPSE" || (e.data && e.data.type === "EPS_AUDIO_COLLAPSE")) {
         if (Date.now() - playerOpenTimeRef.current > 350) {
@@ -2250,14 +2256,14 @@ export default function EpsBookReader({
       }
     };
 
-    if (isAnyPdfOpen) {
-      window.__handleAppBack = () => {
-        if (viewingMaterial) { setViewingMaterial(null); return true; }
-        if (viewingMeaningChapter) { setViewingMeaningChapter(null); return true; }
-        if (selectedChapter) { closeFullScreen(false); return true; }
-        return false;
-      };
-    }
+    window.__handleAppBack = () => {
+      if (viewingMaterial) { setViewingMaterial(null); return true; }
+      if (viewingMeaningChapter) { setViewingMeaningChapter(null); return true; }
+      if (selectedChapter) { closeFullScreen(false); return true; }
+      if (isKoreanFolderOpen) { setIsKoreanFolderOpen(false); return true; }
+      if (isJapaneseFolderOpen) { setIsJapaneseFolderOpen(false); return true; }
+      return false;
+    };
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("popstate", handlePopState);
@@ -2276,7 +2282,7 @@ export default function EpsBookReader({
         document.documentElement.style.overscrollBehaviorY = "";
       }
     };
-  }, [selectedChapter, viewingMaterial, viewingMeaningChapter]);
+  }, [selectedChapter, viewingMaterial, viewingMeaningChapter, isKoreanFolderOpen, isJapaneseFolderOpen]);
 
   // Auto-shrink audio popup to floating audio button when clicking or tapping outside
   useEffect(() => {
@@ -2771,24 +2777,26 @@ export default function EpsBookReader({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              onClick={() => setViewingMaterial(null)}
-              style={{
-                backgroundColor: "#2563eb",
-                color: "#ffffff",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "700",
-                fontSize: "14px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              ← Back to Books
-            </button>
+            {!isMobileApp && (
+              <button
+                onClick={() => setViewingMaterial(null)}
+                style={{
+                  backgroundColor: "#2563eb",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "700",
+                  fontSize: "14px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}
+              >
+                ← Back to Books
+              </button>
+            )}
             <div>
               <div style={{ fontSize: "16px", fontWeight: "800" }}>{viewingMaterial.title}</div>
               {viewingMaterial.folder && (
@@ -4341,6 +4349,9 @@ export default function EpsBookReader({
                   onClick={() => {
                     setActiveFolder(folder.name);
                     setIsKoreanFolderOpen(true);
+                    if (typeof window !== "undefined") {
+                      window.history.pushState({ epsFolderOpen: true }, "");
+                    }
                   }}
                   style={{
                     display: "flex",
@@ -4442,40 +4453,42 @@ export default function EpsBookReader({
           {/* 2. ACTIVE BOOK CONTENT (Opened in dedicated page over this tab) */}
           {isKoreanFolderOpen && (
           <div id="korean-book-active-content">
-            {/* TOP NAVIGATION: BACK BUTTON ONLY */}
-            <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>
-              <button
-                type="button"
-                onClick={() => setIsKoreanFolderOpen(false)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 22px",
-                  backgroundColor: "#1e3a8a",
-                  backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontWeight: "800",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  boxShadow: "0 3px 10px rgba(30, 58, 138, 0.3)"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#172554";
-                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #172554 0%, #1e3a8a 100%)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#1e3a8a";
-                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)";
-                }}
-              >
-                <span style={{ fontSize: "16px", fontWeight: "900" }}>←</span>
-                <span>Back to Books</span>
-              </button>
-            </div>
+            {/* TOP NAVIGATION: BACK BUTTON ONLY (HIDDEN ON MOBILE APPS - USES MOBILE GESTURE NAVIGATION) */}
+            {!isMobileApp && (
+              <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsKoreanFolderOpen(false)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 22px",
+                    backgroundColor: "#1e3a8a",
+                    backgroundImage: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontWeight: "800",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                    boxShadow: "0 3px 10px rgba(30, 58, 138, 0.3)"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#172554";
+                    e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #172554 0%, #1e3a8a 100%)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#1e3a8a";
+                    e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)";
+                  }}
+                >
+                  <span style={{ fontSize: "16px", fontWeight: "900" }}>←</span>
+                  <span>Back to Books</span>
+                </button>
+              </div>
+            )}
             {/* RENDER EPS BOOK SECTION IF ACTIVE */}
             {activeFolder === "EPS Book" && (
             <>
