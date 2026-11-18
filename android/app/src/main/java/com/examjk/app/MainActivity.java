@@ -4,6 +4,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -36,6 +40,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -44,6 +49,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "ExamJKPrefs";
     private static final String KEY_SERVER_URL = "server_url";
     private static final String DEFAULT_URL = "https://examjk.com";
+
+    // Notification constants
+    private static final String NOTIF_CHANNEL_ID = "examjk_launch_channel";
+    private static final int NOTIF_ID = 1001;
 
     private WebView webView;
     private SwipeRefreshLayout swipeRefresh;
@@ -103,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
         setupSwipeRefresh();
         setupBackNavigation();
         requestRequiredPermissions();
+        showLaunchNotification();
 
         btnRetry.setOnClickListener(v -> loadExamJK());
 
@@ -111,12 +121,70 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestRequiredPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            String[] permissions = new String[]{
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.CAMERA
-            };
+            String[] permissions;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // Android 13+ also needs POST_NOTIFICATIONS at runtime
+                permissions = new String[]{
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.POST_NOTIFICATIONS
+                };
+            } else {
+                permissions = new String[]{
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.CAMERA
+                };
+            }
             permissionLauncher.launch(permissions);
         }
+    }
+
+    // Show a persistent notification in the status bar when the app opens
+    private void showLaunchNotification() {
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return;
+
+        // Create notification channel (required for Android 8+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    NOTIF_CHANNEL_ID,
+                    "ExamJK",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            channel.setDescription("ExamJK app notifications");
+            channel.setShowBadge(true);
+            nm.createNotificationChannel(channel);
+        }
+
+        // Check permission on Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return; // Permission not yet granted — will show on next launch after user grants
+            }
+        }
+
+        // Tap on notification → opens the app
+        Intent openIntent = new Intent(this, MainActivity.class);
+        openIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, openIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIF_CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("ExamJK — EPS-TOPIK")
+                .setContentText("🎓 EPS-TOPIK, Korean र Japanese अध्ययन गर्नुहोस्!")
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText("📚 EPS-TOPIK, Korean र Japanese पाठहरू, अडियो र परीक्षाहरू उपलब्ध छन्। अहिले नै अध्ययन सुरु गर्नुहोस्!"))
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setColorized(true)
+                .setColor(0xFF2563EB); // ExamJK brand blue
+
+        nm.notify(NOTIF_ID, builder.build());
     }
 
     private String getTargetUrl() {
