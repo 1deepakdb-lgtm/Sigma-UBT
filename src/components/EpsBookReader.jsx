@@ -2281,16 +2281,20 @@ export default function EpsBookReader({
     if (popupMode !== "full") return;
 
     const handleOutsideClick = (e) => {
-      if (Date.now() - playerOpenTimeRef.current < 350) return;
-      if (popupContainerRef.current && popupContainerRef.current.contains(e.target)) {
-        return;
-      }
+      // Ignore events within 500ms of opening (prevents immediate self-close on mobile)
+      if (Date.now() - playerOpenTimeRef.current < 500) return;
+      // Ignore if click is inside the full popup panel
+      if (popupContainerRef.current && popupContainerRef.current.contains(e.target)) return;
+      // Ignore if click is on the mini audio button itself
+      if (miniAudioBtnRef.current && miniAudioBtnRef.current.contains(e.target)) return;
+      // Collapse to mini floating button
       setPopupMode("gesture");
       setShowTrackDropdown(false);
     };
 
+    // Use both capture-phase listeners — covers iframe postMessage limitation too
     window.addEventListener("pointerdown", handleOutsideClick, { capture: true });
-    window.addEventListener("touchstart", handleOutsideClick, { capture: true });
+    window.addEventListener("touchstart", handleOutsideClick, { capture: true, passive: true });
 
     return () => {
       window.removeEventListener("pointerdown", handleOutsideClick, { capture: true });
@@ -3085,12 +3089,37 @@ export default function EpsBookReader({
         `}</style>
         {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (SLEEK COMPACT FROSTED GLASS) ================= */}
         {popupMode === "full" && (
-          <div
-            ref={popupContainerRef}
-            onPointerDown={handlePopupPointerDown}
-            onPointerMove={handlePopupPointerMove}
-            onPointerUp={handlePopupPointerUp}
-            onPointerCancel={handlePopupPointerUp}
+          <>
+            {/* Transparent backdrop — catches taps outside the popup (works even over iframe) */}
+            <div
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                if (Date.now() - playerOpenTimeRef.current < 500) return;
+                setPopupMode("gesture");
+                setShowTrackDropdown(false);
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                if (Date.now() - playerOpenTimeRef.current < 500) return;
+                setPopupMode("gesture");
+                setShowTrackDropdown(false);
+              }}
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 100003,
+                background: "transparent",
+                pointerEvents: "all",
+                touchAction: "none",
+                WebkitTapHighlightColor: "transparent"
+              }}
+            />
+            <div
+              ref={popupContainerRef}
+              onPointerDown={handlePopupPointerDown}
+              onPointerMove={handlePopupPointerMove}
+              onPointerUp={handlePopupPointerUp}
+              onPointerCancel={handlePopupPointerUp}
             style={{
               position: "fixed",
               left: `${popupPos.x}px`,
@@ -3584,9 +3613,8 @@ export default function EpsBookReader({
               </div>
             )}
           </div>
+          </>
         )}
-
-        {/* CSS KEYFRAMES FOR AUDIO PULSING GLOW WHEN PLAYING */}
         <style>{`
           @keyframes pulseAudioGlow {
             0% {
