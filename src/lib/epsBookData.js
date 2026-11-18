@@ -12,7 +12,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "자기소개",
     "titleNe": "आफ्नो परिचय",
     "titleEn": "Self Introduction",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_01.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%201/Chapter%201%20-%20Self%20Introduction.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_01.jpg",
     "audioTracks": [
       {
@@ -65,7 +65,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "생활용품",
     "titleNe": "दैनिक जीवनमा प्रयोग हुने सामान / घरायसी सामान",
     "titleEn": "Daily Necessities",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_02.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%202/Chapter%202%20-%20Daily%20Necessities.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_02.jpg",
     "audioTracks": [
       {
@@ -118,7 +118,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "위치와 장소",
     "titleNe": "स्थान र ठाउँहरू",
     "titleEn": "Locations and Places",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_03.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%203/Chapter%203%20-%20Locations%20and%20Places.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_03.jpg",
     "audioTracks": [
       {
@@ -171,7 +171,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "동작과 사물",
     "titleNe": "क्रियाकलाप र वस्तुहरू",
     "titleEn": "Actions and Objects",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_04.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%204/Chapter%204%20-%20Actions%20and%20Objects.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_04.jpg",
     "audioTracks": [
       {
@@ -224,7 +224,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "날짜와 요일",
     "titleNe": "मिति र बारहरू",
     "titleEn": "Dates and Days of the Week",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_05.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%205/Chapter%205%20-%20Dates%20and%20Days%20of%20the%20Week.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_05.jpg",
     "audioTracks": [
       {
@@ -277,7 +277,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "하루 일과",
     "titleNe": "दैनिक दिनचर्या",
     "titleEn": "Daily Routine",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_06.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%206/Chapter%206%20-%20Daily%20Routine.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_06.jpg",
     "audioTracks": [
       {
@@ -330,7 +330,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "계절과 날씨",
     "titleNe": "ऋतु र मौसम",
     "titleEn": "Seasons and the Weather",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_07.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%207/Chapter%207%20-%20Seasons%20and%20the%20Weather.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_07.jpg",
     "audioTracks": [
       {
@@ -383,7 +383,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "가족과 친구",
     "titleNe": "परिवार र साथीहरू",
     "titleEn": "Family and Friends",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_08.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%208/Chapter%208%20-%20Family%20and%20Friends.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_08.jpg",
     "audioTracks": [
       {
@@ -436,7 +436,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "음식 주문",
     "titleNe": "खाना अर्डर",
     "titleEn": "Ordering Food",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_09.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%209/Chapter%209%20-%20Ordering%20Food.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_09.jpg",
     "audioTracks": [
       {
@@ -489,7 +489,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "물건 구입",
     "titleNe": "सामान खरिद",
     "titleEn": "Shopping",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_10.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2010/Chapter%2010%20-%20Shopping.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_10.jpg",
     "audioTracks": [
       {
@@ -542,7 +542,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "집안일",
     "titleNe": "घरायसी कामकाज",
     "titleEn": "Household Chores",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_11.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2011/Chapter%2011%20-%20Household%20Chores.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_11.jpg",
     "audioTracks": [
       {
@@ -595,7 +595,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "대중교통",
     "titleNe": "सार्वजनिक यातायात",
     "titleEn": "Public Transportation",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_12.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2012/Chapter%2012%20-%20Public%20Transportation.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_12.jpg",
     "audioTracks": [
       {
@@ -648,7 +648,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "주말 활동",
     "titleNe": "सप्ताहन्तका क्रियाकलापहरू",
     "titleEn": "Weekend Activities",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_13.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2013/Chapter%2013%20-%20Weekend%20Activities.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_13.jpg",
     "audioTracks": [
       {
@@ -701,7 +701,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "길 찾기",
     "titleNe": "बाटो पत्ता लगाउने",
     "titleEn": "Getting Directions",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_14.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2014/Chapter%2014%20-%20Getting%20Directions.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_14.jpg",
     "audioTracks": [
       {
@@ -754,7 +754,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "옷차림",
     "titleNe": "पहिरन र पोसाक",
     "titleEn": "Clothing",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_15.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2015/Chapter%2015%20-%20Clothing.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_15.jpg",
     "audioTracks": [
       {
@@ -807,7 +807,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "집 구하기",
     "titleNe": "घर / कोठा खोज्ने",
     "titleEn": "Finding a House",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_16.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2016/Chapter%2016%20-%20Finding%20a%20House.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_16.jpg",
     "audioTracks": [
       {
@@ -860,7 +860,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "휴가",
     "titleNe": "बिदा र भ्रमण",
     "titleEn": "Vacation",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_17.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2017/Chapter%2017%20-%20Vacation.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_17.jpg",
     "audioTracks": [
       {
@@ -913,7 +913,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "취미",
     "titleNe": "रूचि र शौक",
     "titleEn": "Hobbies",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_18.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2018/Chapter%2018%20-%20Hobbies.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_18.jpg",
     "audioTracks": [
       {
@@ -966,7 +966,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "요리",
     "titleNe": "खाना पकाउने / परिकार",
     "titleEn": "Cooking",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_19.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2019/Chapter%2019%20-%20Cooking.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_19.jpg",
     "audioTracks": [
       {
@@ -1019,7 +1019,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "인터넷과 스마트폰",
     "titleNe": "इन्टरनेट र स्मार्टफोन",
     "titleEn": "The Internet and Smartphones",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_20.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2020/Chapter%2020%20-%20The%20Internet%20and%20Smartphones.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_20.jpg",
     "audioTracks": [
       {
@@ -1072,7 +1072,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "병원",
     "titleNe": "अस्पताल",
     "titleEn": "Hospital",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_21.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2021/Chapter%2021%20-%20Hospital.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_21.jpg",
     "audioTracks": [
       {
@@ -1125,7 +1125,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "약국",
     "titleNe": "औषधि पसल",
     "titleEn": "Pharmacy",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_22.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2022/Chapter%2022%20-%20Pharmacy.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_22.jpg",
     "audioTracks": [
       {
@@ -1178,7 +1178,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "우체국",
     "titleNe": "हुलाक कार्यालय",
     "titleEn": "Post Office",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_23.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2023/Chapter%2023%20-%20Post%20Office.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_23.jpg",
     "audioTracks": [
       {
@@ -1231,7 +1231,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "은행",
     "titleNe": "बैंक",
     "titleEn": "Bank",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_24.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2024/Chapter%2024%20-%20Bank.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_24.jpg",
     "audioTracks": [
       {
@@ -1284,7 +1284,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "외국인 근로자 지원 기관",
     "titleNe": "विदेशी कामदार सहायता संस्था",
     "titleEn": "Foreign Workers Support Center",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_25.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2025/Chapter%2025%20-%20Foreign%20Workers%20Support%20Center.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_25.jpg",
     "audioTracks": [
       {
@@ -1337,7 +1337,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "한국의 주거 문화와 음식 문화",
     "titleNe": "कोरियाको आवास र खाना संस्कृति",
     "titleEn": "Korean Housing Culture and Food Culture",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_26.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2026/Chapter%2026%20-%20Korean%20Housing%20Culture%20and%20Food%20Culture.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_26.jpg",
     "audioTracks": [
       {
@@ -1390,7 +1390,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "한국의 기념일",
     "titleNe": "कोरियाका विशेष स्मरण तथा उत्सव दिवसहरू",
     "titleEn": "Korean Commemorative Days",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_27.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2027/Chapter%2027%20-%20Korean%20Commemorative%20Days.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_27.jpg",
     "audioTracks": [
       {
@@ -1443,7 +1443,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "한국의 명절",
     "titleNe": "कोरियाका मुख्य परम्परागत चाडपर्वहरू",
     "titleEn": "Korean Traditional Holidays",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_28.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2028/Chapter%2028%20-%20Korean%20Traditional%20Holidays.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_28.jpg",
     "audioTracks": [
       {
@@ -1496,7 +1496,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "한국의 예절",
     "titleNe": "कोरियाली शिष्टाचार र संस्कार",
     "titleEn": "Korean Etiquette",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_29.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2029/Chapter%2029%20-%20Korean%20Etiquette.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_29.jpg",
     "audioTracks": [
       {
@@ -1549,7 +1549,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "한국의 대중문화",
     "titleNe": "कोरियाली पप संस्कृति / कोरियन लहर",
     "titleEn": "Korean Popular Culture",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_30.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2030/Chapter%2030%20-%20Korean%20Popular%20Culture.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_30.jpg",
     "audioTracks": [
       {
@@ -1602,7 +1602,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "복장과 근무 태도",
     "titleNe": "कार्यस्थलको पोसाक र काम गर्ने शैली/आचरण",
     "titleEn": "Attire and Work Attitude",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_31.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2031/Chapter%2031.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_31.jpg",
     "audioTracks": [
       {
@@ -1655,7 +1655,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "회사 시설 사용",
     "titleNe": "कम्पनीको सुविधा तथा होस्टेलको प्रयोग",
     "titleEn": "Use of Company Facilities",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_32.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2032/Chapter%2032.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_32.jpg",
     "audioTracks": [
       {
@@ -1708,7 +1708,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "동료와의 관계",
     "titleNe": "सहकर्मीहरूसँगको सम्बन्ध र कार्यस्थलको वातावरण",
     "titleEn": "Colleague Relationships",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_33.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2033/Chapter%2033.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_33.jpg",
     "audioTracks": [
       {
@@ -1745,7 +1745,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "성희롱 및 성추행 예방",
     "titleNe": "यौन दुर्व्यवहार तथा यौन उत्पीडन रोकथाम",
     "titleEn": "Sexual Harassment and Assault Prevention",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_34.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2034/Chapter%2034.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_34.jpg",
     "audioTracks": [
       {
@@ -1798,7 +1798,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "작업장 관리",
     "titleNe": "कार्यस्थलको व्यवस्थापन तथा सरसफाइ",
     "titleEn": "Workplace Management",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_35.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2035/Chapter%2035.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_35.jpg",
     "audioTracks": [
       {
@@ -1851,7 +1851,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "출하 관리",
     "titleNe": "उत्पादन सामग्री ढुवानी तथा प्याकिङ व्यवस्थापन",
     "titleEn": "Shipment Management",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_36.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2036/Chapter%2036.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_36.jpg",
     "audioTracks": [
       {
@@ -1904,7 +1904,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "기계 가공",
     "titleNe": "मेसिन सञ्चालन तथा मेसिनिङ काम",
     "titleEn": "Machine Processing",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_37.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2037/Chapter%2037.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_37.jpg",
     "audioTracks": [
       {
@@ -1957,7 +1957,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "기계 조립",
     "titleNe": "मेसिनका पार्टपुर्जा एसेम्बल (जडान)",
     "titleEn": "Machine Assembly",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_38.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2038/Chapter%2038.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_38.jpg",
     "audioTracks": [
       {
@@ -2010,7 +2010,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "금속 가공",
     "titleNe": "धातु प्रशोधन तथा वेल्डिङ/काट्ने काम",
     "titleEn": "Metal Processing",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_39.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2039/Chapter%2039.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_39.jpg",
     "audioTracks": [
       {
@@ -2063,7 +2063,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "플라스틱 고무 성형",
     "titleNe": "प्लास्टिक तथा रबर मोल्डिङ (आकार दिने काम)",
     "titleEn": "Plastic and Rubber Molding",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_40.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2040/Chapter%2040.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_40.jpg",
     "audioTracks": [
       {
@@ -2116,7 +2116,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "섬유 제조",
     "titleNe": "कपडा तथा धागो उत्पादन / कपडा निर्माण",
     "titleEn": "Textile Manufacturing",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_41.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2041/Chapter%2041.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_41.jpg",
     "audioTracks": [
       {
@@ -2169,7 +2169,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "가구 제작",
     "titleNe": "फर्निचर निर्माण तथा काठको काम",
     "titleEn": "Furniture Making",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_42.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2042/Chapter%2042.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_42.jpg",
     "audioTracks": [
       {
@@ -2222,7 +2222,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "건축 시공",
     "titleNe": "भवन निर्माण तथा रड बाँध्ने/फ्रेमवर्क काम",
     "titleEn": "Building Construction",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_43.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2043/Chapter%2043.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_43.jpg",
     "audioTracks": [
       {
@@ -2275,7 +2275,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "토목 시공",
     "titleNe": "सिभिल इन्जिनियरिङ तथा सडक/खानेपानी निर्माण",
     "titleEn": "Civil Engineering",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_44.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2044/Chapter%2044.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_44.jpg",
     "audioTracks": [
       {
@@ -2328,7 +2328,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "농작물 재배",
     "titleNe": "कृषि बाली तथा फलफूल खेती",
     "titleEn": "Crop Cultivation",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_45.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2045/Chapter%2045.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_45.jpg",
     "audioTracks": [
       {
@@ -2381,7 +2381,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "사육 관리",
     "titleNe": "पशुपालन तथा दाना व्यवस्थापन",
     "titleEn": "Livestock Management",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_46.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2046/Chapter%2046.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_46.jpg",
     "audioTracks": [
       {
@@ -2434,7 +2434,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "연안 어업과 양식",
     "titleNe": "तटीय माछा मार्ने काम र मत्स्यपालन",
     "titleEn": "Coastal Fishery and Aquaculture",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_47.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2047/Chapter%2047.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_47.jpg",
     "audioTracks": [
       {
@@ -2487,7 +2487,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "선체 건조",
     "titleNe": "पानीजहाज निर्माण तथा रङ लगाउने काम",
     "titleEn": "Ship Hull Construction",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_48.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2048/Chapter%2048.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_48.jpg",
     "audioTracks": [
       {
@@ -2540,7 +2540,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "광물 자원 개발 생산",
     "titleNe": "खानी तथा खनिज स्रोत उत्खनन र उत्पादन",
     "titleEn": "Mineral Resource Development and Production",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_49.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2049/Chapter%2049.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_49.jpg",
     "audioTracks": [
       {
@@ -2593,7 +2593,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "산림 자원 조성",
     "titleNe": "वन स्रोत संरक्षण तथा वृक्षारोपण व्यवस्थापन",
     "titleEn": "Forest Resource Management",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_50.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2050/Chapter%2050.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_50.jpg",
     "audioTracks": [
       {
@@ -2646,7 +2646,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "숙박 서비스",
     "titleNe": "होटेल तथा आवास सेवा व्यवस्थापन",
     "titleEn": "Accommodation Services",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_51.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2051/Chapter%2051.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_51.jpg",
     "audioTracks": [
       {
@@ -2699,7 +2699,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "음식 조리",
     "titleNe": "खाना पकाउने तथा खाद्य सामग्री व्यवस्थापन",
     "titleEn": "Food Preparation",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_52.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2052/Chapter%2052.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_52.jpg",
     "audioTracks": [
       {
@@ -2752,7 +2752,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "산업 안전 및 보건 표지",
     "titleNe": "औद्योगिक सुरक्षा तथा स्वास्थ्य सम्बन्धी संकेत चिह्नहरू",
     "titleEn": "Industrial Safety and Health Signs",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_53.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2053/Chapter%2053.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_53.jpg",
     "audioTracks": [
       {
@@ -2805,7 +2805,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "산업 안전 및 보건 수칙",
     "titleNe": "औद्योगिक सुरक्षा तथा स्वास्थ्य नियमहरू",
     "titleEn": "Industrial Safety and Health Regulations",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_54.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2054/Chapter%2054.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_54.jpg",
     "audioTracks": [
       {
@@ -2858,7 +2858,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "산업 안전 및 위생 장비",
     "titleNe": "औद्योगिक सुरक्षा तथा व्यक्तिगत सुरक्षा उपकरणहरू (PPE)",
     "titleEn": "Industrial Safety and Hygiene Equipment",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_55.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2055/Chapter%2055.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_55.jpg",
     "audioTracks": [
       {
@@ -2911,7 +2911,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "산업 재해 및 응급 처치",
     "titleNe": "औद्योगिक दुर्घटना तथा प्राथमिक उपचार",
     "titleEn": "Industrial Accidents and First Aid",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_56.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2056/Chapter%2056.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_56.jpg",
     "audioTracks": [
       {
@@ -2964,7 +2964,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "고용허가제",
     "titleNe": "रोजगार अनुमति प्रणाली (EPS प्रणाली र प्रक्रिया)",
     "titleEn": "Employment Permit System",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_57.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2057/Chapter%2057.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_57.jpg",
     "audioTracks": [
       {
@@ -3017,7 +3017,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "근로기준법",
     "titleNe": "श्रम मानक ऐन र कामदारका अधिकारहरू",
     "titleEn": "Labor Standards Act",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_58.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2058/Chapter%2058.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_58.jpg",
     "audioTracks": [
       {
@@ -3070,7 +3070,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "출입국 관리법",
     "titleNe": "अध्यागमन नियन्त्रण ऐन र विदेशी दर्ता/भिसा प्रक्रिया",
     "titleEn": "Immigration Act",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_59.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2059/Chapter%2059.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_59.jpg",
     "audioTracks": [
       {
@@ -3123,7 +3123,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "근로자 보험",
     "titleNe": "विदेशी कामदार बिमा (प्रस्थान बिमा र ग्यारेन्टी बिमा)",
     "titleEn": "Worker Insurance & Employment Insurance",
-    "pdfUrl": "/uploads/eps-chapters/Chapter_60.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%2060/Chapter%2060.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_60.jpg",
     "audioTracks": [
       {

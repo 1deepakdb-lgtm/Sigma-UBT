@@ -2320,37 +2320,28 @@ export default function EpsBookReader({
     return "";
   };
 
-  // Track auto-play trigger when track changes while playing
+  // Track change: reset position but do NOT auto-play — user must press play
   useEffect(() => {
-    if (isPlaying && audioRef.current) {
-      audioRef.current.play().catch((err) => {
-        console.warn("Track change play error:", err);
-      });
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
+    setIsPlaying(false);
+    setCurrentTime(0);
   }, [currentTrackIndex]);
 
 
 
-  // Direct Track Selection with Instant Auto-Play & Auto-Hide Dialog
+  // Direct Track Selection — only change track, do NOT auto-play
   const handleSelectTrack = (idx) => {
     setCurrentTrackIndex(idx);
     setShowTrackDropdown(false);
-    setIsPlaying(true);
+    setIsPlaying(false);
     setCurrentTime(0);
-
-    // Fast attempt & metadata fallback
-    setTimeout(() => {
-      setShowTrackDropdown(false);
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().then(() => {
-          setIsPlaying(true);
-          setShowTrackDropdown(false);
-        }).catch((err) => {
-          console.warn("Auto-play trigger:", err);
-        });
-      }
-    }, 60);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
   };
 
   // Play / Pause toggle with 100% reliable hardware synchronization
@@ -3812,6 +3803,7 @@ export default function EpsBookReader({
                 key={selectedChapter.chapter !== undefined ? `eps-ch-${selectedChapter.chapter}` : (selectedChapter.id || selectedChapter.folder || selectedChapter.pdfUrl)}
                 src={getCleanPdfUrl(selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
+                onLoad={(e) => { e.currentTarget.style.opacity = "1"; }}
                 style={{
                   position: "absolute",
                   top: 0,
@@ -3823,7 +3815,9 @@ export default function EpsBookReader({
                   padding: 0,
                   display: "block",
                   backgroundColor: "#ffffff",
-                  outline: "none"
+                  outline: "none",
+                  opacity: 0,
+                  transition: "opacity 0.35s ease"
                 }}
               />
             </div>
@@ -3913,9 +3907,7 @@ export default function EpsBookReader({
               if (audioRef.current) {
                 setDuration(audioRef.current.duration);
                 audioRef.current.playbackRate = playbackRate;
-                if (isPlaying) {
-                  audioRef.current.play().catch(() => { });
-                }
+                // Do NOT auto-play on metadata load — user must press play button
               }
             }}
             onEnded={() => {
