@@ -598,7 +598,10 @@ export default function LoginPage() {
     minHeight: "100vh",
     backgroundColor: "#f1f5f9",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    padding: "10px"
+    padding: "12px",
+    paddingTop: "calc(var(--app-header-top-clearance, env(safe-area-inset-top, 0px)) + 14px)",
+    paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)",
+    boxSizing: "border-box"
   };
 
   const cardStyle = {

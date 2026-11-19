@@ -53,10 +53,30 @@ html {
   display: none !important;
 }
 
+/* Mobile, PWA standalone, and native APK: ensure top view always opens comfortably BELOW the status bar */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --app-header-top-clearance: env(safe-area-inset-top, 0px);
+}
+
+@media (max-width: 768px), (display-mode: standalone), (display-mode: fullscreen) {
+  :root {
+    --app-header-top-clearance: calc(env(safe-area-inset-top, 0px) + 14px);
+  }
+}
+
+.is-mobile-app,
+.is-pwa-standalone {
+  --app-header-top-clearance: calc(env(safe-area-inset-top, 0px) + 14px) !important;
+}
+
 /* Mobile App Unified Top View matching #003b73 status bar */
 .unified-app-top-header {
   background-color: #003b73 !important;
-  padding-top: env(safe-area-inset-top, 0px) !important;
+  padding-top: var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px)) !important;
 }
 
 body {

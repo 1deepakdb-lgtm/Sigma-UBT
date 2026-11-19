@@ -1864,8 +1864,9 @@ const StudentDashboard = () => {
     backgroundImage: "linear-gradient(135deg, #003b73 0%, #004b93 50%, #1e3a8a 100%)",
     color: "#ffffff",
     padding: "8px 16px",
-    paddingTop: "calc(8px + env(safe-area-inset-top, 0px))",
-    minHeight: "calc(54px + env(safe-area-inset-top, 0px))",
+    paddingTop: "var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px))",
+    paddingBottom: "10px",
+    minHeight: "calc(58px + var(--app-header-top-clearance, env(safe-area-inset-top, 0px)))",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -1967,7 +1968,7 @@ const StudentDashboard = () => {
       )}
 
       {/* Top Navbar */}
-      <div style={topNavStyle}>
+      <div style={topNavStyle} className="unified-app-top-header">
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, minWidth: "150px", maxWidth: "220px" }}>
           {logoWatermark && (
             <img src={logoWatermark} alt="Institute Logo" style={{ height: "28px", borderRadius: "4px", backgroundColor: "#ffffff", padding: "2px", flexShrink: 0 }} />

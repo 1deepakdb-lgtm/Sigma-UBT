@@ -2755,7 +2755,7 @@ export default function EpsBookReader({
             backgroundColor: "#003b73",
             color: "#ffffff",
             padding: "12px 20px",
-            paddingTop: "calc(12px + env(safe-area-inset-top, 0px))",
+            paddingTop: "var(--app-header-top-clearance, calc(12px + env(safe-area-inset-top, 0px)))",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -2851,11 +2851,12 @@ export default function EpsBookReader({
       >
         {/* TOP BAR */}
         <div
+          className="unified-app-top-header"
           style={{
             backgroundColor: "#991b1b",
             color: "#ffffff",
             padding: "12px 20px",
-            paddingTop: "calc(12px + env(safe-area-inset-top, 0px))",
+            paddingTop: "var(--app-header-top-clearance, calc(12px + env(safe-area-inset-top, 0px)))",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
