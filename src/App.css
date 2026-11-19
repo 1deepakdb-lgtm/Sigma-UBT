@@ -53,6 +53,81 @@ html {
   display: none !important;
 }
 
+/* =========================================================================
+   ZERO-FLASH RESPONSIVE NAVIGATION RULES (Prevents Menus Leaking on Refresh)
+   ========================================================================= */
+
+/* Default desktop display for tab bars and nav menus */
+.desktop-nav-menu,
+.student-desktop-tabs,
+.institute-desktop-tabs {
+  display: flex;
+}
+
+/* Default hidden for bottom bars and mobile drawer toggles */
+.navbar-bottom-nav,
+.student-bottom-nav,
+.institute-bottom-nav,
+.mobile-hamburger-btn,
+.student-mobile-menu-btn,
+.institute-mobile-menu-btn {
+  display: none;
+}
+
+/* On mobile / tablet screens (< 1025px): NEVER show desktop navigation menus, even during initial paint/refresh */
+@media (max-width: 1024px) {
+  .desktop-nav-menu,
+  .student-desktop-tabs,
+  .institute-desktop-tabs,
+  .desktop-divider,
+  .desktop-logout-btn,
+  .student-desktop-logout,
+  .institute-desktop-logout {
+    display: none !important;
+  }
+
+  .mobile-hamburger-btn,
+  .student-mobile-menu-btn,
+  .institute-mobile-menu-btn {
+    display: inline-flex !important;
+  }
+
+  .navbar-bottom-nav,
+  .student-bottom-nav,
+  .institute-bottom-nav {
+    display: flex !important;
+  }
+}
+
+/* In Mobile Apps, PWA standalone, and Native APK: strictly enforce mobile view and NEVER leak desktop menus */
+.is-mobile-app .desktop-nav-menu,
+.is-mobile-app .student-desktop-tabs,
+.is-mobile-app .institute-desktop-tabs,
+.is-mobile-app .desktop-divider,
+.is-mobile-app .desktop-logout-btn,
+.is-mobile-app .student-desktop-logout,
+.is-mobile-app .institute-desktop-logout,
+.is-pwa-standalone .desktop-nav-menu,
+.is-pwa-standalone .student-desktop-tabs,
+.is-pwa-standalone .institute-desktop-tabs,
+.is-pwa-standalone .desktop-divider,
+.is-pwa-standalone .desktop-logout-btn,
+.is-pwa-standalone .student-desktop-logout,
+.is-pwa-standalone .institute-desktop-logout {
+  display: none !important;
+}
+
+@media (min-width: 1025px) {
+  .navbar-bottom-nav,
+  .student-bottom-nav,
+  .institute-bottom-nav,
+  .mobile-hamburger-btn,
+  .student-mobile-menu-btn,
+  .institute-mobile-menu-btn {
+    display: none !important;
+  }
+}
+
 /* Mobile, PWA standalone, and native APK: ensure top view always opens comfortably BELOW the status bar */
 :root {
   --safe-top: env(safe-area-inset-top, 0px);

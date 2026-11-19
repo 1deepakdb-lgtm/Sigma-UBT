@@ -301,7 +301,6 @@ export default function Navbar({
         <nav
           className="desktop-nav-menu"
           style={{
-            display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
             gap: role === 'admin' ? '4px' : '6px',

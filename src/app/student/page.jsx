@@ -1997,7 +1997,6 @@ const StudentDashboard = () => {
         <div
           className="student-desktop-tabs"
           style={{
-            display: "flex",
             gap: "4px",
             flexWrap: "nowrap",
             alignItems: "center",
@@ -4299,7 +4298,7 @@ const StudentDashboard = () => {
           height: "64px",
           backgroundColor: "#ffffff",
           borderTop: "1px solid #e2e8f0",
-          display: "flex",
+          display: "none",
           justifyContent: "space-around",
           alignItems: "center",
           zIndex: 9999,

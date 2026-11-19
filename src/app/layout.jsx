@@ -51,6 +51,27 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
+        {/* Early synchronous platform detection to eliminate navigation menu flashes during page load/refresh */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+                  var isiOSStandalone = window.navigator && window.navigator.standalone === true;
+                  var isNativeApp = !!window.AndroidApp || !!window.Capacitor || !!window._isNativeApp || (document.referrer && document.referrer.indexOf('android-app://') !== -1) || /ExamJK-Android-App|ExamJKApp|Android.*Version\\/[0-9.]+\\s+Chrome\\/[0-9.]+|wv/i.test(navigator.userAgent);
+                  var isMobileWidth = window.innerWidth <= 1024;
+                  if (isStandalone || isiOSStandalone) {
+                    document.documentElement.classList.add('is-pwa-standalone');
+                  }
+                  if (isNativeApp || isStandalone || isiOSStandalone || isMobileWidth) {
+                    document.documentElement.classList.add('is-mobile-app');
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
       </head>
       <body>
         {children}

@@ -1475,7 +1475,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
   const menuContainerStyle = {
     flex: "0 0 auto",
-    display: "flex",
     gap: "8px",
     flexWrap: "nowrap",
     alignItems: "center",
