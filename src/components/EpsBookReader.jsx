@@ -3785,7 +3785,7 @@ export default function EpsBookReader({
             title="Go Back to Chapter List (Esc)"
             style={{
               position: "fixed",
-              top: "14px",
+              top: "calc(var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px)) + 12px)",
               left: "14px",
               zIndex: 100018,
               backgroundColor: "rgba(15, 23, 42, 0.88)",
@@ -3818,13 +3818,26 @@ export default function EpsBookReader({
           </button>
         )}
 
-        {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (NO BROWSER TOOLBAR, MAXIMUM FULLSCREEN FIT) ================= */}
+        {/* Mobile Status Bar Backdrop (Ensures #003b73 dark navy blue behind phone status bar) */}
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px))",
+            backgroundColor: "#003b73",
+            zIndex: 100010
+          }}
+        />
+
+        {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (OPENED SAFELY BELOW STATUS BAR) ================= */}
         <div style={{
           position: "absolute",
-          top: 0,
+          top: "var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px))",
           left: 0,
           width: "100vw",
-          height: "100vh",
+          height: "calc(100vh - var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px)))",
           backgroundColor: "#ffffff",
           overflow: "hidden",
           margin: 0,
@@ -3834,8 +3847,8 @@ export default function EpsBookReader({
           {selectedChapter && (selectedChapter.pdfUrl || selectedChapter.pdf?.url) ? (
             <div style={{
               position: "relative",
-              width: "100vw",
-              height: "100vh",
+              width: "100%",
+              height: "100%",
               overflow: "hidden"
             }}>
               <iframe
@@ -3847,8 +3860,8 @@ export default function EpsBookReader({
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  width: "100vw",
-                  height: "100vh",
+                  width: "100%",
+                  height: "100%",
                   border: "none",
                   margin: 0,
                   padding: 0,
