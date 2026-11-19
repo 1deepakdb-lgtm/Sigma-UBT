@@ -162,6 +162,59 @@
     cursor: pointer;
   }
 
+  /* Quick Zoom In/Out & Reset Floating Controls */
+  #floating-zoom-bar {
+    position: fixed;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    right: calc(18px + env(safe-area-inset-right, 0px));
+    z-index: 99995;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 24px;
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .zoom-ctrl-btn {
+    background: transparent;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .zoom-ctrl-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  .zoom-ctrl-btn:active {
+    transform: scale(0.9);
+  }
+  #zoom-reset-btn {
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    color: #38bdf8 !important;
+    width: auto !important;
+    min-width: 44px !important;
+    padding: 0 6px !important;
+  }
+
 </style>
 </head>
 <body>
@@ -180,6 +233,12 @@
 
 <div id="viewer-scroll-container">
   <div id="viewer-zoom-layer"></div>
+</div>
+
+<div id="floating-zoom-bar">
+  <button type="button" class="zoom-ctrl-btn" id="zoom-out-btn" title="Zoom Out (−)" aria-label="Zoom Out">−</button>
+  <button type="button" class="zoom-ctrl-btn" id="zoom-reset-btn" title="Reset Zoom (Fit Width)" aria-label="Reset Zoom">100%</button>
+  <button type="button" class="zoom-ctrl-btn" id="zoom-in-btn" title="Zoom In (+)" aria-label="Zoom In">+</button>
 </div>
 
 <script src="/pdf.worker.min.js"></script>
@@ -805,19 +864,50 @@
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     }
 
+    function updateZoomBadge() {
+      var badge = document.getElementById('zoom-reset-btn');
+      if (!badge) return;
+      var curZoom = (viewMode === 'custom') ? userZoom : 1.0;
+      var pct = Math.round(curZoom * 100);
+      badge.textContent = pct + '%';
+      if (pct > 104) {
+        badge.style.color = '#38bdf8';
+      } else {
+        badge.style.color = '#94a3b8';
+      }
+    }
+
     // Shrink the PDF back to its own original position (Fit-Width / 1.0x, scrollLeft = 0)
-    function shrinkToOwnPosition(animated) {
+    // Anchored at focalClientX / focalClientY if provided, or screen center
+    function shrinkToOwnPosition(animated, focalClientX, focalClientY) {
       if (isAnimatingZoom) return;
       var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
+      if (oldZoom <= 1.02 && container.scrollLeft <= 5) {
+        updateZoomBadge();
+        return;
+      }
 
-      if (animated !== false && (oldZoom > 1.02 || container.scrollLeft > 5)) {
+      var rect = container.getBoundingClientRect();
+      var clientX = (typeof focalClientX === 'number') ? focalClientX : (rect.left + rect.width / 2);
+      var clientY = (typeof focalClientY === 'number') ? focalClientY : (rect.top + rect.height / 2);
+
+      var vx = clientX - rect.left;
+      var vy = clientY - rect.top;
+      var px = container.scrollLeft + vx;
+      var py = container.scrollTop + vy;
+
+      // Anchored scroll coordinate in 1.0x fit-width space
+      var targetScrollY = Math.max(0, Math.round((py / oldZoom) - vy));
+
+      if (animated !== false) {
         isAnimatingZoom = true;
-        var curScrollY = container.scrollTop;
-        var targetScrollY = Math.max(0, Math.round(curScrollY / oldZoom));
+        var layerRect = zoomLayer.getBoundingClientRect();
+        var originX = clientX - layerRect.left;
+        var originY = clientY - layerRect.top;
 
-        // Smooth CSS shrink animation back to own position
-        zoomLayer.style.transition = 'transform 0.26s cubic-bezier(0.16, 1, 0.3, 1)';
-        zoomLayer.style.transformOrigin = '50% 0';
+        zoomLayer.style.willChange = 'transform';
+        zoomLayer.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
+        zoomLayer.style.transformOrigin = originX + 'px ' + originY + 'px';
         zoomLayer.style.transform = 'scale(' + (1.0 / oldZoom) + ')';
 
         setTimeout(function() {
@@ -832,8 +922,9 @@
           container.scrollLeft = 0;
           container.scrollTop = targetScrollY;
           debouncedReRender();
+          updateZoomBadge();
           isAnimatingZoom = false;
-        }, 260);
+        }, 220);
       } else {
         viewMode = 'fit-width';
         userZoom = 1.0;
@@ -843,26 +934,38 @@
         zoomLayer.style.willChange = 'auto';
         updateAllWrapperDimensions();
         container.scrollLeft = 0;
+        container.scrollTop = targetScrollY;
         debouncedReRender();
+        updateZoomBadge();
       }
     }
 
-    // Smoothly zoom in anchored at double-clicked / tapped point
-    function zoomInAtPoint(clientX, clientY) {
+    // Smoothly zoom in anchored at clicked / tapped focal point
+    function zoomInAtPoint(clientX, clientY, targetLevel) {
       if (isAnimatingZoom) return;
       isAnimatingZoom = true;
 
-      var targetZoom = 2.4;
+      var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
+      var targetZoom = (typeof targetLevel === 'number') ? targetLevel : 2.4;
       var rect = container.getBoundingClientRect();
-      var vx = clientX - rect.left;
-      var vy = clientY - rect.top;
+      var clientXVal = (typeof clientX === 'number') ? clientX : (rect.left + rect.width / 2);
+      var clientYVal = (typeof clientY === 'number') ? clientY : (rect.top + rect.height / 2);
+
+      var vx = clientXVal - rect.left;
+      var vy = clientYVal - rect.top;
       var px = container.scrollLeft + vx;
       var py = container.scrollTop + vy;
 
-      // Animate visual zoom smoothly with hardware-accelerated transform
-      zoomLayer.style.transition = 'transform 0.26s cubic-bezier(0.16, 1, 0.3, 1)';
-      zoomLayer.style.transformOrigin = vx + 'px ' + vy + 'px';
-      zoomLayer.style.transform = 'scale(' + targetZoom + ')';
+      var layerRect = zoomLayer.getBoundingClientRect();
+      var originX = clientXVal - layerRect.left;
+      var originY = clientYVal - layerRect.top;
+
+      var scaleFactor = targetZoom / oldZoom;
+
+      zoomLayer.style.willChange = 'transform';
+      zoomLayer.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
+      zoomLayer.style.transformOrigin = originX + 'px ' + originY + 'px';
+      zoomLayer.style.transform = 'scale(' + scaleFactor + ')';
 
       setTimeout(function() {
         zoomLayer.style.transition = 'none';
@@ -874,21 +977,60 @@
         userZoom = targetZoom;
         updateAllWrapperDimensions();
 
-        container.scrollLeft = Math.max(0, Math.round(px * targetZoom - vx));
-        container.scrollTop = Math.max(0, Math.round(py * targetZoom - vy));
+        container.scrollLeft = Math.max(0, Math.round(px * scaleFactor - vx));
+        container.scrollTop = Math.max(0, Math.round(py * scaleFactor - vy));
         debouncedReRender();
+        updateZoomBadge();
         isAnimatingZoom = false;
-      }, 260);
+      }, 220);
+    }
+
+    // Step Zoom Out (by button or gesture)
+    function zoomOutStep(focalX, focalY) {
+      var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
+      if (oldZoom <= 1.05) {
+        shrinkToOwnPosition(true, focalX, focalY);
+        return;
+      }
+      var nextZoom = Math.max(1.0, Math.round((oldZoom - 0.35) * 100) / 100);
+      if (nextZoom <= 1.05) {
+        shrinkToOwnPosition(true, focalX, focalY);
+      } else {
+        var rect = container.getBoundingClientRect();
+        var clientX = (typeof focalX === 'number') ? focalX : (rect.left + rect.width / 2);
+        var clientY = (typeof focalY === 'number') ? focalY : (rect.top + rect.height / 2);
+
+        var vx = clientX - rect.left;
+        var vy = clientY - rect.top;
+        var px = container.scrollLeft + vx;
+        var py = container.scrollTop + vy;
+
+        viewMode = 'custom';
+        userZoom = nextZoom;
+        var rScale = userZoom / oldZoom;
+        updateAllWrapperDimensions();
+        container.scrollLeft = Math.max(0, Math.round(px * rScale - vx));
+        container.scrollTop = Math.max(0, Math.round(py * rScale - vy));
+        debouncedReRender();
+        updateZoomBadge();
+      }
+    }
+
+    // Step Zoom In (by button or gesture)
+    function zoomInStep(focalX, focalY) {
+      var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
+      var nextZoom = Math.min(5.0, Math.round((oldZoom + 0.35) * 100) / 100);
+      zoomInAtPoint(focalX, focalY, nextZoom);
     }
 
     // Double-click / double-tap anywhere on screen:
-    // If zoomed in -> SHRINK the PDF back to its own original position!
+    // If zoomed in -> SHRINK the PDF back to its own original position smoothly!
     // If at original position -> zoom in smoothly to readable magnification!
     function handleScreenDoubleClick(clientX, clientY) {
-      if (viewMode === 'custom' || userZoom > 1.05 || container.scrollLeft > 10) {
-        shrinkToOwnPosition(true);
+      if (viewMode === 'custom' && userZoom > 1.05) {
+        shrinkToOwnPosition(true, clientX, clientY);
       } else {
-        zoomInAtPoint(clientX, clientY);
+        zoomInAtPoint(clientX, clientY, 2.4);
       }
     }
 
@@ -982,9 +1124,21 @@
         var vx = pinchMidX - rect.left;
         var vy = pinchMidY - rect.top;
 
-        if (currentPinchScale <= 1.08) {
-          // Pinched in to shrink/zoom out -> smoothly shrink back to own position!
-          shrinkToOwnPosition(true);
+        if (currentPinchScale <= 1.06) {
+          // Pinched in to shrink/zoom out -> cleanly lock to Fit-Width at finger focal position!
+          viewMode = 'fit-width';
+          userZoom = 1.0;
+          zoomLayer.style.transition = 'none';
+          zoomLayer.style.transform = 'none';
+          zoomLayer.style.transformOrigin = '0 0';
+          zoomLayer.style.willChange = 'auto';
+
+          updateAllWrapperDimensions();
+          container.scrollLeft = 0;
+          var targetTop = Math.max(0, Math.round((pinchDocAnchorY * 1.0) - vy));
+          container.scrollTop = targetTop;
+          debouncedReRender();
+          updateZoomBadge();
         } else {
           // Keep PDF constant and sharp: Re-anchor document to exact ending pixel
           viewMode = 'custom';
@@ -1000,6 +1154,7 @@
           container.scrollLeft = targetLeft;
           container.scrollTop = targetTop;
           debouncedReRender();
+          updateZoomBadge();
         }
       } else if (!touchMoved && e.changedTouches.length === 1) {
         // Single tap without movement -> check for double-tap
@@ -1024,6 +1179,10 @@
     container.addEventListener('touchcancel', function(e) {
       if (isPinching) {
         isPinching = false;
+        zoomLayer.style.transition = 'none';
+        zoomLayer.style.transform = 'none';
+        zoomLayer.style.transformOrigin = '0 0';
+        zoomLayer.style.willChange = 'auto';
         shrinkToOwnPosition(false);
       }
       touchMoved = false;
@@ -1043,19 +1202,54 @@
         var px = container.scrollLeft + vx;
         var py = container.scrollTop + vy;
 
-        if (nextZoom <= 1.05) {
-          shrinkToOwnPosition(true);
+        if (nextZoom <= 1.03) {
+          viewMode = 'fit-width';
+          userZoom = 1.0;
+          updateAllWrapperDimensions();
+          container.scrollLeft = 0;
+          var targetTop = Math.max(0, Math.round((py * (1.0 / oldZoom)) - vy));
+          container.scrollTop = targetTop;
+          debouncedReRender();
+          updateZoomBadge();
         } else {
           viewMode = 'custom';
           userZoom = Math.round(nextZoom * 100) / 100;
-          var rUp = userZoom / oldZoom;
+          var rScale = userZoom / oldZoom;
           updateAllWrapperDimensions();
+          container.scrollLeft = Math.max(0, Math.round(px * rScale - vx));
+          container.scrollTop = Math.max(0, Math.round(py * rScale - vy));
           debouncedReRender();
-          container.scrollLeft = Math.max(0, Math.round(px * rUp - vx));
-          container.scrollTop = Math.max(0, Math.round(py * rUp - vy));
+          updateZoomBadge();
         }
       }
     }, { passive: false });
+
+    // Connect Quick Zoom Buttons
+    var zoomOutBtn = document.getElementById('zoom-out-btn');
+    var zoomResetBtn = document.getElementById('zoom-reset-btn');
+    var zoomInBtn = document.getElementById('zoom-in-btn');
+
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomOutStep();
+      });
+    }
+    if (zoomResetBtn) {
+      zoomResetBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        shrinkToOwnPosition(true);
+      });
+    }
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomInStep();
+      });
+    }
 
     // =========================================================================
     // 5. MOBILE BACK BUTTON & GESTURE COMMANDS

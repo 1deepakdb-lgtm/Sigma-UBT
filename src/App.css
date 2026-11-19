@@ -137,15 +137,15 @@ html {
   --app-header-top-clearance: env(safe-area-inset-top, 0px);
 }
 
-@media (max-width: 768px), (display-mode: standalone), (display-mode: fullscreen) {
+@media (max-width: 1024px), (orientation: landscape) and (max-height: 520px), (display-mode: standalone), (display-mode: fullscreen) {
   :root {
-    --app-header-top-clearance: calc(env(safe-area-inset-top, 0px) + 14px);
+    --app-header-top-clearance: max(calc(env(safe-area-inset-top, 0px) + 14px), 28px);
   }
 }
 
 .is-mobile-app,
 .is-pwa-standalone {
-  --app-header-top-clearance: calc(env(safe-area-inset-top, 0px) + 14px) !important;
+  --app-header-top-clearance: max(calc(env(safe-area-inset-top, 0px) + 14px), 28px) !important;
 }
 
 /* Mobile App Unified Top View matching #003b73 status bar */

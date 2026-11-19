@@ -13,14 +13,27 @@ import AboutUsSection from "@/components/AboutUsSection";
 import { JLPT_MOCK_SETS_META, getMockExamSetById } from "@/data/jlptMockTestData";
 import { performLogout } from "@/lib/clientAuth";
 
-// Safe JSON parse helper to guard against corrupt/malformed localStorage values
+// Safe JSON parse helpers to guard against corrupt/malformed localStorage values
 const safeJsonParse = (str, fallback) => {
+  if (!str || str === "undefined" || str === "null" || typeof str !== "string") {
+    return fallback;
+  }
   try {
-    if (!str || str === "undefined" || str === "null") return fallback;
-    return JSON.parse(str);
+    const val = JSON.parse(str);
+    return (val !== null && val !== undefined) ? val : fallback;
   } catch (e) {
     return fallback;
   }
+};
+
+const safeJsonArray = (str, fallback = []) => {
+  const val = safeJsonParse(str, fallback);
+  return Array.isArray(val) ? val : fallback;
+};
+
+const safeJsonObject = (str, fallback = {}) => {
+  const val = safeJsonParse(str, fallback);
+  return (typeof val === "object" && val !== null && !Array.isArray(val)) ? val : fallback;
 };
 
 // Clean SVG Icons for zero-emoji compliance
@@ -140,8 +153,8 @@ const StudentDashboard = () => {
   const [unlockedSets, setUnlockedSets] = useState(() => {
     if (typeof window !== "undefined") {
       try {
-        const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-        const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+        const u1 = safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), []);
+        const u2 = safeJsonArray(localStorage.getItem("releasedStudentExamSets"), []);
         return Array.from(new Set([...u1, ...u2]));
       } catch (e) {
         return [];
@@ -152,7 +165,7 @@ const StudentDashboard = () => {
   const [pendingQueries, setPendingQueries] = useState(() => {
     if (typeof window !== "undefined") {
       try {
-        return JSON.parse(localStorage.getItem("studentPendingQueries") || "[]");
+        return safeJsonArray(localStorage.getItem("studentPendingQueries"), []);
       } catch (e) {
         return [];
       }
@@ -278,7 +291,7 @@ const StudentDashboard = () => {
   );
 
   // Check if student has actually purchased / unlocked UBT exam access
-  const buyerMap = typeof window !== 'undefined' ? safeJsonParse(localStorage.getItem("adminBuyerStudentsMap"), {}) : {};
+  const buyerMap = typeof window !== 'undefined' ? safeJsonObject(localStorage.getItem("adminBuyerStudentsMap"), {}) : {};
   const currentPhone = currentStudentPhone || (typeof window !== 'undefined' ? localStorage.getItem("currentStudentPhone") : null);
   const currentBuyer = currentPhone ? (buyerMap[currentPhone] || buyerMap[studentName]) : null;
 
@@ -293,9 +306,9 @@ const StudentDashboard = () => {
       localStorage.getItem("hasPurchasedExamAccess") === "true" ||
       (currentPhone && (buyerMap[currentPhone]?.isBuyer || buyerMap[currentPhone]?.hasPurchased)) ||
       (studentName && (buyerMap[studentName]?.isBuyer || buyerMap[studentName]?.hasPurchased)) ||
-      (safeJsonParse(localStorage.getItem("studentPurchasedSets"), [])).length > 0 ||
-      (safeJsonParse(localStorage.getItem("unlockedStudentExamSets"), [])).length > 0 ||
-      (safeJsonParse(localStorage.getItem("purchasedPackages"), [])).length > 0
+      (safeJsonArray(localStorage.getItem("studentPurchasedSets"), [])).length > 0 ||
+      (safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), [])).length > 0 ||
+      (safeJsonArray(localStorage.getItem("purchasedPackages"), [])).length > 0
     ))
   );
 
@@ -312,8 +325,8 @@ const StudentDashboard = () => {
 
       if (typeof window !== "undefined" && studentInstitute) {
         try {
-          const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
-          const found = institutes.find(i => (i.name && i.name.toLowerCase() === studentInstitute.toLowerCase()) || (i.username && i.username.toLowerCase() === studentInstitute.toLowerCase()));
+          const institutes = safeJsonArray(localStorage.getItem("institutes"), []);
+          const found = institutes.find(i => i && ((i.name && i.name.toLowerCase() === studentInstitute.toLowerCase()) || (i.username && i.username.toLowerCase() === studentInstitute.toLowerCase())));
           if (found) {
             if (found.examPackage && !list.includes(found.examPackage)) list.push(found.examPackage);
             if (Array.isArray(found.purchasedPackages)) {
@@ -323,7 +336,7 @@ const StudentDashboard = () => {
               found.assignedPackages.forEach(p => { if (p && !list.includes(p)) list.push(p); });
             }
           }
-          const instPurchased = JSON.parse(localStorage.getItem(`institutePurchasedPackages_${studentInstitute}`) || "[]");
+          const instPurchased = safeJsonArray(localStorage.getItem(`institutePurchasedPackages_${studentInstitute}`), []);
           if (Array.isArray(instPurchased)) {
             instPurchased.forEach(p => { if (p && !list.includes(p)) list.push(p); });
           }
@@ -514,8 +527,8 @@ const StudentDashboard = () => {
     // 2. Check fresh localStorage for unlocked and released sets
     if (typeof window !== "undefined") {
       try {
-        const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-        const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+        const u1 = safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), []);
+        const u2 = safeJsonArray(localStorage.getItem("releasedStudentExamSets"), []);
         if ([...u1, ...u2].some(id => id?.toString() === setId || id?.toString() === setName || (encodedName && id?.toString() === encodedName))) {
           return true;
         }
@@ -540,7 +553,7 @@ const StudentDashboard = () => {
 
     // 4. Check in adminStudentUnlockedSetsMap
     if (currentPhone && typeof window !== "undefined") {
-      const studentSetMap = JSON.parse(localStorage.getItem("adminStudentUnlockedSetsMap") || "{}");
+      const studentSetMap = safeJsonObject(localStorage.getItem("adminStudentUnlockedSetsMap"), {});
       const phoneSets = studentSetMap[currentPhone] || [];
       if (phoneSets.some((id) => id?.toString() === setId || id?.toString() === setName)) {
         return true;
@@ -784,10 +797,10 @@ const StudentDashboard = () => {
 
   const handleEsewaSuccessUnlock = (res) => {
     try {
-      const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-      const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+      const u1 = safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), []);
+      const u2 = safeJsonArray(localStorage.getItem("releasedStudentExamSets"), []);
       setUnlockedSets(Array.from(new Set([...u1, ...u2])));
-      setPendingQueries(JSON.parse(localStorage.getItem("studentPendingQueries") || "[]"));
+      setPendingQueries(safeJsonArray(localStorage.getItem("studentPendingQueries"), []));
     } catch (e) {}
 
     setPaidAccessTrigger((prev) => prev + 1);
@@ -806,22 +819,22 @@ const StudentDashboard = () => {
     const syncStatus = async () => {
       // 1. Sync from localStorage
       try {
-        const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-        const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+        const u1 = safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), []);
+        const u2 = safeJsonArray(localStorage.getItem("releasedStudentExamSets"), []);
         const combinedLocal = Array.from(new Set([...u1, ...u2]));
         setUnlockedSets(combinedLocal);
-        setPendingQueries(JSON.parse(localStorage.getItem("studentPendingQueries") || "[]"));
+        setPendingQueries(safeJsonArray(localStorage.getItem("studentPendingQueries"), []));
 
         // Sync student-specific unlocked sets from map
         if (phone) {
-          const studentSetMap = JSON.parse(localStorage.getItem("adminStudentUnlockedSetsMap") || "{}");
+          const studentSetMap = safeJsonObject(localStorage.getItem("adminStudentUnlockedSetsMap"), {});
           const mySets = studentSetMap[phone] || [];
           if (mySets.length > 0) {
             setUnlockedSets((prev) => Array.from(new Set([...prev, ...mySets])));
           }
 
           // Check if package was released by admin in localStorage for this phone
-          const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+          const buyerMap = safeJsonObject(localStorage.getItem("adminBuyerStudentsMap"), {});
           const curBuyer = buyerMap[phone] || buyerMap[studentName];
           if (curBuyer?.isBuyer || curBuyer?.hasPurchased) {
             const releasedPkg = curBuyer?.packageName;
@@ -868,16 +881,16 @@ const StudentDashboard = () => {
             if (completeSets.length > 0) {
               setUnlockedSets((prev) => Array.from(new Set([...prev, ...completeSets])));
               try {
-                const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
+                const u1 = safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), []);
                 localStorage.setItem("unlockedStudentExamSets", JSON.stringify(Array.from(new Set([...u1, ...completeSets]))));
-                const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+                const u2 = safeJsonArray(localStorage.getItem("releasedStudentExamSets"), []);
                 localStorage.setItem("releasedStudentExamSets", JSON.stringify(Array.from(new Set([...u2, ...completeSets]))));
               } catch (e) {}
               setPaidAccessTrigger((prev) => prev + 1);
             }
 
             if (completePackages.length > 0) {
-              const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+              const buyerMap = safeJsonObject(localStorage.getItem("adminBuyerStudentsMap"), {});
               const existingPkgs = buyerMap[phone]?.packages || [];
               buyerMap[phone] = {
                 ...(buyerMap[phone] || {}),
@@ -918,15 +931,15 @@ const StudentDashboard = () => {
 
       // 1. Immediately unlock the set or package
       if (itemType === "set") {
-        const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-        const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+        const u1 = safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), []);
+        const u2 = safeJsonArray(localStorage.getItem("releasedStudentExamSets"), []);
         const updated = Array.from(new Set([...u1, ...u2, itemId, itemName].filter(Boolean)));
         localStorage.setItem("unlockedStudentExamSets", JSON.stringify(updated));
         localStorage.setItem("releasedStudentExamSets", JSON.stringify(updated));
         setUnlockedSets(updated);
 
         if (curPhone) {
-          const studentSetMap = JSON.parse(localStorage.getItem("adminStudentUnlockedSetsMap") || "{}");
+          const studentSetMap = safeJsonObject(localStorage.getItem("adminStudentUnlockedSetsMap"), {});
           studentSetMap[curPhone] = Array.from(new Set([...(studentSetMap[curPhone] || []), itemId, itemName].filter(Boolean)));
           localStorage.setItem("adminStudentUnlockedSetsMap", JSON.stringify(studentSetMap));
         }
@@ -934,7 +947,7 @@ const StudentDashboard = () => {
         setStudentPackage(itemName);
         localStorage.setItem("currentStudentPackage", itemName);
         if (curPhone) {
-          const buyerMap = JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}");
+          const buyerMap = safeJsonObject(localStorage.getItem("adminBuyerStudentsMap"), {});
           const existingPkgs = buyerMap[curPhone]?.packages || [];
           buyerMap[curPhone] = {
             ...(buyerMap[curPhone] || {}),
@@ -950,7 +963,7 @@ const StudentDashboard = () => {
       setPaidAccessTrigger(prev => prev + 1);
 
       // 2. Record completed payment locally
-      const payments = JSON.parse(localStorage.getItem("studentPayments") || "[]");
+      const payments = safeJsonArray(localStorage.getItem("studentPayments"), []);
       payments.unshift({
         id: Date.now(),
         txnId: txnCode,
@@ -985,10 +998,10 @@ const StudentDashboard = () => {
     const localPhone = localStorage.getItem("currentStudentPhone") || null;
     const localPkg = localStorage.getItem("currentStudentPackage") || null;
     const localExp = localStorage.getItem("currentStudentExpiryDate") || null;
-    const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
+    const institutes = safeJsonArray(localStorage.getItem("institutes"), []);
     const logo = institutes[0]?.logoUrl || "";
 
-    const localBuyerMap = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}") : {};
+    const localBuyerMap = typeof window !== "undefined" ? safeJsonObject(localStorage.getItem("adminBuyerStudentsMap"), {}) : {};
     const localBuyer = localPhone ? (localBuyerMap[localPhone] || localBuyerMap[localName]) : (localBuyerMap[localName] || null);
     const hasPurchasedAccess = Boolean(
       isPurchasedBuyer ||
@@ -1000,8 +1013,8 @@ const StudentDashboard = () => {
       (typeof window !== "undefined" && (
         localStorage.getItem("isPurchasedBuyer") === "true" ||
         localStorage.getItem("hasPurchasedExamAccess") === "true" ||
-        (JSON.parse(localStorage.getItem("studentPurchasedSets") || "[]")).length > 0 ||
-        (JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]")).length > 0
+        (safeJsonArray(localStorage.getItem("studentPurchasedSets"), [])).length > 0 ||
+        (safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), [])).length > 0
       ))
     );
 
@@ -1118,8 +1131,8 @@ const StudentDashboard = () => {
           if (Array.isArray(data.user?.unlockedSets) && data.user.unlockedSets.length > 0) {
             setUnlockedSets(prev => Array.from(new Set([...prev, ...data.user.unlockedSets])));
             try {
-              const u1 = JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]");
-              const u2 = JSON.parse(localStorage.getItem("releasedStudentExamSets") || "[]");
+              const u1 = safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), []);
+              const u2 = safeJsonArray(localStorage.getItem("releasedStudentExamSets"), []);
               const merged = Array.from(new Set([...u1, ...u2, ...data.user.unlockedSets]));
               localStorage.setItem("unlockedStudentExamSets", JSON.stringify(merged));
               localStorage.setItem("releasedStudentExamSets", JSON.stringify(merged));
@@ -1155,7 +1168,7 @@ const StudentDashboard = () => {
       { id: 4, name: "Model Question Bank", price: "Rs. 1,500", desc: "Exclusive Model Question Bank 40-question UBT sets with Korean Audio & Real-time Evaluation (Sold Separately).", track: "korean" }
     ];
 
-    const savedPackages = JSON.parse(localStorage.getItem("examPackages") || "[]");
+    const savedPackages = safeJsonArray(localStorage.getItem("examPackages"), []);
     let finalPackages = savedPackages.length > 0 ? [...savedPackages] : [];
 
     // Ensure all standard UBT and Mock Test packages are present for all students
@@ -1191,7 +1204,7 @@ const StudentDashboard = () => {
       });
     };
 
-    const savedSets = JSON.parse(localStorage.getItem("examSets") || "[]");
+    const savedSets = safeJsonArray(localStorage.getItem("examSets"), []);
 
     const checkSetIsFree = (s) => true; // All UBT exams have free access for all students unconditionally
 
@@ -1316,7 +1329,7 @@ const StudentDashboard = () => {
             return updatedPrev;
           });
         }
-        const localResults = JSON.parse(localStorage.getItem("examResults") || "[]");
+        const localResults = safeJsonArray(localStorage.getItem("examResults"), []);
         if (data.pastResults && Array.isArray(data.pastResults)) {
           const formattedPast = data.pastResults.map(pr => ({
             id: pr.id,
@@ -1345,7 +1358,7 @@ const StudentDashboard = () => {
         try {
           const queueStr = localStorage.getItem("offlineExamSyncQueue");
           if (queueStr) {
-            const queue = JSON.parse(queueStr);
+            const queue = safeJsonArray(queueStr, []);
             if (Array.isArray(queue) && queue.length > 0) {
               (async () => {
                 const remaining = [];
@@ -1375,11 +1388,11 @@ const StudentDashboard = () => {
         }
       })
       .catch(() => {
-        setResults(JSON.parse(localStorage.getItem("examResults") || "[]"));
+        setResults(safeJsonArray(localStorage.getItem("examResults"), []));
       });
 
-    const allFoldersData = JSON.parse(localStorage.getItem("epsFoldersContent") || "{}");
-    const savedNews = JSON.parse(localStorage.getItem("epsNewsList") || "[]");
+    const allFoldersData = safeJsonObject(localStorage.getItem("epsFoldersContent"), {});
+    const savedNews = safeJsonArray(localStorage.getItem("epsNewsList"), []);
     setFolderMaterials(allFoldersData[activeBookFolder] || []);
     setNewsList(savedNews);
 
@@ -1392,7 +1405,7 @@ const StudentDashboard = () => {
       return Boolean(c && targetCleanPhone && c === targetCleanPhone);
     };
 
-    const allNotifications = JSON.parse(localStorage.getItem("studentNotifications") || "[]");
+    const allNotifications = safeJsonArray(localStorage.getItem("studentNotifications"), []);
     setMyNotifications(
       allNotifications.filter(
         (n) => n.studentName === studentName || (currentStudentPhone && isMatchingPhone(n.studentPhone))
@@ -1437,8 +1450,8 @@ const StudentDashboard = () => {
   }, [currentStudentPhone, studentInstitute, studentBatch, activeBookFolder, instituteLanguage]);
 
   const filterAndSetExamSets = (allSets, packages) => {
-    const studentsList = JSON.parse(localStorage.getItem("studentsList") || "[]");
-    const allInstituteStudents = JSON.parse(localStorage.getItem("instituteStudents") || "{}");
+    const studentsList = safeJsonArray(localStorage.getItem("studentsList"), []);
+    const allInstituteStudents = safeJsonObject(localStorage.getItem("instituteStudents"), {});
 
     const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);
     const targetCleanPhone = cleanDigits(currentStudentPhone);
@@ -1524,7 +1537,7 @@ const StudentDashboard = () => {
   };
 
   const handleBuyRequest = (packageName) => {
-    const requests = JSON.parse(localStorage.getItem("examPurchaseRequests") || "[]");
+    const requests = safeJsonArray(localStorage.getItem("examPurchaseRequests"), []);
     const newReq = {
       id: Date.now(),
       studentName: studentName || "Student",
@@ -1542,7 +1555,7 @@ const StudentDashboard = () => {
       alert("Please fill in both subject and message.");
       return;
     }
-    const requests = JSON.parse(localStorage.getItem("studentNotifications") || "[]");
+    const requests = safeJsonArray(localStorage.getItem("studentNotifications"), []);
     const newItem = {
       id: Date.now(),
       studentName,
@@ -3982,7 +3995,7 @@ const StudentDashboard = () => {
                         <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: pkg.includedSets?.length ? "10px" : "18px" }}>
                           {pkg.desc || (isMock ? "Full simulated Japanese mock test sets with audio and timer." : "Full simulated exam practice sets with Korean audio and timer.")}
                         </p>
-                        {pkg.includedSets && pkg.includedSets.length > 0 && (
+                        {Array.isArray(pkg.includedSets) && pkg.includedSets.length > 0 && (
                           <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "8px 10px", marginBottom: "14px", fontSize: "12px" }}>
                             <div style={{ fontWeight: "700", color: "#1e40af", marginBottom: "4px", fontSize: "11px" }}>
                               📦 {pkg.includedSets.length} Included Sets:
@@ -4449,7 +4462,7 @@ const StudentDashboard = () => {
           onClose={() => setActiveJlptExamSet(null)}
           onComplete={() => {
             try {
-              const prevResults = JSON.parse(localStorage.getItem("examResults") || "[]");
+              const prevResults = safeJsonArray(localStorage.getItem("examResults"), []);
               setResults(prevResults);
             } catch (e) {}
           }}
