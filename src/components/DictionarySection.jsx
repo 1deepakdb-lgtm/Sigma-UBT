@@ -1714,9 +1714,6 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             flex: 1 1 43% !important;
           }
         }
-            margin-left: auto !important;
-          }
-        }
         @media (max-width: 640px) {
           .dict-top-toolbar {
             gap: 4px !important;

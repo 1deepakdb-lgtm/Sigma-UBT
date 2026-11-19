@@ -903,17 +903,7 @@ export default function EpsBookReader({
   const miniAudioBtnRef = useRef(null);
 
   // Platform detection: Website vs Android/iOS Mobile Apps & Mobile screens
-  const [isMobileApp, setIsMobileApp] = useState(() => {
-    if (typeof window !== "undefined") {
-      return !!window.AndroidApp ||
-             !!window.Capacitor ||
-             !!window._isNativeApp ||
-             (window.location.search && window.location.search.includes("app=true")) ||
-             /ExamJK-Android-App|ExamJKApp|Android.*Version\/[0-9.]+\s+Chrome\/[0-9.]+|wv/i.test(navigator.userAgent) ||
-             window.innerWidth <= 768;
-    }
-    return false;
-  });
+  const [isMobileApp, setIsMobileApp] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
       const isApp = !!window.AndroidApp ||
@@ -929,52 +919,6 @@ export default function EpsBookReader({
       }
     }
   }, []);
-
-  // Mobile App Gesture Navigation: Left-to-right swipe naturally navigates back to books/chapters
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-
-    const handleTouchStart = (e) => {
-      if (e.touches.length !== 1) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
-    };
-
-    const handleTouchEnd = (e) => {
-      if (e.changedTouches.length !== 1) return;
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-      const duration = Date.now() - touchStartTime;
-
-      // Natural swipe right: started on left edge/side (< 140px), moved right > 65px, mostly horizontal
-      if (deltaX > 65 && Math.abs(deltaY) < 75 && duration < 600 && touchStartX < 140) {
-        if (viewingMaterial) {
-          setViewingMaterial(null);
-        } else if (viewingMeaningChapter) {
-          setViewingMeaningChapter(null);
-        } else if (isKoreanFolderOpen) {
-          setIsKoreanFolderOpen(false);
-        } else if (isJapaneseFolderOpen) {
-          setIsJapaneseFolderOpen(false);
-        }
-      }
-    };
-
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
-
-    return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [viewingMaterial, viewingMeaningChapter, isKoreanFolderOpen, isJapaneseFolderOpen]);
 
   // Admin/Institute Upload & Edit Modal State
   const [isAdmin, setIsAdmin] = useState(false);
@@ -2280,6 +2224,52 @@ export default function EpsBookReader({
       }
     };
   }, [selectedChapter, viewingMaterial, viewingMeaningChapter, isKoreanFolderOpen, isJapaneseFolderOpen]);
+
+  // Mobile App Gesture Navigation: Left-to-right swipe naturally navigates back to books/chapters
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    };
+
+    const handleTouchEnd = (e) => {
+      if (e.changedTouches.length !== 1) return;
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const duration = Date.now() - touchStartTime;
+
+      // Natural swipe right: started on left edge/side (< 140px), moved right > 65px, mostly horizontal
+      if (deltaX > 65 && Math.abs(deltaY) < 75 && duration < 600 && touchStartX < 140) {
+        if (viewingMaterial) {
+          setViewingMaterial(null);
+        } else if (viewingMeaningChapter) {
+          setViewingMeaningChapter(null);
+        } else if (isKoreanFolderOpen) {
+          setIsKoreanFolderOpen(false);
+        } else if (isJapaneseFolderOpen) {
+          setIsJapaneseFolderOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [viewingMaterial, viewingMeaningChapter, isKoreanFolderOpen, isJapaneseFolderOpen]);
 
   // Auto-shrink audio popup to floating audio button when clicking or tapping outside
   useEffect(() => {
