@@ -1777,6 +1777,77 @@ export default function EpsBookReader({
   // Uses setPointerCapture + direct DOM manipulation to bypass React re-render bottlenecks
   // -------------------------------------------------------------
 
+  // Dynamic audio popup position based on audio button side (Left vs Right) and orientation
+  const calculateAudioPopupPosition = (btnX, btnY) => {
+    const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
+    const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+    const btnSize = 56;
+    const popupWidth = Math.min(340, winW - 20);
+    const popupHeight = 110;
+
+    let targetX;
+    // User requirement:
+    // "audio button if dragged on right then audio dialog button open in left,
+    //  if dragged on left then audio dialog button open in right"
+    if (btnX > winW / 2) {
+      // Button on right half -> open dialog to the LEFT of the button
+      targetX = btnX - popupWidth - 10;
+      if (targetX < 10) targetX = 10;
+    } else {
+      // Button on left half -> open dialog to the RIGHT of the button
+      targetX = btnX + btnSize + 10;
+      if (targetX + popupWidth > winW - 10) {
+        targetX = Math.max(10, winW - popupWidth - 10);
+      }
+    }
+
+    // Vertical alignment: align with button top, clamped safely inside screen in portrait and landscape
+    let targetY = btnY - 8;
+    const safeTop = 10;
+    const safeBottom = Math.max(safeTop, winH - popupHeight - 14);
+    targetY = Math.max(safeTop, Math.min(safeBottom, targetY));
+
+    return { x: Math.round(targetX), y: Math.round(targetY) };
+  };
+
+  // Keep audio button and dialog strictly inside screen boundaries across portrait and landscape (horizontal)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleScreenBoundaries = () => {
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const btnSize = 56;
+      const popupWidth = Math.min(340, winW - 20);
+      const popupHeight = 110;
+
+      // 1. Clamp mini audio button within visible screen in both orientations
+      setMiniAudioPos((prev) => {
+        const clampedX = Math.max(6, Math.min(winW - btnSize - 6, prev.x));
+        const clampedY = Math.max(10, Math.min(winH - btnSize - 10, prev.y));
+        if (miniAudioBtnRef.current) {
+          miniAudioBtnRef.current.style.left = `${clampedX}px`;
+          miniAudioBtnRef.current.style.top = `${clampedY}px`;
+        }
+        return { x: clampedX, y: clampedY };
+      });
+
+      // 2. Clamp popup dialog if open in both orientations
+      setPopupPos((prev) => {
+        const clampedX = Math.max(10, Math.min(winW - popupWidth - 10, prev.x));
+        const clampedY = Math.max(10, Math.min(winH - popupHeight - 14, prev.y));
+        return { x: clampedX, y: clampedY };
+      });
+    };
+
+    window.addEventListener("resize", handleScreenBoundaries);
+    window.addEventListener("orientationchange", handleScreenBoundaries);
+    return () => {
+      window.removeEventListener("resize", handleScreenBoundaries);
+      window.removeEventListener("orientationchange", handleScreenBoundaries);
+    };
+  }, []);
+
   // 2. MOVABLE MINI CIRCULAR AUDIO BUTTON HANDLERS
   // Movable Mini Circular AUDIO Button Touch & Pointer Handlers (100% Pull-Down-Refresh Proof)
   const handleMiniTouchStart = (e) => {
@@ -1840,11 +1911,14 @@ export default function EpsBookReader({
     if (!miniDragRef.current.moved) {
       if (e.cancelable) e.preventDefault();
       playerOpenTimeRef.current = Date.now();
-      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-      const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
-      const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
-      setPopupPos({ x: targetX, y: targetY });
-      setPopupMode("full");
+      if (popupMode === "full") {
+        setPopupMode("gesture");
+        setShowTrackDropdown(false);
+      } else {
+        const pos = calculateAudioPopupPosition(miniAudioPos.x, miniAudioPos.y);
+        setPopupPos(pos);
+        setPopupMode("full");
+      }
     } else {
       let finalX = miniDragRef.current.currentX;
       let finalY = miniDragRef.current.currentY;
@@ -1857,6 +1931,9 @@ export default function EpsBookReader({
         miniAudioBtnRef.current.style.top = `${finalY}px`;
       }
       setMiniAudioPos({ x: finalX, y: finalY });
+      if (popupMode === "full") {
+        setPopupPos(calculateAudioPopupPosition(finalX, finalY));
+      }
     }
   };
 
@@ -1926,11 +2003,14 @@ export default function EpsBookReader({
     if (!miniDragRef.current.moved) {
       if (e.cancelable) e.preventDefault();
       playerOpenTimeRef.current = Date.now();
-      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-      const targetX = Math.min(Math.max(14, miniAudioPos.x), winW - 360);
-      const targetY = Math.max(14, miniAudioPos.y < 200 ? miniAudioPos.y : miniAudioPos.y - 70);
-      setPopupPos({ x: targetX, y: targetY });
-      setPopupMode("full");
+      if (popupMode === "full") {
+        setPopupMode("gesture");
+        setShowTrackDropdown(false);
+      } else {
+        const pos = calculateAudioPopupPosition(miniAudioPos.x, miniAudioPos.y);
+        setPopupPos(pos);
+        setPopupMode("full");
+      }
     } else {
       let finalX = miniDragRef.current.currentX;
       let finalY = miniDragRef.current.currentY;
@@ -1944,6 +2024,9 @@ export default function EpsBookReader({
         miniAudioBtnRef.current.style.top = `${finalY}px`;
       }
       setMiniAudioPos({ x: finalX, y: finalY });
+      if (popupMode === "full") {
+        setPopupPos(calculateAudioPopupPosition(finalX, finalY));
+      }
     }
   };
 
@@ -3667,7 +3750,7 @@ export default function EpsBookReader({
         `}</style>
 
         {/* ================= 2. MOVABLE CIRCULAR AUDIO BUTTON (ULTRA-SMOOTH DRAG & DROP FOR ALL DEVICES) ================= */}
-        {hasAudio && popupMode !== "full" && (
+        {hasAudio && (
           <div
             ref={miniAudioBtnRef}
             onPointerDown={handleMiniPointerDown}
@@ -3678,7 +3761,7 @@ export default function EpsBookReader({
             onTouchMove={handleMiniTouchMove}
             onTouchEnd={handleMiniTouchEnd}
             onTouchCancel={handleMiniTouchEnd}
-            title={isPlaying ? "Audio Playing (Tap for Controls, Drag to Move)" : "Audio (Tap to Open Player, Drag to Move)"}
+            title={popupMode === "full" ? "Audio (Tap to Close Player)" : (isPlaying ? "Audio Playing (Tap for Controls, Drag to Move)" : "Audio (Tap to Open Player, Drag to Move)")}
             style={{
               position: "fixed",
               left: `${miniAudioPos.x}px`,
