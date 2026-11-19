@@ -4,7 +4,10 @@ import PwaDesktopInstaller from '@/components/PwaDesktopInstaller';
 import OfflineSyncManager from '@/components/OfflineSyncManager';
 
 export const viewport = {
-  themeColor: '#003b73',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#003b73' },
+    { media: '(prefers-color-scheme: dark)', color: '#003b73' },
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -22,7 +25,7 @@ export const metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'ExamJK'
   }
 };
@@ -34,10 +37,12 @@ export default function RootLayout({ children }) {
         <meta charSet="utf-8" />
         <meta name="application-name" content="ExamJK" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="#003b73" />
         <meta name="apple-mobile-web-app-title" content="ExamJK" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#003b73" />
+        <meta name="msapplication-navbutton-color" content="#003b73" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="#003b73" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         {/* Universal High-Definition Web Fonts: English (Inter), Korean (Noto Sans KR), Japanese (Noto Sans JP), Nepali (Noto Sans Devanagari) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

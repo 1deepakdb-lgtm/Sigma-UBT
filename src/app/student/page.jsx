@@ -1860,9 +1860,12 @@ const StudentDashboard = () => {
   };
 
   const topNavStyle = {
-    backgroundColor: "#1e3a8a",
+    backgroundColor: "#003b73",
+    backgroundImage: "linear-gradient(135deg, #003b73 0%, #004b93 50%, #1e3a8a 100%)",
     color: "#ffffff",
     padding: "8px 16px",
+    paddingTop: "calc(8px + env(safe-area-inset-top, 0px))",
+    minHeight: "calc(54px + env(safe-area-inset-top, 0px))",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",

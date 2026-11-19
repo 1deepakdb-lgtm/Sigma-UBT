@@ -1590,16 +1590,22 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           flex-direction: column;
           align-items: flex-start;
           gap: 2px;
-          min-width: 90px;
-          flex-shrink: 0;
+          min-width: 0;
+          flex: 1 1 45%;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          white-space: normal;
         }
         .dict-col-meaning {
           display: flex;
           align-items: center;
           gap: 6px;
-          flex: 1;
+          flex: 1 1 45%;
           min-width: 0;
           flex-wrap: wrap;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          white-space: normal;
         }
         .dict-audio-circle-btn {
           width: 32px;
@@ -1637,17 +1643,19 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
-            padding: 8px 2px !important;
+            padding: 4px 2px !important;
             background-color: transparent !important;
             max-width: 100% !important;
             width: 100% !important;
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
           }
           .dict-word-row {
             display: flex !important;
             flex-direction: row !important;
-            align-items: center !important;
+            align-items: flex-start !important;
             justify-content: space-between !important;
-            gap: 10px !important;
+            gap: 8px !important;
             padding: 9px 4px !important;
             border-bottom: 1px solid #f1f5f9 !important;
             border-top: none !important;
@@ -1656,16 +1664,27 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             border-radius: 0 !important;
             box-shadow: none !important;
             white-space: normal !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
           }
           .dict-col-word {
-            min-width: 70px !important;
-            flex-shrink: 0 !important;
+            min-width: 0 !important;
+            flex: 1 1 45% !important;
+            max-width: 48% !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+            white-space: normal !important;
             gap: 2px !important;
           }
           .dict-col-meaning {
-            flex: 1 !important;
+            flex: 1 1 44% !important;
             min-width: 0 !important;
             gap: 4px !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+            white-space: normal !important;
           }
           .dict-audio-circle-btn {
             width: 30px !important;
@@ -1677,7 +1696,24 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
             aspect-ratio: 1 / 1 !important;
             font-size: 12px !important;
             flex-shrink: 0 !important;
-            align-self: center !important;
+            align-self: flex-start !important;
+            margin-top: 2px !important;
+            margin-left: auto !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .dict-word-row {
+            gap: 6px !important;
+            padding: 8px 2px !important;
+          }
+          .dict-col-word {
+            max-width: 47% !important;
+            flex: 1 1 47% !important;
+          }
+          .dict-col-meaning {
+            flex: 1 1 43% !important;
+          }
+        }
             margin-left: auto !important;
           }
         }
@@ -1808,7 +1844,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                 transition: "all 0.15s ease"
               }}
             >
-              <span>{playingAudioId === 'search-custom-voice' ? "Stop" : `Play My Voice (${matchingSearchedCustomVoice.word})`}</span>
+              <span>{playingAudioId === 'search-custom-voice' ? "Stop" : `Play My Voice (${matchingSearchedCustomVoice.word.length > 12 ? matchingSearchedCustomVoice.word.slice(0, 10) + '...' : matchingSearchedCustomVoice.word})`}</span>
             </button>
             {canDownloadAudio && (
               <button
@@ -2223,12 +2259,66 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       {/* SEARCHABLE VOCABULARY WORDS GALLERY & AUDIO PLAYERS */}
       {!showAiStudio ? (
         <div style={{ marginBottom: "28px" }}>
-          {/* Search Results indicator if searching */}
+          {/* Search Results indicator if searching (fits long sentences on mobile portrait) */}
         {searchQuery && (
-          <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
-              Results for &ldquo;<strong style={{ color: "#0f172a" }}>{searchQuery}</strong>&rdquo; ({filteredWords.length})
+          <div style={{ marginBottom: "12px", width: "100%", boxSizing: "border-box" }}>
+            <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600", display: "block", width: "100%", overflowWrap: "anywhere", wordBreak: "break-word", lineHeight: "1.4" }}>
+              Results for &ldquo;<strong style={{ color: "#0f172a", overflowWrap: "anywhere", wordBreak: "break-word" }}>{searchQuery}</strong>&rdquo; ({filteredWords.length})
             </span>
+          </div>
+        )}
+
+        {/* Dedicated Responsive Long Sentence / Word Pronunciation Card */}
+        {searchQuery.trim().length > 0 && (
+          <div
+            style={{
+              backgroundColor: "#f0f9ff",
+              border: "1.5px solid #bae6fd",
+              borderRadius: "10px",
+              padding: "10px 12px",
+              marginBottom: "14px",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: "10px",
+              width: "100%",
+              boxSizing: "border-box",
+              overflowWrap: "anywhere",
+              wordBreak: "break-word"
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: "10px", fontWeight: "800", color: "#0284c7", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "3px" }}>
+                Searched Sentence / Word
+              </div>
+              <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", lineHeight: "1.35", overflowWrap: "anywhere", wordBreak: "break-word", whiteSpace: "normal" }}>
+                {searchQuery.trim()}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handlePlaySearchWord()}
+              title="Play pronunciation for searched sentence"
+              style={{
+                backgroundColor: playingAudioId === 'search-active-model' ? "#0284c7" : "#0369a1",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "20px",
+                padding: "6px 12px",
+                fontSize: "12px",
+                fontWeight: "800",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                flexShrink: 0,
+                alignSelf: "flex-start",
+                boxShadow: "0 2px 4px rgba(2, 132, 199, 0.25)",
+                whiteSpace: "nowrap"
+              }}
+            >
+              {loadingAudioId === 'search-active-model' ? "Wait..." : playingAudioId === 'search-active-model' ? "■ Stop" : "▶ Play"}
+            </button>
           </div>
         )}
 
@@ -2389,14 +2479,17 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                         </span>
                       )}
 
-                      {/* Word text */}
+                      {/* Word / Sentence text (fits long sentences on mobile portrait) */}
                       <span
+                        className="dict-word-text"
                         style={{
-                          fontSize: "16px",
+                          fontSize: "15.5px",
                           fontWeight: "800",
                           color: "#0f172a",
-                          whiteSpace: "nowrap",
-                          lineHeight: "1.2"
+                          lineHeight: "1.3",
+                          wordBreak: "break-word",
+                          overflowWrap: "anywhere",
+                          whiteSpace: "normal"
                         }}
                       >
                         {primaryWord}
@@ -2404,12 +2497,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
                       {(nepaliPhonetic || romaji) && (
                         <span
+                          className="dict-phonetic-text"
                           style={{
-                            fontSize: "12.5px",
+                            fontSize: "12px",
                             fontWeight: "700",
                             color: activeLang === 'ja' ? "#7e22ce" : "#1e40af",
-                            whiteSpace: "nowrap",
-                            lineHeight: "1.2"
+                            lineHeight: "1.3",
+                            wordBreak: "break-word",
+                            overflowWrap: "anywhere",
+                            whiteSpace: "normal"
                           }}
                         >
                           [{nepaliPhonetic || romaji}]
@@ -2417,13 +2513,18 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
                       )}
                     </div>
 
-                    {/* MIDDLE PART: Meaning (Nepali) + English & Badges */}
+                    {/* MIDDLE PART: Meaning (Nepali) + English & Badges (wraps and fits long text) */}
                     <div className="dict-col-meaning">
                       <span
+                        className="dict-meaning-text"
                         style={{
                           color: "#15803d",
                           fontWeight: "700",
-                          fontSize: "14.5px"
+                          fontSize: "14px",
+                          lineHeight: "1.3",
+                          wordBreak: "break-word",
+                          overflowWrap: "anywhere",
+                          whiteSpace: "normal"
                         }}
                       >
                         {word.nepali}
@@ -2431,10 +2532,15 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
 
                       {word.english && (
                         <span
+                          className="dict-english-text"
                           style={{
                             color: "#64748b",
                             fontWeight: "600",
-                            fontSize: "12.5px"
+                            fontSize: "12px",
+                            lineHeight: "1.3",
+                            wordBreak: "break-word",
+                            overflowWrap: "anywhere",
+                            whiteSpace: "normal"
                           }}
                         >
                           ({word.english})

@@ -197,20 +197,21 @@ export default function Navbar({
     lineHeight: 1
   });
 
-  const navBg = '#1e3a8a';
+  const navBg = '#003b73';
 
   return (
     <header
+      className="unified-app-top-header"
       style={{
-        backgroundColor: '#1e3a8a',
-        backgroundImage: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%)',
+        backgroundColor: '#003b73',
+        backgroundImage: 'linear-gradient(135deg, #003b73 0%, #004b93 50%, #1e3a8a 100%)',
         color: '#ffffff',
         width: '100%',
         minWidth: '100%',
-        height: '64px',
-        minHeight: '64px',
-        maxHeight: '64px',
+        height: 'calc(64px + env(safe-area-inset-top, 0px))',
+        minHeight: 'calc(64px + env(safe-area-inset-top, 0px))',
         padding: '0 20px',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

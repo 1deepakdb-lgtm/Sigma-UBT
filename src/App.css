@@ -28,12 +28,35 @@ body,
 }
 
 html {
+  background-color: #003b73;
   overflow-y: scroll;
   scrollbar-gutter: stable;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* Mobile App & Mobile Gesture: Hide 'Back to Books' button on mobile apps and mobile screens */
+@media (max-width: 768px) {
+  .back-to-books-btn,
+  .back-to-books-container,
+  .hide-on-mobile-apps,
+  [data-btn="back-to-books"] {
+    display: none !important;
+  }
+}
+.is-mobile-app .back-to-books-btn,
+.is-mobile-app .back-to-books-container,
+.is-mobile-app .hide-on-mobile-apps,
+.is-mobile-app [data-btn="back-to-books"] {
+  display: none !important;
+}
+
+/* Mobile App Unified Top View matching #003b73 status bar */
+.unified-app-top-header {
+  background-color: #003b73 !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
 }
 
 body {

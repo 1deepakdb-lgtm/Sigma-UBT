@@ -902,18 +902,79 @@ export default function EpsBookReader({
   const miniDragRef = useRef({ startX: 0, startY: 0, initialX: 10, initialY: 56, currentX: 10, currentY: 56, moved: false, isDown: false });
   const miniAudioBtnRef = useRef(null);
 
-  // Platform detection: Website vs Android/iOS Mobile Apps
-  const [isMobileApp, setIsMobileApp] = useState(false);
+  // Platform detection: Website vs Android/iOS Mobile Apps & Mobile screens
+  const [isMobileApp, setIsMobileApp] = useState(() => {
+    if (typeof window !== "undefined") {
+      return !!window.AndroidApp ||
+             !!window.Capacitor ||
+             !!window._isNativeApp ||
+             (window.location.search && window.location.search.includes("app=true")) ||
+             /ExamJK-Android-App|ExamJKApp|Android.*Version\/[0-9.]+\s+Chrome\/[0-9.]+|wv/i.test(navigator.userAgent) ||
+             window.innerWidth <= 768;
+    }
+    return false;
+  });
   useEffect(() => {
     if (typeof window !== "undefined") {
       const isApp = !!window.AndroidApp ||
                     !!window.Capacitor ||
                     !!window._isNativeApp ||
                     (window.location.search && window.location.search.includes("app=true")) ||
-                    /ExamJK-Android-App|ExamJKApp|Android.*Version\/[0-9.]+\s+Chrome\/[0-9.]+/i.test(navigator.userAgent);
+                    /ExamJK-Android-App|ExamJKApp|Android.*Version\/[0-9.]+\s+Chrome\/[0-9.]+|wv/i.test(navigator.userAgent) ||
+                    window.innerWidth <= 768;
       setIsMobileApp(isApp);
+      if (isApp) {
+        document.documentElement.classList.add("is-mobile-app");
+        document.body.classList.add("is-mobile-app");
+      }
     }
   }, []);
+
+  // Mobile App Gesture Navigation: Left-to-right swipe naturally navigates back to books/chapters
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    };
+
+    const handleTouchEnd = (e) => {
+      if (e.changedTouches.length !== 1) return;
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const duration = Date.now() - touchStartTime;
+
+      // Natural swipe right: started on left edge/side (< 140px), moved right > 65px, mostly horizontal
+      if (deltaX > 65 && Math.abs(deltaY) < 75 && duration < 600 && touchStartX < 140) {
+        if (viewingMaterial) {
+          setViewingMaterial(null);
+        } else if (viewingMeaningChapter) {
+          setViewingMeaningChapter(null);
+        } else if (isKoreanFolderOpen) {
+          setIsKoreanFolderOpen(false);
+        } else if (isJapaneseFolderOpen) {
+          setIsJapaneseFolderOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [viewingMaterial, viewingMeaningChapter, isKoreanFolderOpen, isJapaneseFolderOpen]);
 
   // Admin/Institute Upload & Edit Modal State
   const [isAdmin, setIsAdmin] = useState(false);
@@ -2699,10 +2760,12 @@ export default function EpsBookReader({
         }}
       >
         <div
+          className="unified-app-top-header"
           style={{
-            backgroundColor: "#1e3a8a",
+            backgroundColor: "#003b73",
             color: "#ffffff",
             padding: "12px 20px",
+            paddingTop: "calc(12px + env(safe-area-inset-top, 0px))",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -2715,6 +2778,8 @@ export default function EpsBookReader({
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {!isMobileApp && (
               <button
+                className="back-to-books-btn hide-on-mobile-apps"
+                data-btn="back-to-books"
                 onClick={() => setViewingMaterial(null)}
                 style={{
                   backgroundColor: "#2563eb",
@@ -2800,6 +2865,7 @@ export default function EpsBookReader({
             backgroundColor: "#991b1b",
             color: "#ffffff",
             padding: "12px 20px",
+            paddingTop: "calc(12px + env(safe-area-inset-top, 0px))",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -2810,24 +2876,28 @@ export default function EpsBookReader({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              onClick={() => setViewingMeaningChapter(null)}
-              style={{
-                backgroundColor: "#dc2626",
-                color: "#ffffff",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "700",
-                fontSize: "14px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              ← Back to Meaning Book
-            </button>
+            {!isMobileApp && (
+              <button
+                className="back-to-books-btn hide-on-mobile-apps"
+                data-btn="back-to-books"
+                onClick={() => setViewingMeaningChapter(null)}
+                style={{
+                  backgroundColor: "#dc2626",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "700",
+                  fontSize: "14px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}
+              >
+                ← Back to Meaning Book
+              </button>
+            )}
             <div>
               <div style={{ fontSize: "16px", fontWeight: "800" }}>
                 📕 Chapter {viewingMeaningChapter.chapter}: {viewingMeaningChapter.titleKo} ({viewingMeaningChapter.titleNe})
@@ -4391,9 +4461,11 @@ export default function EpsBookReader({
           <div id="korean-book-active-content">
             {/* TOP NAVIGATION: BACK BUTTON ONLY (HIDDEN ON MOBILE APPS - USES MOBILE GESTURE NAVIGATION) */}
             {!isMobileApp && (
-              <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>
+              <div className="back-to-books-container hide-on-mobile-apps" style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>
                 <button
                   type="button"
+                  className="back-to-books-btn hide-on-mobile-apps"
+                  data-btn="back-to-books"
                   onClick={() => setIsKoreanFolderOpen(false)}
                   style={{
                     display: "inline-flex",
