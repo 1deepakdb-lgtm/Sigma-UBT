@@ -13,6 +13,16 @@ import AboutUsSection from "@/components/AboutUsSection";
 import { JLPT_MOCK_SETS_META, getMockExamSetById } from "@/data/jlptMockTestData";
 import { performLogout } from "@/lib/clientAuth";
 
+// Safe JSON parse helper to guard against corrupt/malformed localStorage values
+const safeJsonParse = (str, fallback) => {
+  try {
+    if (!str || str === "undefined" || str === "null") return fallback;
+    return JSON.parse(str);
+  } catch (e) {
+    return fallback;
+  }
+};
+
 // Clean SVG Icons for zero-emoji compliance
 const LaptopExamIcon = ({ size = 28, color = "#1e3a8a" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -268,7 +278,7 @@ const StudentDashboard = () => {
   );
 
   // Check if student has actually purchased / unlocked UBT exam access
-  const buyerMap = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("adminBuyerStudentsMap") || "{}") : {};
+  const buyerMap = typeof window !== 'undefined' ? safeJsonParse(localStorage.getItem("adminBuyerStudentsMap"), {}) : {};
   const currentPhone = currentStudentPhone || (typeof window !== 'undefined' ? localStorage.getItem("currentStudentPhone") : null);
   const currentBuyer = currentPhone ? (buyerMap[currentPhone] || buyerMap[studentName]) : null;
 
@@ -283,9 +293,9 @@ const StudentDashboard = () => {
       localStorage.getItem("hasPurchasedExamAccess") === "true" ||
       (currentPhone && (buyerMap[currentPhone]?.isBuyer || buyerMap[currentPhone]?.hasPurchased)) ||
       (studentName && (buyerMap[studentName]?.isBuyer || buyerMap[studentName]?.hasPurchased)) ||
-      (JSON.parse(localStorage.getItem("studentPurchasedSets") || "[]")).length > 0 ||
-      (JSON.parse(localStorage.getItem("unlockedStudentExamSets") || "[]")).length > 0 ||
-      (JSON.parse(localStorage.getItem("purchasedPackages") || "[]")).length > 0
+      (safeJsonParse(localStorage.getItem("studentPurchasedSets"), [])).length > 0 ||
+      (safeJsonParse(localStorage.getItem("unlockedStudentExamSets"), [])).length > 0 ||
+      (safeJsonParse(localStorage.getItem("purchasedPackages"), [])).length > 0
     ))
   );
 

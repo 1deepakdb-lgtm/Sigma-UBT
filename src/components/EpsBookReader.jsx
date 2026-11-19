@@ -1823,19 +1823,19 @@ export default function EpsBookReader({
 
       // 1. Clamp mini audio button within visible screen in both orientations
       setMiniAudioPos((prev) => {
-        const clampedX = Math.max(6, Math.min(winW - btnSize - 6, prev.x));
-        const clampedY = Math.max(10, Math.min(winH - btnSize - 10, prev.y));
-        if (miniAudioBtnRef.current) {
-          miniAudioBtnRef.current.style.left = `${clampedX}px`;
-          miniAudioBtnRef.current.style.top = `${clampedY}px`;
-        }
+        const px = prev && typeof prev.x === "number" ? prev.x : 10;
+        const py = prev && typeof prev.y === "number" ? prev.y : 56;
+        const clampedX = Math.max(6, Math.min(winW - btnSize - 6, px));
+        const clampedY = Math.max(10, Math.min(winH - btnSize - 10, py));
         return { x: clampedX, y: clampedY };
       });
 
       // 2. Clamp popup dialog if open in both orientations
       setPopupPos((prev) => {
-        const clampedX = Math.max(10, Math.min(winW - popupWidth - 10, prev.x));
-        const clampedY = Math.max(10, Math.min(winH - popupHeight - 14, prev.y));
+        const px = prev && typeof prev.x === "number" ? prev.x : 20;
+        const py = prev && typeof prev.y === "number" ? prev.y : 20;
+        const clampedX = Math.max(10, Math.min(winW - popupWidth - 10, px));
+        const clampedY = Math.max(10, Math.min(winH - popupHeight - 14, py));
         return { x: clampedX, y: clampedY };
       });
     };
