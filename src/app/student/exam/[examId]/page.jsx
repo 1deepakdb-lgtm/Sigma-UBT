@@ -226,58 +226,9 @@ const StudentExam = () => {
         (typeof examId === "string" && id?.toString() === decodeURIComponent(examId))
       );
 
-      const isExamSetFree = Boolean(
-        currentExamSet?.isFree === true ||
-        currentExamSet?.isFree === "true" ||
-        currentExamSet?.isFree === 1 ||
-        currentExamSet?.isFree === "1" ||
-        currentExamSet?.setType === "FREE" ||
-        currentExamSet?.distributionMode === "free" ||
-        currentExamSet?.isFreeForInstituteStudents === true ||
-        currentExamSet?.price === 0 ||
-        currentExamSet?.price === "0" ||
-        currentExamSet?.price === "Rs. 0" ||
-        (typeof currentExamSet?.price === "string" && currentExamSet.price.toLowerCase().includes("free")) ||
-        (currentExamSet?.name && currentExamSet.name.toLowerCase().includes("free")) ||
-        (currentExamSet?.title && currentExamSet.title.toLowerCase().includes("free")) ||
-        (currentExamSet?.packageName && currentExamSet.packageName.toLowerCase().includes("free")) ||
-        (currentExamSet?.packageName && currentExamSet.packageName.toLowerCase().includes("model")) ||
-        (currentExamSet?.name && (
-          currentExamSet.name.toLowerCase().includes("set 01") ||
-          currentExamSet.name.toLowerCase().includes("set 1") ||
-          currentExamSet.name.toLowerCase().includes("01~02") ||
-          currentExamSet.name.toLowerCase().includes("chapterwise 01") ||
-          currentExamSet.name.toLowerCase().includes("chapterwise 1") ||
-          currentExamSet.name.toLowerCase().includes("demo")
-        )) ||
-        currentExamSet?.source === "model_question_bank" ||
-        currentExamSet?.folder === "Model Question Bank" ||
-        (targetSetName && targetSetName.toLowerCase().includes("free")) ||
-        (targetSetName && targetSetName.toLowerCase().includes("model")) ||
-        (targetSetName && (
-          targetSetName.toLowerCase().includes("set 01") ||
-          targetSetName.toLowerCase().includes("set 1") ||
-          targetSetName.toLowerCase().includes("01~02") ||
-          targetSetName.toLowerCase().includes("chapterwise 01") ||
-          targetSetName.toLowerCase().includes("chapterwise 1") ||
-          targetSetName.toLowerCase().includes("demo")
-        ))
-      );
-
-      const hasPaidExam = Boolean(
-        isExamSetFree ||
-        isSetIndividuallyUnlocked ||
-        buyerInfo?.isBuyer ||
-        buyerInfo?.hasPurchased ||
-        (typeof window !== 'undefined' && localStorage.getItem("hasPurchasedExamAccess") === "true") ||
-        (!isFreeGuest && savedPkg && !savedPkg.toLowerCase().includes("free"))
-      );
-
-      if (!isExamSetFree && isFreeGuest && !hasPaidExam) {
-        alert("This exam set requires payment of Rs. 30. Please unlock via eSewa to take this test.");
-        router.push("/student");
-        return;
-      }
+      // All UBT exams have free access for all students unconditionally
+      const isExamSetFree = true;
+      const hasPaidExam = true;
 
       // Check Package Expiry Date Authorization (bypassed if individually unlocked or free demo)
       if (!isExamSetFree && !isSetIndividuallyUnlocked) {

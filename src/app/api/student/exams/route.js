@@ -79,30 +79,6 @@ export async function GET(req) {
       });
 
       const mapped = publicSets.map(set => {
-        const isFree = Boolean(
-          set.isFree === true ||
-          set.isFree === "true" ||
-          set.isFree === 1 ||
-          set.setType === 'FREE' ||
-          set.distributionMode === 'free' ||
-          set.isFreeForInstituteStudents === true ||
-          set.price === 0 ||
-          set.price === "0" ||
-          set.price === "Rs. 0" ||
-          (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
-          (set.name && set.name.toLowerCase().includes('free')) ||
-          (set.packageName && set.packageName.toLowerCase().includes('free')) ||
-          (set.packageName && set.packageName.toLowerCase().includes('model')) ||
-          (set.name && (
-            set.name.toLowerCase().includes('set 01') ||
-            set.name.toLowerCase().includes('set 1') ||
-            set.name.toLowerCase().includes('01~02') ||
-            set.name.toLowerCase().includes('demo')
-          )) ||
-          set.source === 'model_question_bank' ||
-          set.folder === 'Model Question Bank'
-        );
-
         return {
           id: set.id,
           name: set.name,
@@ -112,11 +88,12 @@ export async function GET(req) {
           creatorInstituteName: set.creatorInstituteName,
           isPrivate: set.isPrivate,
           isPublished: set.isPublished,
-          isFree: isFree,
+          isFree: true,
+          price: 0,
           setType: set.setType,
           duration: set.duration,
           questionsCount: set._count?.questions || 40,
-          isUnlocked: isFree,
+          isUnlocked: true,
           isInstituteSet: false
         };
       });
@@ -243,30 +220,6 @@ export async function GET(req) {
         return true;
       })
       .map(set => {
-        const isFree = Boolean(
-          set.isFree === true ||
-          set.isFree === "true" ||
-          set.isFree === 1 ||
-          set.setType === 'FREE' ||
-          set.distributionMode === 'free' ||
-          set.isFreeForInstituteStudents === true ||
-          set.price === 0 ||
-          set.price === "0" ||
-          set.price === "Rs. 0" ||
-          (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
-          (set.name && set.name.toLowerCase().includes('free')) ||
-          (set.packageName && set.packageName.toLowerCase().includes('free')) ||
-          (set.packageName && set.packageName.toLowerCase().includes('model')) ||
-          (set.name && (
-            set.name.toLowerCase().includes('set 01') ||
-            set.name.toLowerCase().includes('set 1') ||
-            set.name.toLowerCase().includes('01~02') ||
-            set.name.toLowerCase().includes('demo')
-          )) ||
-          set.source === 'model_question_bank' ||
-          set.folder === 'Model Question Bank'
-        );
-
         const isCreatedByMyInstitute = Boolean(
           instituteId &&
           set.creatorInstituteId &&
@@ -274,37 +227,6 @@ export async function GET(req) {
         );
 
         const isExplicitlyReleasedToInstitute = instituteReleasedSetIds.has(set.id);
-
-        const isCoveredByStudentPkg = Boolean(
-          assignedPkg && isSetCoveredByPackage(set, assignedPkg)
-        );
-
-        const isIndividuallyReleased = Boolean(
-          (set.id && releasedSetKeys.has(set.id.toLowerCase().trim())) ||
-          (set.name && releasedSetKeys.has(set.name.toLowerCase().trim()))
-        );
-
-        const isCoveredByReleasedPkg = Boolean(
-          releasedPkgKeys.size > 0 &&
-          Array.from(releasedPkgKeys).some((pkgKey) => isSetCoveredBySinglePackage(set, pkgKey))
-        );
-
-        let isUnlocked = false;
-        if (isFree || isIndividuallyReleased || isCoveredByReleasedPkg) {
-          isUnlocked = true;
-        } else if (isInstituteStudent) {
-          // Institute student: unlocked if created by institute, released to institute, or in assigned package
-          isUnlocked = Boolean(
-            isCreatedByMyInstitute ||
-            isExplicitlyReleasedToInstitute ||
-            isCoveredByStudentPkg
-          );
-        } else {
-          // Self-registered student: ONLY unlocked if Super Admin explicitly granted package access!
-          isUnlocked = Boolean(
-            assignedPkg && isCoveredByStudentPkg
-          );
-        }
 
         return {
           id: set.id,
@@ -315,11 +237,12 @@ export async function GET(req) {
           creatorInstituteName: set.creatorInstituteName,
           isPrivate: set.isPrivate,
           isPublished: set.isPublished,
-          isFree: Boolean(isFree || set.isFree),
+          isFree: true,
+          price: 0,
           setType: set.setType,
           duration: set.duration,
           questionsCount: set._count?.questions || 40,
-          isUnlocked,
+          isUnlocked: true,
           isInstituteSet: isCreatedByMyInstitute || isExplicitlyReleasedToInstitute
         };
       });

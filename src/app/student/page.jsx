@@ -88,31 +88,7 @@ const BuildingIcon = ({ size = 20, color = "#0f766e" }) => (
 const SHIFT_NAMES = ['morning', 'day', 'evening', 'night', 'afternoon'];
 const isShift = (str) => SHIFT_NAMES.includes((str || '').toLowerCase().trim());
 
-export const checkSetIsFree = (s) => Boolean(
-  s?.isFree === true ||
-  s?.isFree === "true" ||
-  s?.isFree === 1 ||
-  s?.isFree === "1" ||
-  s?.setType === "FREE" ||
-  s?.distributionMode === "free" ||
-  s?.isFreeForInstituteStudents === true ||
-  s?.price === 0 ||
-  s?.price === "0" ||
-  s?.price === "Rs. 0" ||
-  (typeof s?.price === "string" && s.price.toLowerCase().includes("free")) ||
-  (s?.name && s.name.toLowerCase().includes("free")) ||
-  (s?.title && s.title.toLowerCase().includes("free")) ||
-  (s?.packageName && s.packageName.toLowerCase().includes("free")) ||
-  (s?.packageName && s.packageName.toLowerCase().includes("model")) ||
-  (s?.name && (
-    /\bset\s*0?1\b/i.test(s.name) ||
-    /\bchapterwise\s*0?1\b/i.test(s.name) ||
-    s.name.toLowerCase().includes("01~02") ||
-    s.name.toLowerCase().includes("demo")
-  )) ||
-  s?.source === "model_question_bank" ||
-  s?.folder === "Model Question Bank"
-);
+export const checkSetIsFree = (s) => true; // All UBT exams have free access for all students unconditionally
 
 const StudentDashboard = () => {
   const router = useRouter();
@@ -1207,31 +1183,7 @@ const StudentDashboard = () => {
 
     const savedSets = JSON.parse(localStorage.getItem("examSets") || "[]");
 
-    const checkSetIsFree = (s) => Boolean(
-      s?.isFree === true ||
-      s?.isFree === "true" ||
-      s?.isFree === 1 ||
-      s?.isFree === "1" ||
-      s?.setType === "FREE" ||
-      s?.distributionMode === "free" ||
-      s?.isFreeForInstituteStudents === true ||
-      s?.price === 0 ||
-      s?.price === "0" ||
-      s?.price === "Rs. 0" ||
-      (typeof s?.price === "string" && s.price.toLowerCase().includes("free")) ||
-      (s?.name && s.name.toLowerCase().includes("free")) ||
-      (s?.title && s.title.toLowerCase().includes("free")) ||
-      (s?.packageName && s.packageName.toLowerCase().includes("free")) ||
-      (s?.packageName && s.packageName.toLowerCase().includes("model")) ||
-      (s?.name && (
-        /\bset\s*0?1\b/i.test(s.name) ||
-        /\bchapterwise\s*0?1\b/i.test(s.name) ||
-        s.name.toLowerCase().includes("01~02") ||
-        s.name.toLowerCase().includes("demo")
-      )) ||
-      s?.source === "model_question_bank" ||
-      s?.folder === "Model Question Bank"
-    );
+    const checkSetIsFree = (s) => true; // All UBT exams have free access for all students unconditionally
 
     // Fetch packages and sets from server API to guarantee data is never empty
     fetch("/api/admin/packages")

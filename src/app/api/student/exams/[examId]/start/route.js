@@ -58,29 +58,8 @@ export async function POST(req, { params }) {
     const setNameLower = (examSet.name || '').toLowerCase();
     const setPkgLower = (examSet.packageName || examSet.package?.name || '').toLowerCase();
 
-    // Access authorization check for student: All free sets are accessible by everyone unconditionally
-    const isFree = Boolean(
-      examSet.isFree === true ||
-      examSet.isFree === "true" ||
-      examSet.isFree === 1 ||
-      examSet.isFree === "1" ||
-      examSet.setType === 'FREE' ||
-      examSet.distributionMode === 'free' ||
-      examSet.isFreeForInstituteStudents === true ||
-      examSet.price === 0 ||
-      examSet.price === "0" ||
-      examSet.price === "Rs. 0" ||
-      (typeof examSet.price === "string" && examSet.price.toLowerCase().includes("free")) ||
-      setNameLower.includes('free') ||
-      setPkgLower.includes('free') ||
-      setNameLower.includes('01~02') ||
-      /\bchapterwise\s*0?1\b/i.test(setNameLower) ||
-      /\bset\s*0?1\b/i.test(setNameLower) ||
-      setNameLower.includes('demo') ||
-      setPkgLower.includes('model') ||
-      examSet.source === 'model_question_bank' ||
-      examSet.folder === 'Model Question Bank'
-    );
+    // Access authorization check for student: All UBT exams have 100% free access for everyone unconditionally
+    const isFree = true;
 
     // Optional session check for free sets, required session check for paid sets
     const { session: realSession } = await requireStudent(req).catch(() => ({ session: null }));

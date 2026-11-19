@@ -1584,103 +1584,13 @@ export default function EpsBookReader({
   };
 
   const isSetUnlocked = (set) => {
-    if (!set) return false;
-
-    // 1. Any set designated as FREE by admin, Free Demo, price=0, or in Model Question Bank
-    const isFree = Boolean(
-      set.isFree === true ||
-      set.isFree === "true" ||
-      set.isFree === 1 ||
-      set.isFree === "1" ||
-      set.setType === "FREE" ||
-      set.distributionMode === "free" ||
-      set.isFreeForInstituteStudents === true ||
-      set.price === 0 ||
-      set.price === "0" ||
-      set.price === "Rs. 0" ||
-      (typeof set.price === "string" && set.price.toLowerCase().includes("free")) ||
-      (set.name && set.name.toLowerCase().includes("free")) ||
-      (set.title && set.title.toLowerCase().includes("free")) ||
-      (set.packageName && set.packageName.toLowerCase().includes("free")) ||
-      (set.packageName && set.packageName.toLowerCase().includes("model")) ||
-      activeFolder === "Model Question Bank" ||
-      set.folder === "Model Question Bank" ||
-      set.source === "model_question_bank" ||
-      (set.name && set.name.toLowerCase().includes("model"))
-    );
-
-    if (isFree) {
-      return true;
-    }
-
-    // For other sets (outside Model Question Bank / Free):
-    if (mode === "admin" || mode === "institute") return true;
-
-    // Check individually unlocked sets
-    const setId = set.id?.toString();
-    const setName = (set.name || set.title)?.toString();
-    if (unlockedSets && unlockedSets.length > 0) {
-      if (unlockedSets.some(id => id?.toString() === setId || id?.toString() === setName)) {
-        return true;
-      }
-    }
-
-    let myPkg = studentPackage;
-    let allowedList = purchasedPackages && purchasedPackages.length > 0 ? [...purchasedPackages] : [];
-
-    if (typeof window !== "undefined") {
-      if (!myPkg) myPkg = localStorage.getItem("currentStudentPackage") || "";
-      const phone = localStorage.getItem("currentStudentPhone") || "";
-      const cleanDigits = (p) => (p || "").toString().replace(/[^0-9]/g, "").slice(-10);
-      const studentsList = JSON.parse(localStorage.getItem("studentsList") || "[]");
-      const foundStudent = studentsList.find(s => s.phone && cleanDigits(s.phone) === cleanDigits(phone));
-      if (foundStudent) {
-        if (!myPkg && (foundStudent.assignedPackage || foundStudent.package)) {
-          myPkg = foundStudent.assignedPackage || foundStudent.package;
-        }
-        if (foundStudent.assignedPackages && Array.isArray(foundStudent.assignedPackages)) {
-          allowedList.push(...foundStudent.assignedPackages);
-        }
-      }
-    }
-
-    if (myPkg) allowedList.push(myPkg);
-    if (allowedList.length === 0) allowedList.push("Full Set UBT");
-
-    const norm = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const normAllowed = allowedList.map(norm);
-    const setPkgNorm = norm(set?.packageName || set?.package?.name || "Full Set UBT");
-
-    if (normAllowed.includes(setPkgNorm)) return true;
-    if (normAllowed.some(ap => ap.includes('full') || ap.includes('100') || ap.includes('ubt'))) return true;
-
-    return false;
+    // All UBT sets have 100% free access for all students unconditionally
+    return true;
   };
 
   const handleStartUbtSet = (set) => {
-    const isFree = Boolean(
-      set?.isFree === true ||
-      set?.isFree === "true" ||
-      set?.isFree === 1 ||
-      set?.isFree === "1" ||
-      set?.setType === "FREE" ||
-      set?.distributionMode === "free" ||
-      set?.isFreeForInstituteStudents === true ||
-      set?.price === 0 ||
-      set?.price === "0" ||
-      set?.price === "Rs. 0" ||
-      (typeof set?.price === "string" && set.price.toLowerCase().includes("free")) ||
-      (set?.name && set.name.toLowerCase().includes("free")) ||
-      (set?.title && set.title.toLowerCase().includes("free")) ||
-      (set?.packageName && set.packageName.toLowerCase().includes("free")) ||
-      (set?.packageName && set.packageName.toLowerCase().includes("model")) ||
-      activeFolder === "Model Question Bank" ||
-      set?.folder === "Model Question Bank" ||
-      set?.source === "model_question_bank" ||
-      (set?.name && set.name.toLowerCase().includes("model"))
-    );
-
-    const unlocked = isFree || isSetUnlocked(set);
+    const isFree = true;
+    const unlocked = true;
 
     if (!unlocked) {
       if (mode === "institute") {
