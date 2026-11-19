@@ -777,7 +777,7 @@
     }, { passive: false });
 
     // =========================================================================
-    // 4. ANCHORED FOCAL-POINT ZOOM & RETURN-BACK ENGINE
+    // 4. ANCHORED FOCAL-POINT ZOOM & SMOOTH SHRINK ENGINE
     // =========================================================================
     var isPinching = false;
     var initialPinchDist = 0;
@@ -791,43 +791,104 @@
     var pinchDocPointY = 0;
     var pinchDocAnchorX = 0;
     var pinchDocAnchorY = 0;
+    var isAnimatingZoom = false;
+
+    // Mobile tap tracking for reliable double-tap
     var lastTapTime = 0;
+    var lastTapX = 0;
+    var lastTapY = 0;
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var touchMoved = false;
 
     function getTouchesDist(t1, t2) {
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     }
 
-    // Double-click / double-tap anywhere on screen: Zoom from fixed point & return back to Fit Width!
-    function handleScreenDoubleClick(clientX, clientY) {
+    // Shrink the PDF back to its own original position (Fit-Width / 1.0x, scrollLeft = 0)
+    function shrinkToOwnPosition(animated) {
+      if (isAnimatingZoom) return;
+      var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
+
+      if (animated !== false && (oldZoom > 1.02 || container.scrollLeft > 5)) {
+        isAnimatingZoom = true;
+        var curScrollY = container.scrollTop;
+        var targetScrollY = Math.max(0, Math.round(curScrollY / oldZoom));
+
+        // Smooth CSS shrink animation back to own position
+        zoomLayer.style.transition = 'transform 0.26s cubic-bezier(0.16, 1, 0.3, 1)';
+        zoomLayer.style.transformOrigin = '50% 0';
+        zoomLayer.style.transform = 'scale(' + (1.0 / oldZoom) + ')';
+
+        setTimeout(function() {
+          zoomLayer.style.transition = 'none';
+          zoomLayer.style.transform = 'none';
+          zoomLayer.style.transformOrigin = '0 0';
+          zoomLayer.style.willChange = 'auto';
+
+          viewMode = 'fit-width';
+          userZoom = 1.0;
+          updateAllWrapperDimensions();
+          container.scrollLeft = 0;
+          container.scrollTop = targetScrollY;
+          debouncedReRender();
+          isAnimatingZoom = false;
+        }, 260);
+      } else {
+        viewMode = 'fit-width';
+        userZoom = 1.0;
+        zoomLayer.style.transition = 'none';
+        zoomLayer.style.transform = 'none';
+        zoomLayer.style.transformOrigin = '0 0';
+        zoomLayer.style.willChange = 'auto';
+        updateAllWrapperDimensions();
+        container.scrollLeft = 0;
+        debouncedReRender();
+      }
+    }
+
+    // Smoothly zoom in anchored at double-clicked / tapped point
+    function zoomInAtPoint(clientX, clientY) {
+      if (isAnimatingZoom) return;
+      isAnimatingZoom = true;
+
+      var targetZoom = 2.4;
       var rect = container.getBoundingClientRect();
       var vx = clientX - rect.left;
       var vy = clientY - rect.top;
       var px = container.scrollLeft + vx;
       var py = container.scrollTop + vy;
-      var oldZoom = (viewMode === 'custom') ? userZoom : 1.0;
 
-      if (viewMode !== 'fit-width' || userZoom > 1.05) {
-        // Return back to Fit Width! Fits screen width 100% cleanly!
-        viewMode = 'fit-width';
-        userZoom = 1.0;
-        var ratioDown = 1.0 / oldZoom;
-        updateToolbarUI();
-        updateAllWrapperDimensions();
-        debouncedReRender();
+      // Animate visual zoom smoothly with hardware-accelerated transform
+      zoomLayer.style.transition = 'transform 0.26s cubic-bezier(0.16, 1, 0.3, 1)';
+      zoomLayer.style.transformOrigin = vx + 'px ' + vy + 'px';
+      zoomLayer.style.transform = 'scale(' + targetZoom + ')';
 
-        container.scrollLeft = 0;
-        container.scrollTop = Math.max(0, Math.round(py * ratioDown - vy));
-      } else {
-        // Zoom in to 288% clarity anchored directly at the clicked / tapped fixed point!
+      setTimeout(function() {
+        zoomLayer.style.transition = 'none';
+        zoomLayer.style.transform = 'none';
+        zoomLayer.style.transformOrigin = '0 0';
+        zoomLayer.style.willChange = 'auto';
+
         viewMode = 'custom';
-        userZoom = 2.88;
-        var ratioUp = 2.88 / oldZoom;
-        updateToolbarUI();
+        userZoom = targetZoom;
         updateAllWrapperDimensions();
-        debouncedReRender();
 
-        container.scrollLeft = Math.max(0, Math.round(px * ratioUp - vx));
-        container.scrollTop = Math.max(0, Math.round(py * ratioUp - vy));
+        container.scrollLeft = Math.max(0, Math.round(px * targetZoom - vx));
+        container.scrollTop = Math.max(0, Math.round(py * targetZoom - vy));
+        debouncedReRender();
+        isAnimatingZoom = false;
+      }, 260);
+    }
+
+    // Double-click / double-tap anywhere on screen:
+    // If zoomed in -> SHRINK the PDF back to its own original position!
+    // If at original position -> zoom in smoothly to readable magnification!
+    function handleScreenDoubleClick(clientX, clientY) {
+      if (viewMode === 'custom' || userZoom > 1.05 || container.scrollLeft > 10) {
+        shrinkToOwnPosition(true);
+      } else {
+        zoomInAtPoint(clientX, clientY);
       }
     }
 
@@ -840,14 +901,12 @@
       handleScreenDoubleClick(e.clientX, e.clientY);
     });
 
-    var pinchEndedJustNow = false;
-
     // Mobile & tablet touch double-tap and two-finger anchored pinch-to-zoom
     container.addEventListener('touchstart', function(e) {
       if (e.touches.length === 2) {
         e.preventDefault();
         isPinching = true;
-        pinchEndedJustNow = false;
+        touchMoved = true;
 
         var t1 = e.touches[0];
         var t2 = e.touches[1];
@@ -865,9 +924,6 @@
         pinchMidY = midY;
 
         var rect = container.getBoundingClientRect();
-        var vx = midX - rect.left;
-        var vy = midY - rect.top;
-
         var layerRect = zoomLayer.getBoundingClientRect();
         pinchDocPointX = midX - layerRect.left;
         pinchDocPointY = midY - layerRect.top;
@@ -877,18 +933,13 @@
         pinchDocAnchorY = pinchDocPointY / pinchStartZoom;
 
         // Anchor the CSS transform directly at the physical touch point on the document
+        zoomLayer.style.transition = 'none';
         zoomLayer.style.transformOrigin = pinchDocPointX + 'px ' + pinchDocPointY + 'px';
-        zoomLayer.style.transform = 'none';
         zoomLayer.style.willChange = 'transform';
-      } else if (e.touches.length === 1 && !isPinching && !pinchEndedJustNow) {
-        var now = Date.now();
-        if (now - lastTapTime < 350) {
-          e.preventDefault();
-          handleScreenDoubleClick(e.touches[0].clientX, e.touches[0].clientY);
-          lastTapTime = 0;
-          return;
-        }
-        lastTapTime = now;
+      } else if (e.touches.length === 1 && !isPinching) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchMoved = false;
       }
     }, { passive: false });
 
@@ -900,7 +951,7 @@
         var currentDist = getTouchesDist(t1, t2);
         if (initialPinchDist > 0) {
           var factor = currentDist / initialPinchDist;
-          currentPinchScale = Math.min(5.0, Math.max(0.85, pinchStartZoom * factor));
+          currentPinchScale = Math.min(5.0, Math.max(0.7, pinchStartZoom * factor));
 
           var midX = (t1.clientX + t2.clientX) / 2;
           var midY = (t1.clientY + t2.clientY) / 2;
@@ -914,38 +965,32 @@
           // Smooth continuous visual scaling locked to the touch point with zero drift
           zoomLayer.style.transform = 'translate3d(' + dx + 'px, ' + dy + 'px, 0) scale(' + relScale + ')';
         }
-      } else if (pinchEndedJustNow) {
-        e.preventDefault();
+      } else if (e.touches.length === 1 && !isPinching) {
+        var moveDist = Math.hypot(e.touches[0].clientX - touchStartX, e.touches[0].clientY - touchStartY);
+        if (moveDist > 10) {
+          touchMoved = true;
+        }
       }
     }, { passive: false });
 
     container.addEventListener('touchend', function(e) {
       if (isPinching) {
         isPinching = false;
-        pinchEndedJustNow = true;
+        initialPinchDist = 0;
 
         var rect = container.getBoundingClientRect();
         var vx = pinchMidX - rect.left;
         var vy = pinchMidY - rect.top;
 
-        if (currentPinchScale <= 1.05) {
-          // Snap directly to 100% Fit Width! Zero margins!
-          viewMode = 'fit-width';
-          userZoom = 1.0;
-          updateAllWrapperDimensions();
-          zoomLayer.style.transform = 'none';
-          zoomLayer.style.transformOrigin = '0 0';
-          zoomLayer.style.willChange = 'auto';
-
-          container.scrollLeft = 0;
-          var targetTop = Math.max(0, Math.round((pinchDocAnchorY * 1.0) - vy));
-          container.scrollTop = targetTop;
-          debouncedReRender();
+        if (currentPinchScale <= 1.08) {
+          // Pinched in to shrink/zoom out -> smoothly shrink back to own position!
+          shrinkToOwnPosition(true);
         } else {
           // Keep PDF constant and sharp: Re-anchor document to exact ending pixel
           viewMode = 'custom';
           userZoom = Math.round(currentPinchScale * 100) / 100;
           updateAllWrapperDimensions();
+          zoomLayer.style.transition = 'none';
           zoomLayer.style.transform = 'none';
           zoomLayer.style.transformOrigin = '0 0';
           zoomLayer.style.willChange = 'auto';
@@ -956,26 +1001,32 @@
           container.scrollTop = targetTop;
           debouncedReRender();
         }
-        initialPinchDist = 0;
-      }
-      if (e.touches.length === 0) {
-        setTimeout(function() {
-          pinchEndedJustNow = false;
-        }, 120);
+      } else if (!touchMoved && e.changedTouches.length === 1) {
+        // Single tap without movement -> check for double-tap
+        var tapX = e.changedTouches[0].clientX;
+        var tapY = e.changedTouches[0].clientY;
+        var now = Date.now();
+        var distFromLast = Math.hypot(tapX - lastTapX, tapY - lastTapY);
+
+        if (now - lastTapTime < 340 && distFromLast < 35) {
+          // Double-tap detected on mobile touch screen!
+          e.preventDefault();
+          handleScreenDoubleClick(tapX, tapY);
+          lastTapTime = 0;
+        } else {
+          lastTapTime = now;
+          lastTapX = tapX;
+          lastTapY = tapY;
+        }
       }
     });
 
     container.addEventListener('touchcancel', function(e) {
       if (isPinching) {
         isPinching = false;
-        zoomLayer.style.transform = 'none';
-        zoomLayer.style.transformOrigin = '0 0';
-        zoomLayer.style.willChange = 'auto';
-        initialPinchDist = 0;
+        shrinkToOwnPosition(false);
       }
-      if (e.touches.length === 0) {
-        pinchEndedJustNow = false;
-      }
+      touchMoved = false;
     });
 
     // Trackpad pinch / Ctrl+Wheel zoom for desktop & laptops (Mac trackpad smooth zoom anchored at cursor)
@@ -993,19 +1044,11 @@
         var py = container.scrollTop + vy;
 
         if (nextZoom <= 1.05) {
-          viewMode = 'fit-width';
-          userZoom = 1.0;
-          updateToolbarUI();
-          updateAllWrapperDimensions();
-          debouncedReRender();
-          container.scrollLeft = 0;
-          var rDown = 1.0 / oldZoom;
-          container.scrollTop = Math.max(0, Math.round(py * rDown - vy));
+          shrinkToOwnPosition(true);
         } else {
           viewMode = 'custom';
           userZoom = Math.round(nextZoom * 100) / 100;
           var rUp = userZoom / oldZoom;
-          updateToolbarUI();
           updateAllWrapperDimensions();
           debouncedReRender();
           container.scrollLeft = Math.max(0, Math.round(px * rUp - vx));
