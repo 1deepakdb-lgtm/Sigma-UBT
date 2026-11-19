@@ -719,6 +719,13 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         if (!selectedWord || q) {
           setSelectedWord(data.results[0]);
         }
+        // Save to offline storage for instantaneous access without internet
+        try {
+          if (!q && (targetFilter === 'all' || !targetFilter)) {
+            localStorage.setItem(`offline_dict_cache_${targetLang}`, JSON.stringify(data.results));
+          }
+        } catch (e) {}
+
         // Background prefetch audio for top items so first click plays within milliseconds
         if (typeof window !== 'undefined' && Array.isArray(data.results)) {
           data.results.slice(0, 8).forEach(item => {
@@ -734,7 +741,30 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         setResults([]);
       }
     } catch (err) {
-      console.error('Failed to load dictionary:', err);
+      console.warn('Network fetch failed, attempting offline dictionary fallback:', err);
+      try {
+        const cachedRaw = localStorage.getItem(`offline_dict_cache_${targetLang}`);
+        if (cachedRaw) {
+          const list = JSON.parse(cachedRaw);
+          if (q) {
+            const query = q.toLowerCase().trim();
+            const matched = list.filter(w => {
+              const ko = (w.korean || '').toLowerCase();
+              const ja = (w.japanese || '').toLowerCase();
+              const ne = (w.nepali || '').toLowerCase();
+              const en = (w.english || '').toLowerCase();
+              return ko.includes(query) || ja.includes(query) || ne.includes(query) || en.includes(query);
+            });
+            setResults(matched);
+            if (matched.length > 0) setSelectedWord(matched[0]);
+          } else {
+            setResults(list);
+            if (list.length > 0 && !selectedWord) setSelectedWord(list[0]);
+          }
+        }
+      } catch (storageErr) {
+        console.error('Offline storage fallback error:', storageErr);
+      }
     }
     setLoading(false);
   }

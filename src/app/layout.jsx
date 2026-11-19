@@ -1,6 +1,7 @@
 import '@/App.css';
 import './student.css';
 import PwaDesktopInstaller from '@/components/PwaDesktopInstaller';
+import OfflineSyncManager from '@/components/OfflineSyncManager';
 
 export const viewport = {
   themeColor: '#003b73',
@@ -49,6 +50,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <PwaDesktopInstaller />
+        <OfflineSyncManager />
       </body>
     </html>
   );

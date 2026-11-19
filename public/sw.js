@@ -1,5 +1,9 @@
-// ExamJK Service Worker for Multi-Device Native App Experience
-const CACHE_NAME = 'examjk-cache-v4';
+// ExamJK Advanced Progressive Web App & Offline Sync Service Worker
+// Automatically caches core assets, API data, PDF viewer, dictionary, and media for seamless offline usage
+
+const STATIC_CACHE = 'examjk-static-v5';
+const DATA_CACHE = 'examjk-data-v5';
+const MEDIA_CACHE = 'examjk-media-v5';
 
 const STATIC_ASSETS = [
   '/',
@@ -10,26 +14,40 @@ const STATIC_ASSETS = [
   '/icon-maskable.png',
   '/apple-touch-icon.png',
   '/examjk-logo.png',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/pdfviewer.html',
+  '/pdf.min.js',
+  '/pdf.worker.min.js',
+  '/api/books',
+  '/api/books/japanese-r2',
+  '/api/dictionary?q=&lang=ko&filter=all&limit=500',
+  '/api/dictionary?q=&lang=ja&filter=all&limit=500'
 ];
 
+// Pre-cache static essentials on install
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('PWA: Some static assets failed to cache', err);
-      });
+    caches.open(STATIC_CACHE).then((cache) => {
+      return Promise.allSettled(
+        STATIC_ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => {
+            console.warn(`PWA: Pre-cache asset failed [${asset}]:`, err);
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
 });
 
+// Clean up previous cache generations on activate
 self.addEventListener('activate', (event) => {
+  const currentCaches = [STATIC_CACHE, DATA_CACHE, MEDIA_CACHE];
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (!currentCaches.includes(key)) {
             return caches.delete(key);
           }
         })
@@ -39,35 +57,120 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Intelligent request interceptor with specialized offline strategies
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // Always use network directly for API and non-GET requests
-  if (request.method !== 'GET' || url.pathname.startsWith('/api/')) {
+  // 1. Never intercept non-GET requests (e.g. POST, PUT, DELETE)
+  if (request.method !== 'GET') {
     return;
   }
 
-  // Network-first strategy with cache fallback for navigation and dynamic pages
+  // 2. Bypass live security auth/session checks so security tokens remain un-stale
+  if (url.pathname.startsWith('/api/auth/')) {
+    return;
+  }
+
+  // 3. Navigation requests (Page reloads, visiting /student, etc.)
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => {
-        return caches.match('/student') || caches.match('/') || caches.match(request);
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // When offline: serve cached destination page or student hub
+          return caches.match(request)
+            .then((cachedPage) => cachedPage || caches.match('/student') || caches.match('/'));
+        })
+    );
+    return;
+  }
+
+  // 4. Heavy Media & PDFs (Chapter PDFs, Book Audio, R2 files, Uploads)
+  // Strategy: Cache-First with background download and long-term offline retention
+  if (
+    url.pathname.includes('/api/r2/') ||
+    url.pathname.endsWith('.pdf') ||
+    url.pathname.endsWith('.mp3') ||
+    url.pathname.startsWith('/uploads/')
+  ) {
+    event.respondWith(
+      caches.open(MEDIA_CACHE).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(request)
+            .then((networkResponse) => {
+              if (networkResponse && networkResponse.status === 200) {
+                cache.put(request, networkResponse.clone());
+              }
+              return networkResponse;
+            })
+            .catch(() => cachedResponse);
+        });
       })
     );
     return;
   }
 
-  // Stale-while-revalidate for static assets
+  // 5. Read-only Data APIs (Books library, Japanese manifests, Dictionary searches, Questions)
+  // Strategy: Network-First with automated background caching and seamless offline fallback
+  if (
+    url.pathname.startsWith('/api/books') ||
+    url.pathname.startsWith('/api/dictionary') ||
+    url.pathname.startsWith('/api/eps-book') ||
+    url.pathname.startsWith('/api/student/exams')
+  ) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(DATA_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Serve saved data response when offline
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+
+  // 6. Next.js Static Chunks & Immutable Build Assets (/_next/static/...)
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return networkResponse;
+        });
+      })
+    );
+    return;
+  }
+
+  // 7. General Static Assets (Styles, Scripts, Fonts, PDF viewer, Icons)
+  // Strategy: Stale-While-Revalidate
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       const fetchPromise = fetch(request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
+            const clone = networkResponse.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
           }
           return networkResponse;
         })

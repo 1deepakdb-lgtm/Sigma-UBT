@@ -113,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
         setupSwipeRefresh();
         setupBackNavigation();
         requestRequiredPermissions();
+        registerNetworkCallback();
 
         btnRetry.setOnClickListener(v -> loadExamJK());
 
@@ -155,6 +156,58 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private boolean isNetworkConnected() {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    android.net.Network network = cm.getActiveNetwork();
+                    if (network != null) {
+                        android.net.NetworkCapabilities capabilities = cm.getNetworkCapabilities(network);
+                        return capabilities != null && (
+                                capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+                                capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                                capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET));
+                    }
+                } else {
+                    android.net.NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                    return activeNetwork != null && activeNetwork.isConnected();
+                }
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    private void registerNetworkCallback() {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                cm.registerDefaultNetworkCallback(new android.net.ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(@NonNull android.net.Network network) {
+                        runOnUiThread(() -> {
+                            if (webView != null) {
+                                webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
+                                if (offlineView != null && offlineView.getVisibility() == View.VISIBLE) {
+                                    loadExamJK();
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onLost(@NonNull android.net.Network network) {
+                        runOnUiThread(() -> {
+                            if (webView != null) {
+                                webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+                            }
+                        });
+                    }
+                });
+            }
+        } catch (Exception ignored) {}
+    }
+
     private String getTargetUrl() {
         // Read saved server URL or default
         return prefs.getString(KEY_SERVER_URL, DEFAULT_URL);
@@ -163,6 +216,11 @@ public class MainActivity extends AppCompatActivity {
     private void loadExamJK() {
         offlineView.setVisibility(View.GONE);
         webView.setVisibility(View.VISIBLE);
+        if (isNetworkConnected()) {
+            webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
+        } else {
+            webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        }
         String target = getTargetUrl();
         webView.loadUrl(target);
     }
@@ -177,7 +235,26 @@ public class MainActivity extends AppCompatActivity {
         settings.setAllowContentAccess(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        
+        // Intelligent offline caching: Use network when available, fallback to cache when offline
+        if (isNetworkConnected()) {
+            settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        } else {
+            settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        }
+
+        // Enable Android Service Worker in WebView for high-performance offline caching
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            try {
+                android.webkit.ServiceWorkerController swController = android.webkit.ServiceWorkerController.getInstance();
+                swController.setServiceWorkerClient(new android.webkit.ServiceWorkerClient() {
+                    @Override
+                    public android.webkit.WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
+                        return super.shouldInterceptRequest(request);
+                    }
+                });
+            } catch (Exception ignored) {}
+        }
         // Calibrate responsive viewport and vector zoom to match Adobe Acrobat clarity
         settings.setUseWideViewPort(false);
         settings.setLoadWithOverviewMode(false);
@@ -268,6 +345,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame()) {
+                    // If offline, attempt to serve cached page without kicking user out
+                    if (!isNetworkConnected()) {
+                        view.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+                        if (view.getContentHeight() > 0) {
+                            progressBar.setVisibility(View.GONE);
+                            swipeRefresh.setRefreshing(false);
+                            return;
+                        }
+                    }
                     progressBar.setVisibility(View.GONE);
                     swipeRefresh.setRefreshing(false);
                     webView.setVisibility(View.GONE);

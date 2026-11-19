@@ -1781,7 +1781,7 @@ export default function EpsBookReader({
       }
     });
 
-    // 3. Fetch books folders, materials, meaningChapters & ubtSets for everyone
+    // 3. Fetch books folders, materials, meaningChapters & ubtSets for everyone (with offline cache support)
     fetch("/api/books")
       .then((res) => res.json())
       .then((data) => {
@@ -1802,19 +1802,45 @@ export default function EpsBookReader({
             });
             setUbtSets(combined);
           }
+          try {
+            localStorage.setItem("offline_books_manifest", JSON.stringify(data));
+          } catch (e) {}
         }
       })
-      .catch((err) => console.warn("Books library fetch notice:", err));
+      .catch((err) => {
+        console.warn("Books library fetch notice (falling back to offline data):", err);
+        try {
+          const raw = localStorage.getItem("offline_books_manifest");
+          if (raw) {
+            const data = JSON.parse(raw);
+            if (Array.isArray(data.folders) && data.folders.length > 0) setFolders(data.folders);
+            if (Array.isArray(data.materials)) setMaterials(data.materials);
+            if (Array.isArray(data.meaningChapters)) setMeaningChapters(data.meaningChapters);
+            if (Array.isArray(data.r2Books)) setR2Folders(data.r2Books);
+            if (Array.isArray(data.r2FullBooks)) setR2FullBooks(data.r2FullBooks);
+            if (Array.isArray(data.ubtSets)) setUbtSets(data.ubtSets);
+          }
+        } catch (e) {}
+      });
 
-    // 4. Fetch Japanese R2 Books & Chapters Manifest
+    // 4. Fetch Japanese R2 Books & Chapters Manifest (with offline cache support)
     fetch("/api/books/japanese-r2")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success) {
           setJapaneseR2Data(data);
+          try {
+            localStorage.setItem("offline_japanese_books_manifest", JSON.stringify(data));
+          } catch (e) {}
         }
       })
-      .catch((err) => console.warn("Japanese R2 books fetch notice:", err));
+      .catch((err) => {
+        console.warn("Japanese R2 books fetch notice (falling back to offline data):", err);
+        try {
+          const raw = localStorage.getItem("offline_japanese_books_manifest");
+          if (raw) setJapaneseR2Data(JSON.parse(raw));
+        } catch (e) {}
+      });
   }, [mode]);
 
   // Close dropdown when clicking outside
