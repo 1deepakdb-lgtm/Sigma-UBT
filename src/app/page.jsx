@@ -83,25 +83,42 @@ export default function LoginPage() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("error") === "unauthorized") {
         setError("Session expired or authentication required. Please log in to continue.");
+        try {
+          window.history.replaceState({}, "", window.location.pathname);
+        } catch (e) {}
       }
     }
   }, []);
 
   // Save session state to localStorage and redirect
-  const handleAuthSuccess = (userData) => {
-    localStorage.setItem("currentUser", userData.name || userData.username);
-    localStorage.setItem("role", userData.role || "student");
-    localStorage.setItem("currentRole", userData.role || "student");
-    localStorage.setItem("sigma_current_user", JSON.stringify(userData));
-    localStorage.setItem("instituteLanguage", userData.instituteLanguage || "both");
+  const handleAuthSuccess = (userData, token = null) => {
+    if (!userData) return;
+    const user = userData.user || userData;
+    const jwtToken = token || userData.token || null;
+
+    if (jwtToken) {
+      localStorage.setItem("sigma_token", jwtToken);
+      localStorage.setItem("sigma_session", jwtToken);
+    }
+    localStorage.setItem("currentUser", user.name || user.username);
+    localStorage.setItem("role", user.role || "student");
+    localStorage.setItem("currentRole", user.role || "student");
+    localStorage.setItem("sigma_current_user", JSON.stringify(user));
+    localStorage.setItem("instituteLanguage", user.instituteLanguage || "both");
+
+    if (typeof window !== "undefined") {
+      try {
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch (e) {}
+    }
 
     let redirectUrl = "/";
-    if (userData.role === "admin") {
+    if (user.role === "admin") {
       localStorage.setItem("billingRole", "admin");
       localStorage.setItem("instituteLanguage", "both");
       redirectUrl = "/admin";
-    } else if (userData.role === "institute") {
-      localStorage.setItem("currentInstitute", userData.instituteName || userData.name);
+    } else if (user.role === "institute") {
+      localStorage.setItem("currentInstitute", user.instituteName || user.name);
       localStorage.setItem("billingRole", "admin");
       redirectUrl = "/institute";
 
@@ -116,8 +133,8 @@ export default function LoginPage() {
           } catch (e) {}
         }
       }
-    } else if (userData.role === "staff") {
-      localStorage.setItem("currentInstitute", userData.instituteName || "Language Institute");
+    } else if (user.role === "staff") {
+      localStorage.setItem("currentInstitute", user.instituteName || "Language Institute");
       localStorage.setItem("billingRole", "user");
       redirectUrl = "/institute?tab=billing";
 
@@ -134,27 +151,27 @@ export default function LoginPage() {
       }
     } else {
       // Student role (self-registered or Google student)
-      const studentPhone = userData.phone || userData.username;
+      const studentPhone = user.phone || user.username;
       localStorage.setItem("currentStudentPhone", studentPhone);
       localStorage.setItem("studentPhone", studentPhone);
-      localStorage.setItem("currentStudentName", userData.name || userData.username);
-      if (userData.studentPackage && !userData.studentPackage.toLowerCase().includes("google") && !userData.studentPackage.toLowerCase().includes("free")) {
-        localStorage.setItem("currentStudentPackage", userData.studentPackage);
+      localStorage.setItem("currentStudentName", user.name || user.username);
+      if (user.studentPackage && !user.studentPackage.toLowerCase().includes("google") && !user.studentPackage.toLowerCase().includes("free")) {
+        localStorage.setItem("currentStudentPackage", user.studentPackage);
       } else {
         localStorage.setItem("currentStudentPackage", "Free Student Access");
         localStorage.setItem("isFreeStudent", "true");
         localStorage.setItem("accountValidity", "Lifetime");
       }
-      if (userData.expiryDate) {
-        localStorage.setItem("currentStudentExpiryDate", userData.expiryDate);
+      if (user.expiryDate) {
+        localStorage.setItem("currentStudentExpiryDate", user.expiryDate);
       }
-      if (userData.instituteLanguage) {
-        localStorage.setItem("instituteLanguage", userData.instituteLanguage);
+      if (user.instituteLanguage) {
+        localStorage.setItem("instituteLanguage", user.instituteLanguage);
       } else if (regLanguage) {
         localStorage.setItem("instituteLanguage", regLanguage);
       }
-      if (userData.instituteName) {
-        localStorage.setItem("currentInstitute", userData.instituteName);
+      if (user.instituteName) {
+        localStorage.setItem("currentInstitute", user.instituteName);
       }
       redirectUrl = "/student";
     }
@@ -193,7 +210,7 @@ export default function LoginPage() {
         return;
       }
 
-      handleAuthSuccess(data.user);
+      handleAuthSuccess(data.user, data.token);
     } catch (err) {
       console.error("Login request failed:", err);
       setError("Server connection failed. Please check your network and try again.");
@@ -255,7 +272,7 @@ export default function LoginPage() {
 
       setSuccessMsg("Account created! Granting free student materials access...");
       setTimeout(() => {
-        handleAuthSuccess(data.user);
+        handleAuthSuccess(data.user, data.token);
       }, 350);
     } catch (err) {
       console.error("Registration request failed:", err);
@@ -489,7 +506,7 @@ export default function LoginPage() {
         return;
       }
 
-      handleAuthSuccess(data.user);
+      handleAuthSuccess(data.user, data.token);
     } catch (err) {
       setError("Google authentication failed. Please try again.");
       setLoading(false);
@@ -559,7 +576,7 @@ export default function LoginPage() {
       }
 
       setShowGoogleModal(false);
-      handleAuthSuccess(data.user);
+      handleAuthSuccess(data.user, data.token);
     } catch (err) {
       setError("Google Sign-In failed. Please try again.");
       setLoading(false);

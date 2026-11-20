@@ -45,6 +45,8 @@ export async function GET(req) {
     let studentPackage = 'Full Set UBT';
     let expiryDate = null;
     let isGoogleOrFree = false;
+    let serverUnlockedSets = [];
+    let serverPurchasedPackages = [];
 
     if (user.role === 'student') {
       const shiftNames = ['morning', 'day', 'evening', 'night', 'afternoon'];
@@ -122,8 +124,6 @@ export async function GET(req) {
       }
 
       // Permanent Persistence: Check paymentTransaction table for completed sets/packages
-      let serverUnlockedSets = [];
-      let serverPurchasedPackages = [];
       try {
         const userPhone = user.phone || user.username || '';
         const cleanPhone = userPhone.replace(/[^0-9]/g, '').slice(-10);

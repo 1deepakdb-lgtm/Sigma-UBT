@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'sigma-ubt-production-secret-key-2026'
+  (process.env.JWT_SECRET || 'sigma-ubt-production-secret-key-2026').trim()
 );
 
 // ─── Security Constants ────────────────────────────────────────────────────────
@@ -125,8 +125,8 @@ export async function middleware(req) {
     }
   }
 
-  // Fallback: check Authorization Bearer token for API routes (NO header-based role spoofing allowed)
-  if (!userPayload && pathname.startsWith('/api/')) {
+  // Fallback: check Authorization Bearer token (NO header-based role spoofing allowed)
+  if (!userPayload) {
     const authHeader = req.headers.get('authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
@@ -165,8 +165,8 @@ export async function middleware(req) {
 
   // ─── 6. Root / Login Page Handling ──────────────────────────────────────
   if (pathname === '/') {
-    // If arriving with an error (e.g. expired/unauthorized session) or explicit logout, NEVER bounce back to dashboard
-    if (req.nextUrl.searchParams.has('error') || req.nextUrl.searchParams.has('logout')) {
+    // If arriving with explicit logout, delete session cookie
+    if (req.nextUrl.searchParams.has('logout')) {
       const response = NextResponse.next();
       response.cookies.delete('sigma_session');
       return response;

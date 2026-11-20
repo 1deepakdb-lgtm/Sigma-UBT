@@ -1521,7 +1521,7 @@ const StudentExam = () => {
           align-items: center;
           background-color: #0284c7;
           color: white;
-          padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 34px);
+          padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px);
           padding-bottom: 8px;
           padding-left: calc(env(safe-area-inset-left, 0px) + 16px);
           padding-right: calc(env(safe-area-inset-right, 0px) + 16px);
@@ -1792,7 +1792,7 @@ const StudentExam = () => {
             display: grid !important;
             grid-template-columns: 1fr auto 1fr !important;
             align-items: center !important;
-            padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 34px) !important;
+            padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px) !important;
             padding-bottom: 7px !important;
             padding-left: calc(env(safe-area-inset-left, 0px) + 18px) !important;
             padding-right: calc(env(safe-area-inset-right, 0px) + 18px) !important;
@@ -2103,7 +2103,7 @@ const StudentExam = () => {
             display: grid !important;
             grid-template-columns: 1fr auto 1fr !important;
             align-items: center !important;
-            padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 34px) !important;
+            padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px) !important;
             padding-bottom: 7px !important;
             padding-left: calc(env(safe-area-inset-left, 0px) + 16px) !important;
             padding-right: calc(env(safe-area-inset-right, 0px) + 16px) !important;
@@ -2419,7 +2419,7 @@ const StudentExam = () => {
       {viewMode === "overview" ? (
         <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "100%", width: "100%", height: "100%", margin: "0", justifyContent: "stretch", borderRadius: "0", overflow: "hidden" }}>
           
-          <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 8px), 34px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
+          <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 10px), 38px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
             <span style={{ justifySelf: "start" }}>Remaining Questions: {unsolvedCount}</span>
             <span style={{ justifySelf: "center", textAlign: "center", fontWeight: "900" }}>{exactExamName}</span>
             <div style={{ justifySelf: "end", display: "flex", alignItems: "center", gap: "10px" }}>
@@ -2550,7 +2550,7 @@ const StudentExam = () => {
             const currentQ = questions[currentQuestion];
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-                <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 8px), 34px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
+                <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 10px), 38px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
                   <span style={{ justifySelf: "start" }}>Remaining Questions: {unsolvedCount}</span>
                   <span style={{ justifySelf: "center", textAlign: "center", fontWeight: "900" }}>{exactExamName}</span>
                   <div style={{ justifySelf: "end", display: "flex", alignItems: "center", gap: "10px" }}>

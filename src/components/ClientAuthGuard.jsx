@@ -27,9 +27,13 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
 
     async function verifySession() {
       try {
+        const token = typeof window !== 'undefined' ? (localStorage.getItem('sigma_token') || localStorage.getItem('sigma_session')) : null;
         const res = await fetch('/api/auth/me', {
           cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          }
         });
 
         // If server encounters 500 or 503, DO NOT redirect! Parent layout already verified session.
@@ -41,11 +45,18 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
         if (res.status === 401) {
           // If taking an exam or accessing free exam sets, DO NOT redirect out
           if (typeof window !== 'undefined' && (window.location.pathname.startsWith('/student/exam') || window.location.pathname === '/student')) {
-            const hasLocalUser = localStorage.getItem('currentUser') || localStorage.getItem('sigma_session');
+            const hasLocalUser = localStorage.getItem('currentUser') || localStorage.getItem('sigma_session') || localStorage.getItem('sigma_token');
             if (hasLocalUser) {
               console.warn('[ClientAuthGuard] Active local student session found. Preserving access.');
               return;
             }
+          }
+
+          // If local credentials exist, avoid aggressive immediate wipe
+          const hasLocalUser = typeof window !== 'undefined' && (localStorage.getItem('currentUser') || localStorage.getItem('sigma_token'));
+          if (hasLocalUser) {
+            console.warn('[ClientAuthGuard] Local session exists despite 401. Retaining session to prevent spurious redirect.');
+            return;
           }
 
           // Explicitly unauthenticated: clear cookies properly via logout endpoint
@@ -55,6 +66,7 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
           } catch (e) {}
           try {
             localStorage.removeItem('sigma_session');
+            localStorage.removeItem('sigma_token');
             localStorage.removeItem('currentUser');
             localStorage.removeItem('role');
           } catch (e) {}

@@ -462,15 +462,16 @@ export async function POST(req) {
 
     const response = NextResponse.json({
       success: true,
+      token,
       user: tokenPayload
     });
 
-    // Secure HTTP-only cookie — accessible across page reloads
+    // Secure HTTP-only cookie — accessible across page reloads (30 days persistence)
     response.cookies.set('sigma_session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 30, // 30 days
       path: '/'
     });
 

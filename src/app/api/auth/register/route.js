@@ -136,6 +136,7 @@ export async function POST(req) {
 
     const response = NextResponse.json({
       success: true,
+      token,
       message: 'Account created successfully! Free student access granted.',
       user: tokenPayload
     });
@@ -144,7 +145,7 @@ export async function POST(req) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 30, // 30 days
       path: '/'
     });
 
