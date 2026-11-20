@@ -287,8 +287,8 @@
     var resizeTimer = null;
     var reRenderDebounceTimer = null;
 
-    // View state
-    var viewMode = 'fit-width'; // 'fit-width', 'fit-page', 'custom'
+    // View state: By default, fit completely on screen for all devices (Mobile, Tablet, Smartboard, Desktop)
+    var viewMode = 'fit-page'; // 'fit-page' (default fit on screen), 'fit-width', 'custom'
     var userZoom = 1.0; // 1.0 = 100%, 2.0 = 200%, 2.88 = 288%
 
     if (typeof pdfjsLib === 'undefined') {
@@ -587,40 +587,22 @@
       var pageH = (baseViewport && baseViewport.height) ? baseViewport.height : 841.89;
       var pageAspect = pageH / pageW;
 
-      if (viewMode === 'fit-page') {
-        var availH = screenHeight - 16;
-        var availW = screenWidth - 16;
-        var fitScale = Math.min(availH / pageH, availW / pageW);
-        var finalW = Math.max(320, Math.round(pageW * fitScale));
-        return { width: finalW, height: Math.floor(finalW * pageAspect), scale: fitScale };
-      } else if (viewMode === 'custom' && userZoom > 1.05) {
-        var baseW;
-        if (screenWidth < 768) {
-          baseW = screenWidth;
-        } else if (screenWidth > screenHeight) {
-          // Tablets, Desktops & Smartboards in Landscape
-          baseW = Math.min(screenWidth, Math.max(760, Math.round((screenHeight - 20) * (pageW / pageH))));
-        } else {
-          baseW = screenWidth - 16;
-        }
+      // Fit Page (Default: Fit completely on screen with zero clipping for all devices)
+      var availH = screenHeight - (screenWidth < 768 ? 6 : 14);
+      var availW = screenWidth - (screenWidth < 768 ? 0 : 14);
+      var fitScale = Math.min(availH / pageH, availW / pageW);
+      var fitPageW = Math.max(280, Math.round(pageW * fitScale));
+
+      if (viewMode === 'custom' && userZoom > 1.05) {
+        var baseW = fitPageW;
         var scaledW = Math.round(baseW * userZoom);
         return { width: scaledW, height: Math.floor(scaledW * pageAspect), scale: (scaledW / pageW) };
+      } else if (viewMode === 'fit-width') {
+        var fitWidth = screenWidth < 768 ? screenWidth : Math.min(screenWidth, Math.max(760, Math.round((screenHeight - 20) * (pageW / pageH))));
+        return { width: fitWidth, height: Math.floor(fitWidth * pageAspect), scale: (fitWidth / pageW) };
       } else {
-        // 'fit-width' / Universal Responsiveness across all devices:
-        if (screenWidth < 768) {
-          // Mobile phones: 100% edge-to-edge
-          return { width: screenWidth, height: Math.floor(screenWidth * pageAspect), scale: (screenWidth / pageW) };
-        } else if (screenWidth > screenHeight) {
-          // Tablets, Desktops & Smartboards in Landscape:
-          // Perfectly fit page height on screen so the entire page is visible without constant scrolling!
-          var fitHeightW = Math.round((screenHeight - 24) * (pageW / pageH));
-          var optimalW = Math.min(screenWidth - 32, Math.max(760, fitHeightW));
-          return { width: optimalW, height: Math.floor(optimalW * pageAspect), scale: (optimalW / pageW) };
-        } else {
-          // Tablets in Portrait:
-          var portW = Math.max(600, screenWidth - 20);
-          return { width: portW, height: Math.floor(portW * pageAspect), scale: (portW / pageW) };
-        }
+        // 'fit-page' / 'fit-screen' (DEFAULT FOR ALL DEVICES - FITS ENTIRE PAGE ON SCREEN)
+        return { width: fitPageW, height: Math.floor(fitPageW * pageAspect), scale: fitScale };
       }
     }
 
@@ -997,7 +979,7 @@
           zoomLayer.style.transformOrigin = '0 0';
           zoomLayer.style.willChange = 'auto';
 
-          viewMode = 'fit-width';
+          viewMode = 'fit-page';
           userZoom = 1.0;
           updateAllWrapperDimensions();
           container.scrollLeft = 0;
@@ -1007,7 +989,7 @@
           isAnimatingZoom = false;
         }, 220);
       } else {
-        viewMode = 'fit-width';
+        viewMode = 'fit-page';
         userZoom = 1.0;
         zoomLayer.style.transition = 'none';
         zoomLayer.style.transform = 'none';
