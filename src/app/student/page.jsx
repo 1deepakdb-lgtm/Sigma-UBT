@@ -3475,6 +3475,25 @@ const StudentDashboard = () => {
                         </h4>
                       </div>
 
+                      {/* Managed Question Count & Exam Specs */}
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: "11.5px",
+                        color: "#64748b",
+                        fontWeight: "700",
+                        backgroundColor: "#f8fafc",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        marginTop: "8px",
+                        marginBottom: "10px",
+                        border: "1px solid #f1f5f9"
+                      }}>
+                        <span>🎯 40 Questions</span>
+                        <span>⏱️ 50 Minutes</span>
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => {

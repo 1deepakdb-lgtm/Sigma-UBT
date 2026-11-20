@@ -23,7 +23,7 @@ const StudentExam = () => {
   const [logoWatermark, setLogoWatermark] = useState("");
 
   const [isStarted, setIsStarted] = useState(false);
-  const [viewMode, setViewMode] = useState("overview"); 
+  const [viewMode, setViewMode] = useState("single"); 
   const [showConfirmModal, setShowConfirmModal] = useState(false); 
   
   const [questions, setQuestions] = useState([]);
@@ -372,33 +372,65 @@ const StudentExam = () => {
     }
   }, [isStarted]);
 
+  const enterFullScreen = () => {
+    try {
+      if (typeof document !== "undefined") {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          const el = document.documentElement;
+          if (el.requestFullscreen) {
+            el.requestFullscreen().catch(() => {});
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          } else if (el.mozRequestFullScreen) {
+            el.mozRequestFullScreen();
+          } else if (el.msRequestFullscreen) {
+            el.msRequestFullscreen();
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Synchronize native Android, Smartboard, and Tablet bridge triggers
+    if (typeof window !== "undefined") {
+      try {
+        const p = window.parent || window;
+        const bridges = [
+          window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android,
+          p.AndroidApp, p.SmartboardApp, p.SmartBoardApp, p.SmartBoard, p.smartboard, p.BoardApp, p.boardApp, p.Android, p.android
+        ];
+        for (const b of bridges) {
+          if (!b) continue;
+          if (typeof b.hideStatusBar === "function") b.hideStatusBar();
+          if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
+          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
+          if (typeof b.hideSystemUI === "function") b.hideSystemUI();
+          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
+          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+          if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
+          if (typeof b.setPdfOpen === "function") b.setPdfOpen(true);
+        }
+      } catch (err) {}
+    }
+  };
+
   const toggleFullScreen = () => {
     try {
-      if (typeof document === "undefined") return;
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        const el = document.documentElement;
-        if (el.requestFullscreen) {
-          el.requestFullscreen().catch(() => {});
-        } else if (el.webkitRequestFullscreen) {
-          el.webkitRequestFullscreen();
-        } else if (el.mozRequestFullScreen) {
-          el.mozRequestFullScreen();
-        } else if (el.msRequestFullscreen) {
-          el.msRequestFullscreen();
-        }
-      } else {
+      if (typeof document !== "undefined" && (document.fullscreenElement || document.webkitFullscreenElement)) {
         if (document.exitFullscreen) {
           document.exitFullscreen().catch(() => {});
         } else if (document.webkitExitFullscreen) {
           document.webkitExitFullscreen();
         }
+      } else {
+        enterFullScreen();
       }
     } catch (e) {}
   };
 
   const handleGetStarted = async () => {
-    // Keep this full screen so mobile status bar does not overlay
-    toggleFullScreen();
+    // Keep this full screen so mobile status bar and navigation do not overlay
+    enterFullScreen();
 
     // Auto-lock orientation to landscape on student device
     if (typeof window !== "undefined") {
@@ -414,6 +446,8 @@ const StudentExam = () => {
         }
       } catch (e) {}
     }
+    setCurrentQuestion(0);
+    setViewMode("single");
     setIsStarted(true);
   };
 
@@ -682,8 +716,14 @@ const StudentExam = () => {
       <div 
         className="ubt-pre-exam-screen"
         style={{ 
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           width: "100vw", 
-          minHeight: "100dvh", 
+          height: "100vh",
+          height: "100dvh", 
           display: "flex", 
           justifyContent: "center", 
           alignItems: "center", 
@@ -692,6 +732,7 @@ const StudentExam = () => {
           boxSizing: "border-box", 
           padding: "12px 14px",
           overflowY: "auto",
+          zIndex: 2147483640,
           ...protectedStyle 
         }} 
         onContextMenu={(e) => e.preventDefault()}
@@ -1457,8 +1498,24 @@ const StudentExam = () => {
           box-sizing: border-box;
           padding: 0;
           overflow: hidden;
-          position: relative;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 2147483640;
           background-color: #ffffff;
+        }
+        .student-bottom-nav,
+        .institute-bottom-nav,
+        .navbar-bottom-nav,
+        .student-header,
+        .institute-top-nav,
+        nav {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
         }
         .ubt-exam-main {
           flex: 1;
@@ -1619,9 +1676,12 @@ const StudentExam = () => {
         }
         .ubt-overview-grid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          grid-template-rows: repeat(5, 1fr);
-          gap: 8px;
+          grid-template-columns: repeat(5, 1fr);
+          grid-template-rows: repeat(4, 1fr);
+          gap: 6px;
+          max-width: 420px;
+          width: 100%;
+          margin: 0 auto;
           flex: 1;
           height: 100%;
         }
@@ -1629,10 +1689,13 @@ const StudentExam = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          height: 100%;
-          min-height: 38px;
-          padding: 4px 0;
-          font-size: 13.5px;
+          width: 100%;
+          max-width: 68px;
+          height: 44px;
+          min-height: 44px;
+          margin: 0 auto;
+          padding: 0;
+          font-size: 14.5px;
           font-weight: 800;
           border-radius: 10px;
           box-shadow: 0 1px 3px rgba(0,0,0,0.06);
@@ -1960,7 +2023,7 @@ const StudentExam = () => {
             left: 100vw !important;
             left: 100dvw !important;
             overflow: hidden !important;
-            z-index: 9999 !important;
+            z-index: 2147483640 !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-wrapper {
             width: 100% !important;
@@ -2211,26 +2274,30 @@ const StudentExam = () => {
           }
           .ubt-exam-landscape-enforcer .ubt-overview-grid {
             display: grid !important;
-            grid-template-columns: repeat(4, 1fr) !important;
-            grid-template-rows: repeat(5, 1fr) !important;
-            gap: 4.5px !important;
+            grid-template-columns: repeat(5, 1fr) !important;
+            grid-template-rows: repeat(4, 1fr) !important;
+            gap: 5px !important;
+            max-width: 420px !important;
+            width: 100% !important;
+            margin: 0 auto !important;
             height: 100% !important;
             flex: 1 !important;
             min-height: 0 !important;
             align-content: stretch !important;
-            width: 100% !important;
           }
           .ubt-exam-landscape-enforcer .ubt-overview-grid button {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            height: 100% !important;
-            min-height: 0 !important;
-            max-height: none !important;
+            width: 100% !important;
+            max-width: 68px !important;
+            height: 42px !important;
+            min-height: 40px !important;
+            margin: 0 auto !important;
             padding: 0 !important;
-            font-size: 13px !important;
+            font-size: 14px !important;
             font-weight: 800 !important;
-            border-radius: 12px !important;
+            border-radius: 10px !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.06) !important;
           }
           .ubt-exam-landscape-enforcer .ubt-overview-actions {
@@ -2264,7 +2331,7 @@ const StudentExam = () => {
             height: 100vh !important;
             height: 100dvh !important;
             overflow: hidden !important;
-            z-index: 9999 !important;
+            z-index: 2147483640 !important;
           }
         }
 
@@ -2452,45 +2519,54 @@ const StudentExam = () => {
             <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", flex: 1, minHeight: 0, maxWidth: "960px", width: "100%", margin: "auto 0", overflow: "hidden" }}>
               
               <div className="ubt-overview-col" style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "10px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
-                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 4px 0", fontSize: "13.5px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
+                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
                 <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", height: "100%", minHeight: 0, alignContent: "stretch", width: "100%" }}>
-                    {questions.slice(0, 20).map((q, idx) => (
-                      <button
-                        type="button"
-                        key={q.id}
-                        onClick={() => { setCurrentQuestion(idx); setViewMode("single"); }}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          padding: 0,
-                          height: "100%",
-                          minHeight: 0,
-                          backgroundColor: selectedAnswers[q.id] !== undefined ? "#dcfce7" : "white",
-                          border: selectedAnswers[q.id] !== undefined ? "2px solid #16a34a" : "1.5px solid #0284c7",
-                          borderRadius: "12px",
-                          fontWeight: "800",
-                          fontSize: "14px",
-                          cursor: "pointer",
-                          color: selectedAnswers[q.id] !== undefined ? "#15803d" : "#0f172a",
-                          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                          transition: "0.15s"
-                        }}
-                      >
-                        {idx + 1}
-                      </button>
-                    ))}
+                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gridTemplateRows: "repeat(4, 1fr)", gap: "6px", maxWidth: "420px", width: "100%", margin: "0 auto", height: "100%", minHeight: 0, alignContent: "stretch" }}>
+                    {questions.slice(0, 20).map((q, idx) => {
+                      const isCurrent = currentQuestion === idx;
+                      const isAnswered = selectedAnswers[q.id] !== undefined;
+                      return (
+                        <button
+                          type="button"
+                          key={q.id}
+                          onClick={() => { setCurrentQuestion(idx); setViewMode("single"); }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: 0,
+                            width: "100%",
+                            maxWidth: "68px",
+                            height: "44px",
+                            minHeight: "44px",
+                            margin: "0 auto",
+                            backgroundColor: isCurrent ? "#0284c7" : (isAnswered ? "#dcfce7" : "white"),
+                            border: isCurrent ? "2.5px solid #0369a1" : (isAnswered ? "2px solid #16a34a" : "1.5px solid #0284c7"),
+                            borderRadius: "10px",
+                            fontWeight: "800",
+                            fontSize: "14.5px",
+                            cursor: "pointer",
+                            color: isCurrent ? "#ffffff" : (isAnswered ? "#15803d" : "#0f172a"),
+                            boxShadow: isCurrent ? "0 3px 8px rgba(2, 132, 199, 0.35)" : "0 1px 2px rgba(0,0,0,0.05)",
+                            transition: "0.15s"
+                          }}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
               <div className="ubt-overview-col" style={{ flex: 1, paddingLeft: "10px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
-                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 4px 0", fontSize: "13.5px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
+                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
                 <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", height: "100%", minHeight: 0, alignContent: "stretch", width: "100%" }}>
+                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gridTemplateRows: "repeat(4, 1fr)", gap: "6px", maxWidth: "420px", width: "100%", margin: "0 auto", height: "100%", minHeight: 0, alignContent: "stretch" }}>
                     {questions.slice(20, 40).map((q, idx) => {
                       const actualIndex = idx + 20;
+                      const isCurrent = currentQuestion === actualIndex;
+                      const isAnswered = selectedAnswers[q.id] !== undefined;
                       return (
                         <button
                           type="button"
@@ -2501,16 +2577,19 @@ const StudentExam = () => {
                             alignItems: "center",
                             justifyContent: "center",
                             padding: 0,
-                            height: "100%",
-                            minHeight: 0,
-                            backgroundColor: selectedAnswers[q.id] !== undefined ? "#dcfce7" : "white",
-                            border: selectedAnswers[q.id] !== undefined ? "2px solid #16a34a" : "1.5px solid #0284c7",
-                            borderRadius: "12px",
+                            width: "100%",
+                            maxWidth: "68px",
+                            height: "44px",
+                            minHeight: "44px",
+                            margin: "0 auto",
+                            backgroundColor: isCurrent ? "#0284c7" : (isAnswered ? "#dcfce7" : "white"),
+                            border: isCurrent ? "2.5px solid #0369a1" : (isAnswered ? "2px solid #16a34a" : "1.5px solid #0284c7"),
+                            borderRadius: "10px",
                             fontWeight: "800",
-                            fontSize: "14px",
+                            fontSize: "14.5px",
                             cursor: "pointer",
-                            color: selectedAnswers[q.id] !== undefined ? "#15803d" : "#0f172a",
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                            color: isCurrent ? "#ffffff" : (isAnswered ? "#15803d" : "#0f172a"),
+                            boxShadow: isCurrent ? "0 3px 8px rgba(2, 132, 199, 0.35)" : "0 1px 2px rgba(0,0,0,0.05)",
                             transition: "0.15s"
                           }}
                         >
@@ -2582,12 +2661,56 @@ const StudentExam = () => {
                 <div className="ubt-exam-card" style={{ backgroundColor: "#ffffff", border: "none", borderRadius: "0", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 0, overflow: "hidden" }}>
                   <div className="ubt-exam-columns" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
                     
-                    <div className="ubt-exam-left" style={{ flex: 1.2, padding: "16px 20px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%" }}>
-                      <p style={{ color: "#1e293b", fontSize: "20px", fontWeight: "bold", margin: "0 0 10px 0" }}>
+                    <div className="ubt-exam-left" style={{ flex: 1.25, padding: "14px 18px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%" }}>
+                      {/* MANAGED QUESTION NUMBER BADGE & SPEC BAR */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "8px", flexWrap: "wrap", flexShrink: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span className="ubt-qnum-pill" style={{
+                            backgroundColor: "#0284c7",
+                            color: "#ffffff",
+                            fontWeight: "900",
+                            fontSize: "14px",
+                            padding: "4px 12px",
+                            borderRadius: "8px",
+                            letterSpacing: "0.5px",
+                            minWidth: "75px",
+                            textAlign: "center",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 2px 4px rgba(2, 132, 199, 0.2)"
+                          }}>
+                            Question {currentQuestion + 1}
+                          </span>
+                          <span style={{
+                            backgroundColor: currentQuestion < 20 ? "#eff6ff" : "#fef3c7",
+                            color: currentQuestion < 20 ? "#1d4ed8" : "#b45309",
+                            fontWeight: "800",
+                            fontSize: "12px",
+                            padding: "3px 10px",
+                            borderRadius: "6px",
+                            border: currentQuestion < 20 ? "1px solid #bfdbfe" : "1px solid #fde68a"
+                          }}>
+                            {currentQuestion < 20 ? "📖 Reading" : "🎧 Listening"} • {currentQuestion + 1} / {questions.length || 40}
+                          </span>
+                        </div>
+                        <span style={{
+                          fontSize: "12px",
+                          fontWeight: "800",
+                          color: selectedAnswers[currentQ?.id] !== undefined ? "#16a34a" : "#64748b",
+                          backgroundColor: selectedAnswers[currentQ?.id] !== undefined ? "#dcfce7" : "#f1f5f9",
+                          padding: "2px 8px",
+                          borderRadius: "6px"
+                        }}>
+                          {selectedAnswers[currentQ?.id] !== undefined ? "✓ Answered" : "Not Answered"}
+                        </span>
+                      </div>
+
+                      <p style={{ color: "#1e293b", fontSize: "19px", fontWeight: "bold", margin: "0 0 8px 0", lineHeight: "1.4" }}>
                         {currentQ.mainHeading || (currentQuestion < 20 ? "[ 1 - 20 ] 다음을 읽고 알맞은 것을 고르십시오." : "[ 21 - 40 ] 이야기를 듣고 질문에 알맞은 것을 고르십시오.")}
                       </p>
-                      {currentQ.questionHeading && (
-                        <p style={{ color: "#334155", fontSize: "20px", fontWeight: "bold", margin: "0 0 10px 0" }}>
+                      {currentQ.questionHeading && currentQ.questionHeading.trim() !== String(currentQuestion + 1) && (
+                        <p style={{ color: "#334155", fontSize: "18px", fontWeight: "bold", margin: "0 0 8px 0", lineHeight: "1.4" }}>
                           {currentQ.questionHeading}
                         </p>
                       )}
