@@ -2252,44 +2252,92 @@ export default function EpsBookReader({
     setShowTrackDropdown(false);
   };
 
-  // Global lock for pull-down refresh and hardware back when ANY PDF is open
+  // Global lock for pull-down refresh and hardware back when ANY PDF is open (Mobile Apps & Smartboard Apps)
   useEffect(() => {
     const isAnyPdfOpen = !!(selectedChapter || viewingMaterial || viewingMeaningChapter);
     let refreshLockInterval = null;
 
+    const syncSwipeRefreshBridges = (enable) => {
+      if (typeof window === "undefined") return;
+      const bridges = [
+        window.AndroidApp,
+        window.SmartboardApp,
+        window.SmartBoardApp,
+        window.SmartBoard,
+        window.smartboard,
+        window.BoardApp,
+        window.boardApp,
+        window.Android,
+        window.android,
+        window.webApp
+      ];
+      bridges.forEach((b) => {
+        if (!b) return;
+        try {
+          if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(enable);
+          if (typeof b.setPullToRefreshEnabled === "function") b.setPullToRefreshEnabled(enable);
+          if (!enable && typeof b.disablePullToRefresh === "function") b.disablePullToRefresh();
+          if (enable && typeof b.enablePullToRefresh === "function") b.enablePullToRefresh();
+          if (!enable && typeof b.disableSwipeRefresh === "function") b.disableSwipeRefresh();
+          if (enable && typeof b.enableSwipeRefresh === "function") b.enableSwipeRefresh();
+          if (typeof b.setPdfOpen === "function") b.setPdfOpen(!enable);
+          if (!enable && typeof b.hideStatusBar === "function") b.hideStatusBar();
+          if (!enable && typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+          if (!enable && typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+          if (enable && typeof b.showStatusBar === "function") b.showStatusBar();
+          if (enable && typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+          if (enable && typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
+        } catch (e) {}
+      });
+    };
+
+    let globalTouchStartY = 0;
+    const handleGlobalTouchStart = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        globalTouchStartY = e.touches[0].clientY;
+      }
+    };
+
+    const handleGlobalTouchMove = (e) => {
+      if (!isAnyPdfOpen) return;
+      if (e.touches && e.touches.length === 1) {
+        const dy = e.touches[0].clientY - globalTouchStartY;
+        // Intercept downward drag from top edge or when scrolled to top to completely disable pull-to-refresh
+        if (dy > 0 && (window.scrollY <= 2 || globalTouchStartY < 160)) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
     if (typeof window !== "undefined") {
       window.__isPdfOpen = isAnyPdfOpen;
       if (isAnyPdfOpen) {
+        document.body.classList.add("pdf-open");
+        document.documentElement.classList.add("pdf-open");
         document.body.style.overscrollBehavior = "none";
         document.body.style.overscrollBehaviorY = "none";
         document.documentElement.style.overscrollBehavior = "none";
         document.documentElement.style.overscrollBehaviorY = "none";
-        if (window.AndroidApp) {
-          try {
-            if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
-            if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
-          } catch (e) {}
-        }
-        // Periodic lock check to prevent pull-to-refresh from reactivating during active PDF session
-        if (window.AndroidApp) {
-          refreshLockInterval = setInterval(() => {
-            try {
-              if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
-              if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
-            } catch (err) {}
-          }, 1000);
-        }
+        syncSwipeRefreshBridges(false);
+
+        // Continuous lock check to prevent pull-to-refresh from reactivating during smartboard/mobile sessions
+        refreshLockInterval = setInterval(() => {
+          syncSwipeRefreshBridges(false);
+        }, 1000);
+
+        window.addEventListener("touchstart", handleGlobalTouchStart, { passive: true });
+        window.addEventListener("touchmove", handleGlobalTouchMove, { passive: false });
+        document.addEventListener("touchmove", handleGlobalTouchMove, { passive: false });
       } else {
+        document.body.classList.remove("pdf-open");
+        document.documentElement.classList.remove("pdf-open");
         document.body.style.overscrollBehavior = "";
         document.body.style.overscrollBehaviorY = "";
         document.documentElement.style.overscrollBehavior = "";
         document.documentElement.style.overscrollBehaviorY = "";
-        if (window.AndroidApp) {
-          try {
-            if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(true);
-            if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(false);
-          } catch (e) {}
-        }
+        syncSwipeRefreshBridges(true);
       }
     }
 
@@ -2345,8 +2393,13 @@ export default function EpsBookReader({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("message", handleWindowMessage);
+      window.removeEventListener("touchstart", handleGlobalTouchStart);
+      window.removeEventListener("touchmove", handleGlobalTouchMove);
+      document.removeEventListener("touchmove", handleGlobalTouchMove);
       if (window.__handleAppBack) window.__handleAppBack = null;
       if (typeof window !== "undefined") {
+        document.body.classList.remove("pdf-open");
+        document.documentElement.classList.remove("pdf-open");
         document.body.style.overscrollBehavior = "";
         document.body.style.overscrollBehaviorY = "";
         document.documentElement.style.overscrollBehavior = "";

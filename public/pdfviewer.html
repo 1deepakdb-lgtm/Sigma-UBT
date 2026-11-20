@@ -769,15 +769,43 @@
       } catch (err) {}
     }, { passive: true });
 
-    container.addEventListener('touchmove', function(e) {
-      if (e.touches.length === 1 && !isPinching) {
+    function blockPullToRefresh(e) {
+      if (e.touches && e.touches.length === 1 && !isPinching) {
         var dy = e.touches[0].clientY - singleTouchStartY;
-        var dx = e.touches[0].clientX - singleTouchStartX;
-        if (container.scrollTop <= 0 && dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-          e.preventDefault(); // Kills pull-down-to-refresh completely!
+        // When at top of document or pulling down from top screen region, block pull-down refresh on mobile & smartboard
+        if ((container.scrollTop <= 2 || singleTouchStartY < 160) && dy > 0) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
         }
       }
-    }, { passive: false });
+    }
+
+    container.addEventListener('touchmove', blockPullToRefresh, { passive: false });
+    window.addEventListener('touchmove', blockPullToRefresh, { passive: false });
+    document.addEventListener('touchmove', blockPullToRefresh, { passive: false });
+
+    // Continuous Smartboard and Android native app bridge lock
+    function syncSmartboardBridges() {
+      try {
+        var p = (typeof window !== 'undefined' && window.parent) ? window.parent : window;
+        var targets = [
+          window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android,
+          p.AndroidApp, p.SmartboardApp, p.SmartBoardApp, p.SmartBoard, p.smartboard, p.BoardApp, p.boardApp, p.Android, p.android
+        ];
+        for (var i = 0; i < targets.length; i++) {
+          var b = targets[i];
+          if (!b) continue;
+          if (typeof b.setSwipeRefreshEnabled === 'function') b.setSwipeRefreshEnabled(false);
+          if (typeof b.setPullToRefreshEnabled === 'function') b.setPullToRefreshEnabled(false);
+          if (typeof b.disablePullToRefresh === 'function') b.disablePullToRefresh();
+          if (typeof b.disableSwipeRefresh === 'function') b.disableSwipeRefresh();
+          if (typeof b.setPdfOpen === 'function') b.setPdfOpen(true);
+        }
+      } catch (err) {}
+    }
+    syncSmartboardBridges();
+    setInterval(syncSmartboardBridges, 1500);
 
     // =========================================================================
     // 4. ANCHORED FOCAL-POINT ZOOM & SMOOTH SHRINK ENGINE

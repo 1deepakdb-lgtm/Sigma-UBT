@@ -72,9 +72,9 @@ export default function LoginPage() {
       return () => {
         try {
           document.body.removeChild(script);
-        } catch (e) {}
+        } catch (e) { }
       };
-    } catch (err) {}
+    } catch (err) { }
   }, []);
 
   // Check URL query parameters for authorization & Auto-Restore Active Session
@@ -84,7 +84,7 @@ export default function LoginPage() {
       if (params.has("error")) {
         try {
           window.history.replaceState({}, "", window.location.pathname);
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Auto-restore session from localStorage if already logged in
@@ -111,7 +111,7 @@ export default function LoginPage() {
               localStorage.removeItem("sigma_session");
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     }
   }, []);
@@ -128,7 +128,7 @@ export default function LoginPage() {
       try {
         const secureAttr = window.location.protocol === 'https:' ? '; Secure' : '';
         document.cookie = `sigma_token=${jwtToken}; path=/; max-age=2592000; SameSite=Lax${secureAttr}`;
-      } catch (e) {}
+      } catch (e) { }
     }
     localStorage.setItem("currentUser", user.name || user.username);
     localStorage.setItem("role", user.role || "student");
@@ -139,7 +139,7 @@ export default function LoginPage() {
     if (typeof window !== "undefined") {
       try {
         window.history.replaceState({}, "", window.location.pathname);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let redirectUrl = "/";
@@ -158,9 +158,9 @@ export default function LoginPage() {
         if (isMobile) {
           try {
             if (screen.orientation && typeof screen.orientation.lock === "function") {
-              screen.orientation.lock("landscape").catch(() => {});
+              screen.orientation.lock("landscape").catch(() => { });
             }
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     } else if (user.role === "staff") {
@@ -174,9 +174,9 @@ export default function LoginPage() {
         if (isMobile) {
           try {
             if (screen.orientation && typeof screen.orientation.lock === "function") {
-              screen.orientation.lock("landscape").catch(() => {});
+              screen.orientation.lock("landscape").catch(() => { });
             }
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     } else {
@@ -425,7 +425,7 @@ export default function LoginPage() {
         setWhatsappUrl(data.whatsappUrl);
         try {
           window.open(data.whatsappUrl, "_blank", "noopener,noreferrer");
-        } catch (e) {}
+        } catch (e) { }
       }
       setResetStep(3);
     } catch (err) {
@@ -586,7 +586,7 @@ export default function LoginPage() {
       const derivedName = googleName.trim() || deriveNameFromEmail(googleEmail) || googleEmail.split("@")[0];
       try {
         localStorage.setItem("lastLoginEmail", googleEmail.trim().toLowerCase());
-      } catch (e) {}
+      } catch (e) { }
 
       const res = await fetch("/api/auth/google", {
         method: "POST",
@@ -625,7 +625,7 @@ export default function LoginPage() {
       if (savedLang && ["korean", "japanese"].includes(savedLang) && !regLanguage) {
         setRegLanguage(savedLang);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     if (window.google?.accounts?.id && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
       window.google.accounts.id.prompt((notification) => {
