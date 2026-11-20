@@ -2004,7 +2004,7 @@ export default function KoreanMeaningBookView({
                   <iframe
                     src={getCleanPdfUrl ? getCleanPdfUrl(currentChapterObj.meaningPdfUrl) : currentChapterObj.meaningPdfUrl}
                     title={`Chapter ${currentChapterObj.chapter} PDF`}
-                    style={{ width: "100%", height: "700px", border: "none" }}
+                    style={{ width: "100%", height: "82vh", minHeight: "650px", border: "none" }}
                   />
                 </div>
               ) : (

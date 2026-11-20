@@ -920,6 +920,42 @@ export default function EpsBookReader({
     }
   }, []);
 
+  // Universal Fullscreen Toggle for All Devices (Web, Mobile, Tablet, PWA, Desktop)
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const handleFsChange = () => {
+      setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      document.removeEventListener("webkitfullscreenchange", handleFsChange);
+    };
+  }, []);
+
+  const toggleReaderFullscreen = () => {
+    if (typeof document === "undefined") return;
+    try {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isFull) {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen().catch(() => {});
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen().catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+
   // Admin/Institute Upload & Edit Modal State
   const [isAdmin, setIsAdmin] = useState(false);
   const [uploadModalChapter, setUploadModalChapter] = useState(null);
@@ -2849,28 +2885,26 @@ export default function EpsBookReader({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {!isMobileApp && (
-              <button
-                className="back-to-books-btn hide-on-mobile-apps"
-                data-btn="back-to-books"
-                onClick={() => setViewingMaterial(null)}
-                style={{
-                  backgroundColor: "#2563eb",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: "700",
-                  fontSize: "14px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px"
-                }}
-              >
-                ← Back to Books
-              </button>
-            )}
+            <button
+              className="back-to-books-btn"
+              data-btn="back-to-books"
+              onClick={() => setViewingMaterial(null)}
+              style={{
+                backgroundColor: "#2563eb",
+                color: "#ffffff",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "700",
+                fontSize: "14px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px"
+              }}
+            >
+              ← Back to Books
+            </button>
             <div>
               <div style={{ fontSize: "16px", fontWeight: "800" }}>{viewingMaterial.title}</div>
               {viewingMaterial.folder && (
@@ -2950,28 +2984,26 @@ export default function EpsBookReader({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {!isMobileApp && (
-              <button
-                className="back-to-books-btn hide-on-mobile-apps"
-                data-btn="back-to-books"
-                onClick={() => setViewingMeaningChapter(null)}
-                style={{
-                  backgroundColor: "#dc2626",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: "700",
-                  fontSize: "14px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px"
-                }}
-              >
-                ← Back to Meaning Book
-              </button>
-            )}
+            <button
+              className="back-to-books-btn"
+              data-btn="back-to-books"
+              onClick={() => setViewingMeaningChapter(null)}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "#ffffff",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "700",
+                fontSize: "14px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px"
+              }}
+            >
+              ← Back to Meaning Book
+            </button>
             <div>
               <div style={{ fontSize: "16px", fontWeight: "800" }}>
                 📕 Chapter {viewingMeaningChapter.chapter}: {viewingMeaningChapter.titleKo} ({viewingMeaningChapter.titleNe})
@@ -3857,8 +3889,18 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 3. WEBSITE-ONLY FLOATING GO BACK BUTTON (Hidden on Mobile Apps) ================= */}
-        {!isMobileApp && (
+        {/* ================= 3. FLOATING ACTION CONTROLS (UNIVERSAL: WEB, MOBILE, TABLET, APP) ================= */}
+        <div
+          style={{
+            position: "fixed",
+            top: "max(calc(env(safe-area-inset-top, 0px) + 8px), 12px)",
+            left: "max(calc(env(safe-area-inset-left, 0px) + 10px), 12px)",
+            zIndex: 100018,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
           <button
             type="button"
             onClick={(e) => {
@@ -3867,15 +3909,11 @@ export default function EpsBookReader({
             }}
             title="Go Back to Chapter List (Esc)"
             style={{
-              position: "fixed",
-              top: "calc(var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px)) + 12px)",
-              left: "14px",
-              zIndex: 100018,
-              backgroundColor: "rgba(15, 23, 42, 0.88)",
+              backgroundColor: "rgba(15, 23, 42, 0.9)",
               color: "#ffffff",
               border: "1px solid rgba(255, 255, 255, 0.28)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
               borderRadius: "20px",
               padding: "7px 14px",
               fontSize: "12px",
@@ -3891,7 +3929,7 @@ export default function EpsBookReader({
               transition: "all 0.15s ease"
             }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.98)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.88)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.9)"; }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12" />
@@ -3899,29 +3937,51 @@ export default function EpsBookReader({
             </svg>
             <span>Go Back</span>
           </button>
-        )}
 
-        {/* Mobile Status Bar Backdrop (Ensures #003b73 dark navy blue behind phone status bar) */}
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px))",
-            backgroundColor: "#003b73",
-            zIndex: 100010
-          }}
-        />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleReaderFullscreen();
+            }}
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            style={{
+              backgroundColor: "rgba(15, 23, 42, 0.9)",
+              color: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.28)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              borderRadius: "20px",
+              padding: "7px 12px",
+              fontSize: "12px",
+              fontWeight: "700",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+              lineHeight: 1,
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              transition: "all 0.15s ease"
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.98)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.9)"; }}
+          >
+            <span>{isFullscreen ? "✕" : "⛶"}</span>
+            <span>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+          </button>
+        </div>
 
-        {/* ================= 4. PURE 100% FULL BROWSER PDF VIEW (OPENED SAFELY BELOW STATUS BAR) ================= */}
+        {/* ================= 4. PURE 100% FULL SCREEN BROWSER PDF VIEW ================= */}
         <div style={{
-          position: "absolute",
-          top: "var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px))",
+          position: "fixed",
+          top: 0,
           left: 0,
           width: "100vw",
-          height: "calc(100vh - var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px)))",
-          backgroundColor: "#ffffff",
+          height: "100vh",
+          height: "100dvh",
+          backgroundColor: "#0f172a",
           overflow: "hidden",
           margin: 0,
           padding: 0,
