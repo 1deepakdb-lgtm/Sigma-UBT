@@ -40,7 +40,7 @@ export async function getSessionUser(req) {
     let token = null;
     if (req) {
       // Check cookies on NextRequest
-      const cookieHeader = req.cookies.get('sigma_session')?.value;
+      const cookieHeader = req.cookies.get('sigma_session')?.value || req.cookies.get('sigma_token')?.value;
       if (cookieHeader) token = cookieHeader;
       else {
         const authHeader = req.headers.get('authorization');
@@ -51,7 +51,7 @@ export async function getSessionUser(req) {
     } else {
       // Server Component context
       const cookieStore = cookies();
-      token = cookieStore.get('sigma_session')?.value;
+      token = cookieStore.get('sigma_session')?.value || cookieStore.get('sigma_token')?.value;
     }
 
     if (!token) return null;

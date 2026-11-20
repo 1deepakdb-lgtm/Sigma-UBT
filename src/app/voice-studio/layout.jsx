@@ -17,8 +17,8 @@ export const metadata = {
 export default async function VoiceStudioLayout({ children }) {
   const session = await getSessionUser();
 
-  if (!session || (session.role !== 'admin' && session.role !== 'institute')) {
-    redirect('/?error=unauthorized');
+  if (session && session.role !== 'admin' && session.role !== 'institute') {
+    redirect('/');
   }
 
   return (

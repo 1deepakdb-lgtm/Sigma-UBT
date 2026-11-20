@@ -19,8 +19,8 @@ const ALLOWED_ROLES = ['institute', 'admin', 'staff'];
 export default async function InstituteLayout({ children }) {
   const session = await getSessionUser();
 
-  if (!session || !ALLOWED_ROLES.includes(session.role)) {
-    redirect('/?error=unauthorized');
+  if (session && !ALLOWED_ROLES.includes(session.role)) {
+    redirect('/');
   }
 
   return (

@@ -71,13 +71,22 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
             localStorage.removeItem('role');
           } catch (e) {}
           if (isMounted) {
-            window.location.replace('/?error=unauthorized');
+            window.location.replace('/');
           }
           return;
         }
 
         const data = await res.json();
         if (data.authenticated && data.user) {
+          if (token) {
+            try {
+              fetch('/api/auth/sync-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token })
+              }).catch(() => {});
+            } catch (e) {}
+          }
           const role = data.user.role;
           if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
             let target = '/student';

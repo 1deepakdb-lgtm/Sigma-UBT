@@ -77,15 +77,41 @@ export default function LoginPage() {
     } catch (err) {}
   }, []);
 
-  // Check URL query parameters for authorization / session errors
+  // Check URL query parameters for authorization & Auto-Restore Active Session
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("error") === "unauthorized") {
-        setError("Session expired or authentication required. Please log in to continue.");
+      if (params.has("error")) {
         try {
           window.history.replaceState({}, "", window.location.pathname);
         } catch (e) {}
+      }
+
+      // Auto-restore session from localStorage if already logged in
+      const savedToken = localStorage.getItem("sigma_token") || localStorage.getItem("sigma_session");
+      const savedRole = localStorage.getItem("role") || localStorage.getItem("currentRole");
+
+      if (savedToken) {
+        fetch("/api/auth/sync-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: savedToken })
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.user) {
+              const role = data.user.role || savedRole;
+              let redirectUrl = "/student";
+              if (role === "admin") redirectUrl = "/admin";
+              else if (role === "institute") redirectUrl = "/institute";
+              else if (role === "staff") redirectUrl = "/institute?tab=billing";
+              window.location.replace(redirectUrl);
+            } else {
+              localStorage.removeItem("sigma_token");
+              localStorage.removeItem("sigma_session");
+            }
+          })
+          .catch(() => {});
       }
     }
   }, []);
@@ -99,6 +125,10 @@ export default function LoginPage() {
     if (jwtToken) {
       localStorage.setItem("sigma_token", jwtToken);
       localStorage.setItem("sigma_session", jwtToken);
+      try {
+        const secureAttr = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `sigma_token=${jwtToken}; path=/; max-age=2592000; SameSite=Lax${secureAttr}`;
+      } catch (e) {}
     }
     localStorage.setItem("currentUser", user.name || user.username);
     localStorage.setItem("role", user.role || "student");
@@ -855,7 +885,10 @@ export default function LoginPage() {
               type="text"
               placeholder="Enter email/phone"
               value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              onChange={(e) => {
+                setIdentifier(e.target.value);
+                if (error) setError("");
+              }}
               style={inputStyle}
               autoComplete="username"
               required
@@ -870,7 +903,10 @@ export default function LoginPage() {
               type="password"
               placeholder="Enter Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError("");
+              }}
               style={inputStyle}
               autoComplete="current-password"
               required

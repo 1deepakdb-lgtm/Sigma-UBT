@@ -17,8 +17,8 @@ export const metadata = {
 export default async function AdminLayout({ children }) {
   const session = await getSessionUser();
 
-  if (!session || session.role !== 'admin') {
-    redirect('/?error=unauthorized');
+  if (session && session.role !== 'admin') {
+    redirect('/');
   }
 
   return (

@@ -2160,8 +2160,13 @@ export default function EpsBookReader({
     // Push history state so Android/mobile back button closes the reader cleanly
     if (typeof window !== "undefined") {
       window.history.pushState({ epsReaderModal: true }, "");
-      if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
-        try { window.AndroidApp.setSwipeRefreshEnabled(false); } catch (e) {}
+      if (window.AndroidApp) {
+        try {
+          if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
+          if (typeof window.AndroidApp.hideStatusBar === "function") window.AndroidApp.hideStatusBar();
+          if (typeof window.AndroidApp.setStatusBarVisible === "function") window.AndroidApp.setStatusBarVisible(false);
+          if (typeof window.AndroidApp.setImmersiveFullscreen === "function") window.AndroidApp.setImmersiveFullscreen(true);
+        } catch (e) {}
       }
     }
 

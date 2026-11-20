@@ -113,7 +113,7 @@ export async function middleware(req) {
   }
 
   // ─── 4. JWT Session Verification ─────────────────────────────────────────
-  const sessionToken = req.cookies.get('sigma_session')?.value;
+  const sessionToken = req.cookies.get('sigma_session')?.value || req.cookies.get('sigma_token')?.value;
   let userPayload = null;
 
   if (sessionToken) {
@@ -219,7 +219,6 @@ export async function middleware(req) {
         );
       }
       const loginUrl = new URL('/', req.url);
-      loginUrl.searchParams.set('error', 'unauthorized');
       return NextResponse.redirect(loginUrl);
     }
 
