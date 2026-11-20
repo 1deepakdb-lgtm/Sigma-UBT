@@ -182,6 +182,7 @@
   <div id="viewer-zoom-layer"></div>
 </div>
 
+<script src="/pdf.worker.min.js"></script>
 <script src="/pdf.min.js"></script>
 <script>
   // Strictly prevent right-click context menu (no save/download popup)
@@ -418,36 +419,11 @@
       var fetchUrl = toAbsoluteUrl(url);
 
       try {
-        var resp = await fetch(fetchUrl, { cache: 'default' });
+        var resp = await fetch(fetchUrl);
         if (resp.ok) {
-          var contentLength = resp.headers.get('content-length');
-          var total = contentLength ? parseInt(contentLength, 10) : 0;
-          if (resp.body && total > 0 && typeof ReadableStream !== 'undefined') {
-            var reader = resp.body.getReader();
-            var chunks = [];
-            var received = 0;
-            while (true) {
-              var chunk = await reader.read();
-              if (chunk.done) break;
-              chunks.push(chunk.value);
-              received += chunk.value.length;
-              if (onProgress && total > 0) {
-                var pct = Math.min(99, Math.round((received / total) * 100));
-                onProgress(pct);
-              }
-            }
-            var allChunks = new Uint8Array(received);
-            var pos = 0;
-            for (var c = 0; c < chunks.length; c++) {
-              allChunks.set(chunks[c], pos);
-              pos += chunks[c].length;
-            }
-            if (onProgress) onProgress(100);
-            return allChunks.buffer;
-          }
+          if (onProgress) onProgress(100);
           var buf = await resp.arrayBuffer();
           if (buf && buf.byteLength > 1000) {
-            if (onProgress) onProgress(100);
             return buf;
           }
         }
@@ -612,8 +588,11 @@
         var displayHeight = dims.height;
 
         var dpr = window.devicePixelRatio || 1;
+        // High-DPI backing scale:
+        // For Adobe Acrobat-level razor-sharp vector clarity:
+        // Use full screen DPR (e.g. 2.0x on Mac Retina / 3.0x on OLED phones), with minimum 2.0x for subpixel font anti-aliasing.
         var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 1);
-        var backingScale = isLowMem ? 1.0 : Math.min(dpr, 1.5);
+        var backingScale = isLowMem ? Math.min(dpr, 1.5) : Math.max(dpr, 2.0);
 
         var finalScale = (displayWidth / baseViewport.width) * backingScale;
 
@@ -681,8 +660,18 @@
     }
 
     function unrenderPage(pageNum, wrapper) {
-      // Intentionally keep all rendered canvases alive in DOM so scrolling is 100% instant with zero page reload delays
-      return;
+      if (!renderedPages.has(pageNum)) return;
+      if (activeRenderTasks.has(pageNum)) {
+        try { activeRenderTasks.get(pageNum).cancel(); } catch (e) {}
+        activeRenderTasks.delete(pageNum);
+      }
+      var canvas = wrapper.querySelector('canvas');
+      if (canvas) {
+        canvas.width = 0;
+        canvas.height = 0;
+        wrapper.innerHTML = '';
+      }
+      renderedPages.delete(pageNum);
     }
 
     // Update all page wrapper placeholders to current target dimensions
@@ -1205,53 +1194,8 @@
     }, { passive: true });
 
     // =========================================================================
-    // 6. MAIN DOCUMENT INITIALIZATION & EAGER ALL-PAGE RENDERING ENGINE
+    // 6. MAIN DOCUMENT INITIALIZATION & VIRTUALIZATION
     // =========================================================================
-    var MAX_CONCURRENT_RENDERS = 2;
-    var activeRenders = 0;
-    var renderQueue = [];
-
-    function enqueuePageRender(pageNum, priority) {
-      if (!pdfDoc || pageNum < 1 || pageNum > pdfDoc.numPages) return;
-      if (renderedPages.has(pageNum) || renderingPages.has(pageNum)) return;
-
-      var existingIdx = renderQueue.indexOf(pageNum);
-      if (priority) {
-        if (existingIdx !== -1) renderQueue.splice(existingIdx, 1);
-        renderQueue.unshift(pageNum);
-      } else {
-        if (existingIdx === -1) renderQueue.push(pageNum);
-      }
-      processRenderQueue();
-    }
-
-    async function processRenderQueue() {
-      if (!pdfDoc || activeRenders >= MAX_CONCURRENT_RENDERS || renderQueue.length === 0) return;
-      var nextPg = renderQueue.shift();
-      if (!nextPg || renderedPages.has(nextPg) || renderingPages.has(nextPg)) {
-        processRenderQueue();
-        return;
-      }
-
-      var wrapper = document.getElementById('page-wrapper-' + nextPg);
-      if (!wrapper) {
-        processRenderQueue();
-        return;
-      }
-
-      activeRenders++;
-      renderingPages.add(nextPg);
-      try {
-        await renderPage(nextPg, wrapper);
-      } catch (e) {
-        console.warn('Page ' + nextPg + ' eager render notice:', e);
-      } finally {
-        renderingPages.delete(nextPg);
-        activeRenders--;
-        processRenderQueue();
-      }
-    }
-
     async function startRenderingDoc(pdfSource) {
       var baseOrigin = (window.location && window.location.origin && window.location.origin.startsWith('http') && !window.location.origin.includes('localhost'))
         ? window.location.origin : 'https://examjk.com';
@@ -1262,8 +1206,7 @@
         standardFontDataUrl: baseOrigin + '/standard_fonts/',
         disableFontFace: false,
         isEvalSupported: true,
-        useSystemFonts: false,
-        disableAutoFetch: false
+        useSystemFonts: false
       };
 
       if (typeof pdfSource === 'string') {
@@ -1277,24 +1220,17 @@
       pdfDoc = await loadingTask.promise;
       var totalPages = pdfDoc.numPages;
 
-      // 1. Create all page wrappers 1..totalPages upfront so layout & scrollbar are 100% ready immediately
-      for (var i = 1; i <= totalPages; i++) {
-        var wrapper = document.createElement('div');
-        wrapper.className = 'pdf-page-wrapper';
-        wrapper.id = 'page-wrapper-' + i;
-        wrapper.setAttribute('data-page-num', String(i));
-        zoomLayer.appendChild(wrapper);
-      }
-      updateAllWrapperDimensions();
+      // Page 1 placeholder
+      var wrap1 = document.createElement('div');
+      wrap1.className = 'pdf-page-wrapper';
+      wrap1.id = 'page-wrapper-1';
+      wrap1.setAttribute('data-page-num', '1');
+      zoomLayer.appendChild(wrap1);
 
-      // 2. Render Page 1 first
-      var wrap1 = document.getElementById('page-wrapper-1');
-      if (wrap1) {
-        try {
-          await renderPage(1, wrap1);
-        } catch (e1) {
-          console.warn('Page 1 render warning:', e1);
-        }
+      try {
+        await renderPage(1, wrap1);
+      } catch (e1) {
+        console.warn('Page 1 render warning:', e1);
       }
 
       // Hide loading spinner in milliseconds!
@@ -1303,28 +1239,39 @@
       updateToolbarUI();
       updateAllWrapperDimensions();
 
-      // 3. Eagerly download & render ALL remaining pages in background queue continuously!
-      for (var p = 2; p <= totalPages; p++) {
-        enqueuePageRender(p, false);
+      // Create placeholders for remaining pages
+      for (var i = 2; i <= totalPages; i++) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'pdf-page-wrapper';
+        wrapper.id = 'page-wrapper-' + i;
+        wrapper.setAttribute('data-page-num', String(i));
+        zoomLayer.appendChild(wrapper);
+      }
+      updateAllWrapperDimensions();
+
+      if (totalPages >= 2) {
+        var initialWrap2 = document.getElementById('page-wrapper-2');
+        if (initialWrap2) renderPage(2, initialWrap2).catch(function() {});
       }
 
-      // 4. Viewport IntersectionObserver: If user scrolls ahead, prioritize visible pages immediately!
+      // IntersectionObserver for lazy page rendering and 1GB RAM memory virtualization
       if ('IntersectionObserver' in window) {
+        var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 2);
         var observer = new IntersectionObserver(function(entries) {
           entries.forEach(function(entry) {
+            var pageNum = parseInt(entry.target.getAttribute('data-page-num'), 10);
             if (entry.isIntersecting) {
-              var pNum = parseInt(entry.target.getAttribute('data-page-num'), 10);
-              if (!renderedPages.has(pNum)) {
-                enqueuePageRender(pNum, true);
-                if (pNum + 1 <= totalPages && !renderedPages.has(pNum + 1)) {
-                  enqueuePageRender(pNum + 1, true);
-                }
+              if (!renderedPages.has(pageNum)) {
+                renderPage(pageNum, entry.target);
               }
+            } else if (isLowMem && Math.abs(pageNum - (renderedPages.values().next().value || 1)) > 2) {
+              // Unrender off-screen pages to prevent OOM tab terminations on 1GB RAM Android devices
+              unrenderPage(pageNum, entry.target);
             }
           });
         }, {
           root: container,
-          rootMargin: '1200px 0px 1200px 0px'
+          rootMargin: '600px 0px 600px 0px'
         });
 
         for (var k = 1; k <= totalPages; k++) {
@@ -1339,8 +1286,8 @@
             var el = document.getElementById('page-wrapper-' + p);
             if (el) {
               var rect = el.getBoundingClientRect();
-              if (rect.top < window.innerHeight + 1000 && rect.bottom > -1000) {
-                enqueuePageRender(p, true);
+              if (rect.top < window.innerHeight + 800 && rect.bottom > -800) {
+                renderPage(p, el);
               }
             }
           }
@@ -1353,7 +1300,7 @@
         scrollTimer = setTimeout(function() {
           scrollTimer = null;
           checkVisiblePages();
-        }, 80);
+        }, 120);
       }, { passive: true });
 
       window.addEventListener('resize', function() {
@@ -1365,7 +1312,7 @@
       });
 
       setTimeout(checkVisiblePages, 50);
-      setTimeout(checkVisiblePages, 300);
+      setTimeout(checkVisiblePages, 500);
     }
 
     async function initViewer() {
@@ -1384,37 +1331,35 @@
         console.warn('Cache lookup notice:', cacheErr);
       }
 
-      // Fast Path 2: Instant Streaming Open directly via URL (Opens in milliseconds!)
-      try {
-        await startRenderingDoc(absUrl);
-        // Silently background-cache full buffer for 0ms offline access next time
-        downloadPdfWithProgress(targetDocUrl).then(async function(buf) {
-          if (buf && buf.byteLength > 1000) {
-            var db = await openOfflineDb();
-            var pdfBlob = new Blob([buf], { type: 'application/pdf' });
-            saveToDb(db, targetDocUrl, pdfBlob);
-            saveToCacheStorage(targetDocUrl, pdfBlob);
-            var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
-              ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
-            if (pCache) pCache.set(targetDocUrl, buf);
-          }
-        }).catch(function() {});
-        return;
-      } catch (streamErr) {
-        console.warn('Direct stream notice, trying buffer fallback:', streamErr);
-      }
-
-      // Fast Path 3: Buffer download fallback
+      // Fast Path 2: Fetch and render via ArrayBuffer (universal support across all web servers & browsers)
       try {
         var fallbackBuffer = await downloadPdfWithProgress(targetDocUrl, function(pct) {
           if (loadingProgress) loadingProgress.textContent = 'Opening Document (' + pct + '%)...';
         });
         if (fallbackBuffer && (fallbackBuffer.byteLength > 1000 || (fallbackBuffer.buffer && fallbackBuffer.buffer.byteLength > 1000))) {
           await startRenderingDoc(fallbackBuffer);
+
+          // Save to IndexedDB & CacheStorage in background for lifetime 0ms offline access
+          try {
+            var db = await openOfflineDb();
+            var pdfBlob = new Blob([fallbackBuffer], { type: 'application/pdf' });
+            saveToDb(db, targetDocUrl, pdfBlob);
+            saveToCacheStorage(targetDocUrl, pdfBlob);
+            var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
+              ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
+            if (pCache) pCache.set(targetDocUrl, fallbackBuffer);
+          } catch (saveErr) {}
           return;
         }
       } catch (downloadErr) {
-        console.error('Final PDF rendering failure:', downloadErr);
+        console.warn('Buffer download notice, trying direct URL:', downloadErr);
+      }
+
+      // Fast Path 3: Direct URL streaming fallback
+      try {
+        await startRenderingDoc(absUrl);
+      } catch (streamErr) {
+        console.error('Final PDF rendering failure:', streamErr);
         showError('Unable to load document. Please check your internet connection and tap Retry.');
       }
     }

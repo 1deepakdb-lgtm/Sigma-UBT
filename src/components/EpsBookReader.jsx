@@ -2160,32 +2160,9 @@ export default function EpsBookReader({
     // Push history state so Android/mobile back button closes the reader cleanly
     if (typeof window !== "undefined") {
       window.history.pushState({ epsReaderModal: true }, "");
-      if (window.AndroidApp) {
-        if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
-          try { window.AndroidApp.setSwipeRefreshEnabled(false); } catch (e) {}
-        }
-        if (typeof window.AndroidApp.setImmersiveFullscreen === "function") {
-          try { window.AndroidApp.setImmersiveFullscreen(true); } catch (e) {}
-        }
-        if (typeof window.AndroidApp.setStatusBarVisible === "function") {
-          try { window.AndroidApp.setStatusBarVisible(false); } catch (e) {}
-        }
-        if (typeof window.AndroidApp.hideStatusBar === "function") {
-          try { window.AndroidApp.hideStatusBar(); } catch (e) {}
-        }
+      if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
+        try { window.AndroidApp.setSwipeRefreshEnabled(false); } catch (e) {}
       }
-
-      // Hide mobile status bar & enter full screen across mobile & web browsers
-      try {
-        const elem = document.documentElement;
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen().catch(() => {});
-          }
-        }
-      } catch (e) {}
     }
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
@@ -3940,7 +3917,45 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 3. FLOATING ACTION CONTROLS REMOVED FOR PURE 100% CLEAN FULLSCREEN PDF VIEW ================= */}
+        {/* ================= 3. SLEEK FLOATING BACK BUTTON ================= */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            closeFullScreen();
+          }}
+          title="Go Back (Esc)"
+          style={{
+            position: "fixed",
+            top: "max(calc(env(safe-area-inset-top, 0px) + 8px), 12px)",
+            left: "max(calc(env(safe-area-inset-left, 0px) + 10px), 12px)",
+            zIndex: 100018,
+            backgroundColor: "rgba(15, 23, 42, 0.88)",
+            color: "#ffffff",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderRadius: "20px",
+            padding: "7px 13px",
+            fontSize: "12px",
+            fontWeight: "700",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+            lineHeight: 1,
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            transition: "all 0.15s ease"
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          <span>Back</span>
+        </button>
 
         {/* ================= 4. PURE 100% FULL SCREEN BROWSER PDF VIEW ================= */}
         <div style={{
@@ -3965,7 +3980,7 @@ export default function EpsBookReader({
             }}>
               <iframe
                 key={selectedChapter.chapter !== undefined ? `eps-ch-${selectedChapter.chapter}` : (selectedChapter.id || selectedChapter.folder || selectedChapter.pdfUrl)}
-                src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
+                src={getCleanPdfUrl(selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
                 onLoad={(e) => { e.currentTarget.style.opacity = "1"; }}
                 style={{
