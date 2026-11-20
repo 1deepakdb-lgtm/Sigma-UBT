@@ -1578,11 +1578,11 @@ const StudentExam = () => {
           align-items: center;
           background-color: #0284c7;
           color: white;
-          padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px);
+          padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
           padding-bottom: 8px;
           padding-left: calc(env(safe-area-inset-left, 0px) + 16px);
           padding-right: calc(env(safe-area-inset-right, 0px) + 16px);
-          border-radius: 18px 18px 0 0;
+          border-radius: 0;
           font-weight: bold;
           font-size: 14px;
           gap: 8px;
@@ -1676,10 +1676,10 @@ const StudentExam = () => {
         }
         .ubt-overview-grid {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          grid-template-rows: repeat(4, 1fr);
+          grid-template-columns: repeat(4, 1fr);
+          grid-template-rows: repeat(5, 1fr);
           gap: 6px;
-          max-width: 420px;
+          max-width: 460px;
           width: 100%;
           margin: 0 auto;
           flex: 1;
@@ -1690,14 +1690,13 @@ const StudentExam = () => {
           align-items: center;
           justify-content: center;
           width: 100%;
-          max-width: 68px;
-          height: 44px;
-          min-height: 44px;
+          height: 100%;
+          min-height: 38px;
           margin: 0 auto;
           padding: 0;
-          font-size: 14.5px;
+          font-size: 15px;
           font-weight: 800;
-          border-radius: 10px;
+          border-radius: 12px;
           box-shadow: 0 1px 3px rgba(0,0,0,0.06);
           transition: all 0.15s ease;
         }
@@ -1855,7 +1854,7 @@ const StudentExam = () => {
             display: grid !important;
             grid-template-columns: 1fr auto 1fr !important;
             align-items: center !important;
-            padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px) !important;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
             padding-bottom: 7px !important;
             padding-left: calc(env(safe-area-inset-left, 0px) + 18px) !important;
             padding-right: calc(env(safe-area-inset-right, 0px) + 18px) !important;
@@ -2166,7 +2165,7 @@ const StudentExam = () => {
             display: grid !important;
             grid-template-columns: 1fr auto 1fr !important;
             align-items: center !important;
-            padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px) !important;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
             padding-bottom: 7px !important;
             padding-left: calc(env(safe-area-inset-left, 0px) + 16px) !important;
             padding-right: calc(env(safe-area-inset-right, 0px) + 16px) !important;
@@ -2274,10 +2273,10 @@ const StudentExam = () => {
           }
           .ubt-exam-landscape-enforcer .ubt-overview-grid {
             display: grid !important;
-            grid-template-columns: repeat(5, 1fr) !important;
-            grid-template-rows: repeat(4, 1fr) !important;
-            gap: 5px !important;
-            max-width: 420px !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            grid-template-rows: repeat(5, 1fr) !important;
+            gap: 6px !important;
+            max-width: 460px !important;
             width: 100% !important;
             margin: 0 auto !important;
             height: 100% !important;
@@ -2290,14 +2289,13 @@ const StudentExam = () => {
             align-items: center !important;
             justify-content: center !important;
             width: 100% !important;
-            max-width: 68px !important;
-            height: 42px !important;
-            min-height: 40px !important;
+            height: 100% !important;
+            min-height: 38px !important;
             margin: 0 auto !important;
             padding: 0 !important;
-            font-size: 14px !important;
+            font-size: 14.5px !important;
             font-weight: 800 !important;
-            border-radius: 10px !important;
+            border-radius: 12px !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.06) !important;
           }
           .ubt-exam-landscape-enforcer .ubt-overview-actions {
@@ -2486,7 +2484,7 @@ const StudentExam = () => {
       {viewMode === "overview" ? (
         <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "100%", width: "100%", height: "100%", margin: "0", justifyContent: "stretch", borderRadius: "0", overflow: "hidden" }}>
           
-          <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 10px), 38px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
+          <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px", minHeight: "44px" }}>
             <span style={{ justifySelf: "start" }}>Remaining Questions: {unsolvedCount}</span>
             <span style={{ justifySelf: "center", textAlign: "center", fontWeight: "900" }}>{exactExamName}</span>
             <div style={{ justifySelf: "end", display: "flex", alignItems: "center", gap: "10px" }}>
@@ -2515,13 +2513,13 @@ const StudentExam = () => {
             </div>
           </div>
 
-          <div className="ubt-overview-box" style={{ backgroundColor: "#ffffff", border: "none", padding: "6px 14px", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)", borderRadius: "0", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "center", overflow: "hidden" }}>
-            <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", flex: 1, minHeight: 0, maxWidth: "960px", width: "100%", margin: "auto 0", overflow: "hidden" }}>
+          <div className="ubt-overview-box" style={{ backgroundColor: "#ffffff", border: "none", padding: "8px 16px", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)", borderRadius: "0", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "center", overflow: "hidden" }}>
+            <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", flex: 1, minHeight: 0, maxWidth: "1000px", width: "100%", margin: "auto 0", overflow: "hidden" }}>
               
-              <div className="ubt-overview-col" style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "10px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
-                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
+              <div className="ubt-overview-col" style={{ flex: 1, borderRight: "1.5px solid #cbd5e1", paddingRight: "14px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
+                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14.5px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
                 <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gridTemplateRows: "repeat(4, 1fr)", gap: "6px", maxWidth: "420px", width: "100%", margin: "0 auto", height: "100%", minHeight: 0, alignContent: "stretch" }}>
+                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "6px", maxWidth: "460px", width: "100%", margin: "0 auto", height: "100%", minHeight: 0, alignContent: "stretch" }}>
                     {questions.slice(0, 20).map((q, idx) => {
                       const isCurrent = currentQuestion === idx;
                       const isAnswered = selectedAnswers[q.id] !== undefined;
@@ -2536,15 +2534,14 @@ const StudentExam = () => {
                             justifyContent: "center",
                             padding: 0,
                             width: "100%",
-                            maxWidth: "68px",
-                            height: "44px",
-                            minHeight: "44px",
+                            height: "100%",
+                            minHeight: "38px",
                             margin: "0 auto",
                             backgroundColor: isCurrent ? "#0284c7" : (isAnswered ? "#dcfce7" : "white"),
-                            border: isCurrent ? "2.5px solid #0369a1" : (isAnswered ? "2px solid #16a34a" : "1.5px solid #0284c7"),
-                            borderRadius: "10px",
+                            border: isCurrent ? "2.5px solid #0369a1" : (isAnswered ? "2px solid #16a34a" : "2px solid #0284c7"),
+                            borderRadius: "12px",
                             fontWeight: "800",
-                            fontSize: "14.5px",
+                            fontSize: "15px",
                             cursor: "pointer",
                             color: isCurrent ? "#ffffff" : (isAnswered ? "#15803d" : "#0f172a"),
                             boxShadow: isCurrent ? "0 3px 8px rgba(2, 132, 199, 0.35)" : "0 1px 2px rgba(0,0,0,0.05)",
@@ -2559,10 +2556,10 @@ const StudentExam = () => {
                 </div>
               </div>
 
-              <div className="ubt-overview-col" style={{ flex: 1, paddingLeft: "10px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
-                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
+              <div className="ubt-overview-col" style={{ flex: 1, paddingLeft: "14px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
+                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14.5px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
                 <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gridTemplateRows: "repeat(4, 1fr)", gap: "6px", maxWidth: "420px", width: "100%", margin: "0 auto", height: "100%", minHeight: 0, alignContent: "stretch" }}>
+                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "6px", maxWidth: "460px", width: "100%", margin: "0 auto", height: "100%", minHeight: 0, alignContent: "stretch" }}>
                     {questions.slice(20, 40).map((q, idx) => {
                       const actualIndex = idx + 20;
                       const isCurrent = currentQuestion === actualIndex;
@@ -2578,15 +2575,14 @@ const StudentExam = () => {
                             justifyContent: "center",
                             padding: 0,
                             width: "100%",
-                            maxWidth: "68px",
-                            height: "44px",
-                            minHeight: "44px",
+                            height: "100%",
+                            minHeight: "38px",
                             margin: "0 auto",
                             backgroundColor: isCurrent ? "#0284c7" : (isAnswered ? "#dcfce7" : "white"),
-                            border: isCurrent ? "2.5px solid #0369a1" : (isAnswered ? "2px solid #16a34a" : "1.5px solid #0284c7"),
-                            borderRadius: "10px",
+                            border: isCurrent ? "2.5px solid #0369a1" : (isAnswered ? "2px solid #16a34a" : "2px solid #0284c7"),
+                            borderRadius: "12px",
                             fontWeight: "800",
-                            fontSize: "14.5px",
+                            fontSize: "15px",
                             cursor: "pointer",
                             color: isCurrent ? "#ffffff" : (isAnswered ? "#15803d" : "#0f172a"),
                             boxShadow: isCurrent ? "0 3px 8px rgba(2, 132, 199, 0.35)" : "0 1px 2px rgba(0,0,0,0.05)",
@@ -2603,18 +2599,18 @@ const StudentExam = () => {
 
             </div>
 
-            <div className="ubt-overview-actions" style={{ marginTop: "4px", display: "flex", justifyContent: "space-between", gap: "10px", alignItems: "center", flexShrink: 0, width: "100%", maxWidth: "960px", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 8px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 8px)" }}>
+            <div className="ubt-overview-actions" style={{ marginTop: "6px", display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center", flexShrink: 0, width: "100%", maxWidth: "1000px", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 8px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 8px)" }}>
               <button 
                 type="button"
                 onClick={() => setViewMode("single")}
-                style={{ backgroundColor: "#64748b", color: "white", border: "none", padding: "5px 16px", fontSize: "12px", fontWeight: "800", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 6px rgba(100, 116, 139, 0.35)" }}
+                style={{ backgroundColor: "#546e7a", color: "white", border: "none", padding: "8px 22px", fontSize: "13px", fontWeight: "800", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 6px rgba(84, 110, 122, 0.35)" }}
               >
                 ❮ BACK TO QUESTION
               </button>
               <button 
                 type="button"
                 onClick={() => setShowConfirmModal(true)}
-                style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "5px 16px", fontSize: "12px", fontWeight: "800", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)" }}
+                style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 22px", fontSize: "13px", fontWeight: "800", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 6px rgba(2, 132, 199, 0.35)" }}
               >
                 SUBMIT AND FINISH EXAM ❯
               </button>
@@ -2629,7 +2625,7 @@ const StudentExam = () => {
             const currentQ = questions[currentQuestion];
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-                <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 10px), 38px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
+                <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px", minHeight: "44px" }}>
                   <span style={{ justifySelf: "start" }}>Remaining Questions: {unsolvedCount}</span>
                   <span style={{ justifySelf: "center", textAlign: "center", fontWeight: "900" }}>{exactExamName}</span>
                   <div style={{ justifySelf: "end", display: "flex", alignItems: "center", gap: "10px" }}>
