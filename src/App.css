@@ -40,11 +40,48 @@ html {
 /* Mobile App & Smartboard: Complete Overscroll & Pull-Down Refresh Lock when PDF is open */
 html.pdf-open,
 body.pdf-open,
-body.pdf-open #root,
-body.pdf-open * {
+body.pdf-open #root {
   overscroll-behavior: none !important;
   overscroll-behavior-y: none !important;
   -webkit-overscroll-behavior-y: none !important;
+  overflow: hidden !important;
+}
+
+/* STRICT PDF IMMERSIVE VIEW: HIDE ALL MOBILE & DESKTOP NAVIGATION BARS OVER PDF */
+html.pdf-open nav,
+body.pdf-open nav,
+html.pdf-open .student-bottom-nav,
+body.pdf-open .student-bottom-nav,
+html.pdf-open .institute-bottom-nav,
+body.pdf-open .institute-bottom-nav,
+html.pdf-open .navbar-bottom-nav,
+body.pdf-open .navbar-bottom-nav,
+html.pdf-open .institute-top-nav,
+body.pdf-open .institute-top-nav,
+html.pdf-open .student-header,
+body.pdf-open .student-header,
+html.pdf-open header,
+body.pdf-open header,
+html.pdf-open .desktop-nav-menu,
+body.pdf-open .desktop-nav-menu,
+html.pdf-open .mobile-hamburger-btn,
+body.pdf-open .mobile-hamburger-btn,
+html.pdf-open .student-mobile-menu-btn,
+body.pdf-open .student-mobile-menu-btn,
+html.pdf-open .institute-mobile-menu-btn,
+body.pdf-open .institute-mobile-menu-btn {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0px !important;
+  max-height: 0px !important;
+  min-height: 0px !important;
+  margin: 0px !important;
+  padding: 0px !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: translateY(200%) !important;
 }
 
 /* Mobile App & Mobile Gesture: Hide 'Back to Books' button on mobile apps and mobile screens */

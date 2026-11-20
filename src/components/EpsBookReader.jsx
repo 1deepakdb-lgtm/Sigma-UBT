@@ -2164,7 +2164,11 @@ export default function EpsBookReader({
         try {
           if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
           if (typeof window.AndroidApp.hideStatusBar === "function") window.AndroidApp.hideStatusBar();
+          if (typeof window.AndroidApp.hideNavigationBar === "function") window.AndroidApp.hideNavigationBar();
           if (typeof window.AndroidApp.setStatusBarVisible === "function") window.AndroidApp.setStatusBarVisible(false);
+          if (typeof window.AndroidApp.setNavigationBarVisible === "function") window.AndroidApp.setNavigationBarVisible(false);
+          if (typeof window.AndroidApp.hideSystemUI === "function") window.AndroidApp.hideSystemUI();
+          if (typeof window.AndroidApp.setSystemUIVisible === "function") window.AndroidApp.setSystemUIVisible(false);
           if (typeof window.AndroidApp.setImmersiveFullscreen === "function") window.AndroidApp.setImmersiveFullscreen(true);
         } catch (e) {}
       }
@@ -2242,7 +2246,10 @@ export default function EpsBookReader({
         if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(true);
         if (typeof window.AndroidApp.setImmersiveFullscreen === "function") window.AndroidApp.setImmersiveFullscreen(false);
         if (typeof window.AndroidApp.setStatusBarVisible === "function") window.AndroidApp.setStatusBarVisible(true);
+        if (typeof window.AndroidApp.setNavigationBarVisible === "function") window.AndroidApp.setNavigationBarVisible(true);
         if (typeof window.AndroidApp.showStatusBar === "function") window.AndroidApp.showStatusBar();
+        if (typeof window.AndroidApp.showNavigationBar === "function") window.AndroidApp.showNavigationBar();
+        if (typeof window.AndroidApp.showSystemUI === "function") window.AndroidApp.showSystemUI();
       } catch (e) {}
     }
     setSelectedChapter(null);
@@ -2281,12 +2288,27 @@ export default function EpsBookReader({
           if (!enable && typeof b.disableSwipeRefresh === "function") b.disableSwipeRefresh();
           if (enable && typeof b.enableSwipeRefresh === "function") b.enableSwipeRefresh();
           if (typeof b.setPdfOpen === "function") b.setPdfOpen(!enable);
-          if (!enable && typeof b.hideStatusBar === "function") b.hideStatusBar();
-          if (!enable && typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
-          if (!enable && typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
-          if (enable && typeof b.showStatusBar === "function") b.showStatusBar();
-          if (enable && typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
-          if (enable && typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
+          if (!enable) {
+            if (typeof b.hideStatusBar === "function") b.hideStatusBar();
+            if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
+            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
+            if (typeof b.hideSystemUI === "function") b.hideSystemUI();
+            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
+            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+            if (typeof b.setFullscreen === "function") b.setFullscreen(true);
+            if (typeof b.enterFullScreen === "function") b.enterFullScreen();
+          } else {
+            if (typeof b.showStatusBar === "function") b.showStatusBar();
+            if (typeof b.showNavigationBar === "function") b.showNavigationBar();
+            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(true);
+            if (typeof b.showSystemUI === "function") b.showSystemUI();
+            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(true);
+            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
+            if (typeof b.setFullscreen === "function") b.setFullscreen(false);
+            if (typeof b.exitFullScreen === "function") b.exitFullScreen();
+          }
         } catch (e) {}
       });
     };
@@ -3265,7 +3287,7 @@ export default function EpsBookReader({
           width: "100vw",
           height: "100vh",
           backgroundColor: "#ffffff",
-          zIndex: 99999,
+          zIndex: 2147483640,
           overflow: "hidden",
           fontFamily: "Arial, sans-serif",
           overscrollBehavior: "none",
@@ -3277,6 +3299,17 @@ export default function EpsBookReader({
           html, body {
             overscroll-behavior: none !important;
             overscroll-behavior-y: none !important;
+          }
+          .student-bottom-nav,
+          .institute-bottom-nav,
+          .navbar-bottom-nav,
+          .student-header,
+          .institute-top-nav,
+          nav {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
           }
         `}</style>
         {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (SLEEK COMPACT FROSTED GLASS) ================= */}
@@ -3991,7 +4024,7 @@ export default function EpsBookReader({
           overflow: "hidden",
           margin: 0,
           padding: 0,
-          zIndex: 1
+          zIndex: 2147483642
         }}>
           {selectedChapter && (selectedChapter.pdfUrl || selectedChapter.pdf?.url) ? (
             <div style={{
