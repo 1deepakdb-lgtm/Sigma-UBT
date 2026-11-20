@@ -42,11 +42,11 @@
     overscroll-behavior-y: none !important;
     -webkit-overscroll-behavior-y: none !important;
     box-sizing: border-box;
-    padding-top: 0 !important;
+    padding-top: max(env(safe-area-inset-top, 0px), 0px);
   }
   @media (max-width: 768px), (display-mode: standalone) {
     #viewer-scroll-container {
-      padding-top: 0 !important;
+      padding-top: max(env(safe-area-inset-top, 0px), 34px) !important;
     }
   }
   #viewer-zoom-layer {
@@ -1184,10 +1184,10 @@
     }, { passive: true });
 
     container.addEventListener('touchend', function(e) {
-      if (e.changedTouches.length === 1 && edgeStartX < 40 && userZoom <= 1.05) {
+      if (e.changedTouches.length === 1 && edgeStartX < 80 && userZoom <= 1.05) {
         var dx = e.changedTouches[0].clientX - edgeStartX;
         var dy = Math.abs(e.changedTouches[0].clientY - edgeStartY);
-        if (dx > 80 && dy < 60) {
+        if (dx > 60 && dy < 80) {
           triggerMobileBack();
         }
       }
