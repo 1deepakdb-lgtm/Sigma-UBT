@@ -14,7 +14,7 @@
   html, body {
     width: 100%;
     height: 100%;
-    background-color: #0f172a;
+    background-color: #f1f5f9;
     color: #0f172a;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     overflow: hidden;
@@ -26,6 +26,11 @@
     overscroll-behavior-y: none !important;
     -webkit-overscroll-behavior-y: none !important;
   }
+  @media (max-width: 768px) {
+    html, body {
+      background-color: #ffffff;
+    }
+  }
   :root {
     --safe-top: env(safe-area-inset-top, 0px);
   }
@@ -34,7 +39,7 @@
     height: 100%;
     overflow-y: auto;
     overflow-x: auto;
-    background-color: #0f172a;
+    background-color: #f1f5f9;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     position: relative;
@@ -43,6 +48,11 @@
     -webkit-overscroll-behavior-y: none !important;
     box-sizing: border-box;
     padding-top: 0 !important;
+  }
+  @media (max-width: 768px) {
+    #viewer-scroll-container {
+      background-color: #ffffff;
+    }
   }
   @media (max-width: 768px), (display-mode: standalone) {
     #viewer-scroll-container {
@@ -65,7 +75,7 @@
     justify-content: center;
     align-items: center;
     padding: 0;
-    background-color: transparent;
+    background-color: #ffffff;
     box-sizing: border-box;
     margin: 0 auto;
     line-height: 0;
@@ -73,7 +83,10 @@
   }
   @media (min-width: 768px) {
     .pdf-page-wrapper {
-      padding: 0;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
     }
   }
   canvas {
@@ -180,6 +193,36 @@
 
 <div id="viewer-scroll-container">
   <div id="viewer-zoom-layer"></div>
+</div>
+
+<!-- UNIVERSAL RESPONSIVE SMART TOOLBAR (SMARTBOARD, TABLET & DESKTOP QUICK CONTROLS) -->
+<div id="pdf-smart-toolbar" style="
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 5px 12px;
+  border-radius: 30px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 9999;
+  user-select: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #ffffff;
+  transition: opacity 0.3s ease;
+">
+  <button id="toolbar-zoom-out" title="Zoom Out" style="background: none; border: none; color: #ffffff; font-size: 16px; font-weight: 800; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">−</button>
+  <span id="toolbar-zoom-level" title="Reset to 100%" style="font-size: 12px; font-weight: 700; color: #38bdf8; min-width: 40px; text-align: center; cursor: pointer;">100%</span>
+  <button id="toolbar-zoom-in" title="Zoom In" style="background: none; border: none; color: #ffffff; font-size: 16px; font-weight: 800; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">+</button>
+  <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.25); margin: 0 2px;"></span>
+  <button id="toolbar-fit-toggle" title="Toggle Fit Screen" style="background: none; border: none; color: #e2e8f0; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; cursor: pointer;">⛶ Fit</button>
+  <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.25); margin: 0 2px;"></span>
+  <span id="toolbar-page-info" style="font-size: 11px; font-weight: 600; color: #94a3b8; padding: 0 2px; white-space: nowrap;">Page 1</span>
 </div>
 
 <script src="/pdf.worker.min.js"></script>
@@ -545,23 +588,39 @@
       var pageAspect = pageH / pageW;
 
       if (viewMode === 'fit-page') {
-        // Fit entire page vertically and horizontally with zero clipping
-        var availH = screenHeight - 20;
+        var availH = screenHeight - 16;
         var availW = screenWidth - 16;
-        var scaleH = availH / pageH;
-        var scaleW = availW / pageW;
-        var fitScale = Math.min(scaleH, scaleW);
+        var fitScale = Math.min(availH / pageH, availW / pageW);
         var finalW = Math.max(320, Math.round(pageW * fitScale));
         return { width: finalW, height: Math.floor(finalW * pageAspect), scale: fitScale };
       } else if (viewMode === 'custom' && userZoom > 1.05) {
-        // User zoom (magnification above 100%): True physical magnification
-        var baseW = screenWidth < 768 ? screenWidth : Math.max(600, screenWidth - 24);
+        var baseW;
+        if (screenWidth < 768) {
+          baseW = screenWidth;
+        } else if (screenWidth > screenHeight) {
+          // Tablets, Desktops & Smartboards in Landscape
+          baseW = Math.min(screenWidth, Math.max(760, Math.round((screenHeight - 20) * (pageW / pageH))));
+        } else {
+          baseW = screenWidth - 16;
+        }
         var scaledW = Math.round(baseW * userZoom);
         return { width: scaledW, height: Math.floor(scaledW * pageAspect), scale: (scaledW / pageW) };
       } else {
-        // 'fit-width' (Default / Zoom Out): Full screen width fit with zero margins!
-        var fitWidth = screenWidth < 768 ? screenWidth : Math.max(600, screenWidth - 24);
-        return { width: fitWidth, height: Math.floor(fitWidth * pageAspect), scale: (fitWidth / pageW) };
+        // 'fit-width' / Universal Responsiveness across all devices:
+        if (screenWidth < 768) {
+          // Mobile phones: 100% edge-to-edge
+          return { width: screenWidth, height: Math.floor(screenWidth * pageAspect), scale: (screenWidth / pageW) };
+        } else if (screenWidth > screenHeight) {
+          // Tablets, Desktops & Smartboards in Landscape:
+          // Perfectly fit page height on screen so the entire page is visible without constant scrolling!
+          var fitHeightW = Math.round((screenHeight - 24) * (pageW / pageH));
+          var optimalW = Math.min(screenWidth - 32, Math.max(760, fitHeightW));
+          return { width: optimalW, height: Math.floor(optimalW * pageAspect), scale: (optimalW / pageW) };
+        } else {
+          // Tablets in Portrait:
+          var portW = Math.max(600, screenWidth - 20);
+          return { width: portW, height: Math.floor(portW * pageAspect), scale: (portW / pageW) };
+        }
       }
     }
 
@@ -725,7 +784,70 @@
       }, 150);
     }
 
-    function updateToolbarUI() {}
+    function updateCurrentPageTracker() {
+      if (!pdfDoc) return;
+      var total = pdfDoc.numPages;
+      var cTop = container.scrollTop;
+      var cH = container.clientHeight;
+      var mid = cTop + cH / 3;
+      var curPage = 1;
+
+      for (var p = 1; p <= total; p++) {
+        var el = document.getElementById('page-wrapper-' + p);
+        if (el) {
+          if (el.offsetTop <= mid) {
+            curPage = p;
+          } else {
+            break;
+          }
+        }
+      }
+      var pageEl = document.getElementById('toolbar-page-info');
+      if (pageEl) {
+        pageEl.textContent = 'Page ' + curPage + ' / ' + total;
+      }
+    }
+
+    function updateZoomBadge() {
+      var levelEl = document.getElementById('toolbar-zoom-level');
+      if (levelEl) {
+        var pct = Math.round(((viewMode === 'custom') ? userZoom : 1.0) * 100);
+        levelEl.textContent = pct + '%';
+      }
+      var fitBtn = document.getElementById('toolbar-fit-toggle');
+      if (fitBtn) {
+        fitBtn.textContent = (viewMode === 'fit-page') ? '⛶ Width' : '⛶ Page';
+      }
+      updateCurrentPageTracker();
+    }
+
+    function updateToolbarUI() {
+      updateZoomBadge();
+      updateCurrentPageTracker();
+    }
+
+    function initToolbarButtons() {
+      var zOut = document.getElementById('toolbar-zoom-out');
+      if (zOut) zOut.onclick = function(e) { e.stopPropagation(); zoomOutStep(); };
+      var zIn = document.getElementById('toolbar-zoom-in');
+      if (zIn) zIn.onclick = function(e) { e.stopPropagation(); zoomInStep(); };
+      var zLvl = document.getElementById('toolbar-zoom-level');
+      if (zLvl) zLvl.onclick = function(e) { e.stopPropagation(); shrinkToOwnPosition(true); };
+      var fitToggle = document.getElementById('toolbar-fit-toggle');
+      if (fitToggle) fitToggle.onclick = function(e) {
+        e.stopPropagation();
+        if (viewMode === 'fit-page') {
+          viewMode = 'fit-width';
+          userZoom = 1.0;
+        } else {
+          viewMode = 'fit-page';
+          userZoom = 1.0;
+        }
+        updateAllWrapperDimensions();
+        debouncedReRender();
+        updateZoomBadge();
+      };
+    }
 
     // Pull-Down-To-Refresh Neutralizer: When at top of PDF (scrollTop <= 0), prevent downward swipe reload
     function disableAppRefresh() {
@@ -835,8 +957,6 @@
     function getTouchesDist(t1, t2) {
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     }
-
-    function updateZoomBadge() {}
 
     // Shrink the PDF back to its own original position (Fit-Width / 1.0x, scrollLeft = 0)
     // Anchored at focalClientX / focalClientY if provided, or screen center
@@ -1275,6 +1395,7 @@
       // Hide loading spinner in milliseconds!
       if (loadingView) loadingView.style.display = 'none';
       if (offlineBadge) offlineBadge.style.display = 'inline-block';
+      initToolbarButtons();
       updateToolbarUI();
       updateAllWrapperDimensions();
 
@@ -1335,10 +1456,12 @@
 
       var scrollTimer = null;
       container.addEventListener('scroll', function() {
+        updateCurrentPageTracker();
         if (scrollTimer) return;
         scrollTimer = setTimeout(function() {
           scrollTimer = null;
           checkVisiblePages();
+          updateCurrentPageTracker();
         }, 120);
       }, { passive: true });
 
