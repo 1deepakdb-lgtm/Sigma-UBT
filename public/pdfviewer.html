@@ -182,7 +182,6 @@
   <div id="viewer-zoom-layer"></div>
 </div>
 
-<script src="/pdf.worker.min.js"></script>
 <script src="/pdf.min.js"></script>
 <script>
   // Strictly prevent right-click context menu (no save/download popup)
@@ -613,9 +612,8 @@
         var displayHeight = dims.height;
 
         var dpr = window.devicePixelRatio || 1;
-        // High-DPI backing scale: 1.5x - 2.0x delivers 100% razor-sharp vector text and loads all pages 3x faster without taking time
         var isLowMem = (typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 1);
-        var backingScale = isLowMem ? 1.25 : Math.min(Math.max(dpr, 1.5), 2.0);
+        var backingScale = isLowMem ? 1.0 : Math.min(dpr, 1.5);
 
         var finalScale = (displayWidth / baseViewport.width) * backingScale;
 
@@ -1265,8 +1263,6 @@
         disableFontFace: false,
         isEvalSupported: true,
         useSystemFonts: false,
-        disableRange: true,
-        disableStream: true,
         disableAutoFetch: false
       };
 
@@ -1371,7 +1367,6 @@
       setTimeout(checkVisiblePages, 50);
       setTimeout(checkVisiblePages, 300);
     }
-    }
 
     async function initViewer() {
       var targetDocUrl = sanitizeUrl(cleanUrl);
@@ -1389,35 +1384,37 @@
         console.warn('Cache lookup notice:', cacheErr);
       }
 
-      // Fast Path 2: Fetch and render via ArrayBuffer (universal support across all web servers & browsers)
+      // Fast Path 2: Instant Streaming Open directly via URL (Opens in milliseconds!)
+      try {
+        await startRenderingDoc(absUrl);
+        // Silently background-cache full buffer for 0ms offline access next time
+        downloadPdfWithProgress(targetDocUrl).then(async function(buf) {
+          if (buf && buf.byteLength > 1000) {
+            var db = await openOfflineDb();
+            var pdfBlob = new Blob([buf], { type: 'application/pdf' });
+            saveToDb(db, targetDocUrl, pdfBlob);
+            saveToCacheStorage(targetDocUrl, pdfBlob);
+            var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
+              ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
+            if (pCache) pCache.set(targetDocUrl, buf);
+          }
+        }).catch(function() {});
+        return;
+      } catch (streamErr) {
+        console.warn('Direct stream notice, trying buffer fallback:', streamErr);
+      }
+
+      // Fast Path 3: Buffer download fallback
       try {
         var fallbackBuffer = await downloadPdfWithProgress(targetDocUrl, function(pct) {
           if (loadingProgress) loadingProgress.textContent = 'Opening Document (' + pct + '%)...';
         });
         if (fallbackBuffer && (fallbackBuffer.byteLength > 1000 || (fallbackBuffer.buffer && fallbackBuffer.buffer.byteLength > 1000))) {
           await startRenderingDoc(fallbackBuffer);
-
-          // Save to IndexedDB & CacheStorage in background for lifetime 0ms offline access
-          try {
-            var db = await openOfflineDb();
-            var pdfBlob = new Blob([fallbackBuffer], { type: 'application/pdf' });
-            saveToDb(db, targetDocUrl, pdfBlob);
-            saveToCacheStorage(targetDocUrl, pdfBlob);
-            var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
-              ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
-            if (pCache) pCache.set(targetDocUrl, fallbackBuffer);
-          } catch (saveErr) {}
           return;
         }
       } catch (downloadErr) {
-        console.warn('Buffer download notice, trying direct URL:', downloadErr);
-      }
-
-      // Fast Path 3: Direct URL streaming fallback
-      try {
-        await startRenderingDoc(absUrl);
-      } catch (streamErr) {
-        console.error('Final PDF rendering failure:', streamErr);
+        console.error('Final PDF rendering failure:', downloadErr);
         showError('Unable to load document. Please check your internet connection and tap Retry.');
       }
     }

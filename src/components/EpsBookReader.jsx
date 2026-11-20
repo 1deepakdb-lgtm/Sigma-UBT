@@ -1677,20 +1677,20 @@ export default function EpsBookReader({
     const data = loadEps60Chapters();
     setChapters(data);
 
-    // Silently pre-cache chapters in background during idle time for 0ms instant opening
+    // Silently pre-cache chapters in background immediately for 0ms instant opening
     if (typeof window !== "undefined" && Array.isArray(data) && data.length > 0) {
       setTimeout(() => {
         let qIdx = 0;
         const prefetchNext = () => {
-          if (qIdx >= Math.min(data.length, 10)) return;
+          if (qIdx >= data.length) return;
           const ch = data[qIdx++];
           if (ch) {
             autoSaveChapterOffline(ch);
           }
-          setTimeout(prefetchNext, 2500);
+          setTimeout(prefetchNext, 600);
         };
         prefetchNext();
-      }, 3000);
+      }, 150);
     }
 
     if (typeof window !== "undefined") {
@@ -4758,7 +4758,11 @@ export default function EpsBookReader({
                     <div
                       key={c.id || c.chapter}
                       onClick={() => openChapterFullScreen(c)}
+                      onTouchStart={() => {
+                        try { autoSaveChapterOffline(c); } catch (e) {}
+                      }}
                       onMouseEnter={(e) => {
+                        try { autoSaveChapterOffline(c); } catch (e) {}
                         e.currentTarget.style.transform = "translateY(-3px)";
                         e.currentTarget.style.boxShadow = "0 10px 25px rgba(2, 132, 199, 0.15)";
                         e.currentTarget.style.borderColor = "#38bdf8";
