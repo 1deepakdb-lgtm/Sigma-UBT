@@ -12,7 +12,7 @@ export const INITIAL_60_CHAPTERS = [
     "titleKo": "자기소개",
     "titleNe": "आफ्नो परिचय",
     "titleEn": "Self Introduction",
-    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%201/Chapter%201%20-%20Self%20Introduction.pdf",
+    "pdfUrl": "/api/r2/books/EPS_TOPIK_Unit_Wise_Parts/Chapter%201/Chapter_01_%E1%84%8C%E1%85%A1%E1%84%80%E1%85%B5%E1%84%89%E1%85%A9%E1%84%80%E1%85%A2.pdf",
     "coverImage": "/uploads/eps-chapters/covers/cover_01.jpg",
     "audioTracks": [
       {

@@ -1234,7 +1234,10 @@
         standardFontDataUrl: baseOrigin + '/standard_fonts/',
         disableFontFace: false,
         isEvalSupported: true,
-        useSystemFonts: false
+        useSystemFonts: false,
+        disableRange: false,
+        disableStream: false,
+        rangeChunkSize: 65536
       };
 
       if (typeof pdfSource === 'string') {
@@ -1245,6 +1248,14 @@
       }
 
       var loadingTask = pdfjsLib.getDocument(loadingParams);
+      if (loadingTask.onProgress) {
+        loadingTask.onProgress = function(p) {
+          if (loadingProgress && p.total > 0) {
+            var pct = Math.min(99, Math.round((p.loaded / p.total) * 100));
+            loadingProgress.textContent = 'Opening Document (' + pct + '%)...';
+          }
+        };
+      }
       pdfDoc = await loadingTask.promise;
       var totalPages = pdfDoc.numPages;
 
@@ -1359,7 +1370,29 @@
         console.warn('Cache lookup notice:', cacheErr);
       }
 
-      // Fast Path 2: Fetch and render via ArrayBuffer (universal support across all web servers & browsers)
+      // Fast Path 2: Direct URL Streaming with HTTP Range Requests (Opens Page 1 in milliseconds!)
+      try {
+        await startRenderingDoc(absUrl);
+        // Once successfully opened via streaming, trigger background offline caching (non-blocking!)
+        setTimeout(function() {
+          downloadPdfWithProgress(targetDocUrl, null).then(async function(buffer) {
+            if (buffer && buffer.byteLength > 1000) {
+              var db = await openOfflineDb();
+              var pdfBlob = new Blob([buffer], { type: 'application/pdf' });
+              saveToDb(db, targetDocUrl, pdfBlob);
+              saveToCacheStorage(targetDocUrl, pdfBlob);
+              var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
+                ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
+              if (pCache) pCache.set(targetDocUrl, buffer);
+            }
+          }).catch(function() {});
+        }, 1200);
+        return;
+      } catch (streamErr) {
+        console.warn('Direct streaming notice, falling back to buffered download:', streamErr);
+      }
+
+      // Fast Path 3: Buffered download fallback if streaming failed
       try {
         var fallbackBuffer = await downloadPdfWithProgress(targetDocUrl, function(pct) {
           if (loadingProgress) loadingProgress.textContent = 'Opening Document (' + pct + '%)...';
@@ -1380,14 +1413,7 @@
           return;
         }
       } catch (downloadErr) {
-        console.warn('Buffer download notice, trying direct URL:', downloadErr);
-      }
-
-      // Fast Path 3: Direct URL streaming fallback
-      try {
-        await startRenderingDoc(absUrl);
-      } catch (streamErr) {
-        console.error('Final PDF rendering failure:', streamErr);
+        console.error('Final PDF rendering failure:', downloadErr);
         showError('Unable to load document. Please check your internet connection and tap Retry.');
       }
     }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { S3Client, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import mime from 'mime-types';
 
 // Read Cloudflare R2 credentials from environment with resilient production fallbacks
@@ -9,6 +9,7 @@ const R2_SECRET_ACCESS_KEY = (process.env.R2_SECRET_ACCESS_KEY || '5256075c5425a
 const R2_BUCKET_NAME = (process.env.R2_BUCKET_NAME || 'sigma').trim();
 
 let s3Client = null;
+const resolvedKeyCache = new Map();
 
 function getS3Client() {
   if (!s3Client) {
@@ -22,6 +23,7 @@ function getS3Client() {
         accessKeyId: R2_ACCESS_KEY_ID,
         secretAccessKey: R2_SECRET_ACCESS_KEY,
       },
+      forcePathStyle: true,
     });
   }
   return s3Client;
@@ -41,14 +43,126 @@ function resolveKey(params) {
   return safeSegments.join('/').replace(/^\/+/, '');
 }
 
+async function resolveR2Key(s3, requestedKey) {
+  if (!requestedKey) return requestedKey;
+  if (resolvedKeyCache.has(requestedKey)) {
+    return resolvedKeyCache.get(requestedKey);
+  }
+
+  // 1. Try exact key lookup first
+  try {
+    await s3.send(new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: requestedKey }));
+    resolvedKeyCache.set(requestedKey, requestedKey);
+    return requestedKey;
+  } catch (e) {}
+
+  // 2. Try normalized Unicode (NFD and NFC)
+  const nfcKey = requestedKey.normalize('NFC');
+  const nfdKey = requestedKey.normalize('NFD');
+
+  if (nfcKey !== requestedKey) {
+    try {
+      await s3.send(new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: nfcKey }));
+      resolvedKeyCache.set(requestedKey, nfcKey);
+      return nfcKey;
+    } catch (e) {}
+  }
+
+  if (nfdKey !== requestedKey) {
+    try {
+      await s3.send(new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: nfdKey }));
+      resolvedKeyCache.set(requestedKey, nfdKey);
+      return nfdKey;
+    } catch (e) {}
+  }
+
+  // 3. Fallback: Search directory prefix
+  const lastSlash = requestedKey.lastIndexOf('/');
+  if (lastSlash !== -1) {
+    const folder = requestedKey.substring(0, lastSlash + 1);
+    const targetFilename = requestedKey.substring(lastSlash + 1).toLowerCase();
+    const isPdf = targetFilename.endsWith('.pdf');
+    const isAudio = targetFilename.endsWith('.mp3');
+
+    try {
+      const listRes = await s3.send(new ListObjectsV2Command({
+        Bucket: R2_BUCKET_NAME,
+        Prefix: folder,
+        MaxKeys: 80,
+      }));
+
+      const contents = listRes.Contents || [];
+
+      // A. Match case-insensitively or normalized
+      for (const item of contents) {
+        const itemFile = item.Key.substring(lastSlash + 1);
+        if (
+          itemFile.toLowerCase() === targetFilename ||
+          itemFile.normalize('NFC').toLowerCase() === targetFilename.normalize('NFC') ||
+          itemFile.normalize('NFD').toLowerCase() === targetFilename.normalize('NFD')
+        ) {
+          resolvedKeyCache.set(requestedKey, item.Key);
+          return item.Key;
+        }
+      }
+
+      // B. If requesting PDF, find matching chapter PDF or only PDF in that folder
+      if (isPdf) {
+        const pdfItems = contents.filter(c => c.Key.toLowerCase().endsWith('.pdf'));
+        if (pdfItems.length === 1) {
+          resolvedKeyCache.set(requestedKey, pdfItems[0].Key);
+          return pdfItems[0].Key;
+        }
+        const chMatch = requestedKey.match(/chapter[\s_-]*0*(\d+)/i);
+        if (chMatch) {
+          const chNum = parseInt(chMatch[1], 10);
+          const found = pdfItems.find(c => {
+            const m = c.Key.match(/chapter[\s_-]*0*(\d+)/i);
+            return m && parseInt(m[1], 10) === chNum;
+          });
+          if (found) {
+            resolvedKeyCache.set(requestedKey, found.Key);
+            return found.Key;
+          }
+        }
+        if (pdfItems.length > 0) {
+          resolvedKeyCache.set(requestedKey, pdfItems[0].Key);
+          return pdfItems[0].Key;
+        }
+      }
+
+      // C. If requesting audio, match track number (e.g. Track 028 or Track 28)
+      if (isAudio) {
+        const trackMatch = targetFilename.match(/track[\s_-]*0*(\d+)/i);
+        if (trackMatch) {
+          const trackNum = parseInt(trackMatch[1], 10);
+          const found = contents.find(c => {
+            const m = c.Key.toLowerCase().match(/track[\s_-]*0*(\d+)/i);
+            return m && parseInt(m[1], 10) === trackNum;
+          });
+          if (found) {
+            resolvedKeyCache.set(requestedKey, found.Key);
+            return found.Key;
+          }
+        }
+      }
+    } catch (listErr) {
+      console.warn('R2 prefix search notice:', listErr?.message || listErr);
+    }
+  }
+
+  return requestedKey;
+}
+
 export async function GET(req, { params }) {
   try {
-    const key = resolveKey(params);
-    if (!key) {
+    const rawKey = resolveKey(params);
+    if (!rawKey) {
       return NextResponse.json({ error: 'Key is required' }, { status: 400 });
     }
 
     const s3 = getS3Client();
+    const key = await resolveR2Key(s3, rawKey);
     const rangeHeader = req.headers.get('range');
 
     const commandInput = {
@@ -108,12 +222,13 @@ export async function GET(req, { params }) {
 
 export async function HEAD(req, { params }) {
   try {
-    const key = resolveKey(params);
-    if (!key) {
+    const rawKey = resolveKey(params);
+    if (!rawKey) {
       return new NextResponse(null, { status: 400 });
     }
 
     const s3 = getS3Client();
+    const key = await resolveR2Key(s3, rawKey);
     const s3Res = await s3.send(new HeadObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: key,

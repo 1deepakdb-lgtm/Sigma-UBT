@@ -1884,95 +1884,7 @@ export default function EpsBookReader({
     };
   }, []);
 
-  // 2. MOVABLE MINI CIRCULAR AUDIO BUTTON HANDLERS
-  // Movable Mini Circular AUDIO Button Touch & Pointer Handlers (100% Pull-Down-Refresh Proof)
-  const handleMiniTouchStart = (e) => {
-    if (e.cancelable) e.preventDefault();
-    e.stopPropagation();
-    if (window.AndroidApp) {
-      try {
-        if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
-        if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
-      } catch (err) {}
-    }
-    const touch = e.touches[0];
-    miniDragRef.current = {
-      startX: touch.clientX,
-      startY: touch.clientY,
-      initialX: miniAudioPos.x,
-      initialY: miniAudioPos.y,
-      currentX: miniAudioPos.x,
-      currentY: miniAudioPos.y,
-      moved: false,
-      isDown: true,
-    };
-    setIsMiniDragging(true);
-  };
-
-  const handleMiniTouchMove = (e) => {
-    if (!miniDragRef.current.isDown) return;
-    if (e.cancelable) e.preventDefault();
-    e.stopPropagation();
-    const touch = e.touches[0];
-    const dx = touch.clientX - miniDragRef.current.startX;
-    const dy = touch.clientY - miniDragRef.current.startY;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-      miniDragRef.current.moved = true;
-    }
-
-    const btnSize = 56;
-    const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-    const winH = typeof window !== "undefined" ? window.innerHeight : 800;
-
-    const maxX = Math.max(0, winW - btnSize);
-    const maxY = Math.max(0, winH - btnSize);
-
-    const nextX = Math.max(4, Math.min(maxX - 4, miniDragRef.current.initialX + dx));
-    const nextY = Math.max(4, Math.min(maxY - 4, miniDragRef.current.initialY + dy));
-
-    miniDragRef.current.currentX = nextX;
-    miniDragRef.current.currentY = nextY;
-
-    if (miniAudioBtnRef.current) {
-      miniAudioBtnRef.current.style.left = `${nextX}px`;
-      miniAudioBtnRef.current.style.top = `${nextY}px`;
-    }
-  };
-
-  const handleMiniTouchEnd = (e) => {
-    if (!miniDragRef.current.isDown) return;
-    miniDragRef.current.isDown = false;
-    setIsMiniDragging(false);
-
-    if (!miniDragRef.current.moved) {
-      if (e.cancelable) e.preventDefault();
-      playerOpenTimeRef.current = Date.now();
-      if (popupMode === "full") {
-        setPopupMode("gesture");
-        setShowTrackDropdown(false);
-      } else {
-        const pos = calculateAudioPopupPosition(miniAudioPos.x, miniAudioPos.y);
-        setPopupPos(pos);
-        setPopupMode("full");
-      }
-    } else {
-      let finalX = miniDragRef.current.currentX;
-      let finalY = miniDragRef.current.currentY;
-      const winW = typeof window !== "undefined" ? window.innerWidth : 1000;
-      if (finalX < 24) finalX = 6;
-      else if (finalX > winW - 62) finalX = winW - 62;
-
-      if (miniAudioBtnRef.current) {
-        miniAudioBtnRef.current.style.left = `${finalX}px`;
-        miniAudioBtnRef.current.style.top = `${finalY}px`;
-      }
-      setMiniAudioPos({ x: finalX, y: finalY });
-      if (popupMode === "full") {
-        setPopupPos(calculateAudioPopupPosition(finalX, finalY));
-      }
-    }
-  };
-
+  // 2. MOVABLE MINI CIRCULAR AUDIO BUTTON HANDLERS (UNIFIED POINTER EVENTS - 120FPS DRAG)
   const handleMiniPointerDown = (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     if (e.cancelable) e.preventDefault();
@@ -1995,6 +1907,7 @@ export default function EpsBookReader({
       currentY: miniAudioPos.y,
       moved: false,
       isDown: true,
+      pointerId: e.pointerId
     };
     setIsMiniDragging(true);
   };
@@ -2005,7 +1918,7 @@ export default function EpsBookReader({
     e.stopPropagation();
     const dx = e.clientX - miniDragRef.current.startX;
     const dy = e.clientY - miniDragRef.current.startY;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+    if (Math.hypot(dx, dy) > 4) {
       miniDragRef.current.moved = true;
     }
 
@@ -2032,7 +1945,9 @@ export default function EpsBookReader({
     if (!miniDragRef.current.isDown) return;
     miniDragRef.current.isDown = false;
     try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
+      if (e.pointerId !== undefined) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
     } catch (err) {}
     setIsMiniDragging(false);
 
@@ -2082,6 +1997,7 @@ export default function EpsBookReader({
       currentY: popupPos.y,
       moved: false,
       isDown: true,
+      pointerId: e.pointerId
     };
     setIsDragging(true);
   };
@@ -2090,7 +2006,7 @@ export default function EpsBookReader({
     if (!dragRef.current.isDown) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+    if (Math.hypot(dx, dy) > 4) {
       dragRef.current.moved = true;
     }
     if (!dragRef.current.moved) return;
@@ -2109,9 +2025,10 @@ export default function EpsBookReader({
     dragRef.current.currentX = nextX;
     dragRef.current.currentY = nextY;
 
-    // Use GPU transform for butter-smooth 60fps dragging on low-capacity mobile devices
+    // Direct left and top style updates for butter-smooth 120fps motion without animation conflicts
     if (popupContainerRef.current) {
-      popupContainerRef.current.style.transform = `translate3d(${nextX - dragRef.current.initialX}px, ${nextY - dragRef.current.initialY}px, 0)`;
+      popupContainerRef.current.style.left = `${nextX}px`;
+      popupContainerRef.current.style.top = `${nextY}px`;
     }
   };
 
@@ -2119,14 +2036,15 @@ export default function EpsBookReader({
     if (!dragRef.current.isDown) return;
     dragRef.current.isDown = false;
     try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
+      if (e.pointerId !== undefined) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
     } catch (err) {}
     setIsDragging(false);
     if (dragRef.current.moved) {
       const finalX = dragRef.current.currentX;
       const finalY = dragRef.current.currentY;
       if (popupContainerRef.current) {
-        popupContainerRef.current.style.transform = "none";
         popupContainerRef.current.style.left = `${finalX}px`;
         popupContainerRef.current.style.top = `${finalY}px`;
       }
@@ -3323,16 +3241,10 @@ export default function EpsBookReader({
                 setPopupMode("gesture");
                 setShowTrackDropdown(false);
               }}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                if (Date.now() - playerOpenTimeRef.current < 200) return;
-                setPopupMode("gesture");
-                setShowTrackDropdown(false);
-              }}
               style={{
                 position: "fixed",
                 inset: 0,
-                zIndex: 100010,
+                zIndex: 2147483645,
                 background: "transparent",
                 pointerEvents: "all",
                 touchAction: "none",
@@ -3349,7 +3261,7 @@ export default function EpsBookReader({
                 position: "fixed",
                 left: `${popupPos.x}px`,
                 top: `${popupPos.y}px`,
-                zIndex: 100016,
+                zIndex: 2147483647,
                 display: "flex",
                 flexDirection: "column",
                 gap: "6px",
@@ -3399,6 +3311,7 @@ export default function EpsBookReader({
                   <button
                     type="button"
                     onClick={togglePlayPause}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     title={isPlaying ? "Click to Pause Audio" : "Click to Play Audio"}
@@ -3439,6 +3352,7 @@ export default function EpsBookReader({
                         e.stopPropagation();
                         setShowTrackDropdown(!showTrackDropdown);
                       }}
+                      onPointerDown={(e) => e.stopPropagation()}
                       onMouseDown={(e) => e.stopPropagation()}
                       onTouchStart={(e) => e.stopPropagation()}
                       title="Select Audio Track"
@@ -3644,6 +3558,7 @@ export default function EpsBookReader({
                       e.stopPropagation();
                       setPopupMode("gesture");
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Minimize Player"
@@ -3678,6 +3593,7 @@ export default function EpsBookReader({
                       e.stopPropagation();
                       setPopupMode("gesture");
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Close Player to Floating Icon"
@@ -3723,6 +3639,7 @@ export default function EpsBookReader({
                       setCurrentTime(newTime);
                       if (audioRef.current) audioRef.current.currentTime = newTime;
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     style={{
@@ -3746,6 +3663,7 @@ export default function EpsBookReader({
                       e.stopPropagation();
                       seekBy(-5);
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Rewind 5s"
@@ -3778,6 +3696,7 @@ export default function EpsBookReader({
                       e.stopPropagation();
                       seekBy(5);
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Forward 5s"
@@ -3810,6 +3729,7 @@ export default function EpsBookReader({
                       e.stopPropagation();
                       cyclePlaybackRate(e);
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                     title="Playback Speed"
@@ -3910,16 +3830,12 @@ export default function EpsBookReader({
             onPointerMove={handleMiniPointerMove}
             onPointerUp={handleMiniPointerUp}
             onPointerCancel={handleMiniPointerUp}
-            onTouchStart={handleMiniTouchStart}
-            onTouchMove={handleMiniTouchMove}
-            onTouchEnd={handleMiniTouchEnd}
-            onTouchCancel={handleMiniTouchEnd}
             title={isPlaying ? "Audio Playing (Tap to Open Controls, Drag to Move)" : "Audio (Tap to Open Player, Drag to Move)"}
             style={{
               position: "fixed",
               left: `${miniAudioPos.x}px`,
               top: `${miniAudioPos.y}px`,
-              zIndex: 100015,
+              zIndex: 2147483647,
               width: "56px",
               height: "56px",
               borderRadius: "50%",
@@ -4024,7 +3940,7 @@ export default function EpsBookReader({
           overflow: "hidden",
           margin: 0,
           padding: 0,
-          zIndex: 2147483642
+          zIndex: 10
         }}>
           {selectedChapter && (selectedChapter.pdfUrl || selectedChapter.pdf?.url) ? (
             <div style={{
