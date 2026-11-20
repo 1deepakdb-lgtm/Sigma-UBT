@@ -1826,19 +1826,19 @@ export default function EpsBookReader({
     // "audio button if dragged on right then audio dialog button open in left,
     //  if dragged on left then audio dialog button open in right"
     if (btnX > winW / 2) {
-      // Button on right half -> open dialog to the LEFT of the button
-      targetX = btnX - popupWidth - 10;
+      // Button on right half -> morph dialog to the LEFT of the button position
+      targetX = btnX - popupWidth + btnSize;
       if (targetX < 10) targetX = 10;
     } else {
-      // Button on left half -> open dialog to the RIGHT of the button
-      targetX = btnX + btnSize + 10;
+      // Button on left half -> morph dialog to the RIGHT from the button position
+      targetX = btnX;
       if (targetX + popupWidth > winW - 10) {
         targetX = Math.max(10, winW - popupWidth - 10);
       }
     }
 
-    // Vertical alignment: align with button top, clamped safely inside screen in portrait and landscape
-    let targetY = btnY - 8;
+    // Vertical alignment: align directly with button position
+    let targetY = btnY;
     const safeTop = 10;
     const safeBottom = Math.max(safeTop, winH - popupHeight - 14);
     targetY = Math.max(safeTop, Math.min(safeBottom, targetY));
@@ -2160,9 +2160,32 @@ export default function EpsBookReader({
     // Push history state so Android/mobile back button closes the reader cleanly
     if (typeof window !== "undefined") {
       window.history.pushState({ epsReaderModal: true }, "");
-      if (window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
-        try { window.AndroidApp.setSwipeRefreshEnabled(false); } catch (e) {}
+      if (window.AndroidApp) {
+        if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
+          try { window.AndroidApp.setSwipeRefreshEnabled(false); } catch (e) {}
+        }
+        if (typeof window.AndroidApp.setImmersiveFullscreen === "function") {
+          try { window.AndroidApp.setImmersiveFullscreen(true); } catch (e) {}
+        }
+        if (typeof window.AndroidApp.setStatusBarVisible === "function") {
+          try { window.AndroidApp.setStatusBarVisible(false); } catch (e) {}
+        }
+        if (typeof window.AndroidApp.hideStatusBar === "function") {
+          try { window.AndroidApp.hideStatusBar(); } catch (e) {}
+        }
       }
+
+      // Hide mobile status bar & enter full screen across mobile & web browsers
+      try {
+        const elem = document.documentElement;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen().catch(() => {});
+          }
+        }
+      } catch (e) {}
     }
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
@@ -2225,14 +2248,20 @@ export default function EpsBookReader({
     if (audioRef.current) {
       audioRef.current.pause();
     }
-    if (typeof document !== "undefined" && document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
+    if (typeof document !== "undefined" && (document.fullscreenElement || document.webkitFullscreenElement)) {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
     }
     if (shouldPopHistory && typeof window !== "undefined" && window.history.state?.epsReaderModal) {
       window.history.back();
     }
-    if (typeof window !== "undefined" && window.AndroidApp && typeof window.AndroidApp.setSwipeRefreshEnabled === "function") {
-      try { window.AndroidApp.setSwipeRefreshEnabled(true); } catch (e) {}
+    if (typeof window !== "undefined" && window.AndroidApp) {
+      try {
+        if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(true);
+        if (typeof window.AndroidApp.setImmersiveFullscreen === "function") window.AndroidApp.setImmersiveFullscreen(false);
+        if (typeof window.AndroidApp.setStatusBarVisible === "function") window.AndroidApp.setStatusBarVisible(true);
+        if (typeof window.AndroidApp.showStatusBar === "function") window.AndroidApp.showStatusBar();
+      } catch (e) {}
     }
     setSelectedChapter(null);
     setActivePdfBlobUrl("");
@@ -3216,24 +3245,24 @@ export default function EpsBookReader({
         {/* ================= 1. DRAGGABLE & RESPONSIVE FLOATING POPUP AUDIO PLAYER (SLEEK COMPACT FROSTED GLASS) ================= */}
         {popupMode === "full" && (
           <>
-            {/* Transparent backdrop — catches taps outside the popup (works even over iframe) */}
+            {/* Transparent backdrop — catches taps outside the popup to shrink back into audio button */}
             <div
               onPointerDown={(e) => {
                 e.stopPropagation();
-                if (Date.now() - playerOpenTimeRef.current < 500) return;
+                if (Date.now() - playerOpenTimeRef.current < 200) return;
                 setPopupMode("gesture");
                 setShowTrackDropdown(false);
               }}
               onTouchStart={(e) => {
                 e.stopPropagation();
-                if (Date.now() - playerOpenTimeRef.current < 500) return;
+                if (Date.now() - playerOpenTimeRef.current < 200) return;
                 setPopupMode("gesture");
                 setShowTrackDropdown(false);
               }}
               style={{
                 position: "fixed",
                 inset: 0,
-                zIndex: 100003,
+                zIndex: 100010,
                 background: "transparent",
                 pointerEvents: "all",
                 touchAction: "none",
@@ -3246,33 +3275,35 @@ export default function EpsBookReader({
               onPointerMove={handlePopupPointerMove}
               onPointerUp={handlePopupPointerUp}
               onPointerCancel={handlePopupPointerUp}
-            style={{
-              position: "fixed",
-              left: `${popupPos.x}px`,
-              top: `${popupPos.y}px`,
-              zIndex: 100005,
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              backgroundColor: "rgba(255, 255, 255, 0.82)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-              border: isPlaying ? "1.5px solid rgba(16, 185, 129, 0.65)" : "1.5px solid rgba(37, 99, 235, 0.35)",
-              borderRadius: "16px",
-              padding: "7px 10px",
-              boxShadow: isPlaying
-                ? "0 10px 28px rgba(0, 0, 0, 0.16), 0 2px 10px rgba(16, 185, 129, 0.25)"
-                : "0 10px 28px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(37, 99, 235, 0.18)",
-              cursor: isDragging ? "grabbing" : "grab",
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              touchAction: "none",
-              width: "calc(100vw - 20px)",
-              maxWidth: "340px",
-              boxSizing: "border-box",
-              willChange: "transform"
-            }}
-          >
+              style={{
+                position: "fixed",
+                left: `${popupPos.x}px`,
+                top: `${popupPos.y}px`,
+                zIndex: 100016,
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                backgroundColor: "rgba(255, 255, 255, 0.94)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                border: isPlaying ? "1.5px solid rgba(16, 185, 129, 0.65)" : "1.5px solid rgba(37, 99, 235, 0.35)",
+                borderRadius: "16px",
+                padding: "7px 10px",
+                boxShadow: isPlaying
+                  ? "0 10px 28px rgba(0, 0, 0, 0.22), 0 2px 10px rgba(16, 185, 129, 0.3)"
+                  : "0 10px 28px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(37, 99, 235, 0.22)",
+                cursor: isDragging ? "grabbing" : "grab",
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                touchAction: "none",
+                width: "calc(100vw - 20px)",
+                maxWidth: "340px",
+                boxSizing: "border-box",
+                transformOrigin: miniAudioPos.x > ((typeof window !== "undefined" ? window.innerWidth : 1000) / 2) ? "right center" : "left center",
+                animation: "audioDialogExpand 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                willChange: "transform, opacity"
+              }}
+            >
             {/* ROW 1: PRIMARY AUDIO CONTROLS (BLUE PILL) + WINDOW ACTIONS (MINIMIZE, CLOSE) */}
             {hasAudio && (
               <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
@@ -3779,10 +3810,30 @@ export default function EpsBookReader({
             0% { height: 4px; }
             100% { height: 9px; }
           }
+          @keyframes audioDialogExpand {
+            0% {
+              transform: scale(0.2);
+              opacity: 0;
+            }
+            100% {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+          @keyframes audioBtnShrinkBack {
+            0% {
+              transform: scale(0.4);
+              opacity: 0.3;
+            }
+            100% {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
         `}</style>
 
-        {/* ================= 2. MOVABLE CIRCULAR AUDIO BUTTON (ULTRA-SMOOTH DRAG & DROP FOR ALL DEVICES) ================= */}
-        {hasAudio && (
+        {/* ================= 2. MOVABLE CIRCULAR AUDIO BUTTON (MORPHEABLE: SHRINKS/EXPANDS WITH DIALOG) ================= */}
+        {hasAudio && popupMode !== "full" && (
           <div
             ref={miniAudioBtnRef}
             onPointerDown={handleMiniPointerDown}
@@ -3793,7 +3844,7 @@ export default function EpsBookReader({
             onTouchMove={handleMiniTouchMove}
             onTouchEnd={handleMiniTouchEnd}
             onTouchCancel={handleMiniTouchEnd}
-            title={popupMode === "full" ? "Audio (Tap to Close Player)" : (isPlaying ? "Audio Playing (Tap for Controls, Drag to Move)" : "Audio (Tap to Open Player, Drag to Move)")}
+            title={isPlaying ? "Audio Playing (Tap to Open Controls, Drag to Move)" : "Audio (Tap to Open Player, Drag to Move)"}
             style={{
               position: "fixed",
               left: `${miniAudioPos.x}px`,
@@ -3819,7 +3870,7 @@ export default function EpsBookReader({
               WebkitUserSelect: "none",
               touchAction: "none",
               transition: isMiniDragging ? "none" : "background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
-              animation: isPlaying ? "pulseAudioGlow 2s infinite ease-in-out" : "none"
+              animation: isPlaying ? "pulseAudioGlow 2s infinite ease-in-out, audioBtnShrinkBack 0.2s ease-out" : "audioBtnShrinkBack 0.2s ease-out"
             }}
           >
             {/* Pulsing ring while playing */}
@@ -3889,89 +3940,7 @@ export default function EpsBookReader({
           </div>
         )}
 
-        {/* ================= 3. FLOATING ACTION CONTROLS (UNIVERSAL: WEB, MOBILE, TABLET, APP) ================= */}
-        <div
-          style={{
-            position: "fixed",
-            top: "max(calc(env(safe-area-inset-top, 0px) + 8px), 12px)",
-            left: "max(calc(env(safe-area-inset-left, 0px) + 10px), 12px)",
-            zIndex: 100018,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px"
-          }}
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              closeFullScreen();
-            }}
-            title="Go Back to Chapter List (Esc)"
-            style={{
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
-              color: "#ffffff",
-              border: "1px solid rgba(255, 255, 255, 0.28)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              borderRadius: "20px",
-              padding: "7px 14px",
-              fontSize: "12px",
-              fontWeight: "700",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
-              lineHeight: 1,
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              transition: "all 0.15s ease"
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.98)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.9)"; }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            <span>Go Back</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleReaderFullscreen();
-            }}
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            style={{
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
-              color: "#ffffff",
-              border: "1px solid rgba(255, 255, 255, 0.28)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              borderRadius: "20px",
-              padding: "7px 12px",
-              fontSize: "12px",
-              fontWeight: "700",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
-              lineHeight: 1,
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              transition: "all 0.15s ease"
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.98)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.9)"; }}
-          >
-            <span>{isFullscreen ? "✕" : "⛶"}</span>
-            <span>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
-          </button>
-        </div>
+        {/* ================= 3. FLOATING ACTION CONTROLS REMOVED FOR PURE 100% CLEAN FULLSCREEN PDF VIEW ================= */}
 
         {/* ================= 4. PURE 100% FULL SCREEN BROWSER PDF VIEW ================= */}
         <div style={{
