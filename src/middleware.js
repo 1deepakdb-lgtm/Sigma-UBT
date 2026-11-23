@@ -165,10 +165,13 @@ export async function middleware(req) {
 
   // ─── 6. Root / Login Page Handling ──────────────────────────────────────
   if (pathname === '/') {
-    // If arriving with explicit logout, delete session cookie
+    // If arriving with explicit logout, purge session cookies and remain on login screen
     if (req.nextUrl.searchParams.has('logout')) {
       const response = NextResponse.next();
       response.cookies.delete('sigma_session');
+      response.cookies.delete('sigma_token');
+      response.cookies.set('sigma_session', '', { path: '/', expires: new Date(0), maxAge: 0 });
+      response.cookies.set('sigma_token', '', { path: '/', expires: new Date(0), maxAge: 0 });
       return response;
     }
 

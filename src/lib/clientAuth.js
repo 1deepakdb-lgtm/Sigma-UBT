@@ -41,6 +41,7 @@ export async function performLogout() {
         'instituteLanguage',
         'users',
         'token',
+        'sigma_token',
         'sigma_session',
         'activeSessionId'
       ];
@@ -62,7 +63,8 @@ export async function performLogout() {
         keysToRemove.forEach(k => localStorage.removeItem(k));
       } catch (e) {}
       sessionStorage.clear();
-      document.cookie = 'sigma_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0;';
+      document.cookie = 'sigma_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0; SameSite=Lax;';
+      document.cookie = 'sigma_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0; SameSite=Lax;';
     } catch (e) {}
     window.location.replace('/?logout=true');
   }

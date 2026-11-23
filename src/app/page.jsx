@@ -87,6 +87,24 @@ export default function LoginPage() {
         } catch (e) { }
       }
 
+      // Explicit logout: purge all session tokens and keys immediately, never auto-restore
+      if (params.has("logout")) {
+        try {
+          const keysToPurge = [
+            'sigma_token', 'sigma_session', 'currentUser', 'currentRole', 'user', 'role',
+            'auth', 'studentPhone', 'studentName', 'instituteName', 'currentInstitute',
+            'currentInstituteId', 'billingRole', 'selectedBillingStudent', 'users', 'token',
+            'activeSessionId', 'sigma_current_user'
+          ];
+          keysToPurge.forEach(k => localStorage.removeItem(k));
+          sessionStorage.clear();
+          document.cookie = 'sigma_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0; SameSite=Lax;';
+          document.cookie = 'sigma_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0; SameSite=Lax;';
+          window.history.replaceState({}, "", "/");
+        } catch (e) {}
+        return;
+      }
+
       // Auto-restore session from localStorage if already logged in
       const savedToken = localStorage.getItem("sigma_token") || localStorage.getItem("sigma_session");
       const savedRole = localStorage.getItem("role") || localStorage.getItem("currentRole");
