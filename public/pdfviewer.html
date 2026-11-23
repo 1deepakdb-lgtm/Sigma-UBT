@@ -198,7 +198,6 @@
 
 
 
-<script src="/pdf.worker.min.js"></script>
 <script src="/pdf.min.js"></script>
 <script>
   // Strictly prevent right-click context menu (no save/download popup)
@@ -1284,9 +1283,8 @@
         disableFontFace: false,
         isEvalSupported: true,
         useSystemFonts: false,
-        disableRange: false,
-        disableStream: false,
-        rangeChunkSize: 65536
+        disableRange: true,
+        disableStream: false
       };
 
       if (typeof pdfSource === 'string') {

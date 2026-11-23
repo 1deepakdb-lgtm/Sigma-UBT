@@ -3956,7 +3956,7 @@ export default function EpsBookReader({
           width: "100vw",
           height: "100vh",
           height: "100dvh",
-          backgroundColor: "#0f172a",
+          backgroundColor: "#ffffff",
           overflow: "hidden",
           margin: 0,
           padding: 0,
@@ -3971,9 +3971,8 @@ export default function EpsBookReader({
             }}>
               <iframe
                 key={selectedChapter.chapter !== undefined ? `eps-ch-${selectedChapter.chapter}` : (selectedChapter.id || selectedChapter.folder || selectedChapter.pdfUrl)}
-                src={getCleanPdfUrl(selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
+                src={getCleanPdfUrl(activePdfBlobUrl || selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
-                onLoad={(e) => { e.currentTarget.style.opacity = "1"; }}
                 style={{
                   position: "absolute",
                   top: 0,
@@ -3986,8 +3985,7 @@ export default function EpsBookReader({
                   display: "block",
                   backgroundColor: "#ffffff",
                   outline: "none",
-                  opacity: 0,
-                  transition: "opacity 0.35s ease"
+                  opacity: 1
                 }}
               />
             </div>
