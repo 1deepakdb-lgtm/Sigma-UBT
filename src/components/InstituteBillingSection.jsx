@@ -919,6 +919,32 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     return `${year}-${month}-${day}`;
   };
 
+  // Safe helper to calculate baseDateStr + daysToAdd in local calendar (never throws, timezone-safe)
+  const addDaysToDate = (baseDateStr, days) => {
+    try {
+      let d = new Date();
+      if (baseDateStr && typeof baseDateStr === 'string') {
+        const clean = baseDateStr.split('T')[0];
+        const parts = clean.split('-');
+        if (parts.length === 3 && parts[0].length === 4) {
+          d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        } else {
+          const parsed = new Date(baseDateStr);
+          if (!isNaN(parsed.getTime())) d = parsed;
+        }
+      }
+      d.setDate(d.getDate() + Number(days || 0));
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const da = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${da}`;
+    } catch (e) {
+      const fallback = new Date();
+      fallback.setDate(fallback.getDate() + Number(days || 0));
+      return fallback.toISOString().slice(0, 10);
+    }
+  };
+
   // Expenses Handlers
   const handleSaveExpense = (e) => {
     e.preventDefault();
@@ -2292,7 +2318,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       materials: form.materials,
       preparedBy: preparedByVal,
       nextPaymentDays: form.nextPaymentDays !== undefined ? Number(form.nextPaymentDays) : 15,
-      nextPaymentDate: form.nextPaymentDate || null
+      nextPaymentDate: form.nextPaymentDate || ((currentTotalFee - paidAmt > 0) ? addDaysToDate(form.date || getLocalDateStr(), form.nextPaymentDays || 15) : null)
     };
 
     // SCENARIO 0: Admin is editing an existing bill record (Edit Bill)
@@ -6168,34 +6194,44 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         {/* Quick Presets */}
                         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px", alignItems: "center" }}>
                           <span style={{ fontSize: "11px", fontWeight: "700", color: "#78350f" }}>Quick Select:</span>
-                          {[7, 10, 15, 30].map(days => (
-                            <button
-                              key={days}
-                              type="button"
-                              onClick={() => {
-                                const d = new Date(form.date || new Date().toISOString().split('T')[0]);
-                                d.setDate(d.getDate() + days);
-                                setForm(prev => ({
-                                  ...prev,
-                                  nextPaymentDays: days,
-                                  nextPaymentDate: d.toISOString().split('T')[0]
-                                }));
-                              }}
-                              style={{
-                                backgroundColor: Number(form.nextPaymentDays) === days ? "#b45309" : "#ffffff",
-                                color: Number(form.nextPaymentDays) === days ? "#ffffff" : "#92400e",
-                                border: "1.5px solid #d97706",
-                                padding: "4px 12px",
-                                borderRadius: "14px",
-                                fontSize: "11px",
-                                fontWeight: "800",
-                                cursor: "pointer",
-                                transition: "all 0.15s ease"
-                              }}
-                            >
-                              {days} Days
-                            </button>
-                          ))}
+                          {[7, 10, 15, 30].map(days => {
+                            const isSelected = Number(form.nextPaymentDays) === days;
+                            return (
+                              <button
+                                key={days}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const base = form.date || getLocalDateStr();
+                                  const targetDate = addDaysToDate(base, days);
+                                  setForm(prev => ({
+                                    ...prev,
+                                    nextPaymentDays: days,
+                                    nextPaymentDate: targetDate
+                                  }));
+                                }}
+                                style={{
+                                  backgroundColor: isSelected ? "#b45309" : "#ffffff",
+                                  color: isSelected ? "#ffffff" : "#92400e",
+                                  border: isSelected ? "2px solid #78350f" : "1.5px solid #d97706",
+                                  padding: "5px 14px",
+                                  borderRadius: "16px",
+                                  fontSize: "12px",
+                                  fontWeight: "800",
+                                  cursor: "pointer",
+                                  outline: "none",
+                                  boxShadow: isSelected ? "0 2px 6px rgba(180, 83, 9, 0.35)" : "none",
+                                  touchAction: "manipulation",
+                                  userSelect: "none",
+                                  WebkitTapHighlightColor: "transparent",
+                                  transition: "all 0.15s ease"
+                                }}
+                              >
+                                {days} Days
+                              </button>
+                            );
+                          })}
                         </div>
 
                         {/* Custom Days & Due Date Inputs */}
@@ -6209,18 +6245,25 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               min="1"
                               max="365"
                               value={form.nextPaymentDays ?? 15}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }
+                              }}
                               onChange={(e) => {
-                                const days = parseInt(e.target.value, 10);
+                                const raw = e.target.value;
+                                const days = parseInt(raw, 10);
                                 if (!isNaN(days) && days > 0) {
-                                  const d = new Date(form.date || new Date().toISOString().split('T')[0]);
-                                  d.setDate(d.getDate() + days);
+                                  const base = form.date || getLocalDateStr();
+                                  const targetDate = addDaysToDate(base, days);
                                   setForm(prev => ({
                                     ...prev,
                                     nextPaymentDays: days,
-                                    nextPaymentDate: d.toISOString().split('T')[0]
+                                    nextPaymentDate: targetDate
                                   }));
                                 } else {
-                                  setForm(prev => ({ ...prev, nextPaymentDays: e.target.value, nextPaymentDate: "" }));
+                                  setForm(prev => ({ ...prev, nextPaymentDays: raw, nextPaymentDate: "" }));
                                 }
                               }}
                               style={{
@@ -6243,19 +6286,23 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             </label>
                             <input
                               type="date"
-                              value={form.nextPaymentDate || (() => {
-                                const days = Number(form.nextPaymentDays) || 15;
-                                const d = new Date(form.date || new Date().toISOString().split('T')[0]);
-                                d.setDate(d.getDate() + days);
-                                return d.toISOString().split('T')[0];
-                              })()}
+                              value={form.nextPaymentDate || addDaysToDate(form.date || getLocalDateStr(), form.nextPaymentDays || 15)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }
+                              }}
                               onChange={(e) => {
                                 const newDate = e.target.value;
                                 if (newDate) {
                                   try {
-                                    const base = new Date(form.date || new Date().toISOString().split('T')[0]).getTime();
-                                    const target = new Date(newDate).getTime();
-                                    const diffDays = Math.max(1, Math.round((target - base) / (1000 * 60 * 60 * 24)));
+                                    const base = form.date || getLocalDateStr();
+                                    const bParts = base.split('T')[0].split('-').map(Number);
+                                    const tParts = newDate.split('T')[0].split('-').map(Number);
+                                    const bTime = new Date(bParts[0], bParts[1] - 1, bParts[2]).getTime();
+                                    const tTime = new Date(tParts[0], tParts[1] - 1, tParts[2]).getTime();
+                                    const diffDays = Math.max(1, Math.round((tTime - bTime) / (1000 * 60 * 60 * 24)));
                                     setForm(prev => ({
                                       ...prev,
                                       nextPaymentDate: newDate,
