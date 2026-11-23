@@ -4110,17 +4110,20 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   display: "grid",
                   gridTemplateColumns: "1.2fr 1fr",
                   gap: "2px",
-                  padding: "2px 4px",
+                  padding: "3px 6px",
                   border: "1px solid #000000",
                   borderRadius: "4px",
                   marginBottom: "2px",
                   fontSize: "12px",
-                  lineHeight: "1.15"
+                  lineHeight: "1.2"
                 }}>
                   <div>
                     <div><strong>BILL NO:</strong> <span style={{ fontWeight: "900", fontSize: "12px" }}>{selectedInvoice.billNumber}</span></div>
                     <div><strong>Student Name:</strong> <strong>{selectedInvoice.studentName}</strong></div>
                     <div><strong>Address:</strong> {selectedInvoice.address || "-"}</div>
+                  </div>
+
+                  <div>
                     <div><strong>Contact Number:</strong> {(() => {
                       const formatNum = (v) => {
                         if (!v) return "";
@@ -4133,14 +4136,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     {selectedInvoice.parentName && (
                       <div><strong>Parent Name:</strong> {selectedInvoice.parentName}</div>
                     )}
-                  </div>
-
-                  <div>
-                    <div><strong>Course Detail:</strong> <strong>{selectedInvoice.courseDetail}</strong></div>
-                    <div><strong>Course Package:</strong> {selectedInvoice.coursePackage}</div>
-                    <div><strong>Class Time:</strong> {selectedInvoice.classTime || "-"}</div>
-                    <div><strong>Payment Status:</strong> {Number(selectedInvoice.dueAmount) <= 0 ? "Fully Paid" : "Partial Payment"}</div>
-                    <div><strong>Registration Date:</strong> {selectedInvoice.date}</div>
+                    {selectedInvoice.classTime && (
+                      <div><strong>Class Time:</strong> {selectedInvoice.classTime}</div>
+                    )}
                   </div>
                 </div>
 
