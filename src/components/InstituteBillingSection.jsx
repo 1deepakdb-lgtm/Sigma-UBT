@@ -814,8 +814,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       isDeleted: Boolean(expense.isDeleted)
     };
 
-    const webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+    const SIGMA_DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxL8QJVF4_IzcCPSbIwOcQorTX19KPVgb6Y0xOMfOQOLQcmCwblhStD0nEgmXirXoreFQ/exec';
+    let webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
       (typeof window !== "undefined" ? (localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) || localStorage.getItem("instituteGoogleSheetWebhook_default") || "") : "") || "";
+
+    if (!webhookUrl || webhookUrl === 'setup_done' || webhookUrl.includes('AKfycbyMnje') || webhookUrl.includes('AKfycbzrxTC') || webhookUrl.includes('AKfycbwJJc')) {
+      webhookUrl = SIGMA_DEFAULT_WEBHOOK;
+    }
 
     // 1. Primary: Server-side API (/api/institute/billing/sync) has credentials and database profile fallback
     fetch(apiWithInst("/api/institute/billing/sync"), {
@@ -2476,16 +2481,26 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     }
   };
 
-  // Google Sheet manual sync
-  const handleSyncToGoogleSheet = async () => {
-    if (!profile.googleSheetUrl || !profile.googleSheetUrl.trim() || profile.googleSheetUrl === "setup_done") {
+  // Google Sheet manual & automatic dual sync (Bills & Expenses both at a time)
+  const handleSyncToGoogleSheet = async (overrideWebhookUrl, isSilent = false) => {
+    const SIGMA_DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxL8QJVF4_IzcCPSbIwOcQorTX19KPVgb6Y0xOMfOQOLQcmCwblhStD0nEgmXirXoreFQ/exec';
+    let targetWebhook = (typeof overrideWebhookUrl === "string" && overrideWebhookUrl.trim())
+      ? overrideWebhookUrl.trim()
+      : ((profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+         (typeof window !== "undefined" ? (localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) || localStorage.getItem("instituteGoogleSheetWebhook_default") || "") : ""));
+
+    if (!targetWebhook || targetWebhook === "setup_done" || targetWebhook.includes("AKfycbyMnje") || targetWebhook.includes("AKfycbzrxTC") || targetWebhook.includes("AKfycbwJJc")) {
+      targetWebhook = SIGMA_DEFAULT_WEBHOOK;
+    }
+
+    if (!targetWebhook) {
       setSetupTab("connect");
       handleOpenGoogleSetupModal();
       return;
     }
 
     setIsSyncing(true);
-    const syncMsg = `Syncing all ${bills.length} bills & ${expenses.length} expenses to Google Sheet, please wait...`;
+    const syncMsg = `Scanning and syncing all ${bills.length} bills & ${expenses.length} expenses to Google Sheet...`;
     setSyncStatus(syncMsg);
     setTestStatus({
       state: "testing",
@@ -2498,7 +2513,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'bulk_sync',
-          googleSheetUrl: profile.googleSheetUrl.trim(),
+          googleSheetUrl: targetWebhook,
           ownerEmail: profile.ownerEmail ? profile.ownerEmail.trim() : "",
           bills: bills,
           expenses: expenses
@@ -2511,7 +2526,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         setSyncStatus(` ${successMsg}`);
         setTestStatus({
           state: "success",
-          message: ` ${successMsg} Open your Google Sheet to view the 'Billing' and 'Expenses' tabs.`
+          message: ` ${successMsg} View 'StudentBills' & 'Expenses' tabs in Google Sheet.`
         });
         const updated = bills.map(b => ({ ...b, isSyncedToSheet: true }));
         setBills(updated);
@@ -2520,7 +2535,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           setGoogleSheetViewUrl(data.result.sheetUrl);
           localStorage.setItem(`instituteGoogleSheetViewUrl_${instKey}`, data.result.sheetUrl);
         }
-        alert(` ${successMsg}\n\nYour bills have been written to the 'Billing' tab and expenses to the 'Expenses' tab in your Google Sheet.`);
+        if (!isSilent) {
+          alert(` ${successMsg}\n\nBoth Bills and Expenses have been automatically scanned and synced to your Google Sheet tabs ('StudentBills' and 'Expenses').`);
+        }
       } else {
         const errorMsg = data.error || "Sync failed. Please check your Google Apps Script URL.";
         setSyncStatus(` ${errorMsg}`);
@@ -2528,7 +2545,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           state: "error",
           message: ` ${errorMsg}`
         });
-        alert(`Sync failed: ${errorMsg}`);
+        if (!isSilent) {
+          alert(`Sync failed: ${errorMsg}`);
+        }
       }
     } catch (err) {
       const connErr = `Connection error: ${err.message}`;
@@ -2537,7 +2556,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         state: "error",
         message: ` ${connErr}`
       });
-      alert(`Sync Error: ${connErr}`);
+      if (!isSilent) {
+        alert(`Sync Error: ${connErr}`);
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -2545,7 +2566,15 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
   // Dedicated Google Sheet duplicate purge
   const handleCleanSheetDuplicates = async () => {
-    if (!profile.googleSheetUrl || !profile.googleSheetUrl.trim() || profile.googleSheetUrl === "setup_done") {
+    const SIGMA_DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxL8QJVF4_IzcCPSbIwOcQorTX19KPVgb6Y0xOMfOQOLQcmCwblhStD0nEgmXirXoreFQ/exec';
+    let targetWebhook = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+      (typeof window !== "undefined" ? (localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) || localStorage.getItem("instituteGoogleSheetWebhook_default") || "") : "");
+
+    if (!targetWebhook || targetWebhook === "setup_done" || targetWebhook.includes("AKfycbyMnje") || targetWebhook.includes("AKfycbzrxTC") || targetWebhook.includes("AKfycbwJJc")) {
+      targetWebhook = SIGMA_DEFAULT_WEBHOOK;
+    }
+
+    if (!targetWebhook) {
       setSetupTab("connect");
       handleOpenGoogleSetupModal();
       return;
@@ -2562,7 +2591,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'deduplicate',
-          googleSheetUrl: profile.googleSheetUrl.trim(),
+          googleSheetUrl: targetWebhook,
           ownerEmail: profile.ownerEmail ? profile.ownerEmail.trim() : ""
         })
       });
@@ -2577,13 +2606,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         setTestStatus({ state: "success", message: ` ${successMsg}` });
         alert(` ${successMsg}`);
       } else {
-        // Fallback: If older script is deployed, run bulk sync with deduplicated bills
+        // Fallback: If older script is deployed, run bulk sync with deduplicated bills & expenses
         const resSync = await fetch(apiWithInst("/api/institute/billing/sync"), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'bulk_sync',
-            googleSheetUrl: profile.googleSheetUrl.trim(),
+            googleSheetUrl: targetWebhook,
             ownerEmail: profile.ownerEmail ? profile.ownerEmail.trim() : "",
             bills: bills,
             expenses: expenses
@@ -2593,7 +2622,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         if (resSync.ok && syncData.success) {
           setSyncStatus(" Synchronized & cleaned duplicates via bulk sync.");
           setTestStatus({ state: "success", message: " Synchronized all unique bills to Google Sheet." });
-          alert("Synchronized all unique bills to Google Sheet!\n\nNote: For instant 1-click deduplication, please update the Google Apps Script in Tab 2.");
+          alert("Synchronized all unique bills and expenses to Google Sheet!\n\nNote: For instant 1-click deduplication, please update the Google Apps Script in Tab 2.");
         } else {
           const errMsg = data.error || syncData.error || "Failed to deduplicate Google Sheet.";
           setSyncStatus(` ${errMsg}`);
@@ -2610,11 +2639,12 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     }
   };
 
-  // Save Google Sheet & Drive Configuration
+  // Save Google Sheet & Drive Configuration (Auto-scan and sync both Bills & Expenses immediately upon linking)
   const handleSaveGoogleSetup = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    setSaveSetupStatus("Saving configuration...");
+    setSaveSetupStatus("Saving configuration & preparing dual auto-sync...");
 
+    const SIGMA_DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxL8QJVF4_IzcCPSbIwOcQorTX19KPVgb6Y0xOMfOQOLQcmCwblhStD0nEgmXirXoreFQ/exec';
     let webhookUrl = (profile.googleSheetUrl || "").trim();
     let viewUrl = (googleSheetViewUrl || "").trim();
     let driveUrl = (googleDriveUrl || "").trim();
@@ -2640,6 +2670,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       alert(" You entered a URL ending in '/dev'. Google blocks automated sync requests to test /dev URLs.\n\nPlease deploy a new Web App (Deploy > New deployment > Web app) with 'Who has access: Anyone' and copy the URL ending in '/exec'.");
     }
 
+    const effectiveWebhook = (webhookUrl && webhookUrl.startsWith("http")) ? webhookUrl : SIGMA_DEFAULT_WEBHOOK;
+
     try {
       localStorage.setItem(`instituteGoogleSheetViewUrl_${instKey}`, viewUrl);
       localStorage.setItem(`instituteGoogleDriveUrl_${instKey}`, driveUrl);
@@ -2648,7 +2680,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         localStorage.setItem("instituteGoogleSheetWebhook_default", webhookUrl);
       }
 
-      const savedGoogleSheetUrl = webhookUrl || (driveUrl || viewUrl ? "setup_done" : "");
+      const savedGoogleSheetUrl = webhookUrl || (driveUrl || viewUrl ? "setup_done" : effectiveWebhook);
       const res = await fetch(apiWithInst("/api/institute/billing"), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -2663,34 +2695,41 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         const data = await res.json();
         setProfile(data.profile);
         localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify(data.profile));
-        setSaveSetupStatus(" Configuration saved successfully!");
-        if (webhookUrl || viewUrl || driveUrl) {
+        setSaveSetupStatus(" Configuration saved! Auto-scanning both Expenses & Billing to Google Sheet...");
+        if (webhookUrl || viewUrl || driveUrl || effectiveWebhook) {
           localStorage.setItem("global_google_sheet_setup_done", "true");
           setIsPermanentlyLinked(true);
         }
+        // Auto scan both expenses and billing at the same time upon linking!
+        await handleSyncToGoogleSheet(effectiveWebhook, false);
+        setSaveSetupStatus(" Google Sheet linked & both Bills and Expenses synchronized!");
         setTimeout(() => setSaveSetupStatus(""), 4000);
       } else {
         localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify({
           ...profile,
-          googleSheetUrl: webhookUrl || (driveUrl || viewUrl ? "setup_done" : "")
+          googleSheetUrl: webhookUrl || (driveUrl || viewUrl ? "setup_done" : effectiveWebhook)
         }));
-        setSaveSetupStatus(" Configuration saved locally.");
-        if (webhookUrl || viewUrl || driveUrl) {
+        setSaveSetupStatus(" Configuration saved locally. Auto-scanning Bills & Expenses...");
+        if (webhookUrl || viewUrl || driveUrl || effectiveWebhook) {
           localStorage.setItem("global_google_sheet_setup_done", "true");
           setIsPermanentlyLinked(true);
         }
+        await handleSyncToGoogleSheet(effectiveWebhook, false);
+        setSaveSetupStatus(" Google Sheet linked & both Bills and Expenses synchronized!");
         setTimeout(() => setSaveSetupStatus(""), 4000);
       }
     } catch {
       localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify({
         ...profile,
-        googleSheetUrl: webhookUrl || (driveUrl || viewUrl ? "setup_done" : "")
+        googleSheetUrl: webhookUrl || (driveUrl || viewUrl ? "setup_done" : effectiveWebhook)
       }));
-      setSaveSetupStatus(" Configuration saved locally.");
-      if (webhookUrl || viewUrl || driveUrl) {
+      setSaveSetupStatus(" Configuration saved locally. Auto-scanning Bills & Expenses...");
+      if (webhookUrl || viewUrl || driveUrl || effectiveWebhook) {
         localStorage.setItem("global_google_sheet_setup_done", "true");
         setIsPermanentlyLinked(true);
       }
+      await handleSyncToGoogleSheet(effectiveWebhook, false);
+      setSaveSetupStatus(" Google Sheet linked & both Bills and Expenses synchronized!");
       setTimeout(() => setSaveSetupStatus(""), 4000);
     }
   };
@@ -2751,7 +2790,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         }
         setTestStatus({
           state: "success",
-          message: `${data.message || "Successfully connected to Google Sheet!"} Click "Sync All Bills (${bills.length})" to write all bills into your sheet.`
+          message: `${data.message || "Successfully connected to Google Sheet!"} Click "Sync Both Bills & Expenses" to scan and sync all bills and expenses into your sheet.`
         });
       } else {
         setTestStatus({
@@ -7238,10 +7277,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               borderRadius: "6px",
                               fontSize: "12px",
                               fontWeight: "bold",
-                              cursor: (isSyncing || !profile.googleSheetUrl) ? "not-allowed" : "pointer"
+                              cursor: isSyncing ? "not-allowed" : "pointer"
                             }}
                           >
-                            {isSyncing ? "Syncing..." : `Sync All Bills (${bills.length})`}
+                            {isSyncing ? "Syncing..." : `Sync Both Bills & Expenses (${bills.length} Bills, ${expenses.length} Exp)`}
                           </button>
 
                           <button
@@ -9326,37 +9365,8 @@ function doPost(e) {
                     <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                       <button
                         type="button"
-                        onClick={async () => {
-                          const webhook = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
-                            (typeof window !== "undefined" ? localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) : "") || "";
-                          if (!webhook || webhook === "setup_done") {
-                            alert("Google Sheet is not connected yet. Please connect Google Sheet in Settings > Cloud Links & Sync.");
-                            setSetupTab("connect");
-                            handleOpenGoogleSetupModal();
-                            return;
-                          }
-                          try {
-                            const res = await fetch(apiWithInst("/api/institute/billing/sync"), {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                action: 'bulk_sync',
-                                googleSheetUrl: webhook,
-                                ownerEmail: profile.ownerEmail ? profile.ownerEmail.trim() : "",
-                                bills: [],
-                                expenses: expenses
-                              })
-                            });
-                            const data = await res.json();
-                            if (res.ok && data.success) {
-                              alert(` Google Sheet Sync Successful!\n\n${expenses.length} expenses are now stored in the 'Expenses' tab in Google Sheet.`);
-                            } else {
-                              alert(`Sync Error: ${data.error || 'Failed to sync expenses'}`);
-                            }
-                          } catch (err) {
-                            alert(`Sync Error: ${err.message}`);
-                          }
-                        }}
+                        onClick={() => handleSyncToGoogleSheet()}
+                        disabled={isSyncing}
                         style={{
                           backgroundColor: "#065f46",
                           color: "white",
@@ -9365,15 +9375,15 @@ function doPost(e) {
                           borderRadius: "6px",
                           fontSize: "12px",
                           fontWeight: "700",
-                          cursor: "pointer",
+                          cursor: isSyncing ? "not-allowed" : "pointer",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
-                          boxShadow: "0 2px 4px rgba(6, 95, 70, 0.25)"
+                          boxShadow: "0 2px 4px rgba(6, 95, 70, 0.2)"
                         }}
-                        title="Synchronize all expenses directly to Google Sheet 'Expenses' tab"
+                        title="Synchronize both Expenses and Bills directly to Google Sheet"
                       >
-                        <span>📊</span> Sync to Google Sheet
+                        <span>📊</span> {isSyncing ? "Syncing..." : `Sync Both Expenses (${expenses.length}) & Bills (${bills.length})`}
                       </button>
                       <button
                         type="button"

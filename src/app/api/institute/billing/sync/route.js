@@ -427,11 +427,14 @@ export async function POST(req) {
 
     if (formattedExpenses.length > 0 && result && result.syncedExpenses === undefined) {
       return NextResponse.json({
-        success: false,
-        error: "Your Google Sheet is still running an older version of the Apps Script code. To enable automatic expense storage: Open your Google Sheet, click Extensions > Apps Script, paste the updated script from Tab 2, and deploy as a New version.",
+        success: true,
+        partial: true,
+        message: `Successfully synchronized ${bills.length} bills to Google Sheet! (To also record expenses to the 'Expenses' tab, please paste the updated Apps Script from Tab 2 in your Google Sheet).`,
         needsScriptUpdate: true,
+        totalBills: bills.length,
+        totalExpenses: 0,
         result
-      }, { status: 400 });
+      });
     }
 
     const successMsg = formattedExpenses.length > 0
