@@ -69,6 +69,28 @@ export const formatDateMMDDYYYY = (dateStr) => {
   }
 };
 
+// Format date for readable display (e.g. "Nov 30, 2026")
+export const formatDateDisplay = (dateStr) => {
+  if (!dateStr) return "";
+  try {
+    const clean = String(dateStr).split('T')[0];
+    const parts = clean.split('-');
+    if (parts.length === 3 && parts[0].length === 4) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? String(dateStr) : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return String(dateStr || "");
+  }
+};
+
 // Automatic Daily Countdown Calculator for Due Payments
 export const getPaymentCountdown = (bill) => {
   if (!bill) return null;
