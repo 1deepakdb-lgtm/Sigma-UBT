@@ -18,7 +18,8 @@ export const SUBSCRIPTIONS = [
   { label: "1 Month", months: 1 },
   { label: "3 Months", months: 3 },
   { label: "6 Months", months: 6 },
-  { label: "1 Year", months: 12 }
+  { label: "1 Year", months: 12 },
+  { label: "Lifetime", months: 1200 }
 ];
 
 export function addMonths(dateString, months) {
@@ -38,7 +39,7 @@ export function formatDate(value) {
 }
 
 export function instituteStatus(expireDate) {
-  if (!expireDate) return "Active";
+  if (!expireDate || expireDate >= "2099-01-01") return "Active";
   return new Date(expireDate + "T23:59:59") >= new Date() ? "Active" : "Expired";
 }
 

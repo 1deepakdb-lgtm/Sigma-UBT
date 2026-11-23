@@ -323,7 +323,8 @@ export async function POST(req) {
     // Check institute subscription expiry for non-admin users
     if (user.role === 'institute' || user.role === 'student' || user.role === 'staff') {
       if (user.institute) {
-        const isExpired = new Date(user.institute.expireDate + 'T23:59:59') < new Date();
+        const isLifetime = user.institute.subscription === 'Lifetime' || (user.institute.expireDate && user.institute.expireDate >= '2099-01-01');
+        const isExpired = !isLifetime && user.institute.expireDate && new Date(user.institute.expireDate + 'T23:59:59') < new Date();
         if (isExpired) {
           await prisma.institute.update({
             where: { id: user.institute.id },

@@ -365,6 +365,7 @@ export default function AdminInstitutesPage() {
                   <option value="3 Months">3 Months</option>
                   <option value="6 Months">6 Months</option>
                   <option value="1 Year">1 Year</option>
+                  <option value="Lifetime">Lifetime</option>
                 </select>
               </div>
               <div>
@@ -518,7 +519,7 @@ export default function AdminInstitutesPage() {
                       <span style={{ fontWeight: "bold", color: "#2563eb" }}>{inst.examPackage}</span>
                       <br />
                       <span style={{ fontSize: "12px", color: inst.status === "Expired" ? "#dc2626" : "#475569" }}>
-                        Ends: {inst.expireDate}
+                        {inst.subscription === "Lifetime" || (inst.expireDate && inst.expireDate >= "2099-01-01") ? "Lifetime Access" : `Ends: ${inst.expireDate}`}
                       </span>
                     </td>
                     <td style={tdStyle}>

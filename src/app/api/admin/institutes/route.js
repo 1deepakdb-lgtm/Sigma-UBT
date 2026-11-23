@@ -12,6 +12,7 @@ function addMonths(dateString, months) {
 }
 
 function calculateExpiry(entryDate, subscription) {
+  if (subscription === 'Lifetime') return '2099-12-31';
   let months = 1;
   if (subscription === '3 Months') months = 3;
   else if (subscription === '6 Months') months = 6;
@@ -34,7 +35,8 @@ export async function GET(req) {
     });
 
     const formatted = institutes.map(inst => {
-      const isExpired = new Date(inst.expireDate + 'T23:59:59') < new Date();
+      const isLifetime = inst.subscription === 'Lifetime' || (inst.expireDate && inst.expireDate >= '2099-01-01');
+      const isExpired = !isLifetime && inst.expireDate && new Date(inst.expireDate + 'T23:59:59') < new Date();
       return {
         ...inst,
         studentCount: inst._count.users,
@@ -135,19 +137,22 @@ export async function PUT(req) {
     // ── Institute record update ──────────────────────────────────────────────
     const instituteData = {};
     if (name !== undefined && name.trim()) instituteData.name = name.trim();
-    if (subscription) instituteData.subscription = subscription;
-    if (entryDate) instituteData.entryDate = entryDate;
-    if (examPackage) instituteData.examPackage = examPackage;
-    if (status) instituteData.status = status;
-    if (logoUrl !== undefined) instituteData.logoUrl = logoUrl || null;
-    if (watermarkText !== undefined) instituteData.watermarkText = watermarkText || null;
-    if (language !== undefined) {
-      instituteData.language = ['korean', 'japanese', 'both'].includes((language || '').toLowerCase()) ? language.toLowerCase() : 'both';
-    }
-
-    if (entryDate && subscription) {
-      instituteData.expireDate = calculateExpiry(entryDate, subscription);
-      // Auto-activate if a new valid expiry is set
+    if (subscription) {
+      instituteData.subscription = subscription;
+      if (subscription === 'Lifetime') {
+        instituteData.expireDate = '2099-12-31';
+        if (!status) instituteData.status = 'Active';
+      } else {
+        const currentInst = await prisma.institute.findUnique({ where: { id }, select: { entryDate: true } });
+        const refDate = entryDate || currentInst?.entryDate || new Date().toISOString().slice(0, 10);
+        instituteData.expireDate = calculateExpiry(refDate, subscription);
+        if (!status) instituteData.status = 'Active';
+      }
+    } else if (entryDate) {
+      instituteData.entryDate = entryDate;
+      const currentInst = await prisma.institute.findUnique({ where: { id }, select: { subscription: true } });
+      const refSub = currentInst?.subscription || '1 Month';
+      instituteData.expireDate = calculateExpiry(entryDate, refSub);
       if (!status) instituteData.status = 'Active';
     }
 

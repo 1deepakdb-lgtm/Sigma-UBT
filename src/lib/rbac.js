@@ -54,12 +54,13 @@ export async function requireRole(req, allowedRoles = []) {
   if (session.instituteId && (session.role === ROLES.INSTITUTE || session.role === ROLES.STUDENT || session.role === ROLES.STAFF)) {
     const institute = await prisma.institute.findUnique({
       where: { id: session.instituteId },
-      select: { status: true, expireDate: true }
+      select: { status: true, expireDate: true, subscription: true }
     });
 
     if (institute) {
-      const isExpired = new Date(institute.expireDate + 'T23:59:59') < new Date();
-      if (isExpired || institute.status === 'Expired') {
+      const isLifetime = institute.subscription === 'Lifetime' || (institute.expireDate && institute.expireDate >= '2099-01-01');
+      const isExpired = !isLifetime && (new Date(institute.expireDate + 'T23:59:59') < new Date() || institute.status === 'Expired');
+      if (isExpired) {
         return {
           session,
           errorResponse: NextResponse.json(

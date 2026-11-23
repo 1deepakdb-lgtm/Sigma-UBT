@@ -108,7 +108,7 @@ export const getPaymentCountdown = (bill) => {
         const d = new Date(baseDate);
         d.setDate(d.getDate() + initialDays);
         targetDateStr = d.toISOString().split('T')[0];
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 
@@ -2487,7 +2487,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     let targetWebhook = (typeof overrideWebhookUrl === "string" && overrideWebhookUrl.trim())
       ? overrideWebhookUrl.trim()
       : ((profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
-         (typeof window !== "undefined" ? (localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) || localStorage.getItem("instituteGoogleSheetWebhook_default") || "") : ""));
+        (typeof window !== "undefined" ? (localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) || localStorage.getItem("instituteGoogleSheetWebhook_default") || "") : ""));
 
     if (!targetWebhook || targetWebhook === "setup_done" || targetWebhook.includes("AKfycbyMnje") || targetWebhook.includes("AKfycbzrxTC") || targetWebhook.includes("AKfycbwJJc")) {
       targetWebhook = SIGMA_DEFAULT_WEBHOOK;
@@ -4884,7 +4884,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 msOverflowStyle: "none"
               }}
             >
-              <style dangerouslySetInnerHTML={{ __html: `
+              <style dangerouslySetInnerHTML={{
+                __html: `
             .compact-billing-table-wrapper::-webkit-scrollbar {
               display: none;
               height: 0px;
@@ -9381,1162 +9382,1162 @@ function doPost(e) {
                           gap: "6px",
                           boxShadow: "0 2px 4px rgba(6, 95, 70, 0.2)"
                         }}
-                        title="Synchronize both Expenses and Bills directly to Google Sheet"
                       >
                         <span>📊</span> {isSyncing ? "Syncing..." : `Sync Both Expenses (${expenses.length}) & Bills (${bills.length})`}
                       </button>
                       <button
-                        type="button"
-                        onClick={handleExportExpensesCSV}
-                        style={{
-                          backgroundColor: "#b91c1c",
-                          color: "white",
-                          border: "none",
-                          padding: "8px 14px",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          fontWeight: "700",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          boxShadow: "0 2px 4px rgba(185, 28, 28, 0.25)"
-                        }}
-                        title="Download expenses as a CSV file"
-                      >
-                        <span>📥</span> Download Expenses CSV
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handlePrintExpenses}
-                        style={{
-                          backgroundColor: "#dc2626",
-                          color: "white",
-                          border: "none",
-                          padding: "8px 14px",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          fontWeight: "700",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          boxShadow: "0 2px 4px rgba(220, 38, 38, 0.25)"
-                        }}
-                        title="Print official expenses statement for this period"
-                      >
-                        <span>🖨️</span> Print Expense Sheet
-                      </button>
-                    </div>
+                      type="button"
+                      onClick={handleExportExpensesCSV}
+                      style={{
+                        backgroundColor: "#b91c1c",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 14px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 2px 4px rgba(185, 28, 28, 0.25)"
+                      }}
+                      title="Download expenses as a CSV file"
+                    >
+                      <span>📥</span> Download Expenses CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePrintExpenses}
+                      style={{
+                        backgroundColor: "#dc2626",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 14px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 2px 4px rgba(220, 38, 38, 0.25)"
+                      }}
+                      title="Print official expenses statement for this period"
+                    >
+                      <span>🖨️</span> Print Expense Sheet
+                    </button>
                   </div>
+                </div>
 
-                  {getFilteredExpenses().length === 0 ? (
-                    <div style={{
-                      padding: "30px",
-                      textAlign: "center",
-                      color: "#64748b",
-                      backgroundColor: "#f8fafc",
-                      borderRadius: "8px",
-                      border: "1px dashed #cbd5e1"
-                    }}>
-                      No expenses recorded for this timeframe.
-                    </div>
-                  ) : (
-                    <div style={{ overflowX: "auto" }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", borderRadius: "8px", overflow: "hidden" }}>
-                        <thead>
-                          <tr style={{ backgroundColor: "#b91c1c", textAlign: "left", color: "#ffffff" }}>
-                            <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", borderTopLeftRadius: "6px" }}>#</th>
-                            <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Date</th>
-                            <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Title / Details</th>
-                            <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Category</th>
-                            <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", textAlign: "right" }}>Amount</th>
-                            <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Method</th>
-                            <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", borderTopRightRadius: billingRole === "admin" ? 0 : "6px" }}>Recorded By</th>
+                {getFilteredExpenses().length === 0 ? (
+                  <div style={{
+                    padding: "30px",
+                    textAlign: "center",
+                    color: "#64748b",
+                    backgroundColor: "#f8fafc",
+                    borderRadius: "8px",
+                    border: "1px dashed #cbd5e1"
+                  }}>
+                    No expenses recorded for this timeframe.
+                  </div>
+                ) : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", borderRadius: "8px", overflow: "hidden" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "#b91c1c", textAlign: "left", color: "#ffffff" }}>
+                          <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", borderTopLeftRadius: "6px" }}>#</th>
+                          <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Date</th>
+                          <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Title / Details</th>
+                          <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Category</th>
+                          <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", textAlign: "right" }}>Amount</th>
+                          <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700" }}>Method</th>
+                          <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", borderTopRightRadius: billingRole === "admin" ? 0 : "6px" }}>Recorded By</th>
+                          {billingRole === "admin" && (
+                            <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", textAlign: "center", borderTopRightRadius: "6px" }}>
+                              Admin Actions
+                            </th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getFilteredExpenses().map((exp, i) => (
+                          <tr key={exp.id || i} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                            <td style={{ padding: "8px 10px", color: "#64748b" }}>{i + 1}</td>
+                            <td style={{ padding: "8px 10px", fontWeight: "bold", whiteSpace: "nowrap" }}>{exp.date}</td>
+                            <td style={{ padding: "8px 10px" }}>
+                              <div style={{ fontWeight: "bold", color: "#1e293b" }}>{exp.title}</div>
+                              {exp.remarks && <div style={{ fontSize: "11px", color: "#64748b" }}>{exp.remarks}</div>}
+                            </td>
+                            <td style={{ padding: "8px 10px" }}>
+                              <span style={{ backgroundColor: "#fee2e2", color: "#991b1b", padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: "bold" }}>
+                                {exp.category}
+                              </span>
+                            </td>
+                            <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: "900", color: "#b91c1c", whiteSpace: "nowrap" }}>
+                              {formatCurrency(exp.amount)}
+                            </td>
+                            <td style={{ padding: "8px 10px", color: "#475569" }}>{exp.paymentMethod}</td>
+                            <td style={{ padding: "8px 10px" }}>
+                              <span style={{ backgroundColor: "#f1f5f9", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", color: "#334155" }}>
+                                {exp.recordedBy || "Staff"}
+                              </span>
+                            </td>
+                            {/* ACTION COLUMN: Admin has Edit & Delete authority */}
                             {billingRole === "admin" && (
-                              <th style={{ padding: "12px 10px", color: "#ffffff", fontWeight: "700", textAlign: "center", borderTopRightRadius: "6px" }}>
-                                Admin Actions
-                              </th>
+                              <td style={{ padding: "8px 10px", textAlign: "center" }}>
+                                <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingExpense(exp)}
+                                    title="Edit Expense Entry (Admin Only)"
+                                    style={{
+                                      backgroundColor: "#2563eb",
+                                      color: "white",
+                                      border: "none",
+                                      padding: "4px 8px",
+                                      borderRadius: "4px",
+                                      fontSize: "11px",
+                                      fontWeight: "bold",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "3px"
+                                    }}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteExpense(exp.id)}
+                                    title="Delete Expense Entry (Admin Only)"
+                                    style={{
+                                      backgroundColor: "#ef4444",
+                                      color: "white",
+                                      border: "none",
+                                      padding: "4px 8px",
+                                      borderRadius: "4px",
+                                      fontSize: "11px",
+                                      fontWeight: "bold",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "3px"
+                                    }}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
                             )}
                           </tr>
-                        </thead>
-                        <tbody>
-                          {getFilteredExpenses().map((exp, i) => (
-                            <tr key={exp.id || i} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                              <td style={{ padding: "8px 10px", color: "#64748b" }}>{i + 1}</td>
-                              <td style={{ padding: "8px 10px", fontWeight: "bold", whiteSpace: "nowrap" }}>{exp.date}</td>
-                              <td style={{ padding: "8px 10px" }}>
-                                <div style={{ fontWeight: "bold", color: "#1e293b" }}>{exp.title}</div>
-                                {exp.remarks && <div style={{ fontSize: "11px", color: "#64748b" }}>{exp.remarks}</div>}
-                              </td>
-                              <td style={{ padding: "8px 10px" }}>
-                                <span style={{ backgroundColor: "#fee2e2", color: "#991b1b", padding: "2px 8px", borderRadius: "10px", fontSize: "11px", fontWeight: "bold" }}>
-                                  {exp.category}
-                                </span>
-                              </td>
-                              <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: "900", color: "#b91c1c", whiteSpace: "nowrap" }}>
-                                {formatCurrency(exp.amount)}
-                              </td>
-                              <td style={{ padding: "8px 10px", color: "#475569" }}>{exp.paymentMethod}</td>
-                              <td style={{ padding: "8px 10px" }}>
-                                <span style={{ backgroundColor: "#f1f5f9", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", color: "#334155" }}>
-                                  {exp.recordedBy || "Staff"}
-                                </span>
-                              </td>
-                              {/* ACTION COLUMN: Admin has Edit & Delete authority */}
-                              {billingRole === "admin" && (
-                                <td style={{ padding: "8px 10px", textAlign: "center" }}>
-                                  <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
-                                    <button
-                                      type="button"
-                                      onClick={() => setEditingExpense(exp)}
-                                      title="Edit Expense Entry (Admin Only)"
-                                      style={{
-                                        backgroundColor: "#2563eb",
-                                        color: "white",
-                                        border: "none",
-                                        padding: "4px 8px",
-                                        borderRadius: "4px",
-                                        fontSize: "11px",
-                                        fontWeight: "bold",
-                                        cursor: "pointer",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "3px"
-                                      }}
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteExpense(exp.id)}
-                                      title="Delete Expense Entry (Admin Only)"
-                                      style={{
-                                        backgroundColor: "#ef4444",
-                                        color: "white",
-                                        border: "none",
-                                        padding: "4px 8px",
-                                        borderRadius: "4px",
-                                        fontSize: "11px",
-                                        fontWeight: "bold",
-                                        cursor: "pointer",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "3px"
-                                      }}
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-                                </td>
-                              )}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ marginTop: "20px", textAlign: "right" }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowExpenseModal(false)}
-                    style={{
-                      backgroundColor: "#475569",
-                      color: "white",
-                      border: "none",
-                      padding: "8px 18px",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                      fontSize: "13px"
-                    }}
-                  >
-                    Close
-                  </button>
-                </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
+
+              <div style={{ marginTop: "20px", textAlign: "right" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowExpenseModal(false)}
+                  style={{
+                    backgroundColor: "#475569",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 18px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: "13px"
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
             </div>
           )}
 
-          {/* 12. ADMIN-ONLY EDIT EXPENSE DIALOG */}
-          {editingExpense && (
+      {/* 12. ADMIN-ONLY EDIT EXPENSE DIALOG */}
+      {editingExpense && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(15, 23, 42, 0.75)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000000,
+          padding: "16px"
+        }}>
+          <div style={{
+            backgroundColor: "#ffffff",
+            borderRadius: "12px",
+            width: "100%",
+            maxWidth: "520px",
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
+            border: "1px solid #cbd5e1",
+            overflow: "hidden"
+          }}>
+            {/* Header */}
             <div style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              backgroundColor: "rgba(15, 23, 42, 0.75)",
+              backgroundColor: "#dc2626",
+              color: "white",
+              padding: "16px 20px",
               display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 1000000,
-              padding: "16px"
+              justifyContent: "space-between",
+              alignItems: "center"
             }}>
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "12px",
-                width: "100%",
-                maxWidth: "520px",
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
-                border: "1px solid #cbd5e1",
-                overflow: "hidden"
-              }}>
-                {/* Header */}
-                <div style={{
-                  backgroundColor: "#dc2626",
-                  color: "white",
-                  padding: "16px 20px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center"
-                }}>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      Edit Expense Entry
-                    </h3>
-                    <div style={{ fontSize: "11px", color: "#fecaca", marginTop: "2px" }}>
-                      Admin Authority: Full editing of recorded details
+              <div>
+                <h3 style={{ margin: 0, fontSize: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  Edit Expense Entry
+                </h3>
+                <div style={{ fontSize: "11px", color: "#fecaca", marginTop: "2px" }}>
+                  Admin Authority: Full editing of recorded details
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingExpense(null)}
+                style={{ background: "transparent", border: "none", color: "white", fontSize: "20px", cursor: "pointer" }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleUpdateExpense} style={{ padding: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={editingExpense.date || ""}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
+                    Amount (Rs.) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={editingExpense.amount || ""}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, amount: e.target.value })}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box", fontWeight: "bold" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
+                  Expense Title / Details *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingExpense.title || ""}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, title: e.target.value })}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
+                    Category *
+                  </label>
+                  <select
+                    value={editingExpense.category || "Office Supplies"}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, category: e.target.value })}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                  >
+                    <option value="Office Supplies">Office Supplies</option>
+                    <option value="Tea & Refreshment">Tea & Refreshment</option>
+                    <option value="Utilities & Bills">Utilities & Bills</option>
+                    <option value="Books & Printing">Books & Printing</option>
+                    <option value="Salary & Wages">Salary & Wages</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Internet & Software">Internet & Software</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
+                    Payment Method
+                  </label>
+                  <select
+                    value={editingExpense.paymentMethod || "Cash"}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, paymentMethod: e.target.value })}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Online Esewa">Online Esewa</option>
+                    <option value="Online Khalti">Online Khalti</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
+                    Recorded By
+                  </label>
+                  <input
+                    type="text"
+                    value={editingExpense.recordedBy || ""}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, recordedBy: e.target.value })}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
+                    Bill / Voucher No. {Number(editingExpense.amount) > 200 && <span style={{ color: "#dc2626" }}>*</span>}
+                  </label>
+                  <input
+                    type="text"
+                    required={Number(editingExpense.amount) > 200}
+                    placeholder="Bill Number / Voucher No."
+                    value={editingExpense.remarks || ""}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, remarks: e.target.value })}
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "5px",
+                      border: Number(editingExpense.amount) > 200 && !(editingExpense.remarks || "").trim() ? "1.5px solid #ef4444" : "1px solid #cbd5e1",
+                      backgroundColor: Number(editingExpense.amount) > 200 && !(editingExpense.remarks || "").trim() ? "#fef2f2" : "#ffffff",
+                      fontSize: "13px",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                  {Number(editingExpense.amount) > 200 && !(editingExpense.remarks || "").trim() && (
+                    <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "bold", marginTop: "3px" }}>
+                      Bill number is required for expenses greater than Rs. 200
                     </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingExpense(null)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "6px",
+                    border: "none",
+                    backgroundColor: "#dc2626",
+                    color: "white",
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px"
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 14. PRODUCT STOCK & INVENTORY MODAL (VIEWABLE BY ALL USERS, RESTOCKING BY ADMIN ONLY) */}
+      {showStockModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(15, 23, 42, 0.75)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 999999,
+          padding: "16px",
+          backdropFilter: "blur(3px)"
+        }}>
+          <div style={{
+            backgroundColor: "#ffffff",
+            borderRadius: "14px",
+            width: "100%",
+            maxWidth: "920px",
+            maxHeight: "92vh",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
+            overflow: "hidden",
+            border: "1.5px solid #0f766e"
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)",
+              color: "white",
+              padding: "16px 22px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "10px"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", letterSpacing: "0.5px" }}>
+                    Product Stock & Inventory
+                  </h3>
+                  <div style={{ fontSize: "12px", color: "#ccfbf1", marginTop: "2px" }}>
+                    Real-time available quantities for all center products & books
                   </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                {billingRole === "admin" && (
+                  <span style={{
+                    backgroundColor: "#fef3c7",
+                    color: "#92400e",
+                    padding: "4px 10px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}>
+                    Admin: Can Add Stock & Products
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStockModal(false);
+                    setRestockingProduct(null);
+                  }}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.2)",
+                    border: "none",
+                    color: "white",
+                    fontSize: "18px",
+                    cursor: "pointer",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s"
+                  }}
+                  title="Close (ESC)"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: "18px 22px", overflowY: "auto", flex: 1, backgroundColor: "#f8fafc" }}>
+              {/* Metric Cards */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmin(180px, 1fr))",
+                gap: "12px",
+                marginBottom: "18px"
+              }}>
+                <div style={{
+                  backgroundColor: "#ffffff",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Total Items</div>
+                  <div style={{ fontSize: "22px", fontWeight: "900", color: "#0f766e", marginTop: "2px" }}>
+                    {products.length}
+                  </div>
+                </div>
+
+                <div style={{
+                  backgroundColor: "#ffffff",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Total Stock Available</div>
+                  <div style={{ fontSize: "22px", fontWeight: "900", color: "#16a34a", marginTop: "2px" }}>
+                    {products.reduce((acc, p) => acc + (Number(p.stock) || 0), 0)} <span style={{ fontSize: "13px", fontWeight: "600", color: "#64748b" }}>units</span>
+                  </div>
+                </div>
+
+                <div style={{
+                  backgroundColor: "#ffffff",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Total Products Sold</div>
+                  <div style={{ fontSize: "22px", fontWeight: "900", color: "#2563eb", marginTop: "2px" }}>
+                    {products.reduce((acc, p) => acc + (Number(p.totalSold) || 0), 0)} <span style={{ fontSize: "13px", fontWeight: "600", color: "#64748b" }}>sold</span>
+                  </div>
+                </div>
+
+                <div style={{
+                  backgroundColor: "#ffffff",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Low / Out of Stock</div>
+                  <div style={{ fontSize: "22px", fontWeight: "900", color: products.filter(p => Number(p.stock) <= 5).length > 0 ? "#dc2626" : "#16a34a", marginTop: "2px" }}>
+                    {products.filter(p => Number(p.stock) <= 5).length} <span style={{ fontSize: "13px", fontWeight: "600", color: "#64748b" }}>items</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Toolbar */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "10px",
+                marginBottom: "14px"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: "220px" }}>
+                  <input
+                    type="text"
+                    placeholder="Search product or book name..."
+                    value={stockSearchQuery}
+                    onChange={(e) => setStockSearchQuery(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "13px",
+                      backgroundColor: "#ffffff"
+                    }}
+                  />
                   <button
                     type="button"
-                    onClick={() => setEditingExpense(null)}
-                    style={{ background: "transparent", border: "none", color: "white", fontSize: "20px", cursor: "pointer" }}
+                    onClick={loadProducts}
+                    disabled={productsLoading}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid #cbd5e1",
+                      backgroundColor: "#ffffff",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      color: "#0f766e"
+                    }}
+                    title="Reload stock from server"
                   >
-                    ×
+                    {productsLoading ? "Loading..." : "Refresh"}
                   </button>
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleUpdateExpense} style={{ padding: "20px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                {billingRole === "admin" ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddProductForm(!showAddProductForm);
+                      setRestockingProduct(null);
+                    }}
+                    style={{
+                      backgroundColor: showAddProductForm ? "#475569" : "#0f766e",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    <span>{showAddProductForm ? "Cancel" : "Add New Product"}</span>
+                  </button>
+                ) : (
+                  <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                    Stock can only be added or modified by Admin.
+                  </div>
+                )}
+              </div>
+
+              {/* Admin Create Product Form (Collapsible) */}
+              {billingRole === "admin" && showAddProductForm && (
+                <form onSubmit={handleAdminCreateProduct} style={{
+                  backgroundColor: "#f0fdf4",
+                  border: "1.5px solid #86efac",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  marginBottom: "16px"
+                }}>
+                  <div style={{ fontWeight: "bold", color: "#166534", fontSize: "14px", marginBottom: "10px" }}>
+                    Create New Product / Study Material
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "10px", alignItems: "end" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                        Date *
+                      <label style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
+                        Product Name *
                       </label>
                       <input
-                        type="date"
+                        type="text"
                         required
-                        value={editingExpense.date || ""}
-                        onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                        placeholder="e.g. Model Test 2026 Set"
+                        value={newProductForm.name}
+                        onChange={(e) => setNewProductForm({ ...newProductForm, name: e.target.value })}
+                        style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                        Amount (Rs.) *
+                      <label style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
+                        Price (Rs.) *
                       </label>
                       <input
                         type="number"
-                        required
-                        min="1"
-                        value={editingExpense.amount || ""}
-                        onChange={(e) => setEditingExpense({ ...editingExpense, amount: e.target.value })}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box", fontWeight: "bold" }}
+                        min="0"
+                        placeholder="500"
+                        value={newProductForm.price}
+                        onChange={(e) => setNewProductForm({ ...newProductForm, price: e.target.value })}
+                        style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                       />
                     </div>
-                  </div>
-
-                  <div style={{ marginBottom: "12px" }}>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                      Expense Title / Details *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={editingExpense.title || ""}
-                      onChange={(e) => setEditingExpense({ ...editingExpense, title: e.target.value })}
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
-                    />
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                     <div>
-                      <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                        Category *
+                      <label style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
+                        Initial Stock Qty *
                       </label>
-                      <select
-                        value={editingExpense.category || "Office Supplies"}
-                        onChange={(e) => setEditingExpense({ ...editingExpense, category: e.target.value })}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
-                      >
-                        <option value="Office Supplies">Office Supplies</option>
-                        <option value="Tea & Refreshment">Tea & Refreshment</option>
-                        <option value="Utilities & Bills">Utilities & Bills</option>
-                        <option value="Books & Printing">Books & Printing</option>
-                        <option value="Salary & Wages">Salary & Wages</option>
-                        <option value="Rent">Rent</option>
-                        <option value="Internet & Software">Internet & Software</option>
-                        <option value="Maintenance">Maintenance</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="50"
+                        value={newProductForm.stock}
+                        onChange={(e) => setNewProductForm({ ...newProductForm, stock: e.target.value })}
+                        style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                      />
                     </div>
-
                     <div>
-                      <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                        Payment Method
+                      <label style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
+                        Unit
                       </label>
                       <select
-                        value={editingExpense.paymentMethod || "Cash"}
-                        onChange={(e) => setEditingExpense({ ...editingExpense, paymentMethod: e.target.value })}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                        value={newProductForm.unit}
+                        onChange={(e) => setNewProductForm({ ...newProductForm, unit: e.target.value })}
+                        style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                       >
-                        <option value="Cash">Cash</option>
-                        <option value="Bank Transfer">Bank Transfer</option>
-                        <option value="Online Esewa">Online Esewa</option>
-                        <option value="Online Khalti">Online Khalti</option>
-                        <option value="Other">Other</option>
+                        <option value="copies">copies</option>
+                        <option value="pcs">pcs</option>
+                        <option value="sets">sets</option>
+                        <option value="books">books</option>
+                        <option value="boxes">boxes</option>
                       </select>
                     </div>
                   </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                        Recorded By
-                      </label>
-                      <input
-                        type="text"
-                        value={editingExpense.recordedBy || ""}
-                        onChange={(e) => setEditingExpense({ ...editingExpense, recordedBy: e.target.value })}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                        Bill / Voucher No. {Number(editingExpense.amount) > 200 && <span style={{ color: "#dc2626" }}>*</span>}
-                      </label>
-                      <input
-                        type="text"
-                        required={Number(editingExpense.amount) > 200}
-                        placeholder="Bill Number / Voucher No."
-                        value={editingExpense.remarks || ""}
-                        onChange={(e) => setEditingExpense({ ...editingExpense, remarks: e.target.value })}
-                        style={{
-                          width: "100%",
-                          padding: "8px 10px",
-                          borderRadius: "5px",
-                          border: Number(editingExpense.amount) > 200 && !(editingExpense.remarks || "").trim() ? "1.5px solid #ef4444" : "1px solid #cbd5e1",
-                          backgroundColor: Number(editingExpense.amount) > 200 && !(editingExpense.remarks || "").trim() ? "#fef2f2" : "#ffffff",
-                          fontSize: "13px",
-                          boxSizing: "border-box"
-                        }}
-                      />
-                      {Number(editingExpense.amount) > 200 && !(editingExpense.remarks || "").trim() && (
-                        <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "bold", marginTop: "3px" }}>
-                          Bill number is required for expenses greater than Rs. 200
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "12px" }}>
                     <button
                       type="button"
-                      onClick={() => setEditingExpense(null)}
-                      style={{
-                        padding: "8px 16px",
-                        borderRadius: "6px",
-                        border: "1px solid #cbd5e1",
-                        backgroundColor: "#f1f5f9",
-                        color: "#475569",
-                        fontWeight: "bold",
-                        fontSize: "13px",
-                        cursor: "pointer"
-                      }}
+                      onClick={() => setShowAddProductForm(false)}
+                      style={{ padding: "6px 14px", borderRadius: "5px", border: "1px solid #cbd5e1", backgroundColor: "#ffffff", fontSize: "12px", cursor: "pointer" }}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      style={{
-                        padding: "8px 20px",
-                        borderRadius: "6px",
-                        border: "none",
-                        backgroundColor: "#dc2626",
-                        color: "white",
-                        fontWeight: "bold",
-                        fontSize: "13px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "5px"
-                      }}
+                      style={{ padding: "6px 16px", borderRadius: "5px", border: "none", backgroundColor: "#16a34a", color: "white", fontWeight: "bold", fontSize: "12px", cursor: "pointer" }}
                     >
-                      Save Changes
+                      Save Product
                     </button>
                   </div>
                 </form>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* 14. PRODUCT STOCK & INVENTORY MODAL (VIEWABLE BY ALL USERS, RESTOCKING BY ADMIN ONLY) */}
-          {showStockModal && (
-            <div style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              backgroundColor: "rgba(15, 23, 42, 0.75)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 999999,
-              padding: "16px",
-              backdropFilter: "blur(3px)"
-            }}>
-              <div style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "14px",
-                width: "100%",
-                maxWidth: "920px",
-                maxHeight: "92vh",
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
-                overflow: "hidden",
-                border: "1.5px solid #0f766e"
-              }}>
-                {/* Modal Header */}
+              {/* Admin Restock Drawer / Input */}
+              {billingRole === "admin" && restockingProduct && (
                 <div style={{
-                  background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)",
-                  color: "white",
-                  padding: "16px 22px",
+                  backgroundColor: "#eff6ff",
+                  border: "1.5px solid #93c5fd",
+                  padding: "14px 18px",
+                  borderRadius: "8px",
+                  marginBottom: "16px",
                   display: "flex",
-                  justifyContent: "space-between",
                   alignItems: "center",
+                  justifyContent: "space-between",
                   flexWrap: "wrap",
                   gap: "10px"
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "900", letterSpacing: "0.5px" }}>
-                        Product Stock & Inventory
-                      </h3>
-                      <div style={{ fontSize: "12px", color: "#ccfbf1", marginTop: "2px" }}>
-                        Real-time available quantities for all center products & books
-                      </div>
-                    </div>
+                  <div>
+                    <span style={{ fontWeight: "bold", color: "#1e40af", fontSize: "14px" }}>
+                      Restock: {restockingProduct.name}
+                    </span>
+                    <span style={{ fontSize: "12px", color: "#64748b", marginLeft: "10px" }}>
+                      Current Stock: <strong>{restockingProduct.stock} {restockingProduct.unit || 'pcs'}</strong>
+                    </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    {billingRole === "admin" && (
-                      <span style={{
-                        backgroundColor: "#fef3c7",
-                        color: "#92400e",
-                        padding: "4px 10px",
-                        borderRadius: "16px",
-                        fontSize: "12px",
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: "bold", color: "#1e40af" }}>+ Add Qty:</span>
+                    <input
+                      type="number"
+                      autoFocus
+                      min="1"
+                      placeholder="e.g. 50"
+                      value={restockAmount}
+                      onChange={(e) => setRestockAmount(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAdminRestock(restockingProduct.id, restockAmount);
+                        }
+                      }}
+                      style={{ width: "90px", padding: "6px 10px", borderRadius: "5px", border: "1.5px solid #3b82f6", fontWeight: "bold", fontSize: "13px" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAdminRestock(restockingProduct.id, restockAmount)}
+                      style={{
+                        backgroundColor: "#2563eb",
+                        color: "white",
+                        border: "none",
+                        padding: "6px 14px",
+                        borderRadius: "5px",
                         fontWeight: "bold",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px"
-                      }}>
-                        Admin: Can Add Stock & Products
-                      </span>
-                    )}
-
+                        fontSize: "12px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Confirm Restock
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
-                        setShowStockModal(false);
                         setRestockingProduct(null);
+                        setRestockAmount("");
                       }}
                       style={{
-                        background: "rgba(255, 255, 255, 0.2)",
+                        backgroundColor: "#cbd5e1",
+                        color: "#334155",
                         border: "none",
-                        color: "white",
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "all 0.2s"
+                        padding: "6px 10px",
+                        borderRadius: "5px",
+                        fontSize: "12px",
+                        cursor: "pointer"
                       }}
-                      title="Close (ESC)"
                     >
                       ×
                     </button>
                   </div>
                 </div>
-
-                {/* Modal Body */}
-                <div style={{ padding: "18px 22px", overflowY: "auto", flex: 1, backgroundColor: "#f8fafc" }}>
-                  {/* Metric Cards */}
-                  <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmin(180px, 1fr))",
-                    gap: "12px",
-                    marginBottom: "18px"
-                  }}>
-                    <div style={{
-                      backgroundColor: "#ffffff",
-                      padding: "12px 16px",
-                      borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-                    }}>
-                      <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Total Items</div>
-                      <div style={{ fontSize: "22px", fontWeight: "900", color: "#0f766e", marginTop: "2px" }}>
-                        {products.length}
-                      </div>
-                    </div>
-
-                    <div style={{
-                      backgroundColor: "#ffffff",
-                      padding: "12px 16px",
-                      borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-                    }}>
-                      <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Total Stock Available</div>
-                      <div style={{ fontSize: "22px", fontWeight: "900", color: "#16a34a", marginTop: "2px" }}>
-                        {products.reduce((acc, p) => acc + (Number(p.stock) || 0), 0)} <span style={{ fontSize: "13px", fontWeight: "600", color: "#64748b" }}>units</span>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      backgroundColor: "#ffffff",
-                      padding: "12px 16px",
-                      borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-                    }}>
-                      <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Total Products Sold</div>
-                      <div style={{ fontSize: "22px", fontWeight: "900", color: "#2563eb", marginTop: "2px" }}>
-                        {products.reduce((acc, p) => acc + (Number(p.totalSold) || 0), 0)} <span style={{ fontSize: "13px", fontWeight: "600", color: "#64748b" }}>sold</span>
-                      </div>
-                    </div>
-
-                    <div style={{
-                      backgroundColor: "#ffffff",
-                      padding: "12px 16px",
-                      borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-                    }}>
-                      <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase" }}>Low / Out of Stock</div>
-                      <div style={{ fontSize: "22px", fontWeight: "900", color: products.filter(p => Number(p.stock) <= 5).length > 0 ? "#dc2626" : "#16a34a", marginTop: "2px" }}>
-                        {products.filter(p => Number(p.stock) <= 5).length} <span style={{ fontSize: "13px", fontWeight: "600", color: "#64748b" }}>items</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Toolbar */}
-                  <div style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: "10px",
-                    marginBottom: "14px"
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: "220px" }}>
-                      <input
-                        type="text"
-                        placeholder="Search product or book name..."
-                        value={stockSearchQuery}
-                        onChange={(e) => setStockSearchQuery(e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: "8px 12px",
-                          borderRadius: "6px",
-                          border: "1px solid #cbd5e1",
-                          fontSize: "13px",
-                          backgroundColor: "#ffffff"
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={loadProducts}
-                        disabled={productsLoading}
-                        style={{
-                          padding: "8px 12px",
-                          borderRadius: "6px",
-                          border: "1px solid #cbd5e1",
-                          backgroundColor: "#ffffff",
-                          fontSize: "13px",
-                          cursor: "pointer",
-                          fontWeight: "bold",
-                          color: "#0f766e"
-                        }}
-                        title="Reload stock from server"
-                      >
-                        {productsLoading ? "Loading..." : "Refresh"}
-                      </button>
-                    </div>
-
-                    {billingRole === "admin" ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowAddProductForm(!showAddProductForm);
-                          setRestockingProduct(null);
-                        }}
-                        style={{
-                          backgroundColor: showAddProductForm ? "#475569" : "#0f766e",
-                          color: "white",
-                          border: "none",
-                          padding: "8px 16px",
-                          borderRadius: "6px",
-                          fontWeight: "bold",
-                          fontSize: "13px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px"
-                        }}
-                      >
-                        <span>{showAddProductForm ? "Cancel" : "Add New Product"}</span>
-                      </button>
-                    ) : (
-                      <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
-                        Stock can only be added or modified by Admin.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Admin Create Product Form (Collapsible) */}
-                  {billingRole === "admin" && showAddProductForm && (
-                    <form onSubmit={handleAdminCreateProduct} style={{
-                      backgroundColor: "#f0fdf4",
-                      border: "1.5px solid #86efac",
-                      padding: "16px",
-                      borderRadius: "8px",
-                      marginBottom: "16px"
-                    }}>
-                      <div style={{ fontWeight: "bold", color: "#166534", fontSize: "14px", marginBottom: "10px" }}>
-                        Create New Product / Study Material
-                      </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "10px", alignItems: "end" }}>
-                        <div>
-                          <label style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
-                            Product Name *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Model Test 2026 Set"
-                            value={newProductForm.name}
-                            onChange={(e) => setNewProductForm({ ...newProductForm, name: e.target.value })}
-                            style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
-                            Price (Rs.) *
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="500"
-                            value={newProductForm.price}
-                            onChange={(e) => setNewProductForm({ ...newProductForm, price: e.target.value })}
-                            style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
-                            Initial Stock Qty *
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            placeholder="50"
-                            value={newProductForm.stock}
-                            onChange={(e) => setNewProductForm({ ...newProductForm, stock: e.target.value })}
-                            style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{ display: "block", fontSize: "11px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
-                            Unit
-                          </label>
-                          <select
-                            value={newProductForm.unit}
-                            onChange={(e) => setNewProductForm({ ...newProductForm, unit: e.target.value })}
-                            style={{ width: "100%", padding: "7px 10px", borderRadius: "5px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
-                          >
-                            <option value="copies">copies</option>
-                            <option value="pcs">pcs</option>
-                            <option value="sets">sets</option>
-                            <option value="books">books</option>
-                            <option value="boxes">boxes</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "12px" }}>
-                        <button
-                          type="button"
-                          onClick={() => setShowAddProductForm(false)}
-                          style={{ padding: "6px 14px", borderRadius: "5px", border: "1px solid #cbd5e1", backgroundColor: "#ffffff", fontSize: "12px", cursor: "pointer" }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          style={{ padding: "6px 16px", borderRadius: "5px", border: "none", backgroundColor: "#16a34a", color: "white", fontWeight: "bold", fontSize: "12px", cursor: "pointer" }}
-                        >
-                          Save Product
-                        </button>
-                      </div>
-                    </form>
-                  )}
-
-                  {/* Admin Restock Drawer / Input */}
-                  {billingRole === "admin" && restockingProduct && (
-                    <div style={{
-                      backgroundColor: "#eff6ff",
-                      border: "1.5px solid #93c5fd",
-                      padding: "14px 18px",
-                      borderRadius: "8px",
-                      marginBottom: "16px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      flexWrap: "wrap",
-                      gap: "10px"
-                    }}>
-                      <div>
-                        <span style={{ fontWeight: "bold", color: "#1e40af", fontSize: "14px" }}>
-                          Restock: {restockingProduct.name}
-                        </span>
-                        <span style={{ fontSize: "12px", color: "#64748b", marginLeft: "10px" }}>
-                          Current Stock: <strong>{restockingProduct.stock} {restockingProduct.unit || 'pcs'}</strong>
-                        </span>
-                      </div>
-
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "12px", fontWeight: "bold", color: "#1e40af" }}>+ Add Qty:</span>
-                        <input
-                          type="number"
-                          autoFocus
-                          min="1"
-                          placeholder="e.g. 50"
-                          value={restockAmount}
-                          onChange={(e) => setRestockAmount(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleAdminRestock(restockingProduct.id, restockAmount);
-                            }
-                          }}
-                          style={{ width: "90px", padding: "6px 10px", borderRadius: "5px", border: "1.5px solid #3b82f6", fontWeight: "bold", fontSize: "13px" }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleAdminRestock(restockingProduct.id, restockAmount)}
-                          style={{
-                            backgroundColor: "#2563eb",
-                            color: "white",
-                            border: "none",
-                            padding: "6px 14px",
-                            borderRadius: "5px",
-                            fontWeight: "bold",
-                            fontSize: "12px",
-                            cursor: "pointer"
-                          }}
-                        >
-                          Confirm Restock
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRestockingProduct(null);
-                            setRestockAmount("");
-                          }}
-                          style={{
-                            backgroundColor: "#cbd5e1",
-                            color: "#334155",
-                            border: "none",
-                            padding: "6px 10px",
-                            borderRadius: "5px",
-                            fontSize: "12px",
-                            cursor: "pointer"
-                          }}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Products Inventory Table */}
-                  <div style={{ backgroundColor: "#ffffff", borderRadius: "8px", border: "1px solid #cbd5e1", overflow: "hidden" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-                      <thead>
-                        <tr style={{ backgroundColor: "#0f766e", color: "#ffffff", textAlign: "left" }}>
-                          <th style={{ padding: "10px 12px", width: "40px", textAlign: "center" }}>#</th>
-                          <th style={{ padding: "10px 12px" }}>Product / Item Name</th>
-                          <th style={{ padding: "10px 12px", width: "100px", textAlign: "right" }}>Price (Rs.)</th>
-                          <th style={{ padding: "10px 14px", width: "180px", textAlign: "center" }}>Available Stock (Qty)</th>
-                          <th style={{ padding: "10px 12px", width: "110px", textAlign: "center" }}>Total Sold</th>
-                          {billingRole === "admin" && (
-                            <th style={{ padding: "10px 12px", width: "130px", textAlign: "center" }}>Admin Actions</th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(() => {
-                          const filtered = products.filter(p => {
-                            if (!stockSearchQuery.trim()) return true;
-                            return (p.name || "").toLowerCase().includes(stockSearchQuery.toLowerCase());
-                          });
-
-                          if (filtered.length === 0) {
-                            return (
-                              <tr>
-                                <td colSpan={billingRole === "admin" ? 6 : 5} style={{ padding: "28px", textAlign: "center", color: "#64748b" }}>
-                                  No products found matching "{stockSearchQuery}".
-                                </td>
-                              </tr>
-                            );
-                          }
-
-                          return filtered.map((prod, idx) => {
-                            const stockNum = Number(prod.stock) || 0;
-                            const isOut = stockNum <= 0;
-                            const isLow = stockNum > 0 && stockNum <= 5;
-
-                            return (
-                              <tr key={prod.id || idx} style={{
-                                borderBottom: "1px solid #e2e8f0",
-                                backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc"
-                              }}>
-                                <td style={{ padding: "10px 12px", textAlign: "center", color: "#64748b", fontWeight: "600" }}>
-                                  {idx + 1}
-                                </td>
-                                <td style={{ padding: "10px 12px" }}>
-                                  <div style={{ fontWeight: "bold", color: "#0f172a" }}>
-                                    {prod.name}
-                                  </div>
-                                  <div style={{ fontSize: "11px", color: "#64748b" }}>
-                                    Unit: {prod.unit || 'pcs'} • Code: {prod.id}
-                                  </div>
-                                </td>
-                                <td style={{ padding: "10px 12px", textAlign: "right", fontWeight: "bold", color: "#0f766e" }}>
-                                  {formatCurrency(prod.price)}
-                                </td>
-                                <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                                  {isOut ? (
-                                    <span style={{
-                                      backgroundColor: "#fee2e2",
-                                      color: "#b91c1c",
-                                      padding: "4px 10px",
-                                      borderRadius: "14px",
-                                      fontSize: "12px",
-                                      fontWeight: "900",
-                                      display: "inline-block"
-                                    }}>
-                                      Out of Stock (0)
-                                    </span>
-                                  ) : isLow ? (
-                                    <span style={{
-                                      backgroundColor: "#fef3c7",
-                                      color: "#b45309",
-                                      padding: "4px 10px",
-                                      borderRadius: "14px",
-                                      fontSize: "12px",
-                                      fontWeight: "bold",
-                                      display: "inline-block"
-                                    }}>
-                                      Low: {stockNum} {prod.unit || 'pcs'}
-                                    </span>
-                                  ) : (
-                                    <span style={{
-                                      backgroundColor: "#dcfce7",
-                                      color: "#15803d",
-                                      padding: "4px 10px",
-                                      borderRadius: "14px",
-                                      fontSize: "12px",
-                                      fontWeight: "bold",
-                                      display: "inline-block"
-                                    }}>
-                                      ● In Stock: {stockNum} {prod.unit || 'pcs'}
-                                    </span>
-                                  )}
-                                </td>
-                                <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: "600", color: "#334155" }}>
-                                  {prod.totalSold || 0}
-                                </td>
-
-                                {billingRole === "admin" && (
-                                  <td style={{ padding: "10px 12px", textAlign: "center" }}>
-                                    <div style={{ display: "flex", justifyContent: "center", gap: "6px" }}>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setRestockingProduct(prod);
-                                          setRestockAmount("");
-                                        }}
-                                        style={{
-                                          backgroundColor: "#0284c7",
-                                          color: "white",
-                                          border: "none",
-                                          padding: "4px 8px",
-                                          borderRadius: "4px",
-                                          fontSize: "11px",
-                                          fontWeight: "bold",
-                                          cursor: "pointer"
-                                        }}
-                                        title="Add more stock quantity"
-                                      >
-                                        Restock
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleAdminDeleteProduct(prod.id, prod.name)}
-                                        style={{
-                                          backgroundColor: "#fee2e2",
-                                          color: "#dc2626",
-                                          border: "1px solid #fecaca",
-                                          padding: "4px 6px",
-                                          borderRadius: "4px",
-                                          fontSize: "11px",
-                                          cursor: "pointer"
-                                        }}
-                                        title="Delete product"
-                                      >
-                                        Delete
-                                      </button>
-                                    </div>
-                                  </td>
-                                )}
-                              </tr>
-                            );
-                          });
-                        })()}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Modal Footer */}
-                <div style={{
-                  padding: "12px 22px",
-                  backgroundColor: "#f1f5f9",
-                  borderTop: "1px solid #cbd5e1",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center"
-                }}>
-                  <div style={{ fontSize: "12px", color: "#64748b" }}>
-                    Stock automatically reduces when bills are generated. Only Admin can add stock.
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowStockModal(false);
-                      setRestockingProduct(null);
-                    }}
-                    style={{
-                      backgroundColor: "#475569",
-                      color: "white",
-                      border: "none",
-                      padding: "8px 20px",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                      fontSize: "13px"
-                    }}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 13. PRINTABLE EXPENSES STATEMENT (HIDDEN ON SCREEN, RENDERED PRECISELY ON PRINT) */}
-          <div id="printable-expense-sheet">
-            {/* Institute Stationery Letterhead */}
-            <div style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderBottom: "3px double #1e3a8a",
-              paddingBottom: "12px",
-              marginBottom: "16px"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                {profile.logoUrl && (
-                  <img
-                    src={profile.logoUrl}
-                    alt="Logo"
-                    style={{ height: "65px", maxWidth: "120px", objectFit: "contain" }}
-                  />
-                )}
-                <div>
-                  <h2 style={{
-                    margin: "0 0 3px 0",
-                    fontSize: "22px",
-                    color: "#1e3a8a",
-                    textTransform: "uppercase",
-                    fontWeight: "900",
-                    letterSpacing: "0.5px"
-                  }}>
-                    {profile.instituteName || "INSTITUTE OF LANGUAGE & TECHNOLOGY"}
-                  </h2>
-                  <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.4" }}>
-                    <span>{profile.address || "Kathmandu, Nepal"}</span>
-                    {profile.phone && <span> &nbsp;|&nbsp; Phone: {profile.phone}</span>}
-                    {profile.ownerEmail && <span> &nbsp;|&nbsp; Email: {profile.ownerEmail}</span>}
-                  </div>
-                  {profile.panVatNumber && (
-                    <div style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", marginTop: "2px" }}>
-                      PAN / VAT NO: <span style={{ fontFamily: "monospace", letterSpacing: "1px" }}>{profile.panVatNumber}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{
-                  display: "inline-block",
-                  backgroundColor: "#dc2626",
-                  color: "#ffffff",
-                  padding: "6px 14px",
-                  borderRadius: "4px",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  letterSpacing: "0.5px",
-                  textTransform: "uppercase"
-                }}>
-                  Expense Statement
-                </div>
-                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "6px" }}>
-                  Printed Date: <strong>{new Date().toLocaleDateString('en-CA')}</strong>
-                </div>
-                <div style={{ fontSize: "11px", color: "#64748b" }}>
-                  Period: <strong>{billingRole !== "admin" ? "Today's Ledger" : (expenseTimeframe === "daily" ? "Today's Ledger" : expenseTimeframe === "weekly" ? "Weekly Ledger (7 Days)" : expenseTimeframe === "monthly" ? "Monthly Ledger" : "All-Time Ledger")}</strong>
-                </div>
-              </div>
-            </div>
-
-            {/* Audit Meta Summary */}
-            <div style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              backgroundColor: "#f8fafc",
-              padding: "8px 12px",
-              border: "1px solid #e2e8f0",
-              borderRadius: "6px",
-              marginBottom: "14px",
-              fontSize: "11px"
-            }}>
-              <div>
-                <strong>Report Generated By:</strong> {activeStaffName || (billingRole === "admin" ? "Administrator" : "Staff User")}
-                <span style={{ marginLeft: "12px", color: "#64748b" }}>Authority Level: <strong style={{ textTransform: "uppercase" }}>{billingRole}</strong></span>
-              </div>
-              <div>
-                <strong>Total Entries:</strong> {getFilteredExpenses().length} Record(s)
-              </div>
-            </div>
-
-            {/* Financial Highlights */}
-            {(() => {
-              const printableList = getFilteredExpenses();
-              const totalAmt = printableList.reduce((s, x) => s + Number(x.amount || 0), 0);
-              const cashAmt = printableList.filter(x => x.paymentMethod === "Cash").reduce((s, x) => s + Number(x.amount || 0), 0);
-              const onlineAmt = totalAmt - cashAmt;
-              return (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "16px" }}>
-                  <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", backgroundColor: "#f8fafc" }}>
-                    <div style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase", fontWeight: "bold" }}>Total Expenditure</div>
-                    <div style={{ fontSize: "16px", fontWeight: "900", color: "#b91c1c" }}>{formatCurrency(totalAmt)}</div>
-                  </div>
-                  <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", backgroundColor: "#f8fafc" }}>
-                    <div style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase", fontWeight: "bold" }}>Cash Disbursed</div>
-                    <div style={{ fontSize: "16px", fontWeight: "bold", color: "#15803d" }}>{formatCurrency(cashAmt)}</div>
-                  </div>
-                  <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", backgroundColor: "#f8fafc" }}>
-                    <div style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase", fontWeight: "bold" }}>Online / Bank / Other</div>
-                    <div style={{ fontSize: "16px", fontWeight: "bold", color: "#2563eb" }}>{formatCurrency(onlineAmt)}</div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Detailed Expenses Table */}
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", marginBottom: "20px" }}>
-              <thead>
-                <tr style={{ backgroundColor: "#b91c1c", color: "#ffffff", textAlign: "left" }}>
-                  <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "30px", textAlign: "center" }}>SN</th>
-                  <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "85px" }}>Date</th>
-                  <th style={{ padding: "6px 8px", border: "1px solid #b91c1c" }}>Particulars / Description</th>
-                  <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "110px" }}>Category</th>
-                  <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "95px", textAlign: "right" }}>Amount (Rs.)</th>
-                  <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "85px" }}>Payment Mode</th>
-                  <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "100px" }}>Recorded By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {getFilteredExpenses().length === 0 ? (
-                  <tr>
-                    <td colSpan={7} style={{ padding: "16px", textAlign: "center", color: "#64748b", border: "1px solid #cbd5e1" }}>
-                      No expense records found for this period.
-                    </td>
-                  </tr>
-                ) : (
-                  getFilteredExpenses().map((item, idx) => (
-                    <tr key={item.id || idx} style={{ backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
-                      <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", textAlign: "center", color: "#64748b" }}>{idx + 1}</td>
-                      <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", fontWeight: "600", whiteSpace: "nowrap" }}>{item.date}</td>
-                      <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1" }}>
-                        <div style={{ fontWeight: "bold", color: "#0f172a" }}>{item.title}</div>
-                        {item.remarks && <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>Note: {item.remarks}</div>}
-                      </td>
-                      <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", color: "#475569" }}>{item.category}</td>
-                      <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", textAlign: "right", fontWeight: "bold", color: "#b91c1c" }}>
-                        {formatCurrency(item.amount)}
-                      </td>
-                      <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", color: "#334155" }}>{item.paymentMethod}</td>
-                      <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", color: "#334155" }}>{item.recordedBy || "Staff"}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-              {getFilteredExpenses().length > 0 && (
-                <tfoot>
-                  <tr style={{ backgroundColor: "#f1f5f9", fontWeight: "bold" }}>
-                    <td colSpan={4} style={{ padding: "8px", border: "1px solid #cbd5e1", textAlign: "right", fontSize: "12px", color: "#1e293b" }}>
-                      GRAND TOTAL EXPENSES:
-                    </td>
-                    <td style={{ padding: "8px", border: "1px solid #cbd5e1", textAlign: "right", fontSize: "13px", fontWeight: "900", color: "#b91c1c" }}>
-                      {formatCurrency(getFilteredExpenses().reduce((sum, exp) => sum + Number(exp.amount || 0), 0))}
-                    </td>
-                    <td colSpan={2} style={{ padding: "8px", border: "1px solid #cbd5e1" }}></td>
-                  </tr>
-                </tfoot>
               )}
-            </table>
 
-            {/* Official Authorizations */}
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "40px", paddingTop: "20px", fontSize: "11px" }}>
-              <div style={{ textAlign: "center", width: "180px" }}>
-                <div style={{ borderTop: "1px solid #334155", paddingTop: "4px", fontWeight: "bold" }}>
-                  {activeStaffName || (billingRole === "admin" ? "Administrator" : "Staff User")}
-                </div>
-                <div style={{ color: "#64748b" }}>Prepared / Verified By</div>
+              {/* Products Inventory Table */}
+              <div style={{ backgroundColor: "#ffffff", borderRadius: "8px", border: "1px solid #cbd5e1", overflow: "hidden" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#0f766e", color: "#ffffff", textAlign: "left" }}>
+                      <th style={{ padding: "10px 12px", width: "40px", textAlign: "center" }}>#</th>
+                      <th style={{ padding: "10px 12px" }}>Product / Item Name</th>
+                      <th style={{ padding: "10px 12px", width: "100px", textAlign: "right" }}>Price (Rs.)</th>
+                      <th style={{ padding: "10px 14px", width: "180px", textAlign: "center" }}>Available Stock (Qty)</th>
+                      <th style={{ padding: "10px 12px", width: "110px", textAlign: "center" }}>Total Sold</th>
+                      {billingRole === "admin" && (
+                        <th style={{ padding: "10px 12px", width: "130px", textAlign: "center" }}>Admin Actions</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const filtered = products.filter(p => {
+                        if (!stockSearchQuery.trim()) return true;
+                        return (p.name || "").toLowerCase().includes(stockSearchQuery.toLowerCase());
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={billingRole === "admin" ? 6 : 5} style={{ padding: "28px", textAlign: "center", color: "#64748b" }}>
+                              No products found matching "{stockSearchQuery}".
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return filtered.map((prod, idx) => {
+                        const stockNum = Number(prod.stock) || 0;
+                        const isOut = stockNum <= 0;
+                        const isLow = stockNum > 0 && stockNum <= 5;
+
+                        return (
+                          <tr key={prod.id || idx} style={{
+                            borderBottom: "1px solid #e2e8f0",
+                            backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc"
+                          }}>
+                            <td style={{ padding: "10px 12px", textAlign: "center", color: "#64748b", fontWeight: "600" }}>
+                              {idx + 1}
+                            </td>
+                            <td style={{ padding: "10px 12px" }}>
+                              <div style={{ fontWeight: "bold", color: "#0f172a" }}>
+                                {prod.name}
+                              </div>
+                              <div style={{ fontSize: "11px", color: "#64748b" }}>
+                                Unit: {prod.unit || 'pcs'} • Code: {prod.id}
+                              </div>
+                            </td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", fontWeight: "bold", color: "#0f766e" }}>
+                              {formatCurrency(prod.price)}
+                            </td>
+                            <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                              {isOut ? (
+                                <span style={{
+                                  backgroundColor: "#fee2e2",
+                                  color: "#b91c1c",
+                                  padding: "4px 10px",
+                                  borderRadius: "14px",
+                                  fontSize: "12px",
+                                  fontWeight: "900",
+                                  display: "inline-block"
+                                }}>
+                                  Out of Stock (0)
+                                </span>
+                              ) : isLow ? (
+                                <span style={{
+                                  backgroundColor: "#fef3c7",
+                                  color: "#b45309",
+                                  padding: "4px 10px",
+                                  borderRadius: "14px",
+                                  fontSize: "12px",
+                                  fontWeight: "bold",
+                                  display: "inline-block"
+                                }}>
+                                  Low: {stockNum} {prod.unit || 'pcs'}
+                                </span>
+                              ) : (
+                                <span style={{
+                                  backgroundColor: "#dcfce7",
+                                  color: "#15803d",
+                                  padding: "4px 10px",
+                                  borderRadius: "14px",
+                                  fontSize: "12px",
+                                  fontWeight: "bold",
+                                  display: "inline-block"
+                                }}>
+                                  ● In Stock: {stockNum} {prod.unit || 'pcs'}
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: "600", color: "#334155" }}>
+                              {prod.totalSold || 0}
+                            </td>
+
+                            {billingRole === "admin" && (
+                              <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                                <div style={{ display: "flex", justifyContent: "center", gap: "6px" }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setRestockingProduct(prod);
+                                      setRestockAmount("");
+                                    }}
+                                    style={{
+                                      backgroundColor: "#0284c7",
+                                      color: "white",
+                                      border: "none",
+                                      padding: "4px 8px",
+                                      borderRadius: "4px",
+                                      fontSize: "11px",
+                                      fontWeight: "bold",
+                                      cursor: "pointer"
+                                    }}
+                                    title="Add more stock quantity"
+                                  >
+                                    Restock
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAdminDeleteProduct(prod.id, prod.name)}
+                                    style={{
+                                      backgroundColor: "#fee2e2",
+                                      color: "#dc2626",
+                                      border: "1px solid #fecaca",
+                                      padding: "4px 6px",
+                                      borderRadius: "4px",
+                                      fontSize: "11px",
+                                      cursor: "pointer"
+                                    }}
+                                    title="Delete product"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
               </div>
-              <div style={{ textAlign: "center", width: "180px" }}>
-                <div style={{ borderTop: "1px solid #334155", paddingTop: "4px", fontWeight: "bold" }}>
-                  Admin Authority / Stamp
-                </div>
-                <div style={{ color: "#64748b" }}>Authorized Signature</div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: "12px 22px",
+              backgroundColor: "#f1f5f9",
+              borderTop: "1px solid #cbd5e1",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>
+                Stock automatically reduces when bills are generated. Only Admin can add stock.
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowStockModal(false);
+                  setRestockingProduct(null);
+                }}
+                style={{
+                  backgroundColor: "#475569",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 20px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "13px"
+                }}
+              >
+                Close
+              </button>
             </div>
           </div>
-        </>
+        </div>
       )}
-    </div>
+
+      {/* 13. PRINTABLE EXPENSES STATEMENT (HIDDEN ON SCREEN, RENDERED PRECISELY ON PRINT) */}
+      <div id="printable-expense-sheet">
+        {/* Institute Stationery Letterhead */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "3px double #1e3a8a",
+          paddingBottom: "12px",
+          marginBottom: "16px"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            {profile.logoUrl && (
+              <img
+                src={profile.logoUrl}
+                alt="Logo"
+                style={{ height: "65px", maxWidth: "120px", objectFit: "contain" }}
+              />
+            )}
+            <div>
+              <h2 style={{
+                margin: "0 0 3px 0",
+                fontSize: "22px",
+                color: "#1e3a8a",
+                textTransform: "uppercase",
+                fontWeight: "900",
+                letterSpacing: "0.5px"
+              }}>
+                {profile.instituteName || "INSTITUTE OF LANGUAGE & TECHNOLOGY"}
+              </h2>
+              <div style={{ fontSize: "12px", color: "#334155", lineHeight: "1.4" }}>
+                <span>{profile.address || "Kathmandu, Nepal"}</span>
+                {profile.phone && <span> &nbsp;|&nbsp; Phone: {profile.phone}</span>}
+                {profile.ownerEmail && <span> &nbsp;|&nbsp; Email: {profile.ownerEmail}</span>}
+              </div>
+              {profile.panVatNumber && (
+                <div style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", marginTop: "2px" }}>
+                  PAN / VAT NO: <span style={{ fontFamily: "monospace", letterSpacing: "1px" }}>{profile.panVatNumber}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{
+              display: "inline-block",
+              backgroundColor: "#dc2626",
+              color: "#ffffff",
+              padding: "6px 14px",
+              borderRadius: "4px",
+              fontWeight: "bold",
+              fontSize: "13px",
+              letterSpacing: "0.5px",
+              textTransform: "uppercase"
+            }}>
+              Expense Statement
+            </div>
+            <div style={{ fontSize: "11px", color: "#64748b", marginTop: "6px" }}>
+              Printed Date: <strong>{new Date().toLocaleDateString('en-CA')}</strong>
+            </div>
+            <div style={{ fontSize: "11px", color: "#64748b" }}>
+              Period: <strong>{billingRole !== "admin" ? "Today's Ledger" : (expenseTimeframe === "daily" ? "Today's Ledger" : expenseTimeframe === "weekly" ? "Weekly Ledger (7 Days)" : expenseTimeframe === "monthly" ? "Monthly Ledger" : "All-Time Ledger")}</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Audit Meta Summary */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          backgroundColor: "#f8fafc",
+          padding: "8px 12px",
+          border: "1px solid #e2e8f0",
+          borderRadius: "6px",
+          marginBottom: "14px",
+          fontSize: "11px"
+        }}>
+          <div>
+            <strong>Report Generated By:</strong> {activeStaffName || (billingRole === "admin" ? "Administrator" : "Staff User")}
+            <span style={{ marginLeft: "12px", color: "#64748b" }}>Authority Level: <strong style={{ textTransform: "uppercase" }}>{billingRole}</strong></span>
+          </div>
+          <div>
+            <strong>Total Entries:</strong> {getFilteredExpenses().length} Record(s)
+          </div>
+        </div>
+
+        {/* Financial Highlights */}
+        {(() => {
+          const printableList = getFilteredExpenses();
+          const totalAmt = printableList.reduce((s, x) => s + Number(x.amount || 0), 0);
+          const cashAmt = printableList.filter(x => x.paymentMethod === "Cash").reduce((s, x) => s + Number(x.amount || 0), 0);
+          const onlineAmt = totalAmt - cashAmt;
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "16px" }}>
+              <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", backgroundColor: "#f8fafc" }}>
+                <div style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase", fontWeight: "bold" }}>Total Expenditure</div>
+                <div style={{ fontSize: "16px", fontWeight: "900", color: "#b91c1c" }}>{formatCurrency(totalAmt)}</div>
+              </div>
+              <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", backgroundColor: "#f8fafc" }}>
+                <div style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase", fontWeight: "bold" }}>Cash Disbursed</div>
+                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#15803d" }}>{formatCurrency(cashAmt)}</div>
+              </div>
+              <div style={{ border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 12px", backgroundColor: "#f8fafc" }}>
+                <div style={{ fontSize: "10px", color: "#64748b", textTransform: "uppercase", fontWeight: "bold" }}>Online / Bank / Other</div>
+                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#2563eb" }}>{formatCurrency(onlineAmt)}</div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Detailed Expenses Table */}
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", marginBottom: "20px" }}>
+          <thead>
+            <tr style={{ backgroundColor: "#b91c1c", color: "#ffffff", textAlign: "left" }}>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "30px", textAlign: "center" }}>SN</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "85px" }}>Date</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c" }}>Particulars / Description</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "110px" }}>Category</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "95px", textAlign: "right" }}>Amount (Rs.)</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "85px" }}>Payment Mode</th>
+              <th style={{ padding: "6px 8px", border: "1px solid #b91c1c", width: "100px" }}>Recorded By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {getFilteredExpenses().length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ padding: "16px", textAlign: "center", color: "#64748b", border: "1px solid #cbd5e1" }}>
+                  No expense records found for this period.
+                </td>
+              </tr>
+            ) : (
+              getFilteredExpenses().map((item, idx) => (
+                <tr key={item.id || idx} style={{ backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
+                  <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", textAlign: "center", color: "#64748b" }}>{idx + 1}</td>
+                  <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", fontWeight: "600", whiteSpace: "nowrap" }}>{item.date}</td>
+                  <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1" }}>
+                    <div style={{ fontWeight: "bold", color: "#0f172a" }}>{item.title}</div>
+                    {item.remarks && <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>Note: {item.remarks}</div>}
+                  </td>
+                  <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", color: "#475569" }}>{item.category}</td>
+                  <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", textAlign: "right", fontWeight: "bold", color: "#b91c1c" }}>
+                    {formatCurrency(item.amount)}
+                  </td>
+                  <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", color: "#334155" }}>{item.paymentMethod}</td>
+                  <td style={{ padding: "6px 8px", border: "1px solid #cbd5e1", color: "#334155" }}>{item.recordedBy || "Staff"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+          {getFilteredExpenses().length > 0 && (
+            <tfoot>
+              <tr style={{ backgroundColor: "#f1f5f9", fontWeight: "bold" }}>
+                <td colSpan={4} style={{ padding: "8px", border: "1px solid #cbd5e1", textAlign: "right", fontSize: "12px", color: "#1e293b" }}>
+                  GRAND TOTAL EXPENSES:
+                </td>
+                <td style={{ padding: "8px", border: "1px solid #cbd5e1", textAlign: "right", fontSize: "13px", fontWeight: "900", color: "#b91c1c" }}>
+                  {formatCurrency(getFilteredExpenses().reduce((sum, exp) => sum + Number(exp.amount || 0), 0))}
+                </td>
+                <td colSpan={2} style={{ padding: "8px", border: "1px solid #cbd5e1" }}></td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+
+        {/* Official Authorizations */}
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "40px", paddingTop: "20px", fontSize: "11px" }}>
+          <div style={{ textAlign: "center", width: "180px" }}>
+            <div style={{ borderTop: "1px solid #334155", paddingTop: "4px", fontWeight: "bold" }}>
+              {activeStaffName || (billingRole === "admin" ? "Administrator" : "Staff User")}
+            </div>
+            <div style={{ color: "#64748b" }}>Prepared / Verified By</div>
+          </div>
+          <div style={{ textAlign: "center", width: "180px" }}>
+            <div style={{ borderTop: "1px solid #334155", paddingTop: "4px", fontWeight: "bold" }}>
+              Admin Authority / Stamp
+            </div>
+            <div style={{ color: "#64748b" }}>Authorized Signature</div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+    </div >
   );
 }
