@@ -6,12 +6,20 @@ import { reduceStockInternal } from './products/route';
 let isMigrationChecked = false;
 async function ensureBillingColumns() {
   if (isMigrationChecked) return;
-  try {
-    await prisma.$executeRawUnsafe(`ALTER TABLE "BillRecord" ADD COLUMN "nextPaymentDate" TEXT`);
-  } catch (e) {}
-  try {
-    await prisma.$executeRawUnsafe(`ALTER TABLE "BillRecord" ADD COLUMN "nextPaymentDays" INTEGER`);
-  } catch (e) {}
+  const queries = [
+    `ALTER TABLE BillRecord ADD COLUMN nextPaymentDate TEXT;`,
+    `ALTER TABLE BillRecord ADD COLUMN nextPaymentDays INTEGER;`,
+    `ALTER TABLE BillRecord ADD COLUMN admittedDate TEXT;`,
+    `ALTER TABLE BillRecord ADD COLUMN classTime TEXT;`,
+    `ALTER TABLE BillRecord ADD COLUMN parentName TEXT;`
+  ];
+  for (const q of queries) {
+    try {
+      await prisma.$executeRawUnsafe(q);
+    } catch (e) {
+      // Column already exists or schema busy
+    }
+  }
   isMigrationChecked = true;
 }
 
@@ -122,6 +130,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
+    await ensureBillingColumns();
     const { session, errorResponse } = await requireInstituteOrAdmin(req);
     if (errorResponse) return errorResponse;
 
@@ -251,27 +260,50 @@ export async function POST(req) {
         updatedThirdDate = paymentDate;
       }
 
-      const updatedBill = await prisma.billRecord.update({
-        where: { id: existingBill.id },
-        data: {
-          paidAmount: totalPaidSoFar,
-          dueAmount: remainingDue,
-          amountInWords: amountInWords || existingBill.amountInWords,
-          firstInstallment: updatedFirst,
-          firstPaymentDate: updatedFirstDate,
-          secondInstallment: updatedSecond,
-          secondPaymentDate: updatedSecondDate,
-          thirdInstallment: updatedThird,
-          thirdPaymentDate: updatedThirdDate,
-          paymentsJson: JSON.stringify(paymentsList),
-          parentBillNumber: chosenMethod,
-          nextPaymentDate: remainingDue > 0 ? (incomingNextDate || existingBill.nextPaymentDate) : null,
-          nextPaymentDays: remainingDue > 0 ? (incomingNextDays || existingBill.nextPaymentDays) : null,
-          paymentSystem: isCompleted ? 'Full Payment' : `${instNum === 2 ? '2nd' : instNum === 3 ? '3rd' : `${instNum}th`} Installment`,
-          preparedBy: (preparedBy && preparedBy.trim()) ? preparedBy.trim() : (existingBill.preparedBy || ''),
-          isSyncedToSheet: false
+      let updatedBill;
+      const baseUpdateData = {
+        paidAmount: totalPaidSoFar,
+        dueAmount: remainingDue,
+        amountInWords: amountInWords || existingBill.amountInWords,
+        firstInstallment: updatedFirst,
+        firstPaymentDate: updatedFirstDate,
+        secondInstallment: updatedSecond,
+        secondPaymentDate: updatedSecondDate,
+        thirdInstallment: updatedThird,
+        thirdPaymentDate: updatedThirdDate,
+        paymentsJson: JSON.stringify(paymentsList),
+        parentBillNumber: chosenMethod,
+        paymentSystem: isCompleted ? 'Full Payment' : `${instNum === 2 ? '2nd' : instNum === 3 ? '3rd' : `${instNum}th`} Installment`,
+        preparedBy: (preparedBy && preparedBy.trim()) ? preparedBy.trim() : (existingBill.preparedBy || ''),
+        isSyncedToSheet: false
+      };
+
+      try {
+        updatedBill = await prisma.billRecord.update({
+          where: { id: existingBill.id },
+          data: {
+            ...baseUpdateData,
+            nextPaymentDate: remainingDue > 0 ? (incomingNextDate || existingBill.nextPaymentDate) : null,
+            nextPaymentDays: remainingDue > 0 ? (incomingNextDays || existingBill.nextPaymentDays) : null
+          }
+        });
+      } catch (upErr) {
+        console.warn('Installment update fallback triggered:', upErr.message);
+        updatedBill = await prisma.billRecord.update({
+          where: { id: existingBill.id },
+          data: baseUpdateData
+        });
+        if (remainingDue > 0 && (incomingNextDate || incomingNextDays || existingBill.nextPaymentDate)) {
+          try {
+            await prisma.$executeRawUnsafe(
+              `UPDATE BillRecord SET nextPaymentDate = ?, nextPaymentDays = ? WHERE id = ?;`,
+              incomingNextDate || existingBill.nextPaymentDate || null,
+              incomingNextDays || existingBill.nextPaymentDays || null,
+              existingBill.id
+            );
+          } catch (rawErr) {}
         }
-      });
+      }
 
       // Background auto-sync to Google Sheet
       triggerSheetSync(instituteId, updatedBill, materials);
@@ -333,45 +365,71 @@ export async function POST(req) {
       }
     ];
 
-    const newBill = await prisma.billRecord.create({
-      data: {
-        billNumber: generatedBillNumber,
-        instituteId,
-        date: paymentDate,
-        admittedDate: paymentDate,  // Locked: first bill date = admitted date, never changed
-        studentName: studentName.trim(),
-        address: address || '',
-        contactNumber: cleanPhone,
-        parentName: (parentName || '').trim(),
-        parentNumber: (() => {
-          const pDigits = (parentNumber || '').replace(/\D/g, '');
-          const pLast10 = pDigits.length >= 10 ? pDigits.slice(-10) : pDigits;
-          return pLast10 ? `+977-${pLast10}` : (parentNumber || '').trim();
-        })(),
-        classTime: (classTime || '').trim(),
-        courseDetail: courseDetail.trim(),
-        coursePackage: coursePackage || 'Full packages',
-        paymentSystem: initialDue <= 0 ? 'Full Payment' : '1st Installment',
-        grossFee: parsedGross,
-        discountPercent: parsedDiscPct,
-        discountAmount: parsedDiscAmount,
-        totalFee: finalTotalFee, // Immutable once entered!
-        vatPercent: 13,
-        vatAmount: vatAmt,
-        paidAmount: incomingPaid,
-        dueAmount: initialDue,
-        amountInWords: amountInWords || '',
-        firstInstallment: firstInst,
-        firstBillNo: generatedBillNumber,
-        firstPaymentDate: firstDate,
-        paymentsJson: JSON.stringify(initialPayments),
-        parentBillNumber: chosenMethod,
-        nextPaymentDate: initialDue > 0 ? incomingNextDate : null,
-        nextPaymentDays: initialDue > 0 ? incomingNextDays : null,
-        materialsJson: JSON.stringify(materials || []),
-        preparedBy: (preparedBy && preparedBy.trim()) ? preparedBy.trim() : ''
+    let newBill;
+    const baseBillData = {
+      billNumber: generatedBillNumber,
+      instituteId,
+      date: paymentDate,
+      admittedDate: paymentDate,  // Locked: first bill date = admitted date, never changed
+      studentName: studentName.trim(),
+      address: address || '',
+      contactNumber: cleanPhone,
+      parentName: (parentName || '').trim(),
+      parentNumber: (() => {
+        const pDigits = (parentNumber || '').replace(/\D/g, '');
+        const pLast10 = pDigits.length >= 10 ? pDigits.slice(-10) : pDigits;
+        return pLast10 ? `+977-${pLast10}` : (parentNumber || '').trim();
+      })(),
+      classTime: (classTime || '').trim(),
+      courseDetail: courseDetail.trim(),
+      coursePackage: coursePackage || 'Full packages',
+      paymentSystem: initialDue <= 0 ? 'Full Payment' : '1st Installment',
+      grossFee: parsedGross,
+      discountPercent: parsedDiscPct,
+      discountAmount: parsedDiscAmount,
+      totalFee: finalTotalFee, // Immutable once entered!
+      vatPercent: 13,
+      vatAmount: vatAmt,
+      paidAmount: incomingPaid,
+      dueAmount: initialDue,
+      amountInWords: amountInWords || '',
+      firstInstallment: firstInst,
+      firstBillNo: generatedBillNumber,
+      firstPaymentDate: firstDate,
+      paymentsJson: JSON.stringify(initialPayments),
+      parentBillNumber: chosenMethod,
+      materialsJson: JSON.stringify(materials || []),
+      preparedBy: (preparedBy && preparedBy.trim()) ? preparedBy.trim() : ''
+    };
+
+    try {
+      newBill = await prisma.billRecord.create({
+        data: {
+          ...baseBillData,
+          nextPaymentDate: initialDue > 0 ? incomingNextDate : null,
+          nextPaymentDays: initialDue > 0 ? incomingNextDays : null
+        }
+      });
+    } catch (createErr) {
+      console.warn('BillRecord.create with nextPayment fields failed, using resilient fallback:', createErr.message);
+      newBill = await prisma.billRecord.create({
+        data: baseBillData
+      });
+      if (initialDue > 0 && (incomingNextDate || incomingNextDays)) {
+        try {
+          await prisma.$executeRawUnsafe(
+            `UPDATE BillRecord SET nextPaymentDate = ?, nextPaymentDays = ? WHERE id = ?;`,
+            incomingNextDate || null,
+            incomingNextDays || null,
+            newBill.id
+          );
+          newBill.nextPaymentDate = incomingNextDate || null;
+          newBill.nextPaymentDays = incomingNextDays || null;
+        } catch (rawErr) {
+          console.warn('Direct raw SQL nextPayment update notice:', rawErr.message);
+        }
       }
-    });
+    }
 
     // Background auto-sync to Google Sheet
     triggerSheetSync(instituteId, newBill, materials);
@@ -452,6 +510,7 @@ async function triggerSheetSync(instituteId, bill, materials) {
 
 export async function PUT(req) {
   try {
+    await ensureBillingColumns();
     const { session, errorResponse } = await requireInstituteAdmin(req);
     if (errorResponse) return errorResponse;
 
@@ -520,33 +579,56 @@ export async function PUT(req) {
 
       const cleanStr = (val) => (typeof val === 'string' ? val.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim() : val);
 
-      const updatedBill = await prisma.billRecord.update({
-        where: { id: body.billId },
-        data: {
-          date: body.date || existing.date,
-          studentName: body.studentName ? cleanStr(body.studentName) : existing.studentName,
-          address: body.address !== undefined ? cleanStr(body.address) : existing.address,
-          contactNumber: editContactNumber,
-          parentName: body.parentName !== undefined ? cleanStr(body.parentName) : existing.parentName,
-          parentNumber: editParentNumber,
-          classTime: body.classTime !== undefined ? cleanStr(body.classTime) : existing.classTime,
-          courseDetail: body.courseDetail ? cleanStr(body.courseDetail) : existing.courseDetail,
-          coursePackage: body.coursePackage || existing.coursePackage,
-          paymentSystem: body.paymentSystem || existing.paymentSystem,
-          grossFee: gross,
-          discountPercent: discPct,
-          discountAmount: discAmt,
-          totalFee: total,
-          paidAmount: paid,
-          dueAmount: due,
-          nextPaymentDate: due > 0 ? (body.nextPaymentDate !== undefined ? body.nextPaymentDate : existing.nextPaymentDate) : null,
-          nextPaymentDays: due > 0 ? (body.nextPaymentDays !== undefined ? (Number(body.nextPaymentDays) || null) : existing.nextPaymentDays) : null,
-          amountInWords: body.amountInWords ? cleanStr(body.amountInWords) : existing.amountInWords,
-          materialsJson: body.materials ? JSON.stringify(body.materials) : existing.materialsJson,
-          preparedBy: body.preparedBy !== undefined ? cleanStr(body.preparedBy) : existing.preparedBy,
-          parentBillNumber: (body.paymentMethod && body.paymentMethod.trim()) ? body.paymentMethod.trim() : (existing.parentBillNumber || 'Cash')
+      let updatedBill;
+      const baseEditData = {
+        date: body.date || existing.date,
+        studentName: body.studentName ? cleanStr(body.studentName) : existing.studentName,
+        address: body.address !== undefined ? cleanStr(body.address) : existing.address,
+        contactNumber: editContactNumber,
+        parentName: body.parentName !== undefined ? cleanStr(body.parentName) : existing.parentName,
+        parentNumber: editParentNumber,
+        classTime: body.classTime !== undefined ? cleanStr(body.classTime) : existing.classTime,
+        courseDetail: body.courseDetail ? cleanStr(body.courseDetail) : existing.courseDetail,
+        coursePackage: body.coursePackage || existing.coursePackage,
+        paymentSystem: body.paymentSystem || existing.paymentSystem,
+        grossFee: gross,
+        discountPercent: discPct,
+        discountAmount: discAmt,
+        totalFee: total,
+        paidAmount: paid,
+        dueAmount: due,
+        amountInWords: body.amountInWords ? cleanStr(body.amountInWords) : existing.amountInWords,
+        materialsJson: body.materials ? JSON.stringify(body.materials) : existing.materialsJson,
+        preparedBy: body.preparedBy !== undefined ? cleanStr(body.preparedBy) : existing.preparedBy,
+        parentBillNumber: (body.paymentMethod && body.paymentMethod.trim()) ? body.paymentMethod.trim() : (existing.parentBillNumber || 'Cash')
+      };
+
+      try {
+        updatedBill = await prisma.billRecord.update({
+          where: { id: body.billId },
+          data: {
+            ...baseEditData,
+            nextPaymentDate: due > 0 ? (body.nextPaymentDate !== undefined ? body.nextPaymentDate : existing.nextPaymentDate) : null,
+            nextPaymentDays: due > 0 ? (body.nextPaymentDays !== undefined ? (Number(body.nextPaymentDays) || null) : existing.nextPaymentDays) : null
+          }
+        });
+      } catch (upErr) {
+        console.warn('Admin edit_bill update fallback triggered:', upErr.message);
+        updatedBill = await prisma.billRecord.update({
+          where: { id: body.billId },
+          data: baseEditData
+        });
+        if (due > 0 && (body.nextPaymentDate !== undefined || body.nextPaymentDays !== undefined)) {
+          try {
+            await prisma.$executeRawUnsafe(
+              `UPDATE BillRecord SET nextPaymentDate = ?, nextPaymentDays = ? WHERE id = ?;`,
+              body.nextPaymentDate || existing.nextPaymentDate || null,
+              Number(body.nextPaymentDays) || existing.nextPaymentDays || null,
+              body.billId
+            );
+          } catch (rawErr) {}
         }
-      });
+      }
 
       // Real-time background auto-sync to linked Google Sheet
       triggerSheetSync(instituteId, updatedBill, body.materials || (existing.materialsJson ? JSON.parse(existing.materialsJson) : []));

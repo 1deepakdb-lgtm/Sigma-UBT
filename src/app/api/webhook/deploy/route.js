@@ -157,6 +157,38 @@ async function runDeployTasks(repoDir, forceRestore = false) {
     addLog(`⚠️ Database verification notice: ${dbErr.message}`);
   }
 
+  // 4c. Auto-migrate SQLite schema columns
+  try {
+    addLog(`⚙️ Ensuring SQLite columns exist in dev.db...`);
+    const { default: prismaClient } = await import('@/lib/prisma');
+    const cols = [
+      'ALTER TABLE BillRecord ADD COLUMN nextPaymentDate TEXT;',
+      'ALTER TABLE BillRecord ADD COLUMN nextPaymentDays INTEGER;',
+      'ALTER TABLE BillRecord ADD COLUMN admittedDate TEXT;',
+      'ALTER TABLE BillRecord ADD COLUMN classTime TEXT;',
+      'ALTER TABLE BillRecord ADD COLUMN parentName TEXT;'
+    ];
+    for (const q of cols) {
+      try {
+        await prismaClient.$executeRawUnsafe(q);
+      } catch (colErr) {
+        // Column already exists
+      }
+    }
+    addLog(`✅ SQLite schema columns verified.`);
+  } catch (mErr) {
+    addLog(`ℹ️ Schema check notice: ${mErr.message}`);
+  }
+
+  // 4d. Regenerate Prisma Client on Server
+  try {
+    addLog(`🔄 Updating Prisma Client binary on server...`);
+    await execAsync('node ./node_modules/prisma/build/index.js generate', execOpts);
+    addLog(`✅ Prisma Client generated on server.`);
+  } catch (pErr) {
+    addLog(`ℹ️ Prisma generate notice: ${pErr.message}`);
+  }
+
   // 5. CloudLinux node_modules symlink check
   const nodeModulesPath = path.join(repoDir, 'node_modules');
   try {

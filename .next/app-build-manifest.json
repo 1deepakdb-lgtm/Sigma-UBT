@@ -30,106 +30,6 @@
       "static/chunks/main-app-15e4393f6353e790.js",
       "static/chunks/app/page-b19c5a852ac8303b.js"
     ],
-    "/institute/news/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/29-70ba96b447a96a78.js",
-      "static/chunks/5061-a995ad645a276fe1.js",
-      "static/chunks/971-78fb1a81bf13ec72.js",
-      "static/chunks/app/institute/news/page-fca08f475acde337.js"
-    ],
-    "/institute/layout": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/app/institute/layout-7e2637dac3c8a606.js"
-    ],
-    "/institute/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/29-70ba96b447a96a78.js",
-      "static/chunks/3220-ed5d396dd3ec93ea.js",
-      "static/chunks/6081-faecd51d26612018.js",
-      "static/chunks/8864-92627318d656f62d.js",
-      "static/chunks/9453-3aa63bcd8f07d147.js",
-      "static/chunks/9246-3687070404018546.js",
-      "static/chunks/971-78fb1a81bf13ec72.js",
-      "static/chunks/1144-3f0aa6579e463d9f.js",
-      "static/chunks/4093-2ea84139698ac20e.js",
-      "static/chunks/app/institute/page-aca0e94b3d4747d8.js"
-    ],
-    "/institute/results/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/app/institute/results/page-e15222e54e90b911.js"
-    ],
-    "/institute/settings/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/app/institute/settings/page-25a963387c510463.js"
-    ],
-    "/institute/listening/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/29-70ba96b447a96a78.js",
-      "static/chunks/5061-a995ad645a276fe1.js",
-      "static/chunks/3220-ed5d396dd3ec93ea.js",
-      "static/chunks/6081-faecd51d26612018.js",
-      "static/chunks/8864-92627318d656f62d.js",
-      "static/chunks/9453-3aa63bcd8f07d147.js",
-      "static/chunks/app/institute/listening/page-dbd6cf9e70e13272.js"
-    ],
-    "/institute/exam-preview/[examId]/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/app/institute/exam-preview/[examId]/page-dd1db187f616e9cc.js"
-    ],
-    "/institute/questions/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/3220-ed5d396dd3ec93ea.js",
-      "static/chunks/4570-deba7c3a0665c12a.js",
-      "static/chunks/app/institute/questions/page-846de00723f9a89a.js"
-    ],
-    "/admin/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/29-70ba96b447a96a78.js",
-      "static/chunks/5061-a995ad645a276fe1.js",
-      "static/chunks/app/admin/page-4ea47297210aa16f.js"
-    ],
-    "/admin/layout": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/app/admin/layout-93dfb7a7de574104.js"
-    ],
     "/admin/listening/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
       "static/chunks/fd9d1056-f2c60586c7566496.js",
@@ -144,16 +44,12 @@
       "static/chunks/9453-3aa63bcd8f07d147.js",
       "static/chunks/app/admin/listening/page-7a54b8f580f7ed06.js"
     ],
-    "/admin/news/page": [
+    "/admin/layout": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
       "static/chunks/fd9d1056-f2c60586c7566496.js",
       "static/chunks/2117-1b28a0bcf12f1e19.js",
       "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/29-70ba96b447a96a78.js",
-      "static/chunks/5061-a995ad645a276fe1.js",
-      "static/chunks/971-78fb1a81bf13ec72.js",
-      "static/chunks/app/admin/news/page-c75d3238d65e04b0.js"
+      "static/chunks/app/admin/layout-93dfb7a7de574104.js"
     ],
     "/admin/institutes/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
@@ -165,7 +61,7 @@
       "static/chunks/5061-a995ad645a276fe1.js",
       "static/chunks/app/admin/institutes/page-76587f9786d27132.js"
     ],
-    "/admin/questions/page": [
+    "/admin/dictionary/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
       "static/chunks/fd9d1056-f2c60586c7566496.js",
       "static/chunks/2117-1b28a0bcf12f1e19.js",
@@ -173,8 +69,28 @@
       "static/chunks/3448-8232781a0a213f0b.js",
       "static/chunks/29-70ba96b447a96a78.js",
       "static/chunks/5061-a995ad645a276fe1.js",
-      "static/chunks/4570-deba7c3a0665c12a.js",
-      "static/chunks/app/admin/questions/page-ac3fc2d586d5dc27.js"
+      "static/chunks/8864-92627318d656f62d.js",
+      "static/chunks/9246-3687070404018546.js",
+      "static/chunks/1144-3f0aa6579e463d9f.js",
+      "static/chunks/app/admin/dictionary/page-db37e23d137a6d67.js"
+    ],
+    "/admin/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/29-70ba96b447a96a78.js",
+      "static/chunks/5061-a995ad645a276fe1.js",
+      "static/chunks/app/admin/page-4ea47297210aa16f.js"
+    ],
+    "/admin/results/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/app/admin/results/page-ae25dd2a3b609fd0.js"
     ],
     "/admin/notifications/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
@@ -186,13 +102,27 @@
       "static/chunks/5061-a995ad645a276fe1.js",
       "static/chunks/app/admin/notifications/page-0e75c3578f633a4d.js"
     ],
-    "/admin/results/page": [
+    "/admin/news/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
       "static/chunks/fd9d1056-f2c60586c7566496.js",
       "static/chunks/2117-1b28a0bcf12f1e19.js",
       "static/chunks/main-app-15e4393f6353e790.js",
       "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/app/admin/results/page-ae25dd2a3b609fd0.js"
+      "static/chunks/29-70ba96b447a96a78.js",
+      "static/chunks/5061-a995ad645a276fe1.js",
+      "static/chunks/971-78fb1a81bf13ec72.js",
+      "static/chunks/app/admin/news/page-c75d3238d65e04b0.js"
+    ],
+    "/admin/questions/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/29-70ba96b447a96a78.js",
+      "static/chunks/5061-a995ad645a276fe1.js",
+      "static/chunks/4570-deba7c3a0665c12a.js",
+      "static/chunks/app/admin/questions/page-ac3fc2d586d5dc27.js"
     ],
     "/admin/settings/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
@@ -214,7 +144,38 @@
       "static/chunks/5061-a995ad645a276fe1.js",
       "static/chunks/app/admin/students/page-91ca89d1a98bc5ab.js"
     ],
-    "/admin/dictionary/page": [
+    "/institute/results/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/app/institute/results/page-e15222e54e90b911.js"
+    ],
+    "/institute/layout": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/app/institute/layout-7e2637dac3c8a606.js"
+    ],
+    "/institute/exam-preview/[examId]/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/app/institute/exam-preview/[examId]/page-dd1db187f616e9cc.js"
+    ],
+    "/institute/settings/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/app/institute/settings/page-25a963387c510463.js"
+    ],
+    "/institute/news/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
       "static/chunks/fd9d1056-f2c60586c7566496.js",
       "static/chunks/2117-1b28a0bcf12f1e19.js",
@@ -222,10 +183,72 @@
       "static/chunks/3448-8232781a0a213f0b.js",
       "static/chunks/29-70ba96b447a96a78.js",
       "static/chunks/5061-a995ad645a276fe1.js",
+      "static/chunks/971-78fb1a81bf13ec72.js",
+      "static/chunks/app/institute/news/page-fca08f475acde337.js"
+    ],
+    "/institute/listening/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/29-70ba96b447a96a78.js",
+      "static/chunks/5061-a995ad645a276fe1.js",
+      "static/chunks/3220-ed5d396dd3ec93ea.js",
+      "static/chunks/6081-faecd51d26612018.js",
       "static/chunks/8864-92627318d656f62d.js",
+      "static/chunks/9453-3aa63bcd8f07d147.js",
+      "static/chunks/app/institute/listening/page-dbd6cf9e70e13272.js"
+    ],
+    "/institute/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/29-70ba96b447a96a78.js",
+      "static/chunks/3220-ed5d396dd3ec93ea.js",
+      "static/chunks/6081-faecd51d26612018.js",
+      "static/chunks/8864-92627318d656f62d.js",
+      "static/chunks/9453-3aa63bcd8f07d147.js",
       "static/chunks/9246-3687070404018546.js",
+      "static/chunks/971-78fb1a81bf13ec72.js",
       "static/chunks/1144-3f0aa6579e463d9f.js",
-      "static/chunks/app/admin/dictionary/page-db37e23d137a6d67.js"
+      "static/chunks/4093-2ea84139698ac20e.js",
+      "static/chunks/app/institute/page-aca0e94b3d4747d8.js"
+    ],
+    "/institute/questions/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/3220-ed5d396dd3ec93ea.js",
+      "static/chunks/4570-deba7c3a0665c12a.js",
+      "static/chunks/app/institute/questions/page-846de00723f9a89a.js"
+    ],
+    "/student/exam/[examId]/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/app/student/exam/[examId]/page-848d11d12d6af785.js"
+    ],
+    "/student/layout": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/app/student/layout-1090b76084aedd62.js"
+    ],
+    "/student/result/page": [
+      "static/chunks/webpack-5b5c260b45dc6bac.js",
+      "static/chunks/fd9d1056-f2c60586c7566496.js",
+      "static/chunks/2117-1b28a0bcf12f1e19.js",
+      "static/chunks/main-app-15e4393f6353e790.js",
+      "static/chunks/3448-8232781a0a213f0b.js",
+      "static/chunks/app/student/result/page-d3a9d773b8871fe0.js"
     ],
     "/student/dashboard/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
@@ -245,29 +268,6 @@
       "static/chunks/7470-d157904172801f12.js",
       "static/chunks/app/student/dashboard/page-83afef97b51041d1.js"
     ],
-    "/student/layout": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/app/student/layout-4ac18fae43afc1b7.js"
-    ],
-    "/student/exam/[examId]/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/app/student/exam/[examId]/page-848d11d12d6af785.js"
-    ],
-    "/student/result/page": [
-      "static/chunks/webpack-5b5c260b45dc6bac.js",
-      "static/chunks/fd9d1056-f2c60586c7566496.js",
-      "static/chunks/2117-1b28a0bcf12f1e19.js",
-      "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/3448-8232781a0a213f0b.js",
-      "static/chunks/app/student/result/page-d3a9d773b8871fe0.js"
-    ],
     "/voice-studio/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
       "static/chunks/fd9d1056-f2c60586c7566496.js",
@@ -284,7 +284,7 @@
       "static/chunks/fd9d1056-f2c60586c7566496.js",
       "static/chunks/2117-1b28a0bcf12f1e19.js",
       "static/chunks/main-app-15e4393f6353e790.js",
-      "static/chunks/app/voice-studio/layout-1a4a6b070bb3508e.js"
+      "static/chunks/app/voice-studio/layout-3c3d9c45fdf9d8ad.js"
     ],
     "/student/page": [
       "static/chunks/webpack-5b5c260b45dc6bac.js",
