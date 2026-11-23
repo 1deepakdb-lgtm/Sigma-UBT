@@ -197,6 +197,7 @@ export default function AdminInstitutesPage() {
         alert("❌ Failed to delete: " + (data.error || "Unknown error"));
       } else {
         alert(`✅ Institute "${inst.name}" has been permanently deleted.`);
+        setInstitutes(prev => prev.filter(i => i.id !== inst.id));
         await loadInstitutes();
         if (editId === inst.id) resetForm();
       }

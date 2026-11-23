@@ -196,10 +196,84 @@ export async function DELETE(req) {
 
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
-    await prisma.institute.delete({ where: { id } });
-    return NextResponse.json({ success: true, message: 'Institute deleted' });
+    // Find the institute by ID or username
+    const institute = await prisma.institute.findFirst({
+      where: {
+        OR: [
+          { id },
+          { username: id }
+        ]
+      }
+    });
+
+    if (!institute) {
+      return NextResponse.json({ error: 'Institute not found' }, { status: 404 });
+    }
+
+    const instId = institute.id;
+
+    // 1. Find all users belonging to this institute (students, staff, institute admin)
+    const users = await prisma.user.findMany({
+      where: { instituteId: instId },
+      select: { id: true }
+    });
+    const userIds = users.map(u => u.id);
+
+    // 2. Cleanly delete dependent records in proper order to prevent Foreign Key constraint errors
+    if (userIds.length > 0) {
+      await prisma.examResult.deleteMany({
+        where: { userId: { in: userIds } }
+      }).catch(e => console.warn('Clean examResult:', e.message));
+
+      await prisma.examSession.deleteMany({
+        where: { userId: { in: userIds } }
+      }).catch(e => console.warn('Clean examSession:', e.message));
+
+      await prisma.user.deleteMany({
+        where: { id: { in: userIds } }
+      }).catch(e => console.warn('Clean users:', e.message));
+    }
+
+    // 3. Delete InstituteExamSet relations
+    await prisma.instituteExamSet.deleteMany({
+      where: { instituteId: instId }
+    }).catch(e => console.warn('Clean instituteExamSet:', e.message));
+
+    // 4. Delete BillingProfile & BillRecords
+    await prisma.billingProfile.deleteMany({
+      where: { instituteId: instId }
+    }).catch(e => console.warn('Clean billingProfile:', e.message));
+
+    await prisma.billRecord.deleteMany({
+      where: { instituteId: instId }
+    }).catch(e => console.warn('Clean billRecord:', e.message));
+
+    // 5. Unlink any ExamSets / ExamPackages created by this institute
+    await prisma.examSet.updateMany({
+      where: { creatorInstituteId: instId },
+      data: { creatorInstituteId: null, creatorInstituteName: null }
+    }).catch(e => console.warn('Unlink examSet:', e.message));
+
+    await prisma.examPackage.updateMany({
+      where: { creatorInstituteId: instId },
+      data: { creatorInstituteId: null, creatorInstituteName: null }
+    }).catch(e => console.warn('Unlink examPackage:', e.message));
+
+    // 6. Delete the Institute itself
+    await prisma.institute.delete({
+      where: { id: instId }
+    });
+
+    console.log(`[SuperAdmin] Institute "${institute.name}" (${instId}) permanently deleted by admin ${session.id}`);
+
+    return NextResponse.json({
+      success: true,
+      message: `Institute "${institute.name}" deleted successfully.`
+    });
   } catch (err) {
     console.error('Error deleting institute:', err);
-    return NextResponse.json({ error: 'Failed to delete institute' }, { status: 500 });
+    return NextResponse.json({
+      error: `Failed to delete institute: ${err.message}`
+    }, { status: 500 });
   }
 }
