@@ -451,11 +451,20 @@ async function triggerSheetSync(instituteId, bill, materials) {
   try {
     const profile = await prisma.billingProfile.findUnique({ where: { instituteId } });
     if (profile?.googleSheetUrl && profile.googleSheetUrl.startsWith('http') && profile.googleSheetUrl !== 'setup_done') {
+      // Helper: Normalize phone number and strip +977 prefix
+      const cleanPhone = (val) => {
+        if (!val) return '';
+        let digits = String(val).replace(/\D/g, '');
+        if (digits.startsWith('977') && digits.length > 10) {
+          digits = digits.slice(3);
+        }
+        return digits.length >= 10 ? digits.slice(-10) : digits;
+      };
+
       // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
       const formatNepalPhone = (val) => {
         if (!val) return '';
-        const digits = String(val).replace(/\D/g, '');
-        const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+        const last10 = cleanPhone(val);
         return last10 ? `'+977-${last10}` : '';
       };
 
@@ -473,6 +482,8 @@ async function triggerSheetSync(instituteId, bill, materials) {
 
       const formattedBill = {
         ...bill,
+        billNumber: bill.billNumber || bill.billNo || '',
+        billNo: bill.billNumber || bill.billNo || '',
         ...(bill.contactNumber !== undefined ? { contactNumber: formatNepalPhone(bill.contactNumber) } : {}),
         ...(bill.parentNumber !== undefined ? { parentNumber: formatNepalPhone(bill.parentNumber) } : {}),
         lastUpdated: nowEnglish

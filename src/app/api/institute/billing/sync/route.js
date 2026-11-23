@@ -129,6 +129,44 @@ export async function POST(req) {
       }
     }
 
+    // Handle Sheet Deduplication Purge Request
+    if (body.action === 'deduplicate') {
+      try {
+        const res = await fetch(googleSheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'deduplicate',
+            ownerEmail: ownerEmail || ''
+          }),
+          redirect: 'follow'
+        });
+
+        const text = await res.text().catch(() => '');
+        if (!res.ok) {
+          return NextResponse.json({
+            error: formatGoogleError(res.status, text, googleSheetUrl)
+          }, { status: 502 });
+        }
+
+        const parsed = parseGoogleResponse(text, res.status, googleSheetUrl);
+        if (parsed.error) {
+          return NextResponse.json({ error: parsed.error }, { status: 502 });
+        }
+
+        const dedupResult = parsed.data || {};
+        return NextResponse.json({
+          success: true,
+          message: dedupResult.message || `Deduplication complete! Removed ${dedupResult.removed || 0} duplicate bill rows.`,
+          details: dedupResult
+        });
+      } catch (dedupErr) {
+        return NextResponse.json({
+          error: `Failed to run Google Sheet deduplication: ${dedupErr.message}`
+        }, { status: 502 });
+      }
+    }
+
     // Helper: English-only Date Time for Last Updated column
     const nowEnglish = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Kathmandu',
@@ -151,7 +189,11 @@ export async function POST(req) {
       const billPayload = {
         action: 'append_or_update_bill',
         ownerEmail: ownerEmail || '',
-        bill: b,
+        bill: {
+          ...b,
+          billNumber: b.billNumber || b.billNo || '',
+          billNo: b.billNumber || b.billNo || ''
+        },
         materials: body.materials || []
       };
 
@@ -269,22 +311,32 @@ export async function POST(req) {
       }
     }
 
-    // Ensure exactly 1 entry per student (by 10-digit contactNumber or billNumber)
-    const uniqueBillsMap = new Map();
-    for (const b of bills) {
-      const cleanPhone = (b.contactNumber || '').replace(/\D/g, '').slice(-10);
-      const key = cleanPhone || String(b.billNumber || '').trim().toLowerCase() || b.id;
-      uniqueBillsMap.set(key, b);
-    }
-    const deduplicatedBills = Array.from(uniqueBillsMap.values());
+    // Helper: Normalize 10-digit mobile number and strip +977 country code
+    const cleanPhone = (val) => {
+      if (!val) return '';
+      let digits = String(val).replace(/\D/g, '');
+      if (digits.startsWith('977') && digits.length > 10) {
+        digits = digits.slice(3);
+      }
+      return digits.length >= 10 ? digits.slice(-10) : digits;
+    };
 
     // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
     const formatNepalPhone = (val) => {
       if (!val) return '';
-      const digits = String(val).replace(/\D/g, '');
-      const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+      const last10 = cleanPhone(val);
       return last10 ? `'+977-${last10}` : '';
     };
+
+    // Ensure strictly 1 entry per bill / student (Primary key: billNumber, Secondary: phone)
+    const uniqueBillsMap = new Map();
+    for (const b of bills) {
+      const bNum = String(b.billNumber || b.billNo || '').trim().toUpperCase();
+      const ph = cleanPhone(b.contactNumber);
+      const key = bNum || (ph ? `P:${ph}` : '') || b.id;
+      uniqueBillsMap.set(key, b);
+    }
+    const deduplicatedBills = Array.from(uniqueBillsMap.values());
 
     let formattedExpenses = [];
     if (Array.isArray(body.expenses) && body.expenses.length > 0) {

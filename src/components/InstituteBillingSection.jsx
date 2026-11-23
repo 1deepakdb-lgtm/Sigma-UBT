@@ -377,6 +377,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const [autoLogoutNotice, setAutoLogoutNotice] = useState("");
   const lastActivityRef = useRef(Date.now());
   const customPaymentInputRef = useRef(null);
+  const recentSyncsRef = useRef(new Map());
 
   // Gate Form States
   const [loginUserId, setLoginUserId] = useState("");
@@ -673,15 +674,36 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     return (localStorage.getItem(`billingAdminPin_${instKey}`) || adminPin || "9999").trim();
   };
 
-  // Hidden background sync to Google Sheet (Zero UI delay)
+  // Hidden background sync to Google Sheet (Zero UI delay with debounce)
   const autoSyncToGoogleSheetBackground = (bill, allBills) => {
     if (!bill) return;
+
+    // Concurrency / Duplicate debounce check
+    const bKey = String(bill.billNumber || bill.billNo || bill.id || "").trim().toUpperCase();
+    if (bKey) {
+      const now = Date.now();
+      const last = recentSyncsRef.current.get(bKey);
+      if (last && (now - last) < 5000) {
+        // Already triggered sync for this bill in the last 5 seconds
+        return;
+      }
+      recentSyncsRef.current.set(bKey, now);
+    }
+
+    // Helper: Normalize 10-digit mobile number and strip +977 prefix
+    const cleanPhone = (val) => {
+      if (!val) return '';
+      let digits = String(val).replace(/\D/g, '');
+      if (digits.startsWith('977') && digits.length > 10) {
+        digits = digits.slice(3);
+      }
+      return digits.length >= 10 ? digits.slice(-10) : digits;
+    };
 
     // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
     const formatNepalPhone = (val) => {
       if (!val) return '';
-      const digits = String(val).replace(/\D/g, '');
-      const last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+      const last10 = cleanPhone(val);
       return last10 ? `'+977-${last10}` : '';
     };
 
@@ -699,6 +721,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
     const formattedBill = {
       ...bill,
+      billNumber: bill.billNumber || bill.billNo || '',
+      billNo: bill.billNumber || bill.billNo || '',
       ...(bill.contactNumber !== undefined ? { contactNumber: formatNepalPhone(bill.contactNumber) } : {}),
       ...(bill.parentNumber !== undefined ? { parentNumber: formatNepalPhone(bill.parentNumber) } : {}),
       lastUpdated: nowEnglish
@@ -2510,6 +2534,73 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         message: ` ${connErr}`
       });
       alert(`Sync Error: ${connErr}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Dedicated Google Sheet duplicate purge
+  const handleCleanSheetDuplicates = async () => {
+    if (!profile.googleSheetUrl || !profile.googleSheetUrl.trim() || profile.googleSheetUrl === "setup_done") {
+      setSetupTab("connect");
+      handleOpenGoogleSetupModal();
+      return;
+    }
+
+    setIsSyncing(true);
+    const msg = "Scanning Google Sheet and removing duplicate bill entries, please wait...";
+    setSyncStatus(msg);
+    setTestStatus({ state: "testing", message: msg });
+
+    try {
+      const res = await fetch(apiWithInst("/api/institute/billing/sync"), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deduplicate',
+          googleSheetUrl: profile.googleSheetUrl.trim(),
+          ownerEmail: profile.ownerEmail ? profile.ownerEmail.trim() : ""
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const removed = data.details?.removed || 0;
+        const successMsg = removed > 0
+          ? `Successfully removed ${removed} duplicate bill rows! Every bill now has strictly 1 unique row.`
+          : "Google Sheet is completely clean! No duplicate bill rows found.";
+        setSyncStatus(` ${successMsg}`);
+        setTestStatus({ state: "success", message: ` ${successMsg}` });
+        alert(` ${successMsg}`);
+      } else {
+        // Fallback: If older script is deployed, run bulk sync with deduplicated bills
+        const resSync = await fetch(apiWithInst("/api/institute/billing/sync"), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'bulk_sync',
+            googleSheetUrl: profile.googleSheetUrl.trim(),
+            ownerEmail: profile.ownerEmail ? profile.ownerEmail.trim() : "",
+            bills: bills,
+            expenses: expenses
+          })
+        });
+        const syncData = await resSync.json();
+        if (resSync.ok && syncData.success) {
+          setSyncStatus(" Synchronized & cleaned duplicates via bulk sync.");
+          setTestStatus({ state: "success", message: " Synchronized all unique bills to Google Sheet." });
+          alert("Synchronized all unique bills to Google Sheet!\n\nNote: For instant 1-click deduplication, please update the Google Apps Script in Tab 2.");
+        } else {
+          const errMsg = data.error || syncData.error || "Failed to deduplicate Google Sheet.";
+          setSyncStatus(` ${errMsg}`);
+          setTestStatus({ state: "error", message: ` ${errMsg}` });
+          alert(`Deduplication Error: ${errMsg}`);
+        }
+      }
+    } catch (err) {
+      setSyncStatus(` Error: ${err.message}`);
+      setTestStatus({ state: "error", message: ` Error: ${err.message}` });
+      alert(`Error: ${err.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -7149,6 +7240,25 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             {isSyncing ? "Syncing..." : `Sync All Bills (${bills.length})`}
                           </button>
 
+                          <button
+                            type="button"
+                            onClick={handleCleanSheetDuplicates}
+                            disabled={isSyncing || !profile.googleSheetUrl}
+                            title="Remove all duplicate bill rows from Google Sheet"
+                            style={{
+                              backgroundColor: "#b91c1c",
+                              color: "white",
+                              border: "none",
+                              padding: "7px 14px",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                              cursor: (isSyncing || !profile.googleSheetUrl) ? "not-allowed" : "pointer"
+                            }}
+                          >
+                            Clean Sheet Duplicates
+                          </button>
+
                           {googleSheetViewUrl && (
                             <button
                               type="button"
@@ -7528,14 +7638,271 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           onClick={() => {
                             const code = `/**
  * EXAMJK BILLING & EXPENSES - GOOGLE SHEET & DRIVE SYNC SCRIPT
- * Version: 2.1 (Student Bills & Expenses Dual Sync with Concurrency Lock & Deduplication)
+ * Version: 2.2 (Single Unique Bill Entry & Auto-Deduplication Active)
+ * - Guarantees strictly 1 unique row per Bill No
+ * - Auto-Deduplication: Automatically scans and purges all duplicate rows
+ * - Dual Tabs: 'StudentBills' / 'Billing' tab & 'Expenses' tab
+ * - OnOpen Menu: Adds 'ExamJK Tools > Remove Duplicate Bills' in Google Sheets menu
  */
+
+function onOpen() {
+  try {
+    var ui = SpreadsheetApp.getUi();
+    ui.createMenu("ExamJK Tools")
+      .addItem("Remove Duplicate Bills (दोहोरिएका बिलहरू हटाउनुहोस्)", "cleanDuplicateBillsManual")
+      .addToUi();
+  } catch (e) {}
+}
+
+function cleanDuplicateBillsManual() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var s = getOrCreateStudentBillsSheet();
+  var removed = deduplicateStudentBills(s);
+  try {
+    SpreadsheetApp.getUi().alert("Deduplication Complete", "Successfully removed " + removed + " duplicate bill row(s)! Each bill now has strictly 1 unique row.", SpreadsheetApp.getUi().ButtonSet.OK);
+  } catch(e) {}
+}
+
 function doGet(e) {
   return ContentService.createTextOutput(JSON.stringify({
     status: "online",
-    message: "ExamJK Billing & Expense Webhook is Online and Ready! (Single-Entry Mode Active)",
+    message: "ExamJK Billing & Expense Webhook is Online and Ready! (Single Unique Entry Mode Active)",
     timestamp: new Date().toISOString()
   })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Core Helper: Deduplicate StudentBills sheet (Removes all duplicate rows, keeps latest)
+function deduplicateStudentBills(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 2) return 0;
+  var numCols = Math.min(sheet.getLastColumn(), 5);
+  var data = sheet.getRange(2, 1, lastRow - 1, numCols).getValues();
+  var seen = {};
+  var rowsToDelete = [];
+
+  // Scan backwards from bottom to top so the latest updated row is preserved
+  for (var i = data.length - 1; i >= 0; i--) {
+    var rowNum = i + 2;
+    var bNum = String(data[i][0] || "").trim().toUpperCase();
+    var phone = cleanPhone(data[i][3]);
+    var key = bNum || (phone ? ("P:" + phone) : "");
+    if (!key) continue;
+
+    if (seen[key]) {
+      rowsToDelete.push(rowNum);
+    } else {
+      seen[key] = rowNum;
+    }
+  }
+
+  // Delete duplicate rows (already in descending order)
+  for (var d = 0; d < rowsToDelete.length; d++) {
+    sheet.deleteRow(rowsToDelete[d]);
+  }
+  return rowsToDelete.length;
+}
+
+// Helper: Normalize 10-digit mobile number and strip +977
+function cleanPhone(val) {
+  if (!val) return "";
+  var digits = String(val).replace(/\\D/g, "");
+  if (digits.indexOf("977") === 0 && digits.length > 10) {
+    digits = digits.substring(3);
+  }
+  return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+// Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
+function toNepalPhone(val) {
+  if (!val) return "";
+  var last10 = cleanPhone(val);
+  return last10 ? ("'+977-" + last10) : "";
+}
+
+// Helper: English-only Date Time for Last Updated column (strictly in English)
+function getEnglishDateTime() {
+  try {
+    var tz = Session.getScriptTimeZone() || "GMT+5:45";
+    return Utilities.formatDate(new Date(), tz, "yyyy-MM-dd hh:mm:ss a");
+  } catch (e) {
+    var d = new Date();
+    return d.toISOString().replace("T", " ").substring(0, 19);
+  }
+}
+
+// Helper: Get or Create 'StudentBills' / 'Billing' Sheet
+function getOrCreateStudentBillsSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var allSheets = ss.getSheets();
+  var s = null;
+
+  // 1. Check existing sheets by name (case-insensitive)
+  for (var i = 0; i < allSheets.length; i++) {
+    var n = allSheets[i].getName().trim().toLowerCase();
+    if (n === "studentbills" || n === "billing" || n === "sheet 1" || n === "sheet1" || n === "bills") {
+      s = allSheets[i];
+      break;
+    }
+  }
+
+  // 2. If not found by name, use the 1st sheet tab
+  if (!s) {
+    if (allSheets.length > 0) {
+      s = allSheets[0];
+    } else {
+      try {
+        s = ss.insertSheet("StudentBills", 0);
+      } catch (e) {
+        s = ss.insertSheet();
+      }
+    }
+  }
+
+  var headers = [
+    "Bill No", "Date", "Student Name", "WhatsApp", "Address", "Parent Contact",
+    "Course Detail", "Package", "Payment Method", "Gross Fee", "Discount %",
+    "Total Fee (13% VAT Incl)", "Paid Amount", "Due Amount", "Amount In Words",
+    "Prepared By", "Last Updated"
+  ];
+  if (s.getLastRow() === 0) {
+    s.appendRow(headers);
+    var headerRange = s.getRange(1, 1, 1, headers.length);
+    headerRange.setBackground("#1e3a8a")
+               .setFontColor("#ffffff")
+               .setFontWeight("bold")
+               .setFontSize(11);
+    s.setFrozenRows(1);
+    for (var col = 1; col <= headers.length; col++) {
+      s.setColumnWidth(col, 140);
+    }
+    s.setColumnWidth(1, 170);
+    s.setColumnWidth(3, 180);
+    s.setColumnWidth(7, 180);
+  }
+  return s;
+}
+
+// Helper: Get or Create 'Expenses' Sheet
+function getOrCreateExpenseSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var s1 = getOrCreateStudentBillsSheet();
+  var allSheets = ss.getSheets();
+  var es = null;
+
+  for (var i = 0; i < allSheets.length; i++) {
+    var n = allSheets[i].getName().trim().toLowerCase();
+    if (n === "expenses" || n === "expense" || n === "sheet 2" || n === "sheet2") {
+      es = allSheets[i];
+      break;
+    }
+  }
+
+  if (!es) {
+    if (allSheets.length >= 2 && allSheets[1].getName() !== s1.getName()) {
+      es = allSheets[1];
+    } else {
+      try {
+        es = ss.insertSheet("Expenses", 1);
+      } catch (e) {
+        es = ss.getSheetByName("Expenses") || ss.insertSheet();
+      }
+    }
+  }
+
+  var expHeaders = [
+    "Expense ID", "Date", "Title / Description", "Category",
+    "Amount (Rs)", "Payment Method", "Bill / Voucher No",
+    "Recorded By", "Last Updated"
+  ];
+  if (es.getLastRow() === 0) {
+    es.appendRow(expHeaders);
+    var expHdrRange = es.getRange(1, 1, 1, expHeaders.length);
+    expHdrRange.setBackground("#065f46")
+               .setFontColor("#ffffff")
+               .setFontWeight("bold")
+               .setFontSize(11);
+    es.setFrozenRows(1);
+    es.setColumnWidth(1, 160);
+    es.setColumnWidth(2, 110);
+    es.setColumnWidth(3, 220);
+    es.setColumnWidth(4, 140);
+    es.setColumnWidth(5, 120);
+    es.setColumnWidth(6, 140);
+    es.setColumnWidth(7, 150);
+    es.setColumnWidth(8, 140);
+    es.setColumnWidth(9, 180);
+  }
+  return es;
+}
+
+// Helper: Format a bill into row values
+function formatBillRow(b) {
+  return [
+    b.billNumber || b.billNo || "",
+    b.date || "",
+    b.studentName || "",
+    toNepalPhone(b.contactNumber),
+    b.address || "",
+    toNepalPhone(b.parentNumber),
+    b.courseDetail || "",
+    b.coursePackage || "",
+    b.paymentMethod || "Cash",
+    Number(b.grossFee || 0),
+    Number(b.discountPercent || 0),
+    Number(b.totalFee || 0),
+    Number(b.paidAmount || 0),
+    Number(b.dueAmount || 0),
+    b.amountInWords || "",
+    b.preparedBy || "",
+    b.lastUpdated || getEnglishDateTime()
+  ];
+}
+
+// Helper: Format an expense into row values
+function formatExpenseRow(exp) {
+  return [
+    String(exp.id || ""),
+    exp.date || "",
+    exp.title || "",
+    exp.category || "General",
+    Number(exp.amount || 0),
+    exp.paymentMethod || "Cash",
+    exp.remarks || "",
+    exp.recordedBy || "",
+    exp.lastUpdated || getEnglishDateTime()
+  ];
+}
+
+// Helper: Find matching rows in StudentBills sheet
+function findMatchingBillRows(sheet, b) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+  var dataRange = sheet.getRange(2, 1, lastRow - 1, Math.min(sheet.getLastColumn(), 5)).getValues();
+  var bNum = String(b.billNumber || b.billNo || "").trim().toUpperCase();
+  var bPh = cleanPhone(b.contactNumber || b.phone || b.whatsapp);
+  var bNm = String(b.studentName || "").trim().toLowerCase();
+
+  var matchedIndices = [];
+  for (var i = 0; i < dataRange.length; i++) {
+    var rowBNum = String(dataRange[i][0] || "").trim().toUpperCase();
+    var rowNm = String(dataRange[i][2] || "").trim().toLowerCase();
+    var rowPh = cleanPhone(dataRange[i][3]);
+
+    var isMatch = false;
+    // Priority 1: Exact Bill No match
+    if (bNum && rowBNum && bNum === rowBNum) {
+      isMatch = true;
+    } else if (!bNum && bPh && rowPh && bPh === rowPh) {
+      isMatch = true;
+    } else if (!bNum && !bPh && bNm && rowNm && bNm.length > 3 && bNm === rowNm) {
+      isMatch = true;
+    }
+
+    if (isMatch) {
+      matchedIndices.push(i + 2);
+    }
+  }
+  return matchedIndices;
 }
 
 function doPost(e) {
@@ -7549,250 +7916,31 @@ function doPost(e) {
     var data = JSON.parse(contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // Helper: Normalize 10-digit mobile number
-    function cleanPhone(val) {
-      if (!val) return "";
-      var digits = String(val).replace(/\\D/g, "");
-      return digits.length >= 10 ? digits.slice(-10) : digits;
-    }
-
-    // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
-    function toNepalPhone(val) {
-      if (!val) return "";
-      var digits = String(val).replace(/\\D/g, "");
-      var last10 = digits.length >= 10 ? digits.slice(-10) : digits;
-      return last10 ? ("'+977-" + last10) : "";
-    }
-
-    // Helper: English-only Date Time for Last Updated column (strictly in English)
-    function getEnglishDateTime() {
-      try {
-        var tz = Session.getScriptTimeZone() || "GMT+5:45";
-        return Utilities.formatDate(new Date(), tz, "yyyy-MM-dd hh:mm:ss a");
-      } catch (e) {
-        var d = new Date();
-        return d.toISOString().replace("T", " ").substring(0, 19);
-      }
-    }
-
-    // Helper: Get or Create 'Billing' Sheet (Auto-renames Sheet 1 to 'Billing')
-    function getOrCreateStudentBillsSheet() {
-      var allSheets = ss.getSheets();
-      var s = null;
-
-      // 1. Check existing sheets by name (case-insensitive)
-      for (var i = 0; i < allSheets.length; i++) {
-        var n = allSheets[i].getName().trim().toLowerCase();
-        if (n === "billing" || n === "sheet 1" || n === "sheet1" || n === "studentbills" || n === "bills") {
-          s = allSheets[i];
-          break;
-        }
-      }
-
-      // 2. If not found by name, use the 1st sheet tab
-      if (!s) {
-        if (allSheets.length > 0) {
-          s = allSheets[0];
-        } else {
-          try {
-            s = ss.insertSheet("Billing", 0);
-          } catch (e) {
-            s = ss.insertSheet();
-          }
-        }
-      }
-
-      // 3. Rename to 'Billing' safely
-      if (s.getName() !== "Billing") {
-        try {
-          var existing = ss.getSheetByName("Billing");
-          if (!existing) {
-            s.setName("Billing");
-          }
-        } catch (e) {}
-      }
-
-      var headers = [
-        "Bill No", "Date", "Student Name", "WhatsApp", "Address", "Parent Contact",
-        "Course Detail", "Package", "Payment Method", "Gross Fee", "Discount %",
-        "Total Fee (13% VAT Incl)", "Paid Amount", "Due Amount", "Amount In Words",
-        "Prepared By", "Last Updated"
-      ];
-      if (s.getLastRow() === 0) {
-        s.appendRow(headers);
-        var headerRange = s.getRange(1, 1, 1, headers.length);
-        headerRange.setBackground("#1e3a8a")
-                   .setFontColor("#ffffff")
-                   .setFontWeight("bold")
-                   .setFontSize(11);
-        s.setFrozenRows(1);
-        for (var col = 1; col <= headers.length; col++) {
-          s.setColumnWidth(col, 140);
-        }
-        s.setColumnWidth(1, 170);
-        s.setColumnWidth(3, 180);
-        s.setColumnWidth(7, 180);
-
-        if (data.ownerEmail) {
-          try {
-            var prot = s.protect().setDescription("ExamJK Billing Owner Protection");
-            prot.removeEditors(prot.getEditors());
-            prot.addEditor(data.ownerEmail);
-          } catch (pe) {}
-        }
-      }
-      return s;
-    }
-
-    // Helper: Get or Create 'Expenses' Sheet (Auto-renames Sheet 2 to 'Expenses')
-    function getOrCreateExpenseSheet() {
-      var s1 = getOrCreateStudentBillsSheet();
-      var allSheets = ss.getSheets();
-      var es = null;
-
-      // 1. Check existing sheets by name (case-insensitive)
-      for (var i = 0; i < allSheets.length; i++) {
-        var n = allSheets[i].getName().trim().toLowerCase();
-        if (n === "expenses" || n === "expense" || n === "sheet 2" || n === "sheet2") {
-          es = allSheets[i];
-          break;
-        }
-      }
-
-      // 2. If not found by name, use the 2nd sheet tab if available
-      if (!es) {
-        if (allSheets.length >= 2 && allSheets[1].getName() !== s1.getName()) {
-          es = allSheets[1];
-        } else {
-          try {
-            es = ss.insertSheet("Expenses", 1);
-          } catch (e) {
-            es = ss.getSheetByName("Expenses") || ss.insertSheet();
-          }
-        }
-      }
-
-      // 3. Rename to 'Expenses' safely
-      if (es.getName() !== "Expenses") {
-        try {
-          var existingExp = ss.getSheetByName("Expenses");
-          if (!existingExp) {
-            es.setName("Expenses");
-          }
-        } catch (e) {}
-      }
-
-      var expHeaders = [
-        "Expense ID", "Date", "Title / Description", "Category",
-        "Amount (Rs)", "Payment Method", "Bill / Voucher No",
-        "Recorded By", "Last Updated"
-      ];
-      if (es.getLastRow() === 0) {
-        es.appendRow(expHeaders);
-        var expHdrRange = es.getRange(1, 1, 1, expHeaders.length);
-        expHdrRange.setBackground("#065f46")
-                   .setFontColor("#ffffff")
-                   .setFontWeight("bold")
-                   .setFontSize(11);
-        es.setFrozenRows(1);
-        es.setColumnWidth(1, 160);
-        es.setColumnWidth(2, 110);
-        es.setColumnWidth(3, 220);
-        es.setColumnWidth(4, 140);
-        es.setColumnWidth(5, 120);
-        es.setColumnWidth(6, 140);
-        es.setColumnWidth(7, 150);
-        es.setColumnWidth(8, 140);
-        es.setColumnWidth(9, 180);
-
-        if (data.ownerEmail) {
-          try {
-            var eProt = es.protect().setDescription("ExamJK Expense Protection");
-            eProt.removeEditors(eProt.getEditors());
-            eProt.addEditor(data.ownerEmail);
-          } catch (epe) {}
-        }
-      }
-      return es;
-    }
-
-    // Helper: Format a bill into row values
-    function formatBillRow(b) {
-      return [
-        b.billNumber || "",
-        b.date || "",
-        b.studentName || "",
-        toNepalPhone(b.contactNumber),
-        b.address || "",
-        toNepalPhone(b.parentNumber),
-        b.courseDetail || "",
-        b.coursePackage || "",
-        b.paymentMethod || "Cash",
-        Number(b.grossFee || 0),
-        Number(b.discountPercent || 0),
-        Number(b.totalFee || 0),
-        Number(b.paidAmount || 0),
-        Number(b.dueAmount || 0),
-        b.amountInWords || "",
-        b.preparedBy || "",
-        b.lastUpdated || getEnglishDateTime()
-      ];
-    }
-
-    // Helper: Format an expense into row values
-    function formatExpenseRow(exp) {
-      return [
-        String(exp.id || ""),
-        exp.date || "",
-        exp.title || "",
-        exp.category || "General",
-        Number(exp.amount || 0),
-        exp.paymentMethod || "Cash",
-        exp.remarks || "",
-        exp.recordedBy || "",
-        exp.lastUpdated || getEnglishDateTime()
-      ];
-    }
-
-    // Helper: Find matching rows in StudentBills sheet
-    function findMatchingBillRows(sheet, b) {
-      var lastRow = sheet.getLastRow();
-      if (lastRow <= 1) return [];
-      var dataRange = sheet.getRange(2, 1, lastRow - 1, Math.min(sheet.getLastColumn(), 5)).getValues();
-      var bNum = String(b.billNumber || "").trim().toLowerCase();
-      var bPh = cleanPhone(b.contactNumber);
-      var bNm = String(b.studentName || "").trim().toLowerCase();
-
-      var matchedIndices = [];
-      for (var i = 0; i < dataRange.length; i++) {
-        var rowBNum = String(dataRange[i][0] || "").trim().toLowerCase();
-        var rowNm = String(dataRange[i][2] || "").trim().toLowerCase();
-        var rowPh = cleanPhone(dataRange[i][3]);
-
-        var isMatch = false;
-        if (bNum && rowBNum && bNum === rowBNum) isMatch = true;
-        else if (bPh && rowPh && bPh === rowPh) isMatch = true;
-        else if (bNm && rowNm && bNm.length > 2 && bNm === rowNm) isMatch = true;
-
-        if (isMatch) {
-          matchedIndices.push(i + 2);
-        }
-      }
-      return matchedIndices;
-    }
-
     // 1. Handle Connection Ping / Test
     if (data.action === "test") {
-      getOrCreateStudentBillsSheet();
+      var ts = getOrCreateStudentBillsSheet();
       getOrCreateExpenseSheet();
+      deduplicateStudentBills(ts);
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'! ('Billing' and 'Expenses' tabs ready)",
+        message: "Successfully connected to Google Sheet: '" + ss.getName() + "'! ('StudentBills' and 'Expenses' tabs ready, deduplication active)",
         sheetUrl: ss.getUrl()
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 2. Handle Single Expense (Create, Edit, Delete)
+    // 2. Handle Explicit Deduplication Action
+    if (data.action === "deduplicate") {
+      var ds = getOrCreateStudentBillsSheet();
+      var removedCount = deduplicateStudentBills(ds);
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        message: "Deduplication complete! Removed " + removedCount + " duplicate bill row(s).",
+        removed: removedCount,
+        remainingRows: ds.getLastRow() - 1
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // 3. Handle Single Expense (Create, Edit, Delete)
     if (data.expense || data.action === "append_or_update_expense" || data.action === "sync_expense") {
       var exp = data.expense;
       if (exp) {
@@ -7852,7 +8000,7 @@ function doPost(e) {
       }
     }
 
-    // 3. Handle Single Bill (Create, Installment, Edit, Delete)
+    // 4. Handle Single Bill (Create, Installment, Edit, Delete) - Single Entry Mode
     if (data.bill || data.action === "append_or_update_bill" || data.action === "sync_bill") {
       var sheet = getOrCreateStudentBillsSheet();
       var b = data.bill;
@@ -7862,6 +8010,7 @@ function doPost(e) {
         for (var d = matchingRows.length - 1; d >= 0; d--) {
           sheet.deleteRow(matchingRows[d]);
         }
+        deduplicateStudentBills(sheet);
         return ContentService.createTextOutput(JSON.stringify({
           status: "success",
           message: "Deleted bill from Google Sheet.",
@@ -7876,23 +8025,25 @@ function doPost(e) {
         for (var k = matchingRows.length - 1; k >= 1; k--) {
           sheet.deleteRow(matchingRows[k]);
         }
+        deduplicateStudentBills(sheet);
         return ContentService.createTextOutput(JSON.stringify({
           status: "success",
-          message: "Updated single entry for " + (b.studentName || b.billNumber) + " in Google Sheet.",
+          message: "Updated single entry for " + (b.studentName || b.billNumber || b.billNo) + " in Google Sheet.",
           action: "updated",
           cleanedDuplicates: matchingRows.length - 1
         })).setMimeType(ContentService.MimeType.JSON);
       } else {
         sheet.appendRow(rowData);
+        deduplicateStudentBills(sheet);
         return ContentService.createTextOutput(JSON.stringify({
           status: "success",
-          message: "Saved 1 entry for " + (b.studentName || b.billNumber) + " to Google Sheet.",
+          message: "Saved 1 entry for " + (b.studentName || b.billNumber || b.billNo) + " to Google Sheet.",
           action: "inserted"
         })).setMimeType(ContentService.MimeType.JSON);
       }
     }
 
-    // 4. Handle Bulk Sync (Bills and/or Expenses)
+    // 5. Handle Bulk Sync (Bills and/or Expenses)
     if (data.action === "bulk_sync" || Array.isArray(data.bills) || Array.isArray(data.expenses)) {
       var syncedBillsCount = 0;
       var syncedExpensesCount = 0;
@@ -7900,46 +8051,49 @@ function doPost(e) {
       // Part A: Sync Bills to 'StudentBills'
       if (Array.isArray(data.bills) && data.bills.length > 0) {
         var sheet = getOrCreateStudentBillsSheet();
+        
+        // Step 1: Pre-clean any existing duplicate rows in sheet
+        deduplicateStudentBills(sheet);
+
+        // Step 2: Unique incoming bills by billNumber (Primary) or phone (Secondary)
         var uniqueIncoming = {};
         data.bills.forEach(function(b) {
-          var key = cleanPhone(b.contactNumber) || String(b.billNumber || "").trim().toLowerCase();
+          var bNum = String(b.billNumber || b.billNo || "").trim().toUpperCase();
+          var ph = cleanPhone(b.contactNumber);
+          var key = bNum || (ph ? ("P:" + ph) : "");
           if (key) uniqueIncoming[key] = b;
         });
 
         var lastRow = sheet.getLastRow();
         var sheetMap = {};
-        var duplicateRowsToDelete = [];
         if (lastRow > 1) {
           var existingData = sheet.getRange(2, 1, lastRow - 1, Math.min(sheet.getLastColumn(), 5)).getValues();
           for (var i = 0; i < existingData.length; i++) {
-            var rNum = String(existingData[i][0] || "").trim().toLowerCase();
+            var rNum = String(existingData[i][0] || "").trim().toUpperCase();
             var rPhone = cleanPhone(existingData[i][3]);
-            var rowKey = rPhone || rNum;
-            if (rowKey) {
-              if (sheetMap[rowKey]) {
-                duplicateRowsToDelete.push(i + 2);
-              } else {
-                sheetMap[rowKey] = i + 2;
-              }
-            }
+            if (rNum) sheetMap[rNum] = i + 2;
+            if (rPhone && !sheetMap["P:" + rPhone]) sheetMap["P:" + rPhone] = i + 2;
           }
         }
 
         Object.keys(uniqueIncoming).forEach(function(key) {
           var b = uniqueIncoming[key];
+          var bNum = String(b.billNumber || b.billNo || "").trim().toUpperCase();
+          var ph = cleanPhone(b.contactNumber);
           var rowData = formatBillRow(b);
-          var existingRow = sheetMap[key];
-          if (existingRow) {
+          var existingRow = (bNum && sheetMap[bNum]) ? sheetMap[bNum] : (ph && sheetMap["P:" + ph] ? sheetMap["P:" + ph] : 0);
+          if (existingRow && existingRow > 1) {
             sheet.getRange(existingRow, 1, 1, rowData.length).setValues([rowData]);
           } else {
             sheet.appendRow(rowData);
-            sheetMap[key] = sheet.getLastRow();
+            var newRow = sheet.getLastRow();
+            if (bNum) sheetMap[bNum] = newRow;
+            if (ph) sheetMap["P:" + ph] = newRow;
           }
         });
 
-        for (var d = duplicateRowsToDelete.length - 1; d >= 0; d--) {
-          sheet.deleteRow(duplicateRowsToDelete[d]);
-        }
+        // Step 3: Post-clean any remaining duplicates
+        deduplicateStudentBills(sheet);
         syncedBillsCount = Object.keys(uniqueIncoming).length;
       }
 
@@ -7983,7 +8137,7 @@ function doPost(e) {
 
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Synchronized " + syncedBillsCount + " bills to 'Billing' & " + syncedExpensesCount + " expenses to 'Expenses'.",
+        message: "Synchronized " + syncedBillsCount + " bills to 'StudentBills' & " + syncedExpensesCount + " expenses to 'Expenses'.",
         syncedBills: syncedBillsCount,
         syncedExpenses: syncedExpensesCount
       })).setMimeType(ContentService.MimeType.JSON);
@@ -8035,12 +8189,11 @@ function doPost(e) {
                         rows={12}
                         value={`/**
  * EXAMJK BILLING & EXPENSES - GOOGLE SHEET & DRIVE SYNC SCRIPT
- * Version: 2.1 (Bills & Expenses Dual Sync Active)
- * - Auto-Sync Student Bills into 'StudentBills' tab
- * - Auto-Sync Institute Expenses into 'Expenses' tab
- * - Concurrency Lock: Prevents simultaneous duplicate entries
- * - Multi-field Match: Matches by Bill No, WhatsApp / Phone, or Student Name
- * - Auto-Deduplication: Automatically cleans up and removes duplicate rows!
+ * Version: 2.2 (Single Unique Bill Entry & Auto-Deduplication Active)
+ * - Guarantees strictly 1 unique row per Bill No
+ * - Auto-Deduplication: Automatically purges all duplicate rows
+ * - Dual Tabs: 'StudentBills' tab & 'Expenses' tab
+ * - OnOpen Menu: Adds 'ExamJK Tools > Remove Duplicate Bills' in Google Sheets menu
  *
  * Click "Copy Apps Script Code" above to copy the complete code!
  */`}
