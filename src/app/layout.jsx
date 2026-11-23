@@ -2,6 +2,7 @@ import '@/App.css';
 import './student.css';
 import PwaDesktopInstaller from '@/components/PwaDesktopInstaller';
 import OfflineSyncManager from '@/components/OfflineSyncManager';
+import GlobalPullToRefreshLock from '@/components/GlobalPullToRefreshLock';
 
 export const viewport = {
   themeColor: [
@@ -72,8 +73,71 @@ export default function RootLayout({ children }) {
             `
           }}
         />
+        {/* Universal Synchronous Pull-Down Refresh Blocker (Active Before Page Hydration) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var startY = 0;
+                  var startX = 0;
+                  var isTracking = false;
+
+                  function getScrollParent(el) {
+                    var cur = el;
+                    while (cur && cur !== document.body && cur !== document.documentElement) {
+                      try {
+                        var s = window.getComputedStyle(cur);
+                        var oy = s.overflowY || s.overflow;
+                        if ((oy === 'auto' || oy === 'scroll') && cur.scrollHeight > cur.clientHeight) {
+                          return cur;
+                        }
+                      } catch (e) {}
+                      cur = cur.parentElement;
+                    }
+                    return document.scrollingElement || document.documentElement || document.body;
+                  }
+
+                  window.addEventListener('touchstart', function(e) {
+                    if (e.touches && e.touches.length === 1) {
+                      startY = e.touches[0].clientY;
+                      startX = e.touches[0].clientX;
+                      isTracking = true;
+                    } else {
+                      isTracking = false;
+                    }
+                  }, { passive: true, capture: true });
+
+                  window.addEventListener('touchmove', function(e) {
+                    if (!isTracking || !e.touches || e.touches.length !== 1) return;
+                    var cy = e.touches[0].clientY;
+                    var cx = e.touches[0].clientX;
+                    var dy = cy - startY;
+                    var dx = cx - startX;
+                    if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
+                      var parent = getScrollParent(e.target);
+                      var st = 0;
+                      if (parent === document.body || parent === document.documentElement || parent === document.scrollingElement) {
+                        st = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                      } else {
+                        st = parent.scrollTop;
+                      }
+                      if (st <= 0 && e.cancelable) {
+                        e.preventDefault();
+                      }
+                    }
+                  }, { passive: false, capture: true });
+
+                  window.addEventListener('touchend', function() { isTracking = false; }, { passive: true, capture: true });
+                  window.addEventListener('touchcancel', function() { isTracking = false; }, { passive: true, capture: true });
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
       </head>
       <body suppressHydrationWarning>
+        <GlobalPullToRefreshLock />
         {children}
         <PwaDesktopInstaller />
         <OfflineSyncManager />

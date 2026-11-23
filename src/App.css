@@ -16,7 +16,12 @@
 
 html,
 body,
-#root {
+#__next,
+#root,
+main,
+.app-container,
+.students-page,
+.institute-page {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -27,7 +32,13 @@ body,
   text-size-adjust: 100%;
   overscroll-behavior: none !important;
   overscroll-behavior-y: none !important;
+  overscroll-behavior-x: none !important;
+  -webkit-overscroll-behavior: none !important;
   -webkit-overscroll-behavior-y: none !important;
+}
+
+body {
+  touch-action: pan-x pan-y;
 }
 
 html {

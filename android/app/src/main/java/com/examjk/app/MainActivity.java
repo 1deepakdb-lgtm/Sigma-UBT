@@ -275,10 +275,9 @@ public class MainActivity extends AppCompatActivity {
         webView.addJavascriptInterface(new Object() {
             @android.webkit.JavascriptInterface
             public void setSwipeRefreshEnabled(final boolean enabled) {
-                isPdfOpen = !enabled;
                 runOnUiThread(() -> {
                     if (swipeRefresh != null) {
-                        swipeRefresh.setEnabled(enabled);
+                        swipeRefresh.setEnabled(false); // Globally keep disabled
                     }
                 });
             }
@@ -422,47 +421,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupSwipeRefresh() {
         swipeRefresh.setColorSchemeResources(R.color.accent, R.color.primary);
+        swipeRefresh.setEnabled(false); // GLOBALLY DISABLED: Prevent pull-down refresh on all devices & smartboards
         swipeRefresh.setOnRefreshListener(() -> {
-            if (isPdfOpen || !swipeRefresh.isEnabled()) {
-                swipeRefresh.setRefreshing(false);
-                return;
-            }
-            String currentUrl = webView.getUrl();
-            if (currentUrl != null && (
-                currentUrl.contains("pdfviewer.html") ||
-                currentUrl.contains(".pdf") ||
-                currentUrl.contains("/uploads/eps-chapters/")
-            )) {
-                swipeRefresh.setRefreshing(false);
-                return;
-            }
-
-            // Also double check with JavaScript if any PDF viewer is mounted
-            webView.evaluateJavascript(
-                "(function() { return !!(window.__isPdfOpen || document.querySelector('iframe[src*=\"pdfviewer.html\"]')); })()",
-                value -> {
-                    if ("true".equalsIgnoreCase(value)) {
-                        isPdfOpen = true;
-                        swipeRefresh.setRefreshing(false);
-                        swipeRefresh.setEnabled(false);
-                        return;
-                    }
-                    if (webView.getVisibility() == View.VISIBLE) {
-                        webView.reload();
-                    } else {
-                        loadExamJK();
-                    }
-                }
-            );
+            swipeRefresh.setRefreshing(false);
         });
-        swipeRefresh.setOnChildScrollUpCallback((parent, child) -> {
-            if (!swipeRefresh.isEnabled() || isPdfOpen) {
-                return true; // Never allow pull-down refresh to trigger when reading PDF
-            }
-            String currentUrl = webView.getUrl();
-            if (currentUrl != null && (
-                currentUrl.contains("pdfviewer.html") ||
-                currentUrl.contains(".pdf") ||
+        swipeRefresh.setOnChildScrollUpCallback((parent, child) -> true);
+    }
                 currentUrl.contains("/uploads/eps-chapters/")
             )) {
                 return true;

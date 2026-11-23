@@ -859,10 +859,12 @@
 
     // Strict Smartboard & Mobile Pull-Down Scroll / Refresh Blocker
     var dragStartY = 0;
+    var dragStartX = 0;
 
     function recordDragStart(e) {
-      var y = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
-      dragStartY = y || 0;
+      var t = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
+      dragStartY = t.clientY || 0;
+      dragStartX = t.clientX || 0;
       syncNativeBridges(true);
     }
 
@@ -874,9 +876,14 @@
 
     function blockPullDownScroll(e) {
       if (isPinching) return;
-      var currentY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+      var t = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
+      var currentY = t.clientY || 0;
+      var currentX = t.clientX || 0;
       var dy = currentY - dragStartY;
-      if (container.scrollTop <= 1 && dy > 0) {
+      var dx = currentX - dragStartX;
+
+      // When dragging downwards at the top (the pull-to-refresh reload gesture)
+      if (dy > 0 && Math.abs(dy) > Math.abs(dx) && container.scrollTop <= 0) {
         if (e.cancelable) {
           e.preventDefault();
           e.stopPropagation();
@@ -885,24 +892,24 @@
       }
     }
 
-    window.addEventListener('touchstart', recordDragStart, { passive: true });
-    container.addEventListener('touchstart', recordDragStart, { passive: true });
-    window.addEventListener('touchmove', blockPullDownScroll, { passive: false });
-    container.addEventListener('touchmove', blockPullDownScroll, { passive: false });
-    document.addEventListener('touchmove', blockPullDownScroll, { passive: false });
-    window.addEventListener('touchend', recordDragEnd, { passive: true });
-    window.addEventListener('touchcancel', recordDragEnd, { passive: true });
+    window.addEventListener('touchstart', recordDragStart, { passive: true, capture: true });
+    container.addEventListener('touchstart', recordDragStart, { passive: true, capture: true });
+    window.addEventListener('touchmove', blockPullDownScroll, { passive: false, capture: true });
+    container.addEventListener('touchmove', blockPullDownScroll, { passive: false, capture: true });
+    document.addEventListener('touchmove', blockPullDownScroll, { passive: false, capture: true });
+    window.addEventListener('touchend', recordDragEnd, { passive: true, capture: true });
+    window.addEventListener('touchcancel', recordDragEnd, { passive: true, capture: true });
 
-    window.addEventListener('pointerdown', recordDragStart, { passive: true });
-    container.addEventListener('pointerdown', recordDragStart, { passive: true });
+    window.addEventListener('pointerdown', recordDragStart, { passive: true, capture: true });
+    container.addEventListener('pointerdown', recordDragStart, { passive: true, capture: true });
     window.addEventListener('pointermove', function(e) {
       if (e.pointerType === 'touch' || e.pointerType === 'pen' || e.buttons > 0) blockPullDownScroll(e);
-    }, { passive: false });
+    }, { passive: false, capture: true });
     container.addEventListener('pointermove', function(e) {
       if (e.pointerType === 'touch' || e.pointerType === 'pen' || e.buttons > 0) blockPullDownScroll(e);
-    }, { passive: false });
-    window.addEventListener('pointerup', recordDragEnd, { passive: true });
-    window.addEventListener('pointercancel', recordDragEnd, { passive: true });
+    }, { passive: false, capture: true });
+    window.addEventListener('pointerup', recordDragEnd, { passive: true, capture: true });
+    window.addEventListener('pointercancel', recordDragEnd, { passive: true, capture: true });
 
     function blockWheelOverScroll(e) {
       if (container.scrollTop <= 0 && e.deltaY < 0 && !e.ctrlKey) {
@@ -1420,7 +1427,7 @@
 
       function pruneDistantPages(activePage) {
         if (!pdfDoc) return;
-        var maxKeep = isLowResourceDevice ? 1 : 2;
+        var maxKeep = 2; // Keep current and adjacent 2 pages for buttery smooth scrolling
         var toUnrender = [];
         renderedPages.forEach(function(p) {
           if (Math.abs(p - activePage) > maxKeep) {
@@ -1442,16 +1449,16 @@
               if (!renderedPages.has(pageNum)) {
                 renderPage(pageNum, entry.target);
               }
-            } else if (isLowResourceDevice) {
+            } else {
               var activePage = getActivePageNum();
-              if (Math.abs(pageNum - activePage) > 1) {
+              if (Math.abs(pageNum - activePage) > 2) {
                 unrenderPage(pageNum, entry.target);
               }
             }
           });
         }, {
           root: container,
-          rootMargin: isLowResourceDevice ? '300px 0px 300px 0px' : '600px 0px 600px 0px'
+          rootMargin: '600px 0px 600px 0px'
         });
 
         for (var k = 1; k <= totalPages; k++) {
@@ -1463,7 +1470,7 @@
       function checkVisiblePages() {
         var curPage = getActivePageNum();
         pruneDistantPages(curPage);
-        var margin = isLowResourceDevice ? 350 : 600;
+        var margin = 600;
         for (var p = 1; p <= totalPages; p++) {
           if (!renderedPages.has(p)) {
             var el = document.getElementById('page-wrapper-' + p);
