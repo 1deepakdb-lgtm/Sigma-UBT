@@ -193,36 +193,6 @@
   <div id="viewer-zoom-layer"></div>
 </div>
 
-<!-- UNIVERSAL RESPONSIVE SMART TOOLBAR (SMARTBOARD, TABLET & DESKTOP QUICK CONTROLS) -->
-<div id="pdf-smart-toolbar" style="
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 5px 12px;
-  border-radius: 30px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.22);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  z-index: 9999;
-  user-select: none;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #ffffff;
-  transition: opacity 0.3s ease;
-">
-  <button id="toolbar-zoom-out" title="Zoom Out" style="background: none; border: none; color: #ffffff; font-size: 16px; font-weight: 800; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">−</button>
-  <span id="toolbar-zoom-level" title="Reset to Fit Width" style="font-size: 12px; font-weight: 700; color: #38bdf8; min-width: 40px; text-align: center; cursor: pointer;">100%</span>
-  <button id="toolbar-zoom-in" title="Zoom In" style="background: none; border: none; color: #ffffff; font-size: 16px; font-weight: 800; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">+</button>
-  <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.25); margin: 0 2px;"></span>
-  <button id="toolbar-fit-toggle" title="Toggle Fit Screen" style="background: none; border: none; color: #e2e8f0; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; cursor: pointer;">⛶ Page</button>
-  <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.25); margin: 0 2px;"></span>
-  <span id="toolbar-page-info" style="font-size: 11px; font-weight: 600; color: #94a3b8; padding: 0 2px; white-space: nowrap;">Page 1</span>
-</div>
-
 
 
 <script src="/pdf.worker.min.js"></script>
@@ -769,71 +739,10 @@
       }, 150);
     }
 
-    function updateCurrentPageTracker() {
-      if (!pdfDoc) return;
-      var total = pdfDoc.numPages;
-      var cTop = container.scrollTop;
-      var cH = container.clientHeight;
-      var mid = cTop + cH / 3;
-      var curPage = 1;
-
-      for (var p = 1; p <= total; p++) {
-        var el = document.getElementById('page-wrapper-' + p);
-        if (el) {
-          if (el.offsetTop <= mid) {
-            curPage = p;
-          } else {
-            break;
-          }
-        }
-      }
-      var pageEl = document.getElementById('toolbar-page-info');
-      if (pageEl) {
-        pageEl.textContent = 'Page ' + curPage + ' / ' + total;
-      }
-    }
-
-    function updateZoomBadge() {
-      var levelEl = document.getElementById('toolbar-zoom-level');
-      if (levelEl) {
-        var dims = getTargetDimensions({ width: 595.28, height: 841.89 });
-        var pct = Math.round(dims.scale * 100);
-        levelEl.textContent = pct + '%';
-      }
-      var fitBtn = document.getElementById('toolbar-fit-toggle');
-      if (fitBtn) {
-        fitBtn.textContent = (viewMode === 'fit-page') ? '⛶ Width' : '⛶ Page';
-      }
-      updateCurrentPageTracker();
-    }
-
-    function updateToolbarUI() {
-      updateZoomBadge();
-      updateCurrentPageTracker();
-    }
-
-    function initToolbarButtons() {
-      var zOut = document.getElementById('toolbar-zoom-out');
-      if (zOut) zOut.onclick = function(e) { e.stopPropagation(); zoomOutStep(); };
-      var zIn = document.getElementById('toolbar-zoom-in');
-      if (zIn) zIn.onclick = function(e) { e.stopPropagation(); zoomInStep(); };
-      var zLvl = document.getElementById('toolbar-zoom-level');
-      if (zLvl) zLvl.onclick = function(e) { e.stopPropagation(); shrinkToOwnPosition(true); };
-      var fitToggle = document.getElementById('toolbar-fit-toggle');
-      if (fitToggle) fitToggle.onclick = function(e) {
-        e.stopPropagation();
-        if (viewMode === 'fit-page') {
-          viewMode = 'fit-width';
-          userZoom = 1.0;
-        } else {
-          viewMode = 'fit-page';
-          userZoom = 1.0;
-        }
-        updateAllWrapperDimensions();
-        debouncedReRender();
-        updateZoomBadge();
-      };
-    }
+    function updateCurrentPageTracker() {}
+    function updateZoomBadge() {}
+    function updateToolbarUI() {}
+    function initToolbarButtons() {}
 
     // Comprehensive Native App Bridge Sync: Disable Pull-to-Refresh & Hide Mobile Status Bar / Nav Bar
     function syncNativeBridges(isPdfActive) {
