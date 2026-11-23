@@ -540,7 +540,7 @@ async function triggerSheetSync(instituteId, bill, materials) {
 export async function PUT(req) {
   try {
     await ensureBillingColumns();
-    const { session, errorResponse } = await requireInstituteAdmin(req);
+    const { session, errorResponse } = await requireInstituteOrAdmin(req);
     if (errorResponse) return errorResponse;
 
     const { searchParams: __sp } = new URL(req.url);
@@ -712,7 +712,7 @@ export async function PUT(req) {
       return NextResponse.json({
         success: true,
         profile: created,
-        message: 'Bill Pad Header initialized. 1 lifetime correction remaining.'
+        message: 'Bill Header saved successfully.'
       });
     }
   } catch (err) {

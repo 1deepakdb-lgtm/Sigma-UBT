@@ -627,6 +627,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const [newItemPrice, setNewItemPrice] = useState("");
   const [isItemFree, setIsItemFree] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1959,9 +1960,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     setShowBillModal(true);
   };
 
-  // Save profile header (Unrestricted for Admin)
+  // Save profile header (Unrestricted for Institute Admin)
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    setIsSavingProfile(true);
 
     try {
       const res = await fetch(apiWithInst("/api/institute/billing"), {
@@ -1975,25 +1977,52 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         setProfile(data.profile);
         localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify(data.profile));
         setShowProfileModal(false);
-        alert(` ${data.message || "Company Header saved successfully!"}`);
+        alert(`✅ ${data.message || "Institute Bill Header updated successfully!"}`);
       } else {
-        const err = await res.json();
-        alert(` ${err.error || "Failed to update header"}`);
+        const err = await res.json().catch(() => ({}));
+        alert(`❌ ${err.error || "Failed to update bill header"}`);
       }
     } catch {
       localStorage.setItem(`instituteBillingProfile_${instKey}`, JSON.stringify(profile));
       setShowProfileModal(false);
-      alert("Company Header updated locally.");
+      alert("✅ Institute Bill Header updated locally.");
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
-  // Logo upload
+  // Logo upload with high-res auto canvas optimization
   const handleLogoUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      setProfile((prev) => ({ ...prev, logoUrl: String(reader.result || "") }));
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxDim = 320;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/png", 0.9);
+        setProfile((prev) => ({ ...prev, logoUrl: dataUrl }));
+      };
+      img.onerror = () => {
+        setProfile((prev) => ({ ...prev, logoUrl: String(reader.result || "") }));
+      };
+      img.src = String(reader.result || "");
     };
     reader.readAsDataURL(file);
   };
@@ -2004,7 +2033,32 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      setProfile((prev) => ({ ...prev, stampUrl: String(reader.result || "") }));
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxDim = 280;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/png", 0.9);
+        setProfile((prev) => ({ ...prev, stampUrl: dataUrl }));
+      };
+      img.onerror = () => {
+        setProfile((prev) => ({ ...prev, stampUrl: String(reader.result || "") }));
+      };
+      img.src = String(reader.result || "");
     };
     reader.readAsDataURL(file);
   };
@@ -3620,6 +3674,34 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </button>
               )}
 
+              {billingRole === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => setShowProfileModal(true)}
+                  title="Configure and customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
+                  style={{
+                    backgroundColor: "#0d9488",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: "13px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 6px rgba(13, 148, 136, 0.25)"
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Edit Bill Header
+                </button>
+              )}
+
               {/* CREATE NEW BILL (SECOND LAST BUTTON) */}
               <button
                 onClick={handleOpenCreateBill}
@@ -3911,8 +3993,42 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             boxShadow: "0 3px 12px rgba(0,0,0,0.06)",
             marginBottom: "24px",
             border: "1px solid #cbd5e1",
-            overflow: "hidden"
+            overflow: "hidden",
+            position: "relative"
           }}>
+            {/* Institute Admin Header Customization Button */}
+            {billingRole === "admin" && (
+              <div style={{ position: "absolute", top: "14px", right: "16px", zIndex: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowProfileModal(true)}
+                  title="Customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
+                  style={{
+                    backgroundColor: "#1e40af",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "7px 15px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: "12px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 6px rgba(30, 64, 175, 0.3)",
+                    transition: "all 0.15s ease"
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1d4ed8"}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#1e40af"}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  ✏️ Update Header
+                </button>
+              </div>
+            )}
 
             {/* Real Bill Pad Letterhead (Exact Replica of User Image) */}
             <div style={{ padding: "24px 30px 16px 30px", backgroundColor: "#ffffff" }}>
@@ -4144,6 +4260,28 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       }}
                     >
                       Edit This Bill
+                    </button>
+                  )}
+
+                  {billingRole === "admin" && (
+                    <button
+                      type="button"
+                      onClick={() => setShowProfileModal(true)}
+                      style={{
+                        backgroundColor: "#0d9488",
+                        color: "white",
+                        border: "1px solid #0f766e",
+                        padding: "9px 18px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                        fontSize: "14px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px"
+                      }}
+                    >
+                      ✏️ Edit Bill Header
                     </button>
                   )}
 
@@ -6934,7 +7072,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             </div>
           )}
 
-          {/* 6. EDIT BILL PAD HEADER MODAL */}
+          {/* 6. EDIT BILL PAD HEADER MODAL (Institute Admin Customization) */}
           {showProfileModal && (
             <div style={{
               position: "fixed",
@@ -6942,155 +7080,278 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               left: 0,
               width: "100vw",
               height: "100vh",
-              backgroundColor: "rgba(15, 23, 42, 0.7)",
+              backgroundColor: "rgba(15, 23, 42, 0.75)",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               zIndex: 99999,
-              padding: "20px"
+              padding: "16px"
             }}>
               <div style={{
                 backgroundColor: "white",
-                borderRadius: "12px",
+                borderRadius: "14px",
                 width: "100%",
-                maxWidth: "620px",
-                maxHeight: "90vh",
+                maxWidth: "680px",
+                maxHeight: "92vh",
                 overflowY: "auto",
-                padding: "26px",
-                boxShadow: "0 20px 50px rgba(0,0,0,0.3)"
+                padding: "24px 28px",
+                boxShadow: "0 25px 60px rgba(0,0,0,0.35)",
+                border: "1px solid #cbd5e1"
               }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: "2px solid #e2e8f0", paddingBottom: "10px" }}>
-                  <h3 style={{ margin: 0, color: "#1e3a8a", fontSize: "19px" }}>
-                    Edit Company Bill Pad Header
-                  </h3>
+                {/* Modal Title Bar */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", borderBottom: "2px solid #e2e8f0", paddingBottom: "12px" }}>
+                  <div>
+                    <h3 style={{ margin: 0, color: "#1e3a8a", fontSize: "20px", fontWeight: "900", display: "flex", alignItems: "center", gap: "8px" }}>
+                      🏛️ Update Institute Bill Header
+                    </h3>
+                    <p style={{ margin: "3px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+                      Customize company name, address, contact, VAT/PAN, and logo for your bills.
+                    </p>
+                  </div>
                   <button
                     onClick={() => setShowProfileModal(false)}
-                    style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "5px 12px", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}
+                    style={{ backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", width: "32px", height: "32px", borderRadius: "50%", cursor: "pointer", fontWeight: "bold", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}
                   >
-                    Close
+                    ✕
                   </button>
                 </div>
 
-                <form onSubmit={handleSaveProfile} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <div style={{ gridColumn: "span 2", backgroundColor: "#fef3c7", padding: "10px", borderRadius: "6px", fontSize: "12px", color: "#92400e" }}>
-                    <strong>One-time lifetime edit:</strong> After saving, this header will be permanently locked like pre-printed stationery.
-                  </div>
-
+                {/* Information Callout */}
+                <div style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", padding: "10px 14px", borderRadius: "8px", fontSize: "12px", color: "#1e40af", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "18px" }}>ℹ️</span>
                   <div>
-                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>VAT/PAN Number *</label>
+                    <strong>Institute Admin Choice:</strong> Update these details anytime to match your institute's official branding. All printed bills and invoices will immediately update.
+                  </div>
+                </div>
+
+                {/* Real-time Live Preview of Bill Header */}
+                <div style={{
+                  backgroundColor: "#f8fafc",
+                  border: "2px dashed #94a3b8",
+                  borderRadius: "8px",
+                  padding: "14px 18px",
+                  marginBottom: "16px"
+                }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px", textAlign: "center" }}>
+                    👀 Live Bill Header Preview
+                  </div>
+                  <div style={{ backgroundColor: "#ffffff", padding: "12px 16px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px" }}>
+                      <img
+                        src={profile.logoUrl || "/examjk-logo.png"}
+                        alt="Logo Preview"
+                        style={{ width: "54px", height: "54px", objectFit: "contain", borderRadius: "50%", border: "1px solid #e2e8f0" }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: "18px", fontWeight: "900", color: "#000000", fontFamily: "Georgia, serif" }}>
+                          {profile.companyName || "YOUR INSTITUTE NAME"}
+                        </div>
+                        <div style={{ fontSize: "12px", fontWeight: "bold", color: "#000000" }}>
+                          {profile.companyAddress || "Institute Address, City"}
+                        </div>
+                        <div style={{ fontSize: "11px", fontWeight: "bold", color: "#000000" }}>
+                          Email: {profile.email || "email@institute.com"} &nbsp;|&nbsp; Contact No: {profile.contactNumber || "98XXXXXXXX"}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #000000", marginTop: "8px", paddingTop: "4px", fontSize: "11px", fontWeight: "bold", color: "#000000" }}>
+                      <span>VAT/PAN: {profile.panVatNumber || "-------"}</span>
+                      <span>DATE: {formatDateMMDDYYYY(new Date().toISOString())}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSaveProfile} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div style={{ gridColumn: "span 2" }}>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px", color: "#1e293b" }}>
+                      Institute / Company Name *
+                    </label>
                     <input
                       type="text"
                       required
-                      value={profile.panVatNumber}
-                      onChange={(e) => setProfile({ ...profile, panVatNumber: e.target.value })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "5px", border: "1px solid #cbd5e1" }}
+                      value={profile.companyName || ""}
+                      onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                      placeholder="e.g. SIGMA EDUCATION KOREAN BHASA CENTER"
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1.5px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>Company Name *</label>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px", color: "#1e293b" }}>
+                      VAT / PAN Number *
+                    </label>
                     <input
                       type="text"
                       required
-                      value={profile.companyName}
-                      onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "5px", border: "1px solid #cbd5e1" }}
+                      value={profile.panVatNumber || ""}
+                      onChange={(e) => setProfile({ ...profile, panVatNumber: e.target.value })}
+                      placeholder="e.g. 616838513"
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1.5px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px", color: "#1e293b" }}>
+                      Official Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={profile.email || ""}
+                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      placeholder="e.g. sigmaedu2023@gmail.com"
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1.5px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                     />
                   </div>
 
                   <div style={{ gridColumn: "span 2" }}>
-                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>Address *</label>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px", color: "#1e293b" }}>
+                      Institute Address *
+                    </label>
                     <input
                       type="text"
                       required
-                      value={profile.companyAddress}
+                      value={profile.companyAddress || ""}
                       onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "5px", border: "1px solid #cbd5e1" }}
+                      placeholder="e.g. Samakhushi Chowk, Kathmandu"
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1.5px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                     />
                   </div>
 
-                  <div>
-                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>Contact No *</label>
+                  <div style={{ gridColumn: "span 2" }}>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px", color: "#1e293b" }}>
+                      Contact / Phone Number(s) *
+                    </label>
                     <input
                       type="text"
                       required
-                      value={profile.contactNumber}
+                      value={profile.contactNumber || ""}
                       onChange={(e) => setProfile({ ...profile, contactNumber: e.target.value })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "5px", border: "1px solid #cbd5e1" }}
+                      placeholder="e.g. 9768444902, 9806100148"
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1.5px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                     />
                   </div>
 
+                  {/* Logo Upload & Preview */}
                   <div>
-                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>Email *</label>
-                    <input
-                      type="email"
-                      required
-                      value={profile.email}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "5px", border: "1px solid #cbd5e1" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>Upload Company Logo</label>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px", color: "#1e293b" }}>
+                      Institute Logo (Image)
+                    </label>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleLogoUpload}
-                      style={{ width: "100%", padding: "6px", borderRadius: "5px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "6px", borderRadius: "6px", border: "1.5px solid #cbd5e1", fontSize: "12px", boxSizing: "border-box" }}
                     />
-                    {profile.logoUrl && (
-                      <div style={{ marginTop: "5px", display: "flex", alignItems: "center", gap: "8px" }}>
-                        <img src={profile.logoUrl} alt="Logo Preview" style={{ width: "40px", height: "40px", objectFit: "contain", border: "1px solid #e2e8f0", borderRadius: "4px" }} />
-                        <span style={{ fontSize: "11px", color: "#16a34a" }}>Current logo attached</span>
-                      </div>
-                    )}
+                    <div style={{ marginTop: "6px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      {profile.logoUrl && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <img src={profile.logoUrl} alt="Logo" style={{ width: "32px", height: "32px", objectFit: "contain", border: "1px solid #cbd5e1", borderRadius: "4px" }} />
+                          <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: "bold" }}>Logo active</span>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setProfile(prev => ({ ...prev, logoUrl: "/examjk-logo.png" }))}
+                        style={{ fontSize: "11px", color: "#2563eb", border: "none", background: "none", cursor: "pointer", textDecoration: "underline" }}
+                      >
+                        Reset to ExamJK Logo
+                      </button>
+                    </div>
                   </div>
 
+                  {/* Stamp Upload & Preview */}
                   <div>
-                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>Upload Authorized Stamp</label>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px", color: "#1e293b" }}>
+                      Official Stamp / Seal (Optional)
+                    </label>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleStampUpload}
-                      style={{ width: "100%", padding: "6px", borderRadius: "5px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "6px", borderRadius: "6px", border: "1.5px solid #cbd5e1", fontSize: "12px", boxSizing: "border-box" }}
                     />
-                    {profile.stampUrl ? (
-                      <div style={{ marginTop: "5px", display: "flex", alignItems: "center", gap: "8px" }}>
-                        <img src={profile.stampUrl} alt="Stamp Preview" style={{ width: "45px", height: "45px", objectFit: "contain", border: "1px solid #e2e8f0", borderRadius: "4px" }} />
-                        <span style={{ fontSize: "11px", color: "#16a34a" }}>Current stamp attached</span>
-                        <button
-                          type="button"
-                          onClick={() => setProfile(prev => ({ ...prev, stampUrl: "" }))}
-                          style={{ fontSize: "10px", color: "#dc2626", border: "none", background: "none", cursor: "pointer", textDecoration: "underline" }}
-                        >
-                          Clear Stamp
-                        </button>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", display: "block" }}>
-                        Upload PNG/JPEG seal stamp to appear on printed bills
-                      </span>
-                    )}
+                    <div style={{ marginTop: "6px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      {profile.stampUrl ? (
+                        <>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <img src={profile.stampUrl} alt="Stamp" style={{ width: "32px", height: "32px", objectFit: "contain", border: "1px solid #cbd5e1", borderRadius: "4px" }} />
+                            <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: "bold" }}>Stamp attached</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setProfile(prev => ({ ...prev, stampUrl: "" }))}
+                            style={{ fontSize: "11px", color: "#dc2626", border: "none", background: "none", cursor: "pointer", textDecoration: "underline" }}
+                          >
+                            Remove Stamp
+                          </button>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: "11px", color: "#94a3b8" }}>No stamp attached</span>
+                      )}
+                    </div>
                   </div>
 
+                  {/* Google Sheet Webhook URL */}
                   <div style={{ gridColumn: "span 2" }}>
-                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px" }}>Google Sheet Webhook URL</label>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", marginBottom: "4px", color: "#1e293b" }}>
+                      Google Sheet Webhook URL (Auto-sync)
+                    </label>
                     <input
                       type="url"
-                      placeholder="https://script.google.com/..."
+                      placeholder="https://script.google.com/macros/s/..."
                       value={profile.googleSheetUrl === "setup_done" ? "" : (profile.googleSheetUrl || "")}
                       onChange={(e) => setProfile({ ...profile, googleSheetUrl: e.target.value })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "5px", border: "1px solid #cbd5e1", boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1.5px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" }}
                     />
                   </div>
 
-                  <div style={{ gridColumn: "span 2", marginTop: "10px" }}>
+                  {/* Actions */}
+                  <div style={{ gridColumn: "span 2", marginTop: "12px", display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowProfileModal(false)}
+                      style={{
+                        backgroundColor: "#f1f5f9",
+                        color: "#475569",
+                        border: "1px solid #cbd5e1",
+                        padding: "10px 20px",
+                        borderRadius: "6px",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        fontSize: "13px"
+                      }}
+                    >
+                      Cancel
+                    </button>
                     <button
                       type="submit"
-                      style={{ width: "100%", backgroundColor: "#1e3a8a", color: "white", border: "none", padding: "12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}
+                      disabled={isSavingProfile}
+                      style={{
+                        backgroundColor: "#1e40af",
+                        color: "white",
+                        border: "none",
+                        padding: "10px 24px",
+                        borderRadius: "6px",
+                        fontWeight: "900",
+                        cursor: isSavingProfile ? "not-allowed" : "pointer",
+                        fontSize: "14px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        boxShadow: "0 2px 6px rgba(30, 64, 175, 0.3)"
+                      }}
                     >
-                      Save Company Bill Pad Header
+                      {isSavingProfile ? (
+                        <>
+                          <span>⏳</span> Saving Changes...
+                        </>
+                      ) : (
+                        <>
+                          <span>💾</span> Save Bill Header Changes
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
