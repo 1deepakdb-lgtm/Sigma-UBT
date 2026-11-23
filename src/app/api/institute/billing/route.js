@@ -306,7 +306,7 @@ export async function POST(req) {
       }
 
       // Background auto-sync to Google Sheet
-      triggerSheetSync(instituteId, updatedBill, materials);
+      await triggerSheetSync(instituteId, updatedBill, materials);
 
       return NextResponse.json({
         success: true,
@@ -432,7 +432,7 @@ export async function POST(req) {
     }
 
     // Background auto-sync to Google Sheet
-    triggerSheetSync(instituteId, newBill, materials);
+    await triggerSheetSync(instituteId, newBill, materials);
 
     // Auto-reduce product stock for any sold items/books
     if (Array.isArray(materials) && materials.length > 0) {
@@ -446,76 +446,94 @@ export async function POST(req) {
   }
 }
 
+const SIGMA_DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxL8QJVF4_IzcCPSbIwOcQorTX19KPVgb6Y0xOMfOQOLQcmCwblhStD0nEgmXirXoreFQ/exec';
+
 // Background Sheet Sync Helper
 async function triggerSheetSync(instituteId, bill, materials) {
   try {
-    const profile = await prisma.billingProfile.findUnique({ where: { instituteId } });
-    if (profile?.googleSheetUrl && profile.googleSheetUrl.startsWith('http') && profile.googleSheetUrl !== 'setup_done') {
-      // Helper: Normalize phone number and strip +977 prefix
-      const cleanPhone = (val) => {
-        if (!val) return '';
-        let digits = String(val).replace(/\D/g, '');
-        if (digits.startsWith('977') && digits.length > 10) {
-          digits = digits.slice(3);
-        }
-        return digits.length >= 10 ? digits.slice(-10) : digits;
-      };
+    let profile = await prisma.billingProfile.findUnique({ where: { instituteId } });
+    if (!profile?.googleSheetUrl || !profile.googleSheetUrl.startsWith('http') || profile.googleSheetUrl === 'setup_done') {
+      profile = await prisma.billingProfile.findUnique({ where: { instituteId: 'default-institute' } });
+    }
 
-      // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
-      const formatNepalPhone = (val) => {
-        if (!val) return '';
-        const last10 = cleanPhone(val);
-        return last10 ? `'+977-${last10}` : '';
-      };
+    let targetUrl = (profile?.googleSheetUrl && profile.googleSheetUrl.startsWith('http') && profile.googleSheetUrl !== 'setup_done')
+      ? profile.googleSheetUrl.trim()
+      : '';
 
-      // English-only Date Time for Last Updated column
-      const nowEnglish = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Kathmandu',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-      }).format(new Date());
+    // Auto-fallback to active Sigma Google Sheet webhook if pointing to decommissioned spreadsheet or empty
+    if (!targetUrl || targetUrl.includes('AKfycbyMnje') || targetUrl.includes('AKfycbzrxTC') || targetUrl.includes('AKfycbwJJc')) {
+      targetUrl = SIGMA_DEFAULT_WEBHOOK;
+    }
 
-      const formattedBill = {
-        ...bill,
-        billNumber: bill.billNumber || bill.billNo || '',
-        billNo: bill.billNumber || bill.billNo || '',
-        ...(bill.contactNumber !== undefined ? { contactNumber: formatNepalPhone(bill.contactNumber) } : {}),
-        ...(bill.parentNumber !== undefined ? { parentNumber: formatNepalPhone(bill.parentNumber) } : {}),
-        lastUpdated: nowEnglish
-      };
+    // Helper: Normalize phone number and strip +977 prefix
+    const cleanPhone = (val) => {
+      if (!val) return '';
+      let digits = String(val).replace(/\D/g, '');
+      if (digits.startsWith('977') && digits.length > 10) {
+        digits = digits.slice(3);
+      }
+      return digits.length >= 10 ? digits.slice(-10) : digits;
+    };
 
-      fetch(profile.googleSheetUrl.trim(), {
+    // Helper: Format Nepali mobile numbers with +977- prefix for Google Sheet
+    const formatNepalPhone = (val) => {
+      if (!val) return '';
+      const last10 = cleanPhone(val);
+      return last10 ? `'+977-${last10}` : '';
+    };
+
+    // English-only Date Time for Last Updated column
+    const nowEnglish = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kathmandu',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(new Date());
+
+    const formattedBill = {
+      ...bill,
+      billNumber: bill.billNumber || bill.billNo || '',
+      billNo: bill.billNumber || bill.billNo || '',
+      ...(bill.contactNumber !== undefined ? { contactNumber: formatNepalPhone(bill.contactNumber) } : {}),
+      ...(bill.parentNumber !== undefined ? { parentNumber: formatNepalPhone(bill.parentNumber) } : {}),
+      lastUpdated: nowEnglish
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    try {
+      const res = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'append_or_update_bill',
           bill: formattedBill,
           materials: materials || [],
-          ownerEmail: profile.ownerEmail || ''
+          ownerEmail: profile?.ownerEmail || 'dwijbhatt8@gmail.com'
         }),
-        redirect: 'follow'
-      }).then(async (res) => {
-        const text = await res.text().catch(() => '');
-        const isHtml = text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('drive-logo');
-        if (res.ok && !isHtml && !bill.isDeleted) {
-          await prisma.billRecord.update({
-            where: { id: bill.id },
-            data: { isSyncedToSheet: true, syncedAt: new Date() }
-          }).catch(() => {});
-        } else if (isHtml) {
-          console.warn('Google Sheet auto-sync returned an HTML error page. Check Web App deployment permissions.');
-        }
-      }).catch((e) => {
-        console.warn('Background Google Sheet sync notice:', e.message);
+        redirect: 'follow',
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+      const text = await res.text().catch(() => '');
+      const isHtml = text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('drive-logo');
+      if (res.ok && !isHtml && !bill.isDeleted && bill.id) {
+        await prisma.billRecord.update({
+          where: { id: bill.id },
+          data: { isSyncedToSheet: true, syncedAt: new Date() }
+        }).catch(() => {});
+      }
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      console.warn('Google Sheet auto-sync fetch notice:', fetchErr.message);
     }
   } catch (e) {
-    console.warn('Google Sheet auto-sync failed silently:', e);
+    console.warn('Google Sheet auto-sync notice:', e.message);
   }
 }
 
@@ -642,7 +660,7 @@ export async function PUT(req) {
       }
 
       // Real-time background auto-sync to linked Google Sheet
-      triggerSheetSync(instituteId, updatedBill, body.materials || (existing.materialsJson ? JSON.parse(existing.materialsJson) : []));
+      await triggerSheetSync(instituteId, updatedBill, body.materials || (existing.materialsJson ? JSON.parse(existing.materialsJson) : []));
 
       return NextResponse.json({ success: true, bill: updatedBill, message: 'Bill record updated successfully.' });
     }
@@ -730,7 +748,7 @@ export async function DELETE(req) {
     await prisma.billRecord.delete({ where: { id } });
 
     // Real-time update Google Sheet on deletion
-    triggerSheetSync(instituteId, { id, billNumber: bill.billNumber, isDeleted: true }, []);
+    await triggerSheetSync(instituteId, { id, billNumber: bill.billNumber, isDeleted: true }, []);
 
     return NextResponse.json({ success: true, message: 'Bill record deleted successfully' });
   } catch (err) {

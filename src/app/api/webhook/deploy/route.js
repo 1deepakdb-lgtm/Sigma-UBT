@@ -176,6 +176,18 @@ async function runDeployTasks(repoDir, forceRestore = false) {
       }
     }
     addLog(`✅ SQLite schema columns verified.`);
+
+    // Ensure authoritative Sigma Google Sheet webhook in SQLite database
+    try {
+      const targetWebhook = 'https://script.google.com/macros/s/AKfycbxL8QJVF4_IzcCPSbIwOcQorTX19KPVgb6Y0xOMfOQOLQcmCwblhStD0nEgmXirXoreFQ/exec';
+      await prismaClient.$executeRawUnsafe(
+        `UPDATE BillingProfile SET googleSheetUrl = ? WHERE instituteId IN ('default-institute', 'd932da89-c112-45ba-85b3-76cb742ff9c2', '90e5713b-5d1c-4351-bc19-3b0d7c17ef95', '686e3813-ad09-42cb-99d7-d28dc5cea44c') OR companyName LIKE '%SIGMA%';`,
+        targetWebhook
+      );
+      addLog(`✅ Authoritative Sigma Google Sheet webhook verified in database.`);
+    } catch (profErr) {
+      addLog(`ℹ️ Profile webhook update notice: ${profErr.message}`);
+    }
   } catch (mErr) {
     addLog(`ℹ️ Schema check notice: ${mErr.message}`);
   }

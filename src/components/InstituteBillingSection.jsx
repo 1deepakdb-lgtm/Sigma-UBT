@@ -683,8 +683,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     if (bKey) {
       const now = Date.now();
       const last = recentSyncsRef.current.get(bKey);
-      if (last && (now - last) < 5000) {
-        // Already triggered sync for this bill in the last 5 seconds
+      if (last && (now - last) < 2000) {
         return;
       }
       recentSyncsRef.current.set(bKey, now);
@@ -728,8 +727,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       lastUpdated: nowEnglish
     };
 
-    const webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
+    const SIGMA_DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxL8QJVF4_IzcCPSbIwOcQorTX19KPVgb6Y0xOMfOQOLQcmCwblhStD0nEgmXirXoreFQ/exec';
+    let webhookUrl = (profile && profile.googleSheetUrl ? profile.googleSheetUrl.trim() : "") ||
       (typeof window !== "undefined" ? (localStorage.getItem(`instituteGoogleSheetWebhook_${instKey}`) || localStorage.getItem("instituteGoogleSheetWebhook_default") || "") : "") || "";
+
+    if (!webhookUrl || webhookUrl === 'setup_done' || webhookUrl.includes('AKfycbyMnje') || webhookUrl.includes('AKfycbzrxTC') || webhookUrl.includes('AKfycbwJJc')) {
+      webhookUrl = SIGMA_DEFAULT_WEBHOOK;
+    }
 
     // 1. Primary: Server-side API (/api/institute/billing/sync) has credentials and database profile fallback
     fetch(apiWithInst("/api/institute/billing/sync"), {
@@ -739,7 +743,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       body: JSON.stringify({
         action: "sync_bill",
         googleSheetUrl: (webhookUrl && webhookUrl.startsWith("http") && webhookUrl !== "setup_done") ? webhookUrl : undefined,
-        ownerEmail: (profile && profile.ownerEmail) || "",
+        ownerEmail: (profile && profile.ownerEmail) || "dwijbhatt8@gmail.com",
         bill: formattedBill,
         materials: (bill && bill.materials) || []
       })

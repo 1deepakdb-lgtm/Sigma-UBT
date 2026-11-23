@@ -54,8 +54,14 @@ export async function POST(req) {
       where: { instituteId }
     });
 
-    const googleSheetUrl = (body.googleSheetUrl || profile?.googleSheetUrl || '').trim();
-    const ownerEmail = (body.ownerEmail || profile?.ownerEmail || '').trim();
+    const SIGMA_DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxL8QJVF4_IzcCPSbIwOcQorTX19KPVgb6Y0xOMfOQOLQcmCwblhStD0nEgmXirXoreFQ/exec';
+    let googleSheetUrl = (body.googleSheetUrl || profile?.googleSheetUrl || '').trim();
+    const ownerEmail = (body.ownerEmail || profile?.ownerEmail || 'dwijbhatt8@gmail.com').trim();
+
+    // Auto-fallback to active Sigma Google Sheet webhook if pointing to decommissioned spreadsheet or empty
+    if (!googleSheetUrl || googleSheetUrl === 'setup_done' || googleSheetUrl.includes('AKfycbyMnje') || googleSheetUrl.includes('AKfycbzrxTC') || googleSheetUrl.includes('AKfycbwJJc')) {
+      googleSheetUrl = SIGMA_DEFAULT_WEBHOOK;
+    }
 
     if (!googleSheetUrl) {
       return NextResponse.json({
