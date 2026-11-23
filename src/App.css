@@ -139,9 +139,9 @@ body.pdf-open .institute-mobile-menu-btn {
     display: inline-flex !important;
   }
 
-  .navbar-bottom-nav,
-  .student-bottom-nav,
-  .institute-bottom-nav {
+  body:not(.pdf-open) .navbar-bottom-nav,
+  body:not(.pdf-open) .student-bottom-nav,
+  body:not(.pdf-open) .institute-bottom-nav {
     display: flex !important;
   }
 }

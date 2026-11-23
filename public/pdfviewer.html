@@ -33,6 +33,9 @@
   }
   :root {
     --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
   }
   #viewer-scroll-container {
     width: 100%;
@@ -47,16 +50,14 @@
     overscroll-behavior-y: none !important;
     -webkit-overscroll-behavior-y: none !important;
     box-sizing: border-box;
-    padding-top: 0 !important;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
   @media (max-width: 768px) {
     #viewer-scroll-container {
       background-color: #ffffff;
-    }
-  }
-  @media (max-width: 768px), (display-mode: standalone) {
-    #viewer-scroll-container {
-      padding-top: 0 !important;
     }
   }
   #viewer-zoom-layer {
@@ -195,35 +196,7 @@
   <div id="viewer-zoom-layer"></div>
 </div>
 
-<!-- UNIVERSAL RESPONSIVE SMART TOOLBAR (SMARTBOARD, TABLET & DESKTOP QUICK CONTROLS) -->
-<div id="pdf-smart-toolbar" style="
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 5px 12px;
-  border-radius: 30px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.22);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  z-index: 9999;
-  user-select: none;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #ffffff;
-  transition: opacity 0.3s ease;
-">
-  <button id="toolbar-zoom-out" title="Zoom Out" style="background: none; border: none; color: #ffffff; font-size: 16px; font-weight: 800; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">−</button>
-  <span id="toolbar-zoom-level" title="Reset to 100%" style="font-size: 12px; font-weight: 700; color: #38bdf8; min-width: 40px; text-align: center; cursor: pointer;">100%</span>
-  <button id="toolbar-zoom-in" title="Zoom In" style="background: none; border: none; color: #ffffff; font-size: 16px; font-weight: 800; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">+</button>
-  <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.25); margin: 0 2px;"></span>
-  <button id="toolbar-fit-toggle" title="Toggle Fit Screen" style="background: none; border: none; color: #e2e8f0; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; cursor: pointer;">⛶ Fit</button>
-  <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.25); margin: 0 2px;"></span>
-  <span id="toolbar-page-info" style="font-size: 11px; font-weight: 600; color: #94a3b8; padding: 0 2px; white-space: nowrap;">Page 1</span>
-</div>
+
 
 <script src="/pdf.worker.min.js"></script>
 <script src="/pdf.min.js"></script>
@@ -784,80 +757,76 @@
           }
         }
       }
-      var pageEl = document.getElementById('toolbar-page-info');
-      if (pageEl) {
-        pageEl.textContent = 'Page ' + curPage + ' / ' + total;
-      }
+    function updateCurrentPageTracker() {
+      // Clean reading view (no overlay buttons)
     }
 
-    function updateZoomBadge() {
-      var levelEl = document.getElementById('toolbar-zoom-level');
-      if (levelEl) {
-        var pct = Math.round(((viewMode === 'custom') ? userZoom : 1.0) * 100);
-        levelEl.textContent = pct + '%';
-      }
-      var fitBtn = document.getElementById('toolbar-fit-toggle');
-      if (fitBtn) {
-        fitBtn.textContent = (viewMode === 'fit-page') ? '⛶ Width' : '⛶ Page';
-      }
-      updateCurrentPageTracker();
-    }
+    function updateZoomBadge() {}
+    function updateToolbarUI() {}
+    function initToolbarButtons() {}
 
-    function updateToolbarUI() {
-      updateZoomBadge();
-      updateCurrentPageTracker();
-    }
-
-    function initToolbarButtons() {
-      var zOut = document.getElementById('toolbar-zoom-out');
-      if (zOut) zOut.onclick = function(e) { e.stopPropagation(); zoomOutStep(); };
-      var zIn = document.getElementById('toolbar-zoom-in');
-      if (zIn) zIn.onclick = function(e) { e.stopPropagation(); zoomInStep(); };
-      var zLvl = document.getElementById('toolbar-zoom-level');
-      if (zLvl) zLvl.onclick = function(e) { e.stopPropagation(); shrinkToOwnPosition(true); };
-      var fitToggle = document.getElementById('toolbar-fit-toggle');
-      if (fitToggle) fitToggle.onclick = function(e) {
-        e.stopPropagation();
-        if (viewMode === 'fit-page') {
-          viewMode = 'fit-width';
-          userZoom = 1.0;
-        } else {
-          viewMode = 'fit-page';
-          userZoom = 1.0;
-        }
-        updateAllWrapperDimensions();
-        debouncedReRender();
-        updateZoomBadge();
-      };
-    }
-
-    // Pull-Down-To-Refresh Neutralizer: When at top of PDF (scrollTop <= 0), prevent downward swipe reload
-    function disableAppRefresh() {
+    // Comprehensive Native App Bridge Sync: Disable Pull-to-Refresh & Hide Mobile Status Bar / Nav Bar
+    function syncNativeBridges(isPdfActive) {
       try {
-        if (window.AndroidApp) {
-          if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
-          if (typeof window.AndroidApp.setPdfOpen === "function") window.AndroidApp.setPdfOpen(true);
-        }
-        if (window.parent && window.parent.AndroidApp) {
-          if (typeof window.parent.AndroidApp.setSwipeRefreshEnabled === "function") window.parent.AndroidApp.setSwipeRefreshEnabled(false);
-          if (typeof window.parent.AndroidApp.setPdfOpen === "function") window.parent.AndroidApp.setPdfOpen(true);
-        }
-        if (window.top && window.top.AndroidApp) {
-          if (typeof window.top.AndroidApp.setSwipeRefreshEnabled === "function") window.top.AndroidApp.setSwipeRefreshEnabled(false);
-          if (typeof window.top.AndroidApp.setPdfOpen === "function") window.top.AndroidApp.setPdfOpen(true);
+        var p = (typeof window !== 'undefined' && window.parent) ? window.parent : window;
+        var t = (typeof window !== 'undefined' && window.top) ? window.top : p;
+        var bridgeSources = [window, p, t];
+        var bridgeNames = [
+          'AndroidApp', 'SmartboardApp', 'SmartBoardApp', 'SmartBoard', 'smartboard',
+          'BoardApp', 'boardApp', 'Android', 'android', 'AndroidBridge', 'JSBridge',
+          'webApp', 'NativeApp'
+        ];
+        for (var s = 0; s < bridgeSources.length; s++) {
+          var src = bridgeSources[s];
+          if (!src) continue;
+          for (var b = 0; b < bridgeNames.length; b++) {
+            var bridge = src[bridgeNames[b]];
+            if (!bridge) continue;
+            try {
+              if (isPdfActive) {
+                // 1. Strictly disable pull-down-to-refresh
+                if (typeof bridge.setSwipeRefreshEnabled === 'function') bridge.setSwipeRefreshEnabled(false);
+                if (typeof bridge.setPullToRefreshEnabled === 'function') bridge.setPullToRefreshEnabled(false);
+                if (typeof bridge.disablePullToRefresh === 'function') bridge.disablePullToRefresh();
+                if (typeof bridge.disableSwipeRefresh === 'function') bridge.disableSwipeRefresh();
+                if (typeof bridge.setRefreshEnabled === 'function') bridge.setRefreshEnabled(false);
+                if (typeof bridge.setSwipeToRefreshEnabled === 'function') bridge.setSwipeToRefreshEnabled(false);
+                if (typeof bridge.enableSwipeRefresh === 'function') bridge.enableSwipeRefresh(false);
+                if (typeof bridge.enablePullToRefresh === 'function') bridge.enablePullToRefresh(false);
+                if (typeof bridge.setPdfOpen === 'function') bridge.setPdfOpen(true);
+
+                // 2. Hide mobile status bar and navigation bar (Immersive full screen without overlay)
+                if (typeof bridge.hideStatusBar === 'function') bridge.hideStatusBar();
+                if (typeof bridge.hideNavigationBar === 'function') bridge.hideNavigationBar();
+                if (typeof bridge.setStatusBarVisible === 'function') bridge.setStatusBarVisible(false);
+                if (typeof bridge.setNavigationBarVisible === 'function') bridge.setNavigationBarVisible(false);
+                if (typeof bridge.hideSystemUI === 'function') bridge.hideSystemUI();
+                if (typeof bridge.setSystemUIVisible === 'function') bridge.setSystemUIVisible(false);
+                if (typeof bridge.setImmersiveFullscreen === 'function') bridge.setImmersiveFullscreen(true);
+                if (typeof bridge.setFullscreen === 'function') bridge.setFullscreen(true);
+                if (typeof bridge.enterFullScreen === 'function') bridge.enterFullScreen();
+              }
+            } catch (e) {}
+          }
         }
       } catch (err) {}
     }
-    disableAppRefresh();
-    window.addEventListener('touchstart', disableAppRefresh, { passive: true });
+    syncNativeBridges(true);
+    setInterval(function() { syncNativeBridges(true); }, 1500);
 
     var singleTouchStartY = 0;
     var singleTouchStartX = 0;
-    container.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 1) {
+    function handleTouchStart(e) {
+      if (e.touches && e.touches.length === 1) {
         singleTouchStartY = e.touches[0].clientY;
         singleTouchStartX = e.touches[0].clientX;
       }
+      syncNativeBridges(true);
+    }
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+
+    container.addEventListener('touchstart', function(e) {
       try {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage('EPS_AUDIO_COLLAPSE', '*');
@@ -873,11 +842,11 @@
       } catch (err) {}
     }, { passive: true });
 
+    // Strict Pull-Down-To-Refresh Blocker: Prevent browser & smartboard downward drag reload
     function blockPullToRefresh(e) {
       if (e.touches && e.touches.length === 1 && !isPinching) {
         var dy = e.touches[0].clientY - singleTouchStartY;
-        // When at top of document or pulling down from top screen region, block pull-down refresh on mobile & smartboard
-        if ((container.scrollTop <= 2 || singleTouchStartY < 160) && dy > 0) {
+        if (container.scrollTop <= 2 && dy > 0) {
           if (e.cancelable) {
             e.preventDefault();
           }
@@ -888,28 +857,6 @@
     container.addEventListener('touchmove', blockPullToRefresh, { passive: false });
     window.addEventListener('touchmove', blockPullToRefresh, { passive: false });
     document.addEventListener('touchmove', blockPullToRefresh, { passive: false });
-
-    // Continuous Smartboard and Android native app bridge lock
-    function syncSmartboardBridges() {
-      try {
-        var p = (typeof window !== 'undefined' && window.parent) ? window.parent : window;
-        var targets = [
-          window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android,
-          p.AndroidApp, p.SmartboardApp, p.SmartBoardApp, p.SmartBoard, p.smartboard, p.BoardApp, p.boardApp, p.Android, p.android
-        ];
-        for (var i = 0; i < targets.length; i++) {
-          var b = targets[i];
-          if (!b) continue;
-          if (typeof b.setSwipeRefreshEnabled === 'function') b.setSwipeRefreshEnabled(false);
-          if (typeof b.setPullToRefreshEnabled === 'function') b.setPullToRefreshEnabled(false);
-          if (typeof b.disablePullToRefresh === 'function') b.disablePullToRefresh();
-          if (typeof b.disableSwipeRefresh === 'function') b.disableSwipeRefresh();
-          if (typeof b.setPdfOpen === 'function') b.setPdfOpen(true);
-        }
-      } catch (err) {}
-    }
-    syncSmartboardBridges();
-    setInterval(syncSmartboardBridges, 1500);
 
     // =========================================================================
     // 4. ANCHORED FOCAL-POINT ZOOM & SMOOTH SHRINK ENGINE

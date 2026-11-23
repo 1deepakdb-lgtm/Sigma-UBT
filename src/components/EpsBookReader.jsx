@@ -2078,18 +2078,38 @@ export default function EpsBookReader({
     // Push history state so Android/mobile back button closes the reader cleanly
     if (typeof window !== "undefined") {
       window.history.pushState({ epsReaderModal: true }, "");
-      if (window.AndroidApp) {
-        try {
-          if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
-          if (typeof window.AndroidApp.hideStatusBar === "function") window.AndroidApp.hideStatusBar();
-          if (typeof window.AndroidApp.hideNavigationBar === "function") window.AndroidApp.hideNavigationBar();
-          if (typeof window.AndroidApp.setStatusBarVisible === "function") window.AndroidApp.setStatusBarVisible(false);
-          if (typeof window.AndroidApp.setNavigationBarVisible === "function") window.AndroidApp.setNavigationBarVisible(false);
-          if (typeof window.AndroidApp.hideSystemUI === "function") window.AndroidApp.hideSystemUI();
-          if (typeof window.AndroidApp.setSystemUIVisible === "function") window.AndroidApp.setSystemUIVisible(false);
-          if (typeof window.AndroidApp.setImmersiveFullscreen === "function") window.AndroidApp.setImmersiveFullscreen(true);
-        } catch (e) {}
+      if (typeof document !== "undefined") {
+        document.body.classList.add("pdf-open");
+        document.documentElement.classList.add("pdf-open");
+        document.body.style.overscrollBehavior = "none";
+        document.body.style.overscrollBehaviorY = "none";
+        document.documentElement.style.overscrollBehavior = "none";
+        document.documentElement.style.overscrollBehaviorY = "none";
       }
+      const bridgeList = [
+        window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard,
+        window.BoardApp, window.boardApp, window.Android, window.android, window.AndroidBridge, window.JSBridge,
+        window.webApp, window.NativeApp
+      ];
+      bridgeList.forEach((b) => {
+        if (!b) return;
+        try {
+          if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
+          if (typeof b.setPullToRefreshEnabled === "function") b.setPullToRefreshEnabled(false);
+          if (typeof b.disablePullToRefresh === "function") b.disablePullToRefresh();
+          if (typeof b.disableSwipeRefresh === "function") b.disableSwipeRefresh();
+          if (typeof b.setPdfOpen === "function") b.setPdfOpen(true);
+          if (typeof b.hideStatusBar === "function") b.hideStatusBar();
+          if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
+          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
+          if (typeof b.hideSystemUI === "function") b.hideSystemUI();
+          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
+          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+          if (typeof b.setFullscreen === "function") b.setFullscreen(true);
+          if (typeof b.enterFullScreen === "function") b.enterFullScreen();
+        } catch (e) {}
+      });
     }
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
@@ -3940,7 +3960,7 @@ export default function EpsBookReader({
           overflow: "hidden",
           margin: 0,
           padding: 0,
-          zIndex: 10
+          zIndex: 2147483600
         }}>
           {selectedChapter && (selectedChapter.pdfUrl || selectedChapter.pdf?.url) ? (
             <div style={{
