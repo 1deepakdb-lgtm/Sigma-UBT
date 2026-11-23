@@ -266,6 +266,9 @@ public class MainActivity extends AppCompatActivity {
         String defaultUA = settings.getUserAgentString();
         settings.setUserAgentString(defaultUA + " ExamJK-Android-App/1.0");
 
+        // Prevent downward drag bounce / overscroll on WebView for phones, tablets & Smartboards
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+
         // Enable third-party cookies for seamless auth sessions
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
@@ -422,17 +425,11 @@ public class MainActivity extends AppCompatActivity {
     private void setupSwipeRefresh() {
         swipeRefresh.setColorSchemeResources(R.color.accent, R.color.primary);
         swipeRefresh.setEnabled(false); // GLOBALLY DISABLED: Prevent pull-down refresh on all devices & smartboards
+        swipeRefresh.setOverScrollMode(View.OVER_SCROLL_NEVER);
         swipeRefresh.setOnRefreshListener(() -> {
             swipeRefresh.setRefreshing(false);
         });
         swipeRefresh.setOnChildScrollUpCallback((parent, child) -> true);
-    }
-                currentUrl.contains("/uploads/eps-chapters/")
-            )) {
-                return true;
-            }
-            return webView.getScrollY() > 0;
-        });
     }
 
     private void setupBackNavigation() {

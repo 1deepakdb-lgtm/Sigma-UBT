@@ -24,7 +24,9 @@ export default function GlobalPullToRefreshLock() {
 
     // Apply strict CSS overscroll locks globally
     try {
+      document.documentElement.style.overscrollBehavior = 'none';
       document.documentElement.style.overscrollBehaviorY = 'none';
+      document.body.style.overscrollBehavior = 'none';
       document.body.style.overscrollBehaviorY = 'none';
       document.documentElement.style.setProperty('overscroll-behavior-y', 'none', 'important');
       document.body.style.setProperty('overscroll-behavior-y', 'none', 'important');
@@ -33,21 +35,21 @@ export default function GlobalPullToRefreshLock() {
     var startY = 0;
     var startX = 0;
     var isTracking = false;
+    var cachedScrollContainer = null;
 
-    // Find closest scrollable ancestor of touch target
-    function getScrollParent(element) {
-      var node = element;
-      while (node && node !== document.body && node !== document.documentElement) {
+    // Cache closest scrollable ancestor of touch target ONCE on touchstart
+    function findScrollParent(node) {
+      var cur = node;
+      while (cur && cur !== document.body && cur !== document.documentElement) {
         try {
-          var style = window.getComputedStyle(node);
-          var overflowY = style.overflowY || style.overflow;
-          if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
-            return node;
+          var oy = window.getComputedStyle(cur).overflowY;
+          if ((oy === 'auto' || oy === 'scroll') && cur.scrollHeight > cur.clientHeight) {
+            return cur;
           }
         } catch (e) {}
-        node = node.parentElement;
+        cur = cur.parentElement;
       }
-      return document.scrollingElement || document.documentElement || document.body;
+      return null;
     }
 
     function handleTouchStart(e) {
@@ -55,8 +57,11 @@ export default function GlobalPullToRefreshLock() {
         startY = e.touches[0].clientY;
         startX = e.touches[0].clientX;
         isTracking = true;
+        // Compute container ONCE during touchstart to prevent 60fps forced reflow
+        cachedScrollContainer = findScrollParent(e.target);
       } else {
         isTracking = false;
+        cachedScrollContainer = null;
       }
     }
 
@@ -68,27 +73,34 @@ export default function GlobalPullToRefreshLock() {
       var dy = currentY - startY;
       var dx = currentX - startX;
 
-      // Downward pull: user dragging finger downwards (the gesture that triggers pull-to-refresh)
+      // Downward drag (pull to refresh gesture)
       if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-        var container = getScrollParent(e.target);
-        var scrollTop = 0;
-        if (container === document.body || container === document.documentElement || container === document.scrollingElement) {
-          scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        var isAtTop = false;
+
+        if (cachedScrollContainer) {
+          isAtTop = cachedScrollContainer.scrollTop <= 0;
         } else {
-          scrollTop = container.scrollTop;
+          var winScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+          isAtTop = winScroll <= 0;
         }
 
-        // If at the top or negative overscroll, prevent browser pull-to-refresh reload
-        if (scrollTop <= 0) {
-          if (e.cancelable) {
-            e.preventDefault();
-          }
+        // If at top or overscrolling downward, block browser pull-to-refresh
+        if (isAtTop && e.cancelable) {
+          e.preventDefault();
         }
       }
     }
 
     function handleTouchEnd() {
       isTracking = false;
+      cachedScrollContainer = null;
+    }
+
+    // Keep scroll position bounded above zero
+    function handleScrollClamp() {
+      if (window.scrollY < 0) {
+        window.scrollTo(0, 0);
+      }
     }
 
     // Disable in native bridges if present (Smart Board & Android WebView)
@@ -111,12 +123,24 @@ export default function GlobalPullToRefreshLock() {
     window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
     window.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
     window.addEventListener('touchcancel', handleTouchEnd, { passive: true, capture: true });
+    window.addEventListener('scroll', handleScrollClamp, { passive: true });
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
+    document.addEventListener('touchcancel', handleTouchEnd, { passive: true, capture: true });
 
     return () => {
       window.removeEventListener('touchstart', handleTouchStart, { capture: true });
       window.removeEventListener('touchmove', handleTouchMove, { capture: true });
       window.removeEventListener('touchend', handleTouchEnd, { capture: true });
       window.removeEventListener('touchcancel', handleTouchEnd, { capture: true });
+      window.removeEventListener('scroll', handleScrollClamp);
+
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      document.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      document.removeEventListener('touchend', handleTouchEnd, { capture: true });
+      document.removeEventListener('touchcancel', handleTouchEnd, { capture: true });
     };
   }, []);
 

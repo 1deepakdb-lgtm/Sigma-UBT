@@ -39,6 +39,10 @@ main,
 
 body {
   touch-action: pan-x pan-y;
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  -webkit-overscroll-behavior: none !important;
+  -webkit-overscroll-behavior-y: none !important;
 }
 
 html {
@@ -49,6 +53,10 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  -webkit-overscroll-behavior: none !important;
+  -webkit-overscroll-behavior-y: none !important;
 }
 
 /* Mobile App & Smartboard: Complete Overscroll & Pull-Down Refresh Lock when PDF is open */
