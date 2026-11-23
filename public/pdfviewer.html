@@ -740,24 +740,6 @@
     }
 
     function updateCurrentPageTracker() {
-      if (!pdfDoc) return;
-      var total = pdfDoc.numPages;
-      var cTop = container.scrollTop;
-      var cH = container.clientHeight;
-      var mid = cTop + cH / 3;
-      var curPage = 1;
-
-      for (var p = 1; p <= total; p++) {
-        var el = document.getElementById('page-wrapper-' + p);
-        if (el) {
-          if (el.offsetTop <= mid) {
-            curPage = p;
-          } else {
-            break;
-          }
-        }
-      }
-    function updateCurrentPageTracker() {
       // Clean reading view (no overlay buttons)
     }
 
@@ -1426,7 +1408,11 @@
 
       // Fast Path 2: Direct URL Streaming with HTTP Range Requests (Opens Page 1 in milliseconds!)
       try {
-        await startRenderingDoc(absUrl);
+        var streamingPromise = startRenderingDoc(absUrl);
+        var timeoutPromise = new Promise(function(_, reject) {
+          setTimeout(function() { reject(new Error('Streaming took too long, switching to direct download')); }, 3000);
+        });
+        await Promise.race([streamingPromise, timeoutPromise]);
         // Once successfully opened via streaming, trigger background offline caching (non-blocking!)
         setTimeout(function() {
           downloadPdfWithProgress(targetDocUrl, null).then(async function(buffer) {
