@@ -3,8 +3,32 @@ import prisma from '@/lib/prisma';
 import { requireInstituteOrAdmin, requireInstituteAdmin } from '@/lib/rbac';
 import { reduceStockInternal } from './products/route';
 
+let isMigrationChecked = false;
+async function ensureBillingColumns() {
+  if (isMigrationChecked) return;
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "BillRecord" ADD COLUMN "nextPaymentDate" TEXT`);
+  } catch (e) {}
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "BillRecord" ADD COLUMN "nextPaymentDays" INTEGER`);
+  } catch (e) {}
+  isMigrationChecked = true;
+}
+
+function computeNextDate(baseDateStr, days) {
+  if (!days || isNaN(days) || Number(days) <= 0) return null;
+  try {
+    const d = new Date(baseDateStr || new Date().toISOString().split('T')[0]);
+    d.setDate(d.getDate() + Number(days));
+    return d.toISOString().split('T')[0];
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function GET(req) {
   try {
+    await ensureBillingColumns();
     const { session, errorResponse } = await requireInstituteOrAdmin(req);
     if (errorResponse) return errorResponse;
 
@@ -153,6 +177,12 @@ export async function POST(req) {
     const paymentDate = date || now.toISOString().split('T')[0];
     const incomingPaid = Number(paidAmount) || 0;
 
+    const incomingNextDays = data.nextPaymentDays !== undefined ? (Number(data.nextPaymentDays) || null) : null;
+    let incomingNextDate = data.nextPaymentDate || null;
+    if (!incomingNextDate && incomingNextDays && incomingNextDays > 0) {
+      incomingNextDate = computeNextDate(paymentDate, incomingNextDays);
+    }
+
     // SCENARIO A: Existing student bill -> DO NOT generate a new bill number! Update existing bill!
     if (existingBill) {
       // If already fully paid, disallow next pay
@@ -235,6 +265,8 @@ export async function POST(req) {
           thirdPaymentDate: updatedThirdDate,
           paymentsJson: JSON.stringify(paymentsList),
           parentBillNumber: chosenMethod,
+          nextPaymentDate: remainingDue > 0 ? (incomingNextDate || existingBill.nextPaymentDate) : null,
+          nextPaymentDays: remainingDue > 0 ? (incomingNextDays || existingBill.nextPaymentDays) : null,
           paymentSystem: isCompleted ? 'Full Payment' : `${instNum === 2 ? '2nd' : instNum === 3 ? '3rd' : `${instNum}th`} Installment`,
           preparedBy: (preparedBy && preparedBy.trim()) ? preparedBy.trim() : (existingBill.preparedBy || ''),
           isSyncedToSheet: false
@@ -334,6 +366,8 @@ export async function POST(req) {
         firstPaymentDate: firstDate,
         paymentsJson: JSON.stringify(initialPayments),
         parentBillNumber: chosenMethod,
+        nextPaymentDate: initialDue > 0 ? incomingNextDate : null,
+        nextPaymentDays: initialDue > 0 ? incomingNextDays : null,
         materialsJson: JSON.stringify(materials || []),
         preparedBy: (preparedBy && preparedBy.trim()) ? preparedBy.trim() : ''
       }
@@ -505,6 +539,8 @@ export async function PUT(req) {
           totalFee: total,
           paidAmount: paid,
           dueAmount: due,
+          nextPaymentDate: due > 0 ? (body.nextPaymentDate !== undefined ? body.nextPaymentDate : existing.nextPaymentDate) : null,
+          nextPaymentDays: due > 0 ? (body.nextPaymentDays !== undefined ? (Number(body.nextPaymentDays) || null) : existing.nextPaymentDays) : null,
           amountInWords: body.amountInWords ? cleanStr(body.amountInWords) : existing.amountInWords,
           materialsJson: body.materials ? JSON.stringify(body.materials) : existing.materialsJson,
           preparedBy: body.preparedBy !== undefined ? cleanStr(body.preparedBy) : existing.preparedBy,

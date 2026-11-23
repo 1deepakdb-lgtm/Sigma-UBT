@@ -213,6 +213,8 @@ model BillRecord {
   materialsJson     String    // JSON array of [{ name, amount }]
   preparedBy        String
   parentBillNumber  String?   // References parent bill if applicable
+  nextPaymentDate   String?   // Next payment due date (YYYY-MM-DD)
+  nextPaymentDays   Int?      // Initial days scheduled for next payment (e.g. 7, 10, 15, 30)
   isSyncedToSheet   Boolean   @default(false)
   syncedAt          DateTime?
   createdAt         DateTime  @default(now())

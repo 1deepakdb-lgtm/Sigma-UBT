@@ -69,6 +69,114 @@ export const formatDateMMDDYYYY = (dateStr) => {
   }
 };
 
+// Automatic Daily Countdown Calculator for Due Payments
+export const getPaymentCountdown = (bill) => {
+  if (!bill) return null;
+  const due = Number(bill.dueAmount) || 0;
+  if (due <= 0) return null;
+
+  // Initial days preset (default 15 days if not specified)
+  const initialDays = (bill.nextPaymentDays && Number(bill.nextPaymentDays) > 0) ? Number(bill.nextPaymentDays) : 15;
+  let targetDateStr = bill.nextPaymentDate;
+
+  if (!targetDateStr) {
+    const baseDate = bill.thirdPaymentDate || bill.secondPaymentDate || bill.firstPaymentDate || bill.date;
+    if (baseDate) {
+      try {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + initialDays);
+        targetDateStr = d.toISOString().split('T')[0];
+      } catch (e) {}
+    }
+  }
+
+  if (!targetDateStr) {
+    return {
+      daysRemaining: initialDays,
+      targetDate: '',
+      isOverdue: false,
+      isDueToday: false,
+      statusText: `within ${initialDays} days`,
+      subText: `Within ${initialDays} days`,
+      badgeColor: '#b45309',
+      badgeBg: '#fef3c7',
+      initialDays
+    };
+  }
+
+  try {
+    const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const t = new Date(targetDateStr);
+    const targetMidnight = new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
+    const diffDays = Math.round((targetMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
+    const formattedTarget = formatDateDisplay(targetDateStr);
+
+    if (diffDays < 0) {
+      const overdueDays = Math.abs(diffDays);
+      return {
+        daysRemaining: diffDays,
+        overdueDays,
+        targetDate: formattedTarget,
+        isOverdue: true,
+        isDueToday: false,
+        statusText: `Overdue by ${overdueDays} day${overdueDays > 1 ? 's' : ''}`,
+        subText: `Overdue (Due: ${formattedTarget})`,
+        badgeColor: '#b91c1c',
+        badgeBg: '#fee2e2',
+        initialDays
+      };
+    } else if (diffDays === 0) {
+      return {
+        daysRemaining: 0,
+        targetDate: formattedTarget,
+        isOverdue: false,
+        isDueToday: true,
+        statusText: 'Due Today',
+        subText: `Due: ${formattedTarget}`,
+        badgeColor: '#c2410c',
+        badgeBg: '#ffedd5',
+        initialDays
+      };
+    } else if (diffDays === 1) {
+      return {
+        daysRemaining: 1,
+        targetDate: formattedTarget,
+        isOverdue: false,
+        isDueToday: false,
+        statusText: '1 day remaining',
+        subText: `Within ${initialDays} days (Due: ${formattedTarget})`,
+        badgeColor: '#d97706',
+        badgeBg: '#fef3c7',
+        initialDays
+      };
+    } else {
+      return {
+        daysRemaining: diffDays,
+        targetDate: formattedTarget,
+        isOverdue: false,
+        isDueToday: false,
+        statusText: `${diffDays} days remaining`,
+        subText: `Within ${initialDays} days (Due: ${formattedTarget})`,
+        badgeColor: diffDays <= 3 ? '#b45309' : '#15803d',
+        badgeBg: diffDays <= 3 ? '#fef3c7' : '#dcfce7',
+        initialDays
+      };
+    }
+  } catch (err) {
+    return {
+      daysRemaining: initialDays,
+      targetDate: targetDateStr || '',
+      isOverdue: false,
+      isDueToday: false,
+      statusText: `within ${initialDays} days`,
+      badgeColor: '#b45309',
+      badgeBg: '#fef3c7',
+      initialDays
+    };
+  }
+};
+
 // Predefined Standard Course Options
 export const COURSE_OPTIONS = [
   "EPS Topik Full course",
@@ -432,6 +540,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     paidAmount: defaultNet,
     materials: [...defaultMaterials],
     preparedBy: "", // Blank typing input as requested!
+    nextPaymentDays: 15,
+    nextPaymentDate: "",
     isExistingStudent: false,
     existingBillNumber: ""
   };
@@ -1584,6 +1694,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         paidAmount: remaining > 0 ? remaining : "",
         materials: parsedMaterials,
         paymentSystem: remaining > 0 ? "Installment Payment" : "Full Payment",
+        nextPaymentDays: existing.nextPaymentDays || 15,
+        nextPaymentDate: existing.nextPaymentDate || "",
         preparedBy: "" // Always blank for direct typing as requested!
       }));
 
@@ -1845,6 +1957,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       paidAmount: bill.paidAmount,
       materials: parsedMaterials,
       preparedBy: bill.preparedBy || "",
+      nextPaymentDays: bill.nextPaymentDays || 15,
+      nextPaymentDate: bill.nextPaymentDate || "",
       paymentMethod: PAYMENT_METHODS.includes(bill.paymentMethod) ? bill.paymentMethod : (bill.paymentMethod ? "Other" : "Cash"),
       customPaymentMethod: PAYMENT_METHODS.includes(bill.paymentMethod) ? "" : (bill.paymentMethod || ""),
       isEditingExistingBill: true,
@@ -2176,7 +2290,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       paidAmount: paidAmt,
       amountInWords: inWords,
       materials: form.materials,
-      preparedBy: preparedByVal
+      preparedBy: preparedByVal,
+      nextPaymentDays: form.nextPaymentDays !== undefined ? Number(form.nextPaymentDays) : 15,
+      nextPaymentDate: form.nextPaymentDate || null
     };
 
     // SCENARIO 0: Admin is editing an existing bill record (Edit Bill)
@@ -4144,6 +4260,26 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           {Number(selectedInvoice.dueAmount) > 0 ? formatCurrency(selectedInvoice.dueAmount) : "Paid in Full "}
                         </td>
                       </tr>
+                      {(() => {
+                        if (Number(selectedInvoice.dueAmount) <= 0) return null;
+                        const cd = getPaymentCountdown(selectedInvoice);
+                        if (!cd) return null;
+                        return (
+                          <tr style={{ backgroundColor: cd.isOverdue ? "#fee2e2" : "#fef3c7", borderTop: "1.5px dashed #d97706" }}>
+                            <td style={{ padding: "2px 12px", fontWeight: "800", color: cd.badgeColor, fontSize: "11px" }}>
+                              ⏰ Next Payment Schedule:
+                            </td>
+                            <td style={{ padding: "2px 12px", textAlign: "right", fontWeight: "900", fontSize: "11px", color: cd.badgeColor }}>
+                              Next payment within: {cd.initialDays} days ({cd.statusText})
+                              {cd.targetDate && (
+                                <div style={{ fontSize: "10px", fontWeight: "700", color: cd.isOverdue ? "#991b1b" : "#78350f" }}>
+                                  Due Date: {cd.targetDate}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })()}
                     </tbody>
                   </table>
                 </div>
@@ -4165,6 +4301,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     ) : (
                       <span style={{ fontSize: "11px", color: "#b91c1c", backgroundColor: "#fee2e2", padding: "1px 6px", borderRadius: "8px", fontWeight: "bold" }}>
                         Pending Balance: {formatCurrency(selectedInvoice.dueAmount)}
+                        {(() => {
+                          const cd = getPaymentCountdown(selectedInvoice);
+                          return cd ? ` • Next Pay: ${cd.statusText}` : "";
+                        })()}
                       </span>
                     )}
                   </div>
@@ -4652,7 +4792,38 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", whiteSpace: "nowrap" }}>{formatCurrency(b.totalFee)}</td>
                         <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", color: "#16a34a", whiteSpace: "nowrap" }}>{formatCurrency(b.paidAmount)}</td>
                         <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", color: Number(b.dueAmount) > 0 ? "#dc2626" : "#64748b", whiteSpace: "nowrap" }}>
-                          {Number(b.dueAmount) > 0 ? formatCurrency(b.dueAmount) : "Paid"}
+                          {(() => {
+                            if (Number(b.dueAmount) <= 0) {
+                              return <span style={{ color: "#16a34a", fontSize: "11px", fontWeight: "700" }}>✓ Paid</span>;
+                            }
+                            const cd = getPaymentCountdown(b);
+                            return (
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                                <span style={{ fontSize: "12px", color: "#dc2626", fontWeight: "800" }}>{formatCurrency(b.dueAmount)}</span>
+                                {cd && (
+                                  <span
+                                    title={cd.subText}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "2px",
+                                      fontSize: "10px",
+                                      fontWeight: "700",
+                                      padding: "1px 6px",
+                                      borderRadius: "10px",
+                                      color: cd.badgeColor,
+                                      backgroundColor: cd.badgeBg,
+                                      border: `1px solid ${cd.badgeColor}33`,
+                                      whiteSpace: "nowrap",
+                                      lineHeight: 1.2
+                                    }}
+                                  >
+                                    ⏰ Next Pay: {cd.statusText}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td style={{ padding: "7px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
                           <div style={{ display: "flex", gap: "4px", justifyContent: "center", alignItems: "center" }}>
@@ -5958,6 +6129,166 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       </table>
                     </div>
                   </div>
+
+                  {/* NEXT PAYMENT SCHEDULE CARD (AUTOMATIC DAILY COUNTDOWN) */}
+                  {(() => {
+                    const currentDue = (() => {
+                      if (form.isExistingStudent && !form.isEditingExistingBill) {
+                        const existing = bills.find(b => {
+                          if (!b.contactNumber) return false;
+                          return normalizeNepaliMobile(b.contactNumber) === normalizeNepaliMobile(form.contactNumber);
+                        });
+                        if (existing) {
+                          return Math.max(0, Number(existing.dueAmount || 0) - Number(form.paidAmount || 0));
+                        }
+                      }
+                      return Math.max(0, Number(form.totalFee || 0) - Number(form.paidAmount || 0));
+                    })();
+
+                    if (currentDue <= 0) return null;
+
+                    return (
+                      <div style={{
+                        gridColumn: "span 2",
+                        backgroundColor: "#fffbeb",
+                        border: "2px solid #f59e0b",
+                        borderRadius: "8px",
+                        padding: "14px 16px",
+                        marginTop: "4px"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "6px" }}>
+                          <label style={{ fontSize: "13px", fontWeight: "800", color: "#b45309", display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span>⏰</span> Next Payment Due Schedule / अर्को भुक्तानी तालिका
+                          </label>
+                          <span style={{ fontSize: "12px", fontWeight: "800", color: "#dc2626", backgroundColor: "#fee2e2", padding: "2px 8px", borderRadius: "6px" }}>
+                            Remaining Due: {formatCurrency(currentDue)}
+                          </span>
+                        </div>
+
+                        {/* Quick Presets */}
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px", alignItems: "center" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "700", color: "#78350f" }}>Quick Select:</span>
+                          {[7, 10, 15, 30].map(days => (
+                            <button
+                              key={days}
+                              type="button"
+                              onClick={() => {
+                                const d = new Date(form.date || new Date().toISOString().split('T')[0]);
+                                d.setDate(d.getDate() + days);
+                                setForm(prev => ({
+                                  ...prev,
+                                  nextPaymentDays: days,
+                                  nextPaymentDate: d.toISOString().split('T')[0]
+                                }));
+                              }}
+                              style={{
+                                backgroundColor: Number(form.nextPaymentDays) === days ? "#b45309" : "#ffffff",
+                                color: Number(form.nextPaymentDays) === days ? "#ffffff" : "#92400e",
+                                border: "1.5px solid #d97706",
+                                padding: "4px 12px",
+                                borderRadius: "14px",
+                                fontSize: "11px",
+                                fontWeight: "800",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease"
+                              }}
+                            >
+                              {days} Days
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Custom Days & Due Date Inputs */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                          <div>
+                            <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#78350f", marginBottom: "4px" }}>
+                              Next Payment Within (Days / दिन भित्र):
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="365"
+                              value={form.nextPaymentDays ?? 15}
+                              onChange={(e) => {
+                                const days = parseInt(e.target.value, 10);
+                                if (!isNaN(days) && days > 0) {
+                                  const d = new Date(form.date || new Date().toISOString().split('T')[0]);
+                                  d.setDate(d.getDate() + days);
+                                  setForm(prev => ({
+                                    ...prev,
+                                    nextPaymentDays: days,
+                                    nextPaymentDate: d.toISOString().split('T')[0]
+                                  }));
+                                } else {
+                                  setForm(prev => ({ ...prev, nextPaymentDays: e.target.value, nextPaymentDate: "" }));
+                                }
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "8px 10px",
+                                borderRadius: "6px",
+                                border: "1.5px solid #fcd34d",
+                                fontSize: "13px",
+                                fontWeight: "700",
+                                color: "#78350f",
+                                backgroundColor: "#ffffff",
+                                boxSizing: "border-box"
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: "block", fontSize: "11px", fontWeight: "700", color: "#78350f", marginBottom: "4px" }}>
+                              Next Payment Due Date:
+                            </label>
+                            <input
+                              type="date"
+                              value={form.nextPaymentDate || (() => {
+                                const days = Number(form.nextPaymentDays) || 15;
+                                const d = new Date(form.date || new Date().toISOString().split('T')[0]);
+                                d.setDate(d.getDate() + days);
+                                return d.toISOString().split('T')[0];
+                              })()}
+                              onChange={(e) => {
+                                const newDate = e.target.value;
+                                if (newDate) {
+                                  try {
+                                    const base = new Date(form.date || new Date().toISOString().split('T')[0]).getTime();
+                                    const target = new Date(newDate).getTime();
+                                    const diffDays = Math.max(1, Math.round((target - base) / (1000 * 60 * 60 * 24)));
+                                    setForm(prev => ({
+                                      ...prev,
+                                      nextPaymentDate: newDate,
+                                      nextPaymentDays: diffDays
+                                    }));
+                                  } catch (err) {
+                                    setForm(prev => ({ ...prev, nextPaymentDate: newDate }));
+                                  }
+                                }
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "8px 10px",
+                                borderRadius: "6px",
+                                border: "1.5px solid #fcd34d",
+                                fontSize: "13px",
+                                fontWeight: "700",
+                                color: "#78350f",
+                                backgroundColor: "#ffffff",
+                                boxSizing: "border-box"
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {form.nextPaymentDate && (
+                          <div style={{ marginTop: "8px", fontSize: "11px", color: "#92400e", fontWeight: "700" }}>
+                            📅 Scheduled: Next payment within <strong>{form.nextPaymentDays || 15} days</strong> (Due: <strong>{formatDateDisplay(form.nextPaymentDate)}</strong>)
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Words display */}
                   <div style={{ gridColumn: "span 2", backgroundColor: "#f8fafc", padding: "8px 12px", borderRadius: "6px", border: "1px dashed #cbd5e1" }}>

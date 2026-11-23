@@ -57,6 +57,18 @@
       background-color: #ffffff;
     }
   }
+  #pdf-smart-toolbar,
+  .pdf-smart-toolbar,
+  #toolbar-zoom-level,
+  #toolbar-page-info,
+  [id*="toolbar"],
+  [class*="toolbar-zoom"],
+  [id*="smart-toolbar"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
   #viewer-zoom-layer {
     min-width: 100%;
     width: 100%;
