@@ -4110,12 +4110,12 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   display: "grid",
                   gridTemplateColumns: "1.2fr 1fr",
                   gap: "2px",
-                  padding: "3px 6px",
+                  padding: "4px 8px",
                   border: "1px solid #000000",
                   borderRadius: "4px",
                   marginBottom: "2px",
                   fontSize: "12px",
-                  lineHeight: "1.2"
+                  lineHeight: "1.25"
                 }}>
                   <div>
                     <div><strong>BILL NO:</strong> <span style={{ fontWeight: "900", fontSize: "12px" }}>{selectedInvoice.billNumber}</span></div>
@@ -4135,9 +4135,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     })()}</div>
                     {selectedInvoice.parentName && (
                       <div><strong>Parent Name:</strong> {selectedInvoice.parentName}</div>
-                    )}
-                    {selectedInvoice.classTime && (
-                      <div><strong>Class Time:</strong> {selectedInvoice.classTime}</div>
                     )}
                   </div>
                 </div>
@@ -4164,6 +4161,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         <td style={{ padding: "1px 1px", textAlign: "center", verticalAlign: "middle", borderRight: "1px solid #000000", fontWeight: "bold", color: "#000000" }}>1</td>
                         <td style={{ padding: "1px 3px", verticalAlign: "middle", borderRight: "1px solid #000000", color: "#000000" }}>
                           <strong style={{ fontSize: "12px" }}>{selectedInvoice.courseDetail}</strong>
+                          {selectedInvoice.classTime ? <span style={{ fontSize: "11px", fontWeight: "normal", color: "#334155" }}> ({selectedInvoice.classTime})</span> : null}
                         </td>
                         <td style={{ padding: "1px 2px", textAlign: "center", verticalAlign: "middle", borderRight: "1px solid #000000", fontWeight: "600", color: "#000000" }}>
                           {selectedInvoice.coursePackage}
