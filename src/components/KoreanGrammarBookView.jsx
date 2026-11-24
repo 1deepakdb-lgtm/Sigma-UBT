@@ -5,7 +5,7 @@ import { BASIC_GRAMMAR, INTERMEDIATE_GRAMMAR, ADVANCED_GRAMMAR, GRAMMAR_COMPARIS
 import { CHAPTER_GRAMMAR_MAP } from '@/lib/koreanChapterGrammarData';
 import { renderRuleWithSymbols } from './KoreanMeaningBookView';
 import BatchimRulesGuide from '@/components/BatchimRulesGuide';
-import HangeulAlphabetGuide from '@/components/HangeulAlphabetGuide';
+import HangeulAlphabetGuide, { getSpokenKoreanText } from '@/components/HangeulAlphabetGuide';
 
 export default function KoreanGrammarBookView({ materials = [], isAdmin = false, onUploadMaterial }) {
   // Modes: "alphabet" | "basic_book" | "chapterwise" | "basic_advanced" | "comparisons" | "pdfs"
@@ -40,43 +40,27 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
     cleanText = cleanText.replace(/[#*`_~]/g, '');
     if (!cleanText) cleanText = text;
 
+    const spokenKorean = getSpokenKoreanText ? getSpokenKoreanText(cleanText) : cleanText;
+
     const playKey = id || text;
     setSpeakingText(playKey);
 
-    // 1. Instant Real-Time Web Speech API (Plays in 0 to 15 milliseconds directly on device)
-    if ('speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'ko-KR';
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
-
-        const voices = window.speechSynthesis.getVoices();
-        const koVoice = voices.find(v => (v.lang === 'ko-KR' || v.lang.startsWith('ko') || v.lang.includes('KR')));
-        if (koVoice) utterance.voice = koVoice;
-
-        utterance.onend = () => setSpeakingText(null);
-        utterance.onerror = () => setSpeakingText(null);
-
-        window.speechSynthesis.speak(utterance);
-        return;
-      } catch (e) {
-        console.warn("SpeechSynthesis error, falling back:", e);
-      }
-    }
-
-    // 2. High-Fidelity Neural Voice Fallback
+    // Stop currently running playback
     try {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
         audioPlayerRef.current = null;
       }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    } catch (e) {}
 
+    // 1. PRIMARY: High-Fidelity Studio Neural Voice (Crystal Clear Korean Native Teacher)
+    try {
       const voice = gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural';
       const model = gender === 'male' ? 'male-1' : 'female-1';
-
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ko&gender=${gender}&voice=${voice}&pitch=+0Hz&rate=-4%&model=${model}`;
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&gender=${gender}&voice=${voice}&pitch=+0Hz&rate=-2%&model=${model}`;
       const audio = new Audio(ttsUrl);
       audioPlayerRef.current = audio;
 
@@ -86,17 +70,41 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
       };
 
       audio.onerror = () => {
+        // Fallback to Web Speech API if network is unavailable
+        if ('speechSynthesis' in window) {
+          try {
+            const utterance = new SpeechSynthesisUtterance(spokenKorean);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.0;
+            utterance.onend = () => setSpeakingText(null);
+            utterance.onerror = () => setSpeakingText(null);
+            window.speechSynthesis.speak(utterance);
+            return;
+          } catch (e) {}
+        }
         setSpeakingText(null);
         audioPlayerRef.current = null;
       };
 
       audio.play().catch(() => {
+        if ('speechSynthesis' in window) {
+          try {
+            const utterance = new SpeechSynthesisUtterance(spokenKorean);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 0.9;
+            utterance.onend = () => setSpeakingText(null);
+            utterance.onerror = () => setSpeakingText(null);
+            window.speechSynthesis.speak(utterance);
+            return;
+          } catch (e) {}
+        }
         setSpeakingText(null);
         audioPlayerRef.current = null;
       });
     } catch (e) {
-      console.warn("Speech error:", e);
       setSpeakingText(null);
+      audioPlayerRef.current = null;
     }
   };
 

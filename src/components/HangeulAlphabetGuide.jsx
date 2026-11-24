@@ -582,6 +582,30 @@ export function composeHangul(c, v) {
   return String.fromCharCode(code);
 }
 
+// Convert any standalone vowel or consonant into a complete natural Korean syllable
+export function getSpokenKoreanText(text) {
+  if (!text) return "";
+  const t = String(text).trim();
+  const VOWEL_TO_SYLLABLE = {
+    "ㅏ": "아", "ㅑ": "야", "ㅓ": "어", "ㅕ": "여", "ㅗ": "오",
+    "ㅛ": "요", "ㅜ": "우", "ㅠ": "유", "ㅡ": "으", "ㅣ": "이",
+    "ㅐ": "애", "ㅒ": "얘", "ㅔ": "에", "ㅖ": "예", "ㅘ": "와",
+    "ㅙ": "왜", "ㅚ": "외", "ㅝ": "워", "ㅞ": "웨", "ㅟ": "위",
+    "ㅢ": "의"
+  };
+  if (VOWEL_TO_SYLLABLE[t]) return VOWEL_TO_SYLLABLE[t];
+
+  const CONSONANT_TO_SYLLABLE = {
+    "ㄱ": "가", "ㄴ": "나", "ㄷ": "다", "ㄹ": "라", "ㅁ": "마",
+    "ㅂ": "바", "ㅅ": "사", "ㅇ": "아", "ㅈ": "자", "ㅊ": "차",
+    "ㅋ": "카", "ㅌ": "타", "ㅍ": "파", "ㅎ": "하",
+    "ㄲ": "까", "ㄸ": "따", "ㅃ": "빠", "ㅆ": "싸", "ㅉ": "짜"
+  };
+  if (CONSONANT_TO_SYLLABLE[t]) return CONSONANT_TO_SYLLABLE[t];
+
+  return t;
+}
+
 // Approximate Nepali and Roman pronunciation for common consonant + vowel combos
 const SYLLABLE_PRON_MAP = {
   // ㄱ (गा/खा)
@@ -644,8 +668,9 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
   const lastPlayTimeRef = useRef(0);
   const cachedKoVoiceRef = useRef(null);
 
-  // Pre-load and cache native Korean voices for zero-millisecond touch response
+  // Studio-Quality Neural Audio Engine & Local Cache
   useEffect(() => {
+    // 1. Cache speech synthesis voice if available for offline fallback
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       const loadVoice = () => {
         try {
@@ -659,13 +684,25 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
         window.speechSynthesis.onvoiceschanged = loadVoice;
       }
     }
+
+    // 2. Pre-warm Neural Audio Cache for essential vowels & consonants for instant 0ms touch response
+    const coreWarmList = ["아", "야", "어", "여", "오", "요", "우", "유", "으", "이", "애", "얘", "에", "예", "와", "왜", "외", "워", "웨", "위", "의", "가", "나", "다", "라", "마", "바", "사", "자", "차", "카", "타", "파", "하"];
+    try {
+      coreWarmList.forEach(item => {
+        const url = `/api/tts?text=${encodeURIComponent(item)}&lang=ko&voice=ko-KR-SunHiNeural&rate=+0%`;
+        const a = new Audio();
+        a.preload = "auto";
+        a.src = url;
+        audioCacheRef.current.set(url, a);
+      });
+    } catch (e) {}
   }, []);
 
-  // Real-time instant touch-and-play sound engine (under 20ms response)
+  // Studio-Quality Authentic Korean Pronunciation Engine
   const onPlay = (text, id = null) => {
     if (!text || typeof window === "undefined") return;
     const now = Date.now();
-    if (now - lastPlayTimeRef.current < 60) return; // Debounce rapid multi-touch
+    if (now - lastPlayTimeRef.current < 40) return; // Debounce rapid multi-touch
     lastPlayTimeRef.current = now;
 
     let cleanText = String(text).trim();
@@ -673,61 +710,77 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
     cleanText = cleanText.replace(/\(으\)/g, '으').replace(/\//g, ', ').replace(/[#*`_~]/g, '');
     if (!cleanText) cleanText = text;
 
+    // Convert isolated vowel (ㅏ, ㅐ, ㅘ...) or consonant (ㄱ, ㄴ...) into complete spoken Korean block (아, 애, 와, 가, 나...)
+    const spokenKorean = getSpokenKoreanText(cleanText);
+
     const playKey = id || text;
     setLocalPlayingId(playKey);
 
-    // 1. Instant Real-Time Web Speech API (Plays within milliseconds)
-    if ("speechSynthesis" in window) {
+    // Stop currently playing audio immediately
+    if (activeAudioRef.current) {
       try {
-        window.speechSynthesis.cancel(); // Stop prior audio immediately
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = "ko-KR";
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-
-        if (cachedKoVoiceRef.current) {
-          utterance.voice = cachedKoVoiceRef.current;
-        } else {
-          const voices = window.speechSynthesis.getVoices();
-          const koVoice = voices.find(v => (v.lang === "ko-KR" || v.lang.startsWith("ko") || v.lang.includes("KR")));
-          if (koVoice) {
-            cachedKoVoiceRef.current = koVoice;
-            utterance.voice = koVoice;
-          }
-        }
-
-        utterance.onend = () => setLocalPlayingId(null);
-        utterance.onerror = () => setLocalPlayingId(null);
-
-        window.speechSynthesis.speak(utterance);
-        return;
-      } catch (err) {
-        console.warn("SpeechSynthesis error, falling back to cache/audio:", err);
-      }
-    }
-
-    // 2. High-speed In-Memory Audio Object fallback
-    try {
-      if (activeAudioRef.current) {
         activeAudioRef.current.pause();
         activeAudioRef.current.currentTime = 0;
-      }
+      } catch (e) {}
+    }
+    if ("speechSynthesis" in window) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
 
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ko&gender=female&voice=ko-KR-SunHiNeural&rate=+0%`;
-      let audio = audioCacheRef.current.get(ttsUrl);
-      if (!audio) {
-        audio = new Audio(ttsUrl);
-        audioCacheRef.current.set(ttsUrl, audio);
-      } else {
-        audio.currentTime = 0;
-      }
+    // 1. PRIMARY: High-Fidelity Microsoft Neural Korean Voice (SunHi Studio Broadcast Voice)
+    const ttsUrl = `/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&voice=ko-KR-SunHiNeural&rate=+0%`;
 
-      activeAudioRef.current = audio;
-      audio.onended = () => setLocalPlayingId(null);
-      audio.onerror = () => setLocalPlayingId(null);
-      audio.play().catch(() => setLocalPlayingId(null));
-    } catch (e) {
+    let audio = audioCacheRef.current.get(ttsUrl);
+    if (!audio) {
+      audio = new Audio(ttsUrl);
+      audioCacheRef.current.set(ttsUrl, audio);
+    } else {
+      audio.currentTime = 0;
+    }
+
+    activeAudioRef.current = audio;
+
+    const clearActive = () => {
       setLocalPlayingId(null);
+      if (activeAudioRef.current === audio) activeAudioRef.current = null;
+    };
+
+    audio.onended = clearActive;
+    audio.onerror = () => {
+      // Offline fallback: Use SpeechSynthesisUtterance if network fails
+      if ("speechSynthesis" in window) {
+        try {
+          const utterance = new SpeechSynthesisUtterance(spokenKorean);
+          utterance.lang = "ko-KR";
+          utterance.rate = 0.9;
+          if (cachedKoVoiceRef.current) utterance.voice = cachedKoVoiceRef.current;
+          utterance.onend = clearActive;
+          utterance.onerror = clearActive;
+          window.speechSynthesis.speak(utterance);
+          return;
+        } catch (e) {}
+      }
+      clearActive();
+    };
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Fallback to speech synthesis if autoplay was restricted
+        if ("speechSynthesis" in window) {
+          try {
+            const utterance = new SpeechSynthesisUtterance(spokenKorean);
+            utterance.lang = "ko-KR";
+            utterance.rate = 0.9;
+            if (cachedKoVoiceRef.current) utterance.voice = cachedKoVoiceRef.current;
+            utterance.onend = clearActive;
+            utterance.onerror = clearActive;
+            window.speechSynthesis.speak(utterance);
+            return;
+          } catch (e) {}
+        }
+        clearActive();
+      });
     }
   };
 
@@ -1546,23 +1599,74 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
           }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", fontSize: "13px" }}>
               <thead>
-                <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #cbd5e1" }}>
-                  <th style={{ padding: "10px 12px", fontWeight: "900", color: "#1e3a8a", minWidth: "90px", borderRight: "1.5px solid #cbd5e1" }}>
-                    자음 / 모음
+                <tr style={{ backgroundColor: "#0f2b66", borderBottom: "2px solid #081a40" }}>
+                  <th style={{
+                    padding: "12px 10px",
+                    fontWeight: "900",
+                    backgroundColor: "#081a40",
+                    color: "#ffffff",
+                    minWidth: "105px",
+                    borderRight: "1.5px solid rgba(255,255,255,0.25)",
+                    userSelect: "none"
+                  }}>
+                    <div style={{ fontSize: "15px", fontWeight: "900", color: "#ffffff", letterSpacing: "0.5px" }}>
+                      자음 / 모음
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#bfdbfe", fontWeight: "700", marginTop: "3px" }}>
+                      व्यञ्जन / स्वर
+                    </div>
                   </th>
-                  {currentMatrixVowels.map(v => (
-                    <th key={v.v} style={{ padding: "8px 6px", minWidth: "58px", borderRight: "1px solid #e2e8f0" }}>
-                      <div style={{ fontSize: "18px", fontWeight: "900", color: matrixVowelGroup === "basic" ? "#16a34a" : "#7e22ce" }}>
-                        {v.v}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "#475569", fontWeight: "bold" }}>
-                        {v.ne}
-                      </div>
-                      <div style={{ fontSize: "10px", color: "#94a3b8" }}>
-                        {v.ro}
-                      </div>
-                    </th>
-                  ))}
+                  {currentMatrixVowels.map(v => {
+                    const spokenVowel = getSpokenKoreanText(v.v);
+                    const isHeaderPlaying = isAudioPlaying(`header_v_${v.v}`);
+                    return (
+                      <th
+                        key={v.v}
+                        onPointerDown={() => onPlay(spokenVowel, `header_v_${v.v}`)}
+                        onClick={() => onPlay(spokenVowel, `header_v_${v.v}`)}
+                        style={{
+                          padding: "10px 4px",
+                          minWidth: "60px",
+                          backgroundColor: isHeaderPlaying ? "#2563eb" : "#0f2b66",
+                          color: "#ffffff",
+                          borderRight: "1px solid rgba(255,255,255,0.2)",
+                          cursor: "pointer",
+                          userSelect: "none",
+                          touchAction: "manipulation",
+                          transition: "background-color 0.12s ease"
+                        }}
+                        title={`Click to hear ${v.v} (${v.ne})`}
+                      >
+                        <div style={{
+                          fontSize: "22px",
+                          fontWeight: "900",
+                          color: "#ffffff",
+                          lineHeight: 1.1,
+                          textShadow: "0 1px 3px rgba(0,0,0,0.5)"
+                        }}>
+                          {v.v}
+                        </div>
+                        <div style={{
+                          fontSize: "12px",
+                          color: "#ffffff",
+                          fontWeight: "800",
+                          marginTop: "3px",
+                          textShadow: "0 1px 2px rgba(0,0,0,0.4)"
+                        }}>
+                          {v.ne}
+                        </div>
+                        <div style={{
+                          fontSize: "11px",
+                          color: "#ffffff",
+                          opacity: 0.92,
+                          fontWeight: "700",
+                          marginTop: "1px"
+                        }}>
+                          {v.ro}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -1575,12 +1679,19 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     }}
                   >
                     {/* Consonant Header Cell */}
-                    <td style={{
-                      padding: "8px 10px",
-                      fontWeight: "900",
-                      borderRight: "1.5px solid #cbd5e1",
-                      backgroundColor: matrixFilterType === "single" ? "#eff6ff" : "#fffbeb"
-                    }}>
+                    <td
+                      onPointerDown={() => onPlay(con.soundSample || con.char, `matrix_c_${con.char}`)}
+                      onClick={() => onPlay(con.soundSample || con.char, `matrix_c_${con.char}`)}
+                      style={{
+                        padding: "8px 10px",
+                        fontWeight: "900",
+                        borderRight: "1.5px solid #cbd5e1",
+                        backgroundColor: isAudioPlaying(`matrix_c_${con.char}`) ? "#dbeafe" : (matrixFilterType === "single" ? "#eff6ff" : "#fffbeb"),
+                        cursor: "pointer",
+                        transition: "background-color 0.1s ease"
+                      }}
+                      title={`Click to hear ${con.char} (${con.nameKo})`}
+                    >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
                         <span style={{ fontSize: "20px", color: matrixFilterType === "single" ? "#1e40af" : "#b45309" }}>
                           {con.char}
