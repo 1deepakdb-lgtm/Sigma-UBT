@@ -665,10 +665,19 @@ export async function PUT(req) {
       return NextResponse.json({ success: true, bill: updatedBill, message: 'Bill record updated successfully.' });
     }
 
-    // 2. ADMIN EDIT COMPANY BILL PAD HEADER (Unrestricted for Admin)
+    // 2. ADMIN EDIT COMPANY BILL PAD HEADER (Max 3 edits, then auto-locked)
     let profile = await prisma.billingProfile.findUnique({ where: { instituteId } });
 
     if (profile) {
+      if ((profile.editCount || 0) >= 3 && session.role !== 'admin') {
+        return NextResponse.json({
+          error: 'Bill header has reached the maximum limit of 3 edits and is now permanently locked.'
+        }, { status: 403 });
+      }
+
+      const nextEditCount = (profile.editCount || 0) + 1;
+      const isLocked = nextEditCount >= 3;
+
       const updated = await prisma.billingProfile.update({
         where: { instituteId },
         data: {
@@ -681,21 +690,23 @@ export async function PUT(req) {
           stampUrl: body.stampUrl !== undefined ? body.stampUrl : profile.stampUrl,
           googleSheetUrl: body.googleSheetUrl !== undefined ? body.googleSheetUrl : profile.googleSheetUrl,
           ownerEmail: body.ownerEmail !== undefined ? body.ownerEmail : profile.ownerEmail,
-          editCount: profile.editCount + 1,
-          isLocked: false
+          editCount: nextEditCount,
+          isLocked: isLocked
         }
       });
 
       return NextResponse.json({
         success: true,
         profile: updated,
-        message: 'Bill Pad Header updated successfully.'
+        message: isLocked 
+          ? 'Bill Pad Header updated. (3/3 edits used - now permanently locked).' 
+          : `Bill Pad Header updated successfully (${nextEditCount}/3 edits used).`
       });
     } else {
       const created = await prisma.billingProfile.create({
         data: {
           instituteId,
-          companyName: body.companyName || 'EXAMJK EDUCATION KOREAN BHASA CENTER',
+          companyName: body.companyName || 'SIGMA EDUCATION KOREAN BHASA CENTER',
           companyAddress: body.companyAddress || 'Samakhushi Chowk, Kathmandu',
           contactNumber: body.contactNumber || '9768444902, 9806100148',
           email: body.email || 'examjkedu@gmail.com',
@@ -704,7 +715,7 @@ export async function PUT(req) {
           stampUrl: body.stampUrl || '',
           googleSheetUrl: body.googleSheetUrl || '',
           ownerEmail: body.ownerEmail || '',
-          editCount: 0,
+          editCount: 1,
           isLocked: false
         }
       });
@@ -712,7 +723,7 @@ export async function PUT(req) {
       return NextResponse.json({
         success: true,
         profile: created,
-        message: 'Bill Header saved successfully.'
+        message: 'Bill Pad Header created (1/3 edits used).'
       });
     }
   } catch (err) {

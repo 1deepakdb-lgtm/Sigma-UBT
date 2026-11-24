@@ -1991,9 +1991,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     setShowBillModal(true);
   };
 
-  // Save profile header (Unrestricted for Institute Admin)
+  // Save profile header (Max 3 edits allowed, then permanently locked)
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    if ((profile?.editCount || 0) >= 3 || profile?.isLocked) {
+      alert("⚠️ Bill header has reached the maximum limit of 3 edits and is locked permanently.");
+      return;
+    }
     setIsSavingProfile(true);
 
     try {
@@ -3707,28 +3711,42 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
               <button
                 type="button"
-                onClick={() => setShowProfileModal(true)}
-                title="Configure and customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
+                onClick={() => {
+                  if ((profile?.editCount || 0) >= 3 || profile?.isLocked) {
+                    alert("⚠️ Bill header has reached the maximum limit of 3 edits and is locked permanently.");
+                    return;
+                  }
+                  setShowProfileModal(true);
+                }}
+                disabled={Boolean((profile?.editCount || 0) >= 3 || profile?.isLocked)}
+                title={((profile?.editCount || 0) >= 3 || profile?.isLocked) 
+                  ? "Edit limit reached (3/3 edits used). Locked permanently." 
+                  : `Edit (${3 - (profile?.editCount || 0)} of 3 edits remaining)`
+                }
                 style={{
-                  backgroundColor: "#0d9488",
+                  backgroundColor: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "#94a3b8" : "#0d9488",
                   color: "white",
                   border: "none",
-                  padding: "8px 16px",
+                  padding: "8px 18px",
                   borderRadius: "8px",
-                  cursor: "pointer",
+                  cursor: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "not-allowed" : "pointer",
                   fontWeight: "bold",
                   fontSize: "13px",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  boxShadow: "0 2px 6px rgba(13, 148, 136, 0.25)"
+                  opacity: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? 0.6 : 1,
+                  boxShadow: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "none" : "0 2px 6px rgba(13, 148, 136, 0.25)"
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-                Edit Bill Header
+                <span>Edit</span>
+                {Boolean((profile?.editCount || 0) >= 3 || profile?.isLocked) && (
+                  <span style={{ fontSize: "10px", backgroundColor: "rgba(0,0,0,0.25)", padding: "2px 6px", borderRadius: "10px" }}>🔒 Locked</span>
+                )}
               </button>
 
               {/* CREATE NEW BILL (SECOND LAST BUTTON) */}
@@ -4024,50 +4042,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               marginBottom: "24px",
               border: "1.5px solid #cbd5e1",
               overflow: "hidden",
-              position: "relative",
-              cursor: "pointer",
-              transition: "all 0.15s ease"
+              position: "relative"
             }}
-            onClick={() => setShowProfileModal(true)}
-            title="Click anywhere on this bill header to edit Institute Name, PAN, Logo, Phone, Address"
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = "#2563eb"}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
           >
-            {/* Institute Admin Header Customization Button (Always visible) */}
-            <div style={{ position: "absolute", top: "14px", right: "16px", zIndex: 30 }}>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowProfileModal(true);
-                }}
-                title="Customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
-                style={{
-                  backgroundColor: "#1e40af",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "8px 18px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "13px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: "0 2px 8px rgba(30, 64, 175, 0.35)",
-                  transition: "all 0.15s ease"
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1d4ed8"}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#1e40af"}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                ✏️ Edit Header / PAN / Logo
-              </button>
-            </div>
-
             {/* Real Bill Pad Letterhead (Exact Replica of User Image) */}
             <div style={{ padding: "24px 30px 16px 30px", backgroundColor: "#ffffff" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "25px", flexWrap: "wrap" }}>
@@ -4104,7 +4081,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </div>
               </div>
 
-              {/* Bottom Bar: VAT/PAN on Left, Edit Button in Middle, DATE on Right */}
+              {/* Bottom Bar: VAT/PAN on Left, DATE on Right */}
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -4118,31 +4095,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 flexWrap: "wrap",
                 gap: "8px"
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div>
                   <span>VAT/PAN: {profile.panVatNumber}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowProfileModal(true);
-                    }}
-                    style={{
-                      backgroundColor: "#2563eb",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "4px 12px",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      boxShadow: "0 2px 5px rgba(37, 99, 235, 0.3)"
-                    }}
-                  >
-                    ✏️ Edit Bill Header / PAN
-                  </button>
                 </div>
                 <div>
                   DATE: {formatDateMMDDYYYY(new Date().toISOString())}
@@ -4184,28 +4138,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             </div>
 
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-              <button
-                type="button"
-                onClick={() => setShowProfileModal(true)}
-                title="Edit Institute Bill Header (Name, PAN, Logo, Phone, Address)"
-                style={{
-                  backgroundColor: "#0d9488",
-                  color: "white",
-                  border: "none",
-                  padding: "9px 16px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "12px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: "0 2px 6px rgba(13, 148, 136, 0.25)"
-                }}
-              >
-                ✏️ Edit Bill Header
-              </button>
-
               <button
                 onClick={handleSyncToGoogleSheet}
                 disabled={isSyncing}
@@ -7228,11 +7160,46 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   </button>
                 </div>
 
-                {/* Information Callout */}
-                <div style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", padding: "10px 14px", borderRadius: "8px", fontSize: "12px", color: "#1e40af", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontSize: "18px" }}>ℹ️</span>
-                  <div>
-                    <strong>Institute Admin Choice:</strong> Update these details anytime to match your institute's official branding. All printed bills and invoices will immediately update.
+                {/* Information Callout with Edit Count Display */}
+                <div style={{
+                  backgroundColor: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "#fef2f2" : "#eff6ff",
+                  border: "1px solid " + (((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "#fca5a5" : "#bfdbfe"),
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  color: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "#dc2626" : "#1e40af",
+                  marginBottom: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                  flexWrap: "wrap"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "18px" }}>{((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "🔒" : "ℹ️"}</span>
+                    <div>
+                      <strong>Bill Header Customization:</strong>
+                      {((profile?.editCount || 0) >= 3 || profile?.isLocked) ? (
+                        <span style={{ marginLeft: "4px" }}>
+                          Maximum 3 edits reached. This bill header is now <strong>permanently locked</strong> and cannot be edited further.
+                        </span>
+                      ) : (
+                        <span style={{ marginLeft: "4px" }}>
+                          You can edit this header up to 3 times ({3 - (profile?.editCount || 0)} edit{3 - (profile?.editCount || 0) === 1 ? '' : 's'} remaining). After 3 edits, it will auto-disable and lock permanently.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{
+                    backgroundColor: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "#ef4444" : "#2563eb",
+                    color: "#ffffff",
+                    padding: "3px 10px",
+                    borderRadius: "12px",
+                    fontWeight: "bold",
+                    fontSize: "11px",
+                    whiteSpace: "nowrap"
+                  }}>
+                    {Math.min(3, profile?.editCount || 0)} / 3 Edits Used
                   </div>
                 </div>
 
@@ -7439,23 +7406,27 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     </button>
                     <button
                       type="submit"
-                      disabled={isSavingProfile}
+                      disabled={isSavingProfile || Boolean((profile?.editCount || 0) >= 3 || profile?.isLocked)}
                       style={{
-                        backgroundColor: "#1e40af",
+                        backgroundColor: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "#94a3b8" : "#1e40af",
                         color: "white",
                         border: "none",
                         padding: "10px 24px",
                         borderRadius: "6px",
                         fontWeight: "900",
-                        cursor: isSavingProfile ? "not-allowed" : "pointer",
+                        cursor: (isSavingProfile || (profile?.editCount || 0) >= 3 || profile?.isLocked) ? "not-allowed" : "pointer",
                         fontSize: "14px",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "8px",
-                        boxShadow: "0 2px 6px rgba(30, 64, 175, 0.3)"
+                        boxShadow: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "none" : "0 2px 6px rgba(30, 64, 175, 0.3)"
                       }}
                     >
-                      {isSavingProfile ? (
+                      {((profile?.editCount || 0) >= 3 || profile?.isLocked) ? (
+                        <>
+                          <span>🔒</span> Edits Locked (3/3 Used)
+                        </>
+                      ) : isSavingProfile ? (
                         <>
                           <span>⏳</span> Saving Changes...
                         </>
