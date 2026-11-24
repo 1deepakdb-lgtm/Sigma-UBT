@@ -56,14 +56,7 @@ export default function GlobalPullToRefreshLock() {
       document.body.style.setProperty('overscroll-behavior-y', 'none', 'important');
     } catch (e) {}
 
-    // 2. Prevent Rubber-Banding Overscroll Offset (< 0)
-    function handleScrollClamp() {
-      if (window.scrollY < 0) {
-        window.scrollTo(0, 0);
-      }
-    }
-
-    // 3. Disable in Native Mobile Bridges (Smart Board, Android WebView, iOS WKWebView)
+    // 2. Disable in Native Mobile Bridges (Smart Board, Android WebView, iOS WKWebView)
     function lockNativeBridges() {
       if (typeof window === 'undefined') return;
       var bridgeList = [
@@ -120,13 +113,11 @@ export default function GlobalPullToRefreshLock() {
     lockNativeBridges();
     const bridgeInterval = setInterval(lockNativeBridges, 2000);
 
-    window.addEventListener('scroll', handleScrollClamp, { passive: true });
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       clearInterval(bridgeInterval);
-      window.removeEventListener('scroll', handleScrollClamp);
       window.removeEventListener('keydown', handleKeyDown, { capture: true });
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };

@@ -1565,9 +1565,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       <style dangerouslySetInnerHTML={{
         __html: `
         html {
-          overflow-y: auto !important;
+          overflow-y: scroll !important;
           overflow-x: hidden !important;
-          height: auto !important;
+          height: 100% !important;
           min-height: 100% !important;
           -webkit-overflow-scrolling: touch !important;
           overscroll-behavior-y: none !important;

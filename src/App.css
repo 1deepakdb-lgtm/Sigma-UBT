@@ -21,10 +21,9 @@ html {
   min-height: 100%;
   background-color: #003b73;
   overflow-x: hidden;
-  overflow-y: auto !important;
+  overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: none !important;
-  overscroll-behavior: none !important;
   scrollbar-gutter: stable;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;

@@ -3160,7 +3160,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   });
 
   return (
-    <div style={{ paddingBottom: "120px", width: "100%", overflowY: "visible" }}>
+    <div style={{ paddingBottom: "140px", width: "100%", minHeight: "100%", overflowY: "visible" }}>
       {/* Print CSS - Strictly renders the clean Bill Pad layout or Expense Sheet fixed to Letter size */}
       <style dangerouslySetInnerHTML={{
         __html: `
