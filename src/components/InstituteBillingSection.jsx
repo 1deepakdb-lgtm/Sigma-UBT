@@ -637,6 +637,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const [selectedItemQty, setSelectedItemQty] = useState(1);
 
   const [form, setForm] = useState(defaultForm);
+  const [discountMode, setDiscountMode] = useState("pct"); // "pct" or "amt"
   const [showBillModal, setShowBillModal] = useState(false);
   const [selectedItemToAdd, setSelectedItemToAdd] = useState("");
   const [customItemToAdd, setCustomItemToAdd] = useState("");
@@ -1839,11 +1840,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   // Dynamic fee calculation with Discount %, Materials items price, and included 13% VAT
   const updateFeeCalculations = (newGross, newDiscPct, customMaterials) => {
     const gross = Number(newGross) >= 0 ? Number(newGross) : Number(form.grossFee || 0);
-    const discPct = Number(newDiscPct) >= 0 ? Number(newDiscPct) : Number(form.discountPercent || 0);
+    const discPct = Math.min(100, Math.max(0, Number(newDiscPct) >= 0 ? Number(newDiscPct) : Number(form.discountPercent || 0)));
     const materialsList = customMaterials !== undefined ? customMaterials : (form.materials || []);
     const materialsTotal = materialsList.reduce((acc, m) => acc + (Number(m.amount) || 0), 0);
 
-    const discAmt = gross * (discPct / 100);
+    const discAmt = Math.round(gross * (discPct / 100));
     const netCourseFee = Math.max(0, gross - discAmt);
     const finalTotal = Math.max(0, netCourseFee + materialsTotal);
 
@@ -1858,6 +1859,34 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         ...prev,
         grossFee: gross,
         discountPercent: discPct,
+        discountAmount: discAmt,
+        totalFee: finalTotal,
+        paidAmount: nextPaid
+      };
+    });
+  };
+
+  // Dynamic fee calculation by flat Discount Amount (Rs.)
+  const updateFeeCalculationsByAmount = (newGross, newDiscAmt, customMaterials) => {
+    const gross = Number(newGross) >= 0 ? Number(newGross) : Number(form.grossFee || 0);
+    const discAmt = Math.min(gross, Math.max(0, Number(newDiscAmt) >= 0 ? Number(newDiscAmt) : 0));
+    const discPct = gross > 0 ? (discAmt / gross) * 100 : 0;
+    const materialsList = customMaterials !== undefined ? customMaterials : (form.materials || []);
+    const materialsTotal = materialsList.reduce((acc, m) => acc + (Number(m.amount) || 0), 0);
+    const netCourseFee = Math.max(0, gross - discAmt);
+    const finalTotal = Math.max(0, netCourseFee + materialsTotal);
+
+    setForm(prev => {
+      let nextPaid = prev.paidAmount;
+      if (prev.paymentSystem === "Full Payment") {
+        nextPaid = finalTotal;
+      } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
+        nextPaid = finalTotal;
+      }
+      return {
+        ...prev,
+        grossFee: gross,
+        discountPercent: Math.round(discPct * 100) / 100,
         discountAmount: discAmt,
         totalFee: finalTotal,
         paidAmount: nextPaid
@@ -1948,11 +1977,36 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     if (e && e.preventDefault) e.preventDefault();
     const saveDate = feeUpdateDate || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10));
 
-    const mergedCourseFees = { ...(feeConfig.courseFees || {}), ...editingCourseFees };
+    // Normalize packages to numeric values
+    const cleanedPkgFees = {};
+    Object.keys(editingPackageFees || {}).forEach(k => {
+      cleanedPkgFees[k] = {
+        grossFee: Number(editingPackageFees[k]?.grossFee) || 0,
+        discountPercent: Number(editingPackageFees[k]?.discountPercent) || 0
+      };
+    });
+
+    const cleanedCourseFees = {};
+    Object.keys(editingCourseFees || {}).forEach(cName => {
+      const cObj = editingCourseFees[cName] || {};
+      const cPkgs = {};
+      Object.keys(cObj.packages || {}).forEach(k => {
+        cPkgs[k] = {
+          grossFee: Number(cObj.packages[k]?.grossFee) || 0,
+          discountPercent: Number(cObj.packages[k]?.discountPercent) || 0
+        };
+      });
+      cleanedCourseFees[cName] = {
+        ...cObj,
+        packages: cPkgs
+      };
+    });
+
+    const mergedCourseFees = { ...(feeConfig.courseFees || {}), ...cleanedCourseFees };
 
     const newConfig = {
       defaultPackage: selectedCourseForFees === "STANDARD_DEFAULT" ? selectedDefaultPkg : (feeConfig.defaultPackage || "Full course"),
-      packages: { ...editingPackageFees },
+      packages: { ...DEFAULT_PACKAGE_FEES, ...cleanedPkgFees },
       courseFees: mergedCourseFees,
       updatedAt: saveDate
     };
@@ -1964,8 +2018,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     setFeeSavedToast("Course package default fee structures updated successfully!");
     setTimeout(() => setFeeSavedToast(""), 3500);
 
-    // If bill modal is currently open and not locked, refresh form to match new defaults
-    if (showBillModal && !form.isExistingStudent && !form.isEditingExistingBill) {
+    // If bill modal is currently open, refresh form to match new defaults
+    if (showBillModal && !form.isEditingExistingBill) {
       const curCourse = form.courseDetail;
       const curPkg = form.coursePackage || selectedDefaultPkg;
       const pkgInfo = (curCourse && newConfig.courseFees?.[curCourse]?.packages?.[curPkg]) || newConfig.packages[curPkg] || newConfig.packages[selectedDefaultPkg];
@@ -2199,7 +2253,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     // Recalculate total with new item
     const gross = Number(form.grossFee || 0);
     const discPct = Number(form.discountPercent || 0);
-    const discAmt = gross * (discPct / 100);
+    const discAmt = Number(form.discountAmount) > 0 ? Number(form.discountAmount) : (gross * (discPct / 100));
     const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
     let nextPaid = form.paidAmount;
@@ -2243,7 +2297,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       if (field === "amount") {
         const gross = Number(prev.grossFee || 0);
         const discPct = Number(prev.discountPercent || 0);
-        const discAmt = gross * (discPct / 100);
+        const discAmt = Number(prev.discountAmount) > 0 ? Number(prev.discountAmount) : (gross * (discPct / 100));
         const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
         const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
         let nextPaid = prev.paidAmount;
@@ -2270,7 +2324,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       const updated = prev.materials.filter((_, i) => i !== index);
       const gross = Number(prev.grossFee || 0);
       const discPct = Number(prev.discountPercent || 0);
-      const discAmt = gross * (discPct / 100);
+      const discAmt = Number(prev.discountAmount) > 0 ? Number(prev.discountAmount) : (gross * (discPct / 100));
       const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
       const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
       let nextPaid = prev.paidAmount;
@@ -2321,7 +2375,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
       const gross = Number(prev.grossFee || 0);
       const discPct = Number(prev.discountPercent || 0);
-      const discAmt = gross * (discPct / 100);
+      const discAmt = Number(prev.discountAmount) > 0 ? Number(prev.discountAmount) : (gross * (discPct / 100));
       const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
       const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
       let nextPaid = prev.paidAmount;
@@ -2376,7 +2430,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
       const gross = Number(prev.grossFee || 0);
       const discPct = Number(prev.discountPercent || 0);
-      const discAmt = gross * (discPct / 100);
+      const discAmt = Number(prev.discountAmount) > 0 ? Number(prev.discountAmount) : (gross * (discPct / 100));
       const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
       const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
       let nextPaid = prev.paidAmount;
@@ -5800,68 +5854,146 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       alignItems: "flex-end",
                       marginBottom: "14px"
                     }}>
-                      {/* 1. Course Gross Fee */}
+                      {/* 1. Course Gross Fee (Editable) */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                           <label style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", textTransform: "uppercase" }}>
                             Course Fee (Gross)
                           </label>
                         </div>
-                        <div style={{
-                          width: "100%",
-                          height: "44px",
-                          padding: "0 10px",
-                          borderRadius: "6px",
-                          border: "1.5px solid #cbd5e1",
-                          backgroundColor: "#f1f5f9",
-                          boxSizing: "border-box",
-                          display: "flex",
-                          alignItems: "center",
-                          fontWeight: "bold",
-                          fontSize: "14px",
-                          color: "#166534"
-                        }}>
-                          {formatCurrency(form.grossFee || 0)}
-                        </div>
-                      </div>
-
-                      {/* 2. Discount with minus (-) sign (Editable) */}
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                          <label style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", textTransform: "uppercase" }}>
-                            Discount
-                          </label>
-                          {Number(form.discountAmount || 0) > 0 && (
-                            <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "bold" }}>
-                              - {formatCurrency(form.discountAmount)}
-                            </span>
-                          )}
-                        </div>
                         <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                          <span style={{ position: "absolute", left: "10px", fontWeight: "900", fontSize: "15px", color: "#dc2626", pointerEvents: "none" }}>-</span>
+                          <span style={{ position: "absolute", left: "10px", fontSize: "12px", fontWeight: "bold", color: "#166534", pointerEvents: "none" }}>Rs.</span>
                           <input
                             type="number"
                             min="0"
-                            max="100"
+                            step="100"
                             placeholder="0"
-                            value={form.discountPercent == 0 ? '' : form.discountPercent}
-                            readOnly={form.isExistingStudent && !form.isEditingExistingBill}
+                            value={form.grossFee == 0 ? '' : form.grossFee}
                             onWheel={(e) => e.target.blur()}
-                            onChange={(e) => updateFeeCalculations(form.grossFee, e.target.value)}
+                            onChange={(e) => {
+                              const newGross = Math.max(0, Number(e.target.value) || 0);
+                              if (discountMode === "amt") {
+                                updateFeeCalculationsByAmount(newGross, form.discountAmount);
+                              } else {
+                                updateFeeCalculations(newGross, form.discountPercent);
+                              }
+                            }}
                             style={{
                               width: "100%",
                               height: "44px",
-                              padding: "0 26px 0 22px",
+                              padding: "0 10px 0 34px",
                               borderRadius: "6px",
                               border: "1.5px solid #cbd5e1",
-                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "#ffffff",
+                              backgroundColor: "#ffffff",
+                              boxSizing: "border-box",
+                              fontWeight: "bold",
+                              fontSize: "14px",
+                              color: "#166534"
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* 2. Discount with Toggle (% vs Rs.) (Always Editable) */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <label style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", textTransform: "uppercase" }}>
+                              Discount
+                            </label>
+                            {/* Mode Toggle: % vs Rs. */}
+                            <div style={{ display: "inline-flex", backgroundColor: "#e2e8f0", borderRadius: "4px", padding: "1px" }}>
+                              <button
+                                type="button"
+                                onClick={() => setDiscountMode("pct")}
+                                title="Set discount by percentage (%)"
+                                style={{
+                                  border: "none",
+                                  backgroundColor: discountMode === "pct" ? "#2563eb" : "transparent",
+                                  color: discountMode === "pct" ? "#ffffff" : "#475569",
+                                  fontSize: "10px",
+                                  fontWeight: "bold",
+                                  padding: "1px 6px",
+                                  borderRadius: "3px",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                %
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDiscountMode("amt")}
+                                title="Set discount by flat rupees amount (Rs.)"
+                                style={{
+                                  border: "none",
+                                  backgroundColor: discountMode === "amt" ? "#2563eb" : "transparent",
+                                  color: discountMode === "amt" ? "#ffffff" : "#475569",
+                                  fontSize: "10px",
+                                  fontWeight: "bold",
+                                  padding: "1px 6px",
+                                  borderRadius: "3px",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                Rs.
+                              </button>
+                            </div>
+                          </div>
+
+                          {discountMode === "pct" ? (
+                            Number(form.discountAmount || 0) > 0 && (
+                              <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "bold" }}>
+                                - {formatCurrency(form.discountAmount)}
+                              </span>
+                            )
+                          ) : (
+                            Number(form.discountPercent || 0) > 0 && (
+                              <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "bold" }}>
+                                ({Number(form.discountPercent).toFixed(1).replace(/\.0$/, "")}% off)
+                              </span>
+                            )
+                          )}
+                        </div>
+
+                        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                          <span style={{ position: "absolute", left: "10px", fontWeight: "900", fontSize: "14px", color: "#dc2626", pointerEvents: "none" }}>
+                            {discountMode === "amt" ? "- Rs." : "-"}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            max={discountMode === "pct" ? "100" : (form.grossFee || "999999")}
+                            placeholder="0"
+                            value={
+                              discountMode === "amt"
+                                ? (form.discountAmount == 0 ? '' : form.discountAmount)
+                                : (form.discountPercent == 0 ? '' : form.discountPercent)
+                            }
+                            onWheel={(e) => e.target.blur()}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (discountMode === "amt") {
+                                updateFeeCalculationsByAmount(form.grossFee, val);
+                              } else {
+                                updateFeeCalculations(form.grossFee, val);
+                              }
+                            }}
+                            style={{
+                              width: "100%",
+                              height: "44px",
+                              padding: discountMode === "amt" ? "0 12px 0 48px" : "0 26px 0 22px",
+                              borderRadius: "6px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: "#ffffff",
                               boxSizing: "border-box",
                               fontWeight: "bold",
                               fontSize: "14px",
                               color: "#0f172a"
                             }}
                           />
-                          <span style={{ position: "absolute", right: "10px", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>%</span>
+                          {discountMode === "pct" && (
+                            <span style={{ position: "absolute", right: "10px", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>%</span>
+                          )}
                         </div>
                       </div>
 
@@ -6968,11 +7100,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           const isPrimaryDefault = selectedDefaultPkg === pkg;
 
                           const updateFeeValue = (field, val) => {
-                            const num = Math.max(0, Number(val) || 0);
+                            const raw = val === "" ? "" : Math.max(0, Number(val) || 0);
                             if (selectedCourseForFees === "STANDARD_DEFAULT") {
                               setEditingPackageFees(prev => ({
                                 ...prev,
-                                [pkg]: { ...(prev[pkg] || DEFAULT_PACKAGE_FEES[pkg]), [field]: num }
+                                [pkg]: { ...(prev[pkg] || DEFAULT_PACKAGE_FEES[pkg]), [field]: raw }
                               }));
                             } else {
                               setEditingCourseFees(prev => {
@@ -6988,7 +7120,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                     ...curCourseObj,
                                     packages: {
                                       ...curPkgs,
-                                      [pkg]: { ...curPkgData, [field]: num }
+                                      [pkg]: { ...curPkgData, [field]: raw }
                                     }
                                   }
                                 };
@@ -7013,7 +7145,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                   type="number"
                                   min="0"
                                   step="100"
-                                  value={pkgData.grossFee}
+                                  placeholder="0"
+                                  value={pkgData.grossFee === 0 ? "" : (pkgData.grossFee ?? "")}
                                   onChange={(e) => updateFeeValue("grossFee", e.target.value)}
                                   style={{
                                     width: "100%",
@@ -7032,7 +7165,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                   type="number"
                                   min="0"
                                   max="100"
-                                  value={pkgData.discountPercent}
+                                  placeholder="0"
+                                  value={pkgData.discountPercent === 0 ? "" : (pkgData.discountPercent ?? "")}
                                   onChange={(e) => updateFeeValue("discountPercent", e.target.value)}
                                   style={{
                                     width: "100%",
