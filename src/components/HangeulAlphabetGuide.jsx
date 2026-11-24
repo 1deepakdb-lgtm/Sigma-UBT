@@ -606,6 +606,33 @@ export function getSpokenKoreanText(text) {
   return t;
 }
 
+// Crisp, universally visible SVG Speaker Icon for buttons
+function SpeakerIcon({ isPlaying = false, size = 18 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{
+        display: "block",
+        flexShrink: 0,
+        transition: "transform 0.15s ease",
+        transform: isPlaying ? "scale(1.15)" : "scale(1)"
+      }}
+    >
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+    </svg>
+  );
+}
+
 // Approximate Nepali and Roman pronunciation for common consonant + vowel combos
 const SYLLABLE_PRON_MAP = {
   // ㄱ (गा/खा)
@@ -1139,7 +1166,7 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                       style={{
                         backgroundColor: isAudioPlaying(`single_c_${c.char}`) ? "#2563eb" : "#f1f5f9",
                         color: isAudioPlaying(`single_c_${c.char}`) ? "#ffffff" : "#1e40af",
-                        border: "1px solid #cbd5e1",
+                        border: "1.5px solid #cbd5e1",
                         width: "36px",
                         height: "36px",
                         borderRadius: "50%",
@@ -1147,12 +1174,11 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: "16px",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                         touchAction: "manipulation"
                       }}
                     >
-                      {isAudioPlaying(`single_c_${c.char}`) ? "🔊" : "🔈"}
+                      <SpeakerIcon isPlaying={isAudioPlaying(`single_c_${c.char}`)} size={18} />
                     </button>
                   </div>
 
@@ -1271,7 +1297,7 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                       style={{
                         backgroundColor: isAudioPlaying(`dual_c_${c.char}`) ? "#d97706" : "#fef3c7",
                         color: isAudioPlaying(`dual_c_${c.char}`) ? "#ffffff" : "#92400e",
-                        border: "1px solid #fde68a",
+                        border: "1.5px solid #fde68a",
                         width: "36px",
                         height: "36px",
                         borderRadius: "50%",
@@ -1279,12 +1305,11 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: "16px",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                         touchAction: "manipulation"
                       }}
                     >
-                      {isAudioPlaying(`dual_c_${c.char}`) ? "🔊" : "🔈"}
+                      <SpeakerIcon isPlaying={isAudioPlaying(`dual_c_${c.char}`)} size={18} />
                     </button>
                   </div>
 
@@ -1405,7 +1430,7 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                   style={{
                     backgroundColor: isAudioPlaying(`single_v_${v.char}`) ? "#16a34a" : "#f0fdf4",
                     color: isAudioPlaying(`single_v_${v.char}`) ? "#ffffff" : "#15803d",
-                    border: "1px solid #bbf7d0",
+                    border: "1.5px solid #bbf7d0",
                     width: "38px",
                     height: "38px",
                     borderRadius: "50%",
@@ -1413,13 +1438,12 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "16px",
                     flexShrink: 0,
                     boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     touchAction: "manipulation"
                   }}
                 >
-                  {isAudioPlaying(`single_v_${v.char}`) ? "🔊" : "🔈"}
+                  <SpeakerIcon isPlaying={isAudioPlaying(`single_v_${v.char}`)} size={18} />
                 </button>
               </div>
             ))}
@@ -1497,7 +1521,7 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                   style={{
                     backgroundColor: isAudioPlaying(`dual_v_${v.char}`) ? "#9333ea" : "#faf5ff",
                     color: isAudioPlaying(`dual_v_${v.char}`) ? "#ffffff" : "#7e22ce",
-                    border: "1px solid #e9d5ff",
+                    border: "1.5px solid #e9d5ff",
                     width: "38px",
                     height: "38px",
                     borderRadius: "50%",
@@ -1505,13 +1529,12 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "16px",
                     flexShrink: 0,
                     boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     touchAction: "manipulation"
                   }}
                 >
-                  {isAudioPlaying(`dual_v_${v.char}` ? "🔊" : "🔈")}
+                  <SpeakerIcon isPlaying={isAudioPlaying(`dual_v_${v.char}`)} size={18} />
                 </button>
               </div>
             ))}
@@ -1630,7 +1653,7 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     <div style={{ fontSize: "15px", fontWeight: "900", color: "#ffffff", letterSpacing: "0.5px" }}>
                       자음 / 모음
                     </div>
-                    <div style={{ fontSize: "11px", color: "#bfdbfe", fontWeight: "700", marginTop: "3px" }}>
+                    <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: "700", marginTop: "3px", opacity: 0.95 }}>
                       व्यञ्जन / स्वर
                     </div>
                   </th>
