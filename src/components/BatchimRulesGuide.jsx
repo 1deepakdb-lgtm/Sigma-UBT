@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { koreanToNepaliRomanized } from '@/lib/dictionaryData';
+import HangeulAlphabetGuide from '@/components/HangeulAlphabetGuide';
 
 // =============================================================================
 // 1. ㄱ, ㄷ, ㅂ, ㅈ 발음 규칙 (G, D, B, J Consonant Pronunciation Rules)
@@ -927,12 +928,13 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           >
             {[
               { id: "all", label: "전체 마스터 가이드 (सबै नियम र व्याकरण)" },
+              { id: "hangeul_alphabet", label: "0. कोरियन वर्णमाला (स्वर, व्यञ्जन र संयोजन ध्वनि) 🔤" },
               { id: "gdbj", label: "1. ㄱ, ㄷ, ㅂ, ㅈ उच्चारण नियमहरू" },
               { id: "single_batchim", label: "2. एकल फात्छिम (홑받침 7개 대표음)" },
               { id: "double_batchim", label: "3. संयुक्त फात्छिम (11가지 겹받침)" },
               { id: "sound_change", label: "4. संयुक्त उच्चारणका ९ नियमहरू (음운 변화)" },
               { id: "korean_numbers", label: "5. कोरियन नम्बरहरू (Sino & Native) र गन्ती" },
-              { id: "grammar_verbs", label: "6. क्रिया, VST, विभक्ति (은/는, 이/가, 을/를) र काल" }
+              { id: "grammar_verbs", label: "6. क्रिया, VST, विभक्ति (은/ने, 이/가, 을/를) र काल" }
             ].map(tab => (
               <option key={tab.id} value={tab.id} style={{ color: "#0f172a", backgroundColor: "#ffffff", fontWeight: "700" }}>
                 {tab.label}
@@ -964,6 +966,16 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
           />
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 0. HANGEUL ALPHABET (VOWELS, CONSONANTS, SOUNDS & COMBINATIONS)           */}
+      {/* ========================================================================= */}
+      {(activeCategory === 'all' || activeCategory === 'hangeul_alphabet') && (
+        <HangeulAlphabetGuide
+          handlePlayAudio={handlePlayAudio}
+          playingAudioId={playingAudioId}
+        />
+      )}
 
       {/* ========================================================================= */}
       {/* 1. ㄱ, ㄷ, ㅂ, ㅈ उच्चारण नियम (G, D, B, J Consonant Pronunciation Rules) */}

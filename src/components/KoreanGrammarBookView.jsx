@@ -5,6 +5,7 @@ import { BASIC_GRAMMAR, INTERMEDIATE_GRAMMAR, ADVANCED_GRAMMAR, GRAMMAR_COMPARIS
 import { CHAPTER_GRAMMAR_MAP } from '@/lib/koreanChapterGrammarData';
 import { renderRuleWithSymbols } from './KoreanMeaningBookView';
 import BatchimRulesGuide from '@/components/BatchimRulesGuide';
+import HangeulAlphabetGuide from '@/components/HangeulAlphabetGuide';
 
 export default function KoreanGrammarBookView({ materials = [], isAdmin = false, onUploadMaterial }) {
   // Modes: "basic_book" | "chapterwise" | "basic_advanced" | "comparisons" | "pdfs"
@@ -408,6 +409,29 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
 
           <button
             type="button"
+            onClick={() => { setActiveTab("alphabet"); setSelectedChapterNum(null); }}
+            style={{
+              padding: "10px 18px",
+              borderRadius: "10px",
+              border: activeTab === "alphabet" ? "2px solid #059669" : "1.5px solid #cbd5e1",
+              backgroundColor: activeTab === "alphabet" ? "#059669" : "#ffffff",
+              color: activeTab === "alphabet" ? "#ffffff" : "#1e293b",
+              fontWeight: "800",
+              fontSize: "13.5px",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: activeTab === "alphabet" ? "0 4px 12px rgba(5,150,105,0.25)" : "none",
+              transition: "all 0.15s ease"
+            }}
+          >
+            <span style={{ fontSize: "16px" }}>🔤</span>
+            <span>Vowels & Consonants (स्वर र व्यञ्जन)</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => { setActiveTab("chapterwise"); setSelectedChapterNum(null); }}
             style={{
               padding: "10px 18px",
@@ -488,6 +512,18 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
           )}
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* 0.0 VOWELS & CONSONANTS ALPHABET VIEW                             */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {activeTab === "alphabet" && (
+        <div style={{ marginTop: "14px", width: "100%" }}>
+          <HangeulAlphabetGuide
+            handlePlayAudio={(url, id, text, lang, gender) => handleSpeak(text, id, gender)}
+            playingAudioId={speakingText}
+          />
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* 0. BASIC BOOK VIEW (PRONUNCIATION, BATCHIM, VST & GRAMMAR RULES)    */}
