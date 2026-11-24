@@ -665,18 +665,11 @@ export async function PUT(req) {
       return NextResponse.json({ success: true, bill: updatedBill, message: 'Bill record updated successfully.' });
     }
 
-    // 2. ADMIN EDIT COMPANY BILL PAD HEADER (Max 3 edits, then auto-locked)
+    // 2. ADMIN EDIT COMPANY BILL PAD HEADER (Unlimited edits allowed)
     let profile = await prisma.billingProfile.findUnique({ where: { instituteId } });
 
     if (profile) {
-      if ((profile.editCount || 0) >= 3 && session.role !== 'admin') {
-        return NextResponse.json({
-          error: 'Bill header has reached the maximum limit of 3 edits and is now permanently locked.'
-        }, { status: 403 });
-      }
-
       const nextEditCount = (profile.editCount || 0) + 1;
-      const isLocked = nextEditCount >= 3;
 
       const updated = await prisma.billingProfile.update({
         where: { instituteId },
@@ -691,16 +684,14 @@ export async function PUT(req) {
           googleSheetUrl: body.googleSheetUrl !== undefined ? body.googleSheetUrl : profile.googleSheetUrl,
           ownerEmail: body.ownerEmail !== undefined ? body.ownerEmail : profile.ownerEmail,
           editCount: nextEditCount,
-          isLocked: isLocked
+          isLocked: false
         }
       });
 
       return NextResponse.json({
         success: true,
         profile: updated,
-        message: isLocked 
-          ? 'Bill Pad Header updated. (3/3 edits used - now permanently locked).' 
-          : `Bill Pad Header updated successfully (${nextEditCount}/3 edits used).`
+        message: 'Bill Pad Header updated successfully.'
       });
     } else {
       const created = await prisma.billingProfile.create({
@@ -723,7 +714,7 @@ export async function PUT(req) {
       return NextResponse.json({
         success: true,
         profile: created,
-        message: 'Bill Pad Header created (1/3 edits used).'
+        message: 'Bill Pad Header created successfully.'
       });
     }
   } catch (err) {
