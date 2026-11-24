@@ -358,6 +358,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   // Compulsory Authentication & Auto-Logout (30 seconds of inactivity)
   const [isBillingAuthenticated, setIsBillingAuthenticated] = useState(false);
   useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.body.classList.remove("pdf-open");
+      document.documentElement.classList.remove("pdf-open");
+    }
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("superadmin") === "true") setIsBillingAuthenticated(true);
@@ -3674,33 +3678,31 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </button>
               )}
 
-              {(userRole === "institute" || billingRole === "admin") && (
-                <button
-                  type="button"
-                  onClick={() => setShowProfileModal(true)}
-                  title="Configure and customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
-                  style={{
-                    backgroundColor: "#0d9488",
-                    color: "white",
-                    border: "none",
-                    padding: "8px 16px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 2px 6px rgba(13, 148, 136, 0.25)"
-                  }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                  Edit Bill Header
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setShowProfileModal(true)}
+                title="Configure and customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
+                style={{
+                  backgroundColor: "#0d9488",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 6px rgba(13, 148, 136, 0.25)"
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Edit Bill Header
+              </button>
 
               {/* CREATE NEW BILL (SECOND LAST BUTTON) */}
               <button
@@ -3987,57 +3989,57 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           )}
 
           {/* 1. TOP HEADER (Exact match with user image) */}
-          <div style={{
-            backgroundColor: "white",
-            borderRadius: "10px",
-            boxShadow: "0 3px 12px rgba(0,0,0,0.06)",
-            marginBottom: "24px",
-            border: "1px solid #cbd5e1",
-            overflow: "hidden",
-            position: "relative",
-            cursor: (userRole === "institute" || billingRole === "admin") ? "pointer" : "default"
-          }}
-          onClick={() => {
-            if (userRole === "institute" || billingRole === "admin") setShowProfileModal(true);
-          }}
-          title={(userRole === "institute" || billingRole === "admin") ? "Click to edit bill header (Name, Address, Email, Phone, VAT/PAN, Logo)" : ""}
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "10px",
+              boxShadow: "0 3px 12px rgba(0,0,0,0.06)",
+              marginBottom: "24px",
+              border: "1.5px solid #cbd5e1",
+              overflow: "hidden",
+              position: "relative",
+              cursor: "pointer",
+              transition: "all 0.15s ease"
+            }}
+            onClick={() => setShowProfileModal(true)}
+            title="Click anywhere on this bill header to edit Institute Name, PAN, Logo, Phone, Address"
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = "#2563eb"}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
           >
-            {/* Institute Admin Header Customization Button */}
-            {(userRole === "institute" || billingRole === "admin") && (
-              <div style={{ position: "absolute", top: "14px", right: "16px", zIndex: 10 }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowProfileModal(true);
-                  }}
-                  title="Customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
-                  style={{
-                    backgroundColor: "#1e40af",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "8px 18px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    fontSize: "13px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 2px 8px rgba(30, 64, 175, 0.35)",
-                    transition: "all 0.15s ease"
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1d4ed8"}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#1e40af"}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                  ✏️ Edit Header / PAN / Logo
-                </button>
-              </div>
-            )}
+            {/* Institute Admin Header Customization Button (Always visible) */}
+            <div style={{ position: "absolute", top: "14px", right: "16px", zIndex: 30 }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileModal(true);
+                }}
+                title="Customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
+                style={{
+                  backgroundColor: "#1e40af",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "8px 18px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 8px rgba(30, 64, 175, 0.35)",
+                  transition: "all 0.15s ease"
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1d4ed8"}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#1e40af"}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                ✏️ Edit Header / PAN / Logo
+              </button>
+            </div>
 
             {/* Real Bill Pad Letterhead (Exact Replica of User Image) */}
             <div style={{ padding: "24px 30px 16px 30px", backgroundColor: "#ffffff" }}>
@@ -4075,7 +4077,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </div>
               </div>
 
-              {/* Bottom Bar: VAT/PAN on Left, DATE on Right */}
+              {/* Bottom Bar: VAT/PAN on Left, Edit Button in Middle, DATE on Right */}
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -4085,10 +4087,35 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 borderTop: "1px solid #000000",
                 fontWeight: "bold",
                 fontSize: "14px",
-                color: "#000000"
+                color: "#000000",
+                flexWrap: "wrap",
+                gap: "8px"
               }}>
-                <div>
-                  VAT/PAN: {profile.panVatNumber}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span>VAT/PAN: {profile.panVatNumber}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowProfileModal(true);
+                    }}
+                    style={{
+                      backgroundColor: "#2563eb",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "4px 12px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      boxShadow: "0 2px 5px rgba(37, 99, 235, 0.3)"
+                    }}
+                  >
+                    ✏️ Edit Bill Header / PAN
+                  </button>
                 </div>
                 <div>
                   DATE: {formatDateMMDDYYYY(new Date().toISOString())}
@@ -4129,7 +4156,29 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               />
             </div>
 
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => setShowProfileModal(true)}
+                title="Edit Institute Bill Header (Name, PAN, Logo, Phone, Address)"
+                style={{
+                  backgroundColor: "#0d9488",
+                  color: "white",
+                  border: "none",
+                  padding: "9px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 6px rgba(13, 148, 136, 0.25)"
+                }}
+              >
+                ✏️ Edit Bill Header
+              </button>
+
               <button
                 onClick={handleSyncToGoogleSheet}
                 disabled={isSyncing}
@@ -5023,13 +5072,16 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             </div>
 
             {/* SCROLLABLE BILLING DETAILS TABLE WITH STICKY HEADER & VERTICAL SCROLL */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", padding: "0 4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", padding: "0 4px", flexWrap: "wrap", gap: "8px" }}>
               <div style={{ fontSize: "12px", color: "#475569", fontWeight: "600" }}>
                 📋 Billing Records: <strong style={{ color: "#1e3a8a" }}>{filteredBills.length}</strong> bill(s) found
               </div>
               <div style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-                <span>↕️</span>
-                <span>Scroll down to view older bill records</span>
+                {filteredBills.length <= 5 ? (
+                  <span style={{ color: "#15803d", fontWeight: "700" }}>✓ Showing all {filteredBills.length} bills (Newest first)</span>
+                ) : (
+                  <span>↕️ Showing {filteredBills.length} bills (scroll down to view older bills)</span>
+                )}
               </div>
             </div>
 
@@ -5037,13 +5089,15 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               className="compact-billing-table-wrapper"
               style={{
                 overflowX: "auto",
-                overflowY: "visible",
+                overflowY: "auto",
+                maxHeight: "580px",
                 borderRadius: "8px",
                 border: "1px solid #cbd5e1",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 backgroundColor: "#ffffff",
                 position: "relative",
-                WebkitOverflowScrolling: "touch"
+                WebkitOverflowScrolling: "touch",
+                overscrollBehaviorY: "auto"
               }}
             >
               <style dangerouslySetInnerHTML={{

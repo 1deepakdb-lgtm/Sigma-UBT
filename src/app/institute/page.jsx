@@ -902,6 +902,11 @@ const InstituteDashboard = () => {
       // Return to normal unlocked portrait on other tabs or desktop
       unlockOrientation();
     }
+    // Always clear pdf-open scroll lock when viewing institute dashboard tabs
+    if (typeof document !== "undefined") {
+      document.body.classList.remove("pdf-open");
+      document.documentElement.classList.remove("pdf-open");
+    }
   }, [activeTab]);
 
   useEffect(() => {
@@ -916,6 +921,10 @@ const InstituteDashboard = () => {
   };
 
   const handleTabChange = (tabName) => {
+    if (typeof document !== "undefined") {
+      document.body.classList.remove("pdf-open");
+      document.documentElement.classList.remove("pdf-open");
+    }
     setActiveTab(tabName);
     loadData();
     setShowLandscapeBars(false);
