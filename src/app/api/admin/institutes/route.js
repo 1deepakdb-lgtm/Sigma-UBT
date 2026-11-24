@@ -214,13 +214,23 @@ export async function DELETE(req) {
 
     // 1. Find all users belonging to this institute (students, staff, institute admin)
     const users = await prisma.user.findMany({
-      where: { instituteId: instId },
+      where: {
+        OR: [
+          { instituteId: instId },
+          { instituteId: institute.username },
+          { username: institute.username }
+        ]
+      },
       select: { id: true }
     });
     const userIds = users.map(u => u.id);
 
     // 2. Cleanly delete dependent records in proper order to prevent Foreign Key constraint errors
     if (userIds.length > 0) {
+      await prisma.paymentTransaction.deleteMany({
+        where: { userId: { in: userIds } }
+      }).catch(e => console.warn('Clean paymentTransaction:', e.message));
+
       await prisma.examResult.deleteMany({
         where: { userId: { in: userIds } }
       }).catch(e => console.warn('Clean examResult:', e.message));
@@ -236,26 +246,51 @@ export async function DELETE(req) {
 
     // 3. Delete InstituteExamSet relations
     await prisma.instituteExamSet.deleteMany({
-      where: { instituteId: instId }
+      where: {
+        OR: [
+          { instituteId: instId },
+          { instituteId: institute.username }
+        ]
+      }
     }).catch(e => console.warn('Clean instituteExamSet:', e.message));
 
     // 4. Delete BillingProfile & BillRecords
     await prisma.billingProfile.deleteMany({
-      where: { instituteId: instId }
+      where: {
+        OR: [
+          { instituteId: instId },
+          { instituteId: institute.username }
+        ]
+      }
     }).catch(e => console.warn('Clean billingProfile:', e.message));
 
     await prisma.billRecord.deleteMany({
-      where: { instituteId: instId }
+      where: {
+        OR: [
+          { instituteId: instId },
+          { instituteId: institute.username }
+        ]
+      }
     }).catch(e => console.warn('Clean billRecord:', e.message));
 
     // 5. Unlink any ExamSets / ExamPackages created by this institute
     await prisma.examSet.updateMany({
-      where: { creatorInstituteId: instId },
+      where: {
+        OR: [
+          { creatorInstituteId: instId },
+          { creatorInstituteId: institute.username }
+        ]
+      },
       data: { creatorInstituteId: null, creatorInstituteName: null }
     }).catch(e => console.warn('Unlink examSet:', e.message));
 
     await prisma.examPackage.updateMany({
-      where: { creatorInstituteId: instId },
+      where: {
+        OR: [
+          { creatorInstituteId: instId },
+          { creatorInstituteId: institute.username }
+        ]
+      },
       data: { creatorInstituteId: null, creatorInstituteName: null }
     }).catch(e => console.warn('Unlink examPackage:', e.message));
 

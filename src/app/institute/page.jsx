@@ -1419,9 +1419,12 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
   const containerStyle = {
     minHeight: "100vh",
+    height: "auto",
     backgroundColor: "rgba(241, 245, 249, 0.92)",
     fontFamily: "Arial, sans-serif",
     position: "relative",
+    overflow: "visible",
+    WebkitOverflowScrolling: "touch",
     backgroundImage: logoWatermark ? `url(${logoWatermark})` : "none",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
@@ -1512,7 +1515,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     boxSizing: "border-box"
   });
 
-  const contentAreaStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto", userSelect: "text" };
+  const contentAreaStyle = { padding: "24px 20px 120px 20px", maxWidth: "1280px", margin: "0 auto", userSelect: "text", minHeight: "calc(100vh - 64px)", height: "auto" };
   const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "20px", border: "1px solid #e2e8f0" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", backgroundColor: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", borderRadius: "8px", overflow: "hidden" };
   const thStyle = { backgroundColor: "#f8fafc", padding: "14px 16px", textAlign: "left", color: "#475569", fontWeight: "700", fontSize: "13px", borderBottom: "2px solid #e2e8f0", position: "sticky", top: 0, zIndex: 3 };
@@ -1536,7 +1539,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       <style dangerouslySetInnerHTML={{
         __html: `
         html, body {
-          overflow-y: scroll !important;
+          overflow-y: auto !important;
+          height: auto !important;
+          min-height: 100vh !important;
+          -webkit-overflow-scrolling: touch !important;
+          overscroll-behavior-y: auto !important;
           scrollbar-gutter: stable !important;
         }
         .dynamic-card {
@@ -1701,10 +1708,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 Manage Students
               </button>
             )}
-
-            <button onClick={() => handleTabChange("about")} style={getNavBtnStyle("about")}>
-              About Us
-            </button>
           </div>
 
           <div style={navRightSlotStyle} className="institute-desktop-logout">
@@ -1843,14 +1846,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 <span>Manage Students</span>
               </button>
             )}
-
-            <button
-              onClick={() => { handleTabChange("about"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "about" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <span>ℹ️</span>
-              <span>About Us</span>
-            </button>
 
             <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
               <button
@@ -3985,11 +3980,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               </form>
             </div>
           </div>
-        )}
-
-        {/* ABOUT US TAB */}
-        {activeTab === "about" && (
-          <AboutUsSection />
         )}
 
       </div>

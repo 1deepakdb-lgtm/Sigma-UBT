@@ -3125,7 +3125,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   });
 
   return (
-    <div style={{ paddingBottom: "50px" }}>
+    <div style={{ paddingBottom: "120px", width: "100%", overflowY: "visible" }}>
       {/* Print CSS - Strictly renders the clean Bill Pad layout or Expense Sheet fixed to Letter size */}
       <style dangerouslySetInnerHTML={{
         __html: `
@@ -5036,14 +5036,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             <div
               className="compact-billing-table-wrapper"
               style={{
-                maxHeight: "560px",
-                overflowY: "auto",
                 overflowX: "auto",
+                overflowY: "visible",
                 borderRadius: "8px",
                 border: "1px solid #cbd5e1",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 backgroundColor: "#ffffff",
-                position: "relative"
+                position: "relative",
+                WebkitOverflowScrolling: "touch"
               }}
             >
               <style dangerouslySetInnerHTML={{
