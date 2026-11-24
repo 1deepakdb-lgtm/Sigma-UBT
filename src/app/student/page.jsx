@@ -9,6 +9,7 @@ import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import EsewaCheckoutModal from "@/components/EsewaCheckoutModal";
 import JlptMockExamModal from "@/components/JlptMockExamModal";
 import ColorVisionSection from "@/components/ColorVisionSection";
+import AboutUsSection from "@/components/AboutUsSection";
 
 import { JLPT_MOCK_SETS_META, getMockExamSetById } from "@/data/jlptMockTestData";
 import { performLogout } from "@/lib/clientAuth";
@@ -2041,7 +2042,7 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Desktop Tabs (Visible on screens > 768px, aligned to the LEFT) */}
+        {/* Desktop Tabs (Visible on screens > 768px, aligned to the RIGHT) */}
         <div
           className="student-desktop-tabs"
           style={{
@@ -2049,7 +2050,8 @@ const StudentDashboard = () => {
             gap: "4px",
             flexWrap: "nowrap",
             alignItems: "center",
-            justifyContent: "flex-start",
+            justifyContent: "flex-end",
+            marginLeft: "auto",
             flex: 1,
             flexShrink: 0,
             overflowX: "auto",
@@ -2094,6 +2096,7 @@ const StudentDashboard = () => {
           <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
           <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
           <button onClick={() => setActiveTab("results")} style={getNavBtnStyle("results")}>Performance</button>
+          <button onClick={() => setActiveTab("about")} style={getNavBtnStyle("about")}>About Us</button>
         </div>
 
         {/* Desktop Logout Button */}
@@ -2101,7 +2104,7 @@ const StudentDashboard = () => {
           className="student-desktop-logout"
           onClick={handleLogout}
           style={{
-            marginLeft: "auto",
+            marginLeft: "10px",
             backgroundColor: "#dc2626",
             color: "#ffffff",
             border: "none",
@@ -2270,6 +2273,14 @@ const StudentDashboard = () => {
             >
               <span>📈</span>
               <span>Performance</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("about"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "about" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>ℹ️</span>
+              <span>About Us</span>
             </button>
 
 
@@ -2795,6 +2806,53 @@ const StudentDashboard = () => {
                   </span>
                 </div>
 
+                {/* 9. About Us */}
+                <div
+                  onClick={() => setActiveTab("about")}
+                  style={{
+                    background: "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 50%, #e0e7ff 100%)",
+                    borderRadius: "16px",
+                    padding: "12px 6px 10px 6px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 3px 12px rgba(71, 85, 105, 0.14)",
+                    border: "1.5px solid #cbd5e1",
+                    minHeight: "108px",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+                >
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 7,
+                      border: "1.5px solid #cbd5e1",
+                      boxShadow: "0 3px 8px rgba(71, 85, 105, 0.15)"
+                    }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+                      <path d="M18 5L7 9v9c0 6.5 4.5 11.5 11 13 6.5-1.5 11-6.5 11-13V9L18 5z" fill="#ffffff" stroke="#2563eb" strokeWidth="2" strokeLinejoin="round"/>
+                      <path d="M12 14v8m6-8v8m6-8v8" stroke="#3b82f6" strokeWidth="1.8" strokeLinecap="round"/>
+                      <path d="M10 24h16M11 13h14" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: "12px", fontWeight: "800", color: "#0f172a", lineHeight: "1.25" }}>
+                    About Us
+                  </span>
+                </div>
 
               </div>
             </div>
@@ -4298,6 +4356,10 @@ const StudentDashboard = () => {
           </div>
         )}
 
+        {/* ABOUT US TAB */}
+        {activeTab === "about" && (
+          <AboutUsSection />
+        )}
 
       </div>
 

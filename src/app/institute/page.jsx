@@ -18,6 +18,7 @@ import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
 import InstituteBillingSection from "@/components/InstituteBillingSection";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
+import AboutUsSection from "@/components/AboutUsSection";
 import { performLogout } from "@/lib/clientAuth";
 import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from "@/lib/instituteGateAuth";
 import { JLPT_MOCK_SETS_META } from "@/data/jlptMockTestData";
@@ -1509,14 +1510,15 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     gap: "8px",
     flexWrap: "nowrap",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "flex-end",
+    marginLeft: "auto",
     flexShrink: 0,
     whiteSpace: "nowrap"
   };
 
   const navRightSlotStyle = {
     flex: "0 0 auto",
-    marginLeft: "auto",
+    marginLeft: "12px",
     minWidth: 0,
     display: "flex",
     alignItems: "center",
@@ -1742,6 +1744,10 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 Manage Students
               </button>
             )}
+
+            <button onClick={() => handleTabChange("about")} style={getNavBtnStyle("about")}>
+              About Us
+            </button>
           </div>
 
           <div style={navRightSlotStyle} className="institute-desktop-logout">
@@ -1880,6 +1886,14 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                 <span>Manage Students</span>
               </button>
             )}
+
+            <button
+              onClick={() => { handleTabChange("about"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "about" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>ℹ️</span>
+              <span>About Us</span>
+            </button>
 
             <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
               <button
@@ -4014,6 +4028,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               </form>
             </div>
           </div>
+        )}
+
+        {/* ABOUT US TAB */}
+        {activeTab === "about" && (
+          <AboutUsSection />
         )}
 
       </div>

@@ -83,6 +83,7 @@ export default function Navbar({
     { id: 'dictionary', label: 'Dictionary' },
     { id: 'news', label: 'Notice' },
     { id: 'students', label: 'Manage Students' },
+    { id: 'about', label: 'About Us' },
   ];
 
   const isPureJapanese = currentLang === 'japanese';
@@ -99,6 +100,7 @@ export default function Navbar({
     { id: 'news', label: 'Notice' },
     { id: 'notify', label: 'Messages' },
     { id: 'results', label: 'Performance' },
+    { id: 'about', label: 'About Us' },
   ];
 
   // Derive display title
@@ -284,24 +286,25 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Middle/Left Section: Desktop Navigation & Mobile 3-line Menu Button */}
+      {/* Right Section: Desktop Navigation & Mobile 3-line Menu Button */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-start',
+          justifyContent: 'flex-end',
           gap: role === 'admin' ? '10px' : '14px',
+          marginLeft: 'auto',
           flex: 1,
           minWidth: 0,
           flexShrink: 0
         }}
       >
-        {/* DESKTOP NAVIGATION (Visible on screen width > 768px, aligned to the LEFT) */}
+        {/* DESKTOP NAVIGATION (Visible on screen width > 768px, aligned to the RIGHT) */}
         <nav
           className="desktop-nav-menu"
           style={{
             alignItems: 'center',
-            justifyContent: 'flex-start',
+            justifyContent: 'flex-end',
             gap: role === 'admin' ? '4px' : '6px',
             flexShrink: 0,
             whiteSpace: 'nowrap',
