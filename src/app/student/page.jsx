@@ -2087,6 +2087,7 @@ const StudentDashboard = () => {
             Packages
           </button>
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>Dictionary</button>
+          <button onClick={() => { setActiveTab("grammar"); setActiveBookFolder("Grammar Book"); }} style={getNavBtnStyle("grammar")}>Grammar Book</button>
           <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
           <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
           <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
@@ -2234,6 +2235,14 @@ const StudentDashboard = () => {
             >
               <span>📖</span>
               <span>Dictionary</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab("grammar"); setActiveBookFolder("Grammar Book"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "grammar" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "grammar" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📚</span>
+              <span>Grammar Book</span>
             </button>
 
             <button
@@ -3675,15 +3684,15 @@ const StudentDashboard = () => {
           <DictionarySection instituteLanguage={instituteLanguage} userRole="student" />
         )}
 
-        {/* STUDY MATERIALS & JAPANESE MOCK TEST TAB */}
-        {(activeTab === "listening" || activeTab === "japaneseMock") && (
+        {/* STUDY MATERIALS, GRAMMAR BOOK & JAPANESE MOCK TEST TAB */}
+        {(activeTab === "listening" || activeTab === "japaneseMock" || activeTab === "grammar") && (
           <div style={{ marginTop: "10px", marginBottom: "30px" }}>
             <EpsBookReader
               mode="student"
               studentPackage={studentPackage}
               purchasedPackages={purchasedPackages}
               instituteLanguage={instituteLanguage}
-              initialFolder={activeTab === "japaneseMock" ? "Mock Test" : (activeBookFolder || undefined)}
+              initialFolder={activeTab === "grammar" ? "Grammar Book" : (activeTab === "japaneseMock" ? "Mock Test" : (activeBookFolder || undefined))}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onOpenEsewaModal={handleOpenEsewaModal}
               unlockedSets={unlockedSets}

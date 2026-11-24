@@ -79,6 +79,7 @@ export default function Navbar({
 
   const instituteTabs = [
     { id: 'billing', label: 'Billing' },
+    { id: 'grammar', label: 'Grammar Book' },
     { id: 'listening', label: 'Study Materials' },
     { id: 'dictionary', label: 'Dictionary' },
     { id: 'news', label: 'Notice' },
@@ -95,6 +96,7 @@ export default function Navbar({
     ...((isBoth || isPureJapanese) ? [{ id: 'mock', label: 'Mock Test' }] : []),
     { id: 'buyExam', label: 'Packages' },
     { id: 'vocab', label: 'Dictionary' },
+    { id: 'grammar', label: 'Grammar Book' },
     { id: 'listening', label: 'Study Materials' },
     { id: 'news', label: 'Notice' },
     { id: 'notify', label: 'Messages' },

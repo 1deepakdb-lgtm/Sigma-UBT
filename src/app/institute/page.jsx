@@ -1722,6 +1722,10 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               Billing
             </button>
 
+            <button onClick={() => handleTabChange("grammar")} style={getNavBtnStyle("grammar")}>
+              Grammar Book
+            </button>
+
             <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>
               Study Materials
             </button>
@@ -1842,6 +1846,14 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             >
               <span>💳</span>
               <span>Billing & Management</span>
+            </button>
+
+            <button
+              onClick={() => { handleTabChange("grammar"); setMobileMenuOpen(false); }}
+              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "grammar" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "grammar" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <span>📚</span>
+              <span>Korean Grammar Book</span>
             </button>
 
             <button
@@ -3495,9 +3507,13 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           )
         )}
 
-        {activeTab === "listening" && (
+        {(activeTab === "grammar" || activeTab === "listening") && (
           <div style={{ marginTop: "10px", marginBottom: "30px" }}>
-            <EpsBookReader mode="institute" instituteLanguage={instituteLanguage} />
+            <EpsBookReader
+              mode="institute"
+              instituteLanguage={instituteLanguage}
+              initialFolder={activeTab === "grammar" ? "Grammar Book" : null}
+            />
           </div>
         )}
 
