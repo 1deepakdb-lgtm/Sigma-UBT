@@ -4139,6 +4139,37 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
               <button
+                type="button"
+                onClick={() => {
+                  if ((profile?.editCount || 0) >= 3 || profile?.isLocked) {
+                    alert("⚠️ Bill header has reached the maximum limit of 3 edits and is locked permanently.");
+                    return;
+                  }
+                  setShowProfileModal(true);
+                }}
+                disabled={Boolean((profile?.editCount || 0) >= 3 || profile?.isLocked)}
+                title={((profile?.editCount || 0) >= 3 || profile?.isLocked) 
+                  ? "Edit limit reached (3/3 edits used). Locked permanently." 
+                  : `Edit (${3 - (profile?.editCount || 0)} of 3 edits remaining)`
+                }
+                style={{
+                  backgroundColor: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "#94a3b8" : "#0d9488",
+                  color: "white",
+                  border: "none",
+                  padding: "9px 16px",
+                  borderRadius: "6px",
+                  cursor: ((profile?.editCount || 0) >= 3 || profile?.isLocked) ? "not-allowed" : "pointer",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px"
+                }}
+              >
+                <span>Edit</span>
+              </button>
+
+              <button
                 onClick={handleSyncToGoogleSheet}
                 disabled={isSyncing}
                 style={{
