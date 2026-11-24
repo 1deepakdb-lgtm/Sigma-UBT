@@ -63,13 +63,13 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
           sessionStorage.setItem('last_auth_redirect_ts', String(Date.now()));
           try {
             await fetch('/api/auth/logout', { method: 'POST' });
-          } catch (e) {}
+          } catch (e) { }
           try {
             localStorage.removeItem('sigma_session');
             localStorage.removeItem('sigma_token');
             localStorage.removeItem('currentUser');
             localStorage.removeItem('role');
-          } catch (e) {}
+          } catch (e) { }
           if (isMounted) {
             window.location.replace('/');
           }
@@ -84,8 +84,8 @@ export default function ClientAuthGuard({ allowedRoles = [], children }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token })
-              }).catch(() => {});
-            } catch (e) {}
+              }).catch(() => { });
+            } catch (e) { }
           }
           const role = data.user.role;
           if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {

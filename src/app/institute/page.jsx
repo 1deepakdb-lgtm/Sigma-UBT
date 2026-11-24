@@ -1515,7 +1515,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
   const contentAreaStyle = { padding: "30px", maxWidth: "1200px", margin: "0 auto", userSelect: "text" };
   const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "20px", border: "1px solid #e2e8f0" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", backgroundColor: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", borderRadius: "8px", overflow: "hidden" };
-  const thStyle = { backgroundColor: "#f8fafc", padding: "14px 16px", textAlign: "left", color: "#475569", fontWeight: "700", fontSize: "13px", borderBottom: "2px solid #e2e8f0" };
+  const thStyle = { backgroundColor: "#f8fafc", padding: "14px 16px", textAlign: "left", color: "#475569", fontWeight: "700", fontSize: "13px", borderBottom: "2px solid #e2e8f0", position: "sticky", top: 0, zIndex: 3 };
   const tdStyle = { padding: "15px", borderBottom: "1px solid #e2e8f0", color: "#1e293b", verticalAlign: "middle" };
   const inputStyle = { width: "100%", padding: "10px", marginBottom: "15px", border: "1px solid #cbd5e1", borderRadius: "5px", boxSizing: "border-box", backgroundColor: "white" };
 
@@ -2653,10 +2653,33 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       )}
                     </div>
 
-                    {/* Desktop Table View (Scrollable container so it never breaks layout) */}
-                    <div className="manage-students-table-wrap" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>
+                    {/* Desktop Table View (Scrollable container so it never breaks layout and allows scrolling down through students) */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", padding: "0 2px" }}>
+                      <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                        👥 Registered: <strong style={{ color: "#1e3a8a" }}>{displayedStudents.length}</strong> student(s)
+                      </span>
+                      <span style={{ fontSize: "11px", color: "#64748b" }}>
+                        ↕️ Scroll down to view all students
+                      </span>
+                    </div>
+
+                    <div className="manage-students-table-wrap" style={{ width: "100%", maxHeight: "560px", overflowY: "auto", overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>
+                      <style dangerouslySetInnerHTML={{
+                        __html: `
+                        .manage-students-table-wrap::-webkit-scrollbar {
+                          width: 8px;
+                          height: 8px;
+                        }
+                        .manage-students-table-wrap::-webkit-scrollbar-thumb {
+                          background-color: #94a3b8;
+                          border-radius: 4px;
+                        }
+                        .manage-students-table-wrap::-webkit-scrollbar-track {
+                          background-color: #f1f5f9;
+                        }
+                      ` }} />
                       <table style={{ ...tableStyle, minWidth: "680px", marginBottom: 0 }}>
-                        <thead>
+                        <thead style={{ position: "sticky", top: 0, zIndex: 5 }}>
                           <tr style={{ backgroundColor: "#f8fafc" }}>
                             <th style={{ ...thStyle, borderTopLeftRadius: "8px" }}>Student Name</th>
                             <th style={thStyle}>Phone Number</th>
@@ -2704,8 +2727,8 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
                       </table>
                     </div>
 
-                    {/* Mobile & Tablet Card View (Clear, Touch-Friendly, Never Squished) */}
-                    <div className="manage-students-mobile-cards">
+                    {/* Mobile & Tablet Card View (Clear, Touch-Friendly, Never Squished - Scrollable) */}
+                    <div className="manage-students-mobile-cards" style={{ maxHeight: "600px", overflowY: "auto", paddingRight: "4px" }}>
                       {displayedStudents.length === 0 ? (
                         <div style={{ textAlign: "center", padding: "30px 16px", color: "#94a3b8", backgroundColor: "#ffffff", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                           No students registered under this track yet.

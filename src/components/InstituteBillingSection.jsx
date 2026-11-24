@@ -498,7 +498,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
   // Pre-configured according to user image specifications
   const defaultProfile = {
-    companyName: "EXAMJK EDUCATION & CBT CENTER",
+    companyName: (instituteName && instituteName !== "Language Institute") ? instituteName : "SIGMA EDUCATION KOREAN BHASA CENTER",
     companyAddress: "Samakhushi Chowk, Kathmandu",
     contactNumber: "9768444902, 9806100148",
     email: "examjk2026@gmail.com",
@@ -3674,7 +3674,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </button>
               )}
 
-              {billingRole === "admin" && (
+              {(userRole === "institute" || billingRole === "admin") && (
                 <button
                   type="button"
                   onClick={() => setShowProfileModal(true)}
@@ -3994,38 +3994,47 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             marginBottom: "24px",
             border: "1px solid #cbd5e1",
             overflow: "hidden",
-            position: "relative"
-          }}>
+            position: "relative",
+            cursor: (userRole === "institute" || billingRole === "admin") ? "pointer" : "default"
+          }}
+          onClick={() => {
+            if (userRole === "institute" || billingRole === "admin") setShowProfileModal(true);
+          }}
+          title={(userRole === "institute" || billingRole === "admin") ? "Click to edit bill header (Name, Address, Email, Phone, VAT/PAN, Logo)" : ""}
+          >
             {/* Institute Admin Header Customization Button */}
-            {billingRole === "admin" && (
+            {(userRole === "institute" || billingRole === "admin") && (
               <div style={{ position: "absolute", top: "14px", right: "16px", zIndex: 10 }}>
                 <button
                   type="button"
-                  onClick={() => setShowProfileModal(true)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowProfileModal(true);
+                  }}
                   title="Customize Institute Bill Header (Name, Address, Email, Phone, VAT/PAN, Logo)"
                   style={{
                     backgroundColor: "#1e40af",
                     color: "#ffffff",
                     border: "none",
-                    padding: "7px 15px",
+                    padding: "8px 18px",
                     borderRadius: "6px",
                     cursor: "pointer",
                     fontWeight: "bold",
-                    fontSize: "12px",
+                    fontSize: "13px",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "6px",
-                    boxShadow: "0 2px 6px rgba(30, 64, 175, 0.3)",
+                    boxShadow: "0 2px 8px rgba(30, 64, 175, 0.35)",
                     transition: "all 0.15s ease"
                   }}
                   onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1d4ed8"}
                   onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#1e40af"}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>
-                  ✏️ Update Header
+                  ✏️ Edit Header / PAN / Logo
                 </button>
               </div>
             )}
@@ -4263,7 +4272,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     </button>
                   )}
 
-                  {billingRole === "admin" && (
+                  {(userRole === "institute" || billingRole === "admin") && (
                     <button
                       type="button"
                       onClick={() => setShowProfileModal(true)}
@@ -5013,40 +5022,62 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               </div>
             </div>
 
-            {/* COMPACT TABLE WRAPPER WITHOUT HORIZONTAL SCROLLBAR */}
+            {/* SCROLLABLE BILLING DETAILS TABLE WITH STICKY HEADER & VERTICAL SCROLL */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", padding: "0 4px" }}>
+              <div style={{ fontSize: "12px", color: "#475569", fontWeight: "600" }}>
+                📋 Billing Records: <strong style={{ color: "#1e3a8a" }}>{filteredBills.length}</strong> bill(s) found
+              </div>
+              <div style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span>↕️</span>
+                <span>Scroll down to view older bill records</span>
+              </div>
+            </div>
+
             <div
               className="compact-billing-table-wrapper"
               style={{
+                maxHeight: "560px",
+                overflowY: "auto",
                 overflowX: "auto",
-                scrollbarWidth: "none",
-                msOverflowStyle: "none"
+                borderRadius: "8px",
+                border: "1px solid #cbd5e1",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                backgroundColor: "#ffffff",
+                position: "relative"
               }}
             >
               <style dangerouslySetInnerHTML={{
                 __html: `
             .compact-billing-table-wrapper::-webkit-scrollbar {
-              display: none;
-              height: 0px;
+              width: 8px;
+              height: 8px;
+            }
+            .compact-billing-table-wrapper::-webkit-scrollbar-thumb {
+              background-color: #94a3b8;
+              border-radius: 4px;
+            }
+            .compact-billing-table-wrapper::-webkit-scrollbar-track {
+              background-color: #f1f5f9;
             }
           ` }} />
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "auto" }}>
-                <thead>
+                <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                   <tr style={{
                     backgroundColor: "#1e3a8a",
                     color: "#ffffff",
                     borderBottom: "2px solid #172554"
                   }}>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", borderTopLeftRadius: "6px" }}>Bill #</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Date</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Days</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", color: "#ffffff", fontWeight: "700" }}>Student / Address</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>WhatsApp</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Method</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Package</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Total Fee</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Paid</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700" }}>Due</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", borderTopRightRadius: "6px" }}>Actions</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Bill #</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Date</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Days</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Student / Address</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>WhatsApp</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Method</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Package</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Total Fee</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Paid</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Due</th>
+                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>

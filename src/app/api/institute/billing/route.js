@@ -42,7 +42,7 @@ export async function GET(req) {
 
     const { searchParams: __sp } = new URL(req.url);
     const instIdQuery = __sp.get('instId');
-    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
+    const instituteId = (session.role === 'admin' && instIdQuery) ? instIdQuery : (session.instituteId || instIdQuery || 'default-institute');
     const { searchParams } = new URL(req.url);
     const billNumber = searchParams.get('billNumber');
     const phone = searchParams.get('phone');
@@ -136,7 +136,7 @@ export async function POST(req) {
 
     const { searchParams: __sp } = new URL(req.url);
     const instIdQuery = __sp.get('instId');
-    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
+    const instituteId = (session.role === 'admin' && instIdQuery) ? instIdQuery : (session.instituteId || instIdQuery || 'default-institute');
     const data = await req.json();
 
     const {
@@ -545,7 +545,7 @@ export async function PUT(req) {
 
     const { searchParams: __sp } = new URL(req.url);
     const instIdQuery = __sp.get('instId');
-    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
+    const instituteId = (session.role === 'admin' && instIdQuery) ? instIdQuery : (session.instituteId || instIdQuery || 'default-institute');
     const body = await req.json();
 
     // 1. LIFETIME GOOGLE SETUP PIN OPEN COUNTER (Database Persistence for Lifetime Lock)
@@ -728,7 +728,7 @@ export async function DELETE(req) {
 
     const { searchParams: __sp } = new URL(req.url);
     const instIdQuery = __sp.get('instId');
-    const instituteId = (session.role === 'admin' ? instIdQuery : null) || session.instituteId || 'default-institute';
+    const instituteId = (session.role === 'admin' && instIdQuery) ? instIdQuery : (session.instituteId || instIdQuery || 'default-institute');
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
