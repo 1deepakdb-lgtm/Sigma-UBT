@@ -441,6 +441,18 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     return DEFAULT_PACKAGE_FEES[pkg] || { grossFee: 15000, discountPercent: 0 };
   };
 
+  const getPackageOptionLabel = (pkgName, courseName = "") => {
+    const def = getPackageFee(pkgName, courseName);
+    const gross = Number(def?.grossFee) || 0;
+    const disc = Number(def?.discountPercent) || 0;
+    if (gross <= 0) return pkgName;
+    const net = Math.max(0, Math.round(gross - (gross * disc / 100)));
+    if (disc > 0) {
+      return `${pkgName} — Rs. ${net.toLocaleString()} (${disc}% off of Rs. ${gross.toLocaleString()})`;
+    }
+    return `${pkgName} — Rs. ${gross.toLocaleString()}`;
+  };
+
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
@@ -1911,9 +1923,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         packages: updatedCoursePackages
       }
     };
+    const updatedGlobalPackages = {
+      ...(feeConfig.packages || DEFAULT_PACKAGE_FEES),
+      [targetPkg]: { grossFee: gross, discountPercent: disc }
+    };
 
     const newConfig = {
       ...feeConfig,
+      packages: updatedGlobalPackages,
       courseFees: updatedCourseFees,
       updatedAt: currentDate
     };
@@ -1921,7 +1938,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     try {
       localStorage.setItem(`instituteFeeConfig_${instKey}`, JSON.stringify(newConfig));
     } catch (e) { }
-    setFeeSavedToast(`Saved Rs. ${gross.toLocaleString()} (${disc}% off) as default for "${targetCourse}" (${targetPkg})!`);
+    const net = Math.max(0, Math.round(gross - (gross * disc / 100)));
+    setFeeSavedToast(`Saved default for "${targetPkg}": Rs. ${gross.toLocaleString()}${disc > 0 ? ` (${disc}% off = Rs. ${net.toLocaleString()})` : ''}! Now visible in dropdown arrow.`);
     setTimeout(() => setFeeSavedToast(""), 3500);
   };
 
@@ -5686,12 +5704,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         border: "1.5px solid #cbd5e1",
                         backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "white",
                         fontSize: "14px",
-                        boxSizing: "border-box"
+                        boxSizing: "border-box",
+                        fontWeight: "bold",
+                        color: "#1e3a8a"
                       }}
                     >
                       {COURSE_PACKAGES.map((pkg) => (
                         <option key={pkg} value={pkg}>
-                          {pkg}
+                          {getPackageOptionLabel(pkg, form.courseDetail)}
                         </option>
                       ))}
                     </select>
@@ -5756,172 +5776,19 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       />
                     </div>
 
-                    {/* COURSE FEE, DISCOUNT & EXTRA ITEMS KEPT DIRECTLY WITH COURSE DETAIL (GREEN THEME) */}
+                    {/* ADD ITEM WITH DROP DOWN ARROW ONLY */}
                     <div style={{
-                      backgroundColor: "#f0fdf4",
-                      border: "2px solid #16a34a",
-                      borderRadius: "8px",
-                      padding: "12px 14px",
-                      marginTop: "10px"
-                    }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      backgroundColor: "#ffffff",
+                        border: "1.5px solid #86efac",
+                        borderRadius: "8px",
+                        padding: "10px 14px",
+                        marginTop: "10px"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                           <span style={{ fontSize: "12px", fontWeight: "bold", color: "#166534" }}>
-                            Course Fee & Discount: <strong style={{ color: "#15803d" }}>{form.coursePackage || "Full course"}</strong>
+                            Add Extra Material / Book (Optional)
                           </span>
-                          {(() => {
-                            const curPkg = form.coursePackage || "Full course";
-                            const curDefault = getPackageFee(curPkg, form.courseDetail);
-                            if (!curDefault) return null;
-                            return (
-                              <span style={{ fontSize: "11px", color: "#047857", backgroundColor: "#d1fae5", padding: "1px 6px", borderRadius: "4px", border: "1px solid #a7f3d0", fontWeight: "bold" }}>
-                                Default: Rs. {Number(curDefault.grossFee).toLocaleString()} ({curDefault.discountPercent || 0}% off)
-                              </span>
-                            );
-                          })()}
                         </div>
-
-                        {(!form.isExistingStudent || form.isEditingExistingBill) && (
-                          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                            <button
-                              type="button"
-                              onClick={() => handleSaveCurrentAsDefault(form.coursePackage)}
-                              title={`Save current Rs. ${Number(form.grossFee || 0).toLocaleString()} and ${Number(form.discountPercent || 0)}% discount as default for "${form.coursePackage}"`}
-                              style={{
-                                backgroundColor: "#16a34a",
-                                color: "#ffffff",
-                                border: "none",
-                                borderRadius: "4px",
-                                padding: "4px 8px",
-                                fontSize: "11px",
-                                fontWeight: "bold",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "4px"
-                              }}
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                                <polyline points="17 21 17 13 7 13 7 21" />
-                                <polyline points="7 3 7 8 15 8" />
-                              </svg>
-                              Set as Default
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const initialCourse = (form?.courseDetail && getFilteredCourses().includes(form.courseDetail)) ? form.courseDetail : defaultCourse;
-                                setSelectedCourseForFees(initialCourse);
-                                setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
-                                setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
-                                const courseDefPkg = feeConfig.courseFees?.[initialCourse]?.defaultPackage || feeConfig.defaultPackage || "Full course";
-                                setSelectedDefaultPkg(courseDefPkg);
-                                setFeeUpdateDate(feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10)));
-                                setShowFeeConfigModal(true);
-                              }}
-                              title="View and edit default fees for all packages"
-                              style={{
-                                backgroundColor: "#ffffff",
-                                color: "#0369a1",
-                                border: "1px solid #7dd3fc",
-                                borderRadius: "4px",
-                                padding: "4px 8px",
-                                fontSize: "11px",
-                                fontWeight: "bold",
-                                cursor: "pointer"
-                              }}
-                            >
-                              All Defaults
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {feeSavedToast && (
-                        <div style={{
-                          backgroundColor: "#bbf7d0",
-                          color: "#14532d",
-                          border: "1px solid #86efac",
-                          borderRadius: "4px",
-                          padding: "5px 10px",
-                          fontSize: "11.5px",
-                          fontWeight: "bold",
-                          marginBottom: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between"
-                        }}>
-                          <span>{feeSavedToast}</span>
-                          <button type="button" onClick={() => setFeeSavedToast("")} style={{ background: "none", border: "none", color: "#14532d", cursor: "pointer", fontWeight: "bold" }}>x</button>
-                        </div>
-                      )}
-
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", alignItems: "flex-end" }}>
-                        {/* Course Gross Fee */}
-                        <div>
-                          <label style={{ display: "none" }}>
-
-                          </label>
-                          <input
-                            type="number"
-                            required
-                            placeholder="Course Gross Fee"
-                            value={form.grossFee || ""}
-                            readOnly={form.isExistingStudent && !form.isEditingExistingBill}
-                            onWheel={(e) => e.target.blur()}
-                            onChange={(e) => updateFeeCalculations(e.target.value, form.discountPercent)}
-                            style={{
-                              width: "100%",
-                              height: "36px",
-                              padding: "0 10px",
-                              borderRadius: "5px",
-                              border: "1.5px solid #16a34a",
-                              backgroundColor: "#ffffff",
-                              boxSizing: "border-box",
-                              fontWeight: "bold",
-                              fontSize: "13px",
-                              color: "#166534"
-                            }}
-                          />
-                        </div>
-
-                        {/* Discount % (Manual Entry) */}
-                        <div>
-                          {Number(form.discountAmount || 0) > 0 && (
-                            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "4px" }}>
-                              <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: "bold" }}>
-                                - {formatCurrency(form.discountAmount)}
-                              </span>
-                            </div>
-                          )}
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            placeholder="Discount % (Manual Entry)"
-                            value={form.discountPercent == 0 ? '' : form.discountPercent}
-                            readOnly={form.isExistingStudent && !form.isEditingExistingBill}
-                            onWheel={(e) => e.target.blur()}
-                            onChange={(e) => updateFeeCalculations(form.grossFee, e.target.value)}
-                            style={{
-                              width: "100%",
-                              height: "36px",
-                              padding: "0 10px",
-                              borderRadius: "5px",
-                              border: "1px solid #cbd5e1",
-                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "white",
-                              boxSizing: "border-box",
-                              fontWeight: "bold",
-                              fontSize: "13px"
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* ADD ITEM WITH DROP DOWN ARROW ONLY */}
-                      <div style={{ borderTop: "1px dashed #86efac", paddingTop: "10px", marginTop: "10px" }}>
                         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                           {/* Free Button: Blue before select, fully Red when checked (sets for all items) */}
                           <button
@@ -6229,17 +6096,214 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         )}
                       </div>
                     </div>
-                  </div>
 
                   {/* PAYMENT BREAKDOWN SUMMARY & RECEIPT AMOUNT */}
                   <div style={{ gridColumn: "span 2", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "8px", border: "2px solid #cbd5e1", marginTop: "4px" }}>
-                    <div style={{ fontWeight: "900", fontSize: "14px", color: "#1e3a8a", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
-                      <span style={{ display: "none" }}></span>
+                    {/* Header with Package Defaults & Set as Default Button */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "13px", fontWeight: "900", color: "#1e3a8a" }}>
+                          Course Fee & Payment: <strong style={{ color: "#15803d" }}>{form.coursePackage || "Full course"}</strong>
+                        </span>
+                        {(() => {
+                          const curPkg = form.coursePackage || "Full course";
+                          const curDefault = getPackageFee(curPkg, form.courseDetail);
+                          if (!curDefault) return null;
+                          const gross = Number(curDefault.grossFee) || 0;
+                          const disc = Number(curDefault.discountPercent) || 0;
+                          const net = Math.max(0, Math.round(gross - (gross * disc / 100)));
+                          return (
+                            <span style={{ fontSize: "11px", color: "#047857", backgroundColor: "#d1fae5", padding: "2px 8px", borderRadius: "4px", border: "1px solid #a7f3d0", fontWeight: "bold" }}>
+                              Default: Rs. {gross.toLocaleString()}{disc > 0 ? ` (${disc}% off = Rs. ${net.toLocaleString()})` : ""}
+                            </span>
+                          );
+                        })()}
+                      </div>
+
+                      {(!form.isExistingStudent || form.isEditingExistingBill) && (
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveCurrentAsDefault(form.coursePackage)}
+                            title={`Save current Rs. ${Number(form.grossFee || 0).toLocaleString()} and ${Number(form.discountPercent || 0)}% discount as default for "${form.coursePackage}"`}
+                            style={{
+                              backgroundColor: "#16a34a",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "4px 10px",
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                              <polyline points="17 21 17 13 7 13 7 21" />
+                              <polyline points="7 3 7 8 15 8" />
+                            </svg>
+                            Set as Default
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const initialCourse = (form?.courseDetail && getFilteredCourses().includes(form.courseDetail)) ? form.courseDetail : defaultCourse;
+                              setSelectedCourseForFees(initialCourse);
+                              setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
+                              setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
+                              const courseDefPkg = feeConfig.courseFees?.[initialCourse]?.defaultPackage || feeConfig.defaultPackage || "Full course";
+                              setSelectedDefaultPkg(courseDefPkg);
+                              setFeeUpdateDate(feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10)));
+                              setShowFeeConfigModal(true);
+                            }}
+                            title="View and edit default fees for all packages"
+                            style={{
+                              backgroundColor: "#ffffff",
+                              color: "#0369a1",
+                              border: "1px solid #7dd3fc",
+                              borderRadius: "4px",
+                              padding: "4px 10px",
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              cursor: "pointer"
+                            }}
+                          >
+                            All Defaults
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {/* PAID AMOUNT IN FULL RED BOX (FIRST) & PAYMENT METHOD (SECOND) */}
-                    <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "14px", marginTop: "10px", alignItems: "flex-start" }}>
-                      {/* 1. PAID AMOUNT - FULL RED COLOUR BOX MATCHING SIZE OF PAYMENT METHOD BOX */}
+                    {feeSavedToast && (
+                      <div style={{
+                        backgroundColor: "#bbf7d0",
+                        color: "#14532d",
+                        border: "1px solid #86efac",
+                        borderRadius: "4px",
+                        padding: "5px 10px",
+                        fontSize: "11.5px",
+                        fontWeight: "bold",
+                        marginBottom: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between"
+                      }}>
+                        <span>{feeSavedToast}</span>
+                        <button type="button" onClick={() => setFeeSavedToast("")} style={{ background: "none", border: "none", color: "#14532d", cursor: "pointer", fontWeight: "bold" }}>x</button>
+                      </div>
+                    )}
+
+                    {/* THE ONE ROW: [Course Fee (Gross)] -> [Discount in seted %] -> [Total Fee (Net)] -> [Enter Paid Amount *] */}
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1.15fr 1.25fr",
+                      gap: "10px",
+                      alignItems: "flex-end",
+                      marginBottom: "14px"
+                    }}>
+                      {/* 1. Course Gross Fee */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <label style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", textTransform: "uppercase" }}>
+                            Course Fee (Gross)
+                          </label>
+                        </div>
+                        <div style={{ position: "relative" }}>
+                          <span style={{ position: "absolute", left: "9px", top: "50%", transform: "translateY(-50%)", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
+                          <input
+                            type="number"
+                            required
+                            placeholder="Gross Fee"
+                            value={form.grossFee || ""}
+                            readOnly={form.isExistingStudent && !form.isEditingExistingBill}
+                            onWheel={(e) => e.target.blur()}
+                            onChange={(e) => updateFeeCalculations(e.target.value, form.discountPercent)}
+                            style={{
+                              width: "100%",
+                              height: "44px",
+                              padding: "0 8px 0 32px",
+                              borderRadius: "6px",
+                              border: "1.5px solid #16a34a",
+                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "#ffffff",
+                              boxSizing: "border-box",
+                              fontWeight: "bold",
+                              fontSize: "14px",
+                              color: "#166534"
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* 2. Discount in seted % */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <label style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", textTransform: "uppercase" }}>
+                            Discount (%)
+                          </label>
+                          {Number(form.discountAmount || 0) > 0 && (
+                            <span style={{ fontSize: "10px", color: "#16a34a", fontWeight: "bold" }}>
+                              - {formatCurrency(form.discountAmount)}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ position: "relative" }}>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder="0%"
+                            value={form.discountPercent == 0 ? '' : form.discountPercent}
+                            readOnly={form.isExistingStudent && !form.isEditingExistingBill}
+                            onWheel={(e) => e.target.blur()}
+                            onChange={(e) => updateFeeCalculations(form.grossFee, e.target.value)}
+                            style={{
+                              width: "100%",
+                              height: "44px",
+                              padding: "0 26px 0 8px",
+                              borderRadius: "6px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "white",
+                              boxSizing: "border-box",
+                              fontWeight: "bold",
+                              fontSize: "14px",
+                              color: "#0f172a"
+                            }}
+                          />
+                          <span style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>%</span>
+                        </div>
+                      </div>
+
+                      {/* 3. Total Fee (Kept BEFORE Paid Amount) */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <label style={{ fontSize: "11px", fontWeight: "900", color: "#1e3a8a", textTransform: "uppercase" }}>
+                            Total Fee (Net)
+                          </label>
+                        </div>
+                        <div style={{
+                          width: "100%",
+                          height: "44px",
+                          padding: "0 8px",
+                          borderRadius: "6px",
+                          border: "2px solid #2563eb",
+                          backgroundColor: "#eff6ff",
+                          boxSizing: "border-box",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: "900",
+                          fontSize: "15px",
+                          color: "#1e40af"
+                        }}>
+                          {formatCurrency(form.totalFee || 0)}
+                        </div>
+                      </div>
+
+                      {/* 4. Enter Paid Amount * (Red Box) */}
                       <div>
                         {(() => {
                           const maxAllowedPayment = (() => {
@@ -6261,19 +6325,26 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
                           return (
                             <>
-                              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "26px", marginBottom: "6px", boxSizing: "border-box", width: "100%" }}>
-                                <label style={{ fontSize: "11.5px", fontWeight: "bold", color: "#b91c1c", letterSpacing: "0.2px", margin: 0, lineHeight: 1, whiteSpace: "nowrap", textAlign: "center" }}>
-                                  ENTER PAID AMOUNT *
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                                <label style={{ fontSize: "11px", fontWeight: "bold", color: "#b91c1c", letterSpacing: "0.2px", textTransform: "uppercase" }}>
+                                  Enter Paid Amount *
                                 </label>
+                                {(() => {
+                                  const due = Math.max(0, Number(form.totalFee || 0) - Number(form.paidAmount || 0));
+                                  return (
+                                    <span style={{ fontSize: "10px", fontWeight: "bold", color: due > 0 ? "#dc2626" : "#16a34a" }}>
+                                      {due > 0 ? `Due: ${formatCurrency(due)}` : "✓ Full"}
+                                    </span>
+                                  );
+                                })()}
                               </div>
-
-                              <div style={{ position: "relative", width: "100%", height: "58px", backgroundColor: "#dc2626", borderRadius: "8px", boxSizing: "border-box", overflow: "hidden" }}>
+                              <div style={{ position: "relative", width: "100%", height: "44px", backgroundColor: "#dc2626", borderRadius: "6px", boxSizing: "border-box", overflow: "hidden" }}>
                                 <input
                                   type="number"
                                   required
                                   min="1"
                                   max={maxAllowedPayment > 0 ? maxAllowedPayment : undefined}
-                                  placeholder="Enter Paid Amount"
+                                  placeholder="Paid Amount"
                                   value={form.paidAmount}
                                   className="paid-amount-red-input"
                                   onWheel={(e) => e.target.blur()}
@@ -6292,21 +6363,21 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                   }}
                                   style={{
                                     width: "100%",
-                                    height: "58px",
-                                    minHeight: "58px",
-                                    maxHeight: "58px",
+                                    height: "44px",
+                                    minHeight: "44px",
+                                    maxHeight: "44px",
                                     backgroundColor: "#dc2626",
                                     color: "#ffffff",
                                     border: "2px solid #b91c1c",
-                                    borderRadius: "8px",
+                                    borderRadius: "6px",
                                     fontWeight: "900",
-                                    fontSize: "22px",
+                                    fontSize: "17px",
                                     textAlign: "center",
                                     letterSpacing: "0.5px",
                                     padding: "0 8px",
                                     boxSizing: "border-box",
                                     outline: "none",
-                                    boxShadow: "0 3px 8px rgba(220, 38, 38, 0.28)",
+                                    boxShadow: "0 2px 6px rgba(220, 38, 38, 0.28)",
                                     transition: "all 0.15s ease"
                                   }}
                                 />
@@ -6315,17 +6386,18 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           );
                         })()}
                       </div>
+                    </div>
 
-                      {/* 2. PAYMENT METHOD - WITH CLEAN SVG ICONS */}
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "26px", marginBottom: "6px", boxSizing: "border-box" }}>
-                          <label style={{ fontSize: "12.5px", fontWeight: "bold", color: "#334155", margin: 0, lineHeight: 1 }}>
-                            Payment Method *
-                          </label>
-                          <span style={{ fontSize: "11px", color: "#64748b", display: "inline-flex", alignItems: "center", height: "22px" }}>
-                            Active: <strong style={{ color: "#dc2626", marginLeft: "4px", backgroundColor: "#fee2e2", padding: "1px 8px", borderRadius: "4px", border: "1px solid #fca5a5" }}>{form.paymentMethod === "Other" && form.customPaymentMethod ? form.customPaymentMethod : form.paymentMethod}</strong>
-                          </span>
-                        </div>
+                    {/* PAYMENT METHOD */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "26px", marginBottom: "6px", boxSizing: "border-box" }}>
+                        <label style={{ fontSize: "12.5px", fontWeight: "bold", color: "#334155", margin: 0, lineHeight: 1 }}>
+                          Payment Method *
+                        </label>
+                        <span style={{ fontSize: "11px", color: "#64748b", display: "inline-flex", alignItems: "center", height: "22px" }}>
+                          Active: <strong style={{ color: "#dc2626", marginLeft: "4px", backgroundColor: "#fee2e2", padding: "1px 8px", borderRadius: "4px", border: "1px solid #fca5a5" }}>{form.paymentMethod === "Other" && form.customPaymentMethod ? form.customPaymentMethod : form.paymentMethod}</strong>
+                        </span>
+                      </div>
 
                         {/* Visual Payment Method Buttons with Clean SVG Icons */}
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "6px", height: "58px", boxSizing: "border-box" }}>
@@ -6414,7 +6486,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         )}
                       </div>
                     </div>
-                  </div>
                   {/* PAYMENT SUMMARY CARD */}
                   <div style={{ gridColumn: "span 2" }}>
                     <div style={{
