@@ -211,55 +211,93 @@ export async function DELETE(req) {
     }
 
     const instId = institute.id;
+    const instUsername = institute.username;
+
+    // Temporarily disable SQLite foreign keys during cascade cleanup
+    try {
+      await prisma.$executeRawUnsafe(`PRAGMA foreign_keys = OFF;`);
+    } catch (e) {
+      console.warn('PRAGMA foreign_keys OFF notice:', e.message);
+    }
 
     // 1. Find all users belonging to this institute (students, staff, institute admin)
     const users = await prisma.user.findMany({
       where: {
         OR: [
           { instituteId: instId },
-          { instituteId: institute.username },
-          { username: institute.username }
+          { instituteId: instUsername },
+          { username: instUsername }
         ]
       },
       select: { id: true }
     });
     const userIds = users.map(u => u.id);
 
-    // 2. Cleanly delete dependent records in proper order to prevent Foreign Key constraint errors
+    // 2. Find sessions for these users
+    let sessionIds = [];
     if (userIds.length > 0) {
-      await prisma.paymentTransaction.deleteMany({
-        where: { userId: { in: userIds } }
-      }).catch(e => console.warn('Clean paymentTransaction:', e.message));
-
-      await prisma.examResult.deleteMany({
-        where: { userId: { in: userIds } }
-      }).catch(e => console.warn('Clean examResult:', e.message));
-
-      await prisma.examSession.deleteMany({
-        where: { userId: { in: userIds } }
-      }).catch(e => console.warn('Clean examSession:', e.message));
-
-      await prisma.user.deleteMany({
-        where: { id: { in: userIds } }
-      }).catch(e => console.warn('Clean users:', e.message));
+      const sessions = await prisma.examSession.findMany({
+        where: { userId: { in: userIds } },
+        select: { id: true }
+      });
+      sessionIds = sessions.map(s => s.id);
     }
 
-    // 3. Delete InstituteExamSet relations
+    // 3. Cleanly delete dependent records in proper order
+    if (userIds.length > 0 || sessionIds.length > 0) {
+      if (userIds.length > 0) {
+        await prisma.paymentTransaction.deleteMany({
+          where: { userId: { in: userIds } }
+        }).catch(e => console.warn('Clean paymentTransaction:', e.message));
+      }
+
+      await prisma.examResult.deleteMany({
+        where: {
+          OR: [
+            ...(userIds.length > 0 ? [{ userId: { in: userIds } }] : []),
+            ...(sessionIds.length > 0 ? [{ sessionId: { in: sessionIds } }] : [])
+          ]
+        }
+      }).catch(e => console.warn('Clean examResult:', e.message));
+
+      if (userIds.length > 0) {
+        await prisma.examSession.deleteMany({
+          where: { userId: { in: userIds } }
+        }).catch(e => console.warn('Clean examSession:', e.message));
+
+        await prisma.user.deleteMany({
+          where: { id: { in: userIds } }
+        }).catch(e => console.warn('Clean users:', e.message));
+      }
+    }
+
+    // Also delete any remaining users with instituteId = instId or instUsername
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { instituteId: instId },
+          { instituteId: instUsername },
+          { username: instUsername }
+        ]
+      }
+    }).catch(e => console.warn('Clean remaining users:', e.message));
+
+    // 4. Delete InstituteExamSet relations
     await prisma.instituteExamSet.deleteMany({
       where: {
         OR: [
           { instituteId: instId },
-          { instituteId: institute.username }
+          { instituteId: instUsername }
         ]
       }
     }).catch(e => console.warn('Clean instituteExamSet:', e.message));
 
-    // 4. Delete BillingProfile & BillRecords
+    // 5. Delete BillingProfile & BillRecords
     await prisma.billingProfile.deleteMany({
       where: {
         OR: [
           { instituteId: instId },
-          { instituteId: institute.username }
+          { instituteId: instUsername }
         ]
       }
     }).catch(e => console.warn('Clean billingProfile:', e.message));
@@ -268,17 +306,17 @@ export async function DELETE(req) {
       where: {
         OR: [
           { instituteId: instId },
-          { instituteId: institute.username }
+          { instituteId: instUsername }
         ]
       }
     }).catch(e => console.warn('Clean billRecord:', e.message));
 
-    // 5. Unlink any ExamSets / ExamPackages created by this institute
+    // 6. Unlink any ExamSets / ExamPackages created by this institute
     await prisma.examSet.updateMany({
       where: {
         OR: [
           { creatorInstituteId: instId },
-          { creatorInstituteId: institute.username }
+          { creatorInstituteId: instUsername }
         ]
       },
       data: { creatorInstituteId: null, creatorInstituteName: null }
@@ -288,16 +326,28 @@ export async function DELETE(req) {
       where: {
         OR: [
           { creatorInstituteId: instId },
-          { creatorInstituteId: institute.username }
+          { creatorInstituteId: instUsername }
         ]
       },
       data: { creatorInstituteId: null, creatorInstituteName: null }
     }).catch(e => console.warn('Unlink examPackage:', e.message));
 
-    // 6. Delete the Institute itself
-    await prisma.institute.delete({
-      where: { id: instId }
+    // 7. Delete the Institute itself
+    await prisma.institute.deleteMany({
+      where: {
+        OR: [
+          { id: instId },
+          { username: instUsername }
+        ]
+      }
     });
+
+    // Re-enable foreign keys
+    try {
+      await prisma.$executeRawUnsafe(`PRAGMA foreign_keys = ON;`);
+    } catch (e) {
+      console.warn('PRAGMA foreign_keys ON notice:', e.message);
+    }
 
     console.log(`[SuperAdmin] Institute "${institute.name}" (${instId}) permanently deleted by admin ${session.id}`);
 
@@ -307,6 +357,9 @@ export async function DELETE(req) {
     });
   } catch (err) {
     console.error('Error deleting institute:', err);
+    try {
+      await prisma.$executeRawUnsafe(`PRAGMA foreign_keys = ON;`);
+    } catch {}
     return NextResponse.json({
       error: `Failed to delete institute: ${err.message}`
     }, { status: 500 });

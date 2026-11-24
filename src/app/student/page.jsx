@@ -910,9 +910,44 @@ const StudentDashboard = () => {
     };
 
     syncStatus();
-    const interval = setInterval(syncStatus, 4000);
-    return () => clearInterval(interval);
+    // Adaptive polling: 15s when tab is visible, pause when hidden to save battery & CPU on 2GB devices
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        syncStatus();
+      }
+    }, 15000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncStatus();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [currentStudentPhone]);
+
+  // Universal Background Auto-Sync listener (Silent state update with ZERO page reload)
+  useEffect(() => {
+    const handleSync = (e) => {
+      if (!e.detail) return;
+      const { type, data } = e.detail;
+      if (type === 'news' && data?.news && Array.isArray(data.news)) {
+        setNewsList(data.news);
+      }
+      if (type === 'notifications' && data?.notifications && Array.isArray(data.notifications)) {
+        setNotifications(data.notifications);
+      }
+      if (type === 'student-exams' && data?.results && Array.isArray(data.results)) {
+        setResults(data.results);
+      }
+    };
+    window.addEventListener('examjk:background-sync', handleSync);
+    return () => window.removeEventListener('examjk:background-sync', handleSync);
+  }, []);
 
   // Handle return from official eSewa EPAY gateway
   useEffect(() => {

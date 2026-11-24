@@ -3,6 +3,7 @@ import './student.css';
 import PwaDesktopInstaller from '@/components/PwaDesktopInstaller';
 import OfflineSyncManager from '@/components/OfflineSyncManager';
 import GlobalPullToRefreshLock from '@/components/GlobalPullToRefreshLock';
+import UniversalBackgroundSyncManager from '@/components/UniversalBackgroundSyncManager';
 
 export const viewport = {
   themeColor: [
@@ -79,71 +80,12 @@ export default function RootLayout({ children }) {
             __html: `
               (function() {
                 try {
-                  var startY = 0;
-                  var startX = 0;
-                  var isTracking = false;
-                  var cachedScrollContainer = null;
-
-                  function findScrollParent(node) {
-                    var cur = node;
-                    while (cur && cur !== document.body && cur !== document.documentElement) {
-                      try {
-                        var oy = window.getComputedStyle(cur).overflowY;
-                        if ((oy === 'auto' || oy === 'scroll') && cur.scrollHeight > cur.clientHeight) {
-                          return cur;
-                        }
-                      } catch (e) {}
-                      cur = cur.parentElement;
-                    }
-                    return null;
+                  document.documentElement.style.overscrollBehaviorY = 'none';
+                  document.documentElement.style.setProperty('overscroll-behavior-y', 'none', 'important');
+                  if (document.body) {
+                    document.body.style.overscrollBehaviorY = 'none';
+                    document.body.style.setProperty('overscroll-behavior-y', 'none', 'important');
                   }
-
-                  function onTouchStart(e) {
-                    if (e.touches && e.touches.length === 1) {
-                      startY = e.touches[0].clientY;
-                      startX = e.touches[0].clientX;
-                      isTracking = true;
-                      cachedScrollContainer = findScrollParent(e.target);
-                    } else {
-                      isTracking = false;
-                      cachedScrollContainer = null;
-                    }
-                  }
-
-                  function onTouchMove(e) {
-                    if (!isTracking || !e.touches || e.touches.length !== 1) return;
-                    var cy = e.touches[0].clientY;
-                    var cx = e.touches[0].clientX;
-                    var dy = cy - startY;
-                    var dx = cx - startX;
-                    if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
-                      var isAtTop = false;
-                      if (cachedScrollContainer) {
-                        isAtTop = cachedScrollContainer.scrollTop <= 0;
-                      } else {
-                        var winScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-                        isAtTop = winScroll <= 0;
-                      }
-                      if (isAtTop && e.cancelable) {
-                        e.preventDefault();
-                      }
-                    }
-                  }
-
-                  function onTouchEnd() {
-                    isTracking = false;
-                    cachedScrollContainer = null;
-                  }
-
-                  window.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
-                  window.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
-                  window.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
-                  window.addEventListener('touchcancel', onTouchEnd, { passive: true, capture: true });
-
-                  document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
-                  document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
-                  document.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
-                  document.addEventListener('touchcancel', onTouchEnd, { passive: true, capture: true });
                 } catch (e) {}
               })();
             `
@@ -152,6 +94,7 @@ export default function RootLayout({ children }) {
       </head>
       <body suppressHydrationWarning>
         <GlobalPullToRefreshLock />
+        <UniversalBackgroundSyncManager />
         {children}
         <PwaDesktopInstaller />
         <OfflineSyncManager />

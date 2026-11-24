@@ -505,7 +505,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     companyName: (instituteName && instituteName !== "Language Institute") ? instituteName : "SIGMA EDUCATION KOREAN BHASA CENTER",
     companyAddress: "Samakhushi Chowk, Kathmandu",
     contactNumber: "9768444902, 9806100148",
-    email: "examjk2026@gmail.com",
+    email: "examjkedu@gmail.com",
     panVatNumber: "616838513",
     logoUrl: "/examjk-logo.png",
     stampUrl: "",
@@ -1534,6 +1534,33 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       console.warn("Using offline billing records:", err);
     }
   };
+
+  // Listen to UniversalBackgroundSyncManager for silent zero-reload updates
+  useEffect(() => {
+    const handleBackgroundSync = (e) => {
+      if (e.detail?.type === 'billing' && e.detail.data) {
+        if (e.detail.data.bills && Array.isArray(e.detail.data.bills)) {
+          setBills(e.detail.data.bills);
+          try {
+            localStorage.setItem(`instituteBillingRecords_${instKey}`, JSON.stringify(e.detail.data.bills));
+          } catch (err) {}
+        }
+        if (e.detail.data.profile) {
+          setProfile(prev => ({ ...prev, ...e.detail.data.profile }));
+        }
+      } else if (e.detail?.type === 'products' && e.detail.data) {
+        if (e.detail.data.products && Array.isArray(e.detail.data.products)) {
+          setProducts(e.detail.data.products);
+          try {
+            localStorage.setItem(`instituteBillingProducts_${instKey}`, JSON.stringify(e.detail.data.products));
+          } catch (err) {}
+        }
+      }
+    };
+
+    window.addEventListener('examjk:background-sync', handleBackgroundSync);
+    return () => window.removeEventListener('examjk:background-sync', handleBackgroundSync);
+  }, [instKey]);
 
   // Load products inventory & available stock
   const loadProducts = async () => {

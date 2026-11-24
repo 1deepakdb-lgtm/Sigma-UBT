@@ -18,7 +18,6 @@ import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
 import InstituteBillingSection from "@/components/InstituteBillingSection";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
-import AboutUsSection from "@/components/AboutUsSection";
 import { performLogout } from "@/lib/clientAuth";
 import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from "@/lib/instituteGateAuth";
 import { JLPT_MOCK_SETS_META } from "@/data/jlptMockTestData";
@@ -913,6 +912,24 @@ const InstituteDashboard = () => {
     loadData();
   }, [activeTab, instituteName, activeBookFolder]);
 
+  // Silent background updates from UniversalBackgroundSyncManager (Zero Page Reload)
+  useEffect(() => {
+    const handleBackgroundSync = (e) => {
+      if (e.detail?.type === 'news' && e.detail.data) {
+        if (e.detail.data.news && Array.isArray(e.detail.data.news)) {
+          setNewsList(e.detail.data.news);
+        }
+      }
+      if (e.detail?.type === 'notifications' && e.detail.data) {
+        if (e.detail.data.notifications && Array.isArray(e.detail.data.notifications)) {
+          setNotifications(e.detail.data.notifications);
+        }
+      }
+    };
+    window.addEventListener('examjk:background-sync', handleBackgroundSync);
+    return () => window.removeEventListener('examjk:background-sync', handleBackgroundSync);
+  }, []);
+
   const handleCloseBanner = () => {
     if (popupNotice) {
       localStorage.setItem("lastShownInstitutePopupId", popupNotice.id.toString());
@@ -1552,7 +1569,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           height: auto !important;
           min-height: 100vh !important;
           -webkit-overflow-scrolling: touch !important;
-          overscroll-behavior-y: auto !important;
+          overscroll-behavior-y: none !important;
           scrollbar-gutter: stable !important;
         }
         .dynamic-card {
