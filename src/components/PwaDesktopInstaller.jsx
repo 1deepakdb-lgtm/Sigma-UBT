@@ -29,10 +29,12 @@ export default function PwaDesktopInstaller() {
         document.body.classList.add('is-mobile-app');
       }
 
-      // 2. Register Service Worker
+      // 2. Register & Automatically Update Service Worker
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
           .then((reg) => {
+            // Check for updates on every page visit so clients never run stale code
+            reg.update().catch(() => {});
             console.log('ExamJK PWA Service Worker registered:', reg.scope);
           })
           .catch((err) => {

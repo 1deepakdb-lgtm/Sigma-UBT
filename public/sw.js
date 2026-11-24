@@ -1,9 +1,9 @@
 // ExamJK Advanced Progressive Web App & Offline Sync Service Worker
 // Automatically caches core assets, API data, PDF viewer, dictionary, and media for seamless offline usage
 
-const STATIC_CACHE = 'examjk-static-v7';
-const DATA_CACHE = 'examjk-data-v7';
-const MEDIA_CACHE = 'examjk-media-v7';
+const STATIC_CACHE = 'examjk-static-v8';
+const DATA_CACHE = 'examjk-data-v8';
+const MEDIA_CACHE = 'examjk-media-v8';
 
 const STATIC_ASSETS = [
   '/',
@@ -146,18 +146,19 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 6. Next.js Static Chunks & Immutable Build Assets (/_next/static/...)
+  // Network-First when online to ensure newly deployed bundles take effect immediately,
+  // falling back to cache when offline
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached;
-        return fetch(request).then((networkResponse) => {
+      fetch(request)
+        .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
             caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
           }
           return networkResponse;
-        });
-      })
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }

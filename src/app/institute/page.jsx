@@ -1446,11 +1446,11 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
   const containerStyle = {
     minHeight: "100vh",
     height: "auto",
+    width: "100%",
     backgroundColor: "rgba(241, 245, 249, 0.92)",
     fontFamily: "Arial, sans-serif",
     position: "relative",
-    overflowY: "visible",
-    overflowX: "hidden",
+    overflow: "visible",
     WebkitOverflowScrolling: "touch",
     backgroundImage: logoWatermark ? `url(${logoWatermark})` : "none",
     backgroundRepeat: "no-repeat",
@@ -1564,13 +1564,22 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     <div style={containerStyle} onContextMenu={(e) => e.preventDefault()} suppressHydrationWarning={true}>
       <style dangerouslySetInnerHTML={{
         __html: `
-        html, body {
+        html {
           overflow-y: auto !important;
+          overflow-x: hidden !important;
           height: auto !important;
-          min-height: 100vh !important;
+          min-height: 100% !important;
           -webkit-overflow-scrolling: touch !important;
           overscroll-behavior-y: none !important;
           scrollbar-gutter: stable !important;
+        }
+        body {
+          overflow-y: visible !important;
+          overflow-x: hidden !important;
+          height: auto !important;
+          min-height: 100% !important;
+          -webkit-overflow-scrolling: touch !important;
+          overscroll-behavior-y: none !important;
         }
         .dynamic-card {
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
