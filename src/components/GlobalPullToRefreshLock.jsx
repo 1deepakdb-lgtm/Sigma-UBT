@@ -46,7 +46,7 @@ export default function GlobalPullToRefreshLock() {
       document.documentElement.style.overscrollBehavior = 'none';
       document.documentElement.style.overscrollBehaviorY = 'none';
       document.documentElement.style.setProperty('overscroll-behavior-y', 'none', 'important');
-    } catch (e) { }
+    } catch (e) {}
 
     // 2. Disable in Native Mobile Bridges (Smart Board, Android WebView, iOS WKWebView)
     function lockNativeBridges() {
@@ -56,14 +56,14 @@ export default function GlobalPullToRefreshLock() {
         window.BoardApp, window.boardApp, window.Android, window.android, window.AndroidBridge, window.JSBridge,
         window.webApp, window.NativeApp, window.Capacitor?.Plugins?.App
       ];
-      bridgeList.forEach(function (b) {
+      bridgeList.forEach(function(b) {
         if (!b) return;
         try {
           if (typeof b.setSwipeRefreshEnabled === 'function') b.setSwipeRefreshEnabled(false);
           if (typeof b.setPullToRefreshEnabled === 'function') b.setPullToRefreshEnabled(false);
           if (typeof b.disablePullToRefresh === 'function') b.disablePullToRefresh();
           if (typeof b.disableSwipeRefresh === 'function') b.disableSwipeRefresh();
-        } catch (e) { }
+        } catch (e) {}
       });
     }
 

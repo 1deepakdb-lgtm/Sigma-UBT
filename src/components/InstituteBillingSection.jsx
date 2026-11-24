@@ -4981,7 +4981,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             borderRadius: "10px",
             boxShadow: "none",
             border: "1px solid #cbd5e1",
-            padding: "20px"
+            padding: "20px",
+            marginBottom: "60px"
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
               <h3 style={{ margin: 0, color: "#1e3a8a", fontSize: "17px" }}>
@@ -5086,7 +5087,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 backgroundColor: "#ffffff",
                 position: "relative",
-                WebkitOverflowScrolling: "touch"
+                WebkitOverflowScrolling: "touch",
+                touchAction: "pan-x pan-y",
+                overscrollBehavior: "auto"
               }}
             >
               <style dangerouslySetInnerHTML={{

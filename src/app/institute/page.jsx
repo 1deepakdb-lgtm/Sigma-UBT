@@ -1541,7 +1541,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     boxSizing: "border-box"
   });
 
-  const contentAreaStyle = { padding: "24px 20px 120px 20px", maxWidth: "1280px", margin: "0 auto", userSelect: "text", minHeight: "calc(100vh - 64px)", height: "auto", overflowY: "visible" };
+  const contentAreaStyle = { padding: "24px 20px 280px 20px", maxWidth: "1280px", margin: "0 auto", userSelect: "text", minHeight: "calc(100vh - 64px)", height: "auto", overflowY: "visible" };
   const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "20px", border: "1px solid #e2e8f0" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", backgroundColor: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", borderRadius: "8px", overflow: "hidden" };
   const thStyle = { backgroundColor: "#f8fafc", padding: "14px 16px", textAlign: "left", color: "#475569", fontWeight: "700", fontSize: "13px", borderBottom: "2px solid #e2e8f0", position: "sticky", top: 0, zIndex: 3 };
@@ -1565,8 +1565,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       <style dangerouslySetInnerHTML={{
         __html: `
         html {
-          overflow-y: scroll !important;
-          overflow-x: hidden !important;
+          overflow-y: auto !important;
           height: auto !important;
           min-height: 100% !important;
           -webkit-overflow-scrolling: touch !important;
@@ -4238,7 +4237,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           }
         }
 
-        @media (orientation: landscape) and (max-height: 650px) {
+        @media (max-width: 1024px) and (orientation: landscape) and (max-height: 550px) and (pointer: coarse) {
           :global(.institute-landscape-menu-toggle) {
             display: inline-flex !important;
           }
@@ -4261,10 +4260,10 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             min-height: 0px !important;
           }
           :global(body) {
-            padding-bottom: 0px !important;
+            padding-bottom: 80px !important;
           }
           :global(.institute-content-area) {
-            padding: 8px 10px !important;
+            padding: 12px 10px 160px 10px !important;
           }
           :global(.manage-students-login-wrap) {
             min-height: 100vh !important;

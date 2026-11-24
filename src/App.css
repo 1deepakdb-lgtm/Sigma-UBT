@@ -20,8 +20,7 @@ html {
   width: 100%;
   min-height: 100%;
   background-color: #003b73;
-  overflow-x: hidden;
-  overflow-y: scroll !important;
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: none !important;
   -webkit-text-size-adjust: 100%;
