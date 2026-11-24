@@ -8,8 +8,8 @@ import BatchimRulesGuide from '@/components/BatchimRulesGuide';
 import HangeulAlphabetGuide from '@/components/HangeulAlphabetGuide';
 
 export default function KoreanGrammarBookView({ materials = [], isAdmin = false, onUploadMaterial }) {
-  // Modes: "basic_book" | "chapterwise" | "basic_advanced" | "comparisons" | "pdfs"
-  const [activeTab, setActiveTab] = useState("basic_book");
+  // Modes: "alphabet" | "basic_book" | "chapterwise" | "basic_advanced" | "comparisons" | "pdfs"
+  const [activeTab, setActiveTab] = useState("alphabet");
 
   // Chapter-wise state
   const [chapterBookFilter, setChapterBookFilter] = useState("all"); // "all" | "book1" | "book2"
@@ -384,6 +384,31 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
           borderTop: "1px solid #f1f5f9",
           flexWrap: "wrap"
         }}>
+          {/* 1. VOWELS & CONSONANTS (FIRST TAB) */}
+          <button
+            type="button"
+            onClick={() => { setActiveTab("alphabet"); setSelectedChapterNum(null); }}
+            style={{
+              padding: "10px 18px",
+              borderRadius: "10px",
+              border: activeTab === "alphabet" ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
+              backgroundColor: activeTab === "alphabet" ? "#2563eb" : "#ffffff",
+              color: activeTab === "alphabet" ? "#ffffff" : "#1e293b",
+              fontWeight: "800",
+              fontSize: "13.5px",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: activeTab === "alphabet" ? "0 4px 12px rgba(37,99,235,0.25)" : "none",
+              transition: "all 0.15s ease"
+            }}
+          >
+            <span style={{ fontSize: "16px" }}>🔤</span>
+            <span>Vowels & Consonants (स्वर तथा व्यञ्जन ध्वनि)</span>
+          </button>
+
+          {/* 2. BASIC BOOK */}
           <button
             type="button"
             onClick={() => { setActiveTab("basic_book"); setSelectedChapterNum(null); }}
@@ -405,29 +430,6 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
           >
             <span style={{ fontSize: "16px" }}>📘</span>
             <span>Basic Book (आधारभूत पुस्तक)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setActiveTab("alphabet"); setSelectedChapterNum(null); }}
-            style={{
-              padding: "10px 18px",
-              borderRadius: "10px",
-              border: activeTab === "alphabet" ? "2px solid #059669" : "1.5px solid #cbd5e1",
-              backgroundColor: activeTab === "alphabet" ? "#059669" : "#ffffff",
-              color: activeTab === "alphabet" ? "#ffffff" : "#1e293b",
-              fontWeight: "800",
-              fontSize: "13.5px",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              boxShadow: activeTab === "alphabet" ? "0 4px 12px rgba(5,150,105,0.25)" : "none",
-              transition: "all 0.15s ease"
-            }}
-          >
-            <span style={{ fontSize: "16px" }}>🔤</span>
-            <span>Vowels & Consonants (स्वर र व्यञ्जन)</span>
           </button>
 
           <button
