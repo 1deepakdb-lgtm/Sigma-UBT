@@ -82,10 +82,6 @@ export default function RootLayout({ children }) {
                 try {
                   document.documentElement.style.overscrollBehaviorY = 'none';
                   document.documentElement.style.setProperty('overscroll-behavior-y', 'none', 'important');
-                  if (document.body) {
-                    document.body.style.overscrollBehaviorY = 'none';
-                    document.body.style.setProperty('overscroll-behavior-y', 'none', 'important');
-                  }
                 } catch (e) {}
               })();
             `

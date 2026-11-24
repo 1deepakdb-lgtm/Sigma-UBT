@@ -1567,19 +1567,16 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
         html {
           overflow-y: scroll !important;
           overflow-x: hidden !important;
-          height: 100% !important;
-          min-height: 100% !important;
-          -webkit-overflow-scrolling: touch !important;
-          overscroll-behavior-y: none !important;
-          scrollbar-gutter: stable !important;
-        }
-        body {
-          overflow-y: visible !important;
-          overflow-x: hidden !important;
           height: auto !important;
           min-height: 100% !important;
           -webkit-overflow-scrolling: touch !important;
           overscroll-behavior-y: none !important;
+        }
+        body {
+          overflow: visible !important;
+          height: auto !important;
+          min-height: 100% !important;
+          -webkit-overflow-scrolling: touch !important;
         }
         .dynamic-card {
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);

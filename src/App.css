@@ -24,8 +24,6 @@ html {
   overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: none !important;
-  scrollbar-gutter: stable;
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
@@ -39,12 +37,8 @@ body {
   width: 100%;
   min-height: 100%;
   height: auto;
-  overflow-x: hidden;
-  overflow-y: visible !important;
+  overflow: visible !important;
   -webkit-overflow-scrolling: touch !important;
-  overscroll-behavior-y: none !important;
-  overscroll-behavior: none !important;
-  touch-action: pan-x pan-y;
 }
 
 #__next,
