@@ -5800,62 +5800,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
                   {/* PAYMENT BREAKDOWN SUMMARY & RECEIPT AMOUNT */}
                   <div style={{ gridColumn: "span 2", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "8px", border: "2px solid #cbd5e1", marginTop: "4px" }}>
-                    {/* Header with Package Defaults & Set as Default Button */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "6px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                        <span style={{ fontSize: "13px", fontWeight: "900", color: "#1e3a8a" }}>
-                          Course Fee & Payment: <strong style={{ color: "#15803d" }}>{form.coursePackage || "Full course"}</strong>
-                        </span>
-                        {(() => {
-                          const curPkg = form.coursePackage || "Full course";
-                          const curDefault = getPackageFee(curPkg, form.courseDetail);
-                          if (!curDefault) return null;
-                          const gross = Number(curDefault.grossFee) || 0;
-                          const disc = Number(curDefault.discountPercent) || 0;
-                          const net = Math.max(0, Math.round(gross - (gross * disc / 100)));
-                          return (
-                            <span style={{ fontSize: "11px", color: "#047857", backgroundColor: "#d1fae5", padding: "2px 8px", borderRadius: "4px", border: "1px solid #a7f3d0", fontWeight: "bold" }}>
-                              Default: Rs. {gross.toLocaleString()}{disc > 0 ? ` (${disc}% off = Rs. ${net.toLocaleString()})` : ""}
-                            </span>
-                          );
-                        })()}
-                      </div>
-
-                      {billingRole === "admin" && (
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const initialCourse = (form?.courseDetail && getFilteredCourses().includes(form.courseDetail)) ? form.courseDetail : defaultCourse;
-                              setSelectedCourseForFees(initialCourse);
-                              setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
-                              setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
-                              const courseDefPkg = feeConfig.courseFees?.[initialCourse]?.defaultPackage || feeConfig.defaultPackage || "Full course";
-                              setSelectedDefaultPkg(courseDefPkg);
-                              setFeeUpdateDate(feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10)));
-                              setShowFeeConfigModal(true);
-                            }}
-                            title="Edit default fees and discount rates for all packages (Admin only)"
-                            style={{
-                              backgroundColor: "#ffffff",
-                              color: "#0369a1",
-                              border: "1px solid #7dd3fc",
-                              borderRadius: "4px",
-                              padding: "4px 10px",
-                              fontSize: "11px",
-                              fontWeight: "bold",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px"
-                            }}
-                          >
-                            <span>⚙️ Edit Package Defaults</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
                     {feeSavedToast && (
                       <div style={{
                         backgroundColor: "#bbf7d0",
@@ -5883,13 +5827,12 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       alignItems: "flex-end",
                       marginBottom: "14px"
                     }}>
-                      {/* 1. Course Gross Fee (Non-editable after set default) */}
+                      {/* 1. Course Gross Fee */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                           <label style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", textTransform: "uppercase" }}>
                             Course Fee (Gross)
                           </label>
-                          <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>🔒 Fixed</span>
                         </div>
                         <div style={{
                           width: "100%",
@@ -5909,45 +5852,52 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         </div>
                       </div>
 
-                      {/* 2. Discount in seted % (Non-editable after set default) */}
+                      {/* 2. Discount with minus (-) sign (Editable) */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                           <label style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", textTransform: "uppercase" }}>
-                            Discount (Seted %)
+                            Discount
                           </label>
-                          <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>🔒 Fixed</span>
-                        </div>
-                        <div style={{
-                          width: "100%",
-                          height: "44px",
-                          padding: "0 10px",
-                          borderRadius: "6px",
-                          border: "1.5px solid #cbd5e1",
-                          backgroundColor: "#f1f5f9",
-                          boxSizing: "border-box",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          fontWeight: "bold",
-                          fontSize: "14px",
-                          color: "#0f172a"
-                        }}>
-                          <span>{Number(form.discountPercent || 0)}%</span>
                           {Number(form.discountAmount || 0) > 0 && (
-                            <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: "bold" }}>
-                              -{formatCurrency(form.discountAmount)}
+                            <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "bold" }}>
+                              - {formatCurrency(form.discountAmount)}
                             </span>
                           )}
                         </div>
+                        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                          <span style={{ position: "absolute", left: "10px", fontWeight: "900", fontSize: "15px", color: "#dc2626", pointerEvents: "none" }}>-</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder="0"
+                            value={form.discountPercent == 0 ? '' : form.discountPercent}
+                            readOnly={form.isExistingStudent && !form.isEditingExistingBill}
+                            onWheel={(e) => e.target.blur()}
+                            onChange={(e) => updateFeeCalculations(form.grossFee, e.target.value)}
+                            style={{
+                              width: "100%",
+                              height: "44px",
+                              padding: "0 26px 0 22px",
+                              borderRadius: "6px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "#ffffff",
+                              boxSizing: "border-box",
+                              fontWeight: "bold",
+                              fontSize: "14px",
+                              color: "#0f172a"
+                            }}
+                          />
+                          <span style={{ position: "absolute", right: "10px", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>%</span>
+                        </div>
                       </div>
 
-                      {/* 3. Total Fee (Kept BEFORE Paid Amount, Non-editable) */}
+                      {/* 3. Total Fee (Kept BEFORE Paid Amount) */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                           <label style={{ fontSize: "11px", fontWeight: "900", color: "#1e3a8a", textTransform: "uppercase" }}>
                             Total Fee (Net)
                           </label>
-                          <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>🔒 Auto</span>
                         </div>
                         <div style={{
                           width: "100%",
