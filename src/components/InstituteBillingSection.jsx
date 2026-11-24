@@ -5696,7 +5696,23 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     <select
                       value={form.coursePackage}
                       disabled={form.isExistingStudent && !form.isEditingExistingBill}
-                      onChange={(e) => handleCoursePackageChange(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "__EDIT_DEFAULTS__") {
+                          if (billingRole === "admin") {
+                            const initialCourse = (form?.courseDetail && getFilteredCourses().includes(form.courseDetail)) ? form.courseDetail : defaultCourse;
+                            setSelectedCourseForFees(initialCourse);
+                            setEditingCourseFees({ ...(feeConfig.courseFees || {}) });
+                            setEditingPackageFees({ ...(feeConfig.packages || DEFAULT_PACKAGE_FEES) });
+                            const courseDefPkg = feeConfig.courseFees?.[initialCourse]?.defaultPackage || feeConfig.defaultPackage || "Full course";
+                            setSelectedDefaultPkg(courseDefPkg);
+                            setFeeUpdateDate(feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10)));
+                            setShowFeeConfigModal(true);
+                          }
+                          return;
+                        }
+                        handleCoursePackageChange(val);
+                      }}
                       style={{
                         width: "100%",
                         padding: "9px 12px",
@@ -5714,6 +5730,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           {getPackageOptionLabel(pkg, form.courseDetail)}
                         </option>
                       ))}
+                      {billingRole === "admin" && (
+                        <option value="__EDIT_DEFAULTS__" style={{ color: "#0284c7", fontWeight: "bold" }}>
+                          ⚙️ [Admin] Edit Package Fees & Discounts...
+                        </option>
+                      )}
                     </select>
                   </div>
 
@@ -5775,327 +5796,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         }}
                       />
                     </div>
-
-                    {/* ADD ITEM WITH DROP DOWN ARROW ONLY */}
-                    <div style={{
-                      backgroundColor: "#ffffff",
-                        border: "1.5px solid #86efac",
-                        borderRadius: "8px",
-                        padding: "10px 14px",
-                        marginTop: "10px"
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                          <span style={{ fontSize: "12px", fontWeight: "bold", color: "#166534" }}>
-                            Add Extra Material / Book (Optional)
-                          </span>
-                        </div>
-                        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                          {/* Free Button: Blue before select, fully Red when checked (sets for all items) */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleAllFree(!isItemFree)}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              cursor: "pointer",
-                              userSelect: "none",
-                              padding: "8px 14px",
-                              borderRadius: "5px",
-                              backgroundColor: isItemFree ? "#dc2626" : "#2563eb",
-                              color: "#ffffff",
-                              border: isItemFree ? "1.5px solid #b91c1c" : "1.5px solid #1d4ed8",
-                              fontWeight: "bold",
-                              fontSize: "13px",
-                              height: "36px",
-                              boxSizing: "border-box",
-                              transition: "all 0.15s ease",
-                              boxShadow: "none"
-                            }}
-                            title={isItemFree ? "Currently FREE for all items (click to uncheck)" : "Click to set FREE for all items"}
-                          >
-                            <span style={{
-                              display: "inline-block",
-                              width: "14px",
-                              height: "14px",
-                              borderRadius: "3px",
-                              border: "1.5px solid #ffffff",
-                              backgroundColor: isItemFree ? "#ffffff" : "transparent",
-                              position: "relative",
-                              verticalAlign: "middle"
-                            }}>
-                              {isItemFree && (
-                                <span style={{
-                                  position: "absolute",
-                                  left: "2px",
-                                  top: "-3px",
-                                  color: "#dc2626",
-                                  fontSize: "12px",
-                                  fontWeight: "900"
-                                }}>✓</span>
-                              )}
-                            </span>
-                            <span>Free</span>
-                          </button>
-
-                          {/* Drop down arrow select populated with products & available stock */}
-                          <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
-                            <select
-                              value={selectedItemToAdd}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (!val) return;
-                                if (val === "Other") {
-                                  setSelectedItemToAdd("Other");
-                                  return;
-                                }
-                                handleAddItemFromDropdown(val);
-                              }}
-                              style={{
-                                width: "100%",
-                                padding: "8px 10px",
-                                borderRadius: "5px",
-                                border: "1.5px solid #16a34a",
-                                backgroundColor: "#ffffff",
-                                color: "#166534",
-                                fontWeight: "bold",
-                                fontSize: "13px",
-                                cursor: "pointer"
-                              }}
-                            >
-                              <option value="">Choose item / book to add ▼</option>
-                              {products.map((p) => {
-                                const isOutOfStock = Number(p.stock) <= 0;
-                                return (
-                                  <option
-                                    key={p.id}
-                                    value={p.name}
-                                    disabled={isOutOfStock}
-                                    style={{
-                                      color: isOutOfStock ? "#94a3b8" : "#166534",
-                                      fontWeight: isOutOfStock ? "normal" : "bold"
-                                    }}
-                                  >
-                                    {p.name} — Stock: {p.stock} {p.unit || 'pcs'} {isOutOfStock ? '[OUT OF STOCK]' : `(Rs. ${p.price})`}
-                                  </option>
-                                );
-                              })}
-                              <option value="Other">Type Custom Item Name...</option>
-                            </select>
-                          </div>
-
-                          {/* Quantity Selector for Product */}
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span style={{ fontSize: "11px", fontWeight: "bold", color: "#166534" }}>Qty:</span>
-                            <input
-                              type="number"
-                              min="1"
-                              max={(() => {
-                                const matched = products.find(p => p.name === selectedItemToAdd);
-                                return matched ? Math.max(1, Number(matched.stock) || 1) : 999;
-                              })()}
-                              value={selectedItemQty}
-                              onChange={(e) => {
-                                const val = Math.max(1, parseInt(e.target.value) || 1);
-                                setSelectedItemQty(val);
-                              }}
-                              style={{
-                                width: "55px",
-                                padding: "8px 6px",
-                                borderRadius: "5px",
-                                border: "1.5px solid #16a34a",
-                                backgroundColor: "#ffffff",
-                                color: "#166534",
-                                fontWeight: "bold",
-                                fontSize: "13px",
-                                textAlign: "center",
-                                boxSizing: "border-box"
-                              }}
-                              title="Quantity to add (Available stock will auto-reduce)"
-                            />
-                          </div>
-
-                          {/* Exact Price Input (No Stepper Arrows - Direct Typing) */}
-                          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                            <span style={{ position: "absolute", left: "8px", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              placeholder={isItemFree ? "0" : "Unit Price"}
-                              value={newItemPrice}
-                              onChange={(e) => {
-                                const val = e.target.value.replace(/[^0-9]/g, "");
-                                setNewItemPrice(val);
-                                if (Number(val) > 0) {
-                                  setIsItemFree(false);
-                                } else if (val === "0") {
-                                  setIsItemFree(true);
-                                }
-                              }}
-                              style={{
-                                width: "95px",
-                                padding: "8px 8px 8px 30px",
-                                borderRadius: "5px",
-                                border: isItemFree ? "1.5px solid #16a34a" : "1px solid #86efac",
-                                backgroundColor: isItemFree ? "#f0fdf4" : "#ffffff",
-                                fontWeight: "bold",
-                                fontSize: "13px",
-                                color: isItemFree ? "#15803d" : "#166534",
-                                boxSizing: "border-box"
-                              }}
-                              title={isItemFree ? "Item is marked as FREE (Rs. 0)" : "Type exact unit price"}
-                            />
-                          </div>
-
-                          {selectedItemToAdd === "Other" && (
-                            <div style={{ display: "flex", gap: "6px", alignItems: "center", flex: 1, minWidth: "200px" }}>
-                              <input
-                                type="text"
-                                placeholder="Type Custom Item / Book Name..."
-                                value={customItemToAdd}
-                                autoFocus
-                                onChange={(e) => setCustomItemToAdd(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" && customItemToAdd.trim()) {
-                                    e.preventDefault();
-                                    handleAddItemFromDropdown(customItemToAdd);
-                                  }
-                                }}
-                                style={{
-                                  flex: 1,
-                                  padding: "8px 10px",
-                                  borderRadius: "5px",
-                                  border: "1.5px solid #16a34a",
-                                  fontSize: "13px",
-                                  boxSizing: "border-box"
-                                }}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleAddItemFromDropdown(customItemToAdd)}
-                                style={{
-                                  backgroundColor: "#16a34a",
-                                  color: "white",
-                                  border: "none",
-                                  padding: "8px 12px",
-                                  borderRadius: "5px",
-                                  cursor: "pointer",
-                                  fontWeight: "bold",
-                                  fontSize: "13px"
-                                }}
-                              >
-                                +
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* ONLY SHOW ADDED ITEMS IF ANY HAVE BEEN ADDED */}
-                        {form.materials && form.materials.length > 0 && (
-                          <div style={{ marginTop: "8px", display: "grid", gap: "6px" }}>
-                            {form.materials.map((mat, idx) => (
-                              <div key={idx} style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                backgroundColor: "#ffffff",
-                                padding: "6px 10px",
-                                borderRadius: "5px",
-                                border: "1px solid #cbd5e1"
-                              }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                  <span style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a" }}>
-                                    {mat.name}
-                                  </span>
-                                  {mat.qty && Number(mat.qty) > 1 && (
-                                    <span style={{
-                                      backgroundColor: "#dcfce7",
-                                      color: "#166534",
-                                      padding: "2px 6px",
-                                      borderRadius: "4px",
-                                      fontSize: "11px",
-                                      fontWeight: "bold"
-                                    }}>
-                                      Qty: {mat.qty} {mat.unit || ''}
-                                    </span>
-                                  )}
-                                  {mat.unitPrice && Number(mat.qty) > 1 && !mat.isFree && Number(mat.amount) > 0 && (
-                                    <span style={{ color: "#64748b", fontSize: "11px" }}>
-                                      (@ Rs. {mat.unitPrice})
-                                    </span>
-                                  )}
-                                  {/* Interactive Free uncheck/check button for added item */}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleMaterialFree(idx, !(mat.isFree || Number(mat.amount) === 0))}
-                                    style={{
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "4px",
-                                      cursor: "pointer",
-                                      padding: "3px 8px",
-                                      borderRadius: "4px",
-                                      backgroundColor: (mat.isFree || Number(mat.amount) === 0) ? "#dc2626" : "#f1f5f9",
-                                      color: (mat.isFree || Number(mat.amount) === 0) ? "#ffffff" : "#475569",
-                                      border: (mat.isFree || Number(mat.amount) === 0) ? "1px solid #b91c1c" : "1px solid #cbd5e1",
-                                      fontSize: "11px",
-                                      fontWeight: "bold"
-                                    }}
-                                    title={(mat.isFree || Number(mat.amount) === 0) ? "Click to uncheck Free (restore item price)" : "Click to mark as Free"}
-                                  >
-                                    <span>{(mat.isFree || Number(mat.amount) === 0) ? "✓ Free" : "Set Free"}</span>
-                                  </button>
-                                </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                                    <span style={{ position: "absolute", left: "7px", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
-                                    <input
-                                      type="text"
-                                      inputMode="numeric"
-                                      pattern="[0-9]*"
-                                      value={mat.amount ?? 0}
-                                      onChange={(e) => {
-                                        const val = e.target.value.replace(/[^0-9]/g, "");
-                                        handleUpdateMaterial(idx, "amount", val === "" ? 0 : Number(val));
-                                      }}
-                                      style={{
-                                        width: "85px",
-                                        padding: "5px 6px 5px 26px",
-                                        borderRadius: "4px",
-                                        border: Number(mat.amount) > 0 ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
-                                        backgroundColor: Number(mat.amount) > 0 ? "#eff6ff" : "white",
-                                        color: Number(mat.amount) > 0 ? "#1e3a8a" : "#334155",
-                                        fontWeight: "bold",
-                                        fontSize: "13px"
-                                      }}
-                                      title="Total amount"
-                                    />
-                                  </div>
-                                  <button
-                                    type="button"
-                                    title="Remove this item"
-                                    onClick={() => handleRemoveMaterial(idx)}
-                                    style={{
-                                      backgroundColor: "#fee2e2",
-                                      color: "#dc2626",
-                                      border: "1px solid #fecaca",
-                                      padding: "4px 8px",
-                                      borderRadius: "4px",
-                                      cursor: "pointer",
-                                      fontWeight: "bold",
-                                      fontSize: "12px"
-                                    }}
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  </div>
 
                   {/* PAYMENT BREAKDOWN SUMMARY & RECEIPT AMOUNT */}
                   <div style={{ gridColumn: "span 2", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "8px", border: "2px solid #cbd5e1", marginTop: "4px" }}>
@@ -6120,34 +5821,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         })()}
                       </div>
 
-                      {(!form.isExistingStudent || form.isEditingExistingBill) && (
+                      {billingRole === "admin" && (
                         <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                          <button
-                            type="button"
-                            onClick={() => handleSaveCurrentAsDefault(form.coursePackage)}
-                            title={`Save current Rs. ${Number(form.grossFee || 0).toLocaleString()} and ${Number(form.discountPercent || 0)}% discount as default for "${form.coursePackage}"`}
-                            style={{
-                              backgroundColor: "#16a34a",
-                              color: "#ffffff",
-                              border: "none",
-                              borderRadius: "4px",
-                              padding: "4px 10px",
-                              fontSize: "11px",
-                              fontWeight: "bold",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px"
-                            }}
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                              <polyline points="17 21 17 13 7 13 7 21" />
-                              <polyline points="7 3 7 8 15 8" />
-                            </svg>
-                            Set as Default
-                          </button>
-
                           <button
                             type="button"
                             onClick={() => {
@@ -6160,7 +5835,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               setFeeUpdateDate(feeConfig.updatedAt || (typeof getLocalDateStr === "function" ? getLocalDateStr() : new Date().toISOString().slice(0, 10)));
                               setShowFeeConfigModal(true);
                             }}
-                            title="View and edit default fees for all packages"
+                            title="Edit default fees and discount rates for all packages (Admin only)"
                             style={{
                               backgroundColor: "#ffffff",
                               color: "#0369a1",
@@ -6169,10 +5844,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               padding: "4px 10px",
                               fontSize: "11px",
                               fontWeight: "bold",
-                              cursor: "pointer"
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
                             }}
                           >
-                            All Defaults
+                            <span>⚙️ Edit Package Defaults</span>
                           </button>
                         </div>
                       )}
@@ -6205,84 +5883,71 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       alignItems: "flex-end",
                       marginBottom: "14px"
                     }}>
-                      {/* 1. Course Gross Fee */}
+                      {/* 1. Course Gross Fee (Non-editable after set default) */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                           <label style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", textTransform: "uppercase" }}>
                             Course Fee (Gross)
                           </label>
+                          <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>🔒 Fixed</span>
                         </div>
-                        <div style={{ position: "relative" }}>
-                          <span style={{ position: "absolute", left: "9px", top: "50%", transform: "translateY(-50%)", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
-                          <input
-                            type="number"
-                            required
-                            placeholder="Gross Fee"
-                            value={form.grossFee || ""}
-                            readOnly={form.isExistingStudent && !form.isEditingExistingBill}
-                            onWheel={(e) => e.target.blur()}
-                            onChange={(e) => updateFeeCalculations(e.target.value, form.discountPercent)}
-                            style={{
-                              width: "100%",
-                              height: "44px",
-                              padding: "0 8px 0 32px",
-                              borderRadius: "6px",
-                              border: "1.5px solid #16a34a",
-                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "#ffffff",
-                              boxSizing: "border-box",
-                              fontWeight: "bold",
-                              fontSize: "14px",
-                              color: "#166534"
-                            }}
-                          />
+                        <div style={{
+                          width: "100%",
+                          height: "44px",
+                          padding: "0 10px",
+                          borderRadius: "6px",
+                          border: "1.5px solid #cbd5e1",
+                          backgroundColor: "#f1f5f9",
+                          boxSizing: "border-box",
+                          display: "flex",
+                          alignItems: "center",
+                          fontWeight: "bold",
+                          fontSize: "14px",
+                          color: "#166534"
+                        }}>
+                          {formatCurrency(form.grossFee || 0)}
                         </div>
                       </div>
 
-                      {/* 2. Discount in seted % */}
+                      {/* 2. Discount in seted % (Non-editable after set default) */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                           <label style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", textTransform: "uppercase" }}>
-                            Discount (%)
+                            Discount (Seted %)
                           </label>
+                          <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>🔒 Fixed</span>
+                        </div>
+                        <div style={{
+                          width: "100%",
+                          height: "44px",
+                          padding: "0 10px",
+                          borderRadius: "6px",
+                          border: "1.5px solid #cbd5e1",
+                          backgroundColor: "#f1f5f9",
+                          boxSizing: "border-box",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          fontWeight: "bold",
+                          fontSize: "14px",
+                          color: "#0f172a"
+                        }}>
+                          <span>{Number(form.discountPercent || 0)}%</span>
                           {Number(form.discountAmount || 0) > 0 && (
-                            <span style={{ fontSize: "10px", color: "#16a34a", fontWeight: "bold" }}>
-                              - {formatCurrency(form.discountAmount)}
+                            <span style={{ fontSize: "11px", color: "#16a34a", fontWeight: "bold" }}>
+                              -{formatCurrency(form.discountAmount)}
                             </span>
                           )}
                         </div>
-                        <div style={{ position: "relative" }}>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            placeholder="0%"
-                            value={form.discountPercent == 0 ? '' : form.discountPercent}
-                            readOnly={form.isExistingStudent && !form.isEditingExistingBill}
-                            onWheel={(e) => e.target.blur()}
-                            onChange={(e) => updateFeeCalculations(form.grossFee, e.target.value)}
-                            style={{
-                              width: "100%",
-                              height: "44px",
-                              padding: "0 26px 0 8px",
-                              borderRadius: "6px",
-                              border: "1.5px solid #cbd5e1",
-                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "white",
-                              boxSizing: "border-box",
-                              fontWeight: "bold",
-                              fontSize: "14px",
-                              color: "#0f172a"
-                            }}
-                          />
-                          <span style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>%</span>
-                        </div>
                       </div>
 
-                      {/* 3. Total Fee (Kept BEFORE Paid Amount) */}
+                      {/* 3. Total Fee (Kept BEFORE Paid Amount, Non-editable) */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                           <label style={{ fontSize: "11px", fontWeight: "900", color: "#1e3a8a", textTransform: "uppercase" }}>
                             Total Fee (Net)
                           </label>
+                          <span style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>🔒 Auto</span>
                         </div>
                         <div style={{
                           width: "100%",
@@ -6303,7 +5968,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         </div>
                       </div>
 
-                      {/* 4. Enter Paid Amount * (Red Box) */}
+                      {/* 4. Enter Paid Amount * (Simple Green Background) */}
                       <div>
                         {(() => {
                           const maxAllowedPayment = (() => {
@@ -6326,7 +5991,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           return (
                             <>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                                <label style={{ fontSize: "11px", fontWeight: "bold", color: "#b91c1c", letterSpacing: "0.2px", textTransform: "uppercase" }}>
+                                <label style={{ fontSize: "11px", fontWeight: "900", color: "#15803d", letterSpacing: "0.2px", textTransform: "uppercase" }}>
                                   Enter Paid Amount *
                                 </label>
                                 {(() => {
@@ -6338,7 +6003,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                   );
                                 })()}
                               </div>
-                              <div style={{ position: "relative", width: "100%", height: "44px", backgroundColor: "#dc2626", borderRadius: "6px", boxSizing: "border-box", overflow: "hidden" }}>
+                              <div style={{ position: "relative", width: "100%", height: "44px", backgroundColor: "#16a34a", borderRadius: "6px", boxSizing: "border-box", overflow: "hidden" }}>
                                 <input
                                   type="number"
                                   required
@@ -6346,7 +6011,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                   max={maxAllowedPayment > 0 ? maxAllowedPayment : undefined}
                                   placeholder="Paid Amount"
                                   value={form.paidAmount}
-                                  className="paid-amount-red-input"
+                                  className="paid-amount-green-input"
                                   onWheel={(e) => e.target.blur()}
                                   onChange={(e) => {
                                     const rawVal = e.target.value;
@@ -6366,9 +6031,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                     height: "44px",
                                     minHeight: "44px",
                                     maxHeight: "44px",
-                                    backgroundColor: "#dc2626",
+                                    backgroundColor: "#16a34a",
                                     color: "#ffffff",
-                                    border: "2px solid #b91c1c",
+                                    border: "2px solid #15803d",
                                     borderRadius: "6px",
                                     fontWeight: "900",
                                     fontSize: "17px",
@@ -6377,7 +6042,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                     padding: "0 8px",
                                     boxSizing: "border-box",
                                     outline: "none",
-                                    boxShadow: "0 2px 6px rgba(220, 38, 38, 0.28)",
+                                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.28)",
                                     transition: "all 0.15s ease"
                                   }}
                                 />
@@ -6386,6 +6051,326 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           );
                         })()}
                       </div>
+                    </div>
+
+                    {/* ADD ITEM WITH DROP DOWN ARROW ONLY (PLACED BELOW FEE & PAID AMOUNT ROW) */}
+                    <div style={{
+                      backgroundColor: "#ffffff",
+                      border: "1.5px solid #86efac",
+                      borderRadius: "8px",
+                      padding: "10px 14px",
+                      marginBottom: "14px"
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                        <span style={{ fontSize: "12px", fontWeight: "bold", color: "#166534" }}>
+                          Add Extra Material / Book (Optional)
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                        {/* Free Button: Blue before select, fully Red when checked (sets for all items) */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAllFree(!isItemFree)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                            userSelect: "none",
+                            padding: "8px 14px",
+                            borderRadius: "5px",
+                            backgroundColor: isItemFree ? "#dc2626" : "#2563eb",
+                            color: "#ffffff",
+                            border: isItemFree ? "1.5px solid #b91c1c" : "1.5px solid #1d4ed8",
+                            fontWeight: "bold",
+                            fontSize: "13px",
+                            height: "36px",
+                            boxSizing: "border-box",
+                            transition: "all 0.15s ease",
+                            boxShadow: "none"
+                          }}
+                          title={isItemFree ? "Currently FREE for all items (click to uncheck)" : "Click to set FREE for all items"}
+                        >
+                          <span style={{
+                            display: "inline-block",
+                            width: "14px",
+                            height: "14px",
+                            borderRadius: "3px",
+                            border: "1.5px solid #ffffff",
+                            backgroundColor: isItemFree ? "#ffffff" : "transparent",
+                            position: "relative",
+                            verticalAlign: "middle"
+                          }}>
+                            {isItemFree && (
+                              <span style={{
+                                position: "absolute",
+                                left: "2px",
+                                top: "-3px",
+                                color: "#dc2626",
+                                fontSize: "12px",
+                                fontWeight: "900"
+                              }}>✓</span>
+                            )}
+                          </span>
+                          <span>Free</span>
+                        </button>
+
+                        {/* Drop down arrow select populated with products & available stock */}
+                        <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
+                          <select
+                            value={selectedItemToAdd}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (!val) return;
+                              if (val === "Other") {
+                                setSelectedItemToAdd("Other");
+                                return;
+                              }
+                              handleAddItemFromDropdown(val);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "8px 10px",
+                              borderRadius: "5px",
+                              border: "1.5px solid #16a34a",
+                              backgroundColor: "#ffffff",
+                              color: "#166534",
+                              fontWeight: "bold",
+                              fontSize: "13px",
+                              cursor: "pointer"
+                            }}
+                          >
+                            <option value="">Choose item / book to add ▼</option>
+                            {products.map((p) => {
+                              const isOutOfStock = Number(p.stock) <= 0;
+                              return (
+                                <option
+                                  key={p.id}
+                                  value={p.name}
+                                  disabled={isOutOfStock}
+                                  style={{
+                                    color: isOutOfStock ? "#94a3b8" : "#166534",
+                                    fontWeight: isOutOfStock ? "normal" : "bold"
+                                  }}
+                                >
+                                  {p.name} — Stock: {p.stock} {p.unit || 'pcs'} {isOutOfStock ? '[OUT OF STOCK]' : `(Rs. ${p.price})`}
+                                </option>
+                              );
+                            })}
+                            <option value="Other">Type Custom Item Name...</option>
+                          </select>
+                        </div>
+
+                        {/* Quantity Selector for Product */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "bold", color: "#166534" }}>Qty:</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max={(() => {
+                              const matched = products.find(p => p.name === selectedItemToAdd);
+                              return matched ? Math.max(1, Number(matched.stock) || 1) : 999;
+                            })()}
+                            value={selectedItemQty}
+                            onChange={(e) => {
+                              const val = Math.max(1, parseInt(e.target.value) || 1);
+                              setSelectedItemQty(val);
+                            }}
+                            style={{
+                              width: "55px",
+                              padding: "8px 6px",
+                              borderRadius: "5px",
+                              border: "1.5px solid #16a34a",
+                              backgroundColor: "#ffffff",
+                              color: "#166534",
+                              fontWeight: "bold",
+                              fontSize: "13px",
+                              textAlign: "center",
+                              boxSizing: "border-box"
+                            }}
+                            title="Quantity to add (Available stock will auto-reduce)"
+                          />
+                        </div>
+
+                        {/* Exact Price Input (No Stepper Arrows - Direct Typing) */}
+                        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                          <span style={{ position: "absolute", left: "8px", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            placeholder={isItemFree ? "0" : "Unit Price"}
+                            value={newItemPrice}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/[^0-9]/g, "");
+                              setNewItemPrice(val);
+                              if (Number(val) > 0) {
+                                setIsItemFree(false);
+                              } else if (val === "0") {
+                                setIsItemFree(true);
+                              }
+                            }}
+                            style={{
+                              width: "95px",
+                              padding: "8px 8px 8px 30px",
+                              borderRadius: "5px",
+                              border: isItemFree ? "1.5px solid #16a34a" : "1px solid #86efac",
+                              backgroundColor: isItemFree ? "#f0fdf4" : "#ffffff",
+                              fontWeight: "bold",
+                              fontSize: "13px",
+                              color: isItemFree ? "#15803d" : "#166534",
+                              boxSizing: "border-box"
+                            }}
+                            title={isItemFree ? "Item is marked as FREE (Rs. 0)" : "Type exact unit price"}
+                          />
+                        </div>
+
+                        {selectedItemToAdd === "Other" && (
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", flex: 1, minWidth: "200px" }}>
+                            <input
+                              type="text"
+                              placeholder="Type Custom Item / Book Name..."
+                              value={customItemToAdd}
+                              autoFocus
+                              onChange={(e) => setCustomItemToAdd(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && customItemToAdd.trim()) {
+                                  e.preventDefault();
+                                  handleAddItemFromDropdown(customItemToAdd);
+                                }
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: "8px 10px",
+                                borderRadius: "5px",
+                                border: "1.5px solid #16a34a",
+                                fontSize: "13px",
+                                boxSizing: "border-box"
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleAddItemFromDropdown(customItemToAdd)}
+                              style={{
+                                backgroundColor: "#16a34a",
+                                color: "white",
+                                border: "none",
+                                padding: "8px 12px",
+                                borderRadius: "5px",
+                                cursor: "pointer",
+                                fontWeight: "bold",
+                                fontSize: "13px"
+                              }}
+                            >
+                              +
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ONLY SHOW ADDED ITEMS IF ANY HAVE BEEN ADDED */}
+                      {form.materials && form.materials.length > 0 && (
+                        <div style={{ marginTop: "8px", display: "grid", gap: "6px" }}>
+                          {form.materials.map((mat, idx) => (
+                            <div key={idx} style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              backgroundColor: "#ffffff",
+                              padding: "6px 10px",
+                              borderRadius: "5px",
+                              border: "1px solid #cbd5e1"
+                            }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                <span style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a" }}>
+                                  {mat.name}
+                                </span>
+                                {mat.qty && Number(mat.qty) > 1 && (
+                                  <span style={{
+                                    backgroundColor: "#dcfce7",
+                                    color: "#166534",
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    fontSize: "11px",
+                                    fontWeight: "bold"
+                                  }}>
+                                    Qty: {mat.qty} {mat.unit || ''}
+                                  </span>
+                                )}
+                                {mat.unitPrice && Number(mat.qty) > 1 && !mat.isFree && Number(mat.amount) > 0 && (
+                                  <span style={{ color: "#64748b", fontSize: "11px" }}>
+                                    (@ Rs. {mat.unitPrice})
+                                  </span>
+                                )}
+                                {/* Interactive Free uncheck/check button for added item */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleMaterialFree(idx, !(mat.isFree || Number(mat.amount) === 0))}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    cursor: "pointer",
+                                    padding: "3px 8px",
+                                    borderRadius: "4px",
+                                    backgroundColor: (mat.isFree || Number(mat.amount) === 0) ? "#dc2626" : "#f1f5f9",
+                                    color: (mat.isFree || Number(mat.amount) === 0) ? "#ffffff" : "#475569",
+                                    border: (mat.isFree || Number(mat.amount) === 0) ? "1px solid #b91c1c" : "1px solid #cbd5e1",
+                                    fontSize: "11px",
+                                    fontWeight: "bold"
+                                  }}
+                                  title={(mat.isFree || Number(mat.amount) === 0) ? "Click to uncheck Free (restore item price)" : "Click to mark as Free"}
+                                >
+                                  <span>{(mat.isFree || Number(mat.amount) === 0) ? "✓ Free" : "Set Free"}</span>
+                                </button>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                                  <span style={{ position: "absolute", left: "7px", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={mat.amount ?? 0}
+                                    onChange={(e) => {
+                                      const val = e.target.value.replace(/[^0-9]/g, "");
+                                      handleUpdateMaterial(idx, "amount", val === "" ? 0 : Number(val));
+                                    }}
+                                    style={{
+                                      width: "85px",
+                                      padding: "5px 6px 5px 26px",
+                                      borderRadius: "4px",
+                                      border: Number(mat.amount) > 0 ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                                      backgroundColor: Number(mat.amount) > 0 ? "#eff6ff" : "white",
+                                      color: Number(mat.amount) > 0 ? "#1e3a8a" : "#334155",
+                                      fontWeight: "bold",
+                                      fontSize: "13px"
+                                    }}
+                                    title="Total amount"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  title="Remove this item"
+                                  onClick={() => handleRemoveMaterial(idx)}
+                                  style={{
+                                    backgroundColor: "#fee2e2",
+                                    color: "#dc2626",
+                                    border: "1px solid #fecaca",
+                                    padding: "4px 8px",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                    fontWeight: "bold",
+                                    fontSize: "12px"
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* PAYMENT METHOD */}
