@@ -637,14 +637,101 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
   const [matrixFilterType, setMatrixFilterType] = useState("single"); // "single" | "dual"
   const [matrixVowelGroup, setMatrixVowelGroup] = useState("basic"); // "basic" | "compound"
   const [searchLetter, setSearchLetter] = useState("");
+  const [localPlayingId, setLocalPlayingId] = useState(null);
 
+  const audioCacheRef = useRef(new Map());
+  const activeAudioRef = useRef(null);
+  const lastPlayTimeRef = useRef(0);
+  const cachedKoVoiceRef = useRef(null);
+
+  // Pre-load and cache native Korean voices for zero-millisecond touch response
+  useEffect(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      const loadVoice = () => {
+        try {
+          const voices = window.speechSynthesis.getVoices();
+          const koVoice = voices.find(v => (v.lang === "ko-KR" || v.lang.startsWith("ko") || v.lang.includes("KR")));
+          if (koVoice) cachedKoVoiceRef.current = koVoice;
+        } catch (e) {}
+      };
+      loadVoice();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoice;
+      }
+    }
+  }, []);
+
+  // Real-time instant touch-and-play sound engine (under 20ms response)
   const onPlay = (text, id = null) => {
-    if (!text) return;
+    if (!text || typeof window === "undefined") return;
+    const now = Date.now();
+    if (now - lastPlayTimeRef.current < 60) return; // Debounce rapid multi-touch
+    lastPlayTimeRef.current = now;
+
+    let cleanText = String(text).trim();
+    cleanText = cleanText.replace(/^[~\-\s]+/, '').replace(/[~\-\s]+$/, '');
+    cleanText = cleanText.replace(/\(으\)/g, '으').replace(/\//g, ', ').replace(/[#*`_~]/g, '');
+    if (!cleanText) cleanText = text;
+
     const playKey = id || text;
-    if (handlePlayAudio) {
-      handlePlayAudio(null, playKey, text, 'ko', 'female');
+    setLocalPlayingId(playKey);
+
+    // 1. Instant Real-Time Web Speech API (Plays within milliseconds)
+    if ("speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel(); // Stop prior audio immediately
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = "ko-KR";
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+
+        if (cachedKoVoiceRef.current) {
+          utterance.voice = cachedKoVoiceRef.current;
+        } else {
+          const voices = window.speechSynthesis.getVoices();
+          const koVoice = voices.find(v => (v.lang === "ko-KR" || v.lang.startsWith("ko") || v.lang.includes("KR")));
+          if (koVoice) {
+            cachedKoVoiceRef.current = koVoice;
+            utterance.voice = koVoice;
+          }
+        }
+
+        utterance.onend = () => setLocalPlayingId(null);
+        utterance.onerror = () => setLocalPlayingId(null);
+
+        window.speechSynthesis.speak(utterance);
+        return;
+      } catch (err) {
+        console.warn("SpeechSynthesis error, falling back to cache/audio:", err);
+      }
+    }
+
+    // 2. High-speed In-Memory Audio Object fallback
+    try {
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
+        activeAudioRef.current.currentTime = 0;
+      }
+
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ko&gender=female&voice=ko-KR-SunHiNeural&rate=+0%`;
+      let audio = audioCacheRef.current.get(ttsUrl);
+      if (!audio) {
+        audio = new Audio(ttsUrl);
+        audioCacheRef.current.set(ttsUrl, audio);
+      } else {
+        audio.currentTime = 0;
+      }
+
+      activeAudioRef.current = audio;
+      audio.onended = () => setLocalPlayingId(null);
+      audio.onerror = () => setLocalPlayingId(null);
+      audio.play().catch(() => setLocalPlayingId(null));
+    } catch (e) {
+      setLocalPlayingId(null);
     }
   };
+
+  const isAudioPlaying = (id) => (localPlayingId === id || playingAudioId === id);
 
   const composedBuilderSyllable = useMemo(() => {
     return composeHangul(selectedBuilderC, selectedBuilderV);
@@ -812,11 +899,12 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
                     <button
                       type="button"
+                      onPointerDown={() => onPlay(c.nameKo, `single_c_${c.char}`)}
                       onClick={() => onPlay(c.nameKo, `single_c_${c.char}`)}
                       title={`${c.nameKo} उच्चारण सुन्नुहोस्`}
                       style={{
-                        backgroundColor: playingAudioId === `single_c_${c.char}` ? "#2563eb" : "#f1f5f9",
-                        color: playingAudioId === `single_c_${c.char}` ? "#ffffff" : "#1e40af",
+                        backgroundColor: isAudioPlaying(`single_c_${c.char}`) ? "#2563eb" : "#f1f5f9",
+                        color: isAudioPlaying(`single_c_${c.char}`) ? "#ffffff" : "#1e40af",
                         border: "1px solid #cbd5e1",
                         width: "36px",
                         height: "36px",
@@ -826,10 +914,11 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: "16px",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        touchAction: "manipulation"
                       }}
                     >
-                      {playingAudioId === `single_c_${c.char}` ? "🔊" : "🔈"}
+                      {isAudioPlaying(`single_c_${c.char}`) ? "🔊" : "🔈"}
                     </button>
                   </div>
 
@@ -942,11 +1031,12 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
                     <button
                       type="button"
+                      onPointerDown={() => onPlay(c.nameKo, `dual_c_${c.char}`)}
                       onClick={() => onPlay(c.nameKo, `dual_c_${c.char}`)}
                       title={`${c.nameKo} उच्चारण सुन्नुहोस्`}
                       style={{
-                        backgroundColor: playingAudioId === `dual_c_${c.char}` ? "#d97706" : "#fef3c7",
-                        color: playingAudioId === `dual_c_${c.char}` ? "#ffffff" : "#92400e",
+                        backgroundColor: isAudioPlaying(`dual_c_${c.char}`) ? "#d97706" : "#fef3c7",
+                        color: isAudioPlaying(`dual_c_${c.char}`) ? "#ffffff" : "#92400e",
                         border: "1px solid #fde68a",
                         width: "36px",
                         height: "36px",
@@ -956,10 +1046,11 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: "16px",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        touchAction: "manipulation"
                       }}
                     >
-                      {playingAudioId === `dual_c_${c.char}` ? "🔊" : "🔈"}
+                      {isAudioPlaying(`dual_c_${c.char}`) ? "🔊" : "🔈"}
                     </button>
                   </div>
 
@@ -1074,11 +1165,12 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
                 <button
                   type="button"
+                  onPointerDown={() => onPlay(v.spokenChar, `single_v_${v.char}`)}
                   onClick={() => onPlay(v.spokenChar, `single_v_${v.char}`)}
                   title={`${v.spokenChar} उच्चारण सुन्नुहोस्`}
                   style={{
-                    backgroundColor: playingAudioId === `single_v_${v.char}` ? "#16a34a" : "#f0fdf4",
-                    color: playingAudioId === `single_v_${v.char}` ? "#ffffff" : "#15803d",
+                    backgroundColor: isAudioPlaying(`single_v_${v.char}`) ? "#16a34a" : "#f0fdf4",
+                    color: isAudioPlaying(`single_v_${v.char}`) ? "#ffffff" : "#15803d",
                     border: "1px solid #bbf7d0",
                     width: "38px",
                     height: "38px",
@@ -1089,10 +1181,11 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     justifyContent: "center",
                     fontSize: "16px",
                     flexShrink: 0,
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    touchAction: "manipulation"
                   }}
                 >
-                  {playingAudioId === `single_v_${v.char}` ? "🔊" : "🔈"}
+                  {isAudioPlaying(`single_v_${v.char}`) ? "🔊" : "🔈"}
                 </button>
               </div>
             ))}
@@ -1164,11 +1257,12 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
                 <button
                   type="button"
+                  onPointerDown={() => onPlay(v.spokenChar, `dual_v_${v.char}`)}
                   onClick={() => onPlay(v.spokenChar, `dual_v_${v.char}`)}
                   title={`${v.spokenChar} उच्चारण सुन्नुहोस्`}
                   style={{
-                    backgroundColor: playingAudioId === `dual_v_${v.char}` ? "#9333ea" : "#faf5ff",
-                    color: playingAudioId === `dual_v_${v.char}` ? "#ffffff" : "#7e22ce",
+                    backgroundColor: isAudioPlaying(`dual_v_${v.char}`) ? "#9333ea" : "#faf5ff",
+                    color: isAudioPlaying(`dual_v_${v.char}`) ? "#ffffff" : "#7e22ce",
                     border: "1px solid #e9d5ff",
                     width: "38px",
                     height: "38px",
@@ -1179,10 +1273,11 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     justifyContent: "center",
                     fontSize: "16px",
                     flexShrink: 0,
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    touchAction: "manipulation"
                   }}
                 >
-                  {playingAudioId === `dual_v_${v.char}` ? "🔊" : "🔈"}
+                  {isAudioPlaying(`dual_v_${v.char}` ? "🔊" : "🔈")}
                 </button>
               </div>
             ))}
@@ -1337,29 +1432,34 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     {/* Syllable Cells */}
                     {currentMatrixVowels.map(v => {
                       const syl = composeHangul(con.char, v.v);
-                      const isPlaying = playingAudioId === `matrix_${syl}`;
+                      const isPlaying = isAudioPlaying(`matrix_${syl}`);
                       return (
                         <td
                           key={v.v}
+                          onPointerDown={() => onPlay(syl, `matrix_${syl}`)}
                           onClick={() => onPlay(syl, `matrix_${syl}`)}
                           style={{
                             padding: "8px 4px",
                             cursor: "pointer",
                             borderRight: "1px solid #f1f5f9",
                             backgroundColor: isPlaying ? "#dbeafe" : "transparent",
-                            transition: "background-color 0.1s ease"
+                            touchAction: "manipulation",
+                            userSelect: "none",
+                            WebkitTapHighlightColor: "transparent",
+                            transition: "background-color 0.08s ease"
                           }}
-                          title={`Click to hear ${syl}`}
+                          title={`Click or touch to hear ${syl}`}
                         >
                           <div style={{
                             fontSize: "17px",
                             fontWeight: "900",
                             color: isPlaying ? "#2563eb" : "#0f172a",
-                            transition: "transform 0.1s ease"
+                            transform: isPlaying ? "scale(1.18)" : "scale(1)",
+                            transition: "transform 0.08s ease"
                           }}>
                             {syl}
                           </div>
-                          <div style={{ fontSize: "10px", color: "#64748b", marginTop: "1px" }}>
+                          <div style={{ fontSize: "10px", color: isPlaying ? "#2563eb" : "#64748b", marginTop: "1px" }}>
                             {isPlaying ? "🔊" : "🔈"}
                           </div>
                         </td>
@@ -1506,9 +1606,10 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
             <button
               type="button"
+              onPointerDown={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
               onClick={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
               style={{
-                backgroundColor: "#2563eb",
+                backgroundColor: isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "#1d4ed8" : "#2563eb",
                 color: "#ffffff",
                 border: "none",
                 padding: "12px 24px",
@@ -1519,7 +1620,8 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
-                boxShadow: "0 4px 12px rgba(37,99,235,0.3)"
+                boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
+                touchAction: "manipulation"
               }}
             >
               <span>🔊</span>

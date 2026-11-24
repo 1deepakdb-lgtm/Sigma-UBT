@@ -33,8 +33,6 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
   const handleSpeak = (text, id = null, gender = 'female') => {
     if (!text || typeof window === 'undefined') return;
 
-    // Clean grammar patterns for natural dictionary model pronunciation
-    // e.g. "-(으)ㄹ 수 있다" -> "을 수 있다" or "아/어 보다" -> "아, 어 보다"
     let cleanText = String(text).trim();
     cleanText = cleanText.replace(/^[~\-\s]+/, '').replace(/[~\-\s]+$/, '');
     cleanText = cleanText.replace(/\(으\)/g, '으');
@@ -43,7 +41,32 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
     if (!cleanText) cleanText = text;
 
     const playKey = id || text;
+    setSpeakingText(playKey);
 
+    // 1. Instant Real-Time Web Speech API (Plays in 0 to 15 milliseconds directly on device)
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const koVoice = voices.find(v => (v.lang === 'ko-KR' || v.lang.startsWith('ko') || v.lang.includes('KR')));
+        if (koVoice) utterance.voice = koVoice;
+
+        utterance.onend = () => setSpeakingText(null);
+        utterance.onerror = () => setSpeakingText(null);
+
+        window.speechSynthesis.speak(utterance);
+        return;
+      } catch (e) {
+        console.warn("SpeechSynthesis error, falling back:", e);
+      }
+    }
+
+    // 2. High-Fidelity Neural Voice Fallback
     try {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
@@ -53,11 +76,9 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
       const voice = gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural';
       const model = gender === 'male' ? 'male-1' : 'female-1';
 
-      // Exact dictionary neural model voice endpoint (Microsoft Neural Voice)
       const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ko&gender=${gender}&voice=${voice}&pitch=+0Hz&rate=-4%&model=${model}`;
       const audio = new Audio(ttsUrl);
       audioPlayerRef.current = audio;
-      setSpeakingText(playKey);
 
       audio.onended = () => {
         setSpeakingText(null);
@@ -65,31 +86,13 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
       };
 
       audio.onerror = () => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'ko-KR';
-          utterance.rate = 0.85;
-          utterance.onend = () => setSpeakingText(null);
-          utterance.onerror = () => setSpeakingText(null);
-          window.speechSynthesis.speak(utterance);
-        } else {
-          setSpeakingText(null);
-        }
+        setSpeakingText(null);
+        audioPlayerRef.current = null;
       };
 
       audio.play().catch(() => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'ko-KR';
-          utterance.rate = 0.85;
-          utterance.onend = () => setSpeakingText(null);
-          utterance.onerror = () => setSpeakingText(null);
-          window.speechSynthesis.speak(utterance);
-        } else {
-          setSpeakingText(null);
-        }
+        setSpeakingText(null);
+        audioPlayerRef.current = null;
       });
     } catch (e) {
       console.warn("Speech error:", e);
