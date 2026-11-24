@@ -5048,15 +5048,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               className="compact-billing-table-wrapper"
               style={{
                 overflowX: "auto",
-                overflowY: "auto",
-                maxHeight: "580px",
+                overflowY: "visible",
+                maxHeight: "none",
                 borderRadius: "8px",
                 border: "1px solid #cbd5e1",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                 backgroundColor: "#ffffff",
                 position: "relative",
-                WebkitOverflowScrolling: "touch",
-                overscrollBehaviorY: "auto"
+                WebkitOverflowScrolling: "touch"
               }}
             >
               <style dangerouslySetInnerHTML={{

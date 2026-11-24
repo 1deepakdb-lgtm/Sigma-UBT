@@ -1449,14 +1449,14 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     backgroundColor: "rgba(241, 245, 249, 0.92)",
     fontFamily: "Arial, sans-serif",
     position: "relative",
-    overflow: "visible",
+    overflowY: "visible",
+    overflowX: "hidden",
     WebkitOverflowScrolling: "touch",
     backgroundImage: logoWatermark ? `url(${logoWatermark})` : "none",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
     backgroundSize: "350px",
-    backgroundBlendMode: "overlay",
-    ...protectedStyle
+    backgroundBlendMode: "overlay"
   };
 
   const topNavStyle = {
@@ -1541,7 +1541,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     boxSizing: "border-box"
   });
 
-  const contentAreaStyle = { padding: "24px 20px 120px 20px", maxWidth: "1280px", margin: "0 auto", userSelect: "text", minHeight: "calc(100vh - 64px)", height: "auto" };
+  const contentAreaStyle = { padding: "24px 20px 120px 20px", maxWidth: "1280px", margin: "0 auto", userSelect: "text", minHeight: "calc(100vh - 64px)", height: "auto", overflowY: "visible" };
   const cardStyle = { backgroundColor: "white", padding: "25px", borderRadius: "8px", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", marginBottom: "20px", border: "1px solid #e2e8f0" };
   const tableStyle = { width: "100%", borderCollapse: "collapse", backgroundColor: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", borderRadius: "8px", overflow: "hidden" };
   const thStyle = { backgroundColor: "#f8fafc", padding: "14px 16px", textAlign: "left", color: "#475569", fontWeight: "700", fontSize: "13px", borderBottom: "2px solid #e2e8f0", position: "sticky", top: 0, zIndex: 3 };

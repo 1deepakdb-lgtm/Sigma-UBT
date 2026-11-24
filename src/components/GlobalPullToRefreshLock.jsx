@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 /**
  * Universal Global Pull-To-Refresh Blocker for ExamJK UBT
  * Completely disables pull-down-to-refresh across:
- * - All web routes & pages
+ * - All website routes and pages
  * - Android and iOS WebViews & Capacitor wrappers
  * - Mobile browsers (Chrome, Safari, Firefox, Edge, Samsung Internet)
  * - PWA & installed web applications
@@ -13,18 +13,20 @@ import { useEffect } from 'react';
  * - Desktop touchscreens & trackpads
  * 
  * PRESERVES:
- * - Normal vertical scrolling through pages, tables, and lists
- * - Horizontal scrolling, tabs, and carousels
- * - Multi-touch gestures (pinch-to-zoom)
- * - Smartboard pen / stylus drawing
- * - Input fields, modals, and buttons
- * - Explicit user manual refresh buttons (e.g. In-App Sync button)
+ * - 100% normal vertical scrolling throughout all sections (including Billing Section)
+ * - Free mouse wheel, touch, trackpad, and stylus scrolling from top to bottom
+ * - Smooth scroll bubbling without touchmove cancellation traps
+ * - Active exam accidental reload protection (F5, Ctrl+R, beforeunload)
+ * - Native WebView pull-to-refresh bridge locking
  */
 export default function GlobalPullToRefreshLock() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-    // 1. Strict CSS Overscroll Locking
+    // 1. Strict CSS Overscroll Locking on Root Viewport ONLY
+    // overscroll-behavior-y: none on html and body is the standard W3C specification
+    // that permanently disables pull-to-refresh across all modern browsers (Chrome, Safari 16+, Edge, Firefox)
+    // without blocking normal vertical or touch scrolling.
     const styleId = 'examjk-global-pull-refresh-lock-css';
     let styleTag = document.getElementById(styleId);
     if (!styleTag) {
@@ -41,14 +43,6 @@ export default function GlobalPullToRefreshLock() {
           -webkit-overscroll-behavior-y: none !important;
           overscroll-behavior: none !important;
         }
-        /* Lock pull refresh inside scrollable panels while allowing regular internal scrolling */
-        .no-pull-refresh,
-        .institute-content-area,
-        .student-dashboard-wrap,
-        .table-wrapper,
-        .compact-billing-table-wrapper {
-          overscroll-behavior-y: contain !important;
-        }
       `;
       document.head.appendChild(styleTag);
     }
@@ -62,78 +56,7 @@ export default function GlobalPullToRefreshLock() {
       document.body.style.setProperty('overscroll-behavior-y', 'none', 'important');
     } catch (e) {}
 
-    // 2. Touch Gesture Interceptor (Blocks downward drag at scrollTop <= 0)
-    var startY = 0;
-    var startX = 0;
-    var isTracking = false;
-    var cachedScrollContainer = null;
-
-    function findScrollParent(node) {
-      var cur = node;
-      while (cur && cur !== document.body && cur !== document.documentElement) {
-        try {
-          // If node is a canvas or drawing area on smartboard, don't lock touch
-          if (cur.tagName === 'CANVAS' || cur.classList?.contains('drawing-canvas')) {
-            return null;
-          }
-          var oy = window.getComputedStyle(cur).overflowY;
-          if ((oy === 'auto' || oy === 'scroll') && cur.scrollHeight > cur.clientHeight) {
-            return cur;
-          }
-        } catch (e) {}
-        cur = cur.parentElement;
-      }
-      return null;
-    }
-
-    function handleTouchStart(e) {
-      // Single-finger touch gesture only; leave multi-touch (pinch-zoom) unaffected
-      if (e.touches && e.touches.length === 1) {
-        // Skip stylus/pen on Smartboards
-        if (e.pointerType === 'pen') return;
-
-        startY = e.touches[0].clientY;
-        startX = e.touches[0].clientX;
-        isTracking = true;
-        cachedScrollContainer = findScrollParent(e.target);
-      } else {
-        isTracking = false;
-        cachedScrollContainer = null;
-      }
-    }
-
-    function handleTouchMove(e) {
-      if (!isTracking || !e.touches || e.touches.length !== 1) return;
-
-      var currentY = e.touches[0].clientY;
-      var currentX = e.touches[0].clientX;
-      var dy = currentY - startY;
-      var dx = currentX - startX;
-
-      // Downward drag (pull to refresh gesture)
-      if (dy > 8 && Math.abs(dy) > Math.abs(dx) * 1.2) {
-        var isAtTop = false;
-
-        if (cachedScrollContainer) {
-          isAtTop = cachedScrollContainer.scrollTop <= 0;
-        } else {
-          var winScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-          isAtTop = winScroll <= 0;
-        }
-
-        // If at top and dragging downward on document root, cancel browser pull-to-refresh
-        // Allow inner scrollable containers (tables, modal lists) to scroll freely
-        if (isAtTop && !cachedScrollContainer && e.cancelable) {
-          e.preventDefault();
-        }
-      }
-    }
-
-    function handleTouchEnd() {
-      isTracking = false;
-      cachedScrollContainer = null;
-    }
-
+    // 2. Prevent Rubber-Banding Overscroll Offset (< 0)
     function handleScrollClamp() {
       if (window.scrollY < 0) {
         window.scrollTo(0, 0);
@@ -197,33 +120,15 @@ export default function GlobalPullToRefreshLock() {
     lockNativeBridges();
     const bridgeInterval = setInterval(lockNativeBridges, 2000);
 
-    window.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
-    window.addEventListener('touchcancel', handleTouchEnd, { passive: true, capture: true });
     window.addEventListener('scroll', handleScrollClamp, { passive: true });
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    document.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
-    document.addEventListener('touchcancel', handleTouchEnd, { passive: true, capture: true });
-
     return () => {
       clearInterval(bridgeInterval);
-      window.removeEventListener('touchstart', handleTouchStart, { capture: true });
-      window.removeEventListener('touchmove', handleTouchMove, { capture: true });
-      window.removeEventListener('touchend', handleTouchEnd, { capture: true });
-      window.removeEventListener('touchcancel', handleTouchEnd, { capture: true });
       window.removeEventListener('scroll', handleScrollClamp);
       window.removeEventListener('keydown', handleKeyDown, { capture: true });
       window.removeEventListener('beforeunload', handleBeforeUnload);
-
-      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
-      document.removeEventListener('touchmove', handleTouchMove, { capture: true });
-      document.removeEventListener('touchend', handleTouchEnd, { capture: true });
-      document.removeEventListener('touchcancel', handleTouchEnd, { capture: true });
     };
   }, []);
 
