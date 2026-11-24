@@ -713,6 +713,50 @@ export default function LoginPage() {
 
   return (
     <div style={containerStyle}>
+      {/* Top Header Bar with Brand & About Us Button */}
+      <div style={{
+        width: "100%",
+        maxWidth: "420px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "6px 4px",
+        marginBottom: "10px",
+        boxSizing: "border-box"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <img
+            src="/examjk-logo.png"
+            alt="ExamJK Logo"
+            style={{ width: "24px", height: "24px", objectFit: "contain" }}
+          />
+          <span style={{ fontSize: "16px", fontWeight: "900", color: "#003b73", letterSpacing: "-0.3px" }}>ExamJK</span>
+          <span style={{ fontSize: "10px", backgroundColor: "#e0e7ff", color: "#3730a3", padding: "2px 7px", borderRadius: "10px", fontWeight: "700" }}>Platform</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => router.push("/about")}
+          style={{
+            backgroundColor: "#ffffff",
+            color: "#1e3a8a",
+            border: "1.5px solid #bfdbfe",
+            borderRadius: "8px",
+            padding: "5px 12px",
+            fontSize: "12px",
+            fontWeight: "800",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            boxShadow: "0 2px 6px rgba(30, 58, 138, 0.08)",
+            transition: "all 0.15s ease"
+          }}
+        >
+          <span>ℹ️</span>
+          <span>About Us</span>
+        </button>
+      </div>
+
       <div style={cardStyle}>
         {/* ExamJK Logo */}
         <img
@@ -1589,6 +1633,44 @@ export default function LoginPage() {
 
         {/* Windows, macOS, Android, and iOS App Downloads */}
         <DesktopAppDownloads />
+
+        {/* Footer Links: About Us & Support */}
+        <div style={{
+          marginTop: "16px",
+          paddingTop: "12px",
+          borderTop: "1px solid #f1f5f9",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "12px",
+          fontSize: "12.5px"
+        }}>
+          <button
+            type="button"
+            onClick={() => router.push("/about")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#2563eb",
+              fontWeight: "800",
+              cursor: "pointer",
+              padding: "4px 8px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px"
+            }}
+          >
+            <span>ℹ️</span>
+            <span>About Us – ExamJK</span>
+          </button>
+          <span style={{ color: "#cbd5e1" }}>•</span>
+          <a
+            href="tel:+9779868736491"
+            style={{ color: "#64748b", textDecoration: "none", fontWeight: "600" }}
+          >
+            📞 Contact Us
+          </a>
+        </div>
       </div>
 
       {/* Google Email Sign-In Modal */}

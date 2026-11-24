@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 
 // =============================================================================
 // 1. SINGLE CONSONANTS (14 기본 단자음)
@@ -803,12 +803,12 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
         }}>
           {[
             { id: "all", label: "सबै (All)", icon: "📚" },
-            { id: "single_c", label: "१. एकल व्यञ्जन (14 Single Consonants)", icon: "ㄱ" },
-            { id: "dual_c", label: "२. दोहोरो व्यञ्जन (5 Dual Consonants)", icon: "ㄲ" },
-            { id: "single_v", label: "३. एकल स्वर (10 Single Vowels)", icon: "ㅏ" },
-            { id: "dual_v", label: "४. दोहोरो स्वर (11 Compound Vowels)", icon: "ㅐ" },
-            { id: "matrix", label: "५. संयोजन तालिका (Sound Matrix Table)", icon: "🔠" },
-            { id: "builder", label: "६. अक्षर संयोजन अभ्यास (Syllable Builder)", icon: "🧩" }
+            { id: "builder", label: "१. अक्षर संयोजन अभ्यास (Syllable Builder)", icon: "🧩" },
+            { id: "single_c", label: "२. एकल व्यञ्जन (14 Single Consonants)", icon: "ㄱ" },
+            { id: "dual_c", label: "३. दोहोरो व्यञ्जन (5 Dual Consonants)", icon: "ㄲ" },
+            { id: "single_v", label: "४. एकल स्वर (10 Single Vowels)", icon: "ㅏ" },
+            { id: "dual_v", label: "५. दोहोरो स्वर (11 Compound Vowels)", icon: "ㅐ" },
+            { id: "matrix", label: "६. संयोजन तालिका (Sound Matrix Table)", icon: "🔠" }
           ].map(tab => (
             <button
               key={tab.id}
@@ -836,6 +836,169 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
           ))}
         </div>
       </div>
+
+      {/* ── 0. FIRST: INTERACTIVE SYLLABLE BUILDER (अक्षर निर्माण अभ्यास) ──── */}
+      {(activeSubTab === "all" || activeSubTab === "builder") && (
+        <div style={{
+          backgroundColor: "#ffffff",
+          border: "2.5px solid #2563eb",
+          borderRadius: "14px",
+          padding: "22px 24px",
+          boxShadow: "0 6px 22px rgba(37,99,235,0.12)",
+          marginBottom: "28px"
+        }}>
+          <div style={{ marginBottom: "16px", borderBottom: "1.5px solid #e2e8f0", paddingBottom: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+              <h4 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#1e3a8a", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>🧩</span>
+                <span>अक्षर निर्माण अभ्यास (Interactive Korean Syllable Builder)</span>
+              </h4>
+              <span style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", padding: "3px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "800", border: "1px solid #bfdbfe" }}>
+                पहिलो अभ्यास (Interactive Practice)
+              </span>
+            </div>
+            <p style={{ margin: "6px 0 0 0", fontSize: "13.5px", color: "#475569" }}>
+              कुनै पनि व्यञ्जन (Consonant) र स्वर (Vowel) छानेर नयाँ अक्षर बनाउनुहोस् र त्यसको बनावट, नेपाली तथा अंग्रेजी उच्चारण हेर्नुहोस् र तुरुन्तै आवाज सुन्नुहोस्।
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "20px" }}>
+            {/* 1. Pick Consonant */}
+            <div>
+              <div style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "8px", textTransform: "uppercase" }}>
+                1. व्यञ्जन छान्नुहोस् (Choose Consonant):
+              </div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {[...SINGLE_CONSONANTS, ...DUAL_CONSONANTS].map(c => (
+                  <button
+                    key={c.char}
+                    type="button"
+                    onClick={() => setSelectedBuilderC(c.char)}
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "8px",
+                      border: selectedBuilderC === c.char ? "2.5px solid #2563eb" : "1.5px solid #cbd5e1",
+                      backgroundColor: selectedBuilderC === c.char ? "#eff6ff" : "#ffffff",
+                      color: selectedBuilderC === c.char ? "#1e40af" : "#0f172a",
+                      fontSize: "18px",
+                      fontWeight: "900",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: selectedBuilderC === c.char ? "0 2px 6px rgba(37,99,235,0.2)" : "none"
+                    }}
+                  >
+                    {c.char}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Pick Vowel */}
+            <div>
+              <div style={{ fontSize: "13px", fontWeight: "bold", color: "#166534", marginBottom: "8px", textTransform: "uppercase" }}>
+                2. स्वर छान्नुहोस् (Choose Vowel):
+              </div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {[...SINGLE_VOWELS, ...DUAL_VOWELS].map(v => (
+                  <button
+                    key={v.char}
+                    type="button"
+                    onClick={() => setSelectedBuilderV(v.char)}
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "8px",
+                      border: selectedBuilderV === v.char ? "2.5px solid #16a34a" : "1.5px solid #cbd5e1",
+                      backgroundColor: selectedBuilderV === v.char ? "#f0fdf4" : "#ffffff",
+                      color: selectedBuilderV === v.char ? "#15803d" : "#0f172a",
+                      fontSize: "18px",
+                      fontWeight: "900",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: selectedBuilderV === v.char ? "0 2px 6px rgba(22,163,74,0.2)" : "none"
+                    }}
+                  >
+                    {v.char}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Combined Result Card */}
+          <div style={{
+            backgroundColor: "#f8fafc",
+            border: "2px dashed #93c5fd",
+            borderRadius: "12px",
+            padding: "18px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "16px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+              <div style={{
+                fontSize: "56px",
+                fontWeight: "900",
+                color: "#1e3a8a",
+                backgroundColor: "#ffffff",
+                border: "2.5px solid #2563eb",
+                borderRadius: "14px",
+                width: "90px",
+                height: "90px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 14px rgba(37,99,235,0.15)"
+              }}>
+                {composedBuilderSyllable}
+              </div>
+
+              <div>
+                <div style={{ fontSize: "14px", color: "#64748b", fontWeight: "bold", marginBottom: "4px" }}>
+                  संयोजन सूत्र: <span style={{ color: "#2563eb", fontSize: "16px" }}>{selectedBuilderC}</span> (व्यञ्जन) + <span style={{ color: "#16a34a", fontSize: "16px" }}>{selectedBuilderV}</span> (स्वर) = <strong style={{ color: "#0f172a", fontSize: "18px" }}>{composedBuilderSyllable}</strong>
+                </div>
+                <div style={{ fontSize: "15px", fontWeight: "800", color: "#0f172a", marginBottom: "2px" }}>
+                  ध्वनि / उच्चारण: {SYLLABLE_PRON_MAP[composedBuilderSyllable]?.ne || `${composedBuilderSyllable} (कोरियन संयुक्त ध्वनि)`}
+                </div>
+                <div style={{ fontSize: "12.5px", color: "#64748b" }}>
+                  Roman: {SYLLABLE_PRON_MAP[composedBuilderSyllable]?.ro || "Korean Syllable"}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onPointerDown={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
+              onClick={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
+              style={{
+                backgroundColor: isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "#1d4ed8" : "#2563eb",
+                color: "#ffffff",
+                border: "none",
+                padding: "12px 24px",
+                borderRadius: "10px",
+                fontWeight: "900",
+                fontSize: "15px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
+                touchAction: "manipulation"
+              }}
+            >
+              <span>🔊</span>
+              <span>उच्चारण सुन्नुहोस् (Listen Pronounce)</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── 1. SINGLE CONSONANTS (14 기본 단자음) ─────────────────────────── */}
       {(activeSubTab === "all" || activeSubTab === "single_c") && (
@@ -1473,163 +1636,7 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
         </div>
       )}
 
-      {/* ── 6. INTERACTIVE SYLLABLE BUILDER (अक्षर निर्माण अभ्यास) ──────── */}
-      {(activeSubTab === "all" || activeSubTab === "builder") && (
-        <div style={{
-          backgroundColor: "#ffffff",
-          border: "2px solid #2563eb",
-          borderRadius: "14px",
-          padding: "22px 24px",
-          boxShadow: "0 6px 20px rgba(37,99,235,0.08)",
-          marginBottom: "16px"
-        }}>
-          <div style={{ marginBottom: "16px", borderBottom: "1.5px solid #e2e8f0", paddingBottom: "10px" }}>
-            <h4 style={{ margin: 0, fontSize: "18px", fontWeight: "900", color: "#1e3a8a", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>🧩</span>
-              <span>अक्षर निर्माण अभ्यास (Interactive Korean Syllable Builder)</span>
-            </h4>
-            <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "#64748b" }}>
-              कुनै पनि व्यञ्जन (Consonant) र स्वर (Vowel) छानेर नयाँ अक्षर बनाउनुहोस् र त्यसको बनावट, उच्चारण र ध्वनि सुन्नुहोस्।
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
-            {/* 1. Pick Consonant */}
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "8px", textTransform: "uppercase" }}>
-                1. व्यञ्जन छान्नुहोस् (Choose Consonant):
-              </div>
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                {[...SINGLE_CONSONANTS, ...DUAL_CONSONANTS].map(c => (
-                  <button
-                    key={c.char}
-                    type="button"
-                    onClick={() => setSelectedBuilderC(c.char)}
-                    style={{
-                      width: "42px",
-                      height: "42px",
-                      borderRadius: "8px",
-                      border: selectedBuilderC === c.char ? "2.5px solid #2563eb" : "1.5px solid #cbd5e1",
-                      backgroundColor: selectedBuilderC === c.char ? "#eff6ff" : "#ffffff",
-                      color: selectedBuilderC === c.char ? "#1e40af" : "#0f172a",
-                      fontSize: "18px",
-                      fontWeight: "900",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: selectedBuilderC === c.char ? "0 2px 6px rgba(37,99,235,0.2)" : "none"
-                    }}
-                  >
-                    {c.char}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. Pick Vowel */}
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: "bold", color: "#166534", marginBottom: "8px", textTransform: "uppercase" }}>
-                2. स्वर छान्नुहोस् (Choose Vowel):
-              </div>
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                {[...SINGLE_VOWELS, ...DUAL_VOWELS].map(v => (
-                  <button
-                    key={v.char}
-                    type="button"
-                    onClick={() => setSelectedBuilderV(v.char)}
-                    style={{
-                      width: "42px",
-                      height: "42px",
-                      borderRadius: "8px",
-                      border: selectedBuilderV === v.char ? "2.5px solid #16a34a" : "1.5px solid #cbd5e1",
-                      backgroundColor: selectedBuilderV === v.char ? "#f0fdf4" : "#ffffff",
-                      color: selectedBuilderV === v.char ? "#15803d" : "#0f172a",
-                      fontSize: "18px",
-                      fontWeight: "900",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: selectedBuilderV === v.char ? "0 2px 6px rgba(22,163,74,0.2)" : "none"
-                    }}
-                  >
-                    {v.char}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* 3. Combined Result Card */}
-          <div style={{
-            backgroundColor: "#f8fafc",
-            border: "2px dashed #93c5fd",
-            borderRadius: "12px",
-            padding: "18px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "16px"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              <div style={{
-                fontSize: "56px",
-                fontWeight: "900",
-                color: "#1e3a8a",
-                backgroundColor: "#ffffff",
-                border: "2.5px solid #2563eb",
-                borderRadius: "14px",
-                width: "90px",
-                height: "90px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 4px 14px rgba(37,99,235,0.15)"
-              }}>
-                {composedBuilderSyllable}
-              </div>
-
-              <div>
-                <div style={{ fontSize: "14px", color: "#64748b", fontWeight: "bold", marginBottom: "4px" }}>
-                  संयोजन सूत्र: <span style={{ color: "#2563eb", fontSize: "16px" }}>{selectedBuilderC}</span> (व्यञ्जन) + <span style={{ color: "#16a34a", fontSize: "16px" }}>{selectedBuilderV}</span> (स्वर) = <strong style={{ color: "#0f172a", fontSize: "18px" }}>{composedBuilderSyllable}</strong>
-                </div>
-                <div style={{ fontSize: "15px", fontWeight: "800", color: "#0f172a", marginBottom: "2px" }}>
-                  ध्वनि / उच्चारण: {SYLLABLE_PRON_MAP[composedBuilderSyllable]?.ne || `${composedBuilderSyllable} (कोरियन संयुक्त ध्वनि)`}
-                </div>
-                <div style={{ fontSize: "12.5px", color: "#64748b" }}>
-                  Roman: {SYLLABLE_PRON_MAP[composedBuilderSyllable]?.ro || "Korean Syllable"}
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onPointerDown={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
-              onClick={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
-              style={{
-                backgroundColor: isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "#1d4ed8" : "#2563eb",
-                color: "#ffffff",
-                border: "none",
-                padding: "12px 24px",
-                borderRadius: "10px",
-                fontWeight: "900",
-                fontSize: "15px",
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
-                touchAction: "manipulation"
-              }}
-            >
-              <span>🔊</span>
-              <span>उच्चारण सुन्नुहोस् (Listen Pronounce)</span>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ── END OF GUIDE ── */}
     </div>
   );
 }
