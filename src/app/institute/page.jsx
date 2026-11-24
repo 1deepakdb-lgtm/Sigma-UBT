@@ -1491,7 +1491,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
   };
 
   const navLeftSlotStyle = {
-    flex: "1 1 0",
+    flex: "0 0 auto",
     minWidth: 0,
     display: "flex",
     alignItems: "center",
@@ -1499,21 +1499,24 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
     flexShrink: 0,
     whiteSpace: "nowrap",
     fontSize: "17px",
-    fontWeight: "800"
+    fontWeight: "800",
+    marginRight: "16px"
   };
 
   const menuContainerStyle = {
-    flex: "0 0 auto",
+    flex: "1 1 auto",
+    display: "flex",
     gap: "8px",
     flexWrap: "nowrap",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     flexShrink: 0,
     whiteSpace: "nowrap"
   };
 
   const navRightSlotStyle = {
-    flex: "1 1 0",
+    flex: "0 0 auto",
+    marginLeft: "auto",
     minWidth: 0,
     display: "flex",
     alignItems: "center",
@@ -1722,10 +1725,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               Billing
             </button>
 
-            <button onClick={() => handleTabChange("grammar")} style={getNavBtnStyle("grammar")}>
-              Grammar Book
-            </button>
-
             <button onClick={() => handleTabChange("listening")} style={getNavBtnStyle("listening")}>
               Study Materials
             </button>
@@ -1846,14 +1845,6 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             >
               <span>💳</span>
               <span>Billing & Management</span>
-            </button>
-
-            <button
-              onClick={() => { handleTabChange("grammar"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "grammar" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "grammar" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <span>📚</span>
-              <span>Korean Grammar Book</span>
             </button>
 
             <button
@@ -3507,13 +3498,9 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           )
         )}
 
-        {(activeTab === "grammar" || activeTab === "listening") && (
+        {activeTab === "listening" && (
           <div style={{ marginTop: "10px", marginBottom: "30px" }}>
-            <EpsBookReader
-              mode="institute"
-              instituteLanguage={instituteLanguage}
-              initialFolder={activeTab === "grammar" ? "Grammar Book" : null}
-            />
+            <EpsBookReader mode="institute" instituteLanguage={instituteLanguage} />
           </div>
         )}
 

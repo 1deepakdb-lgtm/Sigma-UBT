@@ -79,7 +79,6 @@ export default function Navbar({
 
   const instituteTabs = [
     { id: 'billing', label: 'Billing' },
-    { id: 'grammar', label: 'Grammar Book' },
     { id: 'listening', label: 'Study Materials' },
     { id: 'dictionary', label: 'Dictionary' },
     { id: 'news', label: 'Notice' },
@@ -96,7 +95,6 @@ export default function Navbar({
     ...((isBoth || isPureJapanese) ? [{ id: 'mock', label: 'Mock Test' }] : []),
     { id: 'buyExam', label: 'Packages' },
     { id: 'vocab', label: 'Dictionary' },
-    { id: 'grammar', label: 'Grammar Book' },
     { id: 'listening', label: 'Study Materials' },
     { id: 'news', label: 'Notice' },
     { id: 'notify', label: 'Messages' },
@@ -286,25 +284,24 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Right Section: Desktop Navigation & Mobile 3-line Menu Button */}
+      {/* Middle/Left Section: Desktop Navigation & Mobile 3-line Menu Button */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end',
+          justifyContent: 'flex-start',
           gap: role === 'admin' ? '10px' : '14px',
-          marginLeft: 'auto',
           flex: 1,
           minWidth: 0,
           flexShrink: 0
         }}
       >
-        {/* DESKTOP NAVIGATION (Visible on screen width > 768px) */}
+        {/* DESKTOP NAVIGATION (Visible on screen width > 768px, aligned to the LEFT) */}
         <nav
           className="desktop-nav-menu"
           style={{
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'flex-start',
             gap: role === 'admin' ? '4px' : '6px',
             flexShrink: 0,
             whiteSpace: 'nowrap',
@@ -382,6 +379,7 @@ export default function Navbar({
         <div
           className="desktop-divider"
           style={{
+            marginLeft: 'auto',
             width: '1px',
             height: '24px',
             backgroundColor: 'rgba(255, 255, 255, 0.22)',
@@ -430,6 +428,7 @@ export default function Navbar({
           aria-label="Navigation Menu"
           title="Toggle Navigation Menu"
           style={{
+            marginLeft: 'auto',
             display: 'none',
             alignItems: 'center',
             justifyContent: 'center',

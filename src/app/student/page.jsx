@@ -2027,7 +2027,7 @@ const StudentDashboard = () => {
 
       {/* Top Navbar */}
       <div style={topNavStyle} className="unified-app-top-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, minWidth: "150px", maxWidth: "220px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, minWidth: "150px", maxWidth: "220px", marginRight: "16px" }}>
           {logoWatermark && (
             <img src={logoWatermark} alt="Institute Logo" style={{ height: "28px", borderRadius: "4px", backgroundColor: "#ffffff", padding: "2px", flexShrink: 0 }} />
           )}
@@ -2041,13 +2041,16 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Desktop Tabs (Visible on screens > 768px) */}
+        {/* Desktop Tabs (Visible on screens > 768px, aligned to the LEFT) */}
         <div
           className="student-desktop-tabs"
           style={{
+            display: "flex",
             gap: "4px",
             flexWrap: "nowrap",
             alignItems: "center",
+            justifyContent: "flex-start",
+            flex: 1,
             flexShrink: 0,
             overflowX: "auto",
             scrollbarWidth: "none",
@@ -2087,7 +2090,6 @@ const StudentDashboard = () => {
             Packages
           </button>
           <button onClick={() => setActiveTab("vocab")} style={getNavBtnStyle("vocab")}>Dictionary</button>
-          <button onClick={() => { setActiveTab("grammar"); setActiveBookFolder("Grammar Book"); }} style={getNavBtnStyle("grammar")}>Grammar Book</button>
           <button onClick={() => setActiveTab("listening")} style={getNavBtnStyle("listening")}>Study Materials</button>
           <button onClick={() => setActiveTab("news")} style={getNavBtnStyle("news")}>Notice</button>
           <button onClick={() => setActiveTab("notify")} style={getNavBtnStyle("notify")}>Messages</button>
@@ -2099,6 +2101,7 @@ const StudentDashboard = () => {
           className="student-desktop-logout"
           onClick={handleLogout}
           style={{
+            marginLeft: "auto",
             backgroundColor: "#dc2626",
             color: "#ffffff",
             border: "none",
@@ -2235,14 +2238,6 @@ const StudentDashboard = () => {
             >
               <span>📖</span>
               <span>Dictionary</span>
-            </button>
-
-            <button
-              onClick={() => { setActiveTab("grammar"); setActiveBookFolder("Grammar Book"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "grammar" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "grammar" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <span>📚</span>
-              <span>Grammar Book</span>
             </button>
 
             <button
@@ -3684,15 +3679,15 @@ const StudentDashboard = () => {
           <DictionarySection instituteLanguage={instituteLanguage} userRole="student" />
         )}
 
-        {/* STUDY MATERIALS, GRAMMAR BOOK & JAPANESE MOCK TEST TAB */}
-        {(activeTab === "listening" || activeTab === "japaneseMock" || activeTab === "grammar") && (
+        {/* STUDY MATERIALS & JAPANESE MOCK TEST TAB */}
+        {(activeTab === "listening" || activeTab === "japaneseMock") && (
           <div style={{ marginTop: "10px", marginBottom: "30px" }}>
             <EpsBookReader
               mode="student"
               studentPackage={studentPackage}
               purchasedPackages={purchasedPackages}
               instituteLanguage={instituteLanguage}
-              initialFolder={activeTab === "grammar" ? "Grammar Book" : (activeTab === "japaneseMock" ? "Mock Test" : (activeBookFolder || undefined))}
+              initialFolder={activeTab === "japaneseMock" ? "Mock Test" : (activeBookFolder || undefined)}
               onNavigateTab={(tab) => setActiveTab(tab)}
               onOpenEsewaModal={handleOpenEsewaModal}
               unlockedSets={unlockedSets}
