@@ -727,13 +727,22 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
       try { window.speechSynthesis.cancel(); } catch (e) {}
     }
 
-    // 1. PRIMARY: High-Fidelity Microsoft Neural Korean Voice (SunHi Studio Broadcast Voice)
-    const ttsUrl = `/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&voice=ko-KR-SunHiNeural&rate=+0%`;
+    // 1. PRIMARY: High-Fidelity Pre-Rendered Native Human Korean Audio (SunHi Neural Studio Voice)
+    let staticAudioUrl = null;
+    if (spokenKorean.length === 1) {
+      const code = spokenKorean.charCodeAt(0);
+      if (code >= 0xAC00 && code <= 0xD7A3) {
+        const hex = code.toString(16).toLowerCase();
+        staticAudioUrl = `/audio/hangeul/syl_${hex}.mp3`;
+      }
+    }
 
-    let audio = audioCacheRef.current.get(ttsUrl);
+    const audioUrl = staticAudioUrl || `/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&voice=ko-KR-SunHiNeural&rate=+0%`;
+
+    let audio = audioCacheRef.current.get(audioUrl);
     if (!audio) {
-      audio = new Audio(ttsUrl);
-      audioCacheRef.current.set(ttsUrl, audio);
+      audio = new Audio(audioUrl);
+      audioCacheRef.current.set(audioUrl, audio);
     } else {
       audio.currentTime = 0;
     }
@@ -747,18 +756,27 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
     audio.onended = clearActive;
     audio.onerror = () => {
-      // Offline fallback: Use SpeechSynthesisUtterance if network fails
-      if ("speechSynthesis" in window) {
-        try {
-          const utterance = new SpeechSynthesisUtterance(spokenKorean);
-          utterance.lang = "ko-KR";
-          utterance.rate = 0.9;
-          if (cachedKoVoiceRef.current) utterance.voice = cachedKoVoiceRef.current;
-          utterance.onend = clearActive;
-          utterance.onerror = clearActive;
-          window.speechSynthesis.speak(utterance);
-          return;
-        } catch (e) {}
+      // If static file fails, try dynamic /api/tts, then fallback to SpeechSynthesis
+      if (staticAudioUrl) {
+        const fallbackAudio = new Audio(`/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&voice=ko-KR-SunHiNeural&rate=+0%`);
+        fallbackAudio.onended = clearActive;
+        fallbackAudio.onerror = () => {
+          if ("speechSynthesis" in window) {
+            try {
+              const utterance = new SpeechSynthesisUtterance(spokenKorean);
+              utterance.lang = "ko-KR";
+              utterance.rate = 0.9;
+              if (cachedKoVoiceRef.current) utterance.voice = cachedKoVoiceRef.current;
+              utterance.onend = clearActive;
+              utterance.onerror = clearActive;
+              window.speechSynthesis.speak(utterance);
+              return;
+            } catch (e) {}
+          }
+          clearActive();
+        };
+        fallbackAudio.play().catch(() => clearActive());
+        return;
       }
       clearActive();
     };

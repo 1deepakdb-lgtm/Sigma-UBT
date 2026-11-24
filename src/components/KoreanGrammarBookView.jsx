@@ -58,9 +58,18 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
 
     // 1. PRIMARY: High-Fidelity Studio Neural Voice (Crystal Clear Korean Native Teacher)
     try {
+      let staticAudioUrl = null;
+      if (spokenKorean.length === 1) {
+        const code = spokenKorean.charCodeAt(0);
+        if (code >= 0xAC00 && code <= 0xD7A3) {
+          const hex = code.toString(16).toLowerCase();
+          staticAudioUrl = `/audio/hangeul/syl_${hex}.mp3`;
+        }
+      }
+
       const voice = gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural';
       const model = gender === 'male' ? 'male-1' : 'female-1';
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&gender=${gender}&voice=${voice}&pitch=+0Hz&rate=-2%&model=${model}`;
+      const ttsUrl = staticAudioUrl || `/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&gender=${gender}&voice=${voice}&pitch=+0Hz&rate=-2%&model=${model}`;
       const audio = new Audio(ttsUrl);
       audioPlayerRef.current = audio;
 
