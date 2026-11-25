@@ -821,6 +821,30 @@ const StudentDashboard = () => {
   };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState("light");
+
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem("app_theme") || "light";
+      setTheme(savedTheme);
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-theme", savedTheme);
+      }
+    } catch (e) {}
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem("app_theme", nextTheme);
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-theme", nextTheme);
+      }
+    } catch (e) {}
+  };
+
+  const isDarkMode = theme === "dark";
 
   const handleEsewaSuccessUnlock = (res) => {
     try {
@@ -1948,19 +1972,22 @@ const StudentDashboard = () => {
 
   const containerStyle = {
     minHeight: "100vh",
-    backgroundColor: "rgba(241, 245, 249, 0.94)",
+    backgroundColor: isDarkMode ? "#090d16" : "rgba(241, 245, 249, 0.94)",
+    color: isDarkMode ? "#f8fafc" : "#1e293b",
     fontFamily: "Arial, sans-serif",
     position: "relative",
     backgroundImage: logoWatermark ? `url(${logoWatermark})` : "none",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
     backgroundSize: "320px",
-    backgroundBlendMode: "overlay"
+    backgroundBlendMode: isDarkMode ? "luminosity" : "overlay"
   };
 
   const topNavStyle = {
-    backgroundColor: "#003b73",
-    backgroundImage: "linear-gradient(135deg, #003b73 0%, #004b93 50%, #1e3a8a 100%)",
+    backgroundColor: isDarkMode ? "#0a1120" : "#003b73",
+    backgroundImage: isDarkMode
+      ? "linear-gradient(135deg, #0a1120 0%, #111d35 50%, #1a2a4c 100%)"
+      : "linear-gradient(135deg, #003b73 0%, #004b93 50%, #1e3a8a 100%)",
     color: "#ffffff",
     padding: "8px 16px",
     paddingTop: "var(--app-header-top-clearance, calc(env(safe-area-inset-top, 0px) + 14px))",
@@ -1969,7 +1996,7 @@ const StudentDashboard = () => {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+    boxShadow: isDarkMode ? "0 4px 12px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.12)",
     flexWrap: "nowrap",
     gap: "10px",
     position: "sticky",
@@ -2003,12 +2030,13 @@ const StudentDashboard = () => {
     boxSizing: "border-box"
   };
   const cardStyle = {
-    backgroundColor: "#ffffff",
+    backgroundColor: isDarkMode ? "#131d31" : "#ffffff",
     padding: "24px",
     borderRadius: "10px",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+    boxShadow: isDarkMode ? "0 4px 16px rgba(0,0,0,0.3)" : "0 2px 6px rgba(0,0,0,0.05)",
     marginBottom: "20px",
-    border: "1px solid #e2e8f0"
+    border: isDarkMode ? "1px solid #1e293b" : "1px solid #e2e8f0",
+    color: isDarkMode ? "#f8fafc" : "#1e293b"
   };
 
   return (
@@ -2141,12 +2169,42 @@ const StudentDashboard = () => {
           <button onClick={() => setActiveTab("about")} style={getNavBtnStyle("about")}>About Us</button>
         </div>
 
+        {/* Dark / Light Theme Toggle Button in Menu Bar */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          title={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          aria-label={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "5px",
+            height: "36px",
+            padding: "0 10px",
+            borderRadius: "8px",
+            backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.18)" : "rgba(255, 255, 255, 0.22)",
+            border: "1px solid rgba(255, 255, 255, 0.35)",
+            color: "#ffffff",
+            cursor: "pointer",
+            fontSize: "12.5px",
+            fontWeight: "700",
+            flexShrink: 0,
+            transition: "all 0.2s ease"
+          }}
+        >
+          <span style={{ fontSize: "15px" }}>{isDarkMode ? "🌙" : "☀️"}</span>
+          <span className="student-theme-btn-text" style={{ fontSize: "12px", letterSpacing: "0.2px" }}>
+            {isDarkMode ? "Dark" : "Light"}
+          </span>
+        </button>
+
         {/* Desktop Logout Button */}
         <button
           className="student-desktop-logout"
           onClick={handleLogout}
           style={{
-            marginLeft: "10px",
+            marginLeft: "6px",
             backgroundColor: "#dc2626",
             color: "#ffffff",
             border: "none",
@@ -2215,7 +2273,7 @@ const StudentDashboard = () => {
               top: "56px",
               left: 0,
               right: 0,
-              backgroundColor: "#0f172a",
+              backgroundColor: isDarkMode ? "#090d16" : "#0f172a",
               borderBottom: "3px solid #2563eb",
               boxShadow: "0 12px 35px rgba(0, 0, 0, 0.5)",
               zIndex: 99999,
@@ -2230,6 +2288,46 @@ const StudentDashboard = () => {
             <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", letterSpacing: "0.5px", textTransform: "uppercase", paddingBottom: "6px", borderBottom: "1px solid rgba(255,255,255,0.09)" }}>
               Student Menu
             </div>
+
+            {/* Dark & Light Theme Switcher Item in Menu */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              style={{
+                padding: "12px 10px",
+                borderRadius: "0",
+                backgroundColor: "transparent",
+                color: isDarkMode ? "#fbbf24" : "#93c5fd",
+                fontWeight: 700,
+                fontSize: "14.5px",
+                border: "none",
+                borderBottom: "1px solid rgba(255,255,255,0.09)",
+                textAlign: "left",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "16px" }}>{isDarkMode ? "🌙" : "☀️"}</span>
+                <span>{isDarkMode ? "Dark Theme" : "Light Theme"}</span>
+              </div>
+              <span
+                style={{
+                  fontSize: "11px",
+                  padding: "3px 9px",
+                  borderRadius: "12px",
+                  backgroundColor: isDarkMode ? "#334155" : "#2563eb",
+                  color: "#ffffff",
+                  fontWeight: "800",
+                  letterSpacing: "0.5px"
+                }}
+              >
+                {isDarkMode ? "DARK" : "LIGHT"}
+              </span>
+            </button>
 
             <button
               onClick={() => { setActiveTab("home"); setMobileMenuOpen(false); }}
@@ -2338,6 +2436,11 @@ const StudentDashboard = () => {
 
       {/* Global Responsive Styles for Student Portal */}
       <style jsx>{`
+        @media (max-width: 640px) {
+          :global(.student-theme-btn-text) {
+            display: none !important;
+          }
+        }
         @media (max-width: 1024px) {
           :global(.student-desktop-tabs) {
             display: none !important;
@@ -2363,6 +2466,43 @@ const StudentDashboard = () => {
         }
         :global(.student-bottom-nav button:active) {
           transform: scale(0.92);
+        }
+
+        /* ── Dark Theme Adaptation ── */
+        :global([data-theme="dark"]) {
+          color-scheme: dark;
+        }
+        :global([data-theme="dark"] body) {
+          background-color: #090d16 !important;
+          color: #f8fafc !important;
+        }
+        :global([data-theme="dark"] h1),
+        :global([data-theme="dark"] h2),
+        :global([data-theme="dark"] h3),
+        :global([data-theme="dark"] h4) {
+          color: #f8fafc !important;
+        }
+        :global([data-theme="dark"] .student-bottom-nav) {
+          background-color: #0a1120 !important;
+          border-top: 1px solid #1e293b !important;
+        }
+        :global([data-theme="dark"] .student-bottom-nav button span) {
+          color: #94a3b8 !important;
+        }
+        :global([data-theme="dark"] .student-bottom-nav button svg) {
+          stroke: #94a3b8 !important;
+        }
+        :global([data-theme="dark"] .student-bottom-nav button:hover span),
+        :global([data-theme="dark"] .student-bottom-nav button:hover svg) {
+          color: #60a5fa !important;
+          stroke: #60a5fa !important;
+        }
+        :global([data-theme="dark"] input:not([type="checkbox"]):not([type="radio"])),
+        :global([data-theme="dark"] select),
+        :global([data-theme="dark"] textarea) {
+          background-color: #131d31 !important;
+          border-color: #24344d !important;
+          color: #f8fafc !important;
         }
       `}</style>
 

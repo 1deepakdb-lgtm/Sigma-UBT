@@ -34,6 +34,30 @@ const InstituteDashboard = () => {
 
   const [activeTab, setActiveTab] = useState("billing");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState("light");
+
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem("app_theme") || "light";
+      setTheme(savedTheme);
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-theme", savedTheme);
+      }
+    } catch (e) {}
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem("app_theme", nextTheme);
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-theme", nextTheme);
+      }
+    } catch (e) {}
+  };
+
+  const isDarkMode = theme === "dark";
   const [showLandscapeBars, setShowLandscapeBars] = useState(false);
   const [students, setStudents] = useState([]);
   const [instituteLanguage, setInstituteLanguage] = useState("both");
@@ -1752,6 +1776,37 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
           </div>
 
           <div style={navRightSlotStyle} className="institute-desktop-logout">
+            {/* Dark / Light Theme Toggle Button in Header */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
+              aria-label={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5px",
+                height: "36px",
+                padding: "0 10px",
+                borderRadius: "8px",
+                backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.18)" : "rgba(255, 255, 255, 0.22)",
+                border: "1px solid rgba(255, 255, 255, 0.35)",
+                color: "#ffffff",
+                cursor: "pointer",
+                fontSize: "12.5px",
+                fontWeight: "700",
+                flexShrink: 0,
+                marginRight: "6px",
+                transition: "all 0.2s ease"
+              }}
+            >
+              <span style={{ fontSize: "15px" }}>{isDarkMode ? "🌙" : "☀️"}</span>
+              <span className="institute-theme-btn-text" style={{ fontSize: "12px", letterSpacing: "0.2px" }}>
+                {isDarkMode ? "Dark" : "Light"}
+              </span>
+            </button>
+
             <button
               onClick={handleLogout}
               style={{
@@ -1845,6 +1900,46 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", letterSpacing: "0.5px", textTransform: "uppercase", paddingBottom: "6px", borderBottom: "1px solid rgba(255,255,255,0.09)" }}>
               Institute Menu ({instituteName || "Panel"})
             </div>
+
+            {/* Dark & Light Theme Switcher Item in Menu */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              style={{
+                padding: "12px 10px",
+                borderRadius: "0",
+                backgroundColor: "transparent",
+                color: isDarkMode ? "#fbbf24" : "#93c5fd",
+                fontWeight: 700,
+                fontSize: "14.5px",
+                border: "none",
+                borderBottom: "1px solid rgba(255,255,255,0.09)",
+                textAlign: "left",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "16px" }}>{isDarkMode ? "🌙" : "☀️"}</span>
+                <span>{isDarkMode ? "Dark Theme" : "Light Theme"}</span>
+              </div>
+              <span
+                style={{
+                  fontSize: "11px",
+                  padding: "3px 9px",
+                  borderRadius: "12px",
+                  backgroundColor: isDarkMode ? "#334155" : "#2563eb",
+                  color: "#ffffff",
+                  fontWeight: "800",
+                  letterSpacing: "0.5px"
+                }}
+              >
+                {isDarkMode ? "DARK" : "LIGHT"}
+              </span>
+            </button>
 
             <button
               onClick={() => { handleTabChange("billing"); setMobileMenuOpen(false); }}
