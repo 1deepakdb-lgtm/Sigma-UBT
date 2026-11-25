@@ -270,9 +270,9 @@ IconFile=https://raw.githubusercontent.com/favicon.ico
   const currentModalApp = apps.find((a) => a.id === activeModal) || apps[0];
 
   return (
-    <div style={{ marginTop: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+    <div style={{ marginTop: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '8px' }}>
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '6px' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
           <span style={{ fontSize: '13px' }}>📲</span>
           <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', letterSpacing: '0.2px' }}>

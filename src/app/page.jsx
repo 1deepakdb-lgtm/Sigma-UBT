@@ -660,22 +660,20 @@ export default function LoginPage() {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    minHeight: "100vh",
+    minHeight: "100dvh",
     backgroundColor: "#f1f5f9",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    padding: "12px",
-    paddingTop: "calc(var(--app-header-top-clearance, env(safe-area-inset-top, 0px)) + 14px)",
-    paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)",
+    padding: "10px 12px",
     boxSizing: "border-box"
   };
 
   const cardStyle = {
     backgroundColor: "white",
-    padding: "20px 22px",
+    padding: "14px 18px",
     borderRadius: "14px",
     boxShadow: "0 10px 28px -5px rgba(0,0,0,0.08)",
     width: "100%",
-    maxWidth: "400px",
+    maxWidth: "390px",
     textAlign: "center",
     border: "1px solid #e2e8f0",
     boxSizing: "border-box"
@@ -683,11 +681,11 @@ export default function LoginPage() {
 
   const inputStyle = {
     width: "100%",
-    padding: "9px 12px",
-    marginBottom: "9px",
+    padding: "7px 10px",
+    marginBottom: "7px",
     borderRadius: "8px",
     border: "1px solid #cbd5e1",
-    fontSize: "13.5px",
+    fontSize: "13px",
     boxSizing: "border-box",
     backgroundColor: "#f8fafc",
     outline: "none",
@@ -696,15 +694,15 @@ export default function LoginPage() {
 
   const buttonStyle = {
     width: "100%",
-    padding: "10px",
+    padding: "8px",
     backgroundColor: "#1e3a8a",
     color: "white",
     border: "none",
     borderRadius: "8px",
     fontWeight: "800",
-    fontSize: "14px",
+    fontSize: "13.5px",
     cursor: loading ? "not-allowed" : "pointer",
-    marginTop: "6px",
+    marginTop: "4px",
     letterSpacing: "0.3px",
     boxShadow: "0 4px 12px rgba(30, 58, 138, 0.2)",
     opacity: loading ? 0.8 : 1,
@@ -719,9 +717,9 @@ export default function LoginPage() {
           src="/examjk-logo.png"
           alt="ExamJK Logo"
           style={{
-            width: "100px",
+            width: "76px",
             height: "auto",
-            margin: "0 auto 10px auto",
+            margin: "0 auto 6px auto",
             display: "block"
           }}
         />
@@ -732,9 +730,9 @@ export default function LoginPage() {
             display: "flex",
             backgroundColor: "#f1f5f9",
             borderRadius: "10px",
-            padding: "4px",
-            marginBottom: "12px",
-            gap: "5px",
+            padding: "3px",
+            marginBottom: "8px",
+            gap: "4px",
             border: "1.5px solid #e2e8f0"
           }}
         >
@@ -1592,14 +1590,14 @@ export default function LoginPage() {
 
         {/* Footer Links: About Us & Support */}
         <div style={{
-          marginTop: "16px",
-          paddingTop: "12px",
+          marginTop: "10px",
+          paddingTop: "8px",
           borderTop: "1px solid #f1f5f9",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "12px",
-          fontSize: "12.5px"
+          fontSize: "12px"
         }}>
           <button
             type="button"
