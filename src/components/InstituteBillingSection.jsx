@@ -5974,32 +5974,24 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             min="0"
                             max={discountMode === "pct" ? "100" : (form.grossFee || "999999")}
                             placeholder="0"
+                            readOnly
                             value={
                               discountMode === "amt"
                                 ? (form.discountAmount == 0 ? '' : form.discountAmount)
                                 : (form.discountPercent == 0 ? '' : form.discountPercent)
                             }
-                            onWheel={(e) => e.target.blur()}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setDiscountUserEdited(true); // user manually changed discount — preserve it
-                              if (discountMode === "amt") {
-                                updateFeeCalculationsByAmount(form.grossFee, val);
-                              } else {
-                                updateFeeCalculations(form.grossFee, val);
-                              }
-                            }}
                             style={{
                               width: "100%",
                               height: "44px",
                               padding: discountMode === "amt" ? "0 12px 0 48px" : "0 26px 0 22px",
                               borderRadius: "6px",
-                              border: "1.5px solid #cbd5e1",
-                              backgroundColor: "#ffffff",
+                              border: "1.5px solid #e2e8f0",
+                              backgroundColor: "#f8fafc",
                               boxSizing: "border-box",
                               fontWeight: "bold",
                               fontSize: "14px",
-                              color: "#0f172a"
+                              color: "#64748b",
+                              cursor: "not-allowed"
                             }}
                           />
                           {discountMode === "pct" && (
