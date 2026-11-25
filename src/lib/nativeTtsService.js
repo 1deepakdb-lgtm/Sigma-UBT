@@ -119,17 +119,12 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     } else {
       neuralVoice = isMale ? 'ja-JP-KeitaNeural' : 'ja-JP-NanamiNeural';
     }
-  }
 
-  // Dynamic Male Voice Actor Differentiation for Korean based on AI Model:
-  // - Turbo v2.5 & Flash v2 dynamically use Hyunsu (modern, energetic, conversational tenor)
-  // - Multilingual v2 & Neural HD Studio use InJoon (authoritative, rich, traditional baritone)
-  if (targetLang === 'ko' && isMale) {
-    const isExplicitDeepBass = model === 'ko-male-2' || model === 'male-2' || model === 'ko-male-6' || model === 'male-6';
-    if (!isExplicitDeepBass && (aiModel.includes('turbo') || aiModel.includes('flash') || model === 'ko-male-3' || model === 'ko-male-5')) {
-      neuralVoice = 'ko-KR-HyunsuMultilingualNeural';
-    } else if (!voice || voice === 'ko-KR-InJoonNeural' || voice === 'ko-KR-SunHiNeural') {
-      neuralVoice = 'ko-KR-InJoonNeural';
+    // Dynamic Male Voice Actor Differentiation for Korean based on AI Model when no specific profile is pinned:
+    if (targetLang === 'ko' && isMale) {
+      if (aiModel.includes('turbo') || aiModel.includes('flash')) {
+        neuralVoice = 'ko-KR-HyunsuMultilingualNeural';
+      }
     }
   }
 
@@ -165,20 +160,21 @@ export async function generateNeuralSpeech(text, lang = 'ja', gender = 'female',
     else if (speechMode === 'news_announcer') rateStr = '+6%';
   }
 
-  // Modulate Pitch and Rate dramatically based on AI Model ID
-  // (Flash v2 = +20% rate / +26Hz pitch, Turbo v2.5 = +10% rate / +14Hz pitch, Studio HD = -8% rate / -20Hz pitch, Multilingual v2 = baseline)
+  // Modulate Pitch and Rate only when no explicit voice profile tone is pinned
   let pitchVal = parseInt(pitchStr.replace('Hz', ''), 10) || 0;
   let rateVal = parseInt(rateStr.replace('%', ''), 10) || 0;
 
-  if (aiModel.includes('flash') || aiModel.includes('flash_v2')) {
-    rateVal += 20;
-    pitchVal += isMale ? 18 : 26;
-  } else if (aiModel.includes('turbo') || aiModel.includes('turbo_v2_5')) {
-    rateVal += 10;
-    pitchVal += isMale ? 10 : 14;
-  } else if (aiModel.includes('neural_studio_hd') || aiModel.includes('studio')) {
-    rateVal -= 8;
-    pitchVal -= isMale ? 18 : 20;
+  if (!matchedTone) {
+    if (aiModel.includes('flash') || aiModel.includes('flash_v2')) {
+      rateVal += 12;
+      pitchVal += isMale ? 8 : 12;
+    } else if (aiModel.includes('turbo') || aiModel.includes('turbo_v2_5')) {
+      rateVal += 6;
+      pitchVal += isMale ? 6 : 8;
+    } else if (aiModel.includes('neural_studio_hd') || aiModel.includes('studio')) {
+      rateVal -= 6;
+      pitchVal -= isMale ? 8 : 10;
+    }
   }
 
   // Safe acoustic boundary clamp to keep audio pleasant, melodic, and natural

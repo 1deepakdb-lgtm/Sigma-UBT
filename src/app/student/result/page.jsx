@@ -41,7 +41,77 @@ const StudentResult = () => {
       }
     } catch (e) {}
     setMounted(true);
+
+    if (typeof window !== "undefined") {
+      try {
+        if (screen.orientation && typeof screen.orientation.lock === "function") {
+          screen.orientation.lock("landscape").catch(() => {});
+        } else if (screen.lockOrientation) {
+          screen.lockOrientation("landscape");
+        } else if (screen.webkitLockOrientation) {
+          screen.webkitLockOrientation("landscape");
+        } else if (screen.mozLockOrientation) {
+          screen.mozLockOrientation("landscape");
+        }
+      } catch (e) {}
+    }
   }, []);
+
+  const enterFullScreen = () => {
+    if (typeof document !== "undefined" && !document.fullscreenElement) {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen().catch(() => {});
+      }
+    }
+  };
+
+  const UBT_RESULT_LANDSCAPE_CSS = `
+    @media (orientation: portrait) {
+      .ubt-exam-landscape-enforcer {
+        position: fixed !important;
+        top: 0 !important;
+        left: 100vw !important;
+        left: 100dvw !important;
+        width: 100vh !important;
+        width: 100dvh !important;
+        height: 100vw !important;
+        height: 100dvw !important;
+        transform: rotate(90deg) !important;
+        transform-origin: top left !important;
+        overflow: hidden !important;
+        z-index: 2147483640 !important;
+        background-color: #f8fafc !important;
+      }
+    }
+    @media (orientation: landscape) {
+      .ubt-exam-landscape-enforcer {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        width: 100dvw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
+        z-index: 2147483640 !important;
+        background-color: #f8fafc !important;
+      }
+    }
+    .student-bottom-nav,
+    .institute-bottom-nav,
+    .navbar-bottom-nav,
+    .student-header,
+    .institute-top-nav,
+    nav {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  `;
 
   // Background Auto-Sync for Offline Submissions to update cPanel database in real time
   React.useEffect(() => {
@@ -152,7 +222,9 @@ const StudentResult = () => {
       const isCorrect = isAttempted && q.answer !== undefined && Number(studentAns) === Number(q.answer);
 
       return (
-        <div className="result-review-outer" style={{ maxWidth: "1050px", margin: "20px auto", padding: "16px", fontFamily: "Arial, sans-serif", boxSizing: "border-box" }}>
+        <div className="ubt-exam-landscape-enforcer" onClick={enterFullScreen} onTouchStart={enterFullScreen} onContextMenu={(e) => e.preventDefault()}>
+          <style dangerouslySetInnerHTML={{ __html: UBT_RESULT_LANDSCAPE_CSS }} />
+          <div className="result-review-outer" style={{ maxWidth: "1050px", margin: "0 auto", padding: "8px 12px", fontFamily: "Arial, sans-serif", boxSizing: "border-box", width: "100%", height: "100%", overflowY: "auto" }}>
           <style dangerouslySetInnerHTML={{ __html: `
             @media (orientation: landscape), (max-height: 650px) {
               .result-review-outer {
@@ -334,11 +406,14 @@ const StudentResult = () => {
             </div>
           </div>
         </div>
+        </div>
       );
     }
 
     return (
-      <div className="result-grid-outer" style={{ maxWidth: "100%", width: "100%", height: "100vh", height: "100dvh", margin: "0 auto", padding: "8px 14px", fontFamily: "Arial, sans-serif", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div className="ubt-exam-landscape-enforcer" onClick={enterFullScreen} onTouchStart={enterFullScreen} onContextMenu={(e) => e.preventDefault()}>
+        <style dangerouslySetInnerHTML={{ __html: UBT_RESULT_LANDSCAPE_CSS }} />
+        <div className="result-grid-outer" style={{ maxWidth: "100%", width: "100%", height: "100vh", height: "100dvh", margin: "0 auto", padding: "8px 14px", fontFamily: "Arial, sans-serif", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <style dangerouslySetInnerHTML={{ __html: `
           .result-grid-outer {
             max-width: 100% !important;
@@ -561,11 +636,14 @@ const StudentResult = () => {
           </div>
         </div>
       </div>
+      </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column" }}>
+    <div className="ubt-exam-landscape-enforcer" onClick={enterFullScreen} onTouchStart={enterFullScreen} onContextMenu={(e) => e.preventDefault()}>
+      <style dangerouslySetInnerHTML={{ __html: UBT_RESULT_LANDSCAPE_CSS }} />
+      <div style={{ width: "100%", height: "100%", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column", overflowY: "auto" }}>
       <style dangerouslySetInnerHTML={{ __html: `
         .result-summary-top-bar {
           background-color: #0284c7;
@@ -905,6 +983,7 @@ const StudentResult = () => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

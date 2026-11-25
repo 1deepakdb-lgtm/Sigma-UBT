@@ -725,43 +725,50 @@ export default function AiStudio({
     const { url: edgeUrl, cleanText, lang, targetGender } = buildDialogueLineUrl(turn);
     const cachedBlobUrl = dialogueBlobCacheRef.current.get(edgeUrl);
 
-    if (!cachedBlobUrl) {
+    const playAudioSrc = (srcUrl) => {
+      if (playTokenRef.current !== token) return;
+      const audio = new Audio(srcUrl);
+      previewAudioRef.current = audio;
+      audio.playbackRate = 1.0;
+
+      audio.onended = () => {
+        if (playTokenRef.current === token) {
+          setPreviewingLineIndex(null);
+        }
+      };
+      audio.onerror = () => {
+        if (playTokenRef.current === token) {
+          setPreviewingLineIndex(null);
+        }
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          if (playTokenRef.current === token && err?.name !== 'AbortError') {
+            setPreviewingLineIndex(null);
+          }
+        });
+      }
+    };
+
+    if (cachedBlobUrl) {
+      playAudioSrc(cachedBlobUrl);
+    } else {
       fetch(edgeUrl)
         .then((res) => (res.ok ? res.blob() : null))
         .then((blob) => {
           if (blob) {
-            dialogueBlobCacheRef.current.set(edgeUrl, URL.createObjectURL(blob));
+            const blobUrl = URL.createObjectURL(blob);
+            dialogueBlobCacheRef.current.set(edgeUrl, blobUrl);
+            playAudioSrc(blobUrl);
+          } else {
+            playAudioSrc(edgeUrl);
           }
         })
-        .catch(() => {});
-    }
-
-    const audio = new Audio(cachedBlobUrl || edgeUrl);
-    previewAudioRef.current = audio;
-    audio.playbackRate = 1.0;
-
-    audio.onended = () => {
-      if (playTokenRef.current === token) {
-        setPreviewingLineIndex(null);
-      }
-    };
-    audio.onerror = () => {
-      if (playTokenRef.current !== token) return;
-      const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => {
-        if (playTokenRef.current === token) setPreviewingLineIndex(null);
-      });
-      if (!spoke) setPreviewingLineIndex(null);
-    };
-
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        if (playTokenRef.current !== token || err?.name === 'AbortError') return;
-        const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => {
-          if (playTokenRef.current === token) setPreviewingLineIndex(null);
+        .catch(() => {
+          playAudioSrc(edgeUrl);
         });
-        if (!spoke) setPreviewingLineIndex(null);
-      });
     }
   };
 
@@ -2175,198 +2182,203 @@ return (
                   key={index}
                   style={{
                     display: 'flex',
-                    gap: '10px',
-                    alignItems: 'center',
+                    flexDirection: 'column',
+                    gap: '8px',
                     background: isSpeakerA ? '#f0fdf4' : '#eff6ff',
-                    padding: '12px 14px',
+                    padding: '10px 14px',
                     borderRadius: '12px',
                     border: isSpeakerA ? '1.5px solid #86efac' : '1.5px solid #93c5fd',
-                    flexWrap: 'wrap',
                     boxSizing: 'border-box',
                     width: '100%'
                   }}
                 >
-                  {/* Speaker Selector, Voice Profile & AI Model */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: '1 1 260px' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextSpk = isSpeakerA ? 'B' : 'A';
-                        const updated = [...dialogueTurns];
-                        updated[index].speaker = nextSpk;
-                        const currentVoice = VOICE_PROFILES.find(v => v.id === updated[index].voiceProfileId);
-                        if (nextSpk === 'A') {
-                          if (!currentVoice || currentVoice.gender === 'male') {
-                            updated[index].voiceProfileId = dialogueLang === 'ja' ? 'ja-female-1' : 'ko-female-1';
+                  {/* Row 1: Line Meta Controls (Speaker, Voice, Model, Play, Delete) */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 auto', minWidth: '180px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextSpk = isSpeakerA ? 'B' : 'A';
+                          const updated = [...dialogueTurns];
+                          updated[index].speaker = nextSpk;
+                          const currentVoice = VOICE_PROFILES.find(v => v.id === updated[index].voiceProfileId);
+                          if (nextSpk === 'A') {
+                            if (!currentVoice || currentVoice.gender === 'male') {
+                              updated[index].voiceProfileId = dialogueLang === 'ja' ? 'ja-female-1' : 'ko-female-1';
+                            }
+                            updated[index].modelId = dialogueModelA || 'eleven_multilingual_v2';
+                          } else {
+                            if (!currentVoice || currentVoice.gender === 'female') {
+                              updated[index].voiceProfileId = dialogueLang === 'ja' ? 'ja-male-2' : 'ko-male-2';
+                            }
+                            updated[index].modelId = dialogueModelB || 'eleven_turbo_v2_5';
                           }
-                          updated[index].modelId = dialogueModelA || 'eleven_multilingual_v2';
-                        } else {
-                          if (!currentVoice || currentVoice.gender === 'female') {
-                            updated[index].voiceProfileId = dialogueLang === 'ja' ? 'ja-male-2' : 'ko-male-2';
-                          }
-                          updated[index].modelId = dialogueModelB || 'eleven_turbo_v2_5';
-                        }
-                        setDialogueTurns(updated);
-                      }}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '7px',
-                        border: 'none',
-                        background: isSpeakerA ? '#16a34a' : '#2563eb',
-                        color: '#ffffff',
-                        fontSize: '11.5px',
-                        fontWeight: '800',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        flexShrink: 0
-                      }}
-                    >
-                      {isSpeakerA ? 'Speaker A' : 'Speaker B'}
-                    </button>
+                          setDialogueTurns(updated);
+                        }}
+                        style={{
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          background: isSpeakerA ? '#16a34a' : '#2563eb',
+                          color: '#ffffff',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          flexShrink: 0
+                        }}
+                      >
+                        {isSpeakerA ? 'Speaker A' : 'Speaker B'}
+                      </button>
 
-                  {/* Custom Voice selector for this specific line */}
-                  <select
-                    value={assignedVoiceId}
-                    onChange={(e) => {
-                      const updated = [...dialogueTurns];
-                      updated[index] = { ...updated[index], voiceProfileId: e.target.value };
-                      setDialogueTurns(updated);
-                    }}
-                    style={{
-                      padding: '5px 8px',
-                      paddingRight: '22px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      background: '#ffffff',
-                      color: '#334155',
-                      maxWidth: '210px',
-                      appearance: 'none',
-                      WebkitAppearance: 'none',
-                      MozAppearance: 'none',
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 6px center',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <optgroup label="Female Voices">
-                      {VOICE_PROFILES.filter(v => v.language === dialogueLang && v.gender === 'female').map(v => (
-                        <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Male Voices">
-                      {VOICE_PROFILES.filter(v => v.language === dialogueLang && v.gender === 'male').map(v => (
-                        <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
-                      ))}
-                    </optgroup>
-                  </select>
+                      {/* Custom Voice selector */}
+                      <select
+                        value={assignedVoiceId}
+                        onChange={(e) => {
+                          const updated = [...dialogueTurns];
+                          updated[index] = { ...updated[index], voiceProfileId: e.target.value };
+                          setDialogueTurns(updated);
+                        }}
+                        style={{
+                          padding: '5px 8px',
+                          paddingRight: '20px',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '11.5px',
+                          fontWeight: '700',
+                          background: '#ffffff',
+                          color: '#334155',
+                          flex: '1 1 auto',
+                          maxWidth: '220px',
+                          minWidth: '130px',
+                          appearance: 'none',
+                          WebkitAppearance: 'none',
+                          MozAppearance: 'none',
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: 'right 6px center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <optgroup label="Female Voices">
+                          {VOICE_PROFILES.filter(v => v.language === dialogueLang && v.gender === 'female').map(v => (
+                            <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Male Voices">
+                          {VOICE_PROFILES.filter(v => v.language === dialogueLang && v.gender === 'male').map(v => (
+                            <option key={v.id} value={v.id}>{v.name} — {v.title}</option>
+                          ))}
+                        </optgroup>
+                      </select>
 
-                  {/* Model Selector for this specific line */}
-                  <select
-                    value={assignedModelId}
-                    onChange={(e) => {
-                      const updated = [...dialogueTurns];
-                      updated[index] = { ...updated[index], modelId: e.target.value };
-                      setDialogueTurns(updated);
-                    }}
-                    style={{
-                      padding: '5px 8px',
-                      paddingRight: '22px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      background: '#ffffff',
-                      color: '#334155',
-                      maxWidth: '140px',
-                      appearance: 'none',
-                      WebkitAppearance: 'none',
-                      MozAppearance: 'none',
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 6px center',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {AVAILABLE_MODELS.map(m => (
-                      <option key={m.id} value={m.id}>{m.shortName || m.name}</option>
-                    ))}
-                  </select>
+                      {/* Model Selector */}
+                      <select
+                        value={assignedModelId}
+                        onChange={(e) => {
+                          const updated = [...dialogueTurns];
+                          updated[index] = { ...updated[index], modelId: e.target.value };
+                          setDialogueTurns(updated);
+                        }}
+                        style={{
+                          padding: '5px 8px',
+                          paddingRight: '20px',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          background: '#ffffff',
+                          color: '#334155',
+                          maxWidth: '130px',
+                          appearance: 'none',
+                          WebkitAppearance: 'none',
+                          MozAppearance: 'none',
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: 'right 6px center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {AVAILABLE_MODELS.map(m => (
+                          <option key={m.id} value={m.id}>{m.shortName || m.name}</option>
+                        ))}
+                      </select>
                     </div>
 
-          {/* Dialogue Line Input */}
-          <div style={{ flex: '2 1 200px', minWidth: '160px' }}>
-            <input
-              type="text"
-              value={turn.text}
-              onChange={(e) => {
-                const updated = [...dialogueTurns];
-                updated[index] = { ...updated[index], text: e.target.value };
-                setDialogueTurns(updated);
-              }}
-              placeholder={`Enter line for ${isSpeakerA ? 'Speaker A' : 'Speaker B'}...`}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                fontSize: '13px',
-                background: '#ffffff',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
+                    {/* Actions: Play Line & Delete Turn */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: 'auto' }}>
+                      <button
+                        type="button"
+                        onClick={() => handlePreviewDialogueLine(turn, index)}
+                        title="Play this specific line with its assigned voice model"
+                        style={{
+                          background: isLinePlaying ? '#ef4444' : isSpeakerA ? '#16a34a' : '#2563eb',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '7px',
+                          padding: '6px 12px',
+                          fontSize: '11.5px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          touchAction: 'manipulation'
+                        }}
+                      >
+                        {isLinePlaying ? '⏹ Stop' : '▶ Play Line'}
+                      </button>
 
-          {/* Actions: Play Line & Delete Turn */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: 'auto' }}>
-            <button
-              type="button"
-              onClick={() => handlePreviewDialogueLine(turn, index)}
-              title="Play this specific line with its assigned voice model"
-              style={{
-                background: isLinePlaying ? '#ef4444' : isSpeakerA ? '#16a34a' : '#2563eb',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '7px',
-                padding: '7px 12px',
-                fontSize: '11.5px',
-                fontWeight: '800',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                touchAction: 'manipulation'
-              }}
-            >
-              {isLinePlaying ? '⏹ Stop' : '▶ Play Line'}
-            </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = dialogueTurns.filter((_, i) => i !== index);
+                          setDialogueTurns(updated);
+                        }}
+                        title="Remove turn"
+                        style={{
+                          background: '#fee2e2',
+                          border: 'none',
+                          color: '#dc2626',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          padding: '5px 9px',
+                          borderRadius: '6px',
+                          fontWeight: '800'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                const updated = dialogueTurns.filter((_, i) => i !== index);
-                setDialogueTurns(updated);
-              }}
-              title="Remove turn"
-              style={{
-                background: '#fee2e2',
-                border: 'none',
-                color: '#dc2626',
-                cursor: 'pointer',
-                fontSize: '13px',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                fontWeight: '800'
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
+                  {/* Row 2: Dialogue Line Text Input (full continuous line, not in cell) */}
+                  <div style={{ width: '100%' }}>
+                    <input
+                      type="text"
+                      value={turn.text}
+                      onChange={(e) => {
+                        const updated = [...dialogueTurns];
+                        updated[index] = { ...updated[index], text: e.target.value };
+                        setDialogueTurns(updated);
+                      }}
+                      placeholder={`Enter line for ${isSpeakerA ? 'Speaker A' : 'Speaker B'}...`}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        color: '#1e293b',
+                        background: '#ffffff',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
         );
               })}
       </div>

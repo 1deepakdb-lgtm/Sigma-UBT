@@ -898,48 +898,347 @@ const StudentExam = () => {
     msUserSelect: "none"
   };
 
+  const UBT_EXAM_CSS = `
+    .ubt-exam-wrapper {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      max-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      padding: 0;
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2147483640;
+      background-color: #f8fafc;
+    }
+    .student-bottom-nav,
+    .institute-bottom-nav,
+    .navbar-bottom-nav,
+    .student-header,
+    .institute-top-nav,
+    nav {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    .ubt-exam-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 100%;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      margin: 0;
+      justify-content: stretch;
+      min-height: 0;
+      border-radius: 0;
+      overflow: hidden;
+      box-shadow: none;
+    }
+    .ubt-exam-header-bar,
+    .ubt-overview-top-bar {
+      display: flex !important;
+      align-items: center !important;
+      background-color: #f8fafc !important;
+      color: #334155 !important;
+      border-bottom: 1px solid #cbd5e1 !important;
+      padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 24px) !important;
+      padding-bottom: 8px !important;
+      padding-left: max(calc(env(safe-area-inset-left, 0px) + 20px), 32px) !important;
+      padding-right: max(calc(env(safe-area-inset-right, 0px) + 28px), 56px) !important;
+      font-size: 13.5px !important;
+      font-weight: 600 !important;
+      flex-shrink: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    :fullscreen .ubt-exam-header-bar,
+    :-webkit-full-screen .ubt-exam-header-bar,
+    :fullscreen .ubt-overview-top-bar,
+    :-webkit-full-screen .ubt-overview-top-bar {
+      padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 14px) !important;
+      padding-bottom: 8px !important;
+      padding-left: max(calc(env(safe-area-inset-left, 0px) + 20px), 32px) !important;
+      padding-right: max(calc(env(safe-area-inset-right, 0px) + 28px), 48px) !important;
+    }
+    .ubt-exam-card {
+      background-color: #f8fafc !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      flex: 1 !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+      padding: 8px 12px !important;
+      gap: 8px !important;
+    }
+    .ubt-exam-columns {
+      display: flex !important;
+      flex: 1 !important;
+      overflow: hidden !important;
+      min-height: 0 !important;
+      gap: 10px !important;
+    }
+    .ubt-exam-left {
+      flex: 1.25 !important;
+      background-color: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 12px !important;
+      padding: 14px 18px !important;
+      position: relative !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow-y: auto !important;
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+    .ubt-exam-right {
+      flex: 1 !important;
+      background-color: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 12px !important;
+      padding: 0 !important;
+      position: relative !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-evenly !important;
+      overflow-y: auto !important;
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+    .ubt-opt-row {
+      display: flex !important;
+      align-items: center !important;
+      padding: 10px 18px !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+      background-color: transparent !important;
+      cursor: pointer !important;
+      transition: background-color 0.15s ease !important;
+      flex: 1 !important;
+    }
+    .ubt-opt-row:last-child {
+      border-bottom: none !important;
+    }
+    .ubt-opt-selected {
+      background-color: #eff6ff !important;
+    }
+    .ubt-opt-badge {
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 50% !important;
+      border: 2px solid #94a3b8 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-size: 15px !important;
+      font-weight: 700 !important;
+      color: #334155 !important;
+      margin-right: 14px !important;
+      flex-shrink: 0 !important;
+      background-color: #ffffff !important;
+      transition: all 0.15s ease !important;
+    }
+    .ubt-opt-badge-selected {
+      border-color: #0284c7 !important;
+      background-color: #0284c7 !important;
+      color: #ffffff !important;
+    }
+    .ubt-opt-text {
+      font-size: 16px !important;
+      font-weight: 600 !important;
+      color: #1e293b !important;
+      flex: 1 !important;
+    }
+    .ubt-opt-selected .ubt-opt-text {
+      color: #0369a1 !important;
+      font-weight: 700 !important;
+    }
+    .ubt-exam-nav-bar {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      padding: 4px 6px !important;
+      flex-shrink: 0 !important;
+      gap: 12px !important;
+    }
+    .ubt-exam-nav-bar button {
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
+      transition: all 0.15s ease !important;
+      font-weight: 700 !important;
+      font-size: 14px !important;
+      border: none !important;
+      border-radius: 9999px !important;
+      padding: 9px 24px !important;
+      cursor: pointer !important;
+    }
+    .ubt-exam-nav-bar button:disabled {
+      opacity: 0.45 !important;
+      cursor: not-allowed !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+
+    /* FORCE LANDSCAPE: rotate entire exam when device is held in portrait */
+    @media (orientation: portrait) {
+      .ubt-exam-landscape-enforcer {
+        position: fixed !important;
+        top: 0 !important;
+        left: 100vw !important;
+        left: 100dvw !important;
+        width: 100vh !important;
+        width: 100dvh !important;
+        height: 100vw !important;
+        height: 100dvw !important;
+        transform: rotate(90deg) !important;
+        transform-origin: top left !important;
+        overflow: hidden !important;
+        z-index: 2147483640 !important;
+        background-color: #f8fafc !important;
+      }
+    }
+    @media (orientation: landscape) {
+      .ubt-exam-landscape-enforcer {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        width: 100dvw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
+        z-index: 2147483640 !important;
+        background-color: #f8fafc !important;
+      }
+    }
+
+    /* Responsive Confirm Submission Modal */
+    .ubt-confirm-modal-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background-color: rgba(15, 23, 42, 0.72) !important;
+      backdrop-filter: blur(3px) !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      z-index: 99999999 !important;
+      padding: 12px !important;
+      box-sizing: border-box !important;
+    }
+    .ubt-confirm-modal-card {
+      background-color: #ffffff !important;
+      padding: 24px 22px !important;
+      border-radius: 18px !important;
+      max-width: min(420px, 94vw) !important;
+      width: 100% !important;
+      max-height: 92dvh !important;
+      overflow-y: auto !important;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
+      box-sizing: border-box !important;
+      text-align: center !important;
+    }
+    .ubt-confirm-modal-icon {
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      background-color: #e0f2fe !important;
+      color: #0284c7 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 auto 10px auto !important;
+    }
+    .ubt-confirm-modal-title {
+      margin: 0 0 6px 0 !important;
+      color: #0f172a !important;
+      font-size: 18px !important;
+      font-weight: 800 !important;
+    }
+    .ubt-confirm-modal-text {
+      color: #475569 !important;
+      font-size: 13.5px !important;
+      margin: 0 0 18px 0 !important;
+      line-height: 1.45 !important;
+    }
+    .ubt-confirm-modal-actions {
+      display: flex !important;
+      justify-content: center !important;
+      gap: 10px !important;
+    }
+    .ubt-confirm-btn-cancel {
+      flex: 1 !important;
+      background-color: #f1f5f9 !important;
+      color: #475569 !important;
+      border: 1px solid #cbd5e1 !important;
+      padding: 10px 14px !important;
+      border-radius: 8px !important;
+      font-weight: 700 !important;
+      font-size: 13px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .ubt-confirm-btn-submit {
+      flex: 1 !important;
+      background-color: #0284c7 !important;
+      color: #ffffff !important;
+      border: none !important;
+      padding: 10px 16px !important;
+      border-radius: 8px !important;
+      font-weight: 700 !important;
+      font-size: 13px !important;
+      cursor: pointer !important;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+      transition: all 0.15s ease !important;
+    }
+  `;
+
   if (!isStarted || !isDownloaded || questions.length === 0) {
     return (
       <div 
         className="ubt-exam-landscape-enforcer"
         onClick={enterFullScreen}
         onTouchStart={enterFullScreen}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: "100vw",
-          height: "100vh",
-          height: "100dvh",
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <style dangerouslySetInnerHTML={{ __html: UBT_EXAM_CSS }} />
+        <div style={{
+          width: "100%",
+          height: "100%",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           backgroundColor: "#f8fafc",
           fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           boxSizing: "border-box",
-          zIndex: 2147483640,
           ...protectedStyle
-        }}
-        onContextMenu={(e) => e.preventDefault()}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px", color: "#334155", fontSize: "22px", fontWeight: "400", letterSpacing: "0.2px" }}>
-          <span>Downloading Questions {downloadProgress} %</span>
-          <svg className="ubt-download-spinner" width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round">
-            <style>{`
-              @keyframes ubt-spinner-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-              .ubt-download-spinner { animation: ubt-spinner-spin 1s steps(8, end) infinite; }
-            `}</style>
-            <line x1="12" y1="2" x2="12" y2="6" stroke="#94a3b8" />
-            <line x1="12" y1="18" x2="12" y2="22" stroke="#475569" />
-            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" stroke="#cbd5e1" />
-            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" stroke="#334155" />
-            <line x1="2" y1="12" x2="6" y2="12" stroke="#e2e8f0" />
-            <line x1="18" y1="12" x2="22" y2="12" stroke="#1e293b" />
-            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" stroke="#64748b" />
-            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" stroke="#cbd5e1" />
-          </svg>
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", color: "#334155", fontSize: "22px", fontWeight: "400", letterSpacing: "0.2px" }}>
+            <span>Downloading Questions {downloadProgress} %</span>
+            <svg className="ubt-download-spinner" width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round">
+              <style>{`
+                @keyframes ubt-spinner-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .ubt-download-spinner { animation: ubt-spinner-spin 1s steps(8, end) infinite; }
+              `}</style>
+              <line x1="12" y1="2" x2="12" y2="6" stroke="#94a3b8" />
+              <line x1="12" y1="18" x2="12" y2="22" stroke="#475569" />
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" stroke="#cbd5e1" />
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" stroke="#334155" />
+              <line x1="2" y1="12" x2="6" y2="12" stroke="#e2e8f0" />
+              <line x1="18" y1="12" x2="22" y2="12" stroke="#1e293b" />
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" stroke="#64748b" />
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" stroke="#cbd5e1" />
+            </svg>
+          </div>
         </div>
       </div>
     );
@@ -964,307 +1263,7 @@ const StudentExam = () => {
   return (
     <div className="ubt-exam-landscape-enforcer">
     <div className="ubt-exam-wrapper" style={containerExamStyle} onContextMenu={(e) => e.preventDefault()}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        .ubt-exam-wrapper {
-          width: 100vw;
-          height: 100vh;
-          height: 100dvh;
-          max-height: 100dvh;
-          display: flex;
-          flex-direction: column;
-          box-sizing: border-box;
-          padding: 0;
-          overflow: hidden;
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 2147483640;
-          background-color: #f8fafc;
-        }
-        .student-bottom-nav,
-        .institute-bottom-nav,
-        .navbar-bottom-nav,
-        .student-header,
-        .institute-top-nav,
-        nav {
-          display: none !important;
-          visibility: hidden !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-        }
-        .ubt-exam-main {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          max-width: 100%;
-          width: 100%;
-          height: 100%;
-          max-height: 100%;
-          margin: 0;
-          justify-content: stretch;
-          min-height: 0;
-          border-radius: 0;
-          overflow: hidden;
-          box-shadow: none;
-        }
-        .ubt-exam-header-bar,
-        .ubt-overview-top-bar {
-          display: flex !important;
-          align-items: center !important;
-          background-color: #f8fafc !important;
-          color: #334155 !important;
-          border-bottom: 1px solid #cbd5e1 !important;
-          padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 32px) !important;
-          padding-bottom: 8px !important;
-          padding-left: max(calc(env(safe-area-inset-left, 0px) + 16px), 24px) !important;
-          padding-right: max(calc(env(safe-area-inset-right, 0px) + 16px), 24px) !important;
-          font-size: 13.5px !important;
-          font-weight: 600 !important;
-          flex-shrink: 0 !important;
-          width: 100% !important;
-          box-sizing: border-box !important;
-        }
-
-        :fullscreen .ubt-exam-header-bar,
-        :-webkit-full-screen .ubt-exam-header-bar,
-        :fullscreen .ubt-overview-top-bar,
-        :-webkit-full-screen .ubt-overview-top-bar {
-          padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 14px) !important;
-          padding-bottom: 8px !important;
-          padding-left: max(calc(env(safe-area-inset-left, 0px) + 16px), 24px) !important;
-          padding-right: max(calc(env(safe-area-inset-right, 0px) + 16px), 24px) !important;
-        }
-        .ubt-exam-card {
-          background-color: #f8fafc !important;
-          display: flex !important;
-          flex-direction: column !important;
-          justify-content: space-between !important;
-          flex: 1 !important;
-          min-height: 0 !important;
-          overflow: hidden !important;
-          padding: 8px 12px !important;
-          gap: 8px !important;
-        }
-        .ubt-exam-columns {
-          display: flex !important;
-          flex: 1 !important;
-          overflow: hidden !important;
-          min-height: 0 !important;
-          gap: 10px !important;
-        }
-        .ubt-exam-left {
-          flex: 1.25 !important;
-          background-color: #ffffff !important;
-          border: 1.5px solid #cbd5e1 !important;
-          border-radius: 12px !important;
-          padding: 14px 18px !important;
-          position: relative !important;
-          display: flex !important;
-          flex-direction: column !important;
-          overflow-y: auto !important;
-          height: 100% !important;
-          min-height: 0 !important;
-        }
-        .ubt-exam-right {
-          flex: 1 !important;
-          background-color: #ffffff !important;
-          border: 1.5px solid #cbd5e1 !important;
-          border-radius: 12px !important;
-          padding: 0 !important;
-          position: relative !important;
-          display: flex !important;
-          flex-direction: column !important;
-          justify-content: space-evenly !important;
-          overflow-y: auto !important;
-          height: 100% !important;
-          min-height: 0 !important;
-        }
-        .ubt-opt-row {
-          display: flex !important;
-          align-items: center !important;
-          padding: 10px 18px !important;
-          border-bottom: 1px solid #e2e8f0 !important;
-          background-color: transparent !important;
-          cursor: pointer !important;
-          transition: background-color 0.15s ease !important;
-          flex: 1 !important;
-        }
-        .ubt-opt-row:last-child {
-          border-bottom: none !important;
-        }
-        .ubt-opt-selected {
-          background-color: #eff6ff !important;
-        }
-        .ubt-opt-badge {
-          width: 28px !important;
-          height: 28px !important;
-          border-radius: 50% !important;
-          border: 1.5px solid #38bdf8 !important;
-          background-color: #ffffff !important;
-          color: #0284c7 !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          font-weight: 700 !important;
-          font-size: 14px !important;
-          margin-right: 14px !important;
-          flex-shrink: 0 !important;
-          transition: all 0.15s ease !important;
-        }
-        .ubt-opt-selected .ubt-opt-badge {
-          background-color: #0284c7 !important;
-          color: #ffffff !important;
-          border-color: #0284c7 !important;
-        }
-        .ubt-exam-nav-bar {
-          display: flex !important;
-          padding: 7px 18px !important;
-          background-color: #f8fafc !important;
-          border-top: 1px solid #cbd5e1 !important;
-          justify-content: space-between !important;
-          align-items: center !important;
-          gap: 12px !important;
-          flex-shrink: 0 !important;
-        }
-        .ubt-exam-nav-bar button {
-          background-color: #0284c7 !important;
-          color: #ffffff !important;
-          border: none !important;
-          border-radius: 9999px !important;
-          padding: 7px 24px !important;
-          font-weight: 800 !important;
-          font-size: 13.5px !important;
-          cursor: pointer !important;
-          display: inline-flex !important;
-          align-items: center !important;
-          gap: 6px !important;
-          letter-spacing: 0.3px !important;
-          box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3) !important;
-          transition: all 0.15s ease !important;
-        }
-        .ubt-exam-nav-bar button:active {
-          transform: scale(0.97) !important;
-        }
-        .ubt-exam-nav-bar button:disabled {
-          opacity: 0.45 !important;
-          cursor: not-allowed !important;
-          box-shadow: none !important;
-          transform: none !important;
-        }
-
-        /* FORCE LANDSCAPE: rotate entire exam when device is held in portrait */
-        @media (orientation: portrait) {
-          .ubt-exam-landscape-enforcer {
-            position: fixed !important;
-            top: 0; left: 0;
-            width: 100vh !important;
-            width: 100dvh !important;
-            height: 100vw !important;
-            height: 100dvw !important;
-            transform: rotate(90deg) !important;
-            transform-origin: top left !important;
-            left: 100vw !important;
-            left: 100dvw !important;
-            overflow: hidden !important;
-            z-index: 2147483640 !important;
-          }
-        }
-        @media (orientation: landscape) {
-          .ubt-exam-landscape-enforcer {
-            position: fixed !important;
-            top: 0; left: 0;
-            width: 100vw !important;
-            width: 100dvw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            overflow: hidden !important;
-            z-index: 2147483640 !important;
-          }
-        }
-
-        /* Responsive Confirm Submission Modal */
-        .ubt-confirm-modal-overlay {
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          background-color: rgba(15, 23, 42, 0.72) !important;
-          backdrop-filter: blur(3px) !important;
-          display: flex !important;
-          justify-content: center !important;
-          align-items: center !important;
-          z-index: 99999999 !important;
-          padding: 12px !important;
-          box-sizing: border-box !important;
-        }
-        .ubt-confirm-modal-card {
-          background-color: #ffffff !important;
-          padding: 24px 22px !important;
-          border-radius: 18px !important;
-          max-width: min(420px, 94vw) !important;
-          width: 100% !important;
-          max-height: 92dvh !important;
-          overflow-y: auto !important;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
-          box-sizing: border-box !important;
-          text-align: center !important;
-        }
-        .ubt-confirm-modal-icon {
-          width: 44px !important;
-          height: 44px !important;
-          border-radius: 50% !important;
-          background-color: #e0f2fe !important;
-          color: #0284c7 !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          margin: 0 auto 10px auto !important;
-        }
-        .ubt-confirm-modal-title {
-          margin: 0 0 6px 0 !important;
-          color: #0f172a !important;
-          font-size: 18px !important;
-          font-weight: 800 !important;
-        }
-        .ubt-confirm-modal-text {
-          color: #475569 !important;
-          font-size: 13.5px !important;
-          margin: 0 0 18px 0 !important;
-          line-height: 1.45 !important;
-        }
-        .ubt-confirm-modal-actions {
-          display: flex !important;
-          justify-content: center !important;
-          gap: 10px !important;
-        }
-        .ubt-confirm-btn-cancel {
-          flex: 1 !important;
-          background-color: #f1f5f9 !important;
-          color: #475569 !important;
-          border: 1px solid #cbd5e1 !important;
-          padding: 10px 14px !important;
-          border-radius: 8px !important;
-          font-weight: 700 !important;
-          font-size: 13px !important;
-          cursor: pointer !important;
-          transition: all 0.15s ease !important;
-        }
-        .ubt-confirm-btn-submit {
-          flex: 1 !important;
-          background-color: #0284c7 !important;
-          color: #ffffff !important;
-          border: none !important;
-          padding: 10px 16px !important;
-          border-radius: 8px !important;
-          font-weight: 700 !important;
-          font-size: 13px !important;
-          cursor: pointer !important;
-          box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
-          transition: all 0.15s ease !important;
-        }
-      ` }} />
+      <style dangerouslySetInnerHTML={{ __html: UBT_EXAM_CSS }} />
       
       {showConfirmModal && (
         <div className="ubt-confirm-modal-overlay">

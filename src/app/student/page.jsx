@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import DictionarySection from "@/components/DictionarySection";
 import EpsBookReader from "@/components/EpsBookReader";
+import ClientErrorBoundary from "@/components/ClientErrorBoundary";
 import OfficialPortalButtons from "@/components/OfficialPortalButtons";
 import EsewaCheckoutModal from "@/components/EsewaCheckoutModal";
 import JlptMockExamModal from "@/components/JlptMockExamModal";
@@ -1884,12 +1885,20 @@ const StudentDashboard = () => {
 
   const enforceLandscapeMode = async () => {
     if (typeof window !== "undefined") {
-      // Gracefully exit native fullscreen to prevent browser "Drag from top to exit full screen" toast
-      if (typeof document !== "undefined" && document.fullscreenElement) {
-        try {
-          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-        } catch (e) {}
-      }
+      try {
+        const elem = document.documentElement;
+        if (!document.fullscreenElement) {
+          if (elem.requestFullscreen) {
+            await elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+          } else if (elem.webkitRequestFullscreen) {
+            await elem.webkitRequestFullscreen().catch(() => {});
+          } else if (elem.mozRequestFullScreen) {
+            await elem.mozRequestFullScreen().catch(() => {});
+          } else if (elem.msRequestFullscreen) {
+            await elem.msRequestFullscreen().catch(() => {});
+          }
+        }
+      } catch (e) {}
 
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
@@ -3763,26 +3772,30 @@ const StudentDashboard = () => {
 
         {/* DICTIONARY TAB */}
         {activeTab === "vocab" && (
-          <DictionarySection instituteLanguage={instituteLanguage} userRole="student" />
+          <ClientErrorBoundary fallbackTitle="Unable to load Dictionary">
+            <DictionarySection instituteLanguage={instituteLanguage} userRole="student" />
+          </ClientErrorBoundary>
         )}
 
         {/* STUDY MATERIALS & JAPANESE MOCK TEST TAB */}
         {(activeTab === "listening" || activeTab === "japaneseMock") && (
           <div style={{ marginTop: "10px", marginBottom: "30px" }}>
-            <EpsBookReader
-              mode="student"
-              studentPackage={studentPackage}
-              purchasedPackages={purchasedPackages}
-              instituteLanguage={instituteLanguage}
-              initialFolder={activeTab === "japaneseMock" ? "Mock Test" : (activeBookFolder || undefined)}
-              onNavigateTab={(tab) => setActiveTab(tab)}
-              onOpenEsewaModal={handleOpenEsewaModal}
-              unlockedSets={unlockedSets}
-              pendingQueries={pendingQueries}
-              isPackageExpired={isPackageExpired}
-              effectiveExpiryDate={effectiveExpiryDate}
-              activeStudentPackages={activeStudentPackages}
-            />
+            <ClientErrorBoundary fallbackTitle="Unable to load Study Materials">
+              <EpsBookReader
+                mode="student"
+                studentPackage={studentPackage}
+                purchasedPackages={purchasedPackages}
+                instituteLanguage={instituteLanguage}
+                initialFolder={activeTab === "japaneseMock" ? "Mock Test" : (activeBookFolder || undefined)}
+                onNavigateTab={(tab) => setActiveTab(tab)}
+                onOpenEsewaModal={handleOpenEsewaModal}
+                unlockedSets={unlockedSets}
+                pendingQueries={pendingQueries}
+                isPackageExpired={isPackageExpired}
+                effectiveExpiryDate={effectiveExpiryDate}
+                activeStudentPackages={activeStudentPackages}
+              />
+            </ClientErrorBoundary>
           </div>
         )}
 
