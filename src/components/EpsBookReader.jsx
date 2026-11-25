@@ -2913,85 +2913,95 @@ export default function EpsBookReader({
           left: 0,
           width: "100vw",
           height: "100vh",
+          height: "100dvh",
           backgroundColor: "#ffffff",
-          zIndex: 999999,
+          zIndex: 2147483640,
           display: "flex",
           flexDirection: "column",
           fontFamily: "Arial, sans-serif",
           overscrollBehavior: "none",
-          overscrollBehaviorY: "none"
+          overscrollBehaviorY: "none",
+          overflow: "hidden",
+          margin: 0,
+          padding: 0
         }}
       >
-        <div
-          className="unified-app-top-header"
-          style={{
-            backgroundColor: "#003b73",
-            color: "#ffffff",
-            padding: "12px 20px",
-            paddingTop: "var(--app-header-top-clearance, calc(12px + env(safe-area-inset-top, 0px)))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-            flexWrap: "wrap",
-            gap: "10px",
-            zIndex: 10
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              className="back-to-books-btn"
-              data-btn="back-to-books"
-              onClick={() => setViewingMaterial(null)}
-              style={{
-                backgroundColor: "#2563eb",
-                color: "#ffffff",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "700",
-                fontSize: "14px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              ← Back to Books
-            </button>
-            <div>
-              <div style={{ fontSize: "16px", fontWeight: "800" }}>{viewingMaterial.title}</div>
-              {viewingMaterial.folder && (
-                <div style={{ fontSize: "12px", color: "#93c5fd" }}>
-                  {viewingMaterial.folder}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <button
-              onClick={() => setViewingMaterial(null)}
-              style={{
-                backgroundColor: "#ef4444",
-                color: "#ffffff",
-                border: "none",
-                padding: "8px 14px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "700",
-                fontSize: "13px"
-              }}
-            >
-              ✕ Close
-            </button>
-          </div>
+        {/* Floating Top Controls: Fullscreen & Close */}
+        <div style={{
+          position: "fixed",
+          top: "max(10px, calc(env(safe-area-inset-top, 0px) + 6px))",
+          right: "max(12px, calc(env(safe-area-inset-right, 0px) + 8px))",
+          zIndex: 2147483647,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          pointerEvents: "auto"
+        }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof document !== "undefined") {
+                const elem = document.documentElement;
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                  if (elem.requestFullscreen) elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+                  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(() => {});
+                } else {
+                  if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                  else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+                }
+              }
+            }}
+            title="Fullscreen"
+            style={{
+              backgroundColor: "rgba(15, 23, 42, 0.75)",
+              backdropFilter: "blur(6px)",
+              color: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              borderRadius: "20px",
+              padding: "6px 12px",
+              fontSize: "12px",
+              fontWeight: "700",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(0, 0, 0, 0.25)"
+            }}
+          >
+            <span>⛶</span>
+            <span>Fullscreen</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewingMaterial(null)}
+            title="Close Document"
+            style={{
+              backgroundColor: "rgba(220, 38, 38, 0.85)",
+              backdropFilter: "blur(6px)",
+              color: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              borderRadius: "50%",
+              width: "30px",
+              height: "30px",
+              fontSize: "13px",
+              fontWeight: "800",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(0, 0, 0, 0.25)"
+            }}
+          >
+            ✕
+          </button>
         </div>
 
-        <div style={{ flex: 1, width: "100%", height: "calc(100vh - 60px)" }}>
+        <div style={{ flex: 1, width: "100%", height: "100%" }}>
           <iframe
             src={getCleanPdfUrl(viewingMaterial.fileUrl)}
             title={viewingMaterial.title}
+            allow="fullscreen; autoplay; accelerometer; encrypted-media"
+            allowFullScreen
             style={{ width: "100%", height: "100%", border: "none", display: "block" }}
           />
         </div>
@@ -3011,113 +3021,97 @@ export default function EpsBookReader({
           left: 0,
           width: "100vw",
           height: "100vh",
+          height: "100dvh",
           backgroundColor: "#ffffff",
-          zIndex: 999999,
+          zIndex: 2147483640,
           display: "flex",
           flexDirection: "column",
           fontFamily: "Arial, sans-serif",
           overscrollBehavior: "none",
-          overscrollBehaviorY: "none"
+          overscrollBehaviorY: "none",
+          overflow: "hidden",
+          margin: 0,
+          padding: 0
         }}
       >
-        {/* TOP BAR */}
-        <div
-          className="unified-app-top-header"
-          style={{
-            backgroundColor: "#991b1b",
-            color: "#ffffff",
-            padding: "12px 20px",
-            paddingTop: "var(--app-header-top-clearance, calc(12px + env(safe-area-inset-top, 0px)))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-            flexWrap: "wrap",
-            gap: "10px",
-            zIndex: 10
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              className="back-to-books-btn"
-              data-btn="back-to-books"
-              onClick={() => setViewingMeaningChapter(null)}
-              style={{
-                backgroundColor: "#dc2626",
-                color: "#ffffff",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "700",
-                fontSize: "14px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              ← Back to Meaning Book
-            </button>
-            <div>
-              <div style={{ fontSize: "16px", fontWeight: "800" }}>
-                📕 Chapter {viewingMeaningChapter.chapter}: {viewingMeaningChapter.titleKo} ({viewingMeaningChapter.titleNe})
-              </div>
-              <div style={{ fontSize: "12px", color: "#fecaca" }}>
-                {viewingMeaningChapter.titleEn || "Vocabulary & Meaning Guide"} • Book Part {viewingMeaningChapter.chapter <= 30 ? 1 : 2}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditMeaningModalChapter(viewingMeaningChapter);
-                  setEditMeaningPdf(viewingMeaningChapter.meaningPdfUrl || "");
-                  setEditMeaningAudio(viewingMeaningChapter.meaningAudioUrl || "");
-                  setEditMeaningNotes(viewingMeaningChapter.notes || "");
-                  setEditMeaningTitleKo(viewingMeaningChapter.titleKo || "");
-                  setEditMeaningTitleNe(viewingMeaningChapter.titleNe || "");
-                }}
-                style={{
-                  backgroundColor: "#f59e0b",
-                  color: "#0f172a",
-                  border: "none",
-                  padding: "8px 14px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  fontWeight: "bold",
-                  cursor: "pointer"
-                }}
-              >
-                ✏️ Edit Chapter PDF
-              </button>
-            )}
-            <button
-              onClick={() => setViewingMeaningChapter(null)}
-              style={{
-                backgroundColor: "#7f1d1d",
-                color: "#ffffff",
-                border: "none",
-                padding: "8px 14px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "700",
-                fontSize: "13px"
-              }}
-            >
-              ✕ Close
-            </button>
-          </div>
+        {/* Floating Top Controls: Fullscreen & Close */}
+        <div style={{
+          position: "fixed",
+          top: "max(10px, calc(env(safe-area-inset-top, 0px) + 6px))",
+          right: "max(12px, calc(env(safe-area-inset-right, 0px) + 8px))",
+          zIndex: 2147483647,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          pointerEvents: "auto"
+        }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof document !== "undefined") {
+                const elem = document.documentElement;
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                  if (elem.requestFullscreen) elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+                  else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(() => {});
+                } else {
+                  if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                  else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+                }
+              }
+            }}
+            title="Fullscreen"
+            style={{
+              backgroundColor: "rgba(15, 23, 42, 0.75)",
+              backdropFilter: "blur(6px)",
+              color: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              borderRadius: "20px",
+              padding: "6px 12px",
+              fontSize: "12px",
+              fontWeight: "700",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(0, 0, 0, 0.25)"
+            }}
+          >
+            <span>⛶</span>
+            <span>Fullscreen</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewingMeaningChapter(null)}
+            title="Close Document"
+            style={{
+              backgroundColor: "rgba(220, 38, 38, 0.85)",
+              backdropFilter: "blur(6px)",
+              color: "#ffffff",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              borderRadius: "50%",
+              width: "30px",
+              height: "30px",
+              fontSize: "13px",
+              fontWeight: "800",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(0, 0, 0, 0.25)"
+            }}
+          >
+            ✕
+          </button>
         </div>
 
         {/* VIEWER AREA */}
-        <div style={{ flex: 1, width: "100%", height: "calc(100vh - 60px)", overflowY: "auto", backgroundColor: "#f8fafc" }}>
+        <div style={{ flex: 1, width: "100%", height: "100%", overflowY: "auto", backgroundColor: "#f8fafc" }}>
           {viewingMeaningChapter.meaningPdfUrl ? (
             <iframe
               src={getCleanPdfUrl(viewingMeaningChapter.meaningPdfUrl)}
               title={`Meaning Chapter ${viewingMeaningChapter.chapter}`}
+              allow="fullscreen; autoplay; accelerometer; encrypted-media"
+              allowFullScreen
               style={{ width: "100%", height: "100%", border: "none", display: "block" }}
             />
           ) : (
@@ -3128,112 +3122,12 @@ export default function EpsBookReader({
               borderRadius: "16px",
               padding: "40px",
               boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
-              border: "1px solid #e2e8f0"
+              textAlign: "center"
             }}>
-              <div style={{ textAlign: "center", marginBottom: "30px" }}>
-                <span style={{
-                  backgroundColor: viewingMeaningChapter.chapter <= 30 ? "#fee2e2" : "#fef3c7",
-                  color: viewingMeaningChapter.chapter <= 30 ? "#b91c1c" : "#b45309",
-                  padding: "6px 20px",
-                  borderRadius: "20px",
-                  fontSize: "14px",
-                  fontWeight: "800",
-                  display: "inline-block",
-                  marginBottom: "12px"
-                }}>
-                  Chapter {viewingMeaningChapter.chapter} (Book Part {viewingMeaningChapter.chapter <= 30 ? 1 : 2})
-                </span>
-                <h2 style={{ margin: "6px 0", fontSize: "28px", color: "#0f172a", fontWeight: "800" }}>
-                  제{viewingMeaningChapter.chapter}과 {viewingMeaningChapter.titleKo}
-                </h2>
-                <h3 style={{ margin: "6px 0", fontSize: "20px", color: "#dc2626", fontWeight: "700" }}>
-                  {viewingMeaningChapter.titleNe}
-                </h3>
-                {viewingMeaningChapter.titleEn && (
-                  <p style={{ margin: "4px 0", fontSize: "14px", color: "#64748b" }}>
-                    ({viewingMeaningChapter.titleEn})
-                  </p>
-                )}
-              </div>
-
-              {/* VOCABULARY OVERVIEW BOX */}
-              <div style={{
-                backgroundColor: "#fff1f2",
-                borderRadius: "12px",
-                padding: "24px",
-                border: "1px solid #fecdd3",
-                marginBottom: "28px"
-              }}>
-                <h4 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#9f1239", fontWeight: "700" }}>
-                  📖 Chapter Vocabulary & Meaning Overview (शब्दावली विवरण)
-                </h4>
-                <p style={{ margin: 0, fontSize: "14px", color: "#4c0519", lineHeight: "1.7" }}>
-                  {viewingMeaningChapter.notes || `यस अध्यायमा EPS-TOPIK Korean 60 Book अन्तर्गत Chapter ${viewingMeaningChapter.chapter} (${viewingMeaningChapter.titleKo} - ${viewingMeaningChapter.titleNe}) का दैनिक जीवन तथा परीक्षामा आउने सम्पूर्ण महत्त्वपूर्ण शब्दहरू समावेश छन्।`}
-                </p>
-              </div>
-
-              {/* ADMIN UPLOAD CALLOUT */}
-              {isAdmin && (
-                <div style={{
-                  backgroundColor: "#f0fdf4",
-                  borderRadius: "12px",
-                  padding: "24px",
-                  border: "2px dashed #86efac",
-                  textAlign: "center",
-                  marginBottom: "24px"
-                }}>
-                  <h4 style={{ margin: "0 0 8px 0", color: "#166534", fontSize: "17px", fontWeight: "800" }}>
-                    📤 Super Admin: Attach Meaning Book PDF Document
-                  </h4>
-                  <p style={{ margin: "0 0 16px 0", fontSize: "13px", color: "#15803d" }}>
-                    Upload Chapter {viewingMeaningChapter.chapter} official meaning book PDF so students can study full-screen.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditMeaningModalChapter(viewingMeaningChapter);
-                      setEditMeaningPdf(viewingMeaningChapter.meaningPdfUrl || "");
-                      setEditMeaningAudio(viewingMeaningChapter.meaningAudioUrl || "");
-                      setEditMeaningNotes(viewingMeaningChapter.notes || "");
-                      setEditMeaningTitleKo(viewingMeaningChapter.titleKo || "");
-                      setEditMeaningTitleNe(viewingMeaningChapter.titleNe || "");
-                    }}
-                    style={{
-                      backgroundColor: "#16a34a",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "11px 24px",
-                      borderRadius: "8px",
-                      fontWeight: "700",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 8px rgba(22,163,74,0.3)"
-                    }}
-                  >
-                    + Upload Chapter {viewingMeaningChapter.chapter} Meaning PDF
-                  </button>
-                </div>
-              )}
+              <h3>No PDF uploaded yet for this chapter meaning.</h3>
             </div>
           )}
         </div>
-
-        {/* ATTACHED AUDIO BAR IF AVAILABLE */}
-        {viewingMeaningChapter.meaningAudioUrl && (
-          <div style={{
-            backgroundColor: "#1e293b",
-            borderTop: "1px solid #334155",
-            padding: "12px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "16px"
-          }}>
-            <span style={{ fontSize: "13px", color: "#f8fafc", fontWeight: "bold" }}>
-              🎧 Chapter Vocabulary Audio:
-            </span>
-            <audio controls src={viewingMeaningChapter.meaningAudioUrl} style={{ flex: 1, maxHeight: "36px" }} />
-          </div>
-        )}
       </div>
     );
   }
@@ -3993,14 +3887,14 @@ export default function EpsBookReader({
           paddingLeft: "env(safe-area-inset-left, 0px)",
           paddingRight: "env(safe-area-inset-right, 0px)",
           boxSizing: "border-box",
-          zIndex: 2147483600
+          zIndex: 2147483640
         }}>
           {/* Floating Action Controls: Fullscreen (Hide Status Bar) & Close */}
           <div style={{
-            position: "absolute",
+            position: "fixed",
             top: "max(10px, calc(env(safe-area-inset-top, 0px) + 6px))",
             right: "max(12px, calc(env(safe-area-inset-right, 0px) + 8px))",
-            zIndex: 2147483640,
+            zIndex: 2147483647,
             display: "flex",
             alignItems: "center",
             gap: "8px",
