@@ -2692,44 +2692,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
           </>
         )}
       </div>
-      ) : (
-        /* Workspace Clean & Wiped Display Notice while AI Studio is Active */
-        <div style={{
-          textAlign: "center",
-          padding: "16px 20px",
-          backgroundColor: "#f8fafc",
-          borderRadius: "12px",
-          border: "1.5px dashed #cbd5e1",
-          marginBottom: "28px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "12px",
-          flexWrap: "wrap"
-        }}>
-          <span style={{ fontSize: "13px", color: "#64748b", fontWeight: "600" }}>
-            Workspace Clean: Vocabulary list is hidden while AI Studio is active.
-          </span>
-          <button
-            type="button"
-            onClick={() => setShowAiStudio(false)}
-            style={{
-              backgroundColor: "#ffffff",
-              color: "#4f46e5",
-              border: "1.5px solid #c7d2fe",
-              padding: "6px 14px",
-              borderRadius: "8px",
-              fontSize: "12px",
-              fontWeight: "700",
-              cursor: "pointer",
-              boxShadow: "0 1px 3px rgba(79, 70, 229, 0.12)",
-              transition: "all 0.15s ease"
-            }}
-          >
-            ✕ Close AI Studio & View Vocabulary
-          </button>
-        </div>
-      )}
+      ) : null}
 
       {/* JAPANESE PRONUNCIATION RULES GUIDE (WHEN JAPANESE IS ACTIVE) */}
       {!showAiStudio && activeLang === 'ja' && (

@@ -631,30 +631,16 @@ export default function AiStudio({
   };
 
   // Preview Individual Dialogue Line with direct HTML5 audio & instant fallback
-  const handlePreviewDialogueLine = (turn, index) => {
-    if (!turn?.text || !turn.text.trim()) return;
+  const dialogueBlobCacheRef = typeof React !== 'undefined' ? React.useRef(new Map()) : { current: new Map() };
 
-    if (previewAudioRef.current) {
-      try {
-        previewAudioRef.current.pause();
-        previewAudioRef.current.currentTime = 0;
-      } catch (e) { }
-    }
-
-    if (previewingLineIndex === index) {
-      setPreviewingLineIndex(null);
-      return;
-    }
-
-    setPreviewingLineIndex(index);
-
+  const buildDialogueLineUrl = (turn) => {
     const isSpeakerA = turn.speaker === 'A';
     const assignedVoiceId = turn.voiceProfileId || (isSpeakerA ? dialogueSpeakerA : dialogueSpeakerB);
     const assignedVoice = VOICE_PROFILES.find(v => v.id === assignedVoiceId) || (isSpeakerA ? VOICE_PROFILES[0] : VOICE_PROFILES[1]);
     const assignedModelId = turn.modelId || (isSpeakerA ? dialogueModelA : dialogueModelB);
     const isMale = assignedVoice?.gender === 'male' || (turn.speaker === 'B' && (!assignedVoice || assignedVoice.gender !== 'female'));
     const targetGender = isMale ? 'male' : 'female';
-    const cleanText = turn.text.trim();
+    const cleanText = (turn.text || '').trim();
     const lang = assignedVoice?.language || (dialogueLang === 'ja' ? 'ja' : 'ko');
 
     const baseParams = new URLSearchParams({
@@ -672,66 +658,90 @@ export default function AiStudio({
       speechMode: assignedVoice?.defaultSpeechMode || 'natural_conversation',
       emotion: assignedVoice?.defaultEmotion || 'reassuring'
     });
-  const edgeUrl = `/api/tts?${baseParams.toString()}`;
+    return {
+      url: `/api/tts?${baseParams.toString()}`,
+      cleanText,
+      lang,
+      targetGender
+    };
+  };
 
-  const playFallback = () => {
+  // Prefetch dialogue turn audio in background so Play Line responds instantly
+  useEffect(() => {
+    if (activeTab !== 'dialogue' || typeof window === 'undefined') return;
+    const timer = setTimeout(() => {
+      (dialogueTurns || []).slice(0, 12).forEach((turn) => {
+        if (!turn?.text || !turn.text.trim()) return;
+        const { url } = buildDialogueLineUrl(turn);
+        if (dialogueBlobCacheRef.current.has(url)) return;
+        fetch(url)
+          .then((res) => (res.ok ? res.blob() : null))
+          .then((blob) => {
+            if (blob) {
+              dialogueBlobCacheRef.current.set(url, URL.createObjectURL(blob));
+            }
+          })
+          .catch(() => {});
+      });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [activeTab, dialogueTurns, dialogueSpeakerA, dialogueSpeakerB, dialogueModelA, dialogueModelB, dialogueLang]);
+
+  const handlePreviewDialogueLine = (turn, index) => {
+    if (!turn?.text || !turn.text.trim()) return;
+
     if (previewAudioRef.current) {
-      try { previewAudioRef.current.pause(); } catch (e) { }
+      try {
+        previewAudioRef.current.pause();
+        previewAudioRef.current.currentTime = 0;
+      } catch (e) { }
     }
-    const fbAudio = new Audio(edgeUrl);
-    previewAudioRef.current = fbAudio;
-    fbAudio.playbackRate = 1.0;
-    fbAudio.onended = () => setPreviewingLineIndex(null);
-    fbAudio.onerror = () => {
+
+    if (previewingLineIndex === index) {
+      setPreviewingLineIndex(null);
+      return;
+    }
+
+    setPreviewingLineIndex(index);
+
+    const { url: edgeUrl, cleanText, lang, targetGender } = buildDialogueLineUrl(turn);
+    const cachedBlobUrl = dialogueBlobCacheRef.current.get(edgeUrl);
+
+    if (!cachedBlobUrl) {
+      fetch(edgeUrl)
+        .then((res) => (res.ok ? res.blob() : null))
+        .then((blob) => {
+          if (blob) {
+            dialogueBlobCacheRef.current.set(edgeUrl, URL.createObjectURL(blob));
+          }
+        })
+        .catch(() => {});
+    }
+
+    let audio = previewAudioRef.current;
+    if (!audio) {
+      audio = new Audio();
+      previewAudioRef.current = audio;
+    }
+    audio.src = cachedBlobUrl || edgeUrl;
+    audio.playbackRate = 1.0;
+
+    audio.onended = () => {
+      setPreviewingLineIndex(null);
+    };
+    audio.onerror = () => {
       const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingLineIndex(null));
       if (!spoke) setPreviewingLineIndex(null);
     };
-    fbAudio.play().catch(() => {
-      const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingLineIndex(null));
-      if (!spoke) setPreviewingLineIndex(null);
-    });
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingLineIndex(null));
+        if (!spoke) setPreviewingLineIndex(null);
+      });
+    }
   };
-
-  if (assignedModelId === 'neural_studio_hd') {
-    playFallback();
-    return;
-  }
-
-  const elUrl = `/api/elevenlabs/tts?${baseParams.toString()}`;
-  let audio = previewAudioRef.current;
-  if (!audio) {
-    audio = new Audio();
-    previewAudioRef.current = audio;
-  }
-  audio.src = elUrl;
-  audio.playbackRate = 1.0;
-
-  let started = false;
-  const fallbackTimer = setTimeout(() => {
-    if (!started) playFallback();
-  }, 2500);
-
-  audio.onplaying = () => {
-    started = true;
-    clearTimeout(fallbackTimer);
-  };
-  audio.onended = () => {
-    clearTimeout(fallbackTimer);
-    setPreviewingLineIndex(null);
-  };
-  audio.onerror = () => {
-    clearTimeout(fallbackTimer);
-    playFallback();
-  };
-
-  const playPromise = audio.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(() => {
-      clearTimeout(fallbackTimer);
-      playFallback();
-    });
-  }
-};
 
 // Load Authentic Dialogue Template
 const handleLoadTemplate = (tmpl) => {
@@ -871,31 +881,6 @@ return (
             Live Neural Audio
           </span>
         </div>
-
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              background: '#f1f5f9',
-              border: '1px solid #cbd5e1',
-              color: '#475569',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              fontSize: '12.5px',
-              fontWeight: '800',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'background-color 0.15s ease'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e2e8f0'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f1f5f9'; }}
-          >
-            <span>✕ Close</span>
-          </button>
-        )}
       </div>
     )}
 
@@ -2331,7 +2316,8 @@ return (
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '4px',
+                touchAction: 'manipulation'
               }}
             >
               {isLinePlaying ? '⏹ Stop' : '▶ Play Line'}
@@ -2477,9 +2463,6 @@ return (
         <div>
           <span style={{ fontSize: '14px', fontWeight: '900', color: '#166534', display: 'block' }}>
             Synchronized Dialogue Audio Ready
-          </span>
-          <span style={{ fontSize: '12px', color: '#15803d', fontWeight: '500' }}>
-            All dialogue turns compiled into one continuous conversation track
           </span>
         </div>
       </div>
