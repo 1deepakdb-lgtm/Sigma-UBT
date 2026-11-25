@@ -2033,12 +2033,14 @@ const StudentDashboard = () => {
             <img src={logoWatermark} alt="Institute Logo" style={{ height: "28px", borderRadius: "4px", backgroundColor: "#ffffff", padding: "2px", flexShrink: 0 }} />
           )}
           <div style={{ overflow: "hidden" }}>
-            <div style={{ fontSize: "14px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", letterSpacing: "0.2px", lineHeight: "1.2" }}>
-              STUDENT PORTAL
+            <div suppressHydrationWarning={true} style={{ fontSize: "14px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden", letterSpacing: "0.2px", lineHeight: "1.2" }}>
+              {studentName || "Student"}
             </div>
-            <div style={{ fontSize: "11px", color: "#93c5fd", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden", minHeight: "14px", lineHeight: "1.2" }}>
-              {studentName ? `${studentName}${studentInstitute ? ` • ${studentInstitute}` : ""}` : "Student Portal"}
-            </div>
+            {studentInstitute && (
+              <div suppressHydrationWarning={true} style={{ fontSize: "11px", color: "#93c5fd", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden", minHeight: "14px", lineHeight: "1.2" }}>
+                {studentInstitute}
+              </div>
+            )}
           </div>
         </div>
 

@@ -103,11 +103,23 @@ export default function Navbar({
     { id: 'about', label: 'About Us' },
   ];
 
+  const [loggedInLabel, setLoggedInLabel] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (role === 'institute') {
+        setLoggedInLabel(localStorage.getItem('instituteName') || localStorage.getItem('currentUser') || 'Institute');
+      } else if (role === 'student') {
+        setLoggedInLabel(localStorage.getItem('currentStudentName') || localStorage.getItem('currentUser') || 'Student');
+      }
+    }
+  }, [role]);
+
   // Derive display title
   const defaultTitle =
     role === 'admin' ? 'EXAMJK ADMIN PANEL' :
-      role === 'institute' ? 'INSTITUTE PANEL' :
-        'STUDENT PORTAL';
+      role === 'institute' ? (loggedInLabel || 'Institute') :
+        (loggedInLabel || 'Student');
 
   const displayTitle = title || defaultTitle;
 

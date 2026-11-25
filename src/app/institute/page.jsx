@@ -1714,7 +1714,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
       <div style={topNavStyle} className={`institute-top-nav ${showLandscapeBars ? "revealed" : ""}`}>
         <div style={navInnerStyle} className="institute-nav-inner">
           <div style={navLeftSlotStyle} className="institute-nav-left">
-            <span suppressHydrationWarning={true}>INSTITUTE PANEL ({instituteName || "sig"})</span>
+            <span suppressHydrationWarning={true}>{instituteName || "Institute"}</span>
             {userRole === "staff" && (
               <span style={{ fontSize: "11px", backgroundColor: "#10b981", color: "white", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold", flexShrink: 0, whiteSpace: "nowrap" }}>
                 👤 Staff Cashier
