@@ -550,7 +550,7 @@ const StudentExam = () => {
     if (typeof window !== "undefined") {
       try {
         window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
-        window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: true }).catch?.(() => {});
+        window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
         window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: "HIDE_STATUS_BAR", fullscreen: true }, "*");
@@ -579,7 +579,16 @@ const StudentExam = () => {
   // Default to full-screen & hide mobile status bar as soon as UBT exam opens
   useEffect(() => {
     enterFullScreen();
+    const handleGesture = () => {
+      enterFullScreen();
+    };
+    window.addEventListener("touchstart", handleGesture, { passive: true });
+    window.addEventListener("pointerdown", handleGesture, { passive: true });
+    window.addEventListener("click", handleGesture);
     return () => {
+      window.removeEventListener("touchstart", handleGesture);
+      window.removeEventListener("pointerdown", handleGesture);
+      window.removeEventListener("click", handleGesture);
       try {
         if (typeof document !== "undefined") {
           document.body.classList.remove("pdf-open", "exam-fullscreen-active");
@@ -893,6 +902,8 @@ const StudentExam = () => {
     return (
       <div 
         className="ubt-exam-landscape-enforcer"
+        onClick={enterFullScreen}
+        onTouchStart={enterFullScreen}
         style={{
           position: "fixed",
           top: 0,
@@ -998,18 +1009,32 @@ const StudentExam = () => {
           overflow: hidden;
           box-shadow: none;
         }
-        .ubt-exam-header-bar {
+        .ubt-exam-header-bar,
+        .ubt-overview-top-bar {
           display: flex !important;
           align-items: center !important;
           background-color: #f8fafc !important;
           color: #334155 !important;
           border-bottom: 1px solid #cbd5e1 !important;
-          padding: 6px 16px !important;
+          padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 32px) !important;
+          padding-bottom: 8px !important;
+          padding-left: max(calc(env(safe-area-inset-left, 0px) + 16px), 24px) !important;
+          padding-right: max(calc(env(safe-area-inset-right, 0px) + 16px), 24px) !important;
           font-size: 13.5px !important;
           font-weight: 600 !important;
           flex-shrink: 0 !important;
           width: 100% !important;
           box-sizing: border-box !important;
+        }
+
+        :fullscreen .ubt-exam-header-bar,
+        :-webkit-full-screen .ubt-exam-header-bar,
+        :fullscreen .ubt-overview-top-bar,
+        :-webkit-full-screen .ubt-overview-top-bar {
+          padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 14px) !important;
+          padding-bottom: 8px !important;
+          padding-left: max(calc(env(safe-area-inset-left, 0px) + 16px), 24px) !important;
+          padding-right: max(calc(env(safe-area-inset-right, 0px) + 16px), 24px) !important;
         }
         .ubt-exam-card {
           background-color: #f8fafc !important;
@@ -1281,7 +1306,7 @@ const StudentExam = () => {
         <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "100%", width: "100%", height: "100%", margin: "0", justifyContent: "stretch", borderRadius: "0", overflow: "hidden" }}>
           
           {/* STEP 3: WHOLE QUESTIONS OVERVIEW TOP BAR (Screenshot 3) */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#f8fafc", borderBottom: "1px solid #cbd5e1", padding: "6px 16px", flexShrink: 0, boxSizing: "border-box", width: "100%" }}>
+          <div className="ubt-overview-top-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#f8fafc", borderBottom: "1px solid #cbd5e1", flexShrink: 0, boxSizing: "border-box", width: "100%" }}>
             
             {/* Left: User Icon & Exam Title */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "700", fontSize: "14px", color: "#1e293b" }}>
@@ -1511,7 +1536,7 @@ const StudentExam = () => {
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
                 
                 {/* STEP 2: TOP HEADER STRIP (Screenshot 2 & 4) */}
-                <div className="ubt-exam-header-bar" style={{ display: "flex", alignItems: "center", backgroundColor: "#f8fafc", color: "#334155", borderBottom: "1px solid #cbd5e1", padding: "6px 16px", fontSize: "13.5px", fontWeight: "600", flexShrink: 0, width: "100%", boxSizing: "border-box" }}>
+                <div className="ubt-exam-header-bar" style={{ display: "flex", alignItems: "center", backgroundColor: "#f8fafc", color: "#334155", borderBottom: "1px solid #cbd5e1", fontSize: "13.5px", fontWeight: "600", flexShrink: 0, width: "100%", boxSizing: "border-box" }}>
                   <div style={{ padding: "0 16px 0 4px", borderRight: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
                     <span>{exactExamName || "New UBT - 127"}</span>
                   </div>
