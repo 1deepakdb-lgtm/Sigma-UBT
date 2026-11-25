@@ -164,12 +164,15 @@ const StudentResult = () => {
     @media (orientation: landscape) {
       .ubt-exam-landscape-enforcer {
         position: fixed !important;
+        inset: 0 !important;
         top: 0 !important;
         left: 0 !important;
-        width: 100vw !important;
-        width: 100dvw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
         overflow: hidden !important;
         z-index: 2147483640 !important;
         background-color: #f8fafc !important;
@@ -493,11 +496,10 @@ const StudentResult = () => {
           .result-grid-outer {
             max-width: 100% !important;
             width: 100% !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            max-height: 100dvh !important;
-            margin: 0 auto !important;
-            padding: 6px 12px !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            margin: 0 !important;
+            padding: calc(env(safe-area-inset-top, 0px) + 4px) calc(env(safe-area-inset-right, 0px) + 10px) calc(env(safe-area-inset-bottom, 0px) + 6px) calc(env(safe-area-inset-left, 0px) + 10px) !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;

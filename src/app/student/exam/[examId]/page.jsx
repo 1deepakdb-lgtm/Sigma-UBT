@@ -891,16 +891,17 @@ const StudentExam = () => {
 
   const UBT_EXAM_CSS = `
     .ubt-exam-wrapper {
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      max-height: 100dvh;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
+      margin: 0;
       padding: 0;
       overflow: hidden;
       position: fixed;
+      inset: 0;
       top: 0;
       left: 0;
       right: 0;
@@ -941,10 +942,10 @@ const StudentExam = () => {
       background-color: #f8fafc !important;
       color: #334155 !important;
       border-bottom: 1px solid #cbd5e1 !important;
-      padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 24px) !important;
-      padding-bottom: 8px !important;
-      padding-left: max(calc(env(safe-area-inset-left, 0px) + 20px), 32px) !important;
-      padding-right: max(calc(env(safe-area-inset-right, 0px) + 28px), 56px) !important;
+      padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+      padding-bottom: 6px !important;
+      padding-left: calc(env(safe-area-inset-left, 0px) + 14px) !important;
+      padding-right: calc(env(safe-area-inset-right, 0px) + 14px) !important;
       font-size: 13.5px !important;
       font-weight: 600 !important;
       flex-shrink: 0 !important;
@@ -956,10 +957,10 @@ const StudentExam = () => {
     :-webkit-full-screen .ubt-exam-header-bar,
     :fullscreen .ubt-overview-top-bar,
     :-webkit-full-screen .ubt-overview-top-bar {
-      padding-top: max(calc(env(safe-area-inset-top, 0px) + 8px), 14px) !important;
-      padding-bottom: 8px !important;
-      padding-left: max(calc(env(safe-area-inset-left, 0px) + 20px), 32px) !important;
-      padding-right: max(calc(env(safe-area-inset-right, 0px) + 28px), 48px) !important;
+      padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+      padding-bottom: 6px !important;
+      padding-left: calc(env(safe-area-inset-left, 0px) + 14px) !important;
+      padding-right: calc(env(safe-area-inset-right, 0px) + 14px) !important;
     }
     .ubt-exam-card {
       background-color: #f8fafc !important;
@@ -1099,12 +1100,15 @@ const StudentExam = () => {
     @media (orientation: landscape) {
       .ubt-exam-landscape-enforcer {
         position: fixed !important;
+        inset: 0 !important;
         top: 0 !important;
         left: 0 !important;
-        width: 100vw !important;
-        width: 100dvw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
         overflow: hidden !important;
         z-index: 2147483640 !important;
         background-color: #f8fafc !important;
