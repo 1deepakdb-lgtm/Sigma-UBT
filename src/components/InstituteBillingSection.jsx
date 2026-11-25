@@ -5864,41 +5864,37 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       alignItems: "flex-end",
                       marginBottom: "14px"
                     }}>
-                      {/* 1. Course Gross Fee (Editable) */}
+                      {/* 1. Course Gross Fee (Read-Only / Locked to Default Fee Structure) */}
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                           <label style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", textTransform: "uppercase" }}>
                             Course Fee (Gross)
                           </label>
                         </div>
-                        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                          <span style={{ position: "absolute", left: "10px", fontSize: "12px", fontWeight: "bold", color: "#166534", pointerEvents: "none" }}>Rs.</span>
+                        <div style={{ position: "relative", display: "flex", alignItems: "center", cursor: "not-allowed" }}>
+                          <span style={{ position: "absolute", left: "10px", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
                           <input
                             type="number"
                             min="0"
                             step="100"
                             placeholder="0"
+                            readOnly
+                            disabled
+                            tabIndex={-1}
                             value={form.grossFee == 0 ? '' : form.grossFee}
-                            onWheel={(e) => e.target.blur()}
-                            onChange={(e) => {
-                              const newGross = Math.max(0, Number(e.target.value) || 0);
-                              if (discountMode === "amt") {
-                                updateFeeCalculationsByAmount(newGross, form.discountAmount);
-                              } else {
-                                updateFeeCalculations(newGross, form.discountPercent);
-                              }
-                            }}
                             style={{
                               width: "100%",
                               height: "44px",
                               padding: "0 10px 0 34px",
                               borderRadius: "6px",
-                              border: "1.5px solid #cbd5e1",
-                              backgroundColor: "#ffffff",
+                              border: "1.5px solid #e2e8f0",
+                              backgroundColor: "#f8fafc",
                               boxSizing: "border-box",
                               fontWeight: "bold",
                               fontSize: "14px",
-                              color: "#166534"
+                              color: "#64748b",
+                              pointerEvents: "none",
+                              userSelect: "none"
                             }}
                           />
                         </div>
@@ -5965,7 +5961,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           )}
                         </div>
 
-                        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                        <div style={{ position: "relative", display: "flex", alignItems: "center", cursor: "not-allowed" }}>
                           <span style={{ position: "absolute", left: "10px", fontWeight: "900", fontSize: "14px", color: "#dc2626", pointerEvents: "none" }}>
                             {discountMode === "amt" ? "- Rs." : "-"}
                           </span>
@@ -5975,6 +5971,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             max={discountMode === "pct" ? "100" : (form.grossFee || "999999")}
                             placeholder="0"
                             readOnly
+                            disabled
+                            tabIndex={-1}
                             value={
                               discountMode === "amt"
                                 ? (form.discountAmount == 0 ? '' : form.discountAmount)
@@ -5991,7 +5989,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               fontWeight: "bold",
                               fontSize: "14px",
                               color: "#64748b",
-                              cursor: "not-allowed"
+                              pointerEvents: "none",
+                              userSelect: "none"
                             }}
                           />
                           {discountMode === "pct" && (
