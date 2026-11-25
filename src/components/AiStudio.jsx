@@ -823,70 +823,53 @@ const handleGenerateDialogue = async () => {
 }
   };
 
-const containerStyle = embedded ? {
-  backgroundColor: '#ffffff',
-  borderRadius: '16px',
-  border: '2px solid #818cf8',
-  padding: '20px 16px',
-  boxShadow: '0 10px 30px rgba(79, 70, 229, 0.12)',
+const containerStyle = {
+  width: '100%',
+  maxWidth: '100%',
+  padding: '0',
   position: 'relative',
-  boxSizing: 'border-box',
-  width: '100%',
-  maxWidth: '100%',
-  overflowX: 'hidden'
-} : {
-  width: '100%',
-  maxWidth: '100%',
   boxSizing: 'border-box',
   overflowX: 'hidden'
 };
 
 return (
   <div style={containerStyle}>
-    {/* Studio Header Bar (when embedded in Dictionary) */}
+    {/* Compact Top Bar (without "AI Studio (Under Dictionary)" text or outer box) */}
     {embedded && (
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: '12px',
-        marginBottom: '20px',
-        paddingBottom: '16px',
+        gap: '10px',
+        marginBottom: '12px',
+        paddingBottom: '10px',
         borderBottom: '1.5px solid #e2e8f0'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '12px',
+            width: '34px',
+            height: '34px',
+            borderRadius: '10px',
             background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '22px',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.35)'
+            boxShadow: '0 3px 10px rgba(79, 70, 229, 0.3)'
           }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
               <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
               <line x1="12" x2="12" y1="19" y2="22" />
             </svg>
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#0f172a' }}>
-                AI Studio (Under Dictionary)
-              </h3>
-              <span style={{ fontSize: '11px', background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: '10px', fontWeight: '800' }}>
-                Live Neural Audio
-              </span>
-            </div>
-            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
-              Generate speech, listen to realistic accents, and test Korean & Japanese voices directly here
-            </span>
-          </div>
+          <span style={{ fontSize: '16px', fontWeight: '900', color: '#0f172a' }}>
+            Multi-Speaker Dialogue Studio
+          </span>
+          <span style={{ fontSize: '11px', background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: '10px', fontWeight: '800' }}>
+            Live Neural Audio
+          </span>
         </div>
 
         {onClose && (
@@ -897,20 +880,20 @@ return (
               background: '#f1f5f9',
               border: '1px solid #cbd5e1',
               color: '#475569',
-              padding: '7px 14px',
+              padding: '6px 12px',
               borderRadius: '8px',
-              fontSize: '13px',
+              fontSize: '12.5px',
               fontWeight: '800',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               transition: 'background-color 0.15s ease'
             }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e2e8f0'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f1f5f9'; }}
           >
-            <span>✕ Close AI Studio</span>
+            <span>✕ Close</span>
           </button>
         )}
       </div>
@@ -1604,9 +1587,9 @@ return (
       </div>
     )}
 
-    {/* ── MULTI-SPEAKER DIALOGUE STUDIO TAB ─────────────────────────────────── */}
+    {/* ── MULTI-SPEAKER DIALOGUE STUDIO TAB (FULL WIDTH, OUTSIDE ALL CELLS) ── */}
     {activeTab === 'dialogue' && (
-      <div style={{ background: '#ffffff', borderRadius: '16px', border: '1.5px solid #e2e8f0', padding: '24px 20px', boxShadow: '0 4px 18px rgba(0,0,0,0.04)' }}>
+      <div style={{ width: '100%', padding: '4px 0', boxSizing: 'border-box' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
@@ -1755,7 +1738,7 @@ return (
             }}>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',
                 gap: '16px'
               }}>
                 {/* SPEAKER A CARD (Lead Role) */}
