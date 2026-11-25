@@ -2204,6 +2204,7 @@ export default function EpsBookReader({
     setCurrentTime(0);
     setShowTrackDropdown(false);
   };
+  const closeChapterFullScreen = closeFullScreen;
 
   // Fullscreen communication handler from embedded PDF viewer iframe
   useEffect(() => {
@@ -4041,7 +4042,7 @@ export default function EpsBookReader({
             </button>
             <button
               type="button"
-              onClick={closeChapterFullScreen}
+              onClick={() => closeFullScreen(true)}
               title="Close Document"
               style={{
                 backgroundColor: "rgba(220, 38, 38, 0.85)",
