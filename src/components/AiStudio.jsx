@@ -631,7 +631,8 @@ export default function AiStudio({
   };
 
   // Preview Individual Dialogue Line with direct HTML5 audio & instant fallback
-  const dialogueBlobCacheRef = typeof React !== 'undefined' ? React.useRef(new Map()) : { current: new Map() };
+  const dialogueBlobCacheRef = useRef(new Map());
+  const playTokenRef = useRef(0);
 
   const buildDialogueLineUrl = (turn) => {
     const isSpeakerA = turn.speaker === 'A';
@@ -690,11 +691,28 @@ export default function AiStudio({
   const handlePreviewDialogueLine = (turn, index) => {
     if (!turn?.text || !turn.text.trim()) return;
 
+    const token = ++playTokenRef.current;
+
     if (previewAudioRef.current) {
       try {
+        previewAudioRef.current.onended = null;
+        previewAudioRef.current.onerror = null;
+        previewAudioRef.current.onplaying = null;
         previewAudioRef.current.pause();
         previewAudioRef.current.currentTime = 0;
       } catch (e) { }
+      previewAudioRef.current = null;
+    }
+
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      } catch (e) { }
+    }
+
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (e) { }
     }
 
     if (previewingLineIndex === index) {
@@ -718,26 +736,30 @@ export default function AiStudio({
         .catch(() => {});
     }
 
-    let audio = previewAudioRef.current;
-    if (!audio) {
-      audio = new Audio();
-      previewAudioRef.current = audio;
-    }
-    audio.src = cachedBlobUrl || edgeUrl;
+    const audio = new Audio(cachedBlobUrl || edgeUrl);
+    previewAudioRef.current = audio;
     audio.playbackRate = 1.0;
 
     audio.onended = () => {
-      setPreviewingLineIndex(null);
+      if (playTokenRef.current === token) {
+        setPreviewingLineIndex(null);
+      }
     };
     audio.onerror = () => {
-      const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingLineIndex(null));
+      if (playTokenRef.current !== token) return;
+      const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => {
+        if (playTokenRef.current === token) setPreviewingLineIndex(null);
+      });
       if (!spoke) setPreviewingLineIndex(null);
     };
 
     const playPromise = audio.play();
     if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => setPreviewingLineIndex(null));
+      playPromise.catch((err) => {
+        if (playTokenRef.current !== token || err?.name === 'AbortError') return;
+        const spoke = speakStudioNative(cleanText, lang === 'ja' ? 'ja-JP' : 'ko-KR', targetGender, () => {
+          if (playTokenRef.current === token) setPreviewingLineIndex(null);
+        });
         if (!spoke) setPreviewingLineIndex(null);
       });
     }
@@ -2209,7 +2231,7 @@ return (
                     value={assignedVoiceId}
                     onChange={(e) => {
                       const updated = [...dialogueTurns];
-                      updated[index].voiceProfileId = e.target.value;
+                      updated[index] = { ...updated[index], voiceProfileId: e.target.value };
                       setDialogueTurns(updated);
                     }}
                     style={{
@@ -2248,7 +2270,7 @@ return (
                     value={assignedModelId}
                     onChange={(e) => {
                       const updated = [...dialogueTurns];
-                      updated[index].modelId = e.target.value;
+                      updated[index] = { ...updated[index], modelId: e.target.value };
                       setDialogueTurns(updated);
                     }}
                     style={{
@@ -2283,7 +2305,7 @@ return (
               value={turn.text}
               onChange={(e) => {
                 const updated = [...dialogueTurns];
-                updated[index].text = e.target.value;
+                updated[index] = { ...updated[index], text: e.target.value };
                 setDialogueTurns(updated);
               }}
               placeholder={`Enter line for ${isSpeakerA ? 'Speaker A' : 'Speaker B'}...`}
