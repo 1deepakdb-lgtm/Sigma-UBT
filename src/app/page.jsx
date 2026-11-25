@@ -713,29 +713,6 @@ export default function LoginPage() {
 
   return (
     <div style={containerStyle}>
-      {/* Top Header Bar with Brand & About Us Button */}
-      <div style={{
-        width: "100%",
-        maxWidth: "420px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "6px 4px",
-        marginBottom: "10px",
-        boxSizing: "border-box"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <img
-            src="/examjk-logo.png"
-            alt="ExamJK Logo"
-            style={{ width: "24px", height: "24px", objectFit: "contain" }}
-          />
-          <span style={{ fontSize: "16px", fontWeight: "900", color: "#003b73", letterSpacing: "-0.3px" }}>ExamJK</span>
-          <span style={{ fontSize: "10px", backgroundColor: "#e0e7ff", color: "#3730a3", padding: "2px 7px", borderRadius: "10px", fontWeight: "700" }}>Platform</span>
-        </div>
-
-      </div>
-
       <div style={cardStyle}>
         {/* ExamJK Logo */}
         <img
