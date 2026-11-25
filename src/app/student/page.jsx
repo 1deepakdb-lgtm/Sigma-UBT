@@ -120,6 +120,31 @@ const StudentDashboard = () => {
   const location = { pathname, state: {} };
 
   const [activeTab, setActiveTab] = useState("home");
+  const isFirstTabMountRef = useRef(true);
+
+  useEffect(() => {
+    if (isFirstTabMountRef.current) {
+      isFirstTabMountRef.current = false;
+      return;
+    }
+    try {
+      router.refresh();
+    } catch (e) {}
+    fetch("/api/student/exams")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.sets && Array.isArray(data.sets) && data.sets.length > 0) {
+          setExamSets((prev) => {
+            const serverMap = new Map(data.sets.map((s) => [s.id, s]));
+            return prev.map((localSet) => {
+              const s = serverMap.get(localSet.id);
+              return s ? { ...localSet, ...s, questions: localSet.questions?.length ? localSet.questions : s.questions } : localSet;
+            });
+          });
+        }
+      })
+      .catch(() => {});
+  }, [activeTab]);
   const [examSets, setExamSets] = useState([]);
   const [examPackages, setExamPackages] = useState([]);
   const [selectedPackageFilter, setSelectedPackageFilter] = useState("All");

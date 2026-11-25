@@ -945,6 +945,7 @@ const InstituteDashboard = () => {
     }
     setActiveTab(tabName);
     loadData();
+    try { router.refresh(); } catch (e) {}
     setShowLandscapeBars(false);
     if (isMobileDevice() && (tabName === "billing" || tabName === "students")) {
       tryAutoRotateLandscape();

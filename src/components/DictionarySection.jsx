@@ -506,6 +506,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   const sourceNodeRef = useRef(null);
   const audioBufferCacheRef = useRef(new Map()); // Map<cacheKey, { buffer, lowShelf, speed }>
   const audioBlobCacheRef = useRef(new Map()); // Map<url, string (blobUrl)> for millisecond playback
+  const inFlightPrefetchRef = useRef(new Set());
   const femaleDropdownRef = useRef(null);
   const maleDropdownRef = useRef(null);
   const femaleBadgeRef = useRef(null);
@@ -519,7 +520,8 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
   // Prefetch AI Studio model audio in background for instant response
   const prefetchAudio = (url) => {
     if (!url || typeof window === 'undefined') return;
-    if (audioBlobCacheRef.current.has(url)) return;
+    if (audioBlobCacheRef.current.has(url) || inFlightPrefetchRef.current.has(url)) return;
+    inFlightPrefetchRef.current.add(url);
     fetch(url)
       .then(res => {
         if (!res.ok) throw new Error('Fetch failed');
@@ -529,8 +531,55 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         const blobUrl = URL.createObjectURL(blob);
         audioBlobCacheRef.current.set(url, blobUrl);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        inFlightPrefetchRef.current.delete(url);
+      });
   };
+
+  // Proactively prefetch searched word + top visible listed words for zero-delay playback
+  useEffect(() => {
+    if (showAiStudio || typeof window === 'undefined') return;
+    const timer = setTimeout(() => {
+      const activeModel = selectedVoiceModel || selectedFemaleModel || (activeLang === 'ja' ? JAPANESE_FEMALE_VOICE_MODELS[0] : KOREAN_FEMALE_VOICE_MODELS[0]);
+      if (!activeModel || activeModel.isCustom) return;
+      const isMale = activeModel?.gender === 'male';
+
+      const buildTtsUrl = (spokenText, langCode) => {
+        const voiceProfId = activeModel?.voiceProfileId || (langCode === 'ja' ? (isMale ? 'ja-male-1' : 'ja-female-1') : (isMale ? 'ko-male-1' : 'ko-female-1'));
+        return `/api/tts?text=${encodeURIComponent(spokenText)}&lang=${langCode}&gender=${isMale ? 'male' : 'female'}&model=${encodeURIComponent(voiceProfId)}&voice=${encodeURIComponent(activeModel?.voice || '')}`;
+      };
+
+      const qText = searchQuery?.trim();
+      if (qText) {
+        const qLang = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(qText)
+          ? 'ja'
+          : (/[\uAC00-\uD7AF]/.test(qText) ? 'ko' : (activeLang === 'ja' ? 'ja' : 'ko'));
+        prefetchAudio(buildTtsUrl(qText, qLang));
+      }
+
+      if (selectedWord) {
+        const primary = selectedWord.japanese || selectedWord.korean || selectedWord.kanji || selectedWord.word;
+        const spoken = selectedWord.japaneseSpoken || selectedWord.spoken || primary;
+        if (spoken) {
+          const wLang = selectedWord.isKanji || activeLang === 'ja' || /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(primary || '') ? 'ja' : 'ko';
+          prefetchAudio(buildTtsUrl(spoken, wLang));
+        }
+      }
+
+      const topWords = (results || []).slice(0, 12);
+      topWords.forEach((word) => {
+        if (!word) return;
+        const primary = word.japanese || word.korean || word.kanji || word.word;
+        const spoken = word.japaneseSpoken || word.spoken || primary;
+        if (!spoken) return;
+        const wLang = word.isKanji || activeLang === 'ja' || /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(primary || '') ? 'ja' : 'ko';
+        prefetchAudio(buildTtsUrl(spoken, wLang));
+      });
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [results, selectedWord, searchQuery, activeLang, selectedVoiceModel, selectedFemaleModel, showAiStudio]);
 
   // Load Voice Library from LocalStorage on mount
   useEffect(() => {
@@ -985,17 +1034,24 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       return;
     }
 
-    // 2. Play high-fidelity synthesized audio with genuine male/female vocal tracts
+    // 2. Play high-fidelity synthesized audio with genuine male/female vocal tracts (0ms from cache)
     if (url) {
-      setLoadingAudioId(id);
-      setPlayingAudioId(null);
+      const cachedBlobUrl = audioBlobCacheRef.current.get(url);
+      if (!cachedBlobUrl) {
+        setLoadingAudioId(id);
+        setPlayingAudioId(null);
+        prefetchAudio(url);
+      } else {
+        setLoadingAudioId(null);
+        setPlayingAudioId(id);
+      }
 
       let audio = audioRef.current;
       if (!audio) {
         audio = new Audio();
         audioRef.current = audio;
       }
-      audio.src = url;
+      audio.src = cachedBlobUrl || url;
 
       audio.onplay = () => {
         setLoadingAudioId(null);
