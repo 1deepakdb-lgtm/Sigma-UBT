@@ -5655,23 +5655,43 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       Class Time (with AM / PM) * {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
                     </label>
                     <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. 07:00 or 7:00 - 8:00"
-                        value={form.classTime || ""}
-                        readOnly={form.isExistingStudent && !form.isEditingExistingBill}
-                        onChange={(e) => setForm({ ...form, classTime: e.target.value })}
-                        style={{
-                          flex: 1,
-                          padding: "9px 12px",
-                          borderRadius: "6px",
-                          border: "1.5px solid #cbd5e1",
-                          backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "white",
-                          fontSize: "14px",
-                          boxSizing: "border-box"
-                        }}
-                      />
+                      {(() => {
+                        const baseTimeSlots = [
+                          "06:00", "06:30", "07:00", "07:30", "08:00", "08:30",
+                          "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+                          "12:00", "12:30", "01:00", "01:30", "02:00", "02:30",
+                          "03:00", "03:30", "04:00", "04:30", "05:00", "05:30"
+                        ];
+                        const curTime = (form.classTime || "").trim();
+                        const timeOptions = curTime && !baseTimeSlots.includes(curTime)
+                          ? [curTime, ...baseTimeSlots]
+                          : baseTimeSlots;
+                        return (
+                          <select
+                            required
+                            value={curTime}
+                            disabled={form.isExistingStudent && !form.isEditingExistingBill}
+                            onChange={(e) => setForm({ ...form, classTime: e.target.value })}
+                            style={{
+                              flex: 1,
+                              padding: "9px 12px",
+                              borderRadius: "6px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "white",
+                              fontSize: "14px",
+                              fontWeight: "600",
+                              color: "#0f172a",
+                              cursor: (form.isExistingStudent && !form.isEditingExistingBill) ? "not-allowed" : "pointer",
+                              boxSizing: "border-box"
+                            }}
+                          >
+                            <option value="">Select Time</option>
+                            {timeOptions.map((t) => (
+                              <option key={t} value={t}>{t}</option>
+                            ))}
+                          </select>
+                        );
+                      })()}
                       <select
                         value={form.classTimePeriod || "AM"}
                         disabled={form.isExistingStudent && !form.isEditingExistingBill}
