@@ -638,6 +638,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
   const [form, setForm] = useState(defaultForm);
   const [discountMode, setDiscountMode] = useState("pct"); // "pct" or "amt"
+  const [discountUserEdited, setDiscountUserEdited] = useState(false); // true once user manually changes discount
   const [showBillModal, setShowBillModal] = useState(false);
   const [selectedItemToAdd, setSelectedItemToAdd] = useState("");
   const [customItemToAdd, setCustomItemToAdd] = useState("");
@@ -1899,23 +1900,27 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     const course = currentCourse !== undefined ? currentCourse : form.courseDetail;
     const pkgDefaults = getPackageFee(selectedPackage, course);
     const gross = Number(pkgDefaults.grossFee) || 0;
-    const discPct = Number(pkgDefaults.discountPercent) || 0;
     const materialsList = form.materials || [];
     const materialsTotal = materialsList.reduce((acc, m) => acc + (Number(m.amount) || 0), 0);
-    const discAmt = gross * (discPct / 100);
-    const netCourseFee = Math.max(0, gross - discAmt);
-    const finalTotal = Math.max(0, netCourseFee + materialsTotal);
 
-    setForm(prev => ({
-      ...prev,
-      coursePackage: selectedPackage,
-      ...(currentCourse !== undefined ? { courseDetail: currentCourse } : {}),
-      grossFee: gross,
-      discountPercent: discPct,
-      discountAmount: discAmt,
-      totalFee: finalTotal,
-      paidAmount: prev.paymentSystem === "Full Payment" ? finalTotal : Math.min(Number(prev.paidAmount || 0), finalTotal)
-    }));
+    setForm(prev => {
+      // If user has manually edited discount, preserve their values; only use package default for fresh forms
+      const useUserDiscount = discountUserEdited;
+      const discPct = useUserDiscount ? Number(prev.discountPercent || 0) : (Number(pkgDefaults.discountPercent) || 0);
+      const discAmt = useUserDiscount ? Number(prev.discountAmount || 0) : (gross * (discPct / 100));
+      const netCourseFee = Math.max(0, gross - discAmt);
+      const finalTotal = Math.max(0, netCourseFee + materialsTotal);
+      return {
+        ...prev,
+        coursePackage: selectedPackage,
+        ...(currentCourse !== undefined ? { courseDetail: currentCourse } : {}),
+        grossFee: gross,
+        discountPercent: discPct,
+        discountAmount: discAmt,
+        totalFee: finalTotal,
+        paidAmount: prev.paymentSystem === "Full Payment" ? finalTotal : Math.min(Number(prev.paidAmount || 0), finalTotal)
+      };
+    });
   };
 
   // Handle Course Detail Change: auto-populates standard child package and fee structure for the selected course
@@ -2018,13 +2023,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     setFeeSavedToast("Course package default fee structures updated successfully!");
     setTimeout(() => setFeeSavedToast(""), 3500);
 
-    // If bill modal is currently open, refresh form to match new defaults
+    // If bill modal is currently open, refresh gross fee from new defaults but preserve user's discount
     if (showBillModal && !form.isEditingExistingBill) {
       const curCourse = form.courseDetail;
       const curPkg = form.coursePackage || selectedDefaultPkg;
       const pkgInfo = (curCourse && newConfig.courseFees?.[curCourse]?.packages?.[curPkg]) || newConfig.packages[curPkg] || newConfig.packages[selectedDefaultPkg];
       if (pkgInfo) {
-        updateFeeCalculations(pkgInfo.grossFee, pkgInfo.discountPercent);
+        // Only update gross fee; preserve current discount (user may have already set it)
+        updateFeeCalculations(pkgInfo.grossFee, discountUserEdited ? form.discountPercent : pkgInfo.discountPercent);
       }
     }
   };
@@ -2060,6 +2066,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   // Open Create New Bill Modal with fresh defaults
   const handleOpenCreateBill = () => {
     setForm(resetBillForm());
+    setDiscountUserEdited(false); // reset flag for fresh form
     setShowBillModal(true);
   };
 
@@ -2203,6 +2210,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       isExistingStudent: false
     });
     setShowBillModal(true);
+    setDiscountUserEdited(true); // existing bill: treat discount as user-set (preserve loaded values)
   };
 
   // Add item from Dropdown Arrow with Stock & Quantity Checking (Auto-Add or Manual)
@@ -2562,6 +2570,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         }
         setShowBillModal(false);
         setForm(resetBillForm());
+        setDiscountUserEdited(false);
         alert(`Bill ${updatedBill.billNumber} has been successfully updated!`);
         return;
       } catch (err) {
@@ -2629,6 +2638,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       setSelectedInvoice(returnedBill);
       setShowBillModal(false);
       setForm(resetBillForm());
+      setDiscountUserEdited(false);
 
       alert(data.message || `Bill ${returnedBill.billNumber} successfully generated!`);
       setTimeout(() => window.print(), 200);
@@ -5972,6 +5982,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             onWheel={(e) => e.target.blur()}
                             onChange={(e) => {
                               const val = e.target.value;
+                              setDiscountUserEdited(true); // user manually changed discount — preserve it
                               if (discountMode === "amt") {
                                 updateFeeCalculationsByAmount(form.grossFee, val);
                               } else {
