@@ -367,15 +367,41 @@ export async function POST(req, { params }) {
       };
     });
 
-    // Fetch Institute Watermark if student has institute
+    // Fetch Institute Watermark & Logo for student's institute
     let watermark = '';
-    if (session?.instituteId) {
+    let instituteLogoUrl = '';
+    let instituteName = '';
+
+    let studentInstId = realSession?.instituteId || session?.instituteId;
+    if (!studentInstId && (cleanPhone || studentPhone)) {
+      try {
+        const studentUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              ...(cleanPhone ? [{ phone: { contains: cleanPhone } }, { username: { contains: cleanPhone } }] : []),
+              ...(studentPhone ? [{ phone: studentPhone }, { username: studentPhone }] : [])
+            ],
+            role: 'student'
+          },
+          select: { instituteId: true }
+        });
+        if (studentUser?.instituteId) {
+          studentInstId = studentUser.instituteId;
+        }
+      } catch (uErr) {}
+    }
+
+    if (studentInstId) {
       try {
         const inst = await prisma.institute.findUnique({
-          where: { id: session.instituteId },
-          select: { watermarkText: true, logoUrl: true }
+          where: { id: studentInstId },
+          select: { watermarkText: true, logoUrl: true, name: true }
         });
-        watermark = inst?.watermarkText || inst?.logoUrl || '';
+        if (inst) {
+          instituteLogoUrl = inst.logoUrl || '';
+          instituteName = inst.name || '';
+          watermark = inst.logoUrl || inst.watermarkText || '';
+        }
       } catch (instErr) {}
     }
 
@@ -387,6 +413,8 @@ export async function POST(req, { params }) {
       duration: durationSeconds,
       expiresAt: expiresAt.toISOString(),
       watermark,
+      instituteLogoUrl,
+      instituteName,
       questions: questionsForStudent,
       answerSheet
     });

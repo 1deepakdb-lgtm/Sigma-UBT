@@ -1174,7 +1174,13 @@ const StudentDashboard = () => {
             setStudentInstitutePackage(instPkg);
             localStorage.setItem("currentInstitutePackage", instPkg);
           }
-          if (instLogo) setLogoWatermark(instLogo);
+          if (instLogo) {
+            setLogoWatermark(instLogo);
+            localStorage.setItem("currentInstituteLogo", instLogo);
+          }
+          if (instName) {
+            localStorage.setItem("currentInstituteName", instName);
+          }
           if (batchName) setStudentBatch(batchName);
           if (userPkg && !isShift(userPkg)) {
             setStudentPackage(userPkg);

@@ -16,36 +16,87 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useParams, usePathname } from "next/navigation";
 
-const UbtWatermark = ({ opacity = 0.16 }) => (
-  <div style={{
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    pointerEvents: "none",
-    userSelect: "none",
-    opacity,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1
-  }}>
-    <svg width="240" height="150" viewBox="0 0 240 150" fill="none">
-      <path d="M65 118 H175 A38 38 0 0 0 175 42 A48 48 0 0 0 82 50 A32 32 0 0 0 65 118 Z" fill="#38bdf8" fillOpacity="0.25" />
-      <text x="120" y="55" textAnchor="middle" fill="#0284c7" fontSize="19" fontWeight="900" fontFamily="sans-serif">EPS</text>
-      <text x="120" y="76" textAnchor="middle" fill="#0284c7" fontSize="19" fontWeight="900" fontFamily="sans-serif">TOPIK</text>
-      <text x="120" y="98" textAnchor="middle" fill="#db2777" fontSize="14" fontWeight="800" fontFamily="sans-serif">Exam Korean</text>
-      <text x="120" y="116" textAnchor="middle" fill="#0284c7" fontSize="15" fontWeight="800" fontFamily="sans-serif">UBT APP</text>
-    </svg>
-  </div>
-);
+const UbtWatermark = ({ logoUrl = "", instituteName = "", opacity = 0.16 }) => {
+  if (logoUrl) {
+    return (
+      <div style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        pointerEvents: "none",
+        userSelect: "none",
+        opacity,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1,
+        maxWidth: "85%",
+        maxHeight: "85%"
+      }}>
+        <img
+          src={logoUrl}
+          alt="Institute Logo Watermark"
+          style={{
+            maxHeight: "140px",
+            maxWidth: "250px",
+            width: "auto",
+            height: "auto",
+            objectFit: "contain",
+            filter: "grayscale(20%)"
+          }}
+          draggable="false"
+        />
+        {instituteName && (
+          <span style={{
+            fontSize: "13px",
+            fontWeight: "800",
+            color: "#0284c7",
+            marginTop: "6px",
+            textAlign: "center",
+            letterSpacing: "0.5px"
+          }}>
+            {instituteName}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      pointerEvents: "none",
+      userSelect: "none",
+      opacity,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 1
+    }}>
+      <svg width="240" height="150" viewBox="0 0 240 150" fill="none">
+        <path d="M65 118 H175 A38 38 0 0 0 175 42 A48 48 0 0 0 82 50 A32 32 0 0 0 65 118 Z" fill="#38bdf8" fillOpacity="0.25" />
+        <text x="120" y="55" textAnchor="middle" fill="#0284c7" fontSize="19" fontWeight="900" fontFamily="sans-serif">EPS</text>
+        <text x="120" y="76" textAnchor="middle" fill="#0284c7" fontSize="19" fontWeight="900" fontFamily="sans-serif">TOPIK</text>
+        <text x="120" y="98" textAnchor="middle" fill="#db2777" fontSize="14" fontWeight="800" fontFamily="sans-serif">Exam Korean</text>
+        <text x="120" y="116" textAnchor="middle" fill="#0284c7" fontSize="15" fontWeight="800" fontFamily="sans-serif">UBT APP</text>
+      </svg>
+    </div>
+  );
+};
 
 const StudentExam = () => {
   const router = useRouter();
   const params = useParams(); const examId = params?.examId;
   const [studentName, setStudentName] = useState("");
   const [logoWatermark, setLogoWatermark] = useState("");
+  const [instituteName, setInstituteName] = useState("");
+  const [playingOptionIndex, setPlayingOptionIndex] = useState(null);
 
   const [isStarted, setIsStarted] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(1);
@@ -74,12 +125,38 @@ const StudentExam = () => {
 
   useEffect(() => {
     try {
-      const u = localStorage.getItem("currentUser") || "Student";
+      const u = localStorage.getItem("currentUser") || localStorage.getItem("currentStudentName") || "Student";
       setStudentName(u);
+      const storedLogo = localStorage.getItem("currentInstituteLogo");
+      if (storedLogo) setLogoWatermark(storedLogo);
+      const storedInstName = localStorage.getItem("currentInstituteName");
+      if (storedInstName) setInstituteName(storedInstName);
+
       const institutes = JSON.parse(localStorage.getItem("institutes") || "[]");
-      if (institutes[0]?.logoUrl) {
+      if (institutes[0]?.logoUrl && !storedLogo) {
         setLogoWatermark(institutes[0].logoUrl);
       }
+      if (institutes[0]?.name && !storedInstName) {
+        setInstituteName(institutes[0].name);
+      }
+
+      // Automatically fetch /api/auth/me to get the authenticated student's institute logo and name
+      fetch("/api/auth/me")
+        .then(r => r.json())
+        .then(d => {
+          if (d?.user?.institute?.logoUrl) {
+            setLogoWatermark(d.user.institute.logoUrl);
+            localStorage.setItem("currentInstituteLogo", d.user.institute.logoUrl);
+          }
+          if (d?.user?.institute?.name) {
+            setInstituteName(d.user.institute.name);
+            localStorage.setItem("currentInstituteName", d.user.institute.name);
+          }
+          if (d?.user?.name || d?.user?.username) {
+            setStudentName(d.user.name || d.user.username);
+          }
+        })
+        .catch(() => {});
     } catch (e) {}
   }, []);
 
@@ -205,6 +282,17 @@ const StudentExam = () => {
             if (data.answerSheet) setAnswerSheet(data.answerSheet);
             setBackendSessionId(data.sessionId);
             if (data.examName) setExactExamName(data.examName);
+            if (data.instituteLogoUrl) {
+              setLogoWatermark(data.instituteLogoUrl);
+              localStorage.setItem("currentInstituteLogo", data.instituteLogoUrl);
+            } else if (data.watermark && (data.watermark.startsWith("http") || data.watermark.startsWith("/"))) {
+              setLogoWatermark(data.watermark);
+              localStorage.setItem("currentInstituteLogo", data.watermark);
+            }
+            if (data.instituteName) {
+              setInstituteName(data.instituteName);
+              localStorage.setItem("currentInstituteName", data.instituteName);
+            }
 
             // DOWNLOAD & CACHE QUESTIONS + ANSWERSHEET FOR COMPLETE OFFLINE TAKE & REVIEW
             try {
@@ -1284,7 +1372,7 @@ const StudentExam = () => {
             
             {/* Reading Questions (1 - 20) */}
             <div style={{ flex: 1, backgroundColor: "#ffffff", border: "1.5px solid #cbd5e1", borderRadius: "12px", padding: "10px 14px", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
-              <UbtWatermark opacity={0.14} />
+              <UbtWatermark logoUrl={logoWatermark} instituteName={instituteName} opacity={0.15} />
               <h3 style={{ textAlign: "center", margin: "0 0 8px 0", fontSize: "15px", fontWeight: "700", color: "#334155", flexShrink: 0, zIndex: 2 }}>
                 Reading Questions
               </h3>
@@ -1328,7 +1416,7 @@ const StudentExam = () => {
 
             {/* Listening Questions (21 - 40) */}
             <div style={{ flex: 1, backgroundColor: "#ffffff", border: "1.5px solid #cbd5e1", borderRadius: "12px", padding: "10px 14px", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
-              <UbtWatermark opacity={0.14} />
+              <UbtWatermark logoUrl={logoWatermark} instituteName={instituteName} opacity={0.15} />
               <h3 style={{ textAlign: "center", margin: "0 0 8px 0", fontSize: "15px", fontWeight: "700", color: "#334155", flexShrink: 0, zIndex: 2 }}>
                 Listening Questions
               </h3>
@@ -1464,25 +1552,7 @@ const StudentExam = () => {
                     {/* LEFT CARD: QUESTION PROMPT, EXCLAMATION BADGE, AUDIO PLAY / VISUAL, WATERMARK */}
                     <div className="ubt-exam-left" style={{ flex: 1.25, backgroundColor: "#ffffff", border: "1.5px solid #cbd5e1", borderRadius: "12px", padding: "14px 18px", position: "relative", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%", minHeight: 0 }}>
                       
-                      {/* Red Exclamation Mark Badge (!) */}
-                      <div style={{
-                        position: "absolute",
-                        top: "14px",
-                        right: "14px",
-                        width: "22px",
-                        height: "22px",
-                        borderRadius: "50%",
-                        backgroundColor: "#ef4444",
-                        color: "#ffffff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: "900",
-                        fontSize: "13px",
-                        zIndex: 3
-                      }}>
-                        !
-                      </div>
+
 
                       {/* Header Question Range Prompt */}
                       <p style={{ margin: "0 0 4px 0", fontSize: "16.5px", fontWeight: "700", color: "#1e293b", lineHeight: "1.35", paddingRight: "30px" }}>
@@ -1496,7 +1566,7 @@ const StudentExam = () => {
 
                       {/* Center Content: Watermark + Audio Play Button / Image / Passage */}
                       <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", width: "100%" }}>
-                        <UbtWatermark opacity={0.22} />
+                        <UbtWatermark logoUrl={logoWatermark} instituteName={instituteName} opacity={0.20} />
 
                         {/* Text Passage (if any) */}
                         {currentQ.description && (
@@ -1538,18 +1608,18 @@ const StudentExam = () => {
                           </div>
                         )}
 
-                        {/* Audio Play Button (Listening Question) */}
-                        {(currentQ.audio || currentQuestion >= 20) && (
+                        {/* Audio Play Button: Display ONLY when question actually has audio */}
+                        {Boolean(currentQ.audio && currentQ.audio.trim()) && (
                           <div style={{ zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                             <button
                               type="button"
                               onClick={() => {
-                                if (audioRef.current) {
+                                if (audioRef.current && currentQ.audio) {
                                   if (isPlayingAnyAudio) {
                                     audioRef.current.pause();
                                     setIsPlayingAnyAudio(false);
                                   } else {
-                                    audioRef.current.play().catch(e => console.log(e));
+                                    audioRef.current.play().catch(e => console.log("Audio play notice:", e));
                                   }
                                 }
                               }}
@@ -1598,12 +1668,14 @@ const StudentExam = () => {
 
                     {/* RIGHT CARD: OPTIONS LIST WITH CIRCULAR BADGES & SUBTLE DIVIDERS */}
                     <div className="ubt-exam-right" style={{ flex: 1, backgroundColor: "#ffffff", border: "1.5px solid #cbd5e1", borderRadius: "12px", padding: 0, position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-evenly", overflowY: "auto", height: "100%", minHeight: 0 }}>
-                      <UbtWatermark opacity={0.15} />
+                      <UbtWatermark logoUrl={logoWatermark} instituteName={instituteName} opacity={0.16} />
 
                       {rawOptions.map((option, index) => {
                         const isSelected = selectedAnswers[currentQ.id] === index;
                         const optText = typeof option === 'object' && option !== null ? option.text : option;
                         const optImg = typeof option === 'object' && option !== null ? option.image : null;
+                        const optAud = typeof option === 'object' && option !== null ? option.audio : (currentQ.optionAudios?.[index] || null);
+                        const hasOptAudio = Boolean(optAud && String(optAud).trim());
 
                         return (
                           <div
@@ -1661,6 +1733,62 @@ const StudentExam = () => {
                                 dangerouslySetInnerHTML={{ __html: optText }}
                               />
                             </div>
+                            {/* Option Audio Play Button: Display ONLY when this option actually has audio */}
+                            {hasOptAudio && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const audEl = optionAudioRefs.current[index];
+                                  if (audEl) {
+                                    if (playingOptionIndex === index) {
+                                      audEl.pause();
+                                      setPlayingOptionIndex(null);
+                                    } else {
+                                      if (audioRef.current) audioRef.current.pause();
+                                      Object.values(optionAudioRefs.current).forEach(a => a && a.pause());
+                                      audEl.currentTime = 0;
+                                      audEl.play().then(() => setPlayingOptionIndex(index)).catch(err => console.log("Opt audio error:", err));
+                                    }
+                                  }
+                                }}
+                                style={{
+                                  backgroundColor: playingOptionIndex === index ? "#ef4444" : "#0284c7",
+                                  color: "#ffffff",
+                                  border: "none",
+                                  borderRadius: "50%",
+                                  width: "28px",
+                                  height: "28px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  cursor: "pointer",
+                                  marginLeft: "auto",
+                                  flexShrink: 0,
+                                  boxShadow: "0 2px 4px rgba(2, 132, 199, 0.25)"
+                                }}
+                                title="Play option audio"
+                              >
+                                {playingOptionIndex === index ? (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#ffffff">
+                                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                                  </svg>
+                                ) : (
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffffff" style={{ marginLeft: "1.5px" }}>
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                  </svg>
+                                )}
+                              </button>
+                            )}
+                            {hasOptAudio && (
+                              <audio
+                                ref={el => optionAudioRefs.current[index] = el}
+                                src={optAud}
+                                onEnded={() => setPlayingOptionIndex(null)}
+                                style={{ display: "none" }}
+                              />
+                            )}
                           </div>
                         );
                       })}
