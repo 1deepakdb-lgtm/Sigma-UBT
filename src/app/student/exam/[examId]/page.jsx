@@ -1533,11 +1533,10 @@ const StudentExam = () => {
           box-shadow: none;
         }
         .ubt-exam-card {
-          background-color: rgba(255, 255, 255, 0.95);
-          border: 1px solid #cbd5e1;
-          border-top: none;
-          border-radius: 0 0 18px 18px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+          background-color: #ffffff;
+          border: none;
+          border-radius: 0;
+          box-shadow: none;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -1553,21 +1552,22 @@ const StudentExam = () => {
         }
         .ubt-exam-left {
           flex: 1.25;
-          padding: 14px 18px;
+          padding: 16px 22px;
           border-right: 1px solid #e2e8f0;
           display: flex;
           flex-direction: column;
+          justify-content: safe center;
           overflow-y: auto;
           height: 100%;
           min-height: 0;
         }
         .ubt-exam-right {
           flex: 1;
-          padding: 14px 18px;
+          padding: 16px 22px;
           display: flex;
           flex-direction: column;
-          justify-content: flex-start;
-          gap: 8px;
+          justify-content: safe center;
+          gap: 10px;
           overflow-y: auto;
           height: 100%;
           min-height: 0;
@@ -1578,11 +1578,11 @@ const StudentExam = () => {
           align-items: center;
           background-color: #0284c7;
           color: white;
-          padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px);
-          padding-bottom: 8px;
+          padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 14px);
+          padding-bottom: 10px;
           padding-left: calc(env(safe-area-inset-left, 0px) + 16px);
           padding-right: calc(env(safe-area-inset-right, 0px) + 16px);
-          border-radius: 18px 18px 0 0;
+          border-radius: 0;
           font-weight: bold;
           font-size: 14px;
           gap: 8px;
@@ -1608,7 +1608,7 @@ const StudentExam = () => {
           padding: 9px 18px;
           background-color: #f8fafc;
           border-top: 1px solid #cbd5e1;
-          border-radius: 0 0 18px 18px;
+          border-radius: 0;
           justify-content: space-between;
           align-items: center;
           gap: 10px;
@@ -2081,10 +2081,10 @@ const StudentExam = () => {
             height: 100% !important;
             max-height: none !important;
             overflow-y: auto !important;
-            padding: 8px 16px !important;
+            padding: 12px 18px !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
+            justify-content: safe center !important;
           }
           .ubt-exam-landscape-enforcer .ubt-exam-left p {
             font-size: 18.5px !important;
@@ -2110,11 +2110,11 @@ const StudentExam = () => {
             height: 100% !important;
             max-height: none !important;
             overflow-y: auto !important;
-            padding: 8px 16px !important;
+            padding: 12px 18px !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: space-evenly !important;
-            gap: 6px !important;
+            justify-content: safe center !important;
+            gap: 8px !important;
           }
           .ubt-exam-landscape-enforcer .ubt-opt-row {
             padding: 8px 12px !important;

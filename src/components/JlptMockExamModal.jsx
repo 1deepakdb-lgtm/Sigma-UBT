@@ -28,6 +28,7 @@ export default function JlptMockExamModal({
   const [timeLeft, setTimeLeft] = useState(initialDuration);
   const [isExamSubmitted, setIsExamSubmitted] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showOverviewGrid, setShowOverviewGrid] = useState(false);
   const [previewShowAnswers, setPreviewShowAnswers] = useState(mode === "institute" || mode === "admin");
   const [reviewFilter, setReviewFilter] = useState("all"); // "all" | "wrong" | "flagged"
   const [audioPlayCounts, setAudioPlayCounts] = useState({});
@@ -336,107 +337,89 @@ export default function JlptMockExamModal({
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: "rgba(15, 23, 42, 0.75)",
-      backdropFilter: "blur(6px)",
-      zIndex: 99999,
+      width: "100vw",
+      height: "100dvh",
+      backgroundColor: "#ffffff",
+      zIndex: 2147483640,
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      padding: "12px",
-      boxSizing: "border-box"
+      padding: 0,
+      boxSizing: "border-box",
+      overflow: "hidden"
     }}>
       <style dangerouslySetInnerHTML={{
         __html: `
         .jlpt-exam-modal {
           width: 100%;
-          max-width: 1140px;
-          height: 94vh;
-          border-radius: 24px;
+          max-width: 100%;
+          height: 100vh;
+          height: 100dvh;
+          max-height: 100dvh;
+          border-radius: 0;
           display: flex;
           flex-direction: column;
           overflow: hidden;
           background-color: #ffffff;
-          box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+          box-shadow: none;
           position: relative;
         }
         .jlpt-exam-body {
           flex: 1;
           display: flex;
+          flex-direction: row;
           overflow: hidden;
+          min-height: 0;
         }
-        .jlpt-exam-question-area {
+        .jlpt-exam-left {
+          flex: 1.25;
+          padding: 18px 26px;
+          border-right: 1.5px solid #e2e8f0;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          justify-content: safe center;
+          min-height: 0;
+        }
+        .jlpt-exam-right {
           flex: 1;
-          padding: 24px 30px;
+          padding: 18px 26px;
           overflow-y: auto;
           display: flex;
           flex-direction: column;
+          justify-content: safe center;
+          gap: 12px;
+          min-height: 0;
         }
-        .jlpt-exam-sidebar {
-          width: 280px;
-          background-color: #f8fafc;
-          border-left: 1.5px solid #e2e8f0;
-          padding: 18px;
-          display: flex;
-          flex-direction: column;
-          overflow-y: auto;
-        }
-        @media (max-width: 860px) and (orientation: portrait) {
-          .jlpt-exam-overlay {
-            padding: 0 !important;
-          }
-          .jlpt-exam-modal {
-            height: 100vh !important;
-            height: 100dvh !important;
-            max-height: 100vh !important;
-            max-height: 100dvh !important;
-            border-radius: 0 !important;
-            border: none !important;
-          }
+        @media (max-width: 760px) and (orientation: portrait) {
           .jlpt-exam-body {
             flex-direction: column !important;
           }
-          .jlpt-exam-question-area {
-            padding: 16px 14px !important;
+          .jlpt-exam-left {
+            flex: 1 !important;
+            border-right: none !important;
+            border-bottom: 1.5px solid #e2e8f0 !important;
+            padding: 14px 16px !important;
           }
-          .jlpt-exam-sidebar {
-            width: 100% !important;
-            border-left: none !important;
-            border-top: 1.5px solid #e2e8f0 !important;
-            max-height: 220px !important;
-            padding: 12px 14px !important;
+          .jlpt-exam-right {
+            flex: 1 !important;
+            padding: 12px 16px !important;
           }
         }
         @media (orientation: landscape) and (max-height: 600px) {
-          .jlpt-exam-overlay {
-            padding: 0 !important;
-          }
-          .jlpt-exam-modal {
-            height: 100vh !important;
-            height: 100dvh !important;
-            max-height: 100dvh !important;
-            border-radius: 0 !important;
-            border: none !important;
-          }
           .jlpt-exam-body {
             flex-direction: row !important;
           }
-          .jlpt-exam-question-area {
-            padding: 10px 16px !important;
-            flex: 1 !important;
+          .jlpt-exam-left {
+            padding: 10px 18px !important;
           }
-          .jlpt-exam-sidebar {
-            width: 220px !important;
-            border-left: 1.5px solid #e2e8f0 !important;
-            border-top: none !important;
-            max-height: none !important;
-            padding: 10px 12px !important;
+          .jlpt-exam-right {
+            padding: 10px 18px !important;
+            gap: 8px !important;
           }
         }
         @media (max-width: 540px) {
-          .jlpt-exam-question-area {
-            padding: 12px 10px !important;
-          }
           .jlpt-confirm-card {
             padding: 18px 14px !important;
           }
@@ -475,109 +458,129 @@ export default function JlptMockExamModal({
           }
         }
       ` }} />
-      {/* MAIN EXAM CONTAINER */}
-      <div className="jlpt-exam-modal" style={{
-        border: `2px solid ${levelTheme.border}`
-      }}>
+      {/* MAIN EXAM CONTAINER (FULL SCREEN UBT FORMAT) */}
+      <div className="jlpt-exam-modal">
         {/* ============================================================== */}
-        {/* HEADER BAR                                                     */}
+        {/* UBT STYLE BLUE HEADER BAR                                      */}
         {/* ============================================================== */}
         <div style={{
-          backgroundColor: "#ffffff",
-          padding: "14px 22px",
-          borderBottom: "1.5px solid #e2e8f0",
-          display: "flex",
+          backgroundColor: "#0284c7",
+          color: "#ffffff",
+          padding: "10px 18px",
+          paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 8px), 10px)",
+          display: "grid",
+          gridTemplateColumns: "1fr auto 1fr",
           alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
           gap: "12px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
+          flexShrink: 0,
+          boxShadow: "0 2px 8px rgba(2, 132, 199, 0.25)"
         }}>
           {/* Left Title & Badge */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
             <span style={{
-              backgroundColor: levelTheme.bg,
-              color: levelTheme.text,
-              border: `1.5px solid ${levelTheme.border}`,
-              padding: "4px 12px",
+              backgroundColor: "rgba(255,255,255,0.2)",
+              color: "#ffffff",
+              border: "1px solid rgba(255,255,255,0.35)",
+              padding: "3px 10px",
               borderRadius: "20px",
-              fontSize: "12px",
+              fontSize: "11px",
               fontWeight: "900",
-              letterSpacing: "0.5px"
+              letterSpacing: "0.4px",
+              flexShrink: 0
             }}>
               {examSet.level}
             </span>
 
-            <div>
-              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "#0f172a", display: "flex", alignItems: "center", gap: "6px" }}>
-                <span>⛩️</span>
-                <span>{examSet.title}</span>
-              </h3>
-              <div style={{ fontSize: "12px", color: levelTheme.primary, fontWeight: "700" }}>
-                {examSet.titleJp}
+            <div style={{ minWidth: 0, overflow: "hidden" }}>
+              <div style={{ fontSize: "14.5px", fontWeight: "800", color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {examSet.title}
               </div>
+              {examSet.titleJp && (
+                <div style={{ fontSize: "11px", color: "#bae6fd", fontWeight: "700", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {examSet.titleJp}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Center Mode / Status */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {mode !== "student" ? (
+          {/* Center Question Counter & Timer */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", justifySelf: "center" }}>
+            {!isExamSubmitted && (
               <span style={{
-                backgroundColor: "#fef3c7",
-                color: "#b45309",
-                border: "1px solid #fde68a",
+                backgroundColor: "rgba(15, 23, 42, 0.22)",
+                color: "#ffffff",
                 padding: "5px 12px",
                 borderRadius: "8px",
-                fontSize: "12px",
-                fontWeight: "800"
+                fontSize: "13px",
+                fontWeight: "800",
+                whiteSpace: "nowrap"
               }}>
-                👁️ Teacher / Institute Preview Mode
+                Q {currentQIndex + 1} / {totalQuestions}
               </span>
-            ) : null}
-
-            {/* Teacher toggle for answers */}
-            {(mode === "institute" || mode === "admin") && !isExamSubmitted && (
-              <button
-                type="button"
-                onClick={() => setPreviewShowAnswers(!previewShowAnswers)}
-                style={{
-                  backgroundColor: previewShowAnswers ? "#16a34a" : "#f1f5f9",
-                  color: previewShowAnswers ? "#ffffff" : "#475569",
-                  border: "none",
-                  padding: "5px 12px",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                  cursor: "pointer"
-                }}
-              >
-                {previewShowAnswers ? "✅ Answer Keys Visible" : "👁️ Reveal Answers"}
-              </button>
             )}
-          </div>
 
-          {/* Right Timer & Exit */}
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
             {!isExamSubmitted && mode === "student" && (
               <div style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                backgroundColor: timeLeft < 300 ? "#fee2e2" : "#f8fafc",
-                padding: "6px 14px",
-                borderRadius: "10px",
-                border: timeLeft < 300 ? "1.5px solid #ef4444" : "1px solid #e2e8f0"
+                gap: "6px",
+                backgroundColor: timeLeft < 300 ? "#dc2626" : "rgba(255,255,255,0.16)",
+                padding: "5px 12px",
+                borderRadius: "8px",
+                border: timeLeft < 300 ? "1px solid #fecaca" : "1px solid rgba(255,255,255,0.3)"
               }}>
-                <span style={{ fontSize: "16px" }}>⏱️</span>
+                <span style={{ fontSize: "14px" }}>⏱️</span>
                 <span style={{
-                  fontSize: "16px",
+                  fontSize: "14px",
                   fontWeight: "900",
-                  color: timeLeft < 300 ? "#b91c1c" : "#0f172a",
+                  color: "#ffffff",
                   fontVariantNumeric: "tabular-nums"
                 }}>
                   {formatTime(timeLeft)}
                 </span>
               </div>
+            )}
+
+            {(mode === "institute" || mode === "admin") && !isExamSubmitted && (
+              <button
+                type="button"
+                onClick={() => setPreviewShowAnswers(!previewShowAnswers)}
+                style={{
+                  backgroundColor: previewShowAnswers ? "#16a34a" : "rgba(255,255,255,0.2)",
+                  color: "#ffffff",
+                  border: "1px solid rgba(255,255,255,0.35)",
+                  padding: "5px 11px",
+                  borderRadius: "8px",
+                  fontSize: "11.5px",
+                  fontWeight: "800",
+                  cursor: "pointer"
+                }}
+              >
+                {previewShowAnswers ? "✅ Answers On" : "👁️ Show Answers"}
+              </button>
+            )}
+          </div>
+
+          {/* Right Finish & Exit */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", justifySelf: "end" }}>
+            {!isExamSubmitted && (
+              <button
+                type="button"
+                onClick={handleSubmitExam}
+                style={{
+                  backgroundColor: "#16a34a",
+                  color: "#ffffff",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  padding: "6px 14px",
+                  borderRadius: "8px",
+                  fontSize: "12.5px",
+                  fontWeight: "800",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+                }}
+              >
+                Finish
+              </button>
             )}
 
             <button
@@ -594,9 +597,9 @@ export default function JlptMockExamModal({
                 }
               }}
               style={{
-                backgroundColor: "#f1f5f9",
-                color: "#475569",
-                border: "1px solid #cbd5e1",
+                backgroundColor: "rgba(255,255,255,0.16)",
+                color: "#ffffff",
+                border: "1px solid rgba(255,255,255,0.35)",
                 padding: "6px 12px",
                 borderRadius: "8px",
                 fontSize: "12px",
@@ -932,128 +935,232 @@ export default function JlptMockExamModal({
                 })}
             </div>
           </div>
-        ) : (
+        ) : showOverviewGrid ? (
           /* ============================================================== */
-          /* ACTIVE EXAM RUNNER WORKSPACE                                   */
+          /* UBT STYLE FULL-SCREEN QUESTION GRID OVERVIEW                   */
           /* ============================================================== */
-          <div className="jlpt-exam-body" style={{
+          <div style={{
             flex: 1,
             display: "flex",
-            overflow: "hidden"
+            flexDirection: "column",
+            justifyContent: "safe center",
+            alignItems: "center",
+            padding: "20px",
+            backgroundColor: "#f8fafc",
+            overflowY: "auto"
           }}>
-            {/* ── LEFT: QUESTION & PASSAGE AREA ── */}
-            <div className="jlpt-exam-question-area" style={{
-              flex: 1,
-              padding: "24px 30px",
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column"
+            <div style={{
+              width: "100%",
+              maxWidth: "820px",
+              backgroundColor: "#ffffff",
+              border: "1px solid #cbd5e1",
+              borderRadius: "14px",
+              padding: "22px",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.06)"
             }}>
-              {/* Top Section Tag */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+                <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "900", color: "#0f172a" }}>
+                  📋 All Questions ({answeredCount} / {totalQuestions} Answered)
+                </h3>
+                <div style={{ display: "flex", gap: "12px", fontSize: "12px", fontWeight: "700" }}>
+                  <span style={{ color: "#0284c7" }}>■ Answered ({answeredCount})</span>
+                  <span style={{ color: "#64748b" }}>□ Remaining ({totalQuestions - answeredCount})</span>
+                  <span style={{ color: "#d97706" }}>🚩 Flagged ({flaggedCount})</span>
+                </div>
+              </div>
+
               <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "14px"
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(54px, 1fr))",
+                gap: "10px",
+                marginBottom: "20px"
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {questions.map((q, idx) => {
+                  const isAnswered = selectedAnswers[q.id] !== undefined;
+                  const isFlagged = Boolean(flaggedQuestions[q.id]);
+                  const isCurrent = currentQIndex === idx;
+
+                  let bg = "#ffffff";
+                  let border = "#cbd5e1";
+                  let text = "#334155";
+
+                  if (isCurrent) {
+                    bg = "#0f172a";
+                    border = "#0f172a";
+                    text = "#ffffff";
+                  } else if (isFlagged) {
+                    bg = "#fef3c7";
+                    border = "#f59e0b";
+                    text = "#b45309";
+                  } else if (isAnswered) {
+                    bg = "#e0f2fe";
+                    border = "#0284c7";
+                    text = "#0369a1";
+                  }
+
+                  return (
+                    <button
+                      key={q.id}
+                      type="button"
+                      onClick={() => {
+                        setCurrentQIndex(idx);
+                        setShowOverviewGrid(false);
+                      }}
+                      style={{
+                        minHeight: "44px",
+                        borderRadius: "10px",
+                        border: `1.5px solid ${border}`,
+                        backgroundColor: bg,
+                        color: text,
+                        fontSize: "14px",
+                        fontWeight: "800",
+                        cursor: "pointer",
+                        position: "relative"
+                      }}
+                    >
+                      {idx + 1}
+                      {isFlagged && (
+                        <span style={{ position: "absolute", top: "-5px", right: "-3px", fontSize: "11px" }}>🚩</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowOverviewGrid(false)}
+                  style={{
+                    backgroundColor: "#0ea5e9",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    fontSize: "13.5px",
+                    fontWeight: "800",
+                    cursor: "pointer"
+                  }}
+                >
+                  ❮ Back to Question {currentQIndex + 1}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmitExam}
+                  style={{
+                    backgroundColor: "#16a34a",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "10px 22px",
+                    borderRadius: "8px",
+                    fontSize: "13.5px",
+                    fontWeight: "800",
+                    cursor: "pointer"
+                  }}
+                >
+                  Submit Exam 🏁
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ============================================================== */
+          /* UBT FORMAT 2-COLUMN SPLIT WORKSPACE (CENTERED & FULL SCREEN)   */
+          /* ============================================================== */
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+            <div className="jlpt-exam-body">
+              {/* ── LEFT COLUMN: QUESTION, PASSAGE & AUDIO ── */}
+              <div className="jlpt-exam-left">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
                   <span style={{
-                    backgroundColor: levelTheme.bg,
-                    color: levelTheme.text,
-                    padding: "3px 10px",
+                    backgroundColor: "#e0f2fe",
+                    color: "#0369a1",
+                    padding: "4px 10px",
                     borderRadius: "6px",
                     fontSize: "12px",
                     fontWeight: "800"
                   }}>
                     {currentQ.sectionJp} ({currentQ.section})
                   </span>
-
-                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#64748b" }}>
+                  <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#64748b" }}>
                     Question {currentQIndex + 1} of {totalQuestions}
                   </span>
                 </div>
-              </div>
 
-              {/* Official Instruction Header */}
-              <div style={{
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                padding: "10px 16px",
-                borderRadius: "10px",
-                fontSize: "13px",
-                color: "#475569",
-                fontWeight: "600",
-                marginBottom: "16px"
-              }}>
-                {currentQ.instruction}
-              </div>
-
-              {/* Reading Passage if any */}
-              {currentQ.readingPassage && (
                 <div style={{
-                  backgroundColor: "#ffffff",
-                  padding: "16px 20px",
-                  borderRadius: "12px",
-                  border: "1.5px solid #cbd5e1",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
-                  fontSize: "14px",
-                  lineHeight: "1.7",
-                  whiteSpace: "pre-line",
-                  color: "#1e293b",
-                  marginBottom: "18px"
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  padding: "9px 14px",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  color: "#334155",
+                  fontWeight: "700",
+                  marginBottom: "12px"
                 }}>
-                  {currentQ.readingPassage}
+                  {currentQ.instruction}
                 </div>
-              )}
 
-              {/* Listening Audio Box if type === "Listening" */}
-              {currentQ.type === "Listening" && (
-                <div style={{
-                  backgroundColor: "#eff6ff",
-                  padding: "16px 20px",
-                  borderRadius: "12px",
-                  border: "1.5px solid #bfdbfe",
-                  marginBottom: "20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "14px"
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                    <button
-                      type="button"
-                      onClick={() => handlePlayListeningAudio(currentQ)}
-                      style={{
-                        width: "50px",
-                        height: "50px",
-                        borderRadius: "50%",
-                        backgroundColor: isPlayingAudio ? "#ef4444" : "#2563eb",
-                        color: "#ffffff",
-                        border: "none",
-                        fontSize: "20px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
-                        transition: "all 0.15s ease"
-                      }}
-                    >
-                      {isPlayingAudio ? "⏸" : "▶"}
-                    </button>
+                {currentQ.readingPassage && (
+                  <div style={{
+                    backgroundColor: "#f8fafc",
+                    padding: "14px 16px",
+                    borderRadius: "10px",
+                    border: "1.5px solid #cbd5e1",
+                    fontSize: "14.5px",
+                    lineHeight: "1.65",
+                    whiteSpace: "pre-line",
+                    color: "#0f172a",
+                    marginBottom: "14px"
+                  }}>
+                    {currentQ.readingPassage}
+                  </div>
+                )}
 
-                    <div>
-                      <div style={{ fontSize: "14px", fontWeight: "800", color: "#1e3a8a" }}>
-                        🎧 Tokyo Japanese Audio Track
-                      </div>
-                      <div style={{ fontSize: "12px", color: "#3b82f6", fontWeight: "600" }}>
-                        {audioStatusText || "Click play to listen to Tokyo dialogue"}
+                {currentQ.type === "Listening" && (
+                  <div style={{
+                    backgroundColor: "#eff6ff",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    border: "1.5px solid #bfdbfe",
+                    marginBottom: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "12px"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <button
+                        type="button"
+                        onClick={() => handlePlayListeningAudio(currentQ)}
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "50%",
+                          backgroundColor: isPlayingAudio ? "#ef4444" : "#0284c7",
+                          color: "#ffffff",
+                          border: "none",
+                          fontSize: "18px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          boxShadow: "0 3px 10px rgba(2, 132, 199, 0.3)"
+                        }}
+                      >
+                        {isPlayingAudio ? "⏸" : "▶"}
+                      </button>
+
+                      <div>
+                        <div style={{ fontSize: "13.5px", fontWeight: "800", color: "#1e3a8a" }}>
+                          🎧 Tokyo Japanese Audio Track
+                        </div>
+                        <div style={{ fontSize: "11.5px", color: "#0284c7", fontWeight: "600" }}>
+                          {audioStatusText || "Click play to listen"}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div style={{ textAlign: "right" }}>
                     <span style={{
                       backgroundColor: "#ffffff",
                       padding: "4px 10px",
@@ -1066,48 +1173,60 @@ export default function JlptMockExamModal({
                       Plays: {audioPlayCounts[currentQ.id] || 0} / {mode === "student" ? 2 : "∞"}
                     </span>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Main Question Text */}
-              <div style={{
-                fontSize: "17px",
-                fontWeight: "800",
-                color: "#0f172a",
-                lineHeight: "1.5",
-                marginBottom: "22px"
-              }}>
-                <span style={{ color: levelTheme.primary, marginRight: "8px" }}>
-                  Q.{currentQ.qIndex}
-                </span>
-                {currentQ.questionText}
+                <div style={{
+                  fontSize: "18px",
+                  fontWeight: "800",
+                  color: "#0f172a",
+                  lineHeight: "1.45"
+                }}>
+                  <span style={{ color: "#0284c7", marginRight: "8px" }}>
+                    {currentQ.qIndex}.
+                  </span>
+                  {currentQ.questionText}
+                </div>
+
+                {previewShowAnswers && currentQ.explanation && (
+                  <div style={{
+                    backgroundColor: "#f0fdf4",
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #bbf7d0",
+                    fontSize: "12px",
+                    color: "#166534",
+                    whiteSpace: "pre-line",
+                    marginTop: "14px"
+                  }}>
+                    <strong>💡 Instructor Explanation:</strong>
+                    <div style={{ marginTop: "4px" }}>{currentQ.explanation}</div>
+                  </div>
+                )}
               </div>
 
-              {/* 4 Options */}
-              <div style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                marginBottom: "24px"
-              }}>
+              {/* ── RIGHT COLUMN: 4 OPTIONS (UBT STYLE) ── */}
+              <div className="jlpt-exam-right">
                 {currentQ.options.map((optItem, optIdx) => {
                   const isSelected = selectedAnswers[currentQ.id] === optIdx;
                   const isRevealedCorrect = previewShowAnswers && currentQ.answer === optIdx;
 
-                  let cardBorder = "#e2e8f0";
+                  let cardBorder = "#cbd5e1";
                   let cardBg = "#ffffff";
-                  let circleBg = "#f1f5f9";
-                  let circleColor = "#475569";
+                  let circleBg = "#ffffff";
+                  let circleBorder = "#0284c7";
+                  let circleColor = "#0284c7";
 
                   if (isSelected) {
-                    cardBorder = "#2563eb";
+                    cardBorder = "#0284c7";
                     cardBg = "#eff6ff";
-                    circleBg = "#2563eb";
+                    circleBg = "#0284c7";
+                    circleBorder = "#0284c7";
                     circleColor = "#ffffff";
                   } else if (isRevealedCorrect) {
                     cardBorder = "#16a34a";
                     cardBg = "#f0fdf4";
                     circleBg = "#16a34a";
+                    circleBorder = "#16a34a";
                     circleColor = "#ffffff";
                   }
 
@@ -1116,37 +1235,39 @@ export default function JlptMockExamModal({
                       key={optIdx}
                       onClick={() => handleSelectOption(currentQ.id, optIdx)}
                       style={{
-                        padding: "14px 18px",
-                        borderRadius: "12px",
-                        border: `2px solid ${cardBorder}`,
+                        padding: "13px 16px",
+                        borderRadius: "10px",
+                        border: isSelected ? `2px solid ${cardBorder}` : `1.5px solid ${cardBorder}`,
                         backgroundColor: cardBg,
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
-                        gap: "14px",
+                        gap: "12px",
                         transition: "all 0.15s ease",
-                        boxShadow: isSelected ? "0 4px 12px rgba(37,99,235,0.12)" : "none"
+                        boxShadow: isSelected ? "0 2px 8px rgba(2, 132, 199, 0.2)" : "0 1px 3px rgba(0,0,0,0.03)"
                       }}
                     >
                       <div style={{
-                        width: "32px",
-                        height: "32px",
+                        width: "30px",
+                        height: "30px",
                         borderRadius: "50%",
                         backgroundColor: circleBg,
+                        border: `2px solid ${circleBorder}`,
                         color: circleColor,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: "900",
-                        fontSize: "14px"
+                        fontSize: "13.5px",
+                        flexShrink: 0
                       }}>
-                        {["①", "②", "③", "④"][optIdx]}
+                        {optIdx + 1}
                       </div>
 
                       <div style={{
-                        fontSize: "15px",
+                        fontSize: "15.5px",
                         fontWeight: isSelected ? "800" : "600",
-                        color: isSelected ? "#1d4ed8" : "#1e293b",
+                        color: isSelected ? "#0369a1" : "#0f172a",
                         flex: 1
                       }}>
                         {optItem.text}
@@ -1161,210 +1282,119 @@ export default function JlptMockExamModal({
                           fontSize: "11px",
                           fontWeight: "800"
                         }}>
-                          Correct Key
+                          Correct
                         </span>
                       )}
                     </div>
                   );
                 })}
               </div>
-
-              {/* Teacher Explanation in Preview Mode */}
-              {previewShowAnswers && currentQ.explanation && (
-                <div style={{
-                  backgroundColor: "#f0fdf4",
-                  padding: "12px 16px",
-                  borderRadius: "10px",
-                  border: "1px solid #bbf7d0",
-                  fontSize: "12px",
-                  color: "#166534",
-                  whiteSpace: "pre-line",
-                  marginTop: "auto"
-                }}>
-                  <strong>💡 Instructor Explanation:</strong>
-                  <div style={{ marginTop: "4px" }}>{currentQ.explanation}</div>
-                </div>
-              )}
-
-              {/* Bottom Nav Controls */}
-              <div style={{
-                marginTop: "auto",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                paddingTop: "16px",
-                borderTop: "1px solid #e2e8f0"
-              }}>
-                <button
-                  type="button"
-                  disabled={currentQIndex === 0}
-                  onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
-                  style={{
-                    backgroundColor: currentQIndex === 0 ? "#f1f5f9" : "#ffffff",
-                    color: currentQIndex === 0 ? "#94a3b8" : "#334155",
-                    border: "1px solid #cbd5e1",
-                    padding: "10px 18px",
-                    borderRadius: "10px",
-                    fontSize: "13px",
-                    fontWeight: "800",
-                    cursor: currentQIndex === 0 ? "not-allowed" : "pointer"
-                  }}
-                >
-                  ⬅ Previous
-                </button>
-
-                {currentQIndex < totalQuestions - 1 ? (
-                  <button
-                    type="button"
-                    onClick={() => setCurrentQIndex(prev => Math.min(totalQuestions - 1, prev + 1))}
-                    style={{
-                      backgroundColor: "#7c3aed",
-                      backgroundImage: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "10px 22px",
-                      borderRadius: "10px",
-                      fontSize: "13px",
-                      fontWeight: "800",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 6px rgba(124, 58, 237, 0.25)"
-                    }}
-                  >
-                    Next Question ➡
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleSubmitExam}
-                    style={{
-                      backgroundColor: "#16a34a",
-                      backgroundImage: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "10px 24px",
-                      borderRadius: "10px",
-                      fontSize: "13px",
-                      fontWeight: "800",
-                      cursor: "pointer",
-                      boxShadow: "0 4px 12px rgba(22,163,74,0.3)"
-                    }}
-                  >
-                    Submit Exam 🏁
-                  </button>
-                )}
-              </div>
             </div>
 
-            {/* ── RIGHT: QUESTION PALETTE SIDEBAR ── */}
-            <div className="jlpt-exam-sidebar" style={{
-              width: "280px",
-              backgroundColor: "#f8fafc",
-              borderLeft: "1.5px solid #e2e8f0",
-              padding: "18px",
+            {/* ── BOTTOM UBT NAVIGATION BAR ── */}
+            <div style={{
               display: "flex",
-              flexDirection: "column",
-              overflowY: "auto"
+              padding: "9px 18px",
+              paddingBottom: "max(calc(env(safe-area-inset-bottom, 0px) + 9px), 9px)",
+              backgroundColor: "#f8fafc",
+              borderTop: "1px solid #cbd5e1",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "10px",
+              flexShrink: 0
             }}>
-              <h4 style={{ margin: "0 0 12px 0", fontSize: "14px", fontWeight: "800", color: "#0f172a" }}>
-                Question Navigator
-              </h4>
-
-              {/* Mini Stats Legend */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "8px",
-                marginBottom: "16px",
-                fontSize: "11px"
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ width: "12px", height: "12px", borderRadius: "3px", backgroundColor: "#7c3aed" }} />
-                  <span>Answered ({answeredCount})</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ width: "12px", height: "12px", borderRadius: "3px", backgroundColor: "#ffffff", border: "1px solid #cbd5e1" }} />
-                  <span>Remaining ({totalQuestions - answeredCount})</span>
-                </div>
-              </div>
-
-              {/* Question Number Badges Grid */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(5, 1fr)",
-                gap: "8px",
-                marginBottom: "20px"
-              }}>
-                {questions.map((q, idx) => {
-                  const isAnswered = selectedAnswers[q.id] !== undefined;
-                  const isFlagged = Boolean(flaggedQuestions[q.id]);
-                  const isCurrent = currentQIndex === idx;
-
-                  let bg = "#ffffff";
-                  let border = "#cbd5e1";
-                  let text = "#475569";
-
-                  if (isCurrent) {
-                    border = "#0f172a";
-                    bg = "#0f172a";
-                    text = "#ffffff";
-                  } else if (isFlagged) {
-                    bg = "#fef3c7";
-                    border = "#f59e0b";
-                    text = "#b45309";
-                  } else if (isAnswered) {
-                    bg = "#faf5ff";
-                    border = "#8b5cf6";
-                    text = "#7c3aed";
-                  }
-
-                  return (
-                    <button
-                      key={q.id}
-                      type="button"
-                      onClick={() => setCurrentQIndex(idx)}
-                      style={{
-                        padding: "8px 0",
-                        borderRadius: "10px",
-                        border: `1.5px solid ${border}`,
-                        backgroundColor: bg,
-                        color: text,
-                        fontSize: "12px",
-                        fontWeight: "800",
-                        cursor: "pointer",
-                        position: "relative",
-                        transition: "all 0.1s ease"
-                      }}
-                    >
-                      {idx + 1}
-                      {isFlagged && (
-                        <span style={{ position: "absolute", top: "-4px", right: "-3px", fontSize: "10px" }}>🚩</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Submit Button in Sidebar */}
               <button
                 type="button"
-                onClick={handleSubmitExam}
+                disabled={currentQIndex === 0}
+                onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
                 style={{
-                  marginTop: "auto",
-                  width: "100%",
-                  backgroundColor: "#16a34a",
-                  backgroundImage: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                  backgroundColor: currentQIndex === 0 ? "#cbd5e1" : "#0ea5e9",
                   color: "#ffffff",
                   border: "none",
-                  padding: "12px",
-                  borderRadius: "10px",
-                  fontSize: "13px",
+                  padding: "9px 18px",
+                  borderRadius: "8px",
+                  fontSize: "13.5px",
                   fontWeight: "800",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(22,163,74,0.25)"
+                  cursor: currentQIndex === 0 ? "not-allowed" : "pointer",
+                  boxShadow: currentQIndex === 0 ? "none" : "0 2px 6px rgba(14, 165, 233, 0.35)"
                 }}
               >
-                🏁 Finish & Submit Exam
+                ❮ Previous
               </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowOverviewGrid(true)}
+                  style={{
+                    backgroundColor: "#ffffff",
+                    color: "#0284c7",
+                    border: "1.5px solid #0284c7",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    fontSize: "13px",
+                    fontWeight: "800",
+                    cursor: "pointer"
+                  }}
+                >
+                  📋 All Questions ({answeredCount}/{totalQuestions})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleToggleFlag(currentQ.id)}
+                  style={{
+                    backgroundColor: flaggedQuestions[currentQ.id] ? "#fef3c7" : "#ffffff",
+                    color: flaggedQuestions[currentQ.id] ? "#b45309" : "#475569",
+                    border: flaggedQuestions[currentQ.id] ? "1.5px solid #f59e0b" : "1.5px solid #cbd5e1",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    fontSize: "13px",
+                    fontWeight: "800",
+                    cursor: "pointer"
+                  }}
+                >
+                  {flaggedQuestions[currentQ.id] ? "🚩 Flagged" : "🏳️ Flag"}
+                </button>
+              </div>
+
+              {currentQIndex < totalQuestions - 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setCurrentQIndex(prev => Math.min(totalQuestions - 1, prev + 1))}
+                  style={{
+                    backgroundColor: "#0ea5e9",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "9px 20px",
+                    borderRadius: "8px",
+                    fontSize: "13.5px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)"
+                  }}
+                >
+                  Next ❯
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmitExam}
+                  style={{
+                    backgroundColor: "#16a34a",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "9px 20px",
+                    borderRadius: "8px",
+                    fontSize: "13.5px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.35)"
+                  }}
+                >
+                  Submit Exam 🏁
+                </button>
+              )}
             </div>
           </div>
         )}
