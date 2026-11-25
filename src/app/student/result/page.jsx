@@ -67,19 +67,29 @@ const StudentResult = () => {
     enterFullScreen();
     const handleGesture = () => {
       enterFullScreen();
+      lockLandscape();
     };
-    window.addEventListener("touchstart", handleGesture, { passive: true });
-    window.addEventListener("pointerdown", handleGesture, { passive: true });
-    window.addEventListener("click", handleGesture);
+    // Use capture phase with valid user-activation events (click, touchend, pointerup) so fullscreen triggers before child state updates
+    window.addEventListener("click", handleGesture, true);
+    window.addEventListener("touchend", handleGesture, { capture: true, passive: true });
+    window.addEventListener("pointerup", handleGesture, { capture: true, passive: true });
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        lockLandscape();
+        enterFullScreen();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       window.removeEventListener("orientationchange", lockLandscape);
       if (typeof screen !== "undefined" && screen.orientation) {
         screen.orientation.removeEventListener("change", lockLandscape);
       }
-      window.removeEventListener("touchstart", handleGesture);
-      window.removeEventListener("pointerdown", handleGesture);
-      window.removeEventListener("click", handleGesture);
+      window.removeEventListener("click", handleGesture, true);
+      window.removeEventListener("touchend", handleGesture, true);
+      window.removeEventListener("pointerup", handleGesture, true);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
 
@@ -91,30 +101,44 @@ const StudentResult = () => {
         const elem = document.documentElement;
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
           if (elem.requestFullscreen) {
-            elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+            elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {
+              elem.requestFullscreen().catch(() => {});
+            });
           } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen().catch(() => {});
+            elem.webkitRequestFullscreen();
           } else if (elem.mozRequestFullScreen) {
-            elem.mozRequestFullScreen().catch(() => {});
+            elem.mozRequestFullScreen();
           } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen().catch(() => {});
+            elem.msRequestFullscreen();
           }
         }
       }
       if (typeof window !== "undefined") {
-        const bridges = [
-          window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android
-        ];
-        bridges.forEach((b) => {
-          if (!b) return;
-          if (typeof b.hideStatusBar === "function") b.hideStatusBar();
-          if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
-          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
-          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
-          if (typeof b.hideSystemUI === "function") b.hideSystemUI();
-          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
-          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
-        });
+        try {
+          window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
+          window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
+          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: "HIDE_STATUS_BAR", fullscreen: true }, "*");
+          }
+          const p = window.parent || window;
+          const bridges = [
+            window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android,
+            p.AndroidApp, p.SmartboardApp, p.SmartBoardApp, p.SmartBoard, p.smartboard, p.BoardApp, p.boardApp, p.Android, p.android
+          ];
+          bridges.forEach((b) => {
+            if (!b) return;
+            if (typeof b.hideStatusBar === "function") b.hideStatusBar();
+            if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
+            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
+            if (typeof b.hideSystemUI === "function") b.hideSystemUI();
+            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
+            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+            if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
+            if (typeof b.setPdfOpen === "function") b.setPdfOpen(true);
+          });
+        } catch (err) {}
       }
     } catch (e) {}
   };

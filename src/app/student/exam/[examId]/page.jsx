@@ -574,13 +574,21 @@ const StudentExam = () => {
     const handleGesture = () => {
       enterFullScreen();
     };
-    window.addEventListener("touchstart", handleGesture, { passive: true });
-    window.addEventListener("pointerdown", handleGesture, { passive: true });
-    window.addEventListener("click", handleGesture);
+    // Use capture phase with valid user-activation events (click, touchend, pointerup) so fullscreen triggers reliably
+    window.addEventListener("click", handleGesture, true);
+    window.addEventListener("touchend", handleGesture, { capture: true, passive: true });
+    window.addEventListener("pointerup", handleGesture, { capture: true, passive: true });
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        enterFullScreen();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
     return () => {
-      window.removeEventListener("touchstart", handleGesture);
-      window.removeEventListener("pointerdown", handleGesture);
-      window.removeEventListener("click", handleGesture);
+      window.removeEventListener("click", handleGesture, true);
+      window.removeEventListener("touchend", handleGesture, true);
+      window.removeEventListener("pointerup", handleGesture, true);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
 
