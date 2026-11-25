@@ -846,6 +846,49 @@ const StudentDashboard = () => {
 
   const isDarkMode = theme === "dark";
 
+  // Ensure normal portal layout, navigation bars, and orientation are restored whenever returning to /student
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (typeof document !== "undefined") {
+        document.body.classList.remove("pdf-open", "exam-fullscreen-active");
+        document.documentElement.classList.remove("pdf-open", "exam-fullscreen-active");
+        document.body.style.overscrollBehavior = "";
+        document.body.style.overscrollBehaviorY = "";
+        document.documentElement.style.overscrollBehavior = "";
+        document.documentElement.style.overscrollBehaviorY = "";
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+        }
+      }
+      try {
+        if (screen.orientation && typeof screen.orientation.unlock === "function") {
+          screen.orientation.unlock();
+        }
+      } catch (e) {}
+      try {
+        window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SHOW_STATUS_BAR", fullscreen: false }));
+        const bridges = [
+          window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android
+        ];
+        bridges.forEach((b) => {
+          if (!b) return;
+          if (typeof b.showStatusBar === "function") b.showStatusBar();
+          if (typeof b.showNavigationBar === "function") b.showNavigationBar();
+          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(true);
+          if (typeof b.showSystemUI === "function") b.showSystemUI();
+          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(true);
+          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
+          if (typeof b.setPdfOpen === "function") b.setPdfOpen(false);
+          if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(true);
+        });
+      } catch (e) {}
+    } catch (e) {}
+  }, []);
+
   const handleEsewaSuccessUnlock = (res) => {
     try {
       const u1 = safeJsonArray(localStorage.getItem("unlockedStudentExamSets"), []);

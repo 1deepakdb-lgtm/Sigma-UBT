@@ -2151,6 +2151,17 @@ export default function EpsBookReader({
     setViewingMaterial(null);
   };
 
+  const closeMeaningFullScreen = (shouldPopHistory = true) => {
+    if (typeof document !== "undefined" && (document.fullscreenElement || document.webkitFullscreenElement)) {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+    }
+    if (shouldPopHistory && typeof window !== "undefined" && window.history.state?.epsReaderModal) {
+      window.history.back();
+    }
+    setViewingMeaningChapter(null);
+  };
+
   // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Universal Smartboard/Mobile Compatibility)
   const openChapterFullScreen = (chapter) => {
     setSelectedChapter(chapter);
@@ -2367,8 +2378,8 @@ export default function EpsBookReader({
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        if (viewingMaterial) { setViewingMaterial(null); return; }
-        if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
+        if (viewingMaterial) { closeMaterialFullScreen(true); return; }
+        if (viewingMeaningChapter) { closeMeaningFullScreen(true); return; }
         if (selectedChapter) { closeFullScreen(true); return; }
         if (isKoreanFolderOpen) { setIsKoreanFolderOpen(false); return; }
         if (isJapaneseFolderOpen) { setIsJapaneseFolderOpen(false); return; }
@@ -2376,8 +2387,8 @@ export default function EpsBookReader({
     };
 
     const handlePopState = () => {
-      if (viewingMaterial) { setViewingMaterial(null); return; }
-      if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
+      if (viewingMaterial) { closeMaterialFullScreen(false); return; }
+      if (viewingMeaningChapter) { closeMeaningFullScreen(false); return; }
       if (selectedChapter) { closeFullScreen(false); return; }
       if (isKoreanFolderOpen) { setIsKoreanFolderOpen(false); return; }
       if (isJapaneseFolderOpen) { setIsJapaneseFolderOpen(false); return; }
@@ -2385,8 +2396,8 @@ export default function EpsBookReader({
 
     const handleWindowMessage = (e) => {
       if (e.data === "EPS_READER_BACK") {
-        if (viewingMaterial) { setViewingMaterial(null); return; }
-        if (viewingMeaningChapter) { setViewingMeaningChapter(null); return; }
+        if (viewingMaterial) { closeMaterialFullScreen(true); return; }
+        if (viewingMeaningChapter) { closeMeaningFullScreen(true); return; }
         if (selectedChapter) { closeFullScreen(true); return; }
         if (isKoreanFolderOpen) { setIsKoreanFolderOpen(false); return; }
         if (isJapaneseFolderOpen) { setIsJapaneseFolderOpen(false); return; }
@@ -2400,8 +2411,8 @@ export default function EpsBookReader({
     };
 
     window.__handleAppBack = () => {
-      if (viewingMaterial) { setViewingMaterial(null); return true; }
-      if (viewingMeaningChapter) { setViewingMeaningChapter(null); return true; }
+      if (viewingMaterial) { closeMaterialFullScreen(false); return true; }
+      if (viewingMeaningChapter) { closeMeaningFullScreen(false); return true; }
       if (selectedChapter) { closeFullScreen(false); return true; }
       if (isKoreanFolderOpen) { setIsKoreanFolderOpen(false); return true; }
       if (isJapaneseFolderOpen) { setIsJapaneseFolderOpen(false); return true; }
@@ -3121,7 +3132,7 @@ export default function EpsBookReader({
           </button>
           <button
             type="button"
-            onClick={() => setViewingMeaningChapter(null)}
+            onClick={() => closeMeaningFullScreen(true)}
             title="Close Document"
             style={{
               backgroundColor: "rgba(220, 38, 38, 0.85)",

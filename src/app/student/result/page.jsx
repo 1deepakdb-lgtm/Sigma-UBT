@@ -143,6 +143,75 @@ const StudentResult = () => {
     } catch (e) {}
   };
 
+  const handleExitResult = () => {
+    try {
+      if (typeof document !== "undefined") {
+        document.body.classList.remove("pdf-open", "exam-fullscreen-active");
+        document.documentElement.classList.remove("pdf-open", "exam-fullscreen-active");
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+        }
+      }
+      if (typeof window !== "undefined") {
+        try {
+          if (screen.orientation && typeof screen.orientation.unlock === "function") {
+            screen.orientation.unlock();
+          }
+        } catch (e) {}
+        try {
+          window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SHOW_STATUS_BAR", fullscreen: false }));
+          const p = window.parent || window;
+          const bridges = [
+            window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android,
+            p.AndroidApp, p.SmartboardApp, p.SmartBoardApp, p.SmartBoard, p.smartboard, p.BoardApp, p.boardApp, p.Android, p.android
+          ];
+          bridges.forEach((b) => {
+            if (!b) return;
+            if (typeof b.showStatusBar === "function") b.showStatusBar();
+            if (typeof b.showNavigationBar === "function") b.showNavigationBar();
+            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(true);
+            if (typeof b.showSystemUI === "function") b.showSystemUI();
+            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(true);
+            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
+            if (typeof b.setPdfOpen === "function") b.setPdfOpen(false);
+          });
+        } catch (e) {}
+      }
+    } catch (e) {}
+    router.push("/student");
+  };
+
+  // Support Android hardware back / Escape key to step back cleanly through Question Review -> Grid -> Summary -> Student Portal
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.__handleAppBack = () => {
+      if (selectedQuestionIndex !== null) {
+        setSelectedQuestionIndex(null);
+        return true;
+      }
+      if (showDetailedView) {
+        setShowDetailedView(false);
+        return true;
+      }
+      handleExitResult();
+      return true;
+    };
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (selectedQuestionIndex !== null) setSelectedQuestionIndex(null);
+        else if (showDetailedView) setShowDetailedView(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      if (window.__handleAppBack) delete window.__handleAppBack;
+    };
+  }, [selectedQuestionIndex, showDetailedView]);
+
   const UBT_RESULT_LANDSCAPE_CSS = `
     @media (orientation: portrait) {
       .ubt-exam-landscape-enforcer {
@@ -1049,7 +1118,7 @@ const StudentResult = () => {
               </button>
               <button 
                 type="button"
-                onClick={() => router.push("/student")}
+                onClick={handleExitResult}
                 style={{ flex: 1, minWidth: "160px", maxWidth: "220px", backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "12px 20px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", transition: "all 0.2s" }}
                 onMouseOver={(e) => { e.target.style.backgroundColor = '#e2e8f0'; e.target.style.transform = 'translateY(-2px)'; }}
                 onMouseOut={(e) => { e.target.style.backgroundColor = '#f1f5f9'; e.target.style.transform = 'translateY(0)'; }}
