@@ -5649,70 +5649,73 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     />
                   </div>
 
-                  {/* 6. Class Time with AM / PM Dropdown */}
+                  {/* 6. Class Time with AM / PM Dropdown (6:00 AM to 6:00 PM) */}
                   <div>
                     <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "4px" }}>
                       Class Time (with AM / PM) * {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
                     </label>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      {(() => {
-                        const baseTimeSlots = [
-                          "06:00", "06:30", "07:00", "07:30", "08:00", "08:30",
-                          "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-                          "12:00", "12:30", "01:00", "01:30", "02:00", "02:30",
-                          "03:00", "03:30", "04:00", "04:30", "05:00", "05:30"
-                        ];
-                        const curTime = (form.classTime || "").trim();
-                        const timeOptions = curTime && !baseTimeSlots.includes(curTime)
-                          ? [curTime, ...baseTimeSlots]
-                          : baseTimeSlots;
-                        return (
-                          <select
-                            required
-                            value={curTime}
-                            disabled={form.isExistingStudent && !form.isEditingExistingBill}
-                            onChange={(e) => setForm({ ...form, classTime: e.target.value })}
-                            style={{
-                              flex: 1,
-                              padding: "9px 12px",
-                              borderRadius: "6px",
-                              border: "1.5px solid #cbd5e1",
-                              backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "white",
-                              fontSize: "14px",
-                              fontWeight: "600",
-                              color: "#0f172a",
-                              cursor: (form.isExistingStudent && !form.isEditingExistingBill) ? "not-allowed" : "pointer",
-                              boxSizing: "border-box"
-                            }}
-                          >
-                            <option value="">Select Time</option>
-                            {timeOptions.map((t) => (
-                              <option key={t} value={t}>{t}</option>
-                            ))}
-                          </select>
-                        );
-                      })()}
-                      <select
-                        value={form.classTimePeriod || "AM"}
-                        disabled={form.isExistingStudent && !form.isEditingExistingBill}
-                        onChange={(e) => setForm({ ...form, classTimePeriod: e.target.value })}
-                        style={{
-                          width: "85px",
-                          padding: "9px 8px",
-                          borderRadius: "6px",
-                          border: "1.5px solid #2563eb",
-                          backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "#eff6ff",
-                          fontWeight: "bold",
-                          fontSize: "14px",
-                          color: "#1e3a8a",
-                          cursor: "pointer",
-                          boxSizing: "border-box"
-                        }}
-                      >
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
-                      </select>
-                    </div>
+                    {(() => {
+                      const baseTimeSlots = [
+                        "06:00 AM", "06:30 AM",
+                        "07:00 AM", "07:30 AM",
+                        "08:00 AM", "08:30 AM",
+                        "09:00 AM", "09:30 AM",
+                        "10:00 AM", "10:30 AM",
+                        "11:00 AM", "11:30 AM",
+                        "12:00 PM", "12:30 PM",
+                        "01:00 PM", "01:30 PM",
+                        "02:00 PM", "02:30 PM",
+                        "03:00 PM", "03:30 PM",
+                        "04:00 PM", "04:30 PM",
+                        "05:00 PM", "05:30 PM",
+                        "06:00 PM"
+                      ];
+                      const curTime = (form.classTime || "").trim();
+                      const curPeriod = (form.classTimePeriod || "AM").toUpperCase();
+                      const curCombined = curTime
+                        ? (/\s*(AM|PM)$/i.test(curTime) ? curTime : `${curTime} ${curPeriod}`)
+                        : "";
+                      const timeOptions = curCombined && !baseTimeSlots.includes(curCombined)
+                        ? [curCombined, ...baseTimeSlots]
+                        : baseTimeSlots;
+                      return (
+                        <select
+                          required
+                          value={curCombined}
+                          disabled={form.isExistingStudent && !form.isEditingExistingBill}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val) {
+                              setForm({ ...form, classTime: "", classTimePeriod: "AM" });
+                              return;
+                            }
+                            const m = val.match(/^(.*?)\s+(AM|PM)$/i);
+                            if (m) {
+                              setForm({ ...form, classTime: m[1].trim(), classTimePeriod: m[2].toUpperCase() });
+                            } else {
+                              setForm({ ...form, classTime: val, classTimePeriod: "AM" });
+                            }
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "9px 12px",
+                            borderRadius: "6px",
+                            border: "1.5px solid #cbd5e1",
+                            backgroundColor: (form.isExistingStudent && !form.isEditingExistingBill) ? "#f1f5f9" : "white",
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            color: "#0f172a",
+                            cursor: (form.isExistingStudent && !form.isEditingExistingBill) ? "not-allowed" : "pointer",
+                            boxSizing: "border-box"
+                          }}
+                        >
+                          <option value="">Select Class Time (6:00 AM - 6:00 PM)</option>
+                          {timeOptions.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      );
+                    })()}
                   </div>
 
                   {/* 7. Course Package */}
