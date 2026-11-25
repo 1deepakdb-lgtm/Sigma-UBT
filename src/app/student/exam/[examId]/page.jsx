@@ -1021,7 +1021,8 @@ const StudentExam = () => {
       border-bottom: none !important;
     }
     .ubt-opt-selected {
-      background-color: #eff6ff !important;
+      background-color: #dbeafe !important;
+      box-shadow: inset 4px 0 0 #0284c7 !important;
     }
     .ubt-opt-badge {
       width: 32px !important;
@@ -1039,6 +1040,7 @@ const StudentExam = () => {
       background-color: #ffffff !important;
       transition: all 0.15s ease !important;
     }
+    .ubt-opt-selected .ubt-opt-badge,
     .ubt-opt-badge-selected {
       border-color: #0284c7 !important;
       background-color: #0284c7 !important;
@@ -1707,14 +1709,14 @@ const StudentExam = () => {
                               flex: 1,
                               padding: "10px 18px",
                               borderBottom: index < rawOptions.length - 1 ? "1px solid #e2e8f0" : "none",
-                              backgroundColor: isSelected ? "#eff6ff" : "transparent",
+                              backgroundColor: isSelected ? "#dbeafe" : "transparent",
                               cursor: "pointer",
                               zIndex: 2,
                               transition: "background-color 0.15s ease"
                             }}
                           >
                             <div
-                              className="ubt-opt-badge"
+                              className={`ubt-opt-badge ${isSelected ? "ubt-opt-badge-selected" : ""}`}
                               style={{
                                 width: "28px",
                                 height: "28px",
