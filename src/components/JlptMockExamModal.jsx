@@ -63,12 +63,27 @@ export default function JlptMockExamModal({
     }
 
     if (typeof window !== "undefined") {
-      // Gracefully exit native fullscreen to prevent browser "Drag from top to exit full screen" toast
-      if (typeof document !== "undefined" && document.fullscreenElement) {
-        try {
-          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-        } catch (e) {}
-      }
+      // Enter full screen & hide mobile status bar by default for Mock Exam
+      try {
+        if (typeof document !== "undefined") {
+          document.body.classList.add("pdf-open", "exam-fullscreen-active");
+          document.documentElement.classList.add("pdf-open", "exam-fullscreen-active");
+          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+              el.requestFullscreen({ navigationUI: "hide" }).catch(() => {
+                el.requestFullscreen().catch(() => {});
+              });
+            } else if (el.webkitRequestFullscreen) {
+              el.webkitRequestFullscreen();
+            }
+          }
+        }
+        window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
+        window.AndroidApp?.hideStatusBar?.();
+        window.AndroidApp?.setStatusBarVisible?.(false);
+        window.AndroidApp?.setImmersiveFullscreen?.(true);
+      } catch (e) {}
 
       const lockLandscape = async () => {
         try {

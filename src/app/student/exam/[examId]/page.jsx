@@ -16,6 +16,31 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useParams, usePathname } from "next/navigation";
 
+const UbtWatermark = ({ opacity = 0.16 }) => (
+  <div style={{
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    pointerEvents: "none",
+    userSelect: "none",
+    opacity,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1
+  }}>
+    <svg width="240" height="150" viewBox="0 0 240 150" fill="none">
+      <path d="M65 118 H175 A38 38 0 0 0 175 42 A48 48 0 0 0 82 50 A32 32 0 0 0 65 118 Z" fill="#38bdf8" fillOpacity="0.25" />
+      <text x="120" y="55" textAnchor="middle" fill="#0284c7" fontSize="19" fontWeight="900" fontFamily="sans-serif">EPS</text>
+      <text x="120" y="76" textAnchor="middle" fill="#0284c7" fontSize="19" fontWeight="900" fontFamily="sans-serif">TOPIK</text>
+      <text x="120" y="98" textAnchor="middle" fill="#db2777" fontSize="14" fontWeight="800" fontFamily="sans-serif">Exam Korean</text>
+      <text x="120" y="116" textAnchor="middle" fill="#0284c7" fontSize="15" fontWeight="800" fontFamily="sans-serif">UBT APP</text>
+    </svg>
+  </div>
+);
+
 const StudentExam = () => {
   const router = useRouter();
   const params = useParams(); const examId = params?.examId;
@@ -23,6 +48,10 @@ const StudentExam = () => {
   const [logoWatermark, setLogoWatermark] = useState("");
 
   const [isStarted, setIsStarted] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(1);
+  const [isDownloaded, setIsDownloaded] = useState(false);
+  const [overviewTab, setOverviewTab] = useState("all"); // "all" | "solved" | "unsolved"
+
   const [viewMode, setViewMode] = useState("single"); 
   const [showConfirmModal, setShowConfirmModal] = useState(false); 
   
@@ -94,6 +123,41 @@ const StudentExam = () => {
       } catch (e) {}
     };
   }, [isStarted]);
+
+  // Step 1: Downloading Questions progress simulation and auto-entry
+  useEffect(() => {
+    if (isDownloaded) return;
+    const interval = setInterval(() => {
+      setDownloadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        if (questions.length === 0 && prev >= 85) {
+          return 85;
+        }
+        const delta = Math.floor(Math.random() * 8) + 6;
+        const nextVal = Math.min(100, prev + delta);
+        if (nextVal >= 100) {
+          clearInterval(interval);
+        }
+        return nextVal;
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [questions.length, isDownloaded]);
+
+  useEffect(() => {
+    if (downloadProgress >= 100 && questions.length > 0 && !isDownloaded) {
+      const timer = setTimeout(() => {
+        setIsDownloaded(true);
+        setIsStarted(true);
+        enterFullScreen();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [downloadProgress, questions.length, isDownloaded]);
 
   const audioRef = useRef(null);
   const optionAudioRefs = useRef({});
@@ -375,10 +439,14 @@ const StudentExam = () => {
   const enterFullScreen = () => {
     try {
       if (typeof document !== "undefined") {
+        document.body.classList.add("pdf-open", "exam-fullscreen-active");
+        document.documentElement.classList.add("pdf-open", "exam-fullscreen-active");
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
           const el = document.documentElement;
           if (el.requestFullscreen) {
-            el.requestFullscreen().catch(() => {});
+            el.requestFullscreen({ navigationUI: "hide" }).catch(() => {
+              el.requestFullscreen().catch(() => {});
+            });
           } else if (el.webkitRequestFullscreen) {
             el.webkitRequestFullscreen();
           } else if (el.mozRequestFullScreen) {
@@ -390,9 +458,15 @@ const StudentExam = () => {
       }
     } catch (e) {}
 
-    // Synchronize native Android, Smartboard, and Tablet bridge triggers
+    // Synchronize native Android, iOS Capacitor, ReactNative, and Smartboard bridges to hide status bar
     if (typeof window !== "undefined") {
       try {
+        window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
+        window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: true }).catch?.(() => {});
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "HIDE_STATUS_BAR", fullscreen: true }, "*");
+        }
         const p = window.parent || window;
         const bridges = [
           window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android,
@@ -413,6 +487,22 @@ const StudentExam = () => {
       } catch (err) {}
     }
   };
+
+  // Default to full-screen & hide mobile status bar as soon as UBT exam opens
+  useEffect(() => {
+    enterFullScreen();
+    return () => {
+      try {
+        if (typeof document !== "undefined") {
+          document.body.classList.remove("pdf-open", "exam-fullscreen-active");
+          document.documentElement.classList.remove("pdf-open", "exam-fullscreen-active");
+        }
+        window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+        window.AndroidApp?.showStatusBar?.();
+        window.AndroidApp?.setStatusBarVisible?.(true);
+      } catch (e) {}
+    };
+  }, []);
 
   const toggleFullScreen = () => {
     try {
@@ -711,762 +801,50 @@ const StudentExam = () => {
     msUserSelect: "none"
   };
 
-  if (!isStarted) {
+  if (!isStarted || !isDownloaded || questions.length === 0) {
     return (
       <div 
-        className="ubt-pre-exam-screen"
-        style={{ 
+        className="ubt-exam-landscape-enforcer"
+        style={{
           position: "fixed",
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          width: "100vw", 
+          width: "100vw",
           height: "100vh",
-          height: "100dvh", 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center", 
-          backgroundColor: "#f8fafc", 
-          fontFamily: "Arial, sans-serif", 
-          boxSizing: "border-box", 
-          padding: "12px 14px",
-          overflowY: "auto",
+          height: "100dvh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#f8fafc",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+          boxSizing: "border-box",
           zIndex: 2147483640,
-          ...protectedStyle 
-        }} 
+          ...protectedStyle
+        }}
         onContextMenu={(e) => e.preventDefault()}
       >
-        <style dangerouslySetInnerHTML={{ __html: `
-          .ubt-pre-exam-dialog {
-            background-color: #ffffff;
-            padding: 22px 26px;
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            border: 1px solid #e2e8f0;
-            max-width: 760px;
-            width: 100%;
-            max-height: 94vh;
-            max-height: 94dvh;
-            overflow-y: auto;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: row;
-            gap: 22px;
-            margin: auto;
-            align-items: center;
-          }
-          .ubt-pre-exam-col-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            justify-content: space-between;
-          }
-          .ubt-pre-exam-col-details {
-            flex: 1.25;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            width: 100%;
-          }
-          .ubt-pre-exam-icon {
-            width: 54px;
-            height: 54px;
-            background-color: #0284c7;
-            border-radius: 50%;
-            margin: 0 auto 8px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            box-shadow: 0 4px 10px rgba(2,132,199,0.3);
-            flex-shrink: 0;
-          }
-          .ubt-pre-exam-title {
-            color: #0f172a;
-            font-size: 22px;
-            margin: 0 0 4px 0;
-            font-weight: 800;
-          }
-          .ubt-pre-exam-subtitle {
-            color: #64748b;
-            margin: 0 0 14px 0;
-            font-size: 13px;
-          }
-          .ubt-pre-exam-table {
-            background-color: #f8fafc;
-            border-radius: 12px;
-            padding: 12px 16px;
-            border: 1px solid #e2e8f0;
-            text-align: left;
-            width: 100%;
-            box-sizing: border-box;
-          }
-          .ubt-pre-exam-row {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px dashed #cbd5e1;
-            padding-bottom: 8px;
-            margin-bottom: 8px;
-            font-size: 13px;
-          }
-          .ubt-pre-exam-btn {
-            flex: 1;
-            padding: 11px;
-            font-size: 13.5px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-          }
-          .ubt-pre-exam-buttons {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-            margin-top: 14px;
-          }
-
-          /* Stack vertically on portrait mode phones or narrow views */
-          @media (orientation: portrait), (max-width: 580px) {
-            .ubt-pre-exam-dialog {
-              flex-direction: column !important;
-              max-width: 440px !important;
-              padding: 20px 18px !important;
-              border-radius: 24px !important;
-              gap: 14px !important;
-            }
-            .ubt-pre-exam-buttons {
-              margin-top: 8px !important;
-            }
-          }
-
-          /* Compact fit on landscape mobile viewports */
-          @media (orientation: landscape) and (max-height: 540px) {
-            .ubt-pre-exam-dialog {
-              flex-direction: row !important;
-              max-width: 680px !important;
-              max-height: 96dvh !important;
-              padding: 10px 18px !important;
-              border-radius: 16px !important;
-              gap: 14px !important;
-            }
-            .ubt-pre-exam-icon {
-              width: 36px !important;
-              height: 36px !important;
-              margin: 0 auto 4px auto !important;
-            }
-            .ubt-pre-exam-icon svg {
-              width: 20px !important;
-              height: 20px !important;
-            }
-            .ubt-pre-exam-title {
-              font-size: 16px !important;
-              margin-bottom: 2px !important;
-            }
-            .ubt-pre-exam-subtitle {
-              font-size: 11px !important;
-              margin-bottom: 6px !important;
-            }
-            .ubt-pre-exam-table {
-              padding: 6px 12px !important;
-              border-radius: 8px !important;
-            }
-            .ubt-pre-exam-row {
-              padding-bottom: 4px !important;
-              margin-bottom: 4px !important;
-              font-size: 11.5px !important;
-            }
-            .ubt-pre-exam-btn {
-              padding: 7px 12px !important;
-              font-size: 12px !important;
-            }
-            .ubt-pre-exam-buttons {
-              margin-top: 6px !important;
-              gap: 8px !important;
-            }
-          }
-        ` }} />
-        <div className="ubt-pre-exam-dialog">
-          <div className="ubt-pre-exam-col-info">
-            <div className="ubt-pre-exam-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-              </svg>
-            </div>
-            <h2 className="ubt-pre-exam-title">EPS-TOPIK UBT Exam</h2>
-            <p className="ubt-pre-exam-subtitle">Please verify your details before starting</p>
-            
-            <div className="ubt-pre-exam-buttons">
-              <button 
-                type="button"
-                className="ubt-pre-exam-btn"
-                onClick={() => router.push("/student")}
-                style={{ backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1" }}
-              >
-                CANCEL
-              </button>
-              <button 
-                type="button"
-                className="ubt-pre-exam-btn"
-                onClick={handleGetStarted}
-                style={{ backgroundColor: "#0284c7", color: "white", border: "none", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
-              >
-                GET START
-              </button>
-            </div>
-          </div>
-
-          <div className="ubt-pre-exam-col-details">
-            <div className="ubt-pre-exam-table">
-              <div className="ubt-pre-exam-row">
-                <span style={{ color: "#64748b", fontWeight: "600" }}>Exam ID</span>
-                <span style={{ color: "#0f172a", fontWeight: "bold" }}>287378RM</span>
-              </div>
-              <div className="ubt-pre-exam-row">
-                <span style={{ color: "#64748b", fontWeight: "600" }}>Student Name</span>
-                <span suppressHydrationWarning style={{ color: "#0f172a", fontWeight: "bold" }}>{studentName}</span>
-              </div>
-              <div className="ubt-pre-exam-row">
-                <span style={{ color: "#64748b", fontWeight: "600" }}>Exam Title</span>
-                <span style={{ color: "#0f172a", fontWeight: "bold" }}>{exactExamName}</span>
-              </div>
-              <div className="ubt-pre-exam-row">
-                <span style={{ color: "#64748b", fontWeight: "600" }}>Total Questions</span>
-                <span style={{ color: "#2563eb", fontWeight: "bold" }}>40 (20 Reading + 20 Listening)</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                <span style={{ color: "#64748b", fontWeight: "600" }}>Time Limit</span>
-                <span style={{ color: "#d97706", fontWeight: "bold" }}>50 Minutes</span>
-              </div>
-            </div>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", color: "#334155", fontSize: "22px", fontWeight: "400", letterSpacing: "0.2px" }}>
+          <span>Downloading Questions {downloadProgress} %</span>
+          <svg className="ubt-download-spinner" width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round">
+            <style>{`
+              @keyframes ubt-spinner-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+              .ubt-download-spinner { animation: ubt-spinner-spin 1s steps(8, end) infinite; }
+            `}</style>
+            <line x1="12" y1="2" x2="12" y2="6" stroke="#94a3b8" />
+            <line x1="12" y1="18" x2="12" y2="22" stroke="#475569" />
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" stroke="#cbd5e1" />
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" stroke="#334155" />
+            <line x1="2" y1="12" x2="6" y2="12" stroke="#e2e8f0" />
+            <line x1="18" y1="12" x2="22" y2="12" stroke="#1e293b" />
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" stroke="#64748b" />
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" stroke="#cbd5e1" />
+          </svg>
         </div>
       </div>
     );
   }
-
-  // ==============================================================
-  // OFFLINE SUBMITTED RESULT & QUESTION REVIEW (1 - 40)
-  // ==============================================================
-  if (isExamSubmitted && submittedExamResult) {
-    const res = submittedExamResult;
-    const revQuestions = res.questions || [];
-    const revReading = revQuestions.filter(q => (q.type && q.type.toLowerCase() === "reading") || (q.qIndex !== undefined && q.qIndex <= 20)).slice(0, 20);
-    const revListening = revQuestions.filter(q => (q.type && q.type.toLowerCase() === "listening") || (q.qIndex !== undefined && q.qIndex > 20)).slice(0, 20);
-    const allRevQuestions = [...revReading, ...revListening].length > 0 ? [...revReading, ...revListening] : revQuestions.slice(0, 40);
-    const revAnswers = res.selectedAnswers || {};
-
-    const getAns = (q, idx) => {
-      if (!q) return undefined;
-      if (revAnswers[q.id] !== undefined) return revAnswers[q.id];
-      if (q.qIndex !== undefined && revAnswers[q.qIndex] !== undefined) return revAnswers[q.qIndex];
-      if (revAnswers[idx] !== undefined) return revAnswers[idx];
-      return undefined;
-    };
-
-    // 1. Detailed Single Question View
-    if (inlineShowDetailed && inlineSelectedQIndex !== null) {
-      const q = allRevQuestions[inlineSelectedQIndex];
-      const studentAns = getAns(q, inlineSelectedQIndex);
-      const isAttempted = studentAns !== undefined && studentAns !== null && studentAns !== "";
-      const isCorrect = isAttempted && q?.answer !== undefined && Number(studentAns) === Number(q.answer);
-
-      return (
-        <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", padding: "16px", boxSizing: "border-box", fontFamily: "Arial, sans-serif", overflowY: "auto" }}>
-          <div style={{ maxWidth: "980px", margin: "0 auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <button
-                  type="button"
-                  onClick={() => setInlineSelectedQIndex(null)}
-                  style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
-                >
-                  ❮ Back to Grid
-                </button>
-                <h3 style={{ margin: 0, color: "#0f172a", fontSize: "18px", fontWeight: "800" }}>
-                  Question {inlineSelectedQIndex + 1} Review ({q?.type || (inlineSelectedQIndex < 20 ? "Reading" : "Listening")})
-                </h3>
-              </div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <span style={{ backgroundColor: isCorrect ? "#dcfce7" : (isAttempted ? "#fee2e2" : "#f1f5f9"), color: isCorrect ? "#15803d" : (isAttempted ? "#b91c1c" : "#64748b"), padding: "6px 14px", borderRadius: "20px", fontWeight: "800", fontSize: "12px" }}>
-                  {isCorrect ? "✓ Correct" : (isAttempted ? "✗ Incorrect" : "○ Not Attempted")}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => { setInlineShowDetailed(false); setInlineSelectedQIndex(null); }}
-                  style={{ backgroundColor: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", padding: "6px 14px", borderRadius: "6px", fontWeight: "700", cursor: "pointer", fontSize: "12px" }}
-                >
-                  Summary
-                </button>
-              </div>
-            </div>
-
-            <div style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "10px", padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-              <p style={{ color: "#0f172a", fontSize: "15px", fontWeight: "bold", margin: "0 0 10px 0" }}>
-                {q?.mainHeading || (inlineSelectedQIndex < 20 ? `[ ${inlineSelectedQIndex + 1} ] 다음을 읽고 알맞은 것을 고르십시오.` : `[ ${inlineSelectedQIndex + 1} ] 이야기를 듣고 질문에 알맞은 것을 고르십시오.`)}
-              </p>
-              {q?.questionHeading && (
-                <p style={{ color: "#334155", fontSize: "14px", fontWeight: "bold", margin: "0 0 10px 0" }}>
-                  {q.questionHeading}
-                </p>
-              )}
-              <p
-                style={{ color: "#0f172a", fontSize: "17px", fontWeight: "bold", margin: "0 0 15px 0" }}
-                dangerouslySetInnerHTML={{ __html: `${inlineSelectedQIndex + 1}. ${q?.description || ""}` }}
-              />
-
-              {q?.image && (
-                <div style={{ margin: "15px 0", textAlign: "center" }}>
-                  <img src={q.image} alt="Question" style={{ maxHeight: "180px", maxWidth: "260px", objectFit: "contain", borderRadius: "6px", border: "1px solid #cbd5e1" }} />
-                </div>
-              )}
-
-              {q?.audio && (
-                <div style={{ margin: "15px 0" }}>
-                  <audio controls controlsList="nodownload" onContextMenu={(e) => e.preventDefault()} src={q.audio} style={{ width: "100%", height: "35px" }} />
-                </div>
-              )}
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
-                {Array.isArray(q?.options) && q.options.map((opt, optIdx) => {
-                  const optText = typeof opt === 'object' && opt !== null ? opt.text : opt;
-                  const optImg = typeof opt === 'object' && opt !== null ? opt.image : null;
-                  const optAud = typeof opt === 'object' && opt !== null ? opt.audio : null;
-
-                  const isThisCorrect = Number(optIdx) === Number(q.answer);
-                  const isThisStudent = Number(optIdx) === Number(studentAns);
-
-                  let bg = "#f8fafc";
-                  let border = "1px solid #cbd5e1";
-                  let color = "#1e293b";
-                  let badgeBg = "white";
-                  let badgeBorder = "2px solid #0284c7";
-                  let badgeColor = "#0284c7";
-
-                  if (isThisCorrect) {
-                    bg = "#f0fdf4";
-                    border = "1.5px solid #16a34a";
-                    color = "#15803d";
-                    badgeBg = "#16a34a";
-                    badgeBorder = "2px solid #16a34a";
-                    badgeColor = "white";
-                  } else if (isThisStudent && !isCorrect) {
-                    bg = "#fef2f2";
-                    border = "1.5px solid #ef4444";
-                    color = "#b91c1c";
-                    badgeBg = "#ef4444";
-                    badgeBorder = "2px solid #ef4444";
-                    badgeColor = "white";
-                  }
-
-                  return (
-                    <div key={optIdx} style={{ display: "flex", flexDirection: "column", padding: "10px 14px", backgroundColor: bg, border, borderRadius: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                        <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: badgeBg, color: badgeColor, border: badgeBorder, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", marginRight: "12px", flexShrink: 0 }}>
-                          {optIdx + 1}
-                        </div>
-                        <span style={{ fontSize: "15px", flex: 1, color }} dangerouslySetInnerHTML={{ __html: optText }} />
-                        {isThisCorrect && (
-                          <span style={{ fontSize: "12px", fontWeight: "800", color: "#16a34a", marginLeft: "8px" }}>
-                            ✓ Correct Answer
-                          </span>
-                        )}
-                        {isThisStudent && !isThisCorrect && (
-                          <span style={{ fontSize: "12px", fontWeight: "800", color: "#ef4444", marginLeft: "8px" }}>
-                            ✗ Your Answer
-                          </span>
-                        )}
-                      </div>
-                      {optImg && (
-                        <div style={{ marginTop: "6px", paddingLeft: "40px" }}>
-                          <img src={optImg} alt={`Opt ${optIdx + 1}`} style={{ maxHeight: "60px", borderRadius: "4px" }} />
-                        </div>
-                      )}
-                      {optAud && (
-                        <div style={{ marginTop: "6px", paddingLeft: "40px" }}>
-                          <audio controls controlsList="nodownload" src={optAud} style={{ width: "100%", height: "26px" }} />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{ marginTop: "24px", display: "flex", justifyContent: "space-between" }}>
-                <button
-                  type="button"
-                  onClick={() => setInlineSelectedQIndex(prev => Math.max(0, prev - 1))}
-                  disabled={inlineSelectedQIndex === 0}
-                  style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "9px 18px", borderRadius: "6px", fontWeight: "bold", cursor: inlineSelectedQIndex === 0 ? "not-allowed" : "pointer", opacity: inlineSelectedQIndex === 0 ? 0.5 : 1 }}
-                >
-                  ❮ Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInlineSelectedQIndex(prev => Math.min(allRevQuestions.length - 1, prev + 1))}
-                  disabled={inlineSelectedQIndex === allRevQuestions.length - 1}
-                  style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "9px 18px", borderRadius: "6px", fontWeight: "bold", cursor: inlineSelectedQIndex === allRevQuestions.length - 1 ? "not-allowed" : "pointer", opacity: inlineSelectedQIndex === allRevQuestions.length - 1 ? 0.5 : 1 }}
-                >
-                  Next ❯
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // 2. 40-Question Grid Overview
-    if (inlineShowDetailed && inlineSelectedQIndex === null) {
-      return (
-        <div style={{ maxWidth: "100%", width: "100%", height: "100vh", height: "100dvh", margin: "0 auto", padding: "8px 12px", boxSizing: "border-box", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden", backgroundColor: "#f8fafc" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "8px", flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={() => setInlineShowDetailed(false)}
-              style={{ backgroundColor: "#0284c7", color: "white", border: "none", padding: "6px 16px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}
-            >
-              ❮ Back to Summary
-            </button>
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#16a34a" }}>● Correct ({res.score})</span>
-              <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#ef4444" }}>● Incorrect ({res.attempted - res.score})</span>
-              <span style={{ fontSize: "12.5px", fontWeight: "700", color: "#64748b" }}>● Unanswered ({res.total - res.attempted})</span>
-            </div>
-          </div>
-
-          <div style={{ backgroundColor: "white", border: "1px solid #cbd5e1", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.05)", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-            <div style={{ backgroundColor: "#0284c7", color: "white", padding: "8px 14px", display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "13px", flexWrap: "wrap", gap: "6px", flexShrink: 0 }}>
-              <span>Exam: {res.examName}</span>
-              <span>Score: {res.score} / {res.total} ({res.percentage}%)</span>
-              <span>Click question number to review</span>
-            </div>
-
-            <div style={{ padding: "8px 12px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flex: 1, minHeight: 0, height: "100%", overflow: "hidden" }}>
-                <div style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "10px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
-                  <h4 style={{ textAlign: "center", color: "#0284c7", margin: "0 0 4px 0", fontSize: "13px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", flex: 1, height: "100%", minHeight: 0 }}>
-                    {allRevQuestions.slice(0, 20).map((q, idx) => {
-                      const ans = getAns(q, idx);
-                      const isAtt = ans !== undefined && ans !== null && ans !== "";
-                      const isCor = isAtt && q.answer !== undefined && Number(ans) === Number(q.answer);
-
-                      let bg = "white";
-                      let border = "#cbd5e1";
-                      let text = "#1e293b";
-                      if (isAtt) {
-                        if (isCor) { bg = "#16a34a"; border = "#15803d"; text = "white"; }
-                        else { bg = "#ef4444"; border = "#dc2626"; text = "white"; }
-                      }
-
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setInlineSelectedQIndex(idx)}
-                          style={{ height: "100%", minHeight: 0, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: bg, border: `1.5px solid ${border}`, borderRadius: "12px", fontWeight: "800", fontSize: "13px", cursor: "pointer", color: text, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
-                        >
-                          {idx + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div style={{ flex: 1, paddingLeft: "10px", display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
-                  <h4 style={{ textAlign: "center", color: "#0284c7", margin: "0 0 4px 0", fontSize: "13px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(5, 1fr)", gap: "5px", flex: 1, height: "100%", minHeight: 0 }}>
-                    {allRevQuestions.slice(20, 40).map((q, idx) => {
-                      const actualIdx = idx + 20;
-                      const ans = getAns(q, actualIdx);
-                      const isAtt = ans !== undefined && ans !== null && ans !== "";
-                      const isCor = isAtt && q.answer !== undefined && Number(ans) === Number(q.answer);
-
-                      let bg = "white";
-                      let border = "#cbd5e1";
-                      let text = "#1e293b";
-                      if (isAtt) {
-                        if (isCor) { bg = "#16a34a"; border = "#15803d"; text = "white"; }
-                        else { bg = "#ef4444"; border = "#dc2626"; text = "white"; }
-                      }
-
-                      return (
-                        <button
-                          key={actualIdx}
-                          type="button"
-                          onClick={() => setInlineSelectedQIndex(actualIdx)}
-                          style={{ height: "100%", minHeight: 0, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: bg, border: `1.5px solid ${border}`, borderRadius: "12px", fontWeight: "800", fontSize: "13px", cursor: "pointer", color: text, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
-                        >
-                          {actualIdx + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // 3. Default: Exam Summary Screen
-    return (
-      <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "Arial, sans-serif", display: "flex", flexDirection: "column" }}>
-        <style dangerouslySetInnerHTML={{ __html: `
-          .exam-finish-top-bar {
-            background-color: #0284c7;
-            color: white;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          .exam-finish-wrap {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-          }
-          .exam-finish-card {
-            width: 100%;
-            max-width: 500px;
-            background-color: white;
-            border-radius: 24px;
-            padding: 26px 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            border: 1px solid #e2e8f0;
-            box-sizing: border-box;
-            max-height: 94vh;
-            overflow-y: auto;
-          }
-          .exam-finish-header {
-            text-align: center;
-            margin-bottom: 18px;
-          }
-          .exam-finish-trophy {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background-color: #fef3c7;
-            border: 1px solid #fde68a;
-            margin: 0 auto 10px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-          }
-          .exam-finish-title {
-            color: #0f172a;
-            font-size: 22px;
-            margin: 0 0 8px 0;
-            font-weight: 800;
-          }
-          .exam-finish-badge {
-            display: inline-block;
-            background-color: #f1f5f9;
-            padding: 6px 14px;
-            border-radius: 20px;
-            color: #475569;
-            font-weight: 600;
-            font-size: 13.5px;
-          }
-          .exam-finish-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-          }
-          .exam-finish-stats {
-            background-color: #f8fafc;
-            border-radius: 16px;
-            padding: 16px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid #e2e8f0;
-          }
-          .exam-finish-actions {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-          }
-
-          /* LANDSCAPE MODE: FIT ON SCREEN CLEANLY WITHOUT SCROLL OR OVERFLOW */
-          @media (orientation: landscape), (max-height: 650px) {
-            .exam-finish-top-bar {
-              display: none !important;
-            }
-            .exam-finish-wrap {
-              padding: 6px 12px !important;
-              height: 100vh !important;
-              height: 100dvh !important;
-              min-height: 0 !important;
-              overflow: hidden !important;
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-            }
-            .exam-finish-card {
-              max-width: 660px !important;
-              width: 100% !important;
-              padding: 12px 20px !important;
-              max-height: calc(100dvh - 16px) !important;
-              border-radius: 24px !important;
-              display: flex !important;
-              flex-direction: column !important;
-              justify-content: center !important;
-              box-sizing: border-box !important;
-              overflow-y: auto !important;
-            }
-            .exam-finish-header {
-              margin-bottom: 8px !important;
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-              gap: 12px !important;
-              text-align: left !important;
-            }
-            .exam-finish-trophy {
-              width: 38px !important;
-              height: 38px !important;
-              font-size: 20px !important;
-              margin: 0 !important;
-              flex-shrink: 0 !important;
-            }
-            .exam-finish-title {
-              font-size: 16px !important;
-              margin: 0 !important;
-            }
-            .exam-finish-badge {
-              font-size: 12px !important;
-              padding: 2px 10px !important;
-              border-radius: 14px !important;
-            }
-            .exam-finish-grid {
-              display: flex !important;
-              flex-direction: column !important;
-              align-items: center !important;
-              gap: 12px !important;
-              width: 100% !important;
-            }
-            .exam-finish-stats {
-              width: 100% !important;
-              max-width: 420px !important;
-              padding: 8px 16px !important;
-              gap: 4px !important;
-              margin-bottom: 0 !important;
-              border-radius: 14px !important;
-            }
-            .exam-finish-stats > div {
-              padding-bottom: 3px !important;
-              max-width: 100% !important;
-            }
-            .exam-finish-stats span {
-              font-size: 13px !important;
-            }
-            .exam-finish-actions {
-              display: flex !important;
-              flex-direction: row !important;
-              justify-content: center !important;
-              gap: 12px !important;
-              width: 100% !important;
-              max-width: 420px !important;
-            }
-            .exam-finish-actions button {
-              flex: 1 !important;
-              width: auto !important;
-              max-width: none !important;
-              min-width: 0 !important;
-              padding: 10px 16px !important;
-              font-size: 13px !important;
-              border-radius: 8px !important;
-            }
-          }
-        ` }} />
-
-        <div className="exam-finish-top-bar">
-          <span>Exam Summary</span>
-        </div>
-
-        <div className="exam-finish-wrap">
-          <div className="exam-finish-card">
-            <div className="exam-finish-header">
-              <div className="exam-finish-trophy">
-                🏆
-              </div>
-              <div>
-                <h2 className="exam-finish-title">Congratulations, Exam Ended!</h2>
-                <div className="exam-finish-badge">
-                  <span style={{ color: "#0284c7" }}>👤 Name:</span> {studentName} &nbsp; | &nbsp; <span style={{ color: "#0284c7" }}>Exam:</span> {res.examName}
-                </div>
-              </div>
-            </div>
-
-            <div className="exam-finish-grid">
-              <div className="exam-finish-stats">
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Total Questions</span>
-                  <span style={{ color: "#0f172a", fontSize: "14px", fontWeight: "bold" }}>{res.total || 40}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Total Attempted</span>
-                  <span style={{ color: "#0f172a", fontSize: "14px", fontWeight: "bold" }}>{res.attempted}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Total Correct</span>
-                  <span style={{ color: "#16a34a", fontSize: "16px", fontWeight: "900" }}>{res.score} / {res.total || 40}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Reading Score</span>
-                  <span style={{ color: "#0284c7", fontSize: "13.5px", fontWeight: "700" }}>{res.readingScore ?? ((res.readingCorrect || 0) * 5)} / 100</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", borderBottom: "1px dashed #cbd5e1", paddingBottom: "5px" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Listening Score</span>
-                  <span style={{ color: "#0284c7", fontSize: "13.5px", fontWeight: "700" }}>{res.listeningScore ?? ((res.listeningCorrect || 0) * 5)} / 100</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", maxWidth: "260px", paddingTop: "3px" }}>
-                  <span style={{ color: "#64748b", fontSize: "13px", fontWeight: "600" }}>Percentage & Status</span>
-                  <span style={{ color: res.passed ? "#16a34a" : "#ef4444", fontSize: "14px", fontWeight: "900" }}>
-                    {res.percentage}% &nbsp; ({res.passed ? "PASSED" : "FAILED"})
-                  </span>
-                </div>
-              </div>
-
-              <div className="exam-finish-actions">
-                <button
-                  type="button"
-                  onClick={() => setInlineShowDetailed(true)}
-                  style={{ flex: 1, minWidth: "160px", backgroundColor: "#0284c7", color: "white", border: "none", padding: "12px 18px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 6px rgba(2, 132, 199, 0.2)" }}
-                >
-                  VIEW REVIEW (1-40)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push("/student")}
-                  style={{ flex: 1, minWidth: "160px", backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "12px 18px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", cursor: "pointer" }}
-                >
-                  CLOSE
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (questions.length === 0) return <div style={{ padding: "50px", textAlign: "center" }}>Loading exam questions...</div>;
 
   const containerExamStyle = {
     width: "100%",
@@ -1504,7 +882,7 @@ const StudentExam = () => {
           right: 0;
           bottom: 0;
           z-index: 2147483640;
-          background-color: #ffffff;
+          background-color: #f8fafc;
         }
         .student-bottom-nav,
         .institute-bottom-nav,
@@ -1532,484 +910,138 @@ const StudentExam = () => {
           overflow: hidden;
           box-shadow: none;
         }
+        .ubt-exam-header-bar {
+          display: flex !important;
+          align-items: center !important;
+          background-color: #f8fafc !important;
+          color: #334155 !important;
+          border-bottom: 1px solid #cbd5e1 !important;
+          padding: 6px 16px !important;
+          font-size: 13.5px !important;
+          font-weight: 600 !important;
+          flex-shrink: 0 !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
         .ubt-exam-card {
-          background-color: #ffffff;
-          border: none;
-          border-radius: 0;
-          box-shadow: none;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          flex: 1;
-          min-height: 0;
-          overflow: hidden;
+          background-color: #f8fafc !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: space-between !important;
+          flex: 1 !important;
+          min-height: 0 !important;
+          overflow: hidden !important;
+          padding: 8px 12px !important;
+          gap: 8px !important;
         }
         .ubt-exam-columns {
-          display: flex;
-          flex: 1;
-          overflow: hidden;
-          min-height: 0;
+          display: flex !important;
+          flex: 1 !important;
+          overflow: hidden !important;
+          min-height: 0 !important;
+          gap: 10px !important;
         }
         .ubt-exam-left {
-          flex: 1.25;
-          padding: 16px 22px;
-          border-right: 1px solid #e2e8f0;
-          display: flex;
-          flex-direction: column;
-          justify-content: safe center;
-          overflow-y: auto;
-          height: 100%;
-          min-height: 0;
+          flex: 1.25 !important;
+          background-color: #ffffff !important;
+          border: 1.5px solid #cbd5e1 !important;
+          border-radius: 12px !important;
+          padding: 14px 18px !important;
+          position: relative !important;
+          display: flex !important;
+          flex-direction: column !important;
+          overflow-y: auto !important;
+          height: 100% !important;
+          min-height: 0 !important;
         }
         .ubt-exam-right {
-          flex: 1;
-          padding: 16px 22px;
-          display: flex;
-          flex-direction: column;
-          justify-content: safe center;
-          gap: 10px;
-          overflow-y: auto;
-          height: 100%;
-          min-height: 0;
+          flex: 1 !important;
+          background-color: #ffffff !important;
+          border: 1.5px solid #cbd5e1 !important;
+          border-radius: 12px !important;
+          padding: 0 !important;
+          position: relative !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: space-evenly !important;
+          overflow-y: auto !important;
+          height: 100% !important;
+          min-height: 0 !important;
         }
-        .ubt-exam-header-bar {
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
-          align-items: center;
-          background-color: #0284c7;
-          color: white;
-          padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 14px);
-          padding-bottom: 10px;
-          padding-left: calc(env(safe-area-inset-left, 0px) + 16px);
-          padding-right: calc(env(safe-area-inset-right, 0px) + 16px);
-          border-radius: 0;
-          font-weight: bold;
-          font-size: 14px;
-          gap: 8px;
-          flex-shrink: 0;
-          box-sizing: border-box;
-          width: 100%;
+        .ubt-opt-row {
+          display: flex !important;
+          align-items: center !important;
+          padding: 10px 18px !important;
+          border-bottom: 1px solid #e2e8f0 !important;
+          background-color: transparent !important;
+          cursor: pointer !important;
+          transition: background-color 0.15s ease !important;
+          flex: 1 !important;
         }
-        .ubt-exam-header-bar > *:nth-child(1) {
-          justify-self: start;
-          text-align: left;
+        .ubt-opt-row:last-child {
+          border-bottom: none !important;
         }
-        .ubt-exam-header-bar > *:nth-child(2) {
-          justify-self: center;
-          text-align: center;
-          font-weight: 800;
+        .ubt-opt-selected {
+          background-color: #eff6ff !important;
         }
-        .ubt-exam-header-bar > *:nth-child(3) {
-          justify-self: end;
-          text-align: right;
+        .ubt-opt-badge {
+          width: 28px !important;
+          height: 28px !important;
+          border-radius: 50% !important;
+          border: 1.5px solid #38bdf8 !important;
+          background-color: #ffffff !important;
+          color: #0284c7 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-weight: 700 !important;
+          font-size: 14px !important;
+          margin-right: 14px !important;
+          flex-shrink: 0 !important;
+          transition: all 0.15s ease !important;
+        }
+        .ubt-opt-selected .ubt-opt-badge {
+          background-color: #0284c7 !important;
+          color: #ffffff !important;
+          border-color: #0284c7 !important;
         }
         .ubt-exam-nav-bar {
-          display: flex;
-          padding: 9px 18px;
-          background-color: #f8fafc;
-          border-top: 1px solid #cbd5e1;
-          border-radius: 0;
-          justify-content: space-between;
-          align-items: center;
-          gap: 10px;
-          flex-shrink: 0;
+          display: flex !important;
+          padding: 7px 18px !important;
+          background-color: #f8fafc !important;
+          border-top: 1px solid #cbd5e1 !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          gap: 12px !important;
+          flex-shrink: 0 !important;
         }
         .ubt-exam-nav-bar button {
-          background-color: #0ea5e9;
-          color: white;
-          border: none;
-          padding: 9px 20px;
-          border-radius: 8px;
-          font-weight: 800;
-          font-size: 13.5px;
-          cursor: pointer;
-          letter-spacing: 0.3px;
-          box-shadow: 0 2px 6px rgba(14, 165, 233, 0.35);
-          transition: all 0.15s ease;
+          background-color: #0284c7 !important;
+          color: #ffffff !important;
+          border: none !important;
+          border-radius: 9999px !important;
+          padding: 7px 24px !important;
+          font-weight: 800 !important;
+          font-size: 13.5px !important;
+          cursor: pointer !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          letter-spacing: 0.3px !important;
+          box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3) !important;
+          transition: all 0.15s ease !important;
         }
         .ubt-exam-nav-bar button:active {
-          transform: scale(0.97);
+          transform: scale(0.97) !important;
         }
-        .ubt-overview-box {
-          background-color: rgba(255, 255, 255, 0.95);
-          border: 1px solid #cbd5e1;
-          border-top: none;
-          padding: 14px 18px;
-          border-radius: 0 0 18px 18px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-          overflow: hidden;
-          flex: 1;
-          min-height: 0;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-        }
-        .ubt-overview-flex {
-          display: flex;
-          justify-content: space-between;
-          gap: 20px;
-          flex: 1;
-          min-height: 0;
-          overflow: hidden;
-        }
-        .ubt-overview-col {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          min-height: 0;
-          overflow: hidden;
-        }
-        .ubt-overview-col:first-child {
-          border-right: 2px solid #e2e8f0;
-          padding-right: 14px;
-        }
-        .ubt-overview-col:last-child {
-          padding-left: 14px;
-        }
-        .ubt-overview-grid-scroll {
-          flex: 1;
-          min-height: 0;
-          overflow-y: auto;
-          overflow-x: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-        .ubt-overview-grid {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          grid-template-rows: repeat(4, 1fr);
-          gap: 6px;
-          max-width: 420px;
-          width: 100%;
-          margin: 0 auto;
-          flex: 1;
-          height: 100%;
-        }
-        .ubt-overview-grid button {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          max-width: 68px;
-          height: 44px;
-          min-height: 44px;
-          margin: 0 auto;
-          padding: 0;
-          font-size: 14.5px;
-          font-weight: 800;
-          border-radius: 10px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-          transition: all 0.15s ease;
+        .ubt-exam-nav-bar button:disabled {
+          opacity: 0.45 !important;
+          cursor: not-allowed !important;
+          box-shadow: none !important;
+          transform: none !important;
         }
 
-        /* LANDSCAPE OPTIMIZED EXAM STYLING: ALWAYS FIT FULL DISPLAY SCREEN */
-        @media (orientation: landscape), (max-height: 650px) {
-          .ubt-exam-wrapper {
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100vw !important;
-            width: 100dvw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            max-height: 100dvh !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-            border-radius: 0 !important;
-            background-color: #ffffff !important;
-          }
-          .ubt-exam-main {
-            height: 100% !important;
-            max-height: 100% !important;
-            max-width: 100% !important;
-            width: 100% !important;
-            justify-content: stretch !important;
-            border-radius: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            margin: 0 !important;
-          }
-          .ubt-exam-card {
-            flex: 1 !important;
-            height: auto !important;
-            min-height: 0 !important;
-            max-height: none !important;
-            border-radius: 0 !important;
-            border-left: none !important;
-            border-right: none !important;
-            border-bottom: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-            justify-content: space-between !important;
-          }
-          .ubt-exam-columns {
-            flex-direction: row !important;
-            flex: 1 !important;
-            overflow: hidden !important;
-            min-height: 0 !important;
-          }
-          .ubt-exam-left {
-            flex: 1.25 !important;
-            padding: 10px 18px !important;
-            border-right: 1.5px solid #e2e8f0 !important;
-            border-bottom: none !important;
-            max-height: none !important;
-            overflow-y: auto !important;
-            height: 100% !important;
-            min-height: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
-          }
-          .ubt-exam-left p {
-            font-size: 19px !important;
-            font-weight: 700 !important;
-            color: #0f172a !important;
-            margin-bottom: 8px !important;
-            line-height: 1.4 !important;
-          }
-          .ubt-exam-desc {
-            font-size: 17px !important;
-            font-weight: 600 !important;
-            padding: 10px 14px !important;
-            margin-bottom: 8px !important;
-            line-height: 1.4 !important;
-            border-radius: 8px !important;
-            border: 1.5px solid #cbd5e1 !important;
-            background-color: #f8fafc !important;
-          }
-          .ubt-exam-q-img {
-            max-height: 125px !important;
-            object-fit: contain !important;
-          }
-          .ubt-exam-right {
-            flex: 1 !important;
-            padding: 10px 18px !important;
-            overflow-y: auto !important;
-            height: 100% !important;
-            min-height: 0 !important;
-            max-height: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-evenly !important;
-            gap: 8px !important;
-          }
-          .ubt-opt-row {
-            padding: 9px 14px !important;
-            border-radius: 10px !important;
-            border: 1.5px solid #cbd5e1 !important;
-            background-color: #ffffff !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
-            cursor: pointer !important;
-            transition: all 0.15s ease !important;
-          }
-          .ubt-opt-row:active {
-            transform: scale(0.99) !important;
-          }
-          .ubt-opt-selected {
-            background-color: #eff6ff !important;
-            border-color: #0284c7 !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2) !important;
-          }
-          .ubt-opt-selected .ubt-opt-badge {
-            background-color: #0284c7 !important;
-            color: #ffffff !important;
-            border-color: #0284c7 !important;
-          }
-          .ubt-opt-selected .ubt-opt-text {
-            color: #0369a1 !important;
-            font-weight: 700 !important;
-          }
-          .ubt-opt-badge {
-            width: 28px !important;
-            height: 28px !important;
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            margin-right: 12px !important;
-            border-radius: 50% !important;
-            border-width: 2px !important;
-            flex-shrink: 0 !important;
-          }
-          .ubt-opt-text {
-            font-size: 18px !important;
-            font-weight: 600 !important;
-            color: #1e293b !important;
-            line-height: 1.35 !important;
-          }
-          .ubt-opt-grid-img {
-            max-height: 75px !important;
-          }
-          .ubt-opt-blind-btn {
-            padding: 12px 14px !important;
-          }
-          .ubt-opt-blind-symbol {
-            font-size: 30px !important;
-          }
-          .ubt-exam-header-bar {
-            display: grid !important;
-            grid-template-columns: 1fr auto 1fr !important;
-            align-items: center !important;
-            padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px) !important;
-            padding-bottom: 7px !important;
-            padding-left: calc(env(safe-area-inset-left, 0px) + 18px) !important;
-            padding-right: calc(env(safe-area-inset-right, 0px) + 18px) !important;
-            font-size: 13.5px !important;
-            font-weight: 700 !important;
-            border-radius: 0 !important;
-            flex-shrink: 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-          }
-          .ubt-exam-header-bar > *:nth-child(1) {
-            justify-self: start !important;
-            text-align: left !important;
-          }
-          .ubt-exam-header-bar > *:nth-child(2) {
-            justify-self: center !important;
-            text-align: center !important;
-            font-weight: 800 !important;
-          }
-          .ubt-exam-header-bar > *:nth-child(3) {
-            justify-self: end !important;
-            text-align: right !important;
-          }
-          .ubt-exam-nav-bar {
-            padding-top: 7px !important;
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
-            padding-left: calc(env(safe-area-inset-left, 0px) + 18px) !important;
-            padding-right: calc(env(safe-area-inset-right, 0px) + 18px) !important;
-            border-radius: 0 !important;
-            flex-shrink: 0 !important;
-            gap: 12px !important;
-          }
-          .ubt-exam-nav-bar button {
-            padding: 7px 22px !important;
-            font-size: 13px !important;
-            font-weight: 800 !important;
-            border-radius: 8px !important;
-            min-width: 0 !important;
-          }
-
-          /* OVERVIEW GRID: CENTERED, COMPACT QUESTIONS & STATUS BAR CLEARANCE */
-          .ubt-overview-box {
-            padding: 6px 14px !important;
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px) !important;
-            border-radius: 0 !important;
-            border: none !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-          }
-          .ubt-overview-flex {
-            flex-direction: row !important;
-            gap: 16px !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            max-width: 960px !important;
-            width: 100% !important;
-            margin: auto 0 !important;
-            align-items: center !important;
-            justify-content: center !important;
-            overflow: hidden !important;
-          }
-          .ubt-overview-col {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            padding: 0 4px !important;
-          }
-          .ubt-overview-col:first-child {
-            border-right: 1.5px solid #e2e8f0 !important;
-            padding-right: 12px !important;
-          }
-          .ubt-overview-col:last-child {
-            padding-left: 12px !important;
-          }
-          .ubt-overview-box h4, .ubt-overview-heading {
-            margin: 0 0 4px 0 !important;
-            font-size: 12.5px !important;
-            font-weight: 800 !important;
-            flex-shrink: 0 !important;
-            text-align: center !important;
-            color: #0284c7 !important;
-          }
-          .ubt-overview-grid-scroll {
-            flex: 1 !important;
-            min-height: 0 !important;
-            height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-          }
-          .ubt-overview-grid {
-            display: grid !important;
-            grid-template-columns: repeat(4, 1fr) !important;
-            grid-template-rows: repeat(5, 1fr) !important;
-            gap: 5px !important;
-            height: 100% !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            align-content: stretch !important;
-            width: 100% !important;
-          }
-          .ubt-overview-grid button {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            height: 100% !important;
-            min-height: 0 !important;
-            max-height: none !important;
-            padding: 0 !important;
-            font-size: 13.5px !important;
-            font-weight: 800 !important;
-            border-radius: 12px !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-          }
-          .ubt-overview-actions {
-            margin-top: 4px !important;
-            gap: 12px !important;
-            flex-shrink: 0 !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            max-width: 960px !important;
-            box-sizing: border-box !important;
-            padding-left: calc(env(safe-area-inset-left, 0px) + 8px) !important;
-            padding-right: calc(env(safe-area-inset-right, 0px) + 8px) !important;
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px) !important;
-          }
-          .ubt-overview-actions button {
-            padding: 5px 16px !important;
-            font-size: 12px !important;
-            font-weight: 800 !important;
-            border-radius: 8px !important;
-          }
-        }
-
-        /* =====================================================
-           FORCE LANDSCAPE: rotate entire exam when device is
-           held in portrait — works on ALL mobile browsers
-        ====================================================== */
+        /* FORCE LANDSCAPE: rotate entire exam when device is held in portrait */
         @media (orientation: portrait) {
           .ubt-exam-landscape-enforcer {
             position: fixed !important;
@@ -2024,302 +1056,6 @@ const StudentExam = () => {
             left: 100dvw !important;
             overflow: hidden !important;
             z-index: 2147483640 !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-wrapper {
-            width: 100% !important;
-            max-width: 100% !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-            border-radius: 0 !important;
-            background-color: #ffffff !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-main {
-            width: 100% !important;
-            max-width: 100% !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            border-radius: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-            overflow: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-card {
-            flex: 1 !important;
-            height: auto !important;
-            min-height: 0 !important;
-            max-height: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            border-radius: 0 !important;
-            border-left: none !important;
-            border-right: none !important;
-            border-bottom: none !important;
-            overflow: hidden !important;
-            justify-content: space-between !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-columns {
-            flex-direction: row !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-left {
-            flex: 1.25 !important;
-            border-right: 1.5px solid #e2e8f0 !important;
-            border-bottom: none !important;
-            height: 100% !important;
-            max-height: none !important;
-            overflow-y: auto !important;
-            padding: 12px 18px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: safe center !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-left p {
-            font-size: 18.5px !important;
-            font-weight: 700 !important;
-            color: #0f172a !important;
-            margin-bottom: 6px !important;
-            line-height: 1.35 !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-desc {
-            font-size: 16.5px !important;
-            font-weight: 600 !important;
-            padding: 8px 12px !important;
-            margin-bottom: 6px !important;
-            border-radius: 8px !important;
-            border: 1.5px solid #cbd5e1 !important;
-            background-color: #f8fafc !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-q-img {
-            max-height: 115px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-right {
-            flex: 1 !important;
-            height: 100% !important;
-            max-height: none !important;
-            overflow-y: auto !important;
-            padding: 12px 18px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: safe center !important;
-            gap: 8px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-row {
-            padding: 8px 12px !important;
-            border-radius: 10px !important;
-            border: 1.5px solid #cbd5e1 !important;
-            background-color: #ffffff !important;
-            cursor: pointer !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-selected {
-            background-color: #eff6ff !important;
-            border-color: #0284c7 !important;
-            border-width: 2px !important;
-            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2) !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-selected .ubt-opt-badge {
-            background-color: #0284c7 !important;
-            color: #ffffff !important;
-            border-color: #0284c7 !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-selected .ubt-opt-text {
-            color: #0369a1 !important;
-            font-weight: 700 !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-badge {
-            width: 26px !important;
-            height: 26px !important;
-            font-size: 13.5px !important;
-            font-weight: 800 !important;
-            margin-right: 10px !important;
-            border-radius: 50% !important;
-            border-width: 2px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-text {
-            font-size: 18px !important;
-            font-weight: 600 !important;
-            color: #1e293b !important;
-            line-height: 1.35 !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-grid-img {
-            max-height: 70px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-blind-btn {
-            padding: 10px 12px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-opt-blind-symbol {
-            font-size: 28px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-header-bar {
-            display: grid !important;
-            grid-template-columns: 1fr auto 1fr !important;
-            align-items: center !important;
-            padding-top: max(calc(env(safe-area-inset-top, 0px) + 10px), 38px) !important;
-            padding-bottom: 7px !important;
-            padding-left: calc(env(safe-area-inset-left, 0px) + 16px) !important;
-            padding-right: calc(env(safe-area-inset-right, 0px) + 16px) !important;
-            font-size: 13px !important;
-            font-weight: 700 !important;
-            border-radius: 0 !important;
-            flex-shrink: 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-header-bar > *:nth-child(1) {
-            justify-self: start !important;
-            text-align: left !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-header-bar > *:nth-child(2) {
-            justify-self: center !important;
-            text-align: center !important;
-            font-weight: 800 !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-header-bar > *:nth-child(3) {
-            justify-self: end !important;
-            text-align: right !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-nav-bar {
-            padding-top: 6px !important;
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
-            padding-left: calc(env(safe-area-inset-left, 0px) + 16px) !important;
-            padding-right: calc(env(safe-area-inset-right, 0px) + 16px) !important;
-            border-radius: 0 !important;
-            flex-shrink: 0 !important;
-            gap: 10px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-exam-nav-bar button {
-            padding: 6px 18px !important;
-            font-size: 12.5px !important;
-            font-weight: 800 !important;
-            min-width: 0 !important;
-            border-radius: 8px !important;
-          }
-
-          /* ROTATED OVERVIEW: CENTERED, COMPACT QUESTIONS & ZERO CUT-OFF */
-          .ubt-exam-landscape-enforcer .ubt-overview-box {
-            padding: 6px 12px !important;
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px) !important;
-            border-radius: 0 !important;
-            border: none !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-flex {
-            flex-direction: row !important;
-            gap: 14px !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            max-width: 960px !important;
-            width: 100% !important;
-            margin: auto 0 !important;
-            align-items: center !important;
-            justify-content: center !important;
-            overflow: hidden !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-col {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
-            padding: 0 4px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-col:first-child {
-            border-right: 1.5px solid #e2e8f0 !important;
-            padding-right: 10px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-col:last-child {
-            padding-left: 10px !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-box h4,
-          .ubt-exam-landscape-enforcer .ubt-overview-heading {
-            margin: 0 0 5px 0 !important;
-            font-size: 12.5px !important;
-            font-weight: 800 !important;
-            flex-shrink: 0 !important;
-            text-align: center !important;
-            color: #0284c7 !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-grid-scroll {
-            flex: 1 !important;
-            min-height: 0 !important;
-            height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-grid {
-            display: grid !important;
-            grid-template-columns: repeat(5, 1fr) !important;
-            grid-template-rows: repeat(4, 1fr) !important;
-            gap: 5px !important;
-            max-width: 420px !important;
-            width: 100% !important;
-            margin: 0 auto !important;
-            height: 100% !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            align-content: stretch !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-grid button {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 100% !important;
-            max-width: 68px !important;
-            height: 42px !important;
-            min-height: 40px !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
-            font-size: 14px !important;
-            font-weight: 800 !important;
-            border-radius: 10px !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.06) !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-actions {
-            margin-top: 4px !important;
-            gap: 10px !important;
-            flex-shrink: 0 !important;
-            padding: 0 !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            max-width: 960px !important;
-            box-sizing: border-box !important;
-            padding-left: calc(env(safe-area-inset-left, 0px) + 8px) !important;
-            padding-right: calc(env(safe-area-inset-right, 0px) + 8px) !important;
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px) !important;
-          }
-          .ubt-exam-landscape-enforcer .ubt-overview-actions button {
-            padding: 5px 16px !important;
-            font-size: 12px !important;
-            font-weight: 800 !important;
-            border-radius: 8px !important;
           }
         }
         @media (orientation: landscape) {
@@ -2415,36 +1151,6 @@ const StudentExam = () => {
           box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
           transition: all 0.15s ease !important;
         }
-
-        @media (orientation: landscape) and (max-height: 520px) {
-          .ubt-confirm-modal-card {
-            padding: 12px 18px !important;
-            border-radius: 14px !important;
-            max-height: 94dvh !important;
-          }
-          .ubt-confirm-modal-icon {
-            width: 32px !important;
-            height: 32px !important;
-            margin-bottom: 4px !important;
-          }
-          .ubt-confirm-modal-icon svg {
-            width: 17px !important;
-            height: 17px !important;
-          }
-          .ubt-confirm-modal-title {
-            font-size: 15px !important;
-            margin-bottom: 4px !important;
-          }
-          .ubt-confirm-modal-text {
-            font-size: 12px !important;
-            margin-bottom: 10px !important;
-          }
-          .ubt-confirm-btn-cancel,
-          .ubt-confirm-btn-submit {
-            padding: 7px 12px !important;
-            font-size: 12px !important;
-          }
-        }
       ` }} />
       
       {showConfirmModal && (
@@ -2486,139 +1192,222 @@ const StudentExam = () => {
       {viewMode === "overview" ? (
         <div className="ubt-exam-main" style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: "100%", width: "100%", height: "100%", margin: "0", justifyContent: "stretch", borderRadius: "0", overflow: "hidden" }}>
           
-          <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 10px), 38px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
-            <span style={{ justifySelf: "start" }}>Remaining Questions: {unsolvedCount}</span>
-            <span style={{ justifySelf: "center", textAlign: "center", fontWeight: "900" }}>{exactExamName}</span>
-            <div style={{ justifySelf: "end", display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ textAlign: "right" }}>Time Remaining: {formatTime(timeLeft)}</span>
+          {/* STEP 3: WHOLE QUESTIONS OVERVIEW TOP BAR (Screenshot 3) */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#f8fafc", borderBottom: "1px solid #cbd5e1", padding: "6px 16px", flexShrink: 0, boxSizing: "border-box", width: "100%" }}>
+            
+            {/* Left: User Icon & Exam Title */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "700", fontSize: "14px", color: "#1e293b" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#475569">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              <span>{exactExamName || "New UBT - 127"}</span>
+            </div>
+
+            {/* Center: Category / Filter Tabs */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ color: "#475569", fontSize: "13.5px", fontWeight: "600", padding: "4px 10px" }}>Nepal</span>
+              <button
+                type="button"
+                onClick={() => setOverviewTab("all")}
+                style={{
+                  backgroundColor: overviewTab === "all" ? "#0284c7" : "transparent",
+                  color: overviewTab === "all" ? "#ffffff" : "#475569",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "5px 14px",
+                  fontWeight: "700",
+                  fontSize: "13.5px",
+                  cursor: "pointer"
+                }}
+              >
+                Whole Questions
+              </button>
+              <button
+                type="button"
+                onClick={() => setOverviewTab("solved")}
+                style={{
+                  backgroundColor: overviewTab === "solved" ? "#0284c7" : "transparent",
+                  color: overviewTab === "solved" ? "#ffffff" : "#475569",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "5px 14px",
+                  fontWeight: "700",
+                  fontSize: "13.5px",
+                  cursor: "pointer"
+                }}
+              >
+                Solved Questions
+              </button>
+              <button
+                type="button"
+                onClick={() => setOverviewTab("unsolved")}
+                style={{
+                  backgroundColor: overviewTab === "unsolved" ? "#0284c7" : "transparent",
+                  color: overviewTab === "unsolved" ? "#ffffff" : "#475569",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "5px 14px",
+                  fontWeight: "700",
+                  fontSize: "13.5px",
+                  cursor: "pointer"
+                }}
+              >
+                Unsolved Questions
+              </button>
+            </div>
+
+            {/* Right: Timer & Student ID */}
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <span style={{ fontWeight: "800", fontSize: "14.5px", color: "#0f172a" }}>{formatTime(timeLeft)}</span>
+              <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>{studentName || "jdf jdf"}</span>
               <button
                 type="button"
                 onClick={toggleFullScreen}
                 title="Toggle Fullscreen"
                 style={{
-                  background: "rgba(255, 255, 255, 0.22)",
-                  border: "1px solid rgba(255, 255, 255, 0.45)",
-                  color: "#ffffff",
+                  background: "transparent",
+                  border: "1px solid #cbd5e1",
+                  color: "#64748b",
                   borderRadius: "6px",
-                  padding: "3px 8px",
-                  fontSize: "11.5px",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.15)"
+                  padding: "2px 6px",
+                  fontSize: "11px",
+                  cursor: "pointer"
                 }}
               >
-                ⛶ Fullscreen
+                ⛶
               </button>
             </div>
           </div>
 
-          <div className="ubt-overview-box" style={{ backgroundColor: "#ffffff", border: "none", padding: "6px 14px", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)", borderRadius: "0", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "center", overflow: "hidden" }}>
-            <div className="ubt-overview-flex" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", flex: 1, minHeight: 0, maxWidth: "960px", width: "100%", margin: "auto 0", overflow: "hidden" }}>
-              
-              <div className="ubt-overview-col" style={{ flex: 1, borderRight: "2px solid #e2e8f0", paddingRight: "10px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
-                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14px", fontWeight: "800", flexShrink: 0 }}>Reading Questions (1 - 20)</h4>
-                <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gridTemplateRows: "repeat(4, 1fr)", gap: "6px", maxWidth: "420px", width: "100%", margin: "0 auto", height: "100%", minHeight: 0, alignContent: "stretch" }}>
-                    {questions.slice(0, 20).map((q, idx) => {
-                      const isCurrent = currentQuestion === idx;
-                      const isAnswered = selectedAnswers[q.id] !== undefined;
-                      return (
-                        <button
-                          type="button"
-                          key={q.id}
-                          onClick={() => { setCurrentQuestion(idx); setViewMode("single"); }}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: 0,
-                            width: "100%",
-                            maxWidth: "68px",
-                            height: "44px",
-                            minHeight: "44px",
-                            margin: "0 auto",
-                            backgroundColor: isCurrent ? "#0284c7" : (isAnswered ? "#dcfce7" : "white"),
-                            border: isCurrent ? "2.5px solid #0369a1" : (isAnswered ? "2px solid #16a34a" : "1.5px solid #0284c7"),
-                            borderRadius: "10px",
-                            fontWeight: "800",
-                            fontSize: "14.5px",
-                            cursor: "pointer",
-                            color: isCurrent ? "#ffffff" : (isAnswered ? "#15803d" : "#0f172a"),
-                            boxShadow: isCurrent ? "0 3px 8px rgba(2, 132, 199, 0.35)" : "0 1px 2px rgba(0,0,0,0.05)",
-                            transition: "0.15s"
-                          }}
-                        >
-                          {idx + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+          {/* MAIN 2-PANEL QUESTION OVERVIEW (Reading 1-20 & Listening 21-40) */}
+          <div style={{ display: "flex", flex: 1, minHeight: 0, gap: "12px", padding: "10px 14px", backgroundColor: "#f8fafc", boxSizing: "border-box", overflow: "hidden" }}>
+            
+            {/* Reading Questions (1 - 20) */}
+            <div style={{ flex: 1, backgroundColor: "#ffffff", border: "1.5px solid #cbd5e1", borderRadius: "12px", padding: "10px 14px", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+              <UbtWatermark opacity={0.14} />
+              <h3 style={{ textAlign: "center", margin: "0 0 8px 0", fontSize: "15px", fontWeight: "700", color: "#334155", flexShrink: 0, zIndex: 2 }}>
+                Reading Questions
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gridTemplateRows: "repeat(4, 1fr)", gap: "8px", flex: 1, minHeight: 0, zIndex: 2 }}>
+                {questions.slice(0, 20).map((q, idx) => {
+                  const isCurrent = currentQuestion === idx;
+                  const isAnswered = selectedAnswers[q.id] !== undefined;
+                  let opacity = 1;
+                  if (overviewTab === "solved" && !isAnswered) opacity = 0.28;
+                  if (overviewTab === "unsolved" && isAnswered) opacity = 0.28;
 
-              <div className="ubt-overview-col" style={{ flex: 1, paddingLeft: "10px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
-                <h4 className="ubt-overview-heading" style={{ textAlign: "center", color: "#0284c7", margin: "0 0 6px 0", fontSize: "14px", fontWeight: "800", flexShrink: 0 }}>Listening Questions (21 - 40)</h4>
-                <div className="ubt-overview-grid-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <div className="ubt-overview-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gridTemplateRows: "repeat(4, 1fr)", gap: "6px", maxWidth: "420px", width: "100%", margin: "0 auto", height: "100%", minHeight: 0, alignContent: "stretch" }}>
-                    {questions.slice(20, 40).map((q, idx) => {
-                      const actualIndex = idx + 20;
-                      const isCurrent = currentQuestion === actualIndex;
-                      const isAnswered = selectedAnswers[q.id] !== undefined;
-                      return (
-                        <button
-                          type="button"
-                          key={q.id}
-                          onClick={() => { setCurrentQuestion(actualIndex); setViewMode("single"); }}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: 0,
-                            width: "100%",
-                            maxWidth: "68px",
-                            height: "44px",
-                            minHeight: "44px",
-                            margin: "0 auto",
-                            backgroundColor: isCurrent ? "#0284c7" : (isAnswered ? "#dcfce7" : "white"),
-                            border: isCurrent ? "2.5px solid #0369a1" : (isAnswered ? "2px solid #16a34a" : "1.5px solid #0284c7"),
-                            borderRadius: "10px",
-                            fontWeight: "800",
-                            fontSize: "14.5px",
-                            cursor: "pointer",
-                            color: isCurrent ? "#ffffff" : (isAnswered ? "#15803d" : "#0f172a"),
-                            boxShadow: isCurrent ? "0 3px 8px rgba(2, 132, 199, 0.35)" : "0 1px 2px rgba(0,0,0,0.05)",
-                            transition: "0.15s"
-                          }}
-                        >
-                          {actualIndex + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                  return (
+                    <button
+                      key={q.id || idx}
+                      type="button"
+                      onClick={() => { setCurrentQuestion(idx); setViewMode("single"); }}
+                      style={{
+                        height: "100%",
+                        minHeight: "34px",
+                        borderRadius: "10px",
+                        border: isCurrent ? "2px solid #0284c7" : "1px solid #cbd5e1",
+                        backgroundColor: isCurrent ? "#0284c7" : (isAnswered ? "#e0f2fe" : "#ffffff"),
+                        color: isCurrent ? "#ffffff" : (isAnswered ? "#0369a1" : "#1e293b"),
+                        fontSize: "14px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        opacity,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
               </div>
-
             </div>
 
-            <div className="ubt-overview-actions" style={{ marginTop: "4px", display: "flex", justifyContent: "space-between", gap: "10px", alignItems: "center", flexShrink: 0, width: "100%", maxWidth: "960px", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 6px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 8px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 8px)" }}>
-              <button 
-                type="button"
-                onClick={() => setViewMode("single")}
-                style={{ backgroundColor: "#64748b", color: "white", border: "none", padding: "5px 16px", fontSize: "12px", fontWeight: "800", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 6px rgba(100, 116, 139, 0.35)" }}
-              >
-                ❮ BACK TO QUESTION
-              </button>
-              <button 
-                type="button"
-                onClick={() => setShowConfirmModal(true)}
-                style={{ backgroundColor: "#0ea5e9", color: "white", border: "none", padding: "5px 16px", fontSize: "12px", fontWeight: "800", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)" }}
-              >
-                SUBMIT AND FINISH EXAM ❯
-              </button>
+            {/* Listening Questions (21 - 40) */}
+            <div style={{ flex: 1, backgroundColor: "#ffffff", border: "1.5px solid #cbd5e1", borderRadius: "12px", padding: "10px 14px", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+              <UbtWatermark opacity={0.14} />
+              <h3 style={{ textAlign: "center", margin: "0 0 8px 0", fontSize: "15px", fontWeight: "700", color: "#334155", flexShrink: 0, zIndex: 2 }}>
+                Listening Questions
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gridTemplateRows: "repeat(4, 1fr)", gap: "8px", flex: 1, minHeight: 0, zIndex: 2 }}>
+                {questions.slice(20, 40).map((q, idx) => {
+                  const actualIdx = idx + 20;
+                  const isCurrent = currentQuestion === actualIdx;
+                  const isAnswered = selectedAnswers[q.id] !== undefined;
+                  let opacity = 1;
+                  if (overviewTab === "solved" && !isAnswered) opacity = 0.28;
+                  if (overviewTab === "unsolved" && isAnswered) opacity = 0.28;
+
+                  return (
+                    <button
+                      key={q.id || actualIdx}
+                      type="button"
+                      onClick={() => { setCurrentQuestion(actualIdx); setViewMode("single"); }}
+                      style={{
+                        height: "100%",
+                        minHeight: "34px",
+                        borderRadius: "10px",
+                        border: isCurrent ? "2px solid #0284c7" : "1px solid #cbd5e1",
+                        backgroundColor: isCurrent ? "#0284c7" : (isAnswered ? "#e0f2fe" : "#ffffff"),
+                        color: isCurrent ? "#ffffff" : (isAnswered ? "#0369a1" : "#1e293b"),
+                        fontSize: "14px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        opacity,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {actualIdx + 1}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+          </div>
+
+          {/* BOTTOM BAR: BACK & SUBMIT AND FINISH EXAM (Screenshot 3) */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 18px", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => setViewMode("single")}
+              style={{
+                backgroundColor: "#64748b",
+                color: "#ffffff",
+                borderRadius: "9999px",
+                border: "none",
+                padding: "8px 22px",
+                fontWeight: "700",
+                fontSize: "13px",
+                cursor: "pointer"
+              }}
+            >
+              ❮ Back to Question
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowConfirmModal(true)}
+              style={{
+                backgroundColor: "#0284c7",
+                color: "#ffffff",
+                borderRadius: "9999px",
+                border: "none",
+                padding: "8px 26px",
+                fontWeight: "800",
+                fontSize: "13.5px",
+                cursor: "pointer",
+                boxShadow: "0 2px 6px rgba(2, 132, 199, 0.35)"
+              }}
+            >
+              Submit And Finish Exam
+            </button>
           </div>
 
         </div>
@@ -2627,453 +1416,348 @@ const StudentExam = () => {
           
           {(() => {
             const currentQ = questions[currentQuestion];
+            if (!currentQ) return null;
+            const rawOptions = currentQ.options || [];
+
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-                <div className="ubt-exam-header-bar" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", backgroundColor: "#0284c7", color: "white", padding: "8px 18px", paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 10px), 38px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 18px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 18px)", borderRadius: "0", alignItems: "center", fontWeight: "bold", fontSize: "14px" }}>
-                  <span style={{ justifySelf: "start" }}>Remaining Questions: {unsolvedCount}</span>
-                  <span style={{ justifySelf: "center", textAlign: "center", fontWeight: "900" }}>{exactExamName}</span>
-                  <div style={{ justifySelf: "end", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ textAlign: "right" }}>Time Remaining: {formatTime(timeLeft)}</span>
+                
+                {/* STEP 2: TOP HEADER STRIP (Screenshot 2 & 4) */}
+                <div className="ubt-exam-header-bar" style={{ display: "flex", alignItems: "center", backgroundColor: "#f8fafc", color: "#334155", borderBottom: "1px solid #cbd5e1", padding: "6px 16px", fontSize: "13.5px", fontWeight: "600", flexShrink: 0, width: "100%", boxSizing: "border-box" }}>
+                  <div style={{ padding: "0 16px 0 4px", borderRight: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
+                    <span>{exactExamName || "New UBT - 127"}</span>
+                  </div>
+                  <div style={{ padding: "0 16px", borderRight: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
+                    <span>Whole Question:40</span>
+                  </div>
+                  <div style={{ padding: "0 16px", borderRight: "1px solid #cbd5e1", whiteSpace: "nowrap" }}>
+                    <span>Remaining Question:{unsolvedCount}</span>
+                  </div>
+                  <div style={{ padding: "0 16px", fontWeight: "800", color: "#0f172a", whiteSpace: "nowrap" }}>
+                    <span>{formatTime(timeLeft)}</span>
+                  </div>
+                  <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "12px" }}>
+                    <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>{studentName || ""}</span>
                     <button
                       type="button"
                       onClick={toggleFullScreen}
                       title="Toggle Fullscreen"
                       style={{
-                        background: "rgba(255, 255, 255, 0.22)",
-                        border: "1px solid rgba(255, 255, 255, 0.45)",
-                        color: "#ffffff",
+                        background: "transparent",
+                        border: "1px solid #cbd5e1",
+                        color: "#64748b",
                         borderRadius: "6px",
-                        padding: "3px 8px",
-                        fontSize: "11.5px",
-                        fontWeight: "700",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.15)"
+                        padding: "2px 6px",
+                        fontSize: "11px",
+                        cursor: "pointer"
                       }}
                     >
-                      ⛶ Fullscreen
+                      ⛶
                     </button>
                   </div>
                 </div>
 
-                <div className="ubt-exam-card" style={{ backgroundColor: "#ffffff", border: "none", borderRadius: "0", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 0, overflow: "hidden" }}>
-                  <div className="ubt-exam-columns" style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                {/* 2-COLUMN QUESTION AREA (Screenshot 2 & 4) */}
+                <div className="ubt-exam-card" style={{ backgroundColor: "#f8fafc", display: "flex", flexDirection: "column", justifyContent: "space-between", flex: 1, minHeight: 0, overflow: "hidden", padding: "8px 12px", gap: "8px" }}>
+                  <div className="ubt-exam-columns" style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0, gap: "10px" }}>
                     
-                    <div className="ubt-exam-left" style={{ flex: 1.25, padding: "14px 18px", borderRight: "1px solid #e2e8f0", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%" }}>
-                      {/* MANAGED QUESTION NUMBER BADGE & SPEC BAR */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "8px", flexWrap: "wrap", flexShrink: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span className="ubt-qnum-pill" style={{
-                            backgroundColor: "#0284c7",
-                            color: "#ffffff",
-                            fontWeight: "900",
-                            fontSize: "14px",
-                            padding: "4px 12px",
-                            borderRadius: "8px",
-                            letterSpacing: "0.5px",
-                            minWidth: "75px",
-                            textAlign: "center",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            boxShadow: "0 2px 4px rgba(2, 132, 199, 0.2)"
-                          }}>
-                            Question {currentQuestion + 1}
-                          </span>
-                          <span style={{
-                            backgroundColor: currentQuestion < 20 ? "#eff6ff" : "#fef3c7",
-                            color: currentQuestion < 20 ? "#1d4ed8" : "#b45309",
-                            fontWeight: "800",
-                            fontSize: "12px",
-                            padding: "3px 10px",
-                            borderRadius: "6px",
-                            border: currentQuestion < 20 ? "1px solid #bfdbfe" : "1px solid #fde68a"
-                          }}>
-                            {currentQuestion < 20 ? "📖 Reading" : "🎧 Listening"} • {currentQuestion + 1} / {questions.length || 40}
-                          </span>
-                        </div>
-                        <span style={{
-                          fontSize: "12px",
-                          fontWeight: "800",
-                          color: selectedAnswers[currentQ?.id] !== undefined ? "#16a34a" : "#64748b",
-                          backgroundColor: selectedAnswers[currentQ?.id] !== undefined ? "#dcfce7" : "#f1f5f9",
-                          padding: "2px 8px",
-                          borderRadius: "6px"
-                        }}>
-                          {selectedAnswers[currentQ?.id] !== undefined ? "✓ Answered" : "Not Answered"}
-                        </span>
+                    {/* LEFT CARD: QUESTION PROMPT, EXCLAMATION BADGE, AUDIO PLAY / VISUAL, WATERMARK */}
+                    <div className="ubt-exam-left" style={{ flex: 1.25, backgroundColor: "#ffffff", border: "1.5px solid #cbd5e1", borderRadius: "12px", padding: "14px 18px", position: "relative", display: "flex", flexDirection: "column", overflowY: "auto", height: "100%", minHeight: 0 }}>
+                      
+                      {/* Red Exclamation Mark Badge (!) */}
+                      <div style={{
+                        position: "absolute",
+                        top: "14px",
+                        right: "14px",
+                        width: "22px",
+                        height: "22px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ef4444",
+                        color: "#ffffff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: "900",
+                        fontSize: "13px",
+                        zIndex: 3
+                      }}>
+                        !
                       </div>
 
-                      <p style={{ color: "#1e293b", fontSize: "19px", fontWeight: "bold", margin: "0 0 8px 0", lineHeight: "1.4" }}>
-                        {currentQ.mainHeading || (currentQuestion < 20 ? "[ 1 - 20 ] 다음을 읽고 알맞은 것을 고르십시오." : "[ 21 - 40 ] 이야기를 듣고 질문에 알맞은 것을 고르십시오.")}
+                      {/* Header Question Range Prompt */}
+                      <p style={{ margin: "0 0 4px 0", fontSize: "16.5px", fontWeight: "700", color: "#1e293b", lineHeight: "1.35", paddingRight: "30px" }}>
+                        {currentQ.mainHeading || (currentQuestion < 20 ? "[ 1~4 ] 다음 그림을 보고 맞은 단어나 문장을 고르십시오." : "[ 21~22 ] 들은 것을 고르십시오.")}
                       </p>
-                      {currentQ.questionHeading && currentQ.questionHeading.trim() !== String(currentQuestion + 1) && (
-                        <p style={{ color: "#334155", fontSize: "18px", fontWeight: "bold", margin: "0 0 8px 0", lineHeight: "1.4" }}>
-                          {currentQ.questionHeading}
-                        </p>
-                      )}
                       
-                      {currentQ.description && (
-                        <div
-                          className="ubt-exam-desc"
-                          style={{ 
-                            border: "1px solid #94a3b8", 
-                            borderRadius: "6px", 
-                            padding: "12px 15px", 
-                            backgroundColor: "white", 
-                            color: "#1e293b", 
-                            fontSize: "18px", 
-                            fontWeight: "bold", 
-                            lineHeight: "1.4",
-                            whiteSpace: "pre-wrap",
-                            marginBottom: "10px"
-                          }}
-                          dangerouslySetInnerHTML={{ __html: currentQ.description }}
-                        />
-                      )}
+                      {/* Question Number */}
+                      <p style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: "800", color: "#0f172a" }}>
+                        {currentQuestion + 1}.
+                      </p>
 
-                      {currentQ.image && (
-                        <div style={{ margin: "auto", border: "1px solid #cbd5e1", padding: "6px", borderRadius: "6px", backgroundColor: "white", textAlign: "center" }}>
-                          <img 
-                            className="ubt-exam-q-img"
-                            src={currentQ.image} 
-                            alt="Question Visual" 
-                            style={{ 
-                              display: 'block', 
-                              maxHeight: '180px', 
-                              maxWidth: '100%', 
-                              width: 'auto',
-                              height: 'auto',
-                              objectFit: 'contain', 
-                              margin: '0 auto', 
-                              pointerEvents: 'none',
-                              imageRendering: 'high-quality',
-                              WebkitImageRendering: '-webkit-optimize-contrast'
-                            }} 
-                            draggable="false" 
-                          />
-                        </div>
-                      )}
+                      {/* Center Content: Watermark + Audio Play Button / Image / Passage */}
+                      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", width: "100%" }}>
+                        <UbtWatermark opacity={0.22} />
 
-                      {currentQ.audio && (
-                        <div style={{ marginTop: "12px", padding: "10px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #cbd5e1", textAlign: "center" }}>
-                          <audio 
-                            ref={audioRef}
-                            controls
-                            controlsList="nodownload noremoteplayback noplaybackrate"
-                            onContextMenu={(e) => e.preventDefault()} 
-                            onPlay={handleAudioPlay}
-                            onEnded={handleAudioEnded}
-                            src={currentQ.audio} 
-                            style={{ 
-                              width: "100%", 
-                              height: "32px",
-                              pointerEvents: (mainAudioLocked || isPlayingAnyAudio) ? "none" : "auto", 
-                              opacity: mainAudioLocked ? 0.5 : 1,
-                              filter: mainAudioLocked ? "grayscale(80%)" : "none"
-                            }} 
+                        {/* Text Passage (if any) */}
+                        {currentQ.description && (
+                          <div
+                            className="ubt-exam-desc"
+                            style={{
+                              border: "1.5px solid #cbd5e1",
+                              borderRadius: "8px",
+                              padding: "10px 14px",
+                              backgroundColor: "#ffffff",
+                              color: "#1e293b",
+                              fontSize: "16px",
+                              fontWeight: "600",
+                              lineHeight: "1.4",
+                              whiteSpace: "pre-wrap",
+                              maxHeight: "160px",
+                              overflowY: "auto",
+                              width: "92%",
+                              zIndex: 2,
+                              marginBottom: "8px"
+                            }}
+                            dangerouslySetInnerHTML={{ __html: currentQ.description }}
                           />
-                        </div>
-                      )}
+                        )}
+
+                        {/* Image Visual (Reading Question) */}
+                        {currentQ.image && (
+                          <div style={{ zIndex: 2, textAlign: "center", maxWidth: "90%", maxHeight: "155px" }}>
+                            <img
+                              src={currentQ.image}
+                              alt={`Question ${currentQuestion + 1}`}
+                              style={{
+                                maxHeight: "145px",
+                                maxWidth: "100%",
+                                objectFit: "contain",
+                                borderRadius: "6px"
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Audio Play Button (Listening Question) */}
+                        {(currentQ.audio || currentQuestion >= 20) && (
+                          <div style={{ zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (audioRef.current) {
+                                  if (isPlayingAnyAudio) {
+                                    audioRef.current.pause();
+                                    setIsPlayingAnyAudio(false);
+                                  } else {
+                                    audioRef.current.play().catch(e => console.log(e));
+                                  }
+                                }
+                              }}
+                              style={{
+                                width: "54px",
+                                height: "54px",
+                                borderRadius: "50%",
+                                backgroundColor: "#0284c7",
+                                color: "#ffffff",
+                                border: "none",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                boxShadow: "0 4px 14px rgba(2, 132, 199, 0.4)",
+                                transition: "transform 0.15s ease"
+                              }}
+                            >
+                              {isPlayingAnyAudio ? (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff">
+                                  <rect x="6" y="4" width="4" height="16" rx="1" />
+                                  <rect x="14" y="4" width="4" height="16" rx="1" />
+                                </svg>
+                              ) : (
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff" style={{ marginLeft: "3px" }}>
+                                  <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                              )}
+                            </button>
+                            <audio
+                              ref={audioRef}
+                              src={currentQ.audio}
+                              onPlay={handleAudioPlay}
+                              onEnded={handleAudioEnded}
+                              style={{ display: "none" }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom Copyright Notice */}
+                      <div style={{ textAlign: "center", fontSize: "10.5px", color: "#94a3b8", marginTop: "auto", flexShrink: 0, paddingTop: "4px" }}>
+                        © Protected content. Copying or sharing is prohibited.
+                      </div>
                     </div>
 
-                    <div className="ubt-exam-right" style={{ flex: 1, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "space-evenly", gap: "8px", overflowY: "auto", height: "100%" }}>
-                      {(() => {
-                        const rawOptions = currentQ.options || [];
-                        const hasImageOptions = rawOptions.some(o => Boolean(typeof o === 'object' && o !== null && o.image));
-                        const isBlindListening = !hasImageOptions && rawOptions.every(o => {
-                          const t = typeof o === 'object' && o !== null ? (o.text || '').trim() : (o || '').toString().trim();
-                          return !t || ['①', '②', '③', '④', '1', '2', '3', '4'].includes(t);
-                        });
+                    {/* RIGHT CARD: OPTIONS LIST WITH CIRCULAR BADGES & SUBTLE DIVIDERS */}
+                    <div className="ubt-exam-right" style={{ flex: 1, backgroundColor: "#ffffff", border: "1.5px solid #cbd5e1", borderRadius: "12px", padding: 0, position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-evenly", overflowY: "auto", height: "100%", minHeight: 0 }}>
+                      <UbtWatermark opacity={0.15} />
 
-                        // ── CASE 1: BLIND LISTENING (Questions 29~32 & 33) ──
-                        if (isBlindListening) {
-                          return (
-                            <div style={{ display: "flex", flexDirection: "column", gap: "16px", justifyContent: "center", height: "100%", padding: "10px" }}>
-                              <p style={{ color: "#475569", fontSize: "16px", margin: "0 0 10px 0", fontWeight: "600", textAlign: "center" }}>
-                                🎧 다음을 듣고 알맞은 번호를 고르십시오. (Blind Listening)
-                              </p>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                                {rawOptions.map((option, index) => {
-                                  const isSelected = selectedAnswers[currentQ.id] === index;
-                                  const symbols = ['①', '②', '③', '④'];
-                                  return (
-                                    <button
-                                      type="button"
-                                      key={index}
-                                      onClick={() => handleOptionSelect(index)}
-                                      style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        padding: "24px 15px",
-                                        borderRadius: "12px",
-                                        border: isSelected ? "3px solid #0284c7" : "1.5px solid #cbd5e1",
-                                        backgroundColor: isSelected ? "#e0f2fe" : "white",
-                                        cursor: "pointer",
-                                        boxShadow: isSelected ? "0 6px 16px rgba(2, 132, 199, 0.25)" : "0 2px 6px rgba(0,0,0,0.04)",
-                                        transition: "all 0.15s ease"
-                                      }}
-                                    >
-                                      <span style={{ fontSize: "40px", fontWeight: "bold", color: isSelected ? "#0284c7" : "#1e293b", lineHeight: 1 }}>
-                                        {symbols[index]}
-                                      </span>
-                                      <span style={{ fontSize: "14px", color: isSelected ? "#0369a1" : "#64748b", marginTop: "8px", fontWeight: "600" }}>
-                                        선택 {index + 1}
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        }
+                      {rawOptions.map((option, index) => {
+                        const isSelected = selectedAnswers[currentQ.id] === index;
+                        const optText = typeof option === 'object' && option !== null ? option.text : option;
+                        const optImg = typeof option === 'object' && option !== null ? option.image : null;
 
-                        // ── CASE 2: 4-PICTURE OPTIONS GRID (Questions 23~28, 34~36) ──
-                        if (hasImageOptions) {
-                          return (
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", width: "100%", padding: "5px 0" }}>
-                              {rawOptions.map((option, index) => {
-                                const isSelected = selectedAnswers[currentQ.id] === index;
-                                const optText = typeof option === 'object' && option !== null ? option.text : option;
-                                const optImg = typeof option === 'object' && option !== null ? option.image : null;
-                                const symbols = ['①', '②', '③', '④'];
-
-                                return (
-                                  <div
-                                    key={index}
-                                    onClick={() => handleOptionSelect(index)}
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      padding: "10px",
-                                      borderRadius: "8px",
-                                      border: isSelected ? "2.5px solid #0284c7" : "1.5px solid #cbd5e1",
-                                      backgroundColor: isSelected ? "#eff6ff" : "white",
-                                      cursor: "pointer",
-                                      boxShadow: isSelected ? "0 4px 10px rgba(2, 132, 199, 0.2)" : "0 1px 3px rgba(0,0,0,0.05)",
-                                      position: "relative"
-                                    }}
-                                  >
-                                    <div style={{
-                                      alignSelf: "flex-start",
-                                      width: "28px",
-                                      height: "28px",
-                                      borderRadius: "50%",
-                                      border: "2px solid #0284c7",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      fontWeight: "bold",
-                                      fontSize: "15px",
-                                      backgroundColor: isSelected ? "#0284c7" : "white",
-                                      color: isSelected ? "white" : "#0284c7",
-                                      marginBottom: "6px"
-                                    }}>
-                                      {index + 1}
-                                    </div>
-                                    {optImg && (
-                                      <img
-                                        src={optImg}
-                                        alt={`Choice ${index + 1}`}
-                                        style={{
-                                          maxHeight: "110px",
-                                          maxWidth: "100%",
-                                          width: "auto",
-                                          height: "auto",
-                                          objectFit: "contain",
-                                          borderRadius: "4px",
-                                          pointerEvents: "none"
-                                        }}
-                                        draggable="false"
-                                      />
-                                    )}
-                                    {optText && !['①', '②', '③', '④', '1', '2', '3', '4'].includes(optText.trim()) && (
-                                      <span
-                                        style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b", marginTop: "6px", textAlign: "center" }}
-                                        dangerouslySetInnerHTML={{ __html: optText }}
-                                      />
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          );
-                        }
-
-                        // ── CASE 3: STANDARD TEXT OPTIONS ──
-                        return rawOptions.map((option, index) => {
-                          const isSelected = selectedAnswers[currentQ.id] === index;
-                          const optText = typeof option === 'object' && option !== null ? option.text : option;
-                          const optImg = typeof option === 'object' && option !== null ? option.image : null;
-                          const optAud = typeof option === 'object' && option !== null ? option.audio : (currentQ.optionAudios?.[index] || null);
-                          const isOptLocked = optionAudioLocked[index];
-
-                          return (
-                            <div 
-                              key={index}
-                              className={`ubt-opt-row ${isSelected ? "ubt-opt-selected" : ""}`}
-                              onClick={() => handleOptionSelect(index)}
+                        return (
+                          <div
+                            key={index}
+                            className={`ubt-opt-row ${isSelected ? "ubt-opt-selected" : ""}`}
+                            onClick={() => handleOptionSelect(index)}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              flex: 1,
+                              padding: "10px 18px",
+                              borderBottom: index < rawOptions.length - 1 ? "1px solid #e2e8f0" : "none",
+                              backgroundColor: isSelected ? "#eff6ff" : "transparent",
+                              cursor: "pointer",
+                              zIndex: 2,
+                              transition: "background-color 0.15s ease"
+                            }}
+                          >
+                            <div
+                              className="ubt-opt-badge"
                               style={{
+                                width: "28px",
+                                height: "28px",
+                                borderRadius: "50%",
+                                border: `1.5px solid ${isSelected ? "#0284c7" : "#38bdf8"}`,
+                                backgroundColor: isSelected ? "#0284c7" : "#ffffff",
+                                color: isSelected ? "#ffffff" : "#0284c7",
                                 display: "flex",
-                                flexDirection: "column",
-                                padding: "10px 14px",
-                                borderRadius: "10px",
-                                border: isSelected ? "2px solid #0284c7" : "1.5px solid #cbd5e1",
-                                cursor: "pointer",
-                                backgroundColor: isSelected ? "#eff6ff" : "#ffffff",
-                                boxShadow: isSelected ? "0 2px 8px rgba(2, 132, 199, 0.18)" : "0 1px 3px rgba(0,0,0,0.03)",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: "700",
+                                fontSize: "14px",
+                                marginRight: "14px",
+                                flexShrink: 0,
                                 transition: "all 0.15s ease"
                               }}
                             >
-                              <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                                <div className="ubt-opt-badge" style={{
-                                  width: "28px", height: "28px", borderRadius: "50%", border: "2px solid #0284c7",
-                                  display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "14px",
-                                  marginRight: "12px", backgroundColor: isSelected ? "#0284c7" : "white", color: isSelected ? "white" : "#0284c7",
-                                  flexShrink: 0
-                                }}>
-                                  {index + 1}
-                                </div>
-                                <span 
-                                  className="ubt-opt-text"
-                                  style={{ fontSize: "18px", fontWeight: "600", color: isSelected ? "#0369a1" : "#1e293b", flex: 1 }} 
-                                  dangerouslySetInnerHTML={{ __html: optText }} 
-                                />
-                              </div>
-
-                              {optImg && (
-                                <div style={{ marginTop: "6px", paddingLeft: "47px" }}>
-                                  <img 
-                                    src={optImg} 
-                                    alt={`Option ${index + 1}`} 
-                                    style={{ 
-                                      maxHeight: "80px", 
-                                      maxWidth: "100%",
-                                      width: "auto",
-                                      height: "auto",
-                                      borderRadius: "4px", 
-                                      border: "1px solid #cbd5e1"
-                                    }} 
-                                  />
-                                </div>
-                              )}
-
-                              {optAud && (
-                                <div style={{ marginTop: "6px", paddingLeft: "47px", width: "100%" }} onClick={(e) => e.stopPropagation()}>
-                                  <audio 
-                                    ref={el => optionAudioRefs.current[index] = el}
-                                    controls
-                                    controlsList="nodownload noremoteplayback noplaybackrate"
-                                    onContextMenu={(e) => e.preventDefault()}
-                                    onPlay={() => handleOptionAudioPlay(index)}
-                                    onEnded={() => handleOptionAudioEnded(index)}
-                                    src={optAud}
-                                    style={{ 
-                                      width: "100%", 
-                                      height: "30px",
-                                      pointerEvents: (isOptLocked || isPlayingAnyAudio) ? "none" : "auto", 
-                                      opacity: isOptLocked ? 0.5 : 1,
-                                      filter: isOptLocked ? "grayscale(80%)" : "none"
-                                    }}
-                                  />
-                                </div>
-                              )}
+                              {index + 1}
                             </div>
-                          );
-                        });
-                      })()}
+                            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "10px" }}>
+                              {optImg && (
+                                <img
+                                  src={optImg}
+                                  alt={`Option ${index + 1}`}
+                                  style={{ maxHeight: "65px", maxWidth: "120px", objectFit: "contain", borderRadius: "4px" }}
+                                />
+                              )}
+                              <span
+                                style={{
+                                  fontSize: "17px",
+                                  fontWeight: isSelected ? "700" : "500",
+                                  color: isSelected ? "#0284c7" : "#1e293b",
+                                  lineHeight: 1.3
+                                }}
+                                dangerouslySetInnerHTML={{ __html: optText }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+
                   </div>
 
-                  <div className="ubt-exam-nav-bar" style={{ display: "flex", padding: "10px 20px", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)", paddingLeft: "calc(env(safe-area-inset-left, 0px) + 20px)", paddingRight: "calc(env(safe-area-inset-right, 0px) + 20px)", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", borderRadius: "0", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
-                    <button 
+                  {/* BOTTOM NAVIGATION: < PREV | ▦ WHOLE QUESTIONS | NEXT > (Screenshot 2 & 4) */}
+                  <div className="ubt-exam-nav-bar" style={{ display: "flex", padding: "7px 18px", backgroundColor: "#f8fafc", borderTop: "1px solid #cbd5e1", justifyContent: "space-between", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+                    <button
                       type="button"
+                      disabled={currentQuestion === 0}
                       onClick={() => {
-                        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                        Object.values(optionTimeoutRefs.current).forEach(t => clearTimeout(t));
                         if (audioRef.current) audioRef.current.pause();
-                        Object.values(optionAudioRefs.current).forEach(aud => aud && aud.pause());
+                        setIsPlayingAnyAudio(false);
                         setCurrentQuestion(prev => Math.max(0, prev - 1));
                       }}
-                      disabled={currentQuestion === 0}
-                      style={{ 
-                        backgroundColor: "#0ea5e9", 
-                        color: "white", 
-                        border: "none", 
-                        padding: "12px 26px", 
-                        borderRadius: "8px", 
-                        fontWeight: "800", 
-                        cursor: currentQuestion === 0 ? "not-allowed" : "pointer", 
-                        fontSize: "15px",
-                        letterSpacing: "0.4px",
-                        boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)",
-                        minWidth: "125px"
+                      style={{
+                        backgroundColor: "#0284c7",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "9999px",
+                        padding: "7px 22px",
+                        fontWeight: "800",
+                        fontSize: "13.5px",
+                        cursor: currentQuestion === 0 ? "not-allowed" : "pointer",
+                        opacity: currentQuestion === 0 ? 0.45 : 1,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 2px 6px rgba(2, 132, 199, 0.3)"
                       }}
                     >
-                      ❮ PREVIOUS
+                      ❮ PREV
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => {
-                        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                        Object.values(optionTimeoutRefs.current).forEach(t => clearTimeout(t));
                         if (audioRef.current) audioRef.current.pause();
-                        Object.values(optionAudioRefs.current).forEach(aud => aud && aud.pause());
+                        setIsPlayingAnyAudio(false);
                         setViewMode("overview");
                       }}
-                      style={{ 
-                        backgroundColor: "#0ea5e9", 
-                        color: "white", 
-                        border: "none", 
-                        padding: "12px 28px", 
-                        borderRadius: "8px", 
-                        fontWeight: "800", 
-                        cursor: "pointer", 
-                        fontSize: "15px",
-                        letterSpacing: "0.4px",
-                        boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)",
-                        minWidth: "170px"
+                      style={{
+                        backgroundColor: "#0284c7",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "9999px",
+                        padding: "7px 26px",
+                        fontWeight: "800",
+                        fontSize: "13.5px",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "7px",
+                        boxShadow: "0 2px 6px rgba(2, 132, 199, 0.3)"
                       }}
                     >
-                      TOTAL QUESTIONS
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                      </svg>
+                      WHOLE QUESTIONS
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => {
-                        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                        Object.values(optionTimeoutRefs.current).forEach(t => clearTimeout(t));
                         if (audioRef.current) audioRef.current.pause();
-                        Object.values(optionAudioRefs.current).forEach(aud => aud && aud.pause());
+                        setIsPlayingAnyAudio(false);
                         if (currentQuestion < questions.length - 1) {
                           setCurrentQuestion(prev => prev + 1);
                         } else {
-                          setShowConfirmModal(true); 
+                          setShowConfirmModal(true);
                         }
                       }}
-                      style={{ 
-                        backgroundColor: "#0ea5e9", 
-                        color: "white", 
-                        border: "none", 
-                        padding: "12px 26px", 
-                        borderRadius: "8px", 
-                        fontWeight: "800", 
-                        cursor: "pointer", 
-                        fontSize: "15px",
-                        letterSpacing: "0.4px",
-                        boxShadow: "0 2px 6px rgba(14, 165, 233, 0.35)",
-                        minWidth: "125px"
+                      style={{
+                        backgroundColor: "#0284c7",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "9999px",
+                        padding: "7px 22px",
+                        fontWeight: "800",
+                        fontSize: "13.5px",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 2px 6px rgba(2, 132, 199, 0.3)"
                       }}
                     >
                       {currentQuestion === questions.length - 1 ? "SUBMIT ❯" : "NEXT ❯"}
                     </button>
                   </div>
+
                 </div>
+
               </div>
             );
           })()}
