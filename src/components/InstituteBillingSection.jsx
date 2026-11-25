@@ -2519,8 +2519,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
     const payload = {
       date: form.date || new Date().toISOString().split('T')[0],
-      studentName: form.studentName.trim(),
-      address: form.address.trim(),
+      studentName: (form.studentName || "").trim(),
+      address: (form.address || "").trim(),
       contactNumber: fullWhatsApp,
       parentName: (form.parentName || "").trim(),
       parentNumber: cleanParent,
@@ -5625,16 +5625,15 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     </div>
                   </div>
 
-                  {/* 5. Student Address */}
+                  {/* 5. Student Address (Optional) */}
                   <div>
                     <label style={{ display: "block", fontSize: "13px", fontWeight: "bold", color: "#475569", marginBottom: "4px" }}>
-                      Student Address (Text Format) * {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
+                      Student Address (Text Format) {(form.isExistingStudent && !form.isEditingExistingBill) && "(Locked)"}
                     </label>
                     <input
                       type="text"
-                      required
-                      placeholder="Enter Address (Text, e.g. Kathmandu)"
-                      value={form.address}
+                      placeholder="Enter Address (Optional, e.g. Kathmandu)"
+                      value={form.address || ""}
                       readOnly={form.isExistingStudent && !form.isEditingExistingBill}
                       onChange={(e) => setForm({ ...form, address: e.target.value.toUpperCase() })}
                       style={{
