@@ -1601,6 +1601,25 @@ export default function LoginPage() {
           gap: "12px",
           fontSize: "12.5px"
         }}>
+          <button
+            type="button"
+            onClick={() => router.push("/about")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#2563eb",
+              fontWeight: "800",
+              cursor: "pointer",
+              padding: "4px 8px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px"
+            }}
+          >
+            <span>ℹ️</span>
+            <span>About Us</span>
+          </button>
+          <span style={{ color: "#cbd5e1" }}>•</span>
           <a
             href="tel:+9779868736491"
             style={{ color: "#64748b", textDecoration: "none", fontWeight: "600" }}

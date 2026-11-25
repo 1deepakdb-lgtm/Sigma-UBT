@@ -233,13 +233,13 @@ IconFile=https://raw.githubusercontent.com/favicon.ico
       id: 'ios',
       title: 'ExamJK iOS App',
       label: 'iPhone/iPad',
-      badge: 'iOS Web App',
+      badge: 'Install on iPhone',
       osTag: 'Your Phone',
       iconEmoji: '🍎',
       brandColor: '#0284c7',
       bgHover: '#f0f9ff',
       borderActive: '#0284c7',
-      desc: 'Add to iPhone / iPad Home Screen with zero-latency audio and full-screen UBT mode.'
+      desc: 'Download & install on iPhone / iPad Home Screen with zero-latency audio and full-screen UBT mode.'
     },
     {
       id: 'windows',
@@ -624,29 +624,53 @@ IconFile=https://raw.githubusercontent.com/favicon.ico
                 <div style={{ background: '#f0f9ff', border: '1.5px solid #bae6fd', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0284c7', fontWeight: '800', fontSize: '13px', marginBottom: '6px' }}>
                     <span>🍎</span>
-                    <span>Install ExamJK on iPhone &amp; iPad</span>
+                    <span>Download &amp; Install ExamJK on iPhone &amp; iPad</span>
                   </div>
                   <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#0369a1', lineHeight: '1.5' }}>
-                    ExamJK runs as a full-screen, hardware-accelerated Apple Web App on iOS with zero audio lag and full offline support.
+                    Download the iPhone App profile below to install ExamJK directly onto your Home Screen with full-screen UBT mode and zero audio lag.
                   </p>
-                  <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    style={{
-                      width: '100%',
-                      padding: '11px',
-                      background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13.5px',
-                      fontWeight: '800',
-                      cursor: 'pointer',
-                      boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)'
-                    }}
-                  >
-                    {copiedLink ? '✓ Portal Link Copied to Clipboard!' : '📋 Copy Portal Link for Safari'}
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <a
+                      href="/api/downloads/ios-profile"
+                      download="ExamJK-iOS.mobileconfig"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '12px',
+                        background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                        color: '#ffffff',
+                        textDecoration: 'none',
+                        borderRadius: '8px',
+                        fontSize: '13.5px',
+                        fontWeight: '800',
+                        boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <span>📥</span>
+                      <span>DOWNLOAD &amp; INSTALL ON IPHONE</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      style={{
+                        width: '100%',
+                        padding: '9px',
+                        background: '#ffffff',
+                        color: '#0369a1',
+                        border: '1.5px solid #bae6fd',
+                        borderRadius: '8px',
+                        fontSize: '12.5px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {copiedLink ? '✓ Portal Link Copied to Clipboard!' : '📋 Copy Portal Link for Safari'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* QR Code for iPhone Scan */}
@@ -662,29 +686,29 @@ IconFile=https://raw.githubusercontent.com/favicon.ico
                         Scan with your iPhone Camera 📷
                       </span>
                       <p style={{ margin: 0, fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>
-                        Open your iPhone Camera, point at this QR code, and tap the yellow banner to open in Safari.
+                        Open your iPhone Camera, point at this QR code, and tap the yellow banner to open in Safari &amp; install.
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* iOS 3-Step Guide */}
+                {/* iOS Installation Steps */}
                 <div style={{ fontSize: '12.5px', color: '#334155' }}>
                   <span style={{ fontWeight: '800', color: '#0f172a', display: 'block', marginBottom: '6px' }}>
-                    3 Simple Steps in Safari:
+                    Quick Installation Steps on iPhone / iPad:
                   </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#ffffff', border: '1px solid #e2e8f0', padding: '8px 10px', borderRadius: '8px' }}>
                       <span style={{ background: '#0284c7', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '800', flexShrink: 0 }}>1</span>
-                      <span style={{ fontSize: '12px' }}>Open this website in <strong>Safari</strong> on your iPhone or iPad.</span>
+                      <span style={{ fontSize: '12px' }}>Tap <strong>Download &amp; Install on iPhone</strong> above in Safari and tap <strong>Allow</strong>.</span>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#ffffff', border: '1px solid #e2e8f0', padding: '8px 10px', borderRadius: '8px' }}>
                       <span style={{ background: '#0284c7', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '800', flexShrink: 0 }}>2</span>
-                      <span style={{ fontSize: '12px' }}>Tap the <strong>Share</strong> button (⎋ square with upward arrow) at the bottom toolbar.</span>
+                      <span style={{ fontSize: '12px' }}>Open iPhone <strong>Settings → Profile Downloaded</strong> (or General → VPN &amp; Device Management) and tap <strong>Install</strong>.</span>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: '#ffffff', border: '1px solid #e2e8f0', padding: '8px 10px', borderRadius: '8px' }}>
                       <span style={{ background: '#0284c7', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '800', flexShrink: 0 }}>3</span>
-                      <span style={{ fontSize: '12px' }}>Scroll down and tap <strong>&quot;Add to Home Screen&quot; (⊞)</strong>, then tap <strong>Add</strong>. Done!</span>
+                      <span style={{ fontSize: '12px' }}>Or in <strong>Safari</strong>, tap <strong>Share (⎋)</strong> → <strong>&quot;Add to Home Screen&quot; (⊞)</strong> → <strong>Add</strong>!</span>
                     </div>
                   </div>
                 </div>
