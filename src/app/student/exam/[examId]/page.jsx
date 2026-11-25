@@ -160,13 +160,10 @@ const StudentExam = () => {
     } catch (e) {}
   }, []);
 
-  // Lock landscape when exam starts; re-lock on any rotation attempt
+  // Lock landscape immediately on mount (including Downloading Questions); re-lock on any rotation attempt
   useEffect(() => {
-    if (!isStarted) return;
-
     const lockLandscape = async () => {
       try {
-        // Re-lock orientation to landscape
         if (screen.orientation && typeof screen.orientation.lock === "function") {
           await screen.orientation.lock("landscape").catch(() => {});
         } else if (screen.lockOrientation) {
@@ -193,13 +190,8 @@ const StudentExam = () => {
       if (screen.orientation) {
         screen.orientation.removeEventListener("change", lockLandscape);
       }
-      try {
-        if (screen.orientation && typeof screen.orientation.unlock === "function") {
-          screen.orientation.unlock();
-        }
-      } catch (e) {}
     };
-  }, [isStarted]);
+  }, []);
 
   // Step 1: Downloading Questions progress simulation and auto-entry
   useEffect(() => {
@@ -589,15 +581,6 @@ const StudentExam = () => {
       window.removeEventListener("touchstart", handleGesture);
       window.removeEventListener("pointerdown", handleGesture);
       window.removeEventListener("click", handleGesture);
-      try {
-        if (typeof document !== "undefined") {
-          document.body.classList.remove("pdf-open", "exam-fullscreen-active");
-          document.documentElement.classList.remove("pdf-open", "exam-fullscreen-active");
-        }
-        window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
-        window.AndroidApp?.showStatusBar?.();
-        window.AndroidApp?.setStatusBarVisible?.(true);
-      } catch (e) {}
     };
   }, []);
 

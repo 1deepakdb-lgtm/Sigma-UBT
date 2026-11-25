@@ -42,30 +42,81 @@ const StudentResult = () => {
     } catch (e) {}
     setMounted(true);
 
-    if (typeof window !== "undefined") {
-      try {
-        if (screen.orientation && typeof screen.orientation.lock === "function") {
-          screen.orientation.lock("landscape").catch(() => {});
-        } else if (screen.lockOrientation) {
-          screen.lockOrientation("landscape");
-        } else if (screen.webkitLockOrientation) {
-          screen.webkitLockOrientation("landscape");
-        } else if (screen.mozLockOrientation) {
-          screen.mozLockOrientation("landscape");
-        }
-      } catch (e) {}
+    const lockLandscape = () => {
+      if (typeof window !== "undefined") {
+        try {
+          if (screen.orientation && typeof screen.orientation.lock === "function") {
+            screen.orientation.lock("landscape").catch(() => {});
+          } else if (screen.lockOrientation) {
+            screen.lockOrientation("landscape");
+          } else if (screen.webkitLockOrientation) {
+            screen.webkitLockOrientation("landscape");
+          } else if (screen.mozLockOrientation) {
+            screen.mozLockOrientation("landscape");
+          }
+        } catch (e) {}
+      }
+    };
+
+    lockLandscape();
+    window.addEventListener("orientationchange", lockLandscape);
+    if (typeof screen !== "undefined" && screen.orientation) {
+      screen.orientation.addEventListener("change", lockLandscape);
     }
+
+    enterFullScreen();
+    const handleGesture = () => {
+      enterFullScreen();
+    };
+    window.addEventListener("touchstart", handleGesture, { passive: true });
+    window.addEventListener("pointerdown", handleGesture, { passive: true });
+    window.addEventListener("click", handleGesture);
+
+    return () => {
+      window.removeEventListener("orientationchange", lockLandscape);
+      if (typeof screen !== "undefined" && screen.orientation) {
+        screen.orientation.removeEventListener("change", lockLandscape);
+      }
+      window.removeEventListener("touchstart", handleGesture);
+      window.removeEventListener("pointerdown", handleGesture);
+      window.removeEventListener("click", handleGesture);
+    };
   }, []);
 
   const enterFullScreen = () => {
-    if (typeof document !== "undefined" && !document.fullscreenElement) {
-      const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen().catch(() => {});
+    try {
+      if (typeof document !== "undefined") {
+        document.body.classList.add("pdf-open", "exam-fullscreen-active");
+        document.documentElement.classList.add("pdf-open", "exam-fullscreen-active");
+        const elem = document.documentElement;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen().catch(() => {});
+          } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen().catch(() => {});
+          } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen().catch(() => {});
+          }
+        }
       }
-    }
+      if (typeof window !== "undefined") {
+        const bridges = [
+          window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android
+        ];
+        bridges.forEach((b) => {
+          if (!b) return;
+          if (typeof b.hideStatusBar === "function") b.hideStatusBar();
+          if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
+          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
+          if (typeof b.hideSystemUI === "function") b.hideSystemUI();
+          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
+          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+        });
+      }
+    } catch (e) {}
   };
 
   const UBT_RESULT_LANDSCAPE_CSS = `

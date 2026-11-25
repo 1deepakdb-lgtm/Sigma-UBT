@@ -1910,8 +1910,12 @@ const StudentDashboard = () => {
   const enforceLandscapeMode = async () => {
     if (typeof window !== "undefined") {
       try {
+        if (typeof document !== "undefined") {
+          document.body.classList.add("pdf-open", "exam-fullscreen-active");
+          document.documentElement.classList.add("pdf-open", "exam-fullscreen-active");
+        }
         const elem = document.documentElement;
-        if (!document.fullscreenElement) {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
           if (elem.requestFullscreen) {
             await elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
           } else if (elem.webkitRequestFullscreen) {
@@ -1934,6 +1938,22 @@ const StudentDashboard = () => {
         } else if (screen.mozLockOrientation) {
           screen.mozLockOrientation("landscape");
         }
+      } catch (e) {}
+
+      try {
+        const bridges = [
+          window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android
+        ];
+        bridges.forEach((b) => {
+          if (!b) return;
+          if (typeof b.hideStatusBar === "function") b.hideStatusBar();
+          if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
+          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
+          if (typeof b.hideSystemUI === "function") b.hideSystemUI();
+          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
+          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+        });
       } catch (e) {}
     }
   };
