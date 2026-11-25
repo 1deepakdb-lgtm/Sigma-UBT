@@ -53,9 +53,22 @@ export default class ClientErrorBoundary extends React.Component {
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 this.setState({ hasError: false, error: null });
-                window.location.reload();
+                try {
+                  if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                  }
+                  if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const r of registrations) {
+                      await r.unregister();
+                    }
+                  }
+                } catch (e) {}
+                const cleanUrl = window.location.origin + window.location.pathname + '?update=' + Date.now();
+                window.location.replace(cleanUrl);
               }}
               style={{
                 backgroundColor: '#2563eb',

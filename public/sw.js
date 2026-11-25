@@ -1,9 +1,9 @@
 // ExamJK Advanced Progressive Web App & Offline Sync Service Worker
 // Automatically caches core assets, API data, PDF viewer, dictionary, and media for seamless offline usage
 
-const STATIC_CACHE = 'examjk-static-v55';
-const DATA_CACHE = 'examjk-data-v55';
-const MEDIA_CACHE = 'examjk-media-v55';
+const STATIC_CACHE = 'examjk-static-v56';
+const DATA_CACHE = 'examjk-data-v56';
+const MEDIA_CACHE = 'examjk-media-v56';
 
 const STATIC_ASSETS = [
   '/',
@@ -41,7 +41,20 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Clean up previous cache generations on activate
+// Direct message handler for forced updates & cache purges
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'PURGE_ALL_CACHES') {
+    event.waitUntil(
+      caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+        .then(() => self.skipWaiting())
+    );
+  }
+});
+
+// Clean up previous cache generations on activate & broadcast update to tabs
 self.addEventListener('activate', (event) => {
   const currentCaches = [STATIC_CACHE, DATA_CACHE, MEDIA_CACHE];
   event.waitUntil(
@@ -49,10 +62,18 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (!currentCaches.includes(key)) {
+            console.log(`[ExamJK SW] Purging obsolete cache: ${key}`);
             return caches.delete(key);
           }
         })
       );
+    }).then(() => {
+      // Notify all open client tabs that fresh assets are active
+      return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'SW_UPDATED', version: STATIC_CACHE });
+        });
+      });
     })
   );
   self.clients.claim();
@@ -76,7 +97,7 @@ self.addEventListener('fetch', (event) => {
   // 3. Navigation requests (Page reloads, visiting /student, etc.)
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-cache' })
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();

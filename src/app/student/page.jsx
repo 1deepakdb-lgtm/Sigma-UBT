@@ -2443,6 +2443,48 @@ const StudentDashboard = () => {
               <span>About Us</span>
             </button>
 
+            {/* Update App / Clear Stale Cache Button */}
+            <button
+              type="button"
+              onClick={async () => {
+                setMobileMenuOpen(false);
+                try {
+                  if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                  }
+                  if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (const r of regs) {
+                      await r.unregister();
+                    }
+                  }
+                } catch (e) {}
+                const cleanUrl = window.location.origin + window.location.pathname + '?refresh=' + Date.now();
+                window.location.replace(cleanUrl);
+              }}
+              style={{
+                width: "100%",
+                backgroundColor: "transparent",
+                color: "#38bdf8",
+                border: "none",
+                borderBottom: "1px solid rgba(255,255,255,0.09)",
+                padding: "12px 10px",
+                borderRadius: "0",
+                fontWeight: "700",
+                fontSize: "14.5px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                gap: "10px",
+                textAlign: "left"
+              }}
+            >
+              <span>🔄</span>
+              <span>Update App / Clear Cache</span>
+            </button>
+
             <button
               onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
               style={{ width: "100%", backgroundColor: "transparent", color: "#f87171", border: "none", padding: "12px 10px", borderRadius: "0", fontWeight: "700", fontSize: "14.5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "10px", textAlign: "left" }}

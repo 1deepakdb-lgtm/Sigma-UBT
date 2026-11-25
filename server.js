@@ -102,6 +102,20 @@ app.prepare()
         const parsedUrl = parse(req.url, true);
         const { pathname } = parsedUrl;
 
+        // 0. Direct Service Worker delivery with strict zero-cache policy
+        // Ensures PWAs and browsers always get newly deployed sw.js without delay
+        if (pathname === '/sw.js') {
+          const swPath = path.join(__dirname, 'public', 'sw.js');
+          if (fs.existsSync(swPath)) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+            res.setHeader('Service-Worker-Allowed', '/');
+            return fs.createReadStream(swPath).pipe(res);
+          }
+        }
+
         // 1. Direct Static Asset Serving for Next.js build chunks
         // Prevents 500 errors on cPanel/LiteSpeed when chunks are requested
         if (pathname && pathname.startsWith('/_next/static/')) {

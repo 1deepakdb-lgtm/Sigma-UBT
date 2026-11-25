@@ -31,10 +31,51 @@ export default function PwaDesktopInstaller() {
 
       // 2. Register & Automatically Update Service Worker
       if ('serviceWorker' in navigator) {
+        let isReloading = false;
+        const triggerReload = () => {
+          if (!isReloading) {
+            isReloading = true;
+            console.log('ExamJK PWA: Fresh application version active. Reloading...');
+            window.location.reload();
+          }
+        };
+
+        // Reload whenever a new Service Worker takes over control
+        navigator.serviceWorker.addEventListener('controllerchange', triggerReload);
+
+        // Listen for direct broadcast messages from sw.js
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data && event.data.type === 'SW_UPDATED') {
+            triggerReload();
+          }
+        });
+
         navigator.serviceWorker.register('/sw.js')
           .then((reg) => {
-            // Check for updates on every page visit so clients never run stale code
+            // Check for updates on initial mount
             reg.update().catch(() => {});
+
+            // If an update is detected, activate it immediately
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('ExamJK PWA: New update installed. Skipping waiting...');
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                });
+              }
+            });
+
+            // Re-check for updates whenever user switches back to the tab/app
+            const handleVisibility = () => {
+              if (document.visibilityState === 'visible') {
+                reg.update().catch(() => {});
+              }
+            };
+            document.addEventListener('visibilitychange', handleVisibility);
+
             console.log('ExamJK PWA Service Worker registered:', reg.scope);
           })
           .catch((err) => {

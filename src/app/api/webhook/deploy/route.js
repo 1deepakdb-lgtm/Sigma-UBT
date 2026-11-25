@@ -69,11 +69,18 @@ async function runDeployTasks(repoDir, forceRestore = false) {
     cwd: repoDir,
     env: {
       ...process.env,
+      HOME: '/home/examjkco',
+      USER: 'examjkco',
       PATH: `/opt/alt/python311/bin:/opt/alt/python310/bin:/opt/alt/python39/bin:/opt/alt/python38/bin:${process.env.PATH || ''}:/usr/local/bin:/usr/bin:/bin:/usr/local/cpanel/3rdparty/bin:/opt/cpanel/ea-git/bin`
     }
   };
 
   addLog(`📁 Working directory: ${repoDir}`);
+
+  // Safe directory configuration
+  try {
+    await execAsync('git config --global --add safe.directory "*"', execOpts);
+  } catch {}
 
   // 1. Database backup
   const dbPath = path.join(repoDir, 'prisma', 'dev.db');
@@ -115,12 +122,23 @@ async function runDeployTasks(repoDir, forceRestore = false) {
   // 4. Git reset --hard origin/main
   try {
     addLog(`🔄 Resetting local tree to origin/main...`);
-    const { stdout } = await execAsync('git reset --hard origin/main', execOpts);
-    const outStr = stdout ? String(stdout).trim() : '';
+    const res = await execAsync('git reset --hard origin/main', execOpts);
+    const outStr = (String(res?.stdout || '') + ' ' + String(res?.stderr || '')).trim();
     addLog(`✅ Reset output:\n${outStr}`);
   } catch (e) {
     addLog(`❌ Git reset failed: ${e.message}`);
     throw new Error(`Git reset failed: ${e.message}`);
+  }
+
+  // 4a. Clear stale .next/cache to ensure newly built bundles and static SSG pages take effect
+  try {
+    const nextCache = path.join(repoDir, '.next', 'cache');
+    if (fs.existsSync(nextCache)) {
+      fs.rmSync(nextCache, { recursive: true, force: true });
+      addLog(`🧹 Purged stale .next/cache to force fresh SSR/SSG page rendering.`);
+    }
+  } catch (cErr) {
+    addLog(`ℹ️ Next cache purge notice: ${cErr.message}`);
   }
 
   // 4b. Verify & Auto-restore SQLite Database from Template
@@ -258,9 +276,13 @@ async function runDeployTasks(repoDir, forceRestore = false) {
     fs.writeFileSync(restartFile, `Restart triggered by ExamJK Deploy at ${new Date().toISOString()}\n`);
     addLog(`🔄 Touched tmp/restart.txt — Phusion Passenger reload initiated.`);
 
+    // Gracefully terminate the current Node process after response delivery so Passenger / LiteSpeed immediately respawns a clean process with new code
     try {
-      exec("nohup sh -c 'sleep 3 && pkill -9 -u examjkco node' >/dev/null 2>&1 &");
-      addLog(`⚡ Scheduled background node worker refresh (pkill) in 3s.`);
+      setTimeout(() => {
+        console.log('[ExamJK] Webhook: Terminating worker process to force clean reload...');
+        process.exit(0);
+      }, 1000);
+      addLog(`⚡ Scheduled Node worker process restart in 1s.`);
     } catch {}
   } catch (e) {
     addLog(`⚠️ Restart touch warning: ${e.message}`);
@@ -269,8 +291,8 @@ async function runDeployTasks(repoDir, forceRestore = false) {
   // 7. Latest commit details
   let latestCommit = '';
   try {
-    const res = await execAsync('git log -1 --oneline', execOpts);
-    latestCommit = String(res?.stdout || '').trim();
+    const res = await execAsync('git log -1 --format="%h - %s (%ci)"', execOpts);
+    latestCommit = (String(res?.stdout || '') + ' ' + String(res?.stderr || '')).trim();
     addLog(`📌 Current deployed commit: ${latestCommit}`);
   } catch (e) {
     addLog(`⚠️ Could not read latest commit: ${e.message}`);

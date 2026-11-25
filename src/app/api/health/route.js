@@ -26,9 +26,20 @@ export async function GET() {
       dbError = e?.message || String(e);
     }
 
+    let buildId = 'unknown';
+    try {
+      const buildIdPath = path.join(process.cwd(), '.next', 'BUILD_ID');
+      if (fs.existsSync(buildIdPath)) {
+        buildId = fs.readFileSync(buildIdPath, 'utf8').trim();
+      }
+    } catch {}
+
     return NextResponse.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
+      pid: process.pid,
+      uptime: Math.round(process.uptime()),
+      buildId,
       cpanelDbFound: Boolean(existingPath),
       cpanelDbPath: existingPath || 'not_found',
       dbStatus,
