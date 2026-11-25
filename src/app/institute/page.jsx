@@ -1834,21 +1834,21 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
               borderBottom: "3px solid #2563eb",
               boxShadow: "0 12px 35px rgba(0, 0, 0, 0.5)",
               zIndex: 99999,
-              padding: "14px 16px",
+              padding: "10px 16px",
               display: "flex",
               flexDirection: "column",
-              gap: "8px",
+              gap: "0px",
               maxHeight: "calc(100vh - 70px)",
               overflowY: "auto"
             }}
           >
-            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "bold", letterSpacing: "0.5px", textTransform: "uppercase", paddingBottom: "6px", borderBottom: "1px solid rgba(255,255,255,0.09)" }}>
               Institute Menu ({instituteName || "Panel"})
             </div>
 
             <button
               onClick={() => { handleTabChange("billing"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "billing" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "billing" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              style={{ padding: "12px 10px", borderRadius: "0", backgroundColor: "transparent", color: activeTab === "billing" ? "#60a5fa" : "#f8fafc", fontWeight: activeTab === "billing" ? 800 : 600, fontSize: "14.5px", border: "none", borderBottom: "1px solid rgba(255,255,255,0.09)", borderLeft: activeTab === "billing" ? "3px solid #3b82f6" : "3px solid transparent", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
             >
               <span>💳</span>
               <span>Billing & Management</span>
@@ -1856,7 +1856,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
             <button
               onClick={() => { handleTabChange("listening"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "listening" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "listening" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              style={{ padding: "12px 10px", borderRadius: "0", backgroundColor: "transparent", color: activeTab === "listening" ? "#60a5fa" : "#f8fafc", fontWeight: activeTab === "listening" ? 800 : 600, fontSize: "14.5px", border: "none", borderBottom: "1px solid rgba(255,255,255,0.09)", borderLeft: activeTab === "listening" ? "3px solid #3b82f6" : "3px solid transparent", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
             >
               <span>🎧</span>
               <span>Study Materials & Books</span>
@@ -1864,7 +1864,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
             <button
               onClick={() => { handleTabChange("dictionary"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "dictionary" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "dictionary" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              style={{ padding: "12px 10px", borderRadius: "0", backgroundColor: "transparent", color: activeTab === "dictionary" ? "#60a5fa" : "#f8fafc", fontWeight: activeTab === "dictionary" ? 800 : 600, fontSize: "14.5px", border: "none", borderBottom: "1px solid rgba(255,255,255,0.09)", borderLeft: activeTab === "dictionary" ? "3px solid #3b82f6" : "3px solid transparent", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
             >
               <span>📖</span>
               <span>Dictionary & Vocabulary</span>
@@ -1872,7 +1872,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
             <button
               onClick={() => { handleTabChange("news"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "news" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "news" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              style={{ padding: "12px 10px", borderRadius: "0", backgroundColor: "transparent", color: activeTab === "news" ? "#60a5fa" : "#f8fafc", fontWeight: activeTab === "news" ? 800 : 600, fontSize: "14.5px", border: "none", borderBottom: "1px solid rgba(255,255,255,0.09)", borderLeft: activeTab === "news" ? "3px solid #3b82f6" : "3px solid transparent", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
             >
               <span>📢</span>
               <span>Notice Board</span>
@@ -1881,7 +1881,7 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
             {userRole !== "staff" && (
               <button
                 onClick={() => { handleTabChange("students"); setMobileMenuOpen(false); }}
-                style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "students" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "students" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+                style={{ padding: "12px 10px", borderRadius: "0", backgroundColor: "transparent", color: activeTab === "students" ? "#60a5fa" : "#f8fafc", fontWeight: activeTab === "students" ? 800 : 600, fontSize: "14.5px", border: "none", borderBottom: "1px solid rgba(255,255,255,0.09)", borderLeft: activeTab === "students" ? "3px solid #3b82f6" : "3px solid transparent", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
               >
                 <span>👥</span>
                 <span>Manage Students</span>
@@ -1890,21 +1890,19 @@ Login Portal: ${typeof window !== "undefined" ? window.location.origin : ""}
 
             <button
               onClick={() => { handleTabChange("about"); setMobileMenuOpen(false); }}
-              style={{ padding: "10px 14px", borderRadius: "8px", backgroundColor: activeTab === "about" ? "#2563eb" : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14px", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              style={{ padding: "12px 10px", borderRadius: "0", backgroundColor: "transparent", color: activeTab === "about" ? "#60a5fa" : "#f8fafc", fontWeight: activeTab === "about" ? 800 : 600, fontSize: "14.5px", border: "none", borderBottom: "1px solid rgba(255,255,255,0.09)", borderLeft: activeTab === "about" ? "3px solid #3b82f6" : "3px solid transparent", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}
             >
               <span>ℹ️</span>
               <span>About Us</span>
             </button>
 
-            <div style={{ marginTop: "8px", paddingTop: "10px", borderTop: "1px solid rgba(255, 255, 255, 0.15)" }}>
-              <button
-                onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
-                style={{ width: "100%", backgroundColor: "#ef4444", color: "#ffffff", border: "none", padding: "11px", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
-              >
-                <span>🚪</span>
-                <span>Logout</span>
-              </button>
-            </div>
+            <button
+              onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+              style={{ width: "100%", backgroundColor: "transparent", color: "#f87171", border: "none", padding: "12px 10px", borderRadius: "0", fontWeight: "700", fontSize: "14.5px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "10px", textAlign: "left" }}
+            >
+              <span>🚪</span>
+              <span>Logout</span>
+            </button>
           </div>
         </>
       )}
