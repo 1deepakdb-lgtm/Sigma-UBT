@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-touch-fullscreen" content="yes">
+<meta name="full-screen" content="yes">
+<meta name="browsermode" content="application">
+<meta name="x5-fullscreen" content="true">
+<meta name="x5-page-mode" content="app">
 <title>Document Viewer</title>
 <style>
   * {
@@ -51,6 +59,7 @@
     -webkit-overscroll-behavior-y: none !important;
     box-sizing: border-box;
     padding: 0 !important;
+    padding-top: max(env(safe-area-inset-top, 0px), 0px) !important;
   }
   @media (max-width: 768px) {
     #viewer-scroll-container {
@@ -1587,6 +1596,25 @@
         }
       }
     }, 7000);
+
+    // Auto-enter immersive fullscreen on user interaction to suppress mobile status bar
+    function triggerImmersiveFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          var el = document.documentElement;
+          if (el.requestFullscreen) {
+            el.requestFullscreen({ navigationUI: "hide" }).catch(function(){});
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen().catch(function(){});
+          }
+        }
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "EXAMJK_ENTER_FULLSCREEN" }, "*");
+        }
+      } catch(e) {}
+    }
+    document.addEventListener('click', triggerImmersiveFullscreen, { passive: true });
+    document.addEventListener('touchend', triggerImmersiveFullscreen, { passive: true });
 
     initViewer();
   })();

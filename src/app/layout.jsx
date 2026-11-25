@@ -27,7 +27,7 @@ export const metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'ExamJK'
   }
 };
@@ -39,12 +39,16 @@ export default function RootLayout({ children }) {
         <meta charSet="utf-8" />
         <meta name="application-name" content="ExamJK" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="#003b73" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="ExamJK" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-touch-fullscreen" content="yes" />
+        <meta name="full-screen" content="yes" />
+        <meta name="browsermode" content="application" />
+        <meta name="x5-fullscreen" content="true" />
+        <meta name="x5-page-mode" content="app" />
         <meta name="theme-color" content="#003b73" />
         <meta name="msapplication-navbutton-color" content="#003b73" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="#003b73" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         {/* Universal High-Definition Web Fonts: English (Inter), Korean (Noto Sans KR), Japanese (Noto Sans JP), Nepali (Noto Sans Devanagari) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

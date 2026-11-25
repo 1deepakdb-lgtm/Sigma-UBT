@@ -2085,6 +2085,20 @@ export default function EpsBookReader({
         document.body.style.overscrollBehaviorY = "none";
         document.documentElement.style.overscrollBehavior = "none";
         document.documentElement.style.overscrollBehaviorY = "none";
+
+        // Request immersive fullscreen to suppress mobile status bar and notification bar
+        try {
+          const elem = document.documentElement;
+          if (!document.fullscreenElement) {
+            if (elem.requestFullscreen) {
+              elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+            } else if (elem.webkitRequestFullscreen) {
+              elem.webkitRequestFullscreen().catch(() => {});
+            } else if (elem.mozRequestFullScreen) {
+              elem.mozRequestFullScreen().catch(() => {});
+            }
+          }
+        } catch (e) {}
       }
       const bridgeList = [
         window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard,
@@ -2182,12 +2196,6 @@ export default function EpsBookReader({
     if (typeof window !== "undefined" && window.AndroidApp) {
       try {
         if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(true);
-        if (typeof window.AndroidApp.setImmersiveFullscreen === "function") window.AndroidApp.setImmersiveFullscreen(false);
-        if (typeof window.AndroidApp.setStatusBarVisible === "function") window.AndroidApp.setStatusBarVisible(true);
-        if (typeof window.AndroidApp.setNavigationBarVisible === "function") window.AndroidApp.setNavigationBarVisible(true);
-        if (typeof window.AndroidApp.showStatusBar === "function") window.AndroidApp.showStatusBar();
-        if (typeof window.AndroidApp.showNavigationBar === "function") window.AndroidApp.showNavigationBar();
-        if (typeof window.AndroidApp.showSystemUI === "function") window.AndroidApp.showSystemUI();
       } catch (e) {}
     }
     setSelectedChapter(null);
@@ -2196,6 +2204,25 @@ export default function EpsBookReader({
     setCurrentTime(0);
     setShowTrackDropdown(false);
   };
+
+  // Fullscreen communication handler from embedded PDF viewer iframe
+  useEffect(() => {
+    const handleFullscreenMsg = (e) => {
+      if (e && e.data && e.data.type === "EXAMJK_ENTER_FULLSCREEN") {
+        try {
+          const elem = document.documentElement;
+          if (!document.fullscreenElement) {
+            if (elem.requestFullscreen) elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(() => {});
+          }
+        } catch (err) {}
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("message", handleFullscreenMsg);
+      return () => window.removeEventListener("message", handleFullscreenMsg);
+    }
+  }, []);
 
   // Global lock for pull-down refresh and hardware back when ANY PDF is open (Mobile Apps & Smartboard Apps)
   useEffect(() => {
@@ -3960,8 +3987,83 @@ export default function EpsBookReader({
           overflow: "hidden",
           margin: 0,
           padding: 0,
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          paddingLeft: "env(safe-area-inset-left, 0px)",
+          paddingRight: "env(safe-area-inset-right, 0px)",
+          boxSizing: "border-box",
           zIndex: 2147483600
         }}>
+          {/* Floating Action Controls: Fullscreen (Hide Status Bar) & Close */}
+          <div style={{
+            position: "absolute",
+            top: "max(10px, calc(env(safe-area-inset-top, 0px) + 6px))",
+            right: "max(12px, calc(env(safe-area-inset-right, 0px) + 8px))",
+            zIndex: 2147483640,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            pointerEvents: "auto"
+          }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof document !== "undefined") {
+                  const elem = document.documentElement;
+                  if (!document.fullscreenElement) {
+                    if (elem.requestFullscreen) elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+                    else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(() => {});
+                  } else {
+                    if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+                  }
+                }
+              }}
+              title="Fullscreen (Hide Status Bar)"
+              style={{
+                backgroundColor: "rgba(15, 23, 42, 0.75)",
+                backdropFilter: "blur(6px)",
+                color: "#ffffff",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                borderRadius: "20px",
+                padding: "6px 12px",
+                fontSize: "12px",
+                fontWeight: "700",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.25)"
+              }}
+            >
+              <span>⛶</span>
+              <span>Fullscreen</span>
+            </button>
+            <button
+              type="button"
+              onClick={closeChapterFullScreen}
+              title="Close Document"
+              style={{
+                backgroundColor: "rgba(220, 38, 38, 0.85)",
+                backdropFilter: "blur(6px)",
+                color: "#ffffff",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                borderRadius: "50%",
+                width: "30px",
+                height: "30px",
+                fontSize: "13px",
+                fontWeight: "800",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.25)"
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
           {selectedChapter && (selectedChapter.pdfUrl || selectedChapter.pdf?.url) ? (
             <div style={{
               position: "relative",
@@ -3973,6 +4075,8 @@ export default function EpsBookReader({
                 key={selectedChapter.chapter !== undefined ? `eps-ch-${selectedChapter.chapter}` : (selectedChapter.id || selectedChapter.folder || selectedChapter.pdfUrl)}
                 src={getCleanPdfUrl(selectedChapter.pdfUrl || selectedChapter.pdf?.url)}
                 title={`EPS Book Chapter ${selectedChapter.chapter}`}
+                allow="fullscreen; autoplay; accelerometer; encrypted-media"
+                allowFullScreen
                 style={{
                   position: "absolute",
                   top: 0,

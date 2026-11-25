@@ -300,20 +300,20 @@ const StudentDashboard = () => {
   );
 
   const isGoogleOrFree = !isEnrolledInstituteStudent || Boolean(
-    studentPackage?.toLowerCase().includes("google") ||
-    studentPackage?.toLowerCase().includes("free") ||
-    studentBatch?.toLowerCase().includes("google") ||
-    studentBatch?.toLowerCase().includes("free") ||
-    currentStudentPhone?.includes("@") ||
+    String(studentPackage || "").toLowerCase().includes("google") ||
+    String(studentPackage || "").toLowerCase().includes("free") ||
+    String(studentBatch || "").toLowerCase().includes("google") ||
+    String(studentBatch || "").toLowerCase().includes("free") ||
+    String(currentStudentPhone || "").includes("@") ||
     (typeof window !== "undefined" && (
       localStorage.getItem("isFreeStudent") === "true" ||
       localStorage.getItem("isGoogleAuth") === "true" ||
-      (localStorage.getItem("currentUser") || "").includes("@") ||
-      (localStorage.getItem("currentStudentPhone") || "").includes("@") ||
-      (localStorage.getItem("studentPhone") || "").includes("@") ||
-      (localStorage.getItem("currentStudentPackage") || "").toLowerCase().includes("free") ||
-      (localStorage.getItem("currentStudentPackage") || "").toLowerCase().includes("google") ||
-      (localStorage.getItem("currentStudentExpiryDate") || "").toLowerCase().includes("free")
+      String(localStorage.getItem("currentUser") || "").includes("@") ||
+      String(localStorage.getItem("currentStudentPhone") || "").includes("@") ||
+      String(localStorage.getItem("studentPhone") || "").includes("@") ||
+      String(localStorage.getItem("currentStudentPackage") || "").toLowerCase().includes("free") ||
+      String(localStorage.getItem("currentStudentPackage") || "").toLowerCase().includes("google") ||
+      String(localStorage.getItem("currentStudentExpiryDate") || "").toLowerCase().includes("free")
     ))
   );
 
@@ -4827,4 +4827,10 @@ const StudentDashboard = () => {
   );
 };
 
-export default StudentDashboard;
+const StudentDashboardWrapped = (props) => (
+  <ClientErrorBoundary fallbackTitle="Student Portal Notice">
+    <StudentDashboard {...props} />
+  </ClientErrorBoundary>
+);
+
+export default StudentDashboardWrapped;
