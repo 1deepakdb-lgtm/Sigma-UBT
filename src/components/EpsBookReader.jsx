@@ -2065,19 +2065,14 @@ export default function EpsBookReader({
     return `/pdfviewer.html?v=crystal_clear_v4&url=${encodeURIComponent(fullUrl)}`;
   };
 
-  // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Universal Smartboard/Mobile Compatibility)
-  const openChapterFullScreen = (chapter) => {
-    setSelectedChapter(chapter);
-    setCurrentTrackIndex(0);
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-    setShowTrackDropdown(false);
-    setPopupMode("gesture");
-
-    // Push history state so Android/mobile back button closes the reader cleanly
+  // Shared helper to enter edge-to-edge fullscreen & hide mobile status/nav bars on any PDF open
+  const activatePdfImmersiveMode = (pushHistory = true) => {
     if (typeof window !== "undefined") {
-      window.history.pushState({ epsReaderModal: true }, "");
+      if (pushHistory && !window.history.state?.epsReaderModal) {
+        try {
+          window.history.pushState({ epsReaderModal: true }, "");
+        } catch (e) {}
+      }
       if (typeof document !== "undefined") {
         document.body.classList.add("pdf-open");
         document.documentElement.classList.add("pdf-open");
@@ -2086,24 +2081,37 @@ export default function EpsBookReader({
         document.documentElement.style.overscrollBehavior = "none";
         document.documentElement.style.overscrollBehaviorY = "none";
 
-        // Request immersive fullscreen to suppress mobile status bar and notification bar
         try {
           const elem = document.documentElement;
-          if (!document.fullscreenElement) {
+          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
             if (elem.requestFullscreen) {
-              elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+              elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {
+                elem.requestFullscreen().catch(() => {});
+              });
             } else if (elem.webkitRequestFullscreen) {
-              elem.webkitRequestFullscreen().catch(() => {});
+              elem.webkitRequestFullscreen();
             } else if (elem.mozRequestFullScreen) {
-              elem.mozRequestFullScreen().catch(() => {});
+              elem.mozRequestFullScreen();
+            } else if (elem.msRequestFullscreen) {
+              elem.msRequestFullscreen();
             }
           }
         } catch (e) {}
       }
+      try {
+        window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
+        window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "HIDE_STATUS_BAR", fullscreen: true }, "*");
+        }
+      } catch (e) {}
+      const p = window.parent || window;
       const bridgeList = [
         window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard,
         window.BoardApp, window.boardApp, window.Android, window.android, window.AndroidBridge, window.JSBridge,
-        window.webApp, window.NativeApp
+        window.webApp, window.NativeApp,
+        p.AndroidApp, p.SmartboardApp, p.SmartBoardApp, p.SmartBoard, p.smartboard, p.BoardApp, p.boardApp, p.Android, p.android
       ];
       bridgeList.forEach((b) => {
         if (!b) return;
@@ -2125,6 +2133,34 @@ export default function EpsBookReader({
         } catch (e) {}
       });
     }
+  };
+
+  const openMaterialFullScreen = (material) => {
+    activatePdfImmersiveMode(true);
+    setViewingMaterial(material);
+  };
+
+  const closeMaterialFullScreen = (shouldPopHistory = true) => {
+    if (typeof document !== "undefined" && (document.fullscreenElement || document.webkitFullscreenElement)) {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+    }
+    if (shouldPopHistory && typeof window !== "undefined" && window.history.state?.epsReaderModal) {
+      window.history.back();
+    }
+    setViewingMaterial(null);
+  };
+
+  // Open Full-Screen View for a Chapter (Instant 0ms PDF opening & Universal Smartboard/Mobile Compatibility)
+  const openChapterFullScreen = (chapter) => {
+    setSelectedChapter(chapter);
+    setCurrentTrackIndex(0);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setShowTrackDropdown(false);
+    setPopupMode("gesture");
+    activatePdfImmersiveMode(true);
 
     const chId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
     const pdfTarget = chapter.pdfUrl || chapter.pdf?.url || "";
@@ -2909,11 +2945,13 @@ export default function EpsBookReader({
       <div
         style={{
           position: "fixed",
+          inset: 0,
           top: 0,
           left: 0,
-          width: "100vw",
-          height: "100vh",
-          height: "100dvh",
+          right: 0,
+          bottom: 0,
+          width: "100%",
+          height: "100%",
           backgroundColor: "#ffffff",
           zIndex: 2147483640,
           display: "flex",
@@ -2973,7 +3011,7 @@ export default function EpsBookReader({
           </button>
           <button
             type="button"
-            onClick={() => setViewingMaterial(null)}
+            onClick={() => closeMaterialFullScreen(true)}
             title="Close Document"
             style={{
               backgroundColor: "rgba(220, 38, 38, 0.85)",
@@ -3017,11 +3055,13 @@ export default function EpsBookReader({
       <div
         style={{
           position: "fixed",
+          inset: 0,
           top: 0,
           left: 0,
-          width: "100vw",
-          height: "100vh",
-          height: "100dvh",
+          right: 0,
+          bottom: 0,
+          width: "100%",
+          height: "100%",
           backgroundColor: "#ffffff",
           zIndex: 2147483640,
           display: "flex",
@@ -5463,7 +5503,7 @@ export default function EpsBookReader({
                           {mat.fileUrl && (
                             <button
                               type="button"
-                              onClick={() => setViewingMaterial(mat)}
+                              onClick={() => openMaterialFullScreen(mat)}
                               style={{
                                 flex: 1,
                                 backgroundColor: "#2563eb",
@@ -5845,7 +5885,7 @@ export default function EpsBookReader({
                         return (
                           <div
                             key={idx}
-                            onClick={() => setViewingMaterial({ title: book.title, fileUrl: book.url })}
+                            onClick={() => openMaterialFullScreen({ title: book.title, fileUrl: book.url })}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = "translateY(-3px)";
                               e.currentTarget.style.boxShadow = "0 10px 25px rgba(124, 58, 237, 0.16)";
@@ -5897,7 +5937,7 @@ export default function EpsBookReader({
                                 margin="10px 0 12px 0"
                                 onClick={(e) => {
                                   if (e && e.stopPropagation) e.stopPropagation();
-                                  setViewingMaterial({ title: book.title, fileUrl: book.url });
+                                  openMaterialFullScreen({ title: book.title, fileUrl: book.url });
                                 }}
                               />
 
@@ -5916,7 +5956,7 @@ export default function EpsBookReader({
                             <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
                               <button
                                 type="button"
-                                onClick={() => setViewingMaterial({ title: book.title, fileUrl: book.url })}
+                                onClick={() => openMaterialFullScreen({ title: book.title, fileUrl: book.url })}
                                 style={{
                                   width: "100%",
                                   padding: "9px 14px",
@@ -5960,7 +6000,7 @@ export default function EpsBookReader({
                         return (
                           <div
                             key={lesson.lesson}
-                            onClick={() => setViewingMaterial({
+                            onClick={() => openMaterialFullScreen({
                               title: `Minna no Nihongo Chapter ${lesson.lesson} (${isN5 ? 'N5' : 'N4'})`,
                               fileUrl: r2PdfUrl
                             })}
@@ -6017,7 +6057,7 @@ export default function EpsBookReader({
                                 margin="10px 0 12px 0"
                                 onClick={(e) => {
                                   if (e && e.stopPropagation) e.stopPropagation();
-                                  setViewingMaterial({
+                                  openMaterialFullScreen({
                                     title: `Minna no Nihongo Chapter ${lesson.lesson} (${isN5 ? 'N5' : 'N4'})`,
                                     fileUrl: r2PdfUrl
                                   });
@@ -6064,7 +6104,7 @@ export default function EpsBookReader({
                             >
                               <button
                                 type="button"
-                                onClick={() => setViewingMaterial({
+                                onClick={() => openMaterialFullScreen({
                                   title: `Minna no Nihongo Chapter ${lesson.lesson} (${isN5 ? 'N5' : 'N4'})`,
                                   fileUrl: r2PdfUrl
                                 })}
@@ -6293,7 +6333,7 @@ export default function EpsBookReader({
                             <div style={{ marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #f1f5f9" }}>
                               <button
                                 type="button"
-                                onClick={() => setViewingMaterial({
+                                onClick={() => openMaterialFullScreen({
                                   title: unit.title,
                                   fileUrl: unit.pdfUrl
                                 })}
@@ -6392,7 +6432,7 @@ export default function EpsBookReader({
                             <div style={{ marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #f1f5f9" }}>
                               <button
                                 type="button"
-                                onClick={() => setViewingMaterial({
+                                onClick={() => openMaterialFullScreen({
                                   title: unit.title,
                                   fileUrl: unit.pdfUrl
                                 })}
@@ -6491,7 +6531,7 @@ export default function EpsBookReader({
                             <div style={{ marginTop: "auto", paddingTop: "8px", borderTop: "1px solid #f1f5f9" }}>
                               <button
                                 type="button"
-                                onClick={() => setViewingMaterial({
+                                onClick={() => openMaterialFullScreen({
                                   title: unit.title,
                                   fileUrl: unit.pdfUrl
                                 })}
@@ -7698,7 +7738,7 @@ export default function EpsBookReader({
                     type="button"
                     onClick={() => {
                       const pdfUrl = getMinnaPdfUrl(viewingMinnaLesson.lesson);
-                      setViewingMaterial({
+                      openMaterialFullScreen({
                         title: `Minna no Nihongo Lesson ${viewingMinnaLesson.lesson} (${viewingMinnaLesson.lesson <= 25 ? 'N5' : 'N4'})`,
                         fileUrl: pdfUrl
                       });
