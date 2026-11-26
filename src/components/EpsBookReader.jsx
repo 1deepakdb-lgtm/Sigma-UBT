@@ -2314,26 +2314,6 @@ export default function EpsBookReader({
       });
     };
 
-    let globalTouchStartY = 0;
-    const handleGlobalTouchStart = (e) => {
-      if (e.touches && e.touches.length > 0) {
-        globalTouchStartY = e.touches[0].clientY;
-      }
-    };
-
-    const handleGlobalTouchMove = (e) => {
-      if (!isAnyPdfOpen) return;
-      if (e.touches && e.touches.length === 1) {
-        const dy = e.touches[0].clientY - globalTouchStartY;
-        // Intercept downward drag from top edge or when scrolled to top to completely disable pull-to-refresh
-        if (dy > 0 && (window.scrollY <= 2 || globalTouchStartY < 160)) {
-          if (e.cancelable) {
-            e.preventDefault();
-          }
-        }
-      }
-    };
-
     if (typeof window !== "undefined") {
       window.__isPdfOpen = isAnyPdfOpen;
       if (isAnyPdfOpen) {
@@ -2349,10 +2329,6 @@ export default function EpsBookReader({
         refreshLockInterval = setInterval(() => {
           syncSwipeRefreshBridges(false);
         }, 1000);
-
-        window.addEventListener("touchstart", handleGlobalTouchStart, { passive: true });
-        window.addEventListener("touchmove", handleGlobalTouchMove, { passive: false });
-        document.addEventListener("touchmove", handleGlobalTouchMove, { passive: false });
       } else {
         document.body.classList.remove("pdf-open");
         document.documentElement.classList.remove("pdf-open");
@@ -2416,9 +2392,6 @@ export default function EpsBookReader({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("message", handleWindowMessage);
-      window.removeEventListener("touchstart", handleGlobalTouchStart);
-      window.removeEventListener("touchmove", handleGlobalTouchMove);
-      document.removeEventListener("touchmove", handleGlobalTouchMove);
       if (window.__handleAppBack) window.__handleAppBack = null;
       if (typeof window !== "undefined") {
         document.body.classList.remove("pdf-open");

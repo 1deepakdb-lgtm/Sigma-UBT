@@ -866,6 +866,9 @@
     }, { passive: true });
 
     // Strict Smartboard & Mobile Pull-Down Scroll / Refresh Blocker
+    // overscroll-behavior: none handles pull-to-refresh blocking cleanly.
+    // We only prevent overscroll boundary bouncing when already at top or bottom,
+    // so normal vertical scrolling flows buttery smooth without interruption.
     var dragStartY = 0;
     var dragStartX = 0;
 
@@ -882,42 +885,10 @@
       }
     }
 
-    function blockPullDownScroll(e) {
-      if (isPinching) return;
-      var t = (e.touches && e.touches.length > 0) ? e.touches[0] : e;
-      var currentY = t.clientY || 0;
-      var currentX = t.clientX || 0;
-      var dy = currentY - dragStartY;
-      var dx = currentX - dragStartX;
-
-      // When dragging downwards at the top (the pull-to-refresh reload gesture)
-      if (dy > 0 && Math.abs(dy) > Math.abs(dx) && container.scrollTop <= 0) {
-        if (e.cancelable) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        container.scrollTop = 0;
-      }
-    }
-
-    window.addEventListener('touchstart', recordDragStart, { passive: true, capture: true });
-    container.addEventListener('touchstart', recordDragStart, { passive: true, capture: true });
-    window.addEventListener('touchmove', blockPullDownScroll, { passive: false, capture: true });
-    container.addEventListener('touchmove', blockPullDownScroll, { passive: false, capture: true });
-    document.addEventListener('touchmove', blockPullDownScroll, { passive: false, capture: true });
-    window.addEventListener('touchend', recordDragEnd, { passive: true, capture: true });
-    window.addEventListener('touchcancel', recordDragEnd, { passive: true, capture: true });
-
-    window.addEventListener('pointerdown', recordDragStart, { passive: true, capture: true });
-    container.addEventListener('pointerdown', recordDragStart, { passive: true, capture: true });
-    window.addEventListener('pointermove', function(e) {
-      if (e.pointerType === 'touch' || e.pointerType === 'pen' || e.buttons > 0) blockPullDownScroll(e);
-    }, { passive: false, capture: true });
-    container.addEventListener('pointermove', function(e) {
-      if (e.pointerType === 'touch' || e.pointerType === 'pen' || e.buttons > 0) blockPullDownScroll(e);
-    }, { passive: false, capture: true });
-    window.addEventListener('pointerup', recordDragEnd, { passive: true, capture: true });
-    window.addEventListener('pointercancel', recordDragEnd, { passive: true, capture: true });
+    window.addEventListener('touchstart', recordDragStart, { passive: true });
+    container.addEventListener('touchstart', recordDragStart, { passive: true });
+    window.addEventListener('touchend', recordDragEnd, { passive: true });
+    window.addEventListener('touchcancel', recordDragEnd, { passive: true });
 
     function blockWheelOverScroll(e) {
       if (container.scrollTop <= 0 && e.deltaY < 0 && !e.ctrlKey) {
