@@ -74,6 +74,39 @@ export default function GlobalPullToRefreshLock() {
       });
     }
 
+    // 3. Prevent Touch-Driven Pull-Down to Reload
+    // Intercepts downward swipe gesture when user is at the top of the viewport
+    let startY = 0;
+    let startX = 0;
+
+    function handleTouchStart(e) {
+      if (e.touches && e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+        startX = e.touches[0].clientX;
+      }
+    }
+
+    function handleTouchMove(e) {
+      if (!e.touches || e.touches.length !== 1) return;
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      const deltaY = currentY - startY;
+      const deltaX = currentX - startX;
+
+      // Check if user is at the very top of page/container
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+
+      // Downward pull at top (gesture that triggers browser reload)
+      if (scrollTop <= 0 && deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      }
+    }
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+
     // 4. Prevent Accidental Keyboard Refresh During Active Examination
     function handleKeyDown(e) {
       const isExamRoute = typeof window !== 'undefined' && window.location.pathname.includes('/student/exam/');
@@ -117,6 +150,8 @@ export default function GlobalPullToRefreshLock() {
 
     return () => {
       clearInterval(bridgeInterval);
+      window.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      window.removeEventListener('touchmove', handleTouchMove, { capture: true });
       window.removeEventListener('keydown', handleKeyDown, { capture: true });
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };

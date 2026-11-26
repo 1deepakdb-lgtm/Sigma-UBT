@@ -11,18 +11,11 @@
         android:layout_height="match_parent"
         android:background="@color/background">
 
-        <!-- Swipe Refresh Layout containing WebView -->
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipe_refresh"
+        <!-- Direct WebView container (SwipeRefreshLayout removed so native pull-down can NEVER reload or navigate home) -->
+        <WebView
+            android:id="@+id/webview"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <WebView
-                android:id="@+id/webview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+            android:layout_height="match_parent" />
 
         <!-- Top Loading Progress Bar -->
         <ProgressBar

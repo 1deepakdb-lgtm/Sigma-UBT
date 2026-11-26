@@ -45,7 +45,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -55,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
 
     private View rootContainer;
     private WebView webView;
-    private SwipeRefreshLayout swipeRefresh;
     private ProgressBar progressBar;
     private LinearLayout offlineView;
     private Button btnRetry;
@@ -105,14 +103,12 @@ public class MainActivity extends AppCompatActivity {
 
         rootContainer = findViewById(R.id.root_container);
         webView = findViewById(R.id.webview);
-        swipeRefresh = findViewById(R.id.swipe_refresh);
         progressBar = findViewById(R.id.progress_bar);
         offlineView = findViewById(R.id.offline_view);
         btnRetry = findViewById(R.id.btn_retry);
 
         setupWindowInsets();
         setupWebView();
-        setupSwipeRefresh();
         setupBackNavigation();
         requestRequiredPermissions();
         registerNetworkCallback();
@@ -360,20 +356,13 @@ public class MainActivity extends AppCompatActivity {
         webView.addJavascriptInterface(new Object() {
             @android.webkit.JavascriptInterface
             public void setSwipeRefreshEnabled(final boolean enabled) {
-                runOnUiThread(() -> {
-                    if (swipeRefresh != null) {
-                        swipeRefresh.setEnabled(false); // Globally keep disabled
-                    }
-                });
+                // Permanently disabled
             }
 
             @android.webkit.JavascriptInterface
             public void setPdfOpen(final boolean open) {
                 isPdfOpen = open;
                 runOnUiThread(() -> {
-                    if (swipeRefresh != null) {
-                        swipeRefresh.setEnabled(false);
-                    }
                     enforceNonOverlappingStatusBar();
                 });
             }
@@ -475,7 +464,6 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 progressBar.setVisibility(View.GONE);
-                swipeRefresh.setRefreshing(false);
                 enforceNonOverlappingStatusBar();
             }
 
@@ -493,12 +481,10 @@ public class MainActivity extends AppCompatActivity {
                         view.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
                         if (view.getContentHeight() > 0) {
                             progressBar.setVisibility(View.GONE);
-                            swipeRefresh.setRefreshing(false);
                             return;
                         }
                     }
                     progressBar.setVisibility(View.GONE);
-                    swipeRefresh.setRefreshing(false);
                     webView.setVisibility(View.GONE);
                     offlineView.setVisibility(View.VISIBLE);
                 }
@@ -561,14 +547,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-    }
-
-    private void setupSwipeRefresh() {
-        swipeRefresh.setColorSchemeResources(R.color.accent, R.color.primary);
-        swipeRefresh.setEnabled(false); // GLOBALLY DISABLED: Prevent pull-down refresh on all devices & smartboards
-        swipeRefresh.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        swipeRefresh.setOnRefreshListener(() -> swipeRefresh.setRefreshing(false));
-        swipeRefresh.setOnChildScrollUpCallback((parent, child) -> true);
     }
 
     private void setupBackNavigation() {
