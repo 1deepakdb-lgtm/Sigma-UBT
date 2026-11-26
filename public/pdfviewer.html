@@ -639,8 +639,8 @@
         var dpr = window.devicePixelRatio || 1;
         // ULTRA-SHARP CLARITY ENGINE:
         // Guarantees 100% razor-sharp, crystal-clear readability for Korean EPS-TOPIK book text, furigana & vocabulary.
-        // Backing scale ensures 1:1 physical display pixel mapping or super-sampled 2x-3x vector rasterization (ZERO BLUR).
-        var backingScale = Math.min(Math.max(dpr, 2.0), 3.0);
+        // Backing scale dynamically adapts based on device profile (1.5x on low RAM <= 1.5GB, up to 2.5x-3.0x on HD/4K smartboards & Retina).
+        var backingScale = isLowResourceDevice ? Math.min(dpr, 1.5) : Math.min(Math.max(dpr, 2.0), 3.0);
 
         var finalScale = (displayWidth / baseViewport.width) * backingScale;
 
@@ -1509,7 +1509,7 @@
       try {
         var streamingPromise = startRenderingDoc(absUrl);
         var timeoutPromise = new Promise(function(_, reject) {
-          setTimeout(function() { reject(new Error('Streaming took too long, switching to direct download')); }, 3000);
+          setTimeout(function() { reject(new Error('Streaming took too long, switching to direct download')); }, 5000);
         });
         await Promise.race([streamingPromise, timeoutPromise]);
         // Once successfully opened via streaming, trigger background offline caching (non-blocking!)

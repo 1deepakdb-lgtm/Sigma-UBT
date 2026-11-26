@@ -88,6 +88,15 @@ const nextConfig = {
         ],
       },
       {
+        source: '/api/pdf/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, HEAD, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: '*' },
+          { key: 'Accept-Ranges', value: 'bytes' },
+        ],
+      },
+      {
         source: '/sw.js',
         headers: [
           { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate, max-age=0' },

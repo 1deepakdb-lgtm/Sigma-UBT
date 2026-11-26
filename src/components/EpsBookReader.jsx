@@ -2052,17 +2052,21 @@ export default function EpsBookReader({
     }
   };
 
-  // Clean PDF URL without browser toolbar, page count or buttons - fit maximum screen universally
+  // Clean PDF URL with ultra-fast progressive Range delivery route
   const getCleanPdfUrl = (url) => {
     if (!url) return "";
-    const trimmed = url.trim();
+    let trimmed = url.trim();
     if (trimmed.includes("drive.google.com")) {
       return trimmed;
+    }
+    // Route local uploads through the high-performance HTTP 206 partial streaming engine
+    if (trimmed.startsWith('/uploads/')) {
+      trimmed = trimmed.replace(/^\/uploads\//, '/api/pdf/');
     }
     const fullUrl = (trimmed.startsWith('/') && typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin.startsWith('http') && !window.location.origin.includes('localhost'))
       ? `${window.location.origin}${trimmed}`
       : trimmed;
-    return `/pdfviewer.html?v=crystal_clear_v4&url=${encodeURIComponent(fullUrl)}`;
+    return `/pdfviewer.html?v=crystal_clear_v5&url=${encodeURIComponent(fullUrl)}`;
   };
 
   // Shared helper to enter edge-to-edge fullscreen & hide mobile status/nav bars on any PDF open
