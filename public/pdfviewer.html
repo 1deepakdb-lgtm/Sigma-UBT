@@ -1328,6 +1328,7 @@
         useSystemFonts: false,
         disableRange: false,
         disableStream: false,
+        disableAutoFetch: true,
         rangeChunkSize: 262144
       };
 
@@ -1509,7 +1510,7 @@
       try {
         var streamingPromise = startRenderingDoc(absUrl);
         var timeoutPromise = new Promise(function(_, reject) {
-          setTimeout(function() { reject(new Error('Streaming took too long, switching to direct download')); }, 5000);
+          setTimeout(function() { reject(new Error('Streaming took too long, switching to direct download')); }, 8000);
         });
         await Promise.race([streamingPromise, timeoutPromise]);
         // Once successfully opened via streaming, trigger background offline caching (non-blocking!)
@@ -1525,7 +1526,7 @@
               if (pCache) pCache.set(targetDocUrl, buffer);
             }
           }).catch(function() {});
-        }, 1200);
+        }, 1500);
         return;
       } catch (streamErr) {
         console.warn('Direct streaming notice, falling back to buffered download:', streamErr);
