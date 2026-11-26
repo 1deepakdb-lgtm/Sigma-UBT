@@ -65,31 +65,28 @@ const StudentResult = () => {
     }
 
     enterFullScreen();
-    const handleGesture = () => {
+    const handleSync = () => {
       enterFullScreen();
       lockLandscape();
     };
-    // Use capture phase with valid user-activation events (click, touchend, pointerup) so fullscreen triggers before child state updates
-    window.addEventListener("click", handleGesture, true);
-    window.addEventListener("touchend", handleGesture, { capture: true, passive: true });
-    window.addEventListener("pointerup", handleGesture, { capture: true, passive: true });
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         lockLandscape();
         enterFullScreen();
       }
     };
+    window.addEventListener("resize", handleSync);
     document.addEventListener("visibilitychange", handleVisibility);
+    document.addEventListener("fullscreenchange", handleSync);
 
     return () => {
       window.removeEventListener("orientationchange", lockLandscape);
       if (typeof screen !== "undefined" && screen.orientation) {
         screen.orientation.removeEventListener("change", lockLandscape);
       }
-      window.removeEventListener("click", handleGesture, true);
-      window.removeEventListener("touchend", handleGesture, true);
-      window.removeEventListener("pointerup", handleGesture, true);
+      window.removeEventListener("resize", handleSync);
       document.removeEventListener("visibilitychange", handleVisibility);
+      document.removeEventListener("fullscreenchange", handleSync);
     };
   }, []);
 
@@ -98,28 +95,16 @@ const StudentResult = () => {
       if (typeof document !== "undefined") {
         document.body.classList.add("pdf-open", "exam-fullscreen-active");
         document.documentElement.classList.add("pdf-open", "exam-fullscreen-active");
-        const elem = document.documentElement;
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {
-              elem.requestFullscreen().catch(() => {});
-            });
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-          } else if (elem.mozRequestFullScreen) {
-            elem.mozRequestFullScreen();
-          } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-          }
-        }
       }
       if (typeof window !== "undefined") {
         try {
-          window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
           window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
-          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
+          window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SET_STATUS_BAR_OVERLAY", overlay: false }));
+          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SHOW_STATUS_BAR", fullscreen: false }));
           if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: "HIDE_STATUS_BAR", fullscreen: true }, "*");
+            window.parent.postMessage({ type: "SET_STATUS_BAR_OVERLAY", overlay: false }, "*");
+            window.parent.postMessage({ type: "SHOW_STATUS_BAR", fullscreen: false }, "*");
           }
           const p = window.parent || window;
           const bridges = [
@@ -128,13 +113,11 @@ const StudentResult = () => {
           ];
           bridges.forEach((b) => {
             if (!b) return;
-            if (typeof b.hideStatusBar === "function") b.hideStatusBar();
-            if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
-            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
-            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
-            if (typeof b.hideSystemUI === "function") b.hideSystemUI();
-            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
-            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+            if (typeof b.syncSystemBarInsets === "function") b.syncSystemBarInsets();
+            if (typeof b.setStatusBarOverlay === "function") b.setStatusBarOverlay(false);
+            if (typeof b.showStatusBar === "function") b.showStatusBar();
+            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
             if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
             if (typeof b.setPdfOpen === "function") b.setPdfOpen(true);
           });
@@ -156,8 +139,10 @@ const StudentResult = () => {
           }
         } catch (e) {}
         try {
-          window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
-          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
+          window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
+          window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SET_STATUS_BAR_OVERLAY", overlay: false }));
+          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SHOW_STATUS_BAR", fullscreen: false }));
           const p = window.parent || window;
           const bridges = [
             window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android,
@@ -165,14 +150,13 @@ const StudentResult = () => {
           ];
           bridges.forEach((b) => {
             if (!b) return;
-            if (typeof b.hideStatusBar === "function") b.hideStatusBar();
-            if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
-            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
-            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
-            if (typeof b.hideSystemUI === "function") b.hideSystemUI();
-            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
-            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+            if (typeof b.syncSystemBarInsets === "function") b.syncSystemBarInsets();
+            if (typeof b.setStatusBarOverlay === "function") b.setStatusBarOverlay(false);
+            if (typeof b.showStatusBar === "function") b.showStatusBar();
+            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
             if (typeof b.setPdfOpen === "function") b.setPdfOpen(false);
+            if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
           });
         } catch (e) {}
       }
@@ -212,13 +196,13 @@ const StudentResult = () => {
     @media (orientation: portrait) {
       .ubt-exam-landscape-enforcer {
         position: fixed !important;
-        top: 0 !important;
-        left: 100vw !important;
-        left: 100dvw !important;
-        width: 100vh !important;
-        width: 100dvh !important;
-        height: 100vw !important;
-        height: 100dvw !important;
+        top: env(safe-area-inset-top, 0px) !important;
+        left: calc(100vw - env(safe-area-inset-right, 0px)) !important;
+        left: calc(100dvw - env(safe-area-inset-right, 0px)) !important;
+        width: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+        width: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+        height: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
+        height: calc(100dvw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
         transform: rotate(90deg) !important;
         transform-origin: top left !important;
         overflow: hidden !important;
@@ -244,7 +228,7 @@ const StudentResult = () => {
         box-sizing: border-box !important;
         overflow: hidden !important;
         z-index: 2147483640 !important;
-        background-color: #f8fafc !important;
+        background-color: #003b73 !important;
       }
     }
     .student-bottom-nav,
@@ -375,12 +359,12 @@ const StudentResult = () => {
           <style dangerouslySetInnerHTML={{ __html: `
             @media (orientation: landscape), (max-height: 650px) {
               .result-review-outer {
+                background-color: #f8fafc !important;
                 max-width: 100% !important;
                 margin: 0 auto !important;
                 padding: 4px 10px !important;
-                height: 100vh !important;
-                height: 100dvh !important;
-                max-height: 100dvh !important;
+                height: 100% !important;
+                max-height: 100% !important;
                 box-sizing: border-box !important;
                 display: flex !important;
                 flex-direction: column !important;
@@ -560,15 +544,16 @@ const StudentResult = () => {
     return (
       <div className="ubt-exam-landscape-enforcer" onClick={enterFullScreen} onTouchStart={enterFullScreen} onContextMenu={(e) => e.preventDefault()}>
         <style dangerouslySetInnerHTML={{ __html: UBT_RESULT_LANDSCAPE_CSS }} />
-        <div className="result-grid-outer" style={{ maxWidth: "100%", width: "100%", height: "100vh", height: "100dvh", margin: "0 auto", padding: "8px 14px", fontFamily: "Arial, sans-serif", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div className="result-grid-outer" style={{ maxWidth: "100%", width: "100%", height: "100%", margin: "0 auto", padding: "8px 14px", fontFamily: "Arial, sans-serif", boxSizing: "border-box", display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <style dangerouslySetInnerHTML={{ __html: `
           .result-grid-outer {
+            background-color: #f8fafc !important;
             max-width: 100% !important;
             width: 100% !important;
             height: 100% !important;
             max-height: 100% !important;
             margin: 0 !important;
-            padding: calc(env(safe-area-inset-top, 0px) + 4px) calc(env(safe-area-inset-right, 0px) + 10px) calc(env(safe-area-inset-bottom, 0px) + 6px) calc(env(safe-area-inset-left, 0px) + 10px) !important;
+            padding: 4px 10px 6px 10px !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
@@ -920,8 +905,8 @@ const StudentResult = () => {
           }
           .result-summary-wrap {
             padding: 6px 12px !important;
-            height: 100vh !important;
-            height: 100dvh !important;
+            height: 100% !important;
+            max-height: 100% !important;
             min-height: 0 !important;
             overflow: hidden !important;
             display: flex !important;

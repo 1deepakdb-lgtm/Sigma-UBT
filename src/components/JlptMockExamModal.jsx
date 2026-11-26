@@ -63,26 +63,19 @@ export default function JlptMockExamModal({
     }
 
     if (typeof window !== "undefined") {
-      // Enter full screen & hide mobile status bar by default for Mock Exam
+      // Keep native status bar cleanly outside Mock Exam viewport
       try {
         if (typeof document !== "undefined") {
           document.body.classList.add("pdf-open", "exam-fullscreen-active");
           document.documentElement.classList.add("pdf-open", "exam-fullscreen-active");
-          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            const el = document.documentElement;
-            if (el.requestFullscreen) {
-              el.requestFullscreen({ navigationUI: "hide" }).catch(() => {
-                el.requestFullscreen().catch(() => {});
-              });
-            } else if (el.webkitRequestFullscreen) {
-              el.webkitRequestFullscreen();
-            }
-          }
         }
-        window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
-        window.AndroidApp?.hideStatusBar?.();
-        window.AndroidApp?.setStatusBarVisible?.(false);
-        window.AndroidApp?.setImmersiveFullscreen?.(true);
+        window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
+        window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+        window.AndroidApp?.syncSystemBarInsets?.();
+        window.AndroidApp?.setStatusBarOverlay?.(false);
+        window.AndroidApp?.showStatusBar?.();
+        window.AndroidApp?.setStatusBarVisible?.(true);
+        window.AndroidApp?.setImmersiveFullscreen?.(false);
       } catch (e) {}
 
       const lockLandscape = async () => {
@@ -115,6 +108,10 @@ export default function JlptMockExamModal({
           }
         } catch (e) {}
         try {
+          if (typeof document !== "undefined") {
+            document.body.classList.remove("pdf-open", "exam-fullscreen-active");
+            document.documentElement.classList.remove("pdf-open", "exam-fullscreen-active");
+          }
           if (document.fullscreenElement) {
             if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -352,15 +349,18 @@ export default function JlptMockExamModal({
       left: 0,
       right: 0,
       bottom: 0,
-      width: "100vw",
-      height: "100dvh",
-      backgroundColor: "#ffffff",
+      width: "100%",
+      height: "100%",
+      backgroundColor: "#003b73",
       zIndex: 2147483640,
       display: "flex",
       flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      padding: 0,
+      paddingTop: "env(safe-area-inset-top, 0px)",
+      paddingRight: "env(safe-area-inset-right, 0px)",
+      paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      paddingLeft: "env(safe-area-inset-left, 0px)",
       boxSizing: "border-box",
       overflow: "hidden"
     }}>
@@ -369,9 +369,8 @@ export default function JlptMockExamModal({
         .jlpt-exam-modal {
           width: 100%;
           max-width: 100%;
-          height: 100vh;
-          height: 100dvh;
-          max-height: 100dvh;
+          height: 100%;
+          max-height: 100%;
           border-radius: 0;
           display: flex;
           flex-direction: column;
@@ -482,7 +481,6 @@ export default function JlptMockExamModal({
           backgroundColor: "#0284c7",
           color: "#ffffff",
           padding: "10px 18px",
-          paddingTop: "max(calc(env(safe-area-inset-top, 0px) + 8px), 10px)",
           display: "grid",
           gridTemplateColumns: "1fr auto 1fr",
           alignItems: "center",
@@ -1310,7 +1308,6 @@ export default function JlptMockExamModal({
             <div style={{
               display: "flex",
               padding: "9px 18px",
-              paddingBottom: "max(calc(env(safe-area-inset-bottom, 0px) + 9px), 9px)",
               backgroundColor: "#f8fafc",
               borderTop: "1px solid #cbd5e1",
               justifyContent: "space-between",

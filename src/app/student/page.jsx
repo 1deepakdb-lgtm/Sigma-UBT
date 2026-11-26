@@ -864,22 +864,22 @@ const StudentDashboard = () => {
         }
       } catch (e) {}
       try {
-        window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
-        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
+        window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
+        window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SET_STATUS_BAR_OVERLAY", overlay: false }));
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SHOW_STATUS_BAR", fullscreen: false }));
         const bridges = [
           window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android
         ];
         bridges.forEach((b) => {
           if (!b) return;
-          if (typeof b.hideStatusBar === "function") b.hideStatusBar();
-          if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
-          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
-          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
-          if (typeof b.hideSystemUI === "function") b.hideSystemUI();
-          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
-          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+          if (typeof b.syncSystemBarInsets === "function") b.syncSystemBarInsets();
+          if (typeof b.setStatusBarOverlay === "function") b.setStatusBarOverlay(false);
+          if (typeof b.showStatusBar === "function") b.showStatusBar();
+          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
           if (typeof b.setPdfOpen === "function") b.setPdfOpen(false);
-          if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(true);
+          if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
         });
       } catch (e) {}
     } catch (e) {}
@@ -1952,20 +1952,6 @@ const StudentDashboard = () => {
         if (typeof document !== "undefined") {
           document.body.classList.add("pdf-open", "exam-fullscreen-active");
           document.documentElement.classList.add("pdf-open", "exam-fullscreen-active");
-          const elem = document.documentElement;
-          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            if (elem.requestFullscreen) {
-              elem.requestFullscreen({ navigationUI: "hide" }).catch(() => {
-                elem.requestFullscreen().catch(() => {});
-              });
-            } else if (elem.webkitRequestFullscreen) {
-              elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-              elem.mozRequestFullScreen();
-            } else if (elem.msRequestFullscreen) {
-              elem.msRequestFullscreen();
-            }
-          }
         }
       } catch (e) {}
 
@@ -1982,11 +1968,13 @@ const StudentDashboard = () => {
       } catch (e) {}
 
       try {
-        window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
         window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
-        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
+        window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SET_STATUS_BAR_OVERLAY", overlay: false }));
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SHOW_STATUS_BAR", fullscreen: false }));
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: "HIDE_STATUS_BAR", fullscreen: true }, "*");
+          window.parent.postMessage({ type: "SET_STATUS_BAR_OVERLAY", overlay: false }, "*");
+          window.parent.postMessage({ type: "SHOW_STATUS_BAR", fullscreen: false }, "*");
         }
         const p = window.parent || window;
         const bridges = [
@@ -1995,13 +1983,11 @@ const StudentDashboard = () => {
         ];
         bridges.forEach((b) => {
           if (!b) return;
-          if (typeof b.hideStatusBar === "function") b.hideStatusBar();
-          if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
-          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
-          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
-          if (typeof b.hideSystemUI === "function") b.hideSystemUI();
-          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
-          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+          if (typeof b.syncSystemBarInsets === "function") b.syncSystemBarInsets();
+          if (typeof b.setStatusBarOverlay === "function") b.setStatusBarOverlay(false);
+          if (typeof b.showStatusBar === "function") b.showStatusBar();
+          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
           if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
           if (typeof b.setPdfOpen === "function") b.setPdfOpen(true);
         });

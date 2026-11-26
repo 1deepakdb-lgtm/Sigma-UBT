@@ -521,31 +521,19 @@ const StudentExam = () => {
       if (typeof document !== "undefined") {
         document.body.classList.add("pdf-open", "exam-fullscreen-active");
         document.documentElement.classList.add("pdf-open", "exam-fullscreen-active");
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          const el = document.documentElement;
-          if (el.requestFullscreen) {
-            el.requestFullscreen({ navigationUI: "hide" }).catch(() => {
-              el.requestFullscreen().catch(() => {});
-            });
-          } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-          } else if (el.mozRequestFullScreen) {
-            el.mozRequestFullScreen();
-          } else if (el.msRequestFullscreen) {
-            el.msRequestFullscreen();
-          }
-        }
       }
     } catch (e) {}
 
-    // Synchronize native Android, iOS Capacitor, ReactNative, and Smartboard bridges to hide status bar
+    // Keep native Android, iOS Capacitor, ReactNative, and Smartboard status bar cleanly outside UBT content
     if (typeof window !== "undefined") {
       try {
-        window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
         window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
-        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
+        window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SET_STATUS_BAR_OVERLAY", overlay: false }));
+        window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SHOW_STATUS_BAR", fullscreen: false }));
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: "HIDE_STATUS_BAR", fullscreen: true }, "*");
+          window.parent.postMessage({ type: "SET_STATUS_BAR_OVERLAY", overlay: false }, "*");
+          window.parent.postMessage({ type: "SHOW_STATUS_BAR", fullscreen: false }, "*");
         }
         const p = window.parent || window;
         const bridges = [
@@ -554,13 +542,11 @@ const StudentExam = () => {
         ];
         for (const b of bridges) {
           if (!b) continue;
-          if (typeof b.hideStatusBar === "function") b.hideStatusBar();
-          if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
-          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
-          if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
-          if (typeof b.hideSystemUI === "function") b.hideSystemUI();
-          if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
-          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
+          if (typeof b.syncSystemBarInsets === "function") b.syncSystemBarInsets();
+          if (typeof b.setStatusBarOverlay === "function") b.setStatusBarOverlay(false);
+          if (typeof b.showStatusBar === "function") b.showStatusBar();
+          if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
+          if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
           if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
           if (typeof b.setPdfOpen === "function") b.setPdfOpen(true);
         }
@@ -568,27 +554,32 @@ const StudentExam = () => {
     }
   };
 
-  // Default to full-screen & hide mobile status bar as soon as UBT exam opens
+  // Enforce non-overlapping system bar insets & UBT layout across mount, orientation changes, and resume
   useEffect(() => {
     enterFullScreen();
-    const handleGesture = () => {
+    const handleSync = () => {
       enterFullScreen();
     };
-    // Use capture phase with valid user-activation events (click, touchend, pointerup) so fullscreen triggers reliably
-    window.addEventListener("click", handleGesture, true);
-    window.addEventListener("touchend", handleGesture, { capture: true, passive: true });
-    window.addEventListener("pointerup", handleGesture, { capture: true, passive: true });
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         enterFullScreen();
       }
     };
+    window.addEventListener("orientationchange", handleSync);
+    window.addEventListener("resize", handleSync);
     document.addEventListener("visibilitychange", handleVisibility);
+    document.addEventListener("fullscreenchange", handleSync);
     return () => {
-      window.removeEventListener("click", handleGesture, true);
-      window.removeEventListener("touchend", handleGesture, true);
-      window.removeEventListener("pointerup", handleGesture, true);
+      window.removeEventListener("orientationchange", handleSync);
+      window.removeEventListener("resize", handleSync);
       document.removeEventListener("visibilitychange", handleVisibility);
+      document.removeEventListener("fullscreenchange", handleSync);
+      try {
+        if (typeof document !== "undefined") {
+          document.body.classList.remove("pdf-open", "exam-fullscreen-active");
+          document.documentElement.classList.remove("pdf-open", "exam-fullscreen-active");
+        }
+      } catch (e) {}
     };
   }, []);
 
@@ -898,18 +889,10 @@ const StudentExam = () => {
       flex-direction: column;
       box-sizing: border-box;
       margin: 0;
-      padding-top: env(safe-area-inset-top, 0px);
-      padding-right: env(safe-area-inset-right, 0px);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      padding-left: env(safe-area-inset-left, 0px);
+      padding: 0;
       overflow: hidden;
-      position: fixed;
-      inset: 0;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 2147483640;
+      position: relative;
+      z-index: 1;
       background-color: #f8fafc;
     }
     .student-bottom-nav,
@@ -945,10 +928,10 @@ const StudentExam = () => {
       background-color: #f8fafc !important;
       color: #334155 !important;
       border-bottom: 1px solid #cbd5e1 !important;
-      padding-top: max(env(safe-area-inset-top, 0px), 8px) !important;
+      padding-top: 8px !important;
       padding-bottom: 8px !important;
-      padding-left: max(calc(env(safe-area-inset-left, 0px) + 14px), 14px) !important;
-      padding-right: max(calc(env(safe-area-inset-right, 0px) + 14px), 14px) !important;
+      padding-left: 14px !important;
+      padding-right: 14px !important;
       font-size: 13.5px !important;
       font-weight: 600 !important;
       flex-shrink: 0 !important;
@@ -1074,17 +1057,17 @@ const StudentExam = () => {
       transform: none !important;
     }
 
-    /* FORCE LANDSCAPE: rotate entire exam when device is held in portrait */
+    /* FORCE LANDSCAPE: rotate entire exam when device is held in portrait, staying strictly below status bar insets */
     @media (orientation: portrait) {
       .ubt-exam-landscape-enforcer {
         position: fixed !important;
-        top: 0 !important;
-        left: 100vw !important;
-        left: 100dvw !important;
-        width: 100vh !important;
-        width: 100dvh !important;
-        height: 100vw !important;
-        height: 100dvw !important;
+        top: env(safe-area-inset-top, 0px) !important;
+        left: calc(100vw - env(safe-area-inset-right, 0px)) !important;
+        left: calc(100dvw - env(safe-area-inset-right, 0px)) !important;
+        width: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+        width: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+        height: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
+        height: calc(100dvw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
         transform: rotate(90deg) !important;
         transform-origin: top left !important;
         overflow: hidden !important;
@@ -1110,7 +1093,7 @@ const StudentExam = () => {
         box-sizing: border-box !important;
         overflow: hidden !important;
         z-index: 2147483640 !important;
-        background-color: #f8fafc !important;
+        background-color: #003b73 !important;
       }
     }
 

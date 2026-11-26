@@ -4,15 +4,14 @@ import { useEffect } from 'react';
 
 /**
  * PwaDesktopInstaller
- * Registers service worker and enforces true immersive fullscreen
- * (hides mobile status bar completely — exam starts at pixel 0,0).
+ * Background PWA service worker registration and native status bar inset enforcement.
+ * Ensures the native Android/iOS status bar remains cleanly outside app content.
  */
 export default function PwaDesktopInstaller() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // 1. Detect PWA Standalone / Native Mobile App mode
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                           window.matchMedia('(display-mode: fullscreen)').matches ||
                            window.navigator.standalone === true ||
                            document.referrer.includes('android-app://');
       const isNativeApp = !!window.AndroidApp ||
@@ -30,23 +29,19 @@ export default function PwaDesktopInstaller() {
         document.body.classList.add('is-mobile-app');
       }
 
-      // 2. Enforce true immersive fullscreen — hide status bar completely
-      const enforceAppImmersive = () => {
+      // 2. Keep native mobile status bar separated with solid background (never overlap content under system bars)
+      const syncSystemBarInsets = () => {
         try {
-          // Capacitor: hide status bar, overlay web view
           if (window.Capacitor?.Plugins?.StatusBar) {
-            window.Capacitor.Plugins.StatusBar.hide().catch(() => {});
-            window.Capacitor.Plugins.StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+            window.Capacitor.Plugins.StatusBar.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
+            window.Capacitor.Plugins.StatusBar.show?.().catch?.(() => {});
           }
 
-          // ReactNative WebView bridge
           if (window.ReactNativeWebView?.postMessage) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'HIDE_STATUS_BAR' }));
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SET_STATUS_BAR_OVERLAY', overlay: true }));
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SET_IMMERSIVE_FULLSCREEN', value: true }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SET_STATUS_BAR_OVERLAY', overlay: false }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SHOW_STATUS_BAR', fullscreen: false }));
           }
 
-          // Android/Smartboard native bridges
           const bridges = [
             window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard,
             window.BoardApp, window.boardApp, window.Android, window.android, window.AndroidBridge, window.JSBridge,
@@ -54,37 +49,24 @@ export default function PwaDesktopInstaller() {
           ];
           bridges.forEach((b) => {
             if (!b) return;
-            if (typeof b.hideStatusBar === 'function') b.hideStatusBar();
-            if (typeof b.hideNavigationBar === 'function') b.hideNavigationBar();
-            if (typeof b.setStatusBarVisible === 'function') b.setStatusBarVisible(false);
-            if (typeof b.setNavigationBarVisible === 'function') b.setNavigationBarVisible(false);
-            if (typeof b.hideSystemUI === 'function') b.hideSystemUI();
-            if (typeof b.setSystemUIVisible === 'function') b.setSystemUIVisible(false);
-            if (typeof b.setImmersiveFullscreen === 'function') b.setImmersiveFullscreen(true);
-            if (typeof b.setFullscreen === 'function') b.setFullscreen(true);
-            if (typeof b.enterFullscreen === 'function') b.enterFullscreen();
-            if (typeof b.enableImmersiveMode === 'function') b.enableImmersiveMode();
+            if (typeof b.syncSystemBarInsets === 'function') b.syncSystemBarInsets();
+            if (typeof b.setStatusBarOverlay === 'function') b.setStatusBarOverlay(false);
+            if (typeof b.showStatusBar === 'function') b.showStatusBar();
+            if (typeof b.setStatusBarVisible === 'function') b.setStatusBarVisible(true);
+            if (typeof b.setImmersiveFullscreen === 'function') b.setImmersiveFullscreen(false);
           });
-
-          // Web Fullscreen API (for standalone PWA on Android Chrome)
-          const el = document.documentElement;
-          if (el.requestFullscreen && document.fullscreenElement !== el) {
-            el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
-          } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-          }
         } catch (e) {}
       };
 
-      // Run immediately and on every user interaction to re-enter fullscreen if dismissed
-      enforceAppImmersive();
-
-      window.addEventListener('click', enforceAppImmersive, { capture: true, passive: true });
-      window.addEventListener('touchend', enforceAppImmersive, { capture: true, passive: true });
-      window.addEventListener('pointerup', enforceAppImmersive, { capture: true, passive: true });
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') enforceAppImmersive();
-      });
+      syncSystemBarInsets();
+      const handleVisibilitySync = () => {
+        if (document.visibilityState === 'visible') {
+          syncSystemBarInsets();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilitySync);
+      window.addEventListener('orientationchange', syncSystemBarInsets);
+      window.addEventListener('resize', syncSystemBarInsets);
 
       // 3. Register & Automatically Update Service Worker
       if ('serviceWorker' in navigator) {
@@ -139,6 +121,12 @@ export default function PwaDesktopInstaller() {
             console.warn('PWA Service Worker registration skipped:', err);
           });
       }
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilitySync);
+        window.removeEventListener('orientationchange', syncSystemBarInsets);
+        window.removeEventListener('resize', syncSystemBarInsets);
+      };
     }
   }, []);
 
