@@ -72,6 +72,16 @@ export default function PwaDesktopInstaller() {
       if ('serviceWorker' in navigator) {
         let isReloading = false;
         const triggerReload = () => {
+          // Guard: NEVER auto-reload while user is in active exam or viewing a PDF
+          if (typeof window !== 'undefined') {
+            const isExamRoute = window.location.pathname.includes('/student/exam/');
+            const isExamRunning = !!window.isExamRunning || isExamRoute;
+            const isPdfOpen = !!window.__isPdfOpen || !!document.querySelector('iframe[src*="pdfviewer.html"]');
+            if (isExamRunning || isPdfOpen) {
+              console.log('ExamJK PWA: Update available, but delaying reload because exam or PDF is active.');
+              return;
+            }
+          }
           if (!isReloading) {
             isReloading = true;
             console.log('ExamJK PWA: Fresh application version active. Reloading...');

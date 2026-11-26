@@ -2234,7 +2234,7 @@ export default function EpsBookReader({
     }
     if (typeof window !== "undefined" && window.AndroidApp) {
       try {
-        if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(true);
+        if (typeof window.AndroidApp.setSwipeRefreshEnabled === "function") window.AndroidApp.setSwipeRefreshEnabled(false);
       } catch (e) {}
     }
     setSelectedChapter(null);
@@ -2286,12 +2286,10 @@ export default function EpsBookReader({
       bridges.forEach((b) => {
         if (!b) return;
         try {
-          if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(enable);
-          if (typeof b.setPullToRefreshEnabled === "function") b.setPullToRefreshEnabled(enable);
-          if (!enable && typeof b.disablePullToRefresh === "function") b.disablePullToRefresh();
-          if (enable && typeof b.enablePullToRefresh === "function") b.enablePullToRefresh();
-          if (!enable && typeof b.disableSwipeRefresh === "function") b.disableSwipeRefresh();
-          if (enable && typeof b.enableSwipeRefresh === "function") b.enableSwipeRefresh();
+          if (typeof b.setSwipeRefreshEnabled === "function") b.setSwipeRefreshEnabled(false);
+          if (typeof b.setPullToRefreshEnabled === "function") b.setPullToRefreshEnabled(false);
+          if (typeof b.disablePullToRefresh === "function") b.disablePullToRefresh();
+          if (typeof b.disableSwipeRefresh === "function") b.disableSwipeRefresh();
           if (typeof b.setPdfOpen === "function") b.setPdfOpen(!enable);
           if (!enable) {
             if (typeof b.hideStatusBar === "function") b.hideStatusBar();
@@ -2358,11 +2356,11 @@ export default function EpsBookReader({
       } else {
         document.body.classList.remove("pdf-open");
         document.documentElement.classList.remove("pdf-open");
-        document.body.style.overscrollBehavior = "";
-        document.body.style.overscrollBehaviorY = "";
-        document.documentElement.style.overscrollBehavior = "";
-        document.documentElement.style.overscrollBehaviorY = "";
-        syncSwipeRefreshBridges(true);
+        document.body.style.overscrollBehavior = "none";
+        document.body.style.overscrollBehaviorY = "none";
+        document.documentElement.style.overscrollBehavior = "none";
+        document.documentElement.style.overscrollBehaviorY = "none";
+        syncSwipeRefreshBridges(false);
       }
     }
 
@@ -2425,10 +2423,10 @@ export default function EpsBookReader({
       if (typeof window !== "undefined") {
         document.body.classList.remove("pdf-open");
         document.documentElement.classList.remove("pdf-open");
-        document.body.style.overscrollBehavior = "";
-        document.body.style.overscrollBehaviorY = "";
-        document.documentElement.style.overscrollBehavior = "";
-        document.documentElement.style.overscrollBehaviorY = "";
+        document.body.style.overscrollBehavior = "none";
+        document.body.style.overscrollBehaviorY = "none";
+        document.documentElement.style.overscrollBehavior = "none";
+        document.documentElement.style.overscrollBehaviorY = "none";
       }
     };
   }, [selectedChapter, viewingMaterial, viewingMeaningChapter, isKoreanFolderOpen, isJapaneseFolderOpen]);

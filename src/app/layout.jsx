@@ -85,7 +85,15 @@ export default function RootLayout({ children }) {
               (function() {
                 try {
                   document.documentElement.style.overscrollBehaviorY = 'none';
+                  document.documentElement.style.overscrollBehavior = 'none';
                   document.documentElement.style.setProperty('overscroll-behavior-y', 'none', 'important');
+                  document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important');
+                  if (document.body) {
+                    document.body.style.overscrollBehaviorY = 'none';
+                    document.body.style.overscrollBehavior = 'none';
+                    document.body.style.setProperty('overscroll-behavior-y', 'none', 'important');
+                    document.body.style.setProperty('overscroll-behavior', 'none', 'important');
+                  }
                 } catch (e) {}
               })();
             `

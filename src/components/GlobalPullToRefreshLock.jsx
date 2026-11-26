@@ -23,7 +23,7 @@ export default function GlobalPullToRefreshLock() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-    // 1. Strict CSS Overscroll Locking on Root Viewport ONLY
+    // 1. Strict CSS Overscroll Locking on Root Viewport & Body
     // overscroll-behavior-y: none on html and body is the standard W3C specification
     // that permanently disables pull-to-refresh across all modern browsers (Chrome, Safari 16+, Edge, Firefox)
     // without blocking normal vertical or touch scrolling.
@@ -33,7 +33,7 @@ export default function GlobalPullToRefreshLock() {
       styleTag = document.createElement('style');
       styleTag.id = styleId;
       styleTag.innerHTML = `
-        html {
+        html, body, #__next, #root {
           overscroll-behavior-y: none !important;
           -webkit-overscroll-behavior-y: none !important;
           overscroll-behavior: none !important;
@@ -46,6 +46,13 @@ export default function GlobalPullToRefreshLock() {
       document.documentElement.style.overscrollBehavior = 'none';
       document.documentElement.style.overscrollBehaviorY = 'none';
       document.documentElement.style.setProperty('overscroll-behavior-y', 'none', 'important');
+      document.documentElement.style.setProperty('overscroll-behavior', 'none', 'important');
+      if (document.body) {
+        document.body.style.overscrollBehavior = 'none';
+        document.body.style.overscrollBehaviorY = 'none';
+        document.body.style.setProperty('overscroll-behavior-y', 'none', 'important');
+        document.body.style.setProperty('overscroll-behavior', 'none', 'important');
+      }
     } catch (e) {}
 
     // 2. Disable in Native Mobile Bridges (Smart Board, Android WebView, iOS WKWebView)

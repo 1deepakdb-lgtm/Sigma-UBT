@@ -853,10 +853,10 @@ const StudentDashboard = () => {
       if (typeof document !== "undefined") {
         document.body.classList.remove("pdf-open", "exam-fullscreen-active");
         document.documentElement.classList.remove("pdf-open", "exam-fullscreen-active");
-        document.body.style.overscrollBehavior = "";
-        document.body.style.overscrollBehaviorY = "";
-        document.documentElement.style.overscrollBehavior = "";
-        document.documentElement.style.overscrollBehaviorY = "";
+        document.body.style.overscrollBehavior = "none";
+        document.body.style.overscrollBehaviorY = "none";
+        document.documentElement.style.overscrollBehavior = "none";
+        document.documentElement.style.overscrollBehaviorY = "none";
       }
       try {
         if (screen.orientation && typeof screen.orientation.unlock === "function") {
