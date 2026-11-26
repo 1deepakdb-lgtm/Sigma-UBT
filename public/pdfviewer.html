@@ -302,7 +302,12 @@
     }
 
     try {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+      var baseOrigin = (typeof window !== 'undefined' && window.location && window.location.origin)
+        ? window.location.origin : 'https://examjk.com';
+      if (!baseOrigin || baseOrigin.indexOf('http') !== 0 || baseOrigin.includes('localhost') || baseOrigin.startsWith('file:') || baseOrigin.startsWith('capacitor:')) {
+        baseOrigin = 'https://examjk.com';
+      }
+      pdfjsLib.GlobalWorkerOptions.workerSrc = baseOrigin + '/pdf.worker.min.js';
     } catch (e) {}
 
     function showError(msg) {
@@ -1510,7 +1515,7 @@
       try {
         var streamingPromise = startRenderingDoc(absUrl);
         var timeoutPromise = new Promise(function(_, reject) {
-          setTimeout(function() { reject(new Error('Streaming took too long, switching to direct download')); }, 8000);
+          setTimeout(function() { reject(new Error('Streaming took too long, switching to direct download')); }, 30000);
         });
         await Promise.race([streamingPromise, timeoutPromise]);
         // Once successfully opened via streaming, trigger background offline caching (non-blocking!)
@@ -1554,7 +1559,15 @@
         }
       } catch (downloadErr) {
         console.error('Final PDF rendering failure:', downloadErr);
-        showError('Unable to load document. Please check your internet connection and tap Retry.');
+        var errMsg = 'Unable to load document.';
+        if (!navigator.onLine) {
+          errMsg = 'Network is offline. Please check your internet connection.';
+        } else if (downloadErr && downloadErr.message && downloadErr.message.includes('404')) {
+          errMsg = 'Document file not found on server.';
+        } else if (downloadErr && downloadErr.message) {
+          errMsg = 'Unable to open: ' + downloadErr.message;
+        }
+        showError(errMsg + ' Tap Retry to reload.');
       }
     }
 
@@ -1564,10 +1577,11 @@
         if (pdfDoc && renderedPages.size > 0) {
           loadingView.style.display = 'none';
         } else if (!pdfDoc) {
-          showError('Document load timeout. Please check your internet connection and tap Retry.');
+          var timeoutMsg = navigator.onLine ? 'Document is taking longer than expected. Tap Retry.' : 'Network connection lost. Please check your internet connection.';
+          showError(timeoutMsg);
         }
       }
-    }, 7000);
+    }, 45000);
 
     // Auto-enter immersive fullscreen on user interaction to suppress mobile status bar
     function triggerImmersiveFullscreen() {
