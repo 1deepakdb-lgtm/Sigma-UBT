@@ -898,7 +898,10 @@ const StudentExam = () => {
       flex-direction: column;
       box-sizing: border-box;
       margin: 0;
-      padding: 0;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
       overflow: hidden;
       position: fixed;
       inset: 0;
@@ -942,25 +945,15 @@ const StudentExam = () => {
       background-color: #f8fafc !important;
       color: #334155 !important;
       border-bottom: 1px solid #cbd5e1 !important;
-      padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
-      padding-bottom: 6px !important;
-      padding-left: calc(env(safe-area-inset-left, 0px) + 14px) !important;
-      padding-right: calc(env(safe-area-inset-right, 0px) + 14px) !important;
+      padding-top: max(env(safe-area-inset-top, 0px), 8px) !important;
+      padding-bottom: 8px !important;
+      padding-left: max(calc(env(safe-area-inset-left, 0px) + 14px), 14px) !important;
+      padding-right: max(calc(env(safe-area-inset-right, 0px) + 14px), 14px) !important;
       font-size: 13.5px !important;
       font-weight: 600 !important;
       flex-shrink: 0 !important;
       width: 100% !important;
       box-sizing: border-box !important;
-    }
-
-    :fullscreen .ubt-exam-header-bar,
-    :-webkit-full-screen .ubt-exam-header-bar,
-    :fullscreen .ubt-overview-top-bar,
-    :-webkit-full-screen .ubt-overview-top-bar {
-      padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
-      padding-bottom: 6px !important;
-      padding-left: calc(env(safe-area-inset-left, 0px) + 14px) !important;
-      padding-right: calc(env(safe-area-inset-right, 0px) + 14px) !important;
     }
     .ubt-exam-card {
       background-color: #f8fafc !important;
@@ -1110,7 +1103,11 @@ const StudentExam = () => {
         width: 100% !important;
         height: 100% !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding-top: env(safe-area-inset-top, 0px) !important;
+        padding-right: env(safe-area-inset-right, 0px) !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        padding-left: env(safe-area-inset-left, 0px) !important;
+        box-sizing: border-box !important;
         overflow: hidden !important;
         z-index: 2147483640 !important;
         background-color: #f8fafc !important;

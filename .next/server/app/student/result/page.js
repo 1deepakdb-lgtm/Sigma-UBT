@@ -27,7 +27,11 @@
         width: 100% !important;
         height: 100% !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding-top: env(safe-area-inset-top, 0px) !important;
+        padding-right: env(safe-area-inset-right, 0px) !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        padding-left: env(safe-area-inset-left, 0px) !important;
+        box-sizing: border-box !important;
         overflow: hidden !important;
         z-index: 2147483640 !important;
         background-color: #f8fafc !important;

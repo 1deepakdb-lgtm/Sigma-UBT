@@ -29,58 +29,27 @@ export default function PwaDesktopInstaller() {
         document.body.classList.add('is-mobile-app');
       }
 
-      // 1b. Enforce global fullscreen & hide mobile notification/status bar across the entire UBT system
-      const enforceAppImmersive = () => {
+      // 1b. Keep native mobile status bar separated (never overlay app content underneath system bars)
+      const syncSystemBarInsets = () => {
         try {
-          if (isMobile || isStandalone || isNativeApp) {
-            const elem = document.documentElement;
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-              if (elem.requestFullscreen) {
-                elem.requestFullscreen({ navigationUI: 'hide' }).catch(() => {
-                  elem.requestFullscreen().catch(() => {});
-                });
-              } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-              }
-            }
-          }
-          window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
           window.Capacitor?.Plugins?.StatusBar?.setOverlaysWebView?.({ overlay: false }).catch?.(() => {});
-          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: 'HIDE_STATUS_BAR', fullscreen: true }));
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'HIDE_STATUS_BAR', fullscreen: true }, '*');
-          }
-          const p = window.parent || window;
+          window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
+          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: 'SET_STATUS_BAR_OVERLAY', overlay: false }));
           const bridges = [
             window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard,
             window.BoardApp, window.boardApp, window.Android, window.android, window.AndroidBridge, window.JSBridge,
-            window.webApp, window.NativeApp,
-            p.AndroidApp, p.SmartboardApp, p.SmartBoardApp, p.SmartBoard, p.smartboard, p.BoardApp, p.boardApp, p.Android, p.android
+            window.webApp, window.NativeApp
           ];
           bridges.forEach((b) => {
             if (!b) return;
-            if (typeof b.hideStatusBar === 'function') b.hideStatusBar();
-            if (typeof b.hideNavigationBar === 'function') b.hideNavigationBar();
-            if (typeof b.setStatusBarVisible === 'function') b.setStatusBarVisible(false);
-            if (typeof b.setNavigationBarVisible === 'function') b.setNavigationBarVisible(false);
-            if (typeof b.hideSystemUI === 'function') b.hideSystemUI();
-            if (typeof b.setSystemUIVisible === 'function') b.setSystemUIVisible(false);
-            if (typeof b.setImmersiveFullscreen === 'function') b.setImmersiveFullscreen(true);
-            if (typeof b.setFullscreen === 'function') b.setFullscreen(true);
+            if (typeof b.setStatusBarOverlay === 'function') b.setStatusBarOverlay(false);
+            if (typeof b.showStatusBar === 'function') b.showStatusBar();
+            if (typeof b.setStatusBarVisible === 'function') b.setStatusBarVisible(true);
           });
         } catch (e) {}
       };
 
-      enforceAppImmersive();
-      window.addEventListener('click', enforceAppImmersive, true);
-      window.addEventListener('touchend', enforceAppImmersive, { capture: true, passive: true });
-      window.addEventListener('pointerup', enforceAppImmersive, { capture: true, passive: true });
-      const handleAppVisibility = () => {
-        if (document.visibilityState === 'visible') {
-          enforceAppImmersive();
-        }
-      };
-      document.addEventListener('visibilitychange', handleAppVisibility);
+      syncSystemBarInsets();
 
       // 2. Register & Automatically Update Service Worker
       if ('serviceWorker' in navigator) {

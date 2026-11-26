@@ -13,7 +13,7 @@ export const viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  viewportFit: 'cover',
+  viewportFit: 'contain',
 };
 
 export const metadata = {
@@ -27,7 +27,7 @@ export const metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'ExamJK'
   }
 };
@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
         <meta charSet="utf-8" />
         <meta name="application-name" content="ExamJK" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="ExamJK" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-touch-fullscreen" content="yes" />
