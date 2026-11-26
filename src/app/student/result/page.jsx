@@ -148,10 +148,6 @@ const StudentResult = () => {
       if (typeof document !== "undefined") {
         document.body.classList.remove("pdf-open", "exam-fullscreen-active");
         document.documentElement.classList.remove("pdf-open", "exam-fullscreen-active");
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-          else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
-        }
       }
       if (typeof window !== "undefined") {
         try {
@@ -160,8 +156,8 @@ const StudentResult = () => {
           }
         } catch (e) {}
         try {
-          window.Capacitor?.Plugins?.StatusBar?.show?.().catch?.(() => {});
-          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "SHOW_STATUS_BAR", fullscreen: false }));
+          window.Capacitor?.Plugins?.StatusBar?.hide?.().catch?.(() => {});
+          window.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: "HIDE_STATUS_BAR", fullscreen: true }));
           const p = window.parent || window;
           const bridges = [
             window.AndroidApp, window.SmartboardApp, window.SmartBoardApp, window.SmartBoard, window.smartboard, window.BoardApp, window.boardApp, window.Android, window.android,
@@ -169,13 +165,13 @@ const StudentResult = () => {
           ];
           bridges.forEach((b) => {
             if (!b) return;
-            if (typeof b.showStatusBar === "function") b.showStatusBar();
-            if (typeof b.showNavigationBar === "function") b.showNavigationBar();
-            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
-            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(true);
-            if (typeof b.showSystemUI === "function") b.showSystemUI();
-            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(true);
-            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
+            if (typeof b.hideStatusBar === "function") b.hideStatusBar();
+            if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
+            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
+            if (typeof b.hideSystemUI === "function") b.hideSystemUI();
+            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
+            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
             if (typeof b.setPdfOpen === "function") b.setPdfOpen(false);
           });
         } catch (e) {}

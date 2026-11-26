@@ -2141,10 +2141,6 @@ export default function EpsBookReader({
   };
 
   const closeMaterialFullScreen = (shouldPopHistory = true) => {
-    if (typeof document !== "undefined" && (document.fullscreenElement || document.webkitFullscreenElement)) {
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-      else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
-    }
     if (shouldPopHistory && typeof window !== "undefined" && window.history.state?.epsReaderModal) {
       window.history.back();
     }
@@ -2152,10 +2148,6 @@ export default function EpsBookReader({
   };
 
   const closeMeaningFullScreen = (shouldPopHistory = true) => {
-    if (typeof document !== "undefined" && (document.fullscreenElement || document.webkitFullscreenElement)) {
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-      else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
-    }
     if (shouldPopHistory && typeof window !== "undefined" && window.history.state?.epsReaderModal) {
       window.history.back();
     }
@@ -2312,15 +2304,13 @@ export default function EpsBookReader({
             if (typeof b.setFullscreen === "function") b.setFullscreen(true);
             if (typeof b.enterFullScreen === "function") b.enterFullScreen();
           } else {
-            if (typeof b.showStatusBar === "function") b.showStatusBar();
-            if (typeof b.showNavigationBar === "function") b.showNavigationBar();
-            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(true);
-            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(true);
-            if (typeof b.showSystemUI === "function") b.showSystemUI();
-            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(true);
-            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(false);
-            if (typeof b.setFullscreen === "function") b.setFullscreen(false);
-            if (typeof b.exitFullScreen === "function") b.exitFullScreen();
+            if (typeof b.hideStatusBar === "function") b.hideStatusBar();
+            if (typeof b.hideNavigationBar === "function") b.hideNavigationBar();
+            if (typeof b.setStatusBarVisible === "function") b.setStatusBarVisible(false);
+            if (typeof b.setNavigationBarVisible === "function") b.setNavigationBarVisible(false);
+            if (typeof b.hideSystemUI === "function") b.hideSystemUI();
+            if (typeof b.setSystemUIVisible === "function") b.setSystemUIVisible(false);
+            if (typeof b.setImmersiveFullscreen === "function") b.setImmersiveFullscreen(true);
           }
         } catch (e) {}
       });
