@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireInstituteOrAdmin, requireInstituteAdmin } from '@/lib/rbac';
 import { reduceStockInternal } from './products/route';
+import { calculateCollectionsLedger, getKathmanduDateStr } from '@/lib/collectionsLedgerEngine';
 
 let isMigrationChecked = false;
 async function ensureBillingColumns() {
@@ -121,7 +122,25 @@ export async function GET(req) {
     });
     const googleSetupOpenCount = setupSetting ? (parseInt(setupSetting.value, 10) || 0) : 0;
 
-    return NextResponse.json({ profile, bills: formattedBills, googleSetupOpenCount });
+    // Single Source of Truth Analytics & Collections Ledger pre-computations
+    const todayStr = getKathmanduDateStr();
+    const currentMonthStr = todayStr.slice(0, 7);
+    const ledgerDaily = calculateCollectionsLedger(formattedBills, { timeframe: 'daily' });
+    const ledgerWeekly = calculateCollectionsLedger(formattedBills, { timeframe: 'weekly' });
+    const ledgerMonthly = calculateCollectionsLedger(formattedBills, { timeframe: 'monthly', targetMonth: currentMonthStr });
+    const ledgerAllTime = calculateCollectionsLedger(formattedBills, { timeframe: 'all' });
+
+    return NextResponse.json({
+      profile,
+      bills: formattedBills,
+      googleSetupOpenCount,
+      ledger: {
+        daily: ledgerDaily,
+        weekly: ledgerWeekly,
+        monthly: ledgerMonthly,
+        allTime: ledgerAllTime
+      }
+    });
   } catch (err) {
     console.error('Error in GET /api/institute/billing:', err);
     return NextResponse.json({ error: 'Failed to retrieve billing data' }, { status: 500 });
@@ -308,13 +327,28 @@ export async function POST(req) {
       // Background auto-sync to Google Sheet
       await triggerSheetSync(instituteId, updatedBill, materials);
 
+      // Recompute Collections Ledger after payment recorded
+      const allBillsAfterPayment = await prisma.billRecord.findMany({
+        where: { instituteId },
+        orderBy: { createdAt: 'desc' }
+      });
+      const todayStr = getKathmanduDateStr();
+      const currentMonthStr = todayStr.slice(0, 7);
+      const updatedLedger = {
+        daily: calculateCollectionsLedger(allBillsAfterPayment, { timeframe: 'daily' }),
+        weekly: calculateCollectionsLedger(allBillsAfterPayment, { timeframe: 'weekly' }),
+        monthly: calculateCollectionsLedger(allBillsAfterPayment, { timeframe: 'monthly', targetMonth: currentMonthStr }),
+        allTime: calculateCollectionsLedger(allBillsAfterPayment, { timeframe: 'all' })
+      };
+
       return NextResponse.json({
         success: true,
         updated: true,
         message: isCompleted
           ? `Bill ${existingBill.billNumber} payment is now 100% COMPLETE! (Due balance: Rs. 0)`
           : `Installment #${instNum} recorded on Bill ${existingBill.billNumber}.`,
-        bill: { ...updatedBill, paymentMethod: chosenMethod }
+        bill: { ...updatedBill, paymentMethod: chosenMethod },
+        ledger: updatedLedger
       });
     }
 
@@ -439,7 +473,21 @@ export async function POST(req) {
       reduceStockInternal(materials).catch((err) => console.error('Failed to auto-reduce stock on bill creation:', err));
     }
 
-    return NextResponse.json({ success: true, bill: newBill });
+    // Recompute Collections Ledger after bill creation
+    const allBillsAfterCreate = await prisma.billRecord.findMany({
+      where: { instituteId },
+      orderBy: { createdAt: 'desc' }
+    });
+    const todayStr = getKathmanduDateStr();
+    const currentMonthStr = todayStr.slice(0, 7);
+    const updatedLedger = {
+      daily: calculateCollectionsLedger(allBillsAfterCreate, { timeframe: 'daily' }),
+      weekly: calculateCollectionsLedger(allBillsAfterCreate, { timeframe: 'weekly' }),
+      monthly: calculateCollectionsLedger(allBillsAfterCreate, { timeframe: 'monthly', targetMonth: currentMonthStr }),
+      allTime: calculateCollectionsLedger(allBillsAfterCreate, { timeframe: 'all' })
+    };
+
+    return NextResponse.json({ success: true, bill: newBill, ledger: updatedLedger });
   } catch (err) {
     console.error('Error creating bill record:', err);
     return NextResponse.json({ error: 'Failed to create bill record: ' + err.message }, { status: 500 });
@@ -608,6 +656,44 @@ export async function PUT(req) {
 
       const cleanStr = (val) => (typeof val === 'string' ? val.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim() : val);
 
+      // Parse and reconcile existing payments list so that historical transactions are preserved
+      let paymentsList = [];
+      try {
+        if (existing.paymentsJson) {
+          paymentsList = typeof existing.paymentsJson === 'string' ? JSON.parse(existing.paymentsJson) : existing.paymentsJson;
+        }
+      } catch (e) {
+        paymentsList = [];
+      }
+
+      if (!Array.isArray(paymentsList) || paymentsList.length === 0) {
+        paymentsList = [
+          {
+            installment: 1,
+            amount: paid,
+            date: body.date || existing.date,
+            preparedBy: body.preparedBy || existing.preparedBy || '',
+            paymentMethod: (body.paymentMethod && body.paymentMethod.trim()) ? body.paymentMethod.trim() : (existing.parentBillNumber || 'Cash')
+          }
+        ];
+      } else if (body.paidAmount !== undefined && Number(body.paidAmount) !== Number(existing.paidAmount)) {
+        // Administrator intentionally adjusted the paid amount during bill edit:
+        // Adjust the last payment installment (or single installment) to match the new paid amount without destroying history
+        const sumPrevious = paymentsList.slice(0, -1).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+        const lastIndex = paymentsList.length - 1;
+        const adjustedLastAmount = Math.max(0, paid - sumPrevious);
+        paymentsList[lastIndex] = {
+          ...paymentsList[lastIndex],
+          amount: adjustedLastAmount,
+          date: body.date || paymentsList[lastIndex].date || existing.date,
+          paymentMethod: (body.paymentMethod && body.paymentMethod.trim()) ? body.paymentMethod.trim() : (paymentsList[lastIndex].paymentMethod || 'Cash')
+        };
+      }
+
+      const totalPaidComputed = paymentsList.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+      const verifiedPaid = (totalPaidComputed > 0 && Math.abs(totalPaidComputed - paid) < 0.01) ? totalPaidComputed : paid;
+      const verifiedDue = Math.max(0, total - verifiedPaid);
+
       let updatedBill;
       const baseEditData = {
         date: body.date || existing.date,
@@ -624,8 +710,15 @@ export async function PUT(req) {
         discountPercent: discPct,
         discountAmount: discAmt,
         totalFee: total,
-        paidAmount: paid,
-        dueAmount: due,
+        paidAmount: verifiedPaid,
+        dueAmount: verifiedDue,
+        firstInstallment: paymentsList[0] ? paymentsList[0].amount : (existing.firstInstallment || verifiedPaid),
+        firstPaymentDate: paymentsList[0] ? paymentsList[0].date : (existing.firstPaymentDate || existing.date),
+        secondInstallment: paymentsList[1] ? paymentsList[1].amount : existing.secondInstallment,
+        secondPaymentDate: paymentsList[1] ? paymentsList[1].date : existing.secondPaymentDate,
+        thirdInstallment: paymentsList[2] ? paymentsList[2].amount : existing.thirdInstallment,
+        thirdPaymentDate: paymentsList[2] ? paymentsList[2].date : existing.thirdPaymentDate,
+        paymentsJson: JSON.stringify(paymentsList),
         amountInWords: body.amountInWords ? cleanStr(body.amountInWords) : existing.amountInWords,
         materialsJson: body.materials ? JSON.stringify(body.materials) : existing.materialsJson,
         preparedBy: body.preparedBy !== undefined ? cleanStr(body.preparedBy) : existing.preparedBy,
@@ -662,7 +755,146 @@ export async function PUT(req) {
       // Real-time background auto-sync to linked Google Sheet
       await triggerSheetSync(instituteId, updatedBill, body.materials || (existing.materialsJson ? JSON.parse(existing.materialsJson) : []));
 
-      return NextResponse.json({ success: true, bill: updatedBill, message: 'Bill record updated successfully.' });
+      // Recompute Collections Ledger after bill edit for instant real-time synchronization
+      const allBillsAfterEdit = await prisma.billRecord.findMany({
+        where: { instituteId },
+        orderBy: { createdAt: 'desc' }
+      });
+      const todayStr = getKathmanduDateStr();
+      const currentMonthStr = todayStr.slice(0, 7);
+      const updatedLedger = {
+        daily: calculateCollectionsLedger(allBillsAfterEdit, { timeframe: 'daily' }),
+        weekly: calculateCollectionsLedger(allBillsAfterEdit, { timeframe: 'weekly' }),
+        monthly: calculateCollectionsLedger(allBillsAfterEdit, { timeframe: 'monthly', targetMonth: currentMonthStr }),
+        allTime: calculateCollectionsLedger(allBillsAfterEdit, { timeframe: 'all' })
+      };
+
+      return NextResponse.json({
+        success: true,
+        bill: updatedBill,
+        ledger: updatedLedger,
+        message: 'Bill record updated successfully.'
+      });
+    }
+
+    // 3. ADMIN CANCEL / RESTORE A BILL RECORD
+    if (body.action === 'cancel_bill' && body.billId) {
+      const existing = await prisma.billRecord.findUnique({ where: { id: body.billId } });
+      if (!existing) {
+        return NextResponse.json({ error: 'Bill record not found' }, { status: 404 });
+      }
+      if (session.role !== 'admin' && existing.instituteId !== instituteId) {
+        return NextResponse.json({ error: 'Unauthorized to cancel this bill' }, { status: 403 });
+      }
+
+      const shouldCancel = body.cancel !== false; // default true
+      const updatedSystem = shouldCancel ? 'CANCELLED' : (Number(existing.dueAmount) <= 0 ? 'Full Payment' : '1st Installment');
+
+      const updatedBill = await prisma.billRecord.update({
+        where: { id: body.billId },
+        data: {
+          paymentSystem: updatedSystem
+        }
+      });
+
+      await triggerSheetSync(instituteId, updatedBill, existing.materialsJson ? JSON.parse(existing.materialsJson) : []);
+
+      const allBillsAfterCancel = await prisma.billRecord.findMany({
+        where: { instituteId },
+        orderBy: { createdAt: 'desc' }
+      });
+      const todayStr = getKathmanduDateStr();
+      const currentMonthStr = todayStr.slice(0, 7);
+      const updatedLedger = {
+        daily: calculateCollectionsLedger(allBillsAfterCancel, { timeframe: 'daily' }),
+        weekly: calculateCollectionsLedger(allBillsAfterCancel, { timeframe: 'weekly' }),
+        monthly: calculateCollectionsLedger(allBillsAfterCancel, { timeframe: 'monthly', targetMonth: currentMonthStr }),
+        allTime: calculateCollectionsLedger(allBillsAfterCancel, { timeframe: 'all' })
+      };
+
+      return NextResponse.json({
+        success: true,
+        bill: updatedBill,
+        ledger: updatedLedger,
+        message: shouldCancel ? `Bill ${existing.billNumber} has been CANCELLED.` : `Bill ${existing.billNumber} has been restored.`
+      });
+    }
+
+    // 4. ADMIN RECORD REFUND / REVERSAL TRANSACTION ON A BILL
+    if (body.action === 'refund_bill' && body.billId) {
+      const existing = await prisma.billRecord.findUnique({ where: { id: body.billId } });
+      if (!existing) {
+        return NextResponse.json({ error: 'Bill record not found' }, { status: 404 });
+      }
+      if (session.role !== 'admin' && existing.instituteId !== instituteId) {
+        return NextResponse.json({ error: 'Unauthorized to process refund' }, { status: 403 });
+      }
+
+      const refundAmount = Number(body.refundAmount) || 0;
+      if (refundAmount <= 0) {
+        return NextResponse.json({ error: 'Refund amount must be greater than 0.' }, { status: 400 });
+      }
+      if (refundAmount > Number(existing.paidAmount)) {
+        return NextResponse.json({
+          error: `Refund amount (Rs. ${refundAmount.toLocaleString()}) cannot exceed total paid amount (Rs. ${Number(existing.paidAmount).toLocaleString()}).`
+        }, { status: 400 });
+      }
+
+      let paymentsList = [];
+      try {
+        if (existing.paymentsJson) {
+          paymentsList = typeof existing.paymentsJson === 'string' ? JSON.parse(existing.paymentsJson) : existing.paymentsJson;
+        }
+      } catch (e) {
+        paymentsList = [];
+      }
+
+      const refundDate = body.date || getKathmanduDateStr();
+      paymentsList.push({
+        id: `${existing.billNumber}-refund-${Date.now()}`,
+        installment: paymentsList.length + 1,
+        amount: -refundAmount,
+        date: refundDate,
+        preparedBy: body.preparedBy || session.name || 'Admin',
+        paymentMethod: body.paymentMethod || 'Cash',
+        isRefund: true,
+        refundReason: body.reason || 'Student refund/reversal'
+      });
+
+      const newPaid = Math.max(0, Number(existing.paidAmount) - refundAmount);
+      const newDue = Math.max(0, Number(existing.totalFee) - newPaid);
+
+      const updatedBill = await prisma.billRecord.update({
+        where: { id: body.billId },
+        data: {
+          paidAmount: newPaid,
+          dueAmount: newDue,
+          paymentsJson: JSON.stringify(paymentsList),
+          paymentSystem: newPaid === 0 ? 'REFUNDED' : (newDue <= 0 ? 'Full Payment' : 'Partial Payment')
+        }
+      });
+
+      await triggerSheetSync(instituteId, updatedBill, existing.materialsJson ? JSON.parse(existing.materialsJson) : []);
+
+      const allBillsAfterRefund = await prisma.billRecord.findMany({
+        where: { instituteId },
+        orderBy: { createdAt: 'desc' }
+      });
+      const todayStr = getKathmanduDateStr();
+      const currentMonthStr = todayStr.slice(0, 7);
+      const updatedLedger = {
+        daily: calculateCollectionsLedger(allBillsAfterRefund, { timeframe: 'daily' }),
+        weekly: calculateCollectionsLedger(allBillsAfterRefund, { timeframe: 'weekly' }),
+        monthly: calculateCollectionsLedger(allBillsAfterRefund, { timeframe: 'monthly', targetMonth: currentMonthStr }),
+        allTime: calculateCollectionsLedger(allBillsAfterRefund, { timeframe: 'all' })
+      };
+
+      return NextResponse.json({
+        success: true,
+        bill: updatedBill,
+        ledger: updatedLedger,
+        message: `Refund of Rs. ${refundAmount.toLocaleString()} recorded on Bill ${existing.billNumber}.`
+      });
     }
 
     // 2. ADMIN EDIT COMPANY BILL PAD HEADER (Unlimited edits allowed)
@@ -752,7 +984,27 @@ export async function DELETE(req) {
     // Real-time update Google Sheet on deletion
     await triggerSheetSync(instituteId, { id, billNumber: bill.billNumber, isDeleted: true }, []);
 
-    return NextResponse.json({ success: true, message: 'Bill record deleted successfully' });
+    // Recompute Collections Ledger after bill deletion
+    const allBillsAfterDelete = await prisma.billRecord.findMany({
+      where: { instituteId },
+      orderBy: { createdAt: 'desc' }
+    });
+    const todayStr = getKathmanduDateStr();
+    const currentMonthStr = todayStr.slice(0, 7);
+    const updatedLedger = {
+      daily: calculateCollectionsLedger(allBillsAfterDelete, { timeframe: 'daily' }),
+      weekly: calculateCollectionsLedger(allBillsAfterDelete, { timeframe: 'weekly' }),
+      monthly: calculateCollectionsLedger(allBillsAfterDelete, { timeframe: 'monthly', targetMonth: currentMonthStr }),
+      allTime: calculateCollectionsLedger(allBillsAfterDelete, { timeframe: 'all' })
+    };
+
+    return NextResponse.json({
+      success: true,
+      deletedBillId: id,
+      deletedBillNumber: bill.billNumber,
+      ledger: updatedLedger,
+      message: 'Bill record deleted successfully'
+    });
   } catch (err) {
     console.error('Error deleting bill record:', err);
     return NextResponse.json({ error: 'Failed to delete bill record' }, { status: 500 });

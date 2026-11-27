@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from '@/lib/instituteGateAuth';
+import { calculateCollectionsLedger, extractTransactionsFromBill, getKathmanduDateStr } from '@/lib/collectionsLedgerEngine';
 
 // Number to Indian/Nepali Rupees in Words helper
 export const numberToRupeesInWords = (num) => {
@@ -1484,6 +1485,98 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       }
     } catch (err) {
       alert("Network error while removing staff member");
+    }
+  };
+
+  // Admin Cancel or Restore Bill handler
+  const handleToggleCancelBill = async (bill) => {
+    if (billingRole !== "admin") {
+      alert("Only Admin can cancel or restore billing records.");
+      return;
+    }
+    const isCurrentlyCancelled = bill.paymentSystem === "CANCELLED" || bill.paymentSystem === "Cancelled";
+    const promptAction = isCurrentlyCancelled ? "restore" : "cancel";
+    if (!confirm(`Are you sure you want to ${promptAction} Bill ${bill.billNumber}?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(apiWithInst("/api/institute/billing"), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "cancel_bill",
+          billId: bill.id,
+          cancel: !isCurrentlyCancelled
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || `Failed to ${promptAction} bill`);
+        return;
+      }
+      const updatedBill = data.bill;
+      const updatedList = bills.map(b => b.id === bill.id ? updatedBill : b);
+      setBills(updatedList);
+      localStorage.setItem(`instituteBillingRecords_${instKey}`, JSON.stringify(updatedList));
+      if (selectedInvoice && selectedInvoice.id === bill.id) {
+        setSelectedInvoice(updatedBill);
+      }
+      alert(data.message || `Bill ${bill.billNumber} status updated.`);
+    } catch (err) {
+      console.error("Cancel bill error:", err);
+      alert("Network error while updating bill cancellation status.");
+    }
+  };
+
+  // Admin Process Refund handler
+  const handleRefundBill = async (bill) => {
+    if (billingRole !== "admin") {
+      alert("Only Admin can process payment refunds.");
+      return;
+    }
+    const paid = Number(bill.paidAmount) || 0;
+    if (paid <= 0) {
+      alert("This bill has 0 paid amount to refund.");
+      return;
+    }
+    const refundStr = prompt(`Enter refund amount for Bill ${bill.billNumber} (Max: Rs. ${paid.toLocaleString()}):`, String(paid));
+    if (!refundStr) return;
+    const refundAmount = Number(refundStr);
+    if (isNaN(refundAmount) || refundAmount <= 0 || refundAmount > paid) {
+      alert(`Invalid refund amount. Must be between 1 and ${paid}.`);
+      return;
+    }
+    const reason = prompt("Enter reason for refund:", "Student requested cancellation/refund") || "Refund";
+
+    try {
+      const res = await fetch(apiWithInst("/api/institute/billing"), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "refund_bill",
+          billId: bill.id,
+          refundAmount,
+          reason,
+          date: getKathmanduDateStr()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to process refund");
+        return;
+      }
+      const updatedBill = data.bill;
+      const updatedList = bills.map(b => b.id === bill.id ? updatedBill : b);
+      setBills(updatedList);
+      localStorage.setItem(`instituteBillingRecords_${instKey}`, JSON.stringify(updatedList));
+      if (selectedInvoice && selectedInvoice.id === bill.id) {
+        setSelectedInvoice(updatedBill);
+      }
+      alert(data.message || `Refund processed successfully.`);
+    } catch (err) {
+      console.error("Refund bill error:", err);
+      alert("Network error while processing refund.");
     }
   };
 
@@ -3128,53 +3221,24 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
   // Compute Daily, Weekly, and Monthly Analytics ACCORDING TO EACH TRANSACTION
   const getPeriodStats = (period, targetMonth = selectedMonth) => {
-    let total = 0;
-    let cash = 0;
-    let online = 0;
-    let count = 0;
-    let breakdown = {
-      "Cash": 0,
-      "Online Bank Acc": 0,
-      "Online Esewa": 0,
-      "Online Khalti": 0,
-      "Other": 0
-    };
-
-    bills.forEach(b => {
-      const txs = extractTransactionsFromBill(b);
-      txs.forEach(tx => {
-        const txDate = tx.date || (b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : "");
-        let inPeriod = false;
-        if (period === "daily") inPeriod = (txDate === todayStr);
-        else if (period === "weekly") inPeriod = (txDate >= oneWeekAgoStr);
-        else if (period === "monthly") inPeriod = (txDate && txDate.startsWith(targetMonth));
-        else inPeriod = true;
-
-        if (inPeriod && tx.amount > 0) {
-          count++;
-          total += tx.amount;
-          const m = tx.paymentMethod || "Cash";
-          if (m === "Cash") {
-            cash += tx.amount;
-            breakdown["Cash"] += tx.amount;
-          } else if (m === "Online Bank Acc") {
-            online += tx.amount;
-            breakdown["Online Bank Acc"] += tx.amount;
-          } else if (m === "Online Esewa") {
-            online += tx.amount;
-            breakdown["Online Esewa"] += tx.amount;
-          } else if (m === "Online Khalti") {
-            online += tx.amount;
-            breakdown["Online Khalti"] += tx.amount;
-          } else {
-            online += tx.amount;
-            breakdown["Other"] += tx.amount;
-          }
-        }
-      });
+    const ledger = calculateCollectionsLedger(bills, {
+      timeframe: period === "daily" ? "daily" : period === "weekly" ? "weekly" : period === "monthly" ? "monthly" : "all",
+      targetMonth: targetMonth
     });
 
-    return { total, cash, online, breakdown, count };
+    return {
+      total: ledger.totalCollected,
+      cash: ledger.totalCash,
+      online: ledger.totalOnline,
+      totalBilled: ledger.totalBilled,
+      totalOutstanding: ledger.totalOutstanding,
+      totalRefunds: ledger.totalRefunds,
+      totalBillsIssued: ledger.totalBillsIssued,
+      cancelledBillsCount: ledger.cancelledBillsCount,
+      partialPaymentsCount: ledger.partialPaymentsCount,
+      breakdown: ledger.breakdown,
+      count: ledger.transactionsCount
+    };
   };
 
   const dailyStats = getPeriodStats("daily");
@@ -3939,34 +4003,54 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </div>
               </div>
 
-              {/* KPI Stat Cards (All in Green, Centered) */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "14px" }}>
-                {/* Total Period Collection */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "4px" }}>
-                    Total {adminTimeframe === "daily" ? "Today" : adminTimeframe === "weekly" ? "This Week" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Collection
+              {/* KPI Stat Cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "14px" }}>
+                {/* Total Billed Amount */}
+                <div style={{ backgroundColor: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", marginBottom: "2px" }}>
+                    Total Billed ({activeStats.totalBillsIssued} Bills)
                   </div>
-                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#0f172a" }}>
+                    {formatCurrency(activeStats.totalBilled)}
+                  </div>
+                </div>
+
+                {/* Total Period Collection */}
+                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", marginBottom: "2px" }}>
+                    Total {adminTimeframe === "daily" ? "Today" : adminTimeframe === "weekly" ? "This Week" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Collected
+                  </div>
+                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.total)}
                   </div>
                 </div>
 
-                {/* Total Cash Collection */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "4px" }}>
-                    Total Cash in Hand
+                {/* Outstanding Due Amount */}
+                <div style={{ backgroundColor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#9a3412", marginBottom: "2px" }}>
+                    Outstanding Balance (Due)
                   </div>
-                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#c2410c" }}>
+                    {formatCurrency(activeStats.totalOutstanding)}
+                  </div>
+                </div>
+
+                {/* Total Cash Collection */}
+                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", marginBottom: "2px" }}>
+                    Cash in Hand
+                  </div>
+                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.cash)}
                   </div>
                 </div>
 
                 {/* Total Online Collection */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "4px" }}>
-                    Total Online / Digital Payments
+                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", marginBottom: "2px" }}>
+                    Digital / Online Payments
                   </div>
-                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.online)}
                   </div>
                 </div>
@@ -3989,6 +4073,21 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 <span style={{ backgroundColor: "#166534", border: "1px solid #14532d", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
                   Other: <strong style={{ color: "#ffffff" }}>{formatCurrency(activeStats.breakdown["Other"])}</strong>
                 </span>
+                {activeStats.partialPaymentsCount > 0 && (
+                  <span style={{ backgroundColor: "#0284c7", border: "1px solid #0369a1", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
+                    Partial Payments: <strong style={{ color: "#ffffff" }}>{activeStats.partialPaymentsCount}</strong>
+                  </span>
+                )}
+                {activeStats.cancelledBillsCount > 0 && (
+                  <span style={{ backgroundColor: "#dc2626", border: "1px solid #b91c1c", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
+                    Cancelled Bills: <strong style={{ color: "#ffffff" }}>{activeStats.cancelledBillsCount}</strong>
+                  </span>
+                )}
+                {activeStats.totalRefunds > 0 && (
+                  <span style={{ backgroundColor: "#9333ea", border: "1px solid #7e22ce", color: "#ffffff", padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
+                    Refunds: <strong style={{ color: "#ffffff" }}>{formatCurrency(activeStats.totalRefunds)}</strong>
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -5190,8 +5289,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     </tr>
                   ) : (
                     filteredBills.map((b) => (
-                      <tr key={b.id || b.billNumber} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                        <td style={{ padding: "8px 6px", fontWeight: "900", color: "#1e3a8a", whiteSpace: "nowrap", textAlign: "center" }}>{b.billNumber}</td>
+                      <tr key={b.id || b.billNumber} style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: b.paymentSystem === "CANCELLED" ? "#fff1f2" : "transparent" }}>
+                        <td style={{ padding: "8px 6px", fontWeight: "900", color: b.paymentSystem === "CANCELLED" ? "#e11d48" : "#1e3a8a", whiteSpace: "nowrap", textAlign: "center" }}>
+                          {b.billNumber}
+                          {b.paymentSystem === "CANCELLED" && (
+                            <span style={{ display: "block", fontSize: "9px", color: "#e11d48", fontWeight: "800", textTransform: "uppercase" }}>Cancelled</span>
+                          )}
+                        </td>
                         <td style={{ padding: "8px 6px", color: "#64748b", whiteSpace: "nowrap", fontSize: "11px", textAlign: "center" }}>{b.date}</td>
                         <td style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
                           {(() => {
@@ -5347,6 +5451,42 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                 >
                                   Edit
                                 </button>
+
+                                <button
+                                  onClick={() => handleToggleCancelBill(b)}
+                                  title={b.paymentSystem === "CANCELLED" ? "Restore Cancelled Bill" : "Cancel this Bill"}
+                                  style={{
+                                    backgroundColor: b.paymentSystem === "CANCELLED" ? "#fef3c7" : "#f1f5f9",
+                                    color: b.paymentSystem === "CANCELLED" ? "#b45309" : "#475569",
+                                    border: b.paymentSystem === "CANCELLED" ? "1px solid #fde68a" : "1px solid #cbd5e1",
+                                    padding: "4px 6px",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                    fontSize: "11px",
+                                    fontWeight: "bold"
+                                  }}
+                                >
+                                  {b.paymentSystem === "CANCELLED" ? "Restore" : "Cancel"}
+                                </button>
+
+                                {Number(b.paidAmount) > 0 && b.paymentSystem !== "CANCELLED" && (
+                                  <button
+                                    onClick={() => handleRefundBill(b)}
+                                    title="Issue a partial or full refund on this bill"
+                                    style={{
+                                      backgroundColor: "#f3e8ff",
+                                      color: "#7e22ce",
+                                      border: "1px solid #d8b4fe",
+                                      padding: "4px 6px",
+                                      borderRadius: "4px",
+                                      cursor: "pointer",
+                                      fontSize: "11px",
+                                      fontWeight: "bold"
+                                    }}
+                                  >
+                                    Refund
+                                  </button>
+                                )}
 
                                 <button
                                   onClick={() => handleDeleteBill(b.id, b.billNumber)}
