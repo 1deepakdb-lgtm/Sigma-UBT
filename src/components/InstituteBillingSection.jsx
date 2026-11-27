@@ -4007,9 +4007,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </div>
               </div>
 
-              {/* KPI Stat Cards: Total Fee (After Discount Gross Fee), Total Paid Collections (Actual Received), Cash, Online, and Due */}
+              {/* KPI Stat Cards: Total Fee (Net / After Discount Gross Fee), Total Paid Collections (Enter Paid Amount *), Cash, Online, and Due */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px", marginBottom: "14px" }}>
-                {/* 1. Total Fee (After Discount Gross Fee / Invoiced Course Fee) */}
+                {/* 1. Total Fee (Net / After Discount Gross Fee) */}
                 <div style={{ backgroundColor: "#eff6ff", border: "1.5px solid #93c5fd", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#1e40af", marginBottom: "3px" }}>
                     Total {adminTimeframe === "daily" ? "Daily" : adminTimeframe === "weekly" ? "Weekly" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Fee
@@ -4018,16 +4018,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     {formatCurrency(activeStats.totalBilled)}
                   </div>
                   <div style={{ fontSize: "11px", color: "#1e40af", marginTop: "3px", fontWeight: "700" }}>
-                    After Discount Gross Fee
+                    Total Fee (Net)
                   </div>
-                  {activeStats.totalGrossFee > activeStats.totalBilled && (
-                    <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }}>
-                      Gross: {formatCurrency(activeStats.totalGrossFee)} • Disc: {formatCurrency(activeStats.totalDiscount)}
-                    </div>
-                  )}
+                  <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
+                    After Discount Gross Fee {activeStats.totalGrossFee > activeStats.totalBilled && `(Gross: ${formatCurrency(activeStats.totalGrossFee)})`}
+                  </div>
                 </div>
 
-                {/* 2. Total Paid Collections (According to Actual Paid Fee) */}
+                {/* 2. Total Paid Collections (Enter Paid Amount *) */}
                 <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
                     Total {adminTimeframe === "daily" ? "Daily" : adminTimeframe === "weekly" ? "Weekly" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Paid Collections
@@ -4038,8 +4036,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "700" }}>
                     Actual Received Paid Fee
                   </div>
-                  <div style={{ fontSize: "10.5px", color: "#166534", marginTop: "2px" }}>
-                    {activeStats.totalBilled > 0 ? `${Math.min(100, Math.round((activeStats.total / activeStats.totalBilled) * 100))}% Collected` : 'Received in Full'}
+                  <div style={{ fontSize: "10.5px", color: "#166534", marginTop: "2px", fontWeight: "600" }}>
+                    {activeStats.totalBilled > 0 ? `${Math.min(100, Math.round((activeStats.total / activeStats.totalBilled) * 100))}% Collected` : '100% Collected'}
                   </div>
                 </div>
 
@@ -4055,7 +4053,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     Physical Cash in Hand
                   </div>
                   <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
-                    {activeStats.breakdown["Other"] > 0 ? `Cash: ${formatCurrency(activeStats.breakdown["Cash"])} • Other: ${formatCurrency(activeStats.breakdown["Other"])}` : 'Physical Cash Receipts Only'}
+                    Physical Cash Receipts Only
                   </div>
                 </div>
 
@@ -4086,11 +4084,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   <div style={{ fontSize: "11px", color: "#9a3412", marginTop: "3px", fontWeight: "600" }}>
                     Unpaid Pending Fees
                   </div>
-                  {activeStats.totalBilled > 0 && (
-                    <div style={{ fontSize: "10px", color: "#78350f", marginTop: "2px" }}>
-                      Total Fee ({formatCurrency(activeStats.totalBilled)}) - Paid ({formatCurrency(activeStats.total)})
-                    </div>
-                  )}
+                  <div style={{ fontSize: "10px", color: "#78350f", marginTop: "2px" }}>
+                    Total Fee ({formatCurrency(activeStats.totalBilled)}) - Paid ({formatCurrency(activeStats.total)})
+                  </div>
                 </div>
               </div>
 
