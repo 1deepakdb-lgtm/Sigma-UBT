@@ -5451,24 +5451,24 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               background-color: #f1f5f9;
             }
           ` }} />
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", tableLayout: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", tableLayout: "auto" }}>
                 <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                   <tr style={{
                     backgroundColor: "#1e3a8a",
                     color: "#ffffff",
                     borderBottom: "2px solid #172554"
                   }}>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Bill #</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Date</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Days</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Student / Address</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>WhatsApp</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Method</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Package</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Total Fee</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Paid</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Due</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a" }}>Actions</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Bill #</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Date</th>
+                    <th style={{ padding: "8px 2px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Days</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Student / Address</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>WhatsApp</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Method</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Package</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Total</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Paid</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Due</th>
+                    <th style={{ padding: "8px 4px", textAlign: "center", whiteSpace: "nowrap", color: "#ffffff", fontWeight: "700", position: "sticky", top: 0, backgroundColor: "#1e3a8a", fontSize: "11px" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -5481,14 +5481,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   ) : (
                     filteredBills.map((b) => (
                       <tr key={b.id || b.billNumber} style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: b.paymentSystem === "CANCELLED" ? "#fff1f2" : "transparent" }}>
-                        <td style={{ padding: "8px 6px", fontWeight: "900", color: b.paymentSystem === "CANCELLED" ? "#e11d48" : "#1e3a8a", whiteSpace: "nowrap", textAlign: "center" }}>
+                        <td style={{ padding: "6px 4px", fontWeight: "900", color: b.paymentSystem === "CANCELLED" ? "#e11d48" : "#1e3a8a", whiteSpace: "nowrap", textAlign: "center", fontSize: "11px" }}>
                           {b.billNumber}
                           {b.paymentSystem === "CANCELLED" && (
                             <span style={{ display: "block", fontSize: "9px", color: "#e11d48", fontWeight: "800", textTransform: "uppercase" }}>Cancelled</span>
                           )}
                         </td>
-                        <td style={{ padding: "8px 6px", color: "#64748b", whiteSpace: "nowrap", fontSize: "11px", textAlign: "center" }}>{b.date}</td>
-                        <td style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "6px 4px", color: "#64748b", whiteSpace: "nowrap", fontSize: "10.5px", textAlign: "center" }}>{b.date}</td>
+                        <td style={{ padding: "6px 2px", textAlign: "center", whiteSpace: "nowrap" }}>
                           {(() => {
                             const admitStr = b.admittedDate || b.firstPaymentDate || (b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : null);
                             if (!admitStr) return <span style={{ fontSize: "10px", color: "#94a3b8" }}>—</span>;
@@ -5497,80 +5497,80 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             admit.setHours(0, 0, 0, 0); today.setHours(0, 0, 0, 0);
                             const diff = Math.floor((today - admit) / (1000 * 60 * 60 * 24));
                             return (
-                              <span style={{ fontSize: "12px", fontWeight: "bold", color: "#dc2626" }}>
+                              <span style={{ fontSize: "11px", fontWeight: "bold", color: "#dc2626" }}>
                                 {diff}d
                               </span>
                             );
                           })()}
                         </td>
-                        <td style={{ padding: "8px 6px", textAlign: "center" }}>
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                            <div style={{ fontWeight: "bold", color: "#0f172a" }}>{String(b.studentName || "-")}</div>
+                        <td style={{ padding: "6px 4px", textAlign: "center" }}>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", maxWidth: "130px", margin: "0 auto" }}>
+                            <div style={{ fontWeight: "bold", color: "#0f172a", fontSize: "11.5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>{String(b.studentName || "-")}</div>
                             {b.address && (
-                              <div style={{ fontSize: "11px", color: "#64748b" }}>
+                              <div style={{ fontSize: "10px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
                                 {String(b.address)}
                               </div>
                             )}
                           </div>
                         </td>
-                        <td style={{ padding: "8px 6px", color: "#2563eb", fontWeight: "bold", whiteSpace: "nowrap", fontSize: "11px", textAlign: "center" }}>{b.contactNumber}</td>
-                        <td style={{ padding: "8px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "6px 4px", color: "#2563eb", fontWeight: "bold", whiteSpace: "nowrap", fontSize: "10.5px", textAlign: "center" }}>{b.contactNumber}</td>
+                        <td style={{ padding: "6px 3px", textAlign: "center", whiteSpace: "nowrap" }}>
                           <span style={{
                             backgroundColor: b.paymentMethod === "Cash" ? "#f0fdf4" : b.paymentMethod === "Online Esewa" ? "#ecfdf5" : b.paymentMethod === "Online Khalti" ? "#faf5ff" : "#eff6ff",
                             color: b.paymentMethod === "Cash" ? "#15803d" : b.paymentMethod === "Online Esewa" ? "#047857" : b.paymentMethod === "Online Khalti" ? "#7e22ce" : "#1e40af",
                             border: "1px solid",
                             borderColor: b.paymentMethod === "Cash" ? "#bbf7d0" : b.paymentMethod === "Online Esewa" ? "#a7f3d0" : b.paymentMethod === "Online Khalti" ? "#e9d5ff" : "#bfdbfe",
-                            padding: "2px 6px",
-                            borderRadius: "10px",
-                            fontSize: "10.5px",
+                            padding: "1px 5px",
+                            borderRadius: "8px",
+                            fontSize: "10px",
                             fontWeight: "bold",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "4px"
+                            gap: "3px"
                           }}>
-                            {getPaymentMethodIcon(b.paymentMethod, 12)}
+                            {getPaymentMethodIcon(b.paymentMethod, 11)}
                             <span>{b.paymentMethod === "Cash" ? "Cash" : b.paymentMethod === "Online Esewa" ? "eSewa" : b.paymentMethod === "Online Khalti" ? "Khalti" : b.paymentMethod === "Online Bank Acc" ? "Bank" : `${b.paymentMethod || "Cash"}`}</span>
                           </span>
                         </td>
-                        <td style={{ padding: "8px 6px", fontSize: "11px", whiteSpace: "nowrap", textAlign: "center" }}>{b.coursePackage}</td>
-                        <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", whiteSpace: "nowrap" }}>{formatCurrency(b.totalFee)}</td>
-                        <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", color: "#16a34a", whiteSpace: "nowrap" }}>{formatCurrency(b.paidAmount)}</td>
-                        <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: "bold", color: Number(b.dueAmount) > 0 ? "#dc2626" : "#64748b", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "6px 3px", fontSize: "10.5px", whiteSpace: "nowrap", textAlign: "center" }}>{b.coursePackage}</td>
+                        <td style={{ padding: "6px 3px", textAlign: "center", fontWeight: "bold", whiteSpace: "nowrap", fontSize: "11px" }}>{formatCurrency(b.totalFee)}</td>
+                        <td style={{ padding: "6px 3px", textAlign: "center", fontWeight: "bold", color: "#16a34a", whiteSpace: "nowrap", fontSize: "11px" }}>{formatCurrency(b.paidAmount)}</td>
+                        <td style={{ padding: "6px 3px", textAlign: "center", fontWeight: "bold", color: Number(b.dueAmount) > 0 ? "#dc2626" : "#64748b", whiteSpace: "nowrap" }}>
                           {(() => {
                             if (Number(b.dueAmount) <= 0) {
-                              return <span style={{ color: "#16a34a", fontSize: "11px", fontWeight: "700" }}>✓ Paid</span>;
+                              return <span style={{ color: "#16a34a", fontSize: "10.5px", fontWeight: "700" }}>✓ Paid</span>;
                             }
                             const cd = getPaymentCountdown(b);
                             return (
-                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                                <span style={{ fontSize: "12px", color: "#dc2626", fontWeight: "800" }}>{formatCurrency(b.dueAmount)}</span>
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1px" }}>
+                                <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "800" }}>{formatCurrency(b.dueAmount)}</span>
                                 {cd && (
                                   <span
                                     title={cd.subText}
                                     style={{
                                       display: "inline-flex",
                                       alignItems: "center",
-                                      gap: "2px",
-                                      fontSize: "10px",
+                                      gap: "1px",
+                                      fontSize: "9px",
                                       fontWeight: "700",
-                                      padding: "1px 6px",
-                                      borderRadius: "10px",
+                                      padding: "1px 4px",
+                                      borderRadius: "8px",
                                       color: cd.badgeColor,
                                       backgroundColor: cd.badgeBg,
                                       border: `1px solid ${cd.badgeColor}33`,
                                       whiteSpace: "nowrap",
-                                      lineHeight: 1.2
+                                      lineHeight: 1.1
                                     }}
                                   >
-                                    ⏰ Next Pay: {cd.statusText}
+                                    ⏰ {cd.statusText}
                                   </span>
                                 )}
                               </div>
                             );
                           })()}
                         </td>
-                        <td style={{ padding: "7px 6px", textAlign: "center", whiteSpace: "nowrap" }}>
-                          <div style={{ display: "flex", gap: "4px", justifyContent: "center", alignItems: "center" }}>
+                        <td style={{ padding: "6px 2px", textAlign: "center", whiteSpace: "nowrap" }}>
+                          <div style={{ display: "inline-flex", gap: "3px", justifyContent: "center", alignItems: "center" }}>
                             <button
                               onClick={() => {
                                 setSelectedInvoice(b);
@@ -5581,14 +5581,15 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                 backgroundColor: "#dc2626",
                                 color: "#ffffff",
                                 border: "1px solid #b91c1c",
-                                padding: "4px 8px",
-                                borderRadius: "4px",
+                                padding: "3px 6px",
+                                borderRadius: "3px",
                                 cursor: "pointer",
-                                fontSize: "11px",
+                                fontSize: "10.5px",
                                 fontWeight: "bold",
-                                display: "flex",
+                                display: "inline-flex",
                                 alignItems: "center",
-                                gap: "3px"
+                                gap: "2px",
+                                lineHeight: "1"
                               }}
                             >
                               Print
@@ -5602,14 +5603,15 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                 backgroundColor: "#25D366",
                                 color: "#ffffff",
                                 border: "1px solid #1ea952",
-                                padding: "4px 7px",
-                                borderRadius: "4px",
+                                padding: "3px 5px",
+                                borderRadius: "3px",
                                 cursor: "pointer",
-                                fontSize: "11px",
+                                fontSize: "10.5px",
                                 fontWeight: "bold",
                                 display: "inline-flex",
                                 alignItems: "center",
-                                gap: "2px"
+                                gap: "2px",
+                                lineHeight: "1"
                               }}
                             >
                               💬 WA
@@ -5627,17 +5629,18 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                     backgroundColor: isUrgent ? "#ea580c" : "#fef3c7",
                                     color: isUrgent ? "#ffffff" : "#92400e",
                                     border: isUrgent ? "1px solid #c2410c" : "1px solid #fde68a",
-                                    padding: "4px 7px",
-                                    borderRadius: "4px",
+                                    padding: "3px 5px",
+                                    borderRadius: "3px",
                                     cursor: "pointer",
-                                    fontSize: "11px",
+                                    fontSize: "10.5px",
                                     fontWeight: "bold",
                                     display: "inline-flex",
                                     alignItems: "center",
-                                    gap: "2px"
+                                    gap: "2px",
+                                    lineHeight: "1"
                                   }}
                                 >
-                                  ⏰ {isUrgent ? (cd ? cd.statusText : "Remind") : "Remind"}
+                                  ⏰ Remind
                                 </button>
                               );
                             })()}
