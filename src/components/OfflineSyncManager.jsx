@@ -158,6 +158,69 @@ export default function OfflineSyncManager() {
     }
   }
 
-  // Silent background sync — completely hide dialog box popup from the screen
-  return null;
+  // Render subtle, elegant top pill status when offline or syncing pending queue
+  if (!showNotification && isOnline) {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 'max(14px, calc(env(safe-area-inset-bottom, 0px) + 10px))',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 2147483640,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '7px 14px',
+        borderRadius: '24px',
+        backgroundColor: isOnline ? 'rgba(15, 23, 42, 0.92)' : 'rgba(185, 28, 28, 0.95)',
+        color: '#ffffff',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)',
+        fontSize: '12px',
+        fontWeight: '700',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        pointerEvents: 'auto',
+        maxWidth: '92vw',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}
+    >
+      <span
+        style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          backgroundColor: isOnline ? '#22c55e' : '#fbbf24',
+          display: 'inline-block',
+          boxShadow: isOnline ? '0 0 8px #22c55e' : '0 0 8px #fbbf24'
+        }}
+      />
+      <span>
+        {isOnline
+          ? (syncStatus === 'syncing' ? syncMessage || 'Syncing...' : 'Online • Content Up-to-Date')
+          : '⚡ Offline Mode • Saved Materials & Exams Active'}
+      </span>
+      <button
+        onClick={() => setShowNotification(false)}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'rgba(255, 255, 255, 0.7)',
+          cursor: 'pointer',
+          padding: '0 0 0 6px',
+          fontSize: '13px',
+          fontWeight: '800'
+        }}
+        title="Dismiss"
+      >
+        ✕
+      </button>
+    </div>
+  );
 }

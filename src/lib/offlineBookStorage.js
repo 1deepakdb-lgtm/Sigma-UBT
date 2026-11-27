@@ -478,3 +478,78 @@ export async function getAllOfflineChaptersStatus() {
     }
   });
 }
+
+/**
+ * Delete a downloaded chapter and its files to free up local device storage
+ */
+export async function deleteDownloadedChapter(chapter) {
+  if (!chapter || typeof window === 'undefined') return false;
+  const chapterId = chapter.chapter !== undefined ? chapter.chapter : (chapter.id || chapter.folder);
+  const idStr = String(chapterId);
+
+  const pdfUrl = chapter.pdfUrl || chapter.pdf?.url;
+  const audioTracks = chapter.audioTracks || [];
+  const urlsToDelete = [];
+  if (pdfUrl) urlsToDelete.push(pdfUrl);
+  audioTracks.forEach((t) => { if (t.url) urlsToDelete.push(t.url); });
+
+  // 1. Evict from memory caches
+  urlsToDelete.forEach((u) => {
+    const variants = getUrlVariants(u);
+    variants.forEach((v) => {
+      inMemoryBlobUrlCache.delete(v);
+      inMemoryBufferCache.delete(v);
+    });
+  });
+  inMemoryChapterStatusCache.delete(idStr);
+
+  // 2. Evict from IndexedDB
+  const db = await getDB();
+  if (db) {
+    try {
+      const tx = db.transaction([STORE_FILES, STORE_CHAPTERS], 'readwrite');
+      const fileStore = tx.objectStore(STORE_FILES);
+      const chStore = tx.objectStore(STORE_CHAPTERS);
+
+      urlsToDelete.forEach((u) => {
+        const variants = getUrlVariants(u);
+        variants.forEach((v) => fileStore.delete(v));
+      });
+      chStore.delete(idStr);
+    } catch (err) {
+      console.warn('IndexedDB delete notice:', err);
+    }
+  }
+
+  // 3. Evict from CacheStorage
+  if (typeof caches !== 'undefined') {
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      for (const u of urlsToDelete) {
+        const variants = getUrlVariants(u);
+        for (const v of variants) {
+          await cache.delete(v).catch(() => {});
+        }
+      }
+    } catch (e) {}
+  }
+
+  return true;
+}
+
+/**
+ * Get Storage Quota and Usage stats for user management
+ */
+export async function getStorageUsageEstimate() {
+  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
+    try {
+      const est = await navigator.storage.estimate();
+      return {
+        usageMB: ((est.usage || 0) / (1024 * 1024)).toFixed(1),
+        quotaMB: ((est.quota || 0) / (1024 * 1024)).toFixed(0),
+        percent: Math.min(100, Math.round(((est.usage || 0) / (est.quota || 1)) * 100))
+      };
+    } catch (e) {}
+  }
+  return { usageMB: '0', quotaMB: '1000', percent: 0 };
+}

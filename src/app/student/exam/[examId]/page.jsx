@@ -500,21 +500,37 @@ const StudentExam = () => {
     setIsPlayingAnyAudio(false);
   }, [currentQuestion]);
 
+  // Restore unfinished exam progress & answers on reload if active
   useEffect(() => {
-    if (isStarted) {
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            handleFinalSubmit();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [isStarted]);
+    if (typeof window === "undefined") return;
+    try {
+      const activeSessionKey = `active_exam_progress_${examId || "set-1-demo"}`;
+      const savedProgressStr = localStorage.getItem(activeSessionKey);
+      if (savedProgressStr) {
+        const saved = JSON.parse(savedProgressStr);
+        if (saved && saved.selectedAnswers && Object.keys(saved.selectedAnswers).length > 0) {
+          setSelectedAnswers(saved.selectedAnswers);
+          if (saved.currentQuestion !== undefined) setCurrentQuestion(saved.currentQuestion);
+          if (saved.timeLeft && saved.timeLeft > 10) setTimeLeft(saved.timeLeft);
+        }
+      }
+    } catch (e) {}
+  }, [examId]);
+
+  // Persist answers continuously so no progress is ever lost if browser/app closes
+  useEffect(() => {
+    if (typeof window === "undefined" || !isStarted) return;
+    try {
+      const activeSessionKey = `active_exam_progress_${examId || "set-1-demo"}`;
+      localStorage.setItem(activeSessionKey, JSON.stringify({
+        examId: examId || "set-1-demo",
+        selectedAnswers,
+        currentQuestion,
+        timeLeft,
+        updatedAt: Date.now()
+      }));
+    } catch (e) {}
+  }, [selectedAnswers, currentQuestion, timeLeft, isStarted, examId]);
 
   const enterFullScreen = () => {
     try {
@@ -848,6 +864,11 @@ const StudentExam = () => {
         }
       }
       
+      // Clear unfinished exam progress key upon successful submission
+      try {
+        localStorage.removeItem(`active_exam_progress_${examId || "set-1-demo"}`);
+      } catch (e) {}
+
       localStorage.setItem("lastExamResult", JSON.stringify(examResultData));
 
       const existingResults = JSON.parse(localStorage.getItem("examResults")) || [];

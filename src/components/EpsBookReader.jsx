@@ -15,7 +15,9 @@ import {
   fetchAndCacheFile,
   preloadAllCachedBlobs,
   getAllOfflineChaptersStatus,
-  isChapterOfflineReadySync
+  isChapterOfflineReadySync,
+  deleteDownloadedChapter,
+  getStorageUsageEstimate
 } from "@/lib/offlineBookStorage";
 import JapanesePronunciationGuide from "@/components/JapanesePronunciationGuide";
 import { KANJI_1000_LIST } from "@/lib/kanji1000Data";
@@ -4425,7 +4427,7 @@ export default function EpsBookReader({
             {/* RENDER EPS BOOK SECTION IF ACTIVE */}
             {activeFolder === "EPS Book" && (
             <>
-              {/* SEARCH BAR (CLEAN & SIMPLE) */}
+              {/* SEARCH BAR & OFFLINE DOWNLOAD TOOLS */}
               <div style={{
                 backgroundColor: "white",
                 padding: "14px 18px",
@@ -4434,10 +4436,11 @@ export default function EpsBookReader({
                 boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
                 marginBottom: "20px",
                 display: "flex",
+                flexWrap: "wrap",
                 alignItems: "center",
                 gap: "12px"
               }}>
-                <div style={{ position: "relative", flex: 1 }}>
+                <div style={{ position: "relative", flex: "1 1 240px" }}>
                   <span style={{ position: "absolute", left: "12px", top: "11px", color: "#64748b" }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
                   </span>
@@ -4457,6 +4460,51 @@ export default function EpsBookReader({
                     }}
                   />
                 </div>
+
+                {/* BULK OFFLINE DOWNLOAD ALL BUTTON */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const toDownload = chapters.filter(c => !offlineChaptersMap[c.chapter]);
+                    if (toDownload.length === 0) {
+                      alert("All available chapters are already saved offline!");
+                      return;
+                    }
+                    if (!window.confirm(`Download remaining ${toDownload.length} chapters for complete offline study?`)) return;
+
+                    setIsChapterSavingOffline(true);
+                    for (const ch of toDownload) {
+                      await new Promise((resolve) => {
+                        autoSaveChapterOffline(ch, (progress) => {
+                          if (progress.type === "completed") {
+                            setOfflineChaptersMap(prev => ({ ...prev, [ch.chapter]: true }));
+                            resolve();
+                          }
+                        });
+                        setTimeout(resolve, 8000); // 8s safety per chapter
+                      });
+                    }
+                    setIsChapterSavingOffline(false);
+                    alert("Complete offline download finished!");
+                  }}
+                  disabled={isChapterSavingOffline}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "9px 16px",
+                    borderRadius: "8px",
+                    backgroundColor: isChapterSavingOffline ? "#94a3b8" : "#0284c7",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    border: "none",
+                    cursor: isChapterSavingOffline ? "not-allowed" : "pointer",
+                    boxShadow: "0 2px 6px rgba(2, 132, 199, 0.25)"
+                  }}
+                >
+                  <span>{isChapterSavingOffline ? "⏳ Downloading..." : "⚡ Download All for Offline"}</span>
+                </button>
               </div>
 
               {/* 60 CHAPTERS CLEAN GRID / MOBILE IN-A-ROW DISPLAY */}
@@ -4599,13 +4647,13 @@ export default function EpsBookReader({
                     >
                       <div className="chapter-unit-card-inner">
                         {/* CHAPTER HEADER */}
-                        <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "12px" }}>
+                        <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", width: "100%" }}>
                           <span className="chapter-unit-badge" style={{
                             backgroundColor: c.chapter <= 30 ? "#dbeafe" : "#fef3c7",
                             color: c.chapter <= 30 ? "#1d4ed8" : "#b45309",
-                            padding: "5px 20px",
+                            padding: "4px 14px",
                             borderRadius: "16px",
-                            fontSize: "13px",
+                            fontSize: "12px",
                             fontWeight: "800",
                             letterSpacing: "0.5px",
                             boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -4613,6 +4661,64 @@ export default function EpsBookReader({
                           }}>
                             Chapter {c.chapter}
                           </span>
+
+                          {/* OFFLINE STATUS BADGE / ACTION */}
+                          {offlineChaptersMap[c.chapter] ? (
+                            <span
+                              title="Downloaded & Available Offline. Click to remove."
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Delete downloaded Chapter ${c.chapter} to free up device space?`)) {
+                                  deleteDownloadedChapter(c).then(() => {
+                                    setOfflineChaptersMap((prev) => ({ ...prev, [c.chapter]: false }));
+                                  });
+                                }
+                              }}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                color: "#16a34a",
+                                backgroundColor: "#dcfce7",
+                                padding: "2px 8px",
+                                borderRadius: "10px",
+                                border: "1px solid #bbf7d0",
+                                cursor: "pointer"
+                              }}
+                            >
+                              ✓ Offline
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              title="Download Chapter for Offline Study"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                autoSaveChapterOffline(c, (progress) => {
+                                  if (progress.type === "completed") {
+                                    setOfflineChaptersMap((prev) => ({ ...prev, [c.chapter]: true }));
+                                  }
+                                });
+                              }}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "2px",
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                color: "#0284c7",
+                                backgroundColor: "#f0f9ff",
+                                padding: "2px 8px",
+                                borderRadius: "10px",
+                                border: "1px solid #bae6fd",
+                                cursor: "pointer"
+                              }}
+                            >
+                              ↓ Download
+                            </button>
+                          )}
                         </div>
 
                         {/* CHAPTER COVER / FIRST PAGE PREVIEW (DESKTOP ONLY) */}
