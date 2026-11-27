@@ -2,6 +2,43 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getSharedGateCredentials, verifySharedGateCredentials, updateSharedGateCredentials } from '@/lib/instituteGateAuth';
 import { calculateCollectionsLedger, extractTransactionsFromBill, getKathmanduDateStr } from '@/lib/collectionsLedgerEngine';
+import NepaliDate from '@/lib/nepaliDateConverter';
+
+// Helper to convert English Date (YYYY-MM-DD) to Bikram Sambat (BS)
+export const convertAdToBsStr = (adDateStr) => {
+  if (!adDateStr) return "";
+  try {
+    const parts = String(adDateStr).split('-');
+    if (parts.length < 3) return "";
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    const jsDate = new Date(y, m, d);
+    const np = new NepaliDate(jsDate);
+    return np.format('YYYY-MM-DD');
+  } catch (e) {
+    return "";
+  }
+};
+
+// Helper to convert Bikram Sambat (BS: YYYY-MM-DD) to English Date (AD: YYYY-MM-DD)
+export const convertBsToAdStr = (bsDateStr) => {
+  if (!bsDateStr) return "";
+  try {
+    const parts = String(bsDateStr).split('-');
+    if (parts.length < 3) return "";
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return "";
+    const np = new NepaliDate(y, m, d);
+    const jsD = np.toJsDate();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${jsD.getFullYear()}-${pad(jsD.getMonth() + 1)}-${pad(jsD.getDate())}`;
+  } catch (e) {
+    return "";
+  }
+};
 
 // Number to Indian/Nepali Rupees in Words helper
 export const numberToRupeesInWords = (num) => {
@@ -5538,28 +5575,66 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             ? `Bill Number: ${form.existingBillNumber} (Keeps SAME Bill Number)`
                             : `Next Generated Bill Number: ${getNextBillNumber()}`}
                       </span>
-                      {/* Billing Date display / editable for Institute Admin and Main Admin */}
+                      {/* Billing Date display / editable for Institute Admin and Main Admin with English <-> Nepali (BS) Converter */}
                       {(billingRole === "admin" || isMainAdmin) ? (
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ fontSize: "11px", fontWeight: "800", color: "#1e40af" }}>
-                            Date:
-                          </span>
-                          <input
-                            type="date"
-                            value={form.date || getLocalDateStr()}
-                            onChange={(e) => setForm({ ...form, date: e.target.value })}
-                            style={{
-                              padding: "3px 8px",
-                              borderRadius: "6px",
-                              border: "2px solid #2563eb",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              color: "#1e3a8a",
-                              backgroundColor: "#ffffff",
-                              cursor: "pointer"
-                            }}
-                            title="Edit billing / payment date (Admin permission)"
-                          />
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap", backgroundColor: "#eff6ff", padding: "4px 10px", borderRadius: "8px", border: "1.5px solid #bfdbfe" }}>
+                          {/* English Date (AD) */}
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <span style={{ fontSize: "11px", fontWeight: "800", color: "#1e40af" }}>
+                              English (AD):
+                            </span>
+                            <input
+                              type="date"
+                              value={form.date || getLocalDateStr()}
+                              onChange={(e) => setForm({ ...form, date: e.target.value })}
+                              style={{
+                                padding: "3px 6px",
+                                borderRadius: "5px",
+                                border: "1.5px solid #2563eb",
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                color: "#1e3a8a",
+                                backgroundColor: "#ffffff",
+                                cursor: "pointer"
+                              }}
+                              title="English Date (AD) - Automatically converts to Nepali (BS)"
+                            />
+                          </div>
+
+                          <span style={{ color: "#93c5fd", fontWeight: "bold", fontSize: "12px" }}>⇄</span>
+
+                          {/* Nepali Date (BS) */}
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                            <span style={{ fontSize: "11px", fontWeight: "800", color: "#b91c1c" }}>
+                              Nepali (BS):
+                            </span>
+                            <input
+                              type="text"
+                              placeholder="YYYY-MM-DD"
+                              value={convertAdToBsStr(form.date || getLocalDateStr())}
+                              onChange={(e) => {
+                                const bsInput = e.target.value.trim();
+                                if (/^\d{4}-\d{2}-\d{2}$/.test(bsInput)) {
+                                  const adConverted = convertBsToAdStr(bsInput);
+                                  if (adConverted) {
+                                    setForm({ ...form, date: adConverted });
+                                  }
+                                }
+                              }}
+                              style={{
+                                width: "95px",
+                                padding: "3px 6px",
+                                borderRadius: "5px",
+                                border: "1.5px solid #dc2626",
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                color: "#991b1b",
+                                backgroundColor: "#fef2f2",
+                                textAlign: "center"
+                              }}
+                              title="Nepali Bikram Sambat Date (BS). Type YYYY-MM-DD (e.g. 2083-08-11) to automatically convert to English (AD)!"
+                            />
+                          </div>
                         </div>
                       ) : (
                         <span style={{
@@ -5572,9 +5647,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           borderRadius: "12px",
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "4px"
+                          gap: "6px"
                         }}>
-                          Date: {form.date || getLocalDateStr()} (Auto)
+                          <span>AD: {form.date || getLocalDateStr()}</span>
+                          <span style={{ color: "#0284c7" }}>•</span>
+                          <span style={{ color: "#dc2626", fontWeight: "bold" }}>BS: {convertAdToBsStr(form.date || getLocalDateStr())}</span>
                         </span>
                       )}
                     </div>
