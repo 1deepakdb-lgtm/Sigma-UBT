@@ -3233,6 +3233,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       cash: ledger.totalCash,
       online: ledger.totalOnline,
       totalBilled: ledger.totalBilled,
+      totalGrossFee: ledger.totalGrossFee,
+      totalDiscount: ledger.totalDiscount,
       totalOutstanding: ledger.totalOutstanding,
       totalRefunds: ledger.totalRefunds,
       totalBillsIssued: ledger.totalBillsIssued,
@@ -4005,58 +4007,76 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </div>
               </div>
 
-              {/* KPI Stat Cards (Paid Collections Strictly) */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "14px" }}>
-                {/* Total Paid Collections */}
+              {/* KPI Stat Cards (Gross Fee, Paid Collections strictly by Payment Method, and Remaining Due) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px", marginBottom: "14px" }}>
+                {/* 1. Total Paid Collections (Actual Received Payments Only) */}
                 <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
-                    Total {adminTimeframe === "daily" ? "Today's" : adminTimeframe === "weekly" ? "Weekly" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Paid Collections
+                    Total {adminTimeframe === "daily" ? "Daily" : adminTimeframe === "weekly" ? "Weekly" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Paid Collections
                   </div>
                   <div style={{ fontSize: "22px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.total)}
                   </div>
-                  <div style={{ fontSize: "10.5px", color: "#166534", marginTop: "2px", fontWeight: "600" }}>
+                  <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "600" }}>
                     Actual Received Payments Only
                   </div>
+                  {activeStats.totalGrossFee > 0 && (
+                    <div style={{ fontSize: "10.5px", color: "#4b5563", marginTop: "2px" }}>
+                      Gross Course Fee: <strong>{formatCurrency(activeStats.totalGrossFee)}</strong>
+                    </div>
+                  )}
                 </div>
 
-                {/* Total Cash Collection */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                {/* 2. Paid in Cash (Cash in Hand) */}
+                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
                     Paid in Cash (Cash in Hand)
                   </div>
                   <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.cash)}
                   </div>
-                  <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }}>
-                    Physical Cash Collections
+                  <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "600" }}>
+                    Physical Cash in Hand
                   </div>
+                  {activeStats.breakdown["Other"] > 0 && (
+                    <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
+                      Other Methods: {formatCurrency(activeStats.breakdown["Other"])}
+                    </div>
+                  )}
                 </div>
 
-                {/* Total Online Collection */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                {/* 3. Paid Online (Digital Payments: Bank Acc, eSewa & Khalti) */}
+                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
                     Paid Online (Digital Payments)
                   </div>
                   <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.online)}
                   </div>
-                  <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }}>
+                  <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "600" }}>
                     Bank Acc, eSewa & Khalti
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#475569", marginTop: "2px" }}>
+                    Bank: {formatCurrency(activeStats.breakdown["Online Bank Acc"])} • eSewa: {formatCurrency(activeStats.breakdown["Online Esewa"])} • Khalti: {formatCurrency(activeStats.breakdown["Online Khalti"])}
                   </div>
                 </div>
 
-                {/* Outstanding Due Amount */}
-                <div style={{ backgroundColor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                {/* 4. Outstanding Balance (Due) */}
+                <div style={{ backgroundColor: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#9a3412", marginBottom: "3px" }}>
                     Outstanding Balance (Due)
                   </div>
                   <div style={{ fontSize: "20px", fontWeight: "900", color: "#c2410c" }}>
                     {formatCurrency(activeStats.totalOutstanding)}
                   </div>
-                  <div style={{ fontSize: "10.5px", color: "#9a3412", marginTop: "2px" }}>
+                  <div style={{ fontSize: "11px", color: "#9a3412", marginTop: "3px", fontWeight: "600" }}>
                     Unpaid Pending Fees
                   </div>
+                  {activeStats.totalGrossFee > 0 && (
+                    <div style={{ fontSize: "10px", color: "#78350f", marginTop: "2px" }}>
+                      Gross ({formatCurrency(activeStats.totalGrossFee)}) - Paid ({formatCurrency(activeStats.total)})
+                    </div>
+                  )}
                 </div>
               </div>
 
