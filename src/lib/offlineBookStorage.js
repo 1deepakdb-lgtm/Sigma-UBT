@@ -299,6 +299,124 @@ export async function saveFileBlob(url, blob, meta = {}) {
 }
 
 /**
+ * Download file with real-time byte-level progress reporting and persistent caching
+ */
+export async function downloadFileWithProgress(url, meta = {}, onProgress = null) {
+  if (!url || typeof window === 'undefined') return null;
+
+  const cleanUrl = url.split('#')[0].trim();
+
+  // Check if already cached
+  const existing = await getCachedFileBlob(cleanUrl);
+  if (existing) {
+    if (onProgress) {
+      onProgress({
+        loaded: 100,
+        total: 100,
+        percent: 100,
+        mbLoaded: '1.00',
+        mbTotal: '1.00',
+        mbRemaining: '0.00',
+        status: 'cached'
+      });
+    }
+    return existing;
+  }
+
+  return new Promise((resolve) => {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', cleanUrl, true);
+      xhr.responseType = 'blob';
+      xhr.timeout = 120000; // 2 minutes for full PDF files
+
+      xhr.onprogress = (e) => {
+        if (e.lengthComputable && e.total > 0) {
+          const loadedBytes = e.loaded;
+          const totalBytes = e.total;
+          const remainingBytes = Math.max(0, totalBytes - loadedBytes);
+          const percent = Math.min(99, Math.max(1, Math.round((loadedBytes / totalBytes) * 100)));
+          const mbLoaded = (loadedBytes / (1024 * 1024)).toFixed(2);
+          const mbTotal = (totalBytes / (1024 * 1024)).toFixed(2);
+          const mbRemaining = (remainingBytes / (1024 * 1024)).toFixed(2);
+
+          if (onProgress) {
+            onProgress({
+              loaded: loadedBytes,
+              total: totalBytes,
+              percent,
+              mbLoaded,
+              mbTotal,
+              mbRemaining,
+              status: 'downloading'
+            });
+          }
+        } else if (e.loaded > 0) {
+          const mbLoaded = (e.loaded / (1024 * 1024)).toFixed(2);
+          if (onProgress) {
+            onProgress({
+              loaded: e.loaded,
+              total: null,
+              percent: null,
+              mbLoaded,
+              mbTotal: null,
+              mbRemaining: null,
+              status: 'downloading'
+            });
+          }
+        }
+      };
+
+      xhr.onload = async () => {
+        if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
+          const blob = xhr.response;
+          const totalBytes = blob.size;
+          const mbTotal = (totalBytes / (1024 * 1024)).toFixed(2);
+
+          if (onProgress) {
+            onProgress({
+              loaded: totalBytes,
+              total: totalBytes,
+              percent: 100,
+              mbLoaded: mbTotal,
+              mbTotal: mbTotal,
+              mbRemaining: '0.00',
+              status: 'saving'
+            });
+          }
+
+          const savedBlobUrl = await saveFileBlob(cleanUrl, blob, meta);
+
+          if (onProgress) {
+            onProgress({
+              loaded: totalBytes,
+              total: totalBytes,
+              percent: 100,
+              mbLoaded: mbTotal,
+              mbTotal: mbTotal,
+              mbRemaining: '0.00',
+              status: 'completed',
+              blobUrl: savedBlobUrl
+            });
+          }
+
+          resolve(savedBlobUrl);
+        } else {
+          resolve(null);
+        }
+      };
+
+      xhr.onerror = () => resolve(null);
+      xhr.ontimeout = () => resolve(null);
+      xhr.send();
+    } catch (err) {
+      console.warn('XHR download error:', err);
+      resolve(null);
+    }
+  });
+}
+
+/**
  * Fetch and silently cache a URL in background
  */
 export async function fetchAndCacheFile(url, meta = {}) {
@@ -399,16 +517,33 @@ export async function autoSaveChapterOffline(chapter, onProgress) {
     const cachedPdf = await getCachedFileBlob(pdfUrl);
     if (cachedPdf) {
       results.pdfBlobUrl = cachedPdf;
-      if (onProgress) onProgress({ type: 'pdf', blobUrl: cachedPdf, chapterId });
+      if (onProgress) onProgress({ type: 'pdf', blobUrl: cachedPdf, chapterId, percent: 100 });
     } else {
-      pdfPromise = fetchAndCacheFile(pdfUrl, { chapterId, type: 'pdf', mimeType: 'application/pdf' })
-        .then((blobUrl) => {
-          if (blobUrl) {
-            results.pdfBlobUrl = blobUrl;
-            if (onProgress) onProgress({ type: 'pdf', blobUrl, chapterId });
+      pdfPromise = downloadFileWithProgress(
+        pdfUrl,
+        { chapterId, type: 'pdf', mimeType: 'application/pdf' },
+        (p) => {
+          if (onProgress) {
+            onProgress({
+              type: 'pdf',
+              chapterId,
+              loaded: p.loaded,
+              total: p.total,
+              percent: p.percent,
+              mbLoaded: p.mbLoaded,
+              mbTotal: p.mbTotal,
+              mbRemaining: p.mbRemaining,
+              status: p.status,
+              blobUrl: p.blobUrl || null
+            });
           }
-          return blobUrl;
-        });
+        }
+      ).then((blobUrl) => {
+        if (blobUrl) {
+          results.pdfBlobUrl = blobUrl;
+        }
+        return blobUrl;
+      });
     }
   }
 

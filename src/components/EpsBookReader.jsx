@@ -877,6 +877,7 @@ export default function EpsBookReader({
 
   // Offline Auto-Save & Instant (0ms) PDF/Audio Open State
   const [offlineChaptersMap, setOfflineChaptersMap] = useState({});
+  const [downloadProgressMap, setDownloadProgressMap] = useState({}); // { [chapterId]: { percent, mbLoaded, mbTotal, mbRemaining, status } }
   const [activePdfBlobUrl, setActivePdfBlobUrl] = useState("");
   const [cachedAudioUrls, setCachedAudioUrls] = useState({});
   const [isChapterSavingOffline, setIsChapterSavingOffline] = useState(false);
@@ -4558,7 +4559,7 @@ export default function EpsBookReader({
                     }}
                   >
                     <div className="chapter-unit-card-inner">
-                      <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                      <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                         <span className="chapter-unit-badge" style={{
                           backgroundColor: "#d1fae5",
                           color: "#065f46",
@@ -4570,6 +4571,102 @@ export default function EpsBookReader({
                         }}>
                           🔰 Preliminary
                         </span>
+
+                        {offlineChaptersMap["Preliminary"] ? (
+                          <span
+                            title="Downloaded & Available Offline. Click to remove."
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm("Delete downloaded Preliminary chapter to free up space?")) {
+                                deleteDownloadedChapter({ chapter: "Preliminary", pdfUrl: "/uploads/eps-chapters/Preliminary.pdf" }).then(() => {
+                                  setOfflineChaptersMap((prev) => ({ ...prev, Preliminary: false }));
+                                });
+                              }
+                            }}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              color: "#16a34a",
+                              backgroundColor: "#dcfce7",
+                              padding: "3px 8px",
+                              borderRadius: "10px",
+                              border: "1px solid #bbf7d0",
+                              cursor: "pointer"
+                            }}
+                          >
+                            ✓ Offline (9.88 MB)
+                          </span>
+                        ) : downloadProgressMap["Preliminary"] ? (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}
+                          >
+                            <span style={{ fontSize: "11px", fontWeight: "700", color: "#0284c7" }}>
+                              {downloadProgressMap["Preliminary"].percent !== null ? `${downloadProgressMap["Preliminary"].percent}%` : 'Downloading'}
+                            </span>
+                            <div style={{ width: "80px", height: "4px", backgroundColor: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
+                              <div style={{ width: `${downloadProgressMap["Preliminary"].percent || 15}%`, height: "100%", backgroundColor: "#0284c7", borderRadius: "999px" }} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <span style={{ fontSize: "10.5px", fontWeight: "600", color: "#64748b" }}>9.88 MB</span>
+                            <button
+                              type="button"
+                              title="Download Preliminary (9.88 MB) for Offline Study"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const item = { chapter: "Preliminary", pdfUrl: "/uploads/eps-chapters/Preliminary.pdf", audioTracks: [] };
+                                setDownloadProgressMap((prev) => ({
+                                  ...prev,
+                                  Preliminary: { percent: 1, mbLoaded: "0.00", mbTotal: "9.88", status: "starting" }
+                                }));
+                                autoSaveChapterOffline(item, (progress) => {
+                                  if (progress.type === "pdf") {
+                                    setDownloadProgressMap((prev) => ({
+                                      ...prev,
+                                      Preliminary: {
+                                        percent: progress.percent,
+                                        mbLoaded: progress.mbLoaded,
+                                        mbTotal: progress.mbTotal,
+                                        mbRemaining: progress.mbRemaining,
+                                        status: progress.status
+                                      }
+                                    }));
+                                  }
+                                  if (progress.type === "completed") {
+                                    setOfflineChaptersMap((prev) => ({ ...prev, Preliminary: true }));
+                                    setTimeout(() => {
+                                      setDownloadProgressMap((prev) => {
+                                        const next = { ...prev };
+                                        delete next.Preliminary;
+                                        return next;
+                                      });
+                                    }, 800);
+                                  }
+                                });
+                              }}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                color: "#0284c7",
+                                backgroundColor: "#f0f9ff",
+                                padding: "3px 8px",
+                                borderRadius: "10px",
+                                border: "1px solid #bae6fd",
+                                cursor: "pointer"
+                              }}
+                            >
+                              ↓ Download
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="chapter-unit-cover-desktop">
@@ -4671,53 +4768,124 @@ export default function EpsBookReader({
                                 if (window.confirm(`Delete downloaded Chapter ${c.chapter} to free up device space?`)) {
                                   deleteDownloadedChapter(c).then(() => {
                                     setOfflineChaptersMap((prev) => ({ ...prev, [c.chapter]: false }));
+                                    setDownloadProgressMap((prev) => {
+                                      const next = { ...prev };
+                                      delete next[c.chapter];
+                                      return next;
+                                    });
                                   });
                                 }
                               }}
                               style={{
                                 display: "inline-flex",
                                 alignItems: "center",
-                                gap: "3px",
+                                gap: "4px",
                                 fontSize: "11px",
                                 fontWeight: "700",
                                 color: "#16a34a",
                                 backgroundColor: "#dcfce7",
-                                padding: "2px 8px",
+                                padding: "3px 8px",
                                 borderRadius: "10px",
                                 border: "1px solid #bbf7d0",
                                 cursor: "pointer"
                               }}
                             >
-                              ✓ Offline
+                              ✓ Offline {c.fileSizeMB ? `(${c.fileSizeMB})` : ''}
                             </span>
-                          ) : (
-                            <button
-                              type="button"
-                              title="Download Chapter for Offline Study"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                autoSaveChapterOffline(c, (progress) => {
-                                  if (progress.type === "completed") {
-                                    setOfflineChaptersMap((prev) => ({ ...prev, [c.chapter]: true }));
-                                  }
-                                });
-                              }}
+                          ) : downloadProgressMap[c.chapter] ? (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
                               style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "2px",
-                                fontSize: "11px",
-                                fontWeight: "700",
-                                color: "#0284c7",
-                                backgroundColor: "#f0f9ff",
-                                padding: "2px 8px",
-                                borderRadius: "10px",
-                                border: "1px solid #bae6fd",
-                                cursor: "pointer"
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "flex-end",
+                                gap: "2px"
                               }}
                             >
-                              ↓ Download
-                            </button>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ fontSize: "11px", fontWeight: "700", color: "#0284c7" }}>
+                                  {downloadProgressMap[c.chapter].percent !== null ? `${downloadProgressMap[c.chapter].percent}%` : 'Downloading'}
+                                </span>
+                                <span style={{ fontSize: "10px", color: "#64748b" }}>
+                                  {downloadProgressMap[c.chapter].mbLoaded && downloadProgressMap[c.chapter].mbTotal
+                                    ? `${downloadProgressMap[c.chapter].mbLoaded}/${downloadProgressMap[c.chapter].mbTotal} MB`
+                                    : downloadProgressMap[c.chapter].mbLoaded ? `${downloadProgressMap[c.chapter].mbLoaded} MB` : ''}
+                                </span>
+                              </div>
+                              <div style={{
+                                width: "90px",
+                                height: "5px",
+                                backgroundColor: "#e2e8f0",
+                                borderRadius: "999px",
+                                overflow: "hidden"
+                              }}>
+                                <div style={{
+                                  width: `${downloadProgressMap[c.chapter].percent || 15}%`,
+                                  height: "100%",
+                                  backgroundColor: "#0284c7",
+                                  borderRadius: "999px",
+                                  transition: "width 0.15s ease-out"
+                                }} />
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                              {c.fileSizeMB && (
+                                <span style={{ fontSize: "10.5px", fontWeight: "600", color: "#64748b" }}>
+                                  {c.fileSizeMB}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                title={`Download Chapter ${c.chapter} (${c.fileSizeMB || 'PDF'}) for Offline Study`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDownloadProgressMap((prev) => ({
+                                    ...prev,
+                                    [c.chapter]: { percent: 1, mbLoaded: "0.00", mbTotal: c.fileSizeMB ? c.fileSizeMB.replace(' MB', '') : null, status: "starting" }
+                                  }));
+                                  autoSaveChapterOffline(c, (progress) => {
+                                    if (progress.type === "pdf") {
+                                      setDownloadProgressMap((prev) => ({
+                                        ...prev,
+                                        [c.chapter]: {
+                                          percent: progress.percent,
+                                          mbLoaded: progress.mbLoaded,
+                                          mbTotal: progress.mbTotal,
+                                          mbRemaining: progress.mbRemaining,
+                                          status: progress.status
+                                        }
+                                      }));
+                                    }
+                                    if (progress.type === "completed") {
+                                      setOfflineChaptersMap((prev) => ({ ...prev, [c.chapter]: true }));
+                                      setTimeout(() => {
+                                        setDownloadProgressMap((prev) => {
+                                          const next = { ...prev };
+                                          delete next[c.chapter];
+                                          return next;
+                                        });
+                                      }, 800);
+                                    }
+                                  });
+                                }}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "3px",
+                                  fontSize: "11px",
+                                  fontWeight: "700",
+                                  color: "#0284c7",
+                                  backgroundColor: "#f0f9ff",
+                                  padding: "3px 8px",
+                                  borderRadius: "10px",
+                                  border: "1px solid #bae6fd",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                ↓ Download
+                              </button>
+                            </div>
                           )}
                         </div>
 
@@ -4795,7 +4963,7 @@ export default function EpsBookReader({
                     }}
                   >
                     <div className="chapter-unit-card-inner">
-                      <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "8px" }}>
+                      <div className="chapter-unit-badge-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                         <span className="chapter-unit-badge" style={{
                           backgroundColor: "#ede9fe",
                           color: "#5b21b6",
@@ -4807,6 +4975,102 @@ export default function EpsBookReader({
                         }}>
                           Appendix
                         </span>
+
+                        {offlineChaptersMap["Appendix"] ? (
+                          <span
+                            title="Downloaded & Available Offline. Click to remove."
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm("Delete downloaded Appendix chapter to free up space?")) {
+                                deleteDownloadedChapter({ chapter: "Appendix", pdfUrl: "/uploads/eps-chapters/Appendix.pdf" }).then(() => {
+                                  setOfflineChaptersMap((prev) => ({ ...prev, Appendix: false }));
+                                });
+                              }
+                            }}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              color: "#16a34a",
+                              backgroundColor: "#dcfce7",
+                              padding: "3px 8px",
+                              borderRadius: "10px",
+                              border: "1px solid #bbf7d0",
+                              cursor: "pointer"
+                            }}
+                          >
+                            ✓ Offline (7.11 MB)
+                          </span>
+                        ) : downloadProgressMap["Appendix"] ? (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}
+                          >
+                            <span style={{ fontSize: "11px", fontWeight: "700", color: "#0284c7" }}>
+                              {downloadProgressMap["Appendix"].percent !== null ? `${downloadProgressMap["Appendix"].percent}%` : 'Downloading'}
+                            </span>
+                            <div style={{ width: "80px", height: "4px", backgroundColor: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
+                              <div style={{ width: `${downloadProgressMap["Appendix"].percent || 15}%`, height: "100%", backgroundColor: "#0284c7", borderRadius: "999px" }} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <span style={{ fontSize: "10.5px", fontWeight: "600", color: "#64748b" }}>7.11 MB</span>
+                            <button
+                              type="button"
+                              title="Download Appendix (7.11 MB) for Offline Study"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const item = { chapter: "Appendix", pdfUrl: "/uploads/eps-chapters/Appendix.pdf", audioTracks: [] };
+                                setDownloadProgressMap((prev) => ({
+                                  ...prev,
+                                  Appendix: { percent: 1, mbLoaded: "0.00", mbTotal: "7.11", status: "starting" }
+                                }));
+                                autoSaveChapterOffline(item, (progress) => {
+                                  if (progress.type === "pdf") {
+                                    setDownloadProgressMap((prev) => ({
+                                      ...prev,
+                                      Appendix: {
+                                        percent: progress.percent,
+                                        mbLoaded: progress.mbLoaded,
+                                        mbTotal: progress.mbTotal,
+                                        mbRemaining: progress.mbRemaining,
+                                        status: progress.status
+                                      }
+                                    }));
+                                  }
+                                  if (progress.type === "completed") {
+                                    setOfflineChaptersMap((prev) => ({ ...prev, Appendix: true }));
+                                    setTimeout(() => {
+                                      setDownloadProgressMap((prev) => {
+                                        const next = { ...prev };
+                                        delete next.Appendix;
+                                        return next;
+                                      });
+                                    }, 800);
+                                  }
+                                });
+                              }}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                color: "#0284c7",
+                                backgroundColor: "#f0f9ff",
+                                padding: "3px 8px",
+                                borderRadius: "10px",
+                                border: "1px solid #bae6fd",
+                                cursor: "pointer"
+                              }}
+                            >
+                              ↓ Download
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="chapter-unit-cover-desktop">

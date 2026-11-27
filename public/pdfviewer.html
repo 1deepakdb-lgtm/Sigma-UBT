@@ -128,9 +128,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 14px;
     background-color: #0f172a;
     z-index: 100;
+    padding: 24px;
   }
   .spinner {
     width: 44px;
@@ -143,13 +144,53 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  .loading-text {
-    font-size: 14px;
-    font-weight: 700;
+  .loading-title {
+    font-size: 15px;
+    font-weight: 800;
     color: #f8fafc;
     letter-spacing: 0.3px;
     text-align: center;
-    padding: 0 20px;
+    max-width: 480px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .loading-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: 0.2px;
+    text-align: center;
+  }
+  .loading-progress-box {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .progress-bar-wrap {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
+    border-radius: 999px;
+    transition: width 0.15s ease-out;
+  }
+  .loading-subtext {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
   }
   .loading-badge {
     font-size: 11px;
@@ -203,8 +244,15 @@
 
 <div id="loading-view">
   <div class="spinner"></div>
-  <div class="loading-text" id="loading-progress">Opening Document (0%)...</div>
-  <div class="loading-badge" id="offline-badge">⚡ Offline Ready</div>
+  <div class="loading-title" id="loading-doc-name">Opening Document...</div>
+  <div class="loading-progress-box">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar-fill"></div>
+    </div>
+    <div class="loading-text" id="loading-progress">Connecting...</div>
+    <div class="loading-subtext" id="loading-subtext">Preparing document download</div>
+  </div>
+  <div class="loading-badge" id="offline-badge">✓ Offline Available</div>
 </div>
 
 <div id="error-view">
@@ -259,12 +307,27 @@
     var rawUrl = params.get('url');
 
     var loadingView = document.getElementById('loading-view');
+    var loadingDocName = document.getElementById('loading-doc-name');
     var loadingProgress = document.getElementById('loading-progress');
+    var loadingSubtext = document.getElementById('loading-subtext');
+    var progressBarFill = document.getElementById('progress-bar-fill');
     var offlineBadge = document.getElementById('offline-badge');
     var errorView = document.getElementById('error-view');
     var errorMessage = document.getElementById('error-message');
     var container = document.getElementById('viewer-scroll-container');
     var zoomLayer = document.getElementById('viewer-zoom-layer');
+
+    // Display formatted file name in loading screen
+    if (loadingDocName && rawUrl) {
+      try {
+        var pathParts = decodeURIComponent(rawUrl).split('/');
+        var fName = pathParts[pathParts.length - 1] || 'EPS Book Material';
+        fName = fName.replace(/\.pdf$/i, '');
+        loadingDocName.textContent = fName;
+      } catch (e) {
+        loadingDocName.textContent = 'EPS Book Material';
+      }
+    }
 
     var ZOOM_LEVELS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.4, 2.88, 3.5, 4.0, 5.0];
 
@@ -482,13 +545,17 @@
 
           xhr.onprogress = function(e) {
             if (e.lengthComputable && e.total > 0 && onProgress) {
-              var pct = Math.min(99, Math.max(1, Math.round((e.loaded / e.total) * 100)));
-              var mbLoaded = (e.loaded / (1024 * 1024)).toFixed(1);
-              var mbTotal = (e.total / (1024 * 1024)).toFixed(1);
-              onProgress(pct, mbLoaded, mbTotal);
+              var loadedBytes = e.loaded;
+              var totalBytes = e.total;
+              var remainingBytes = Math.max(0, totalBytes - loadedBytes);
+              var pct = Math.min(99, Math.max(1, Math.round((loadedBytes / totalBytes) * 100)));
+              var mbLoaded = (loadedBytes / (1024 * 1024)).toFixed(2);
+              var mbTotal = (totalBytes / (1024 * 1024)).toFixed(2);
+              var mbRemaining = (remainingBytes / (1024 * 1024)).toFixed(2);
+              onProgress(pct, mbLoaded, mbTotal, mbRemaining);
             } else if (onProgress && e.loaded > 0) {
-              var mb = (e.loaded / (1024 * 1024)).toFixed(1);
-              onProgress(null, mb, null);
+              var mbLoadedIndeterminate = (e.loaded / (1024 * 1024)).toFixed(2);
+              onProgress(null, mbLoadedIndeterminate, null, null);
             }
           };
 
@@ -1501,7 +1568,11 @@
         var cachedBuffer = await loadCachedPdfBuffer(targetDocUrl);
         if (cachedBuffer && (cachedBuffer.byteLength > 1000 || (cachedBuffer.buffer && cachedBuffer.buffer.byteLength > 1000))) {
           if (offlineBadge) offlineBadge.style.display = 'inline-block';
-          if (loadingProgress) loadingProgress.textContent = 'Opening Document (Ready)...';
+          if (progressBarFill) progressBarFill.style.width = '100%';
+          var cachedSize = cachedBuffer.byteLength || (cachedBuffer.buffer ? cachedBuffer.buffer.byteLength : 0);
+          var cachedMB = (cachedSize / (1024 * 1024)).toFixed(2);
+          if (loadingProgress) loadingProgress.textContent = 'Downloaded: ' + cachedMB + ' MB / ' + cachedMB + ' MB';
+          if (loadingSubtext) loadingSubtext.textContent = 'Status: Download Complete • Offline Available';
           await startRenderingDoc(cachedBuffer);
           return;
         }
@@ -1512,20 +1583,37 @@
       // Strategy 2: Complete Document Download Immediately with Live Progress
       // Downloads all pages and 100% original binary data in one complete download.
       try {
-        var buffer = await downloadCompletePdf(targetDocUrl, function(pct, mbLoaded, mbTotal) {
+        var buffer = await downloadCompletePdf(targetDocUrl, function(pct, mbLoaded, mbTotal, mbRemaining) {
+          if (progressBarFill && pct !== null) {
+            progressBarFill.style.width = pct + '%';
+          }
           if (loadingProgress) {
             if (pct !== null && mbLoaded && mbTotal) {
-              loadingProgress.textContent = 'Downloading Complete PDF (' + pct + '% - ' + mbLoaded + 'MB / ' + mbTotal + 'MB)...';
+              loadingProgress.textContent = mbLoaded + ' MB / ' + mbTotal + ' MB downloaded (' + pct + '%)';
             } else if (pct !== null) {
-              loadingProgress.textContent = 'Downloading Complete PDF (' + pct + '%)...';
+              loadingProgress.textContent = pct + '% completed';
             } else if (mbLoaded) {
-              loadingProgress.textContent = 'Downloading Complete PDF (' + mbLoaded + 'MB)...';
+              loadingProgress.textContent = mbLoaded + ' MB downloaded';
+            }
+          }
+          if (loadingSubtext) {
+            if (mbRemaining && mbTotal) {
+              loadingSubtext.textContent = mbRemaining + ' MB remaining • Total: ' + mbTotal + ' MB';
+            } else if (mbTotal) {
+              loadingSubtext.textContent = 'Total PDF Size: ' + mbTotal + ' MB';
+            } else {
+              loadingSubtext.textContent = 'Downloading original PDF...';
             }
           }
         });
 
         if (buffer && (buffer.byteLength > 1000 || (buffer.buffer && buffer.buffer.byteLength > 1000))) {
-          if (loadingProgress) loadingProgress.textContent = 'Processing Document...';
+          var bufSize = buffer.byteLength || (buffer.buffer ? buffer.buffer.byteLength : 0);
+          var finalMB = (bufSize / (1024 * 1024)).toFixed(2);
+          if (progressBarFill) progressBarFill.style.width = '100%';
+          if (loadingProgress) loadingProgress.textContent = 'Downloaded: ' + finalMB + ' MB / ' + finalMB + ' MB';
+          if (loadingSubtext) loadingSubtext.textContent = 'Status: Download Complete • Offline Available';
+          if (offlineBadge) offlineBadge.style.display = 'inline-block';
           await startRenderingDoc(buffer);
 
           // Save to permanent local storage (IndexedDB + CacheStorage + RAM) for lifetime instant access & offline use

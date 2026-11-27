@@ -1,11 +1,30 @@
 import { NextResponse } from 'next/server';
 import { readFile, writeFile, mkdir } from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 import { INITIAL_60_CHAPTERS } from '@/lib/epsBookData';
 import { requireInstituteOrAdmin } from '@/lib/rbac';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const CHAPTERS_FILE = path.join(DATA_DIR, 'eps-book-chapters.json');
+
+// Helper to calculate exact file size on disk for PDF
+function getPdfFileStats(pdfUrl) {
+  if (!pdfUrl) return null;
+  try {
+    const cleanUrl = String(pdfUrl).split('#')[0].split('?')[0].trim();
+    const cleanPath = cleanUrl.startsWith('/') ? cleanUrl.slice(1) : cleanUrl;
+    const fullPath = path.join(process.cwd(), 'public', cleanPath.replace(/^public\//, ''));
+    if (fs.existsSync(fullPath)) {
+      const stat = fs.statSync(fullPath);
+      const sizeBytes = stat.size;
+      const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(2) + ' MB';
+      const fileName = path.basename(fullPath);
+      return { fileSize: sizeBytes, fileSizeMB: sizeMB, fileName };
+    }
+  } catch (e) {}
+  return null;
+}
 
 // Ensure data folder and chapters file exist
 async function getStoredChapters() {
@@ -24,17 +43,27 @@ async function getStoredChapters() {
 
       const merged = INITIAL_60_CHAPTERS.map((init) => {
         const stored = chapterMap.get(init.chapter);
-        if (!stored) return init;
-        return {
+        const base = stored ? {
           ...init,
           ...stored,
-          // Keep audio tracks if present
           audioTracks: (stored.audioTracks && stored.audioTracks.length > 0)
             ? stored.audioTracks
             : init.audioTracks,
           pdfUrl: stored.pdfUrl !== undefined ? stored.pdfUrl : init.pdfUrl,
           coverImage: stored.coverImage !== undefined ? stored.coverImage : (init.coverImage || "")
-        };
+        } : init;
+
+        // Attach exact file stats
+        const stats = getPdfFileStats(base.pdfUrl);
+        if (stats) {
+          return {
+            ...base,
+            fileSize: stats.fileSize,
+            fileSizeMB: stats.fileSizeMB,
+            fileName: stats.fileName
+          };
+        }
+        return base;
       });
 
       return merged;
@@ -51,7 +80,10 @@ async function getStoredChapters() {
     console.error('Failed to initialize eps-book-chapters.json:', err);
   }
 
-  return INITIAL_60_CHAPTERS;
+  return INITIAL_60_CHAPTERS.map((c) => {
+    const stats = getPdfFileStats(c.pdfUrl);
+    return stats ? { ...c, fileSize: stats.fileSize, fileSizeMB: stats.fileSizeMB, fileName: stats.fileName } : c;
+  });
 }
 
 // GET /api/eps-book: Fetch all 60 chapters for students, institutes, and admins
