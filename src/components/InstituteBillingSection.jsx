@@ -1945,10 +1945,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     const finalTotal = Math.max(0, netCourseFee + materialsTotal);
 
     setForm(prev => {
+      // Do NOT force paidAmount to finalTotal on Full Payment; keep user-entered/student's actual paid payment intact
       let nextPaid = prev.paidAmount;
-      if (prev.paymentSystem === "Full Payment") {
-        nextPaid = finalTotal;
-      } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
+      if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
         nextPaid = finalTotal;
       }
       return {
@@ -1973,10 +1972,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     const finalTotal = Math.max(0, netCourseFee + materialsTotal);
 
     setForm(prev => {
+      // Do NOT force paidAmount to finalTotal on Full Payment; keep user-entered/student's actual paid payment intact
       let nextPaid = prev.paidAmount;
-      if (prev.paymentSystem === "Full Payment") {
-        nextPaid = finalTotal;
-      } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
+      if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
         nextPaid = finalTotal;
       }
       return {
@@ -2013,7 +2011,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         discountPercent: discPct,
         discountAmount: discAmt,
         totalFee: finalTotal,
-        paidAmount: prev.paymentSystem === "Full Payment" ? finalTotal : Math.min(Number(prev.paidAmount || 0), finalTotal)
+        paidAmount: (prev.paidAmount !== "" && Number(prev.paidAmount) > 0) ? Math.min(Number(prev.paidAmount), finalTotal) : finalTotal
       };
     });
   };

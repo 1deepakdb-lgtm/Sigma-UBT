@@ -690,9 +690,9 @@ export async function PUT(req) {
             paymentMethod: (body.paymentMethod && body.paymentMethod.trim()) ? body.paymentMethod.trim() : (existing.parentBillNumber || 'Cash')
           }
         ];
-      } else if (body.paidAmount !== undefined && Number(body.paidAmount) !== Number(existing.paidAmount)) {
-        // Administrator adjusted the paid amount during bill edit:
-        // Adjust the last payment installment to match the new paid amount without destroying historical dates
+      } else if (body.paidAmount !== undefined) {
+        // Synchronize payment transaction method and amount:
+        // Adjust the last payment installment to match the actual received payment amount and method without destroying historical dates
         const sumPrevious = paymentsList.slice(0, -1).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
         const lastIndex = paymentsList.length - 1;
         const adjustedLastAmount = Math.max(0, paid - sumPrevious);
