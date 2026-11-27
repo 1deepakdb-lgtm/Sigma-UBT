@@ -5538,15 +5538,15 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             ? `Bill Number: ${form.existingBillNumber} (Keeps SAME Bill Number)`
                             : `Next Generated Bill Number: ${getNextBillNumber()}`}
                       </span>
-                      {/* Billing Date display / editable for Main Admin */}
-                      {form.isEditingExistingBill && isMainAdmin ? (
+                      {/* Billing Date display / editable for Institute Admin and Main Admin */}
+                      {(billingRole === "admin" || isMainAdmin) ? (
                         <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
                           <span style={{ fontSize: "11px", fontWeight: "800", color: "#1e40af" }}>
-                            Billing Date (Main Admin Only):
+                            Date:
                           </span>
                           <input
                             type="date"
-                            value={form.date || ""}
+                            value={form.date || getLocalDateStr()}
                             onChange={(e) => setForm({ ...form, date: e.target.value })}
                             style={{
                               padding: "3px 8px",
@@ -5558,7 +5558,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               backgroundColor: "#ffffff",
                               cursor: "pointer"
                             }}
-                            title="Edit billing date (Main Admin permission)"
+                            title="Edit billing / payment date (Admin permission)"
                           />
                         </div>
                       ) : (
@@ -5574,7 +5574,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           alignItems: "center",
                           gap: "4px"
                         }}>
-                          Date: {form.date || new Date().toISOString().split('T')[0]} {form.isEditingExistingBill ? "(Locked)" : "(Auto)"}
+                          Date: {form.date || getLocalDateStr()} (Auto)
                         </span>
                       )}
                     </div>

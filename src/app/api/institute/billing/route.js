@@ -633,15 +633,15 @@ export async function PUT(req) {
       // Check if billing date is being modified
       const requestedDate = body.date ? String(body.date).trim() : null;
       const isDateChanged = requestedDate && requestedDate !== existing.date;
-      if (isDateChanged && session.role !== 'admin') {
+      if (isDateChanged && session.role !== 'admin' && session.role !== 'institute') {
         return NextResponse.json({
-          error: 'Forbidden: Only the Main Admin has permission to edit the billing date of an institute bill.',
-          message: 'Permission denied. Only Main Admin can edit billing date.'
+          error: 'Forbidden: Only Institute Admin and Main Admin have permission to edit the billing date.',
+          message: 'Permission denied. Only Institute Admin and Main Admin can edit billing date.'
         }, { status: 403 });
       }
 
-      // If Main Admin changed the billing date, preserve actual payment dates!
-      const effectiveBillDate = (isDateChanged && session.role === 'admin') ? requestedDate : existing.date;
+      // If Admin or Institute Admin changed the billing date, preserve actual payment dates!
+      const effectiveBillDate = (isDateChanged && (session.role === 'admin' || session.role === 'institute')) ? requestedDate : existing.date;
 
       const gross = Number(body.grossFee) >= 0 ? Number(body.grossFee) : (Number(existing.grossFee) || Number(existing.totalFee));
       const discPct = Number(body.discountPercent) >= 0 ? Number(body.discountPercent) : (Number(existing.discountPercent) || 0);
