@@ -1939,82 +1939,81 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     return digits.slice(0, 10);
   };
 
-  // Helper to send WhatsApp Bill Receipt / PDF notice
+  // Helper to send WhatsApp Bill Receipt / PDF notice (in Nepali)
   const handleSendWhatsAppReceipt = (bill = selectedInvoice) => {
     if (!bill) return;
     const phone = normalizeNepaliMobile(bill.contactNumber);
     if (!phone || phone.length < 10) {
-      alert("Valid 10-digit mobile number not found for this student.");
+      alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
       return;
     }
-    const instTitle = instituteName ? `${instituteName.trim()} - ` : "";
     const dueAmt = Number(bill.dueAmount || 0);
     const paidAmt = Number(bill.paidAmount || 0);
     const totalAmt = Number(bill.totalFee || 0);
 
-    let msg = `*Fee Payment Receipt*\n`;
+    let msg = `*शुल्क भुक्तानी रसिद (Fee Receipt)*\n`;
     if (instituteName) msg += `🏢 *${instituteName.trim()}*\n`;
-    msg += `📄 *Bill No:* ${bill.billNumber || "N/A"}\n`;
-    msg += `👤 *Student:* ${bill.studentName || "Student"}\n`;
+    msg += `📄 *बिल नं (Bill No):* ${bill.billNumber || "N/A"}\n`;
+    msg += `👤 *विद्यार्थीको नाम:* ${bill.studentName || "Student"}\n`;
     if (bill.coursePackage || bill.courseDetail) {
-      msg += `📚 *Course:* ${bill.coursePackage || bill.courseDetail}\n`;
+      msg += `📚 *कोर्स (Course):* ${bill.coursePackage || bill.courseDetail}\n`;
     }
-    msg += `📅 *Date:* ${bill.date || getLocalDateStr()}\n`;
-    msg += `💰 *Total Fee:* Rs. ${totalAmt.toLocaleString()}\n`;
-    msg += `✅ *Paid Amount:* Rs. ${paidAmt.toLocaleString()}\n`;
-    msg += `💳 *Payment Method:* ${bill.paymentMethod || "Cash"}\n`;
+    msg += `📅 *मिति (Date):* ${bill.date || getLocalDateStr()}\n`;
+    msg += `💰 *जम्मा शुल्क (Total Fee):* रु. ${totalAmt.toLocaleString()}\n`;
+    msg += `✅ *भुक्तानी रकम (Paid Amount):* रु. ${paidAmt.toLocaleString()}\n`;
+    msg += `💳 *भुक्तानी माध्यम (Method):* ${bill.paymentMethod || "Cash"}\n`;
 
     if (dueAmt > 0) {
-      msg += `⚠️ *Remaining Due Balance:* Rs. ${dueAmt.toLocaleString()}\n`;
+      msg += `⚠️ *बाँकी रकम (Remaining Due):* रु. ${dueAmt.toLocaleString()}\n`;
       if (bill.nextPaymentDate) {
-        msg += `⏰ *Next Payment Due Date:* ${bill.nextPaymentDate}\n`;
+        msg += `⏰ *अर्को किस्ता भुक्तानी मिति:* ${bill.nextPaymentDate}\n`;
       }
     } else {
-      msg += `🎉 *Payment Status:* Paid in Full\n`;
+      msg += `🎉 *भुक्तानी स्थिति:* पूर्ण भुक्तानी भइसकेको (Paid in Full)\n`;
     }
-    msg += `\nThank you for your payment! Please keep this receipt for your records.`;
+    msg += `\nभुक्तानी गर्नुभएकोमा धन्यवाद! कृपया यो रसिद सुरक्षित राख्नुहोला।`;
 
     const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
   };
 
-  // Helper to send WhatsApp Due Payment Reminder (especially for last 2 days or overdue)
+  // Helper to send WhatsApp Due Payment Reminder in Nepali
   const handleSendWhatsAppReminder = (bill = selectedInvoice) => {
     if (!bill) return;
     const phone = normalizeNepaliMobile(bill.contactNumber);
     if (!phone || phone.length < 10) {
-      alert("Valid 10-digit mobile number not found for this student.");
+      alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
       return;
     }
     const dueAmt = Number(bill.dueAmount || 0);
     if (dueAmt <= 0) {
-      alert("This student has already paid in full. No due balance remaining.");
+      alert("विद्यार्थीको कुनै बाँकी शुल्क छैन, पूर्ण भुक्तानी भइसकेको छ।");
       return;
     }
     const cd = getPaymentCountdown(bill);
     let timeNotice = "";
     if (cd) {
       if (cd.isOverdue) {
-        timeNotice = `(Overdue by ${cd.overdueDays || 1} day${cd.overdueDays > 1 ? 's' : ''})`;
+        timeNotice = `(${cd.overdueDays || 1} दिन ढिला भएको / Overdue)`;
       } else if (cd.isDueToday) {
-        timeNotice = `(Due Today)`;
+        timeNotice = `(आजै अन्तिम मिति / Due Today)`;
       } else if (cd.daysRemaining !== null) {
-        timeNotice = `(${cd.daysRemaining} day${cd.daysRemaining > 1 ? 's' : ''} remaining)`;
+        timeNotice = `(${cd.daysRemaining} दिन बाँकी)`;
       }
     }
 
-    let msg = `*Payment Reminder Notice*\n`;
+    let msg = `*शुल्क भुक्तानी सम्बन्धी जानकारी (Payment Reminder)*\n`;
     if (instituteName) msg += `🏢 *${instituteName.trim()}*\n`;
-    msg += `Dear *${bill.studentName || "Student"}*,\n\n`;
-    msg += `This is a gentle reminder regarding your upcoming fee installment payment.\n\n`;
-    msg += `📄 *Bill No:* ${bill.billNumber || "N/A"}\n`;
-    msg += `💰 *Remaining Due Balance:* Rs. ${dueAmt.toLocaleString()}\n`;
+    msg += `आदरणीय *${bill.studentName || "विद्यार्थी"}* ज्यू,\n\n`;
+    msg += `यो तपाईंको आगामी किस्ता शुल्क भुक्तानी सम्बन्धी विनम्र स्मरण पत्र हो।\n\n`;
+    msg += `📄 *बिल नं (Bill No):* ${bill.billNumber || "N/A"}\n`;
+    msg += `💰 *बाँकी रकम (Remaining Due):* रु. ${dueAmt.toLocaleString()}\n`;
     if (bill.nextPaymentDate) {
-      msg += `📅 *Due Date:* ${bill.nextPaymentDate} ${timeNotice}\n`;
+      msg += `📅 *भुक्तानी गर्ने अन्तिम मिति:* ${bill.nextPaymentDate} ${timeNotice}\n`;
     } else if (timeNotice) {
-      msg += `⏰ *Schedule:* ${timeNotice}\n`;
+      msg += `⏰ *समय तालिका:* ${timeNotice}\n`;
     }
-    msg += `\nPlease kindly arrange to complete this payment before the due date. If you have already paid, please ignore this notice.\n\nThank you!`;
+    msg += `\nकृपया तोकिएको मितिभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहुन हार्दिक अनुरोध गर्दछौं। यदि तपाईंले पहिले नै भुक्तानी गरिसक्नुभएको छ भने कृपया यस जानकारीलाई बेवास्ता गरिदिनुहोला।\n\nधन्यवाद!`;
 
     const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
