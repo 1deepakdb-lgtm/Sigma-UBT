@@ -65,17 +65,6 @@ export function getDateRangeBoundaries(timeframe = 'daily', targetMonth = null, 
   return { startDate: '1970-01-01', endDate: '2099-12-31', label: 'All-Time' };
 }
 
-// Normalize payment method string across all possible inputs (Cash, Esewa, Khalti, Bank, etc.)
-export function normalizePaymentMethod(rawMethod) {
-  if (!rawMethod) return 'Cash';
-  const s = String(rawMethod).trim().toLowerCase();
-  if (s.includes('esewa') || s.includes('e-sewa')) return 'Online Esewa';
-  if (s.includes('khalti')) return 'Online Khalti';
-  if (s.includes('bank') || s.includes('acc') || s.includes('account') || s.includes('transfer') || s.includes('fonepay') || s.includes('connectips')) return 'Online Bank Acc';
-  if (s.includes('cash')) return 'Cash';
-  return 'Other';
-}
-
 /**
  * Extracts and normalizes individual payment transactions from a BillRecord.
  * Every transaction contains:
@@ -110,7 +99,7 @@ export function extractTransactionsFromBill(bill) {
           contactNumber: bill.contactNumber,
           date: p.date || bill.date || getKathmanduDateStr(),
           amount: Number(p.amount) || 0,
-          paymentMethod: normalizePaymentMethod(p.paymentMethod || bill.paymentMethod || bill.parentBillNumber || 'Cash'),
+          paymentMethod: p.paymentMethod || bill.paymentMethod || bill.parentBillNumber || 'Cash',
           installment: p.installment || (idx + 1),
           preparedBy: p.preparedBy || bill.preparedBy || '',
           isRefund: Boolean(p.isRefund || (Number(p.amount) < 0)),
@@ -134,7 +123,7 @@ export function extractTransactionsFromBill(bill) {
         contactNumber: bill.contactNumber,
         date: bill.firstPaymentDate || bill.date || getKathmanduDateStr(),
         amount: Number(bill.firstInstallment) || 0,
-        paymentMethod: normalizePaymentMethod(bill.paymentMethod || bill.parentBillNumber || 'Cash'),
+        paymentMethod: bill.paymentMethod || bill.parentBillNumber || 'Cash',
         installment: 1,
         preparedBy: bill.preparedBy || '',
         isRefund: false,
@@ -151,7 +140,7 @@ export function extractTransactionsFromBill(bill) {
         contactNumber: bill.contactNumber,
         date: bill.secondPaymentDate || bill.date || getKathmanduDateStr(),
         amount: Number(bill.secondInstallment) || 0,
-        paymentMethod: normalizePaymentMethod(bill.paymentMethod || bill.parentBillNumber || 'Cash'),
+        paymentMethod: bill.paymentMethod || bill.parentBillNumber || 'Cash',
         installment: 2,
         preparedBy: bill.preparedBy || '',
         isRefund: false,
@@ -168,7 +157,7 @@ export function extractTransactionsFromBill(bill) {
         contactNumber: bill.contactNumber,
         date: bill.thirdPaymentDate || bill.date || getKathmanduDateStr(),
         amount: Number(bill.thirdInstallment) || 0,
-        paymentMethod: normalizePaymentMethod(bill.paymentMethod || bill.parentBillNumber || 'Cash'),
+        paymentMethod: bill.paymentMethod || bill.parentBillNumber || 'Cash',
         installment: 3,
         preparedBy: bill.preparedBy || '',
         isRefund: false,
@@ -188,7 +177,7 @@ export function extractTransactionsFromBill(bill) {
       contactNumber: bill.contactNumber,
       date: bill.date || getKathmanduDateStr(),
       amount: Number(bill.paidAmount) || 0,
-      paymentMethod: normalizePaymentMethod(bill.paymentMethod || bill.parentBillNumber || 'Cash'),
+      paymentMethod: bill.paymentMethod || bill.parentBillNumber || 'Cash',
       installment: 1,
       preparedBy: bill.preparedBy || '',
       isRefund: false,
@@ -287,7 +276,7 @@ export function calculateCollectionsLedger(bills = [], options = {}) {
       if (!inTxPeriod) return;
 
       // Method filter
-      const m = normalizePaymentMethod(tx.paymentMethod);
+      const m = tx.paymentMethod || 'Cash';
       if (paymentMethodFilter !== 'all' && m !== paymentMethodFilter) return;
 
       matchingTransactions.push(tx);
