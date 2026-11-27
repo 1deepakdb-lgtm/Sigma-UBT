@@ -1947,11 +1947,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
       return;
     }
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://examjk.com";
+    const billPdfUrl = `${origin}/bill/${encodeURIComponent(bill.billNumber || bill.id)}`;
+
     const dueAmt = Number(bill.dueAmount || 0);
     const paidAmt = Number(bill.paidAmount || 0);
     const totalAmt = Number(bill.totalFee || 0);
 
-    let msg = `*शुल्क भुक्तानी रसिद (Fee Receipt)*\n`;
+    let msg = `*शुल्क भुक्तानी आधिकारिक रसिद (Official Bill Receipt)*\n`;
     if (instituteName) msg += `🏢 *${instituteName.trim()}*\n`;
     msg += `📄 *बिल नं (Bill No):* ${bill.billNumber || "N/A"}\n`;
     msg += `👤 *विद्यार्थीको नाम:* ${bill.studentName || "Student"}\n`;
@@ -1959,19 +1962,21 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       msg += `📚 *कोर्स (Course):* ${bill.coursePackage || bill.courseDetail}\n`;
     }
     msg += `📅 *मिति (Date):* ${bill.date || getLocalDateStr()}\n`;
-    msg += `💰 *जम्मा शुल्क (Total Fee):* रु. ${totalAmt.toLocaleString()}\n`;
-    msg += `✅ *भुक्तानी रकम (Paid Amount):* रु. ${paidAmt.toLocaleString()}\n`;
-    msg += `💳 *भुक्तानी माध्यम (Method):* ${bill.paymentMethod || "Cash"}\n`;
+    msg += `💰 *जम्मा शुल्क:* रु. ${totalAmt.toLocaleString()}\n`;
+    msg += `✅ *भुक्तानी रकम:* रु. ${paidAmt.toLocaleString()}\n`;
+    msg += `💳 *भुक्तानी माध्यम:* ${bill.paymentMethod || "Cash"}\n`;
 
     if (dueAmt > 0) {
-      msg += `⚠️ *बाँकी रकम (Remaining Due):* रु. ${dueAmt.toLocaleString()}\n`;
+      msg += `⚠️ *बाँकी रकम (Due):* रु. ${dueAmt.toLocaleString()}\n`;
       if (bill.nextPaymentDate) {
-        msg += `⏰ *अर्को किस्ता भुक्तानी मिति:* ${bill.nextPaymentDate}\n`;
+        msg += `⏰ *अर्को किस्ता मिति:* ${bill.nextPaymentDate}\n`;
       }
     } else {
       msg += `🎉 *भुक्तानी स्थिति:* पूर्ण भुक्तानी भइसकेको (Paid in Full)\n`;
     }
-    msg += `\nभुक्तानी गर्नुभएकोमा धन्यवाद! कृपया यो रसिद सुरक्षित राख्नुहोला।`;
+
+    msg += `\n📥 *आफ्नो आधिकारिक छाप र हस्ताक्षर सहितको बिल PDF हेर्न वा डाउनलोड गर्न तलको लिङ्कमा क्लिक गर्नुहोस्:*\n🔗 ${billPdfUrl}\n`;
+    msg += `\nभुक्तानी गर्नुभएकोमा धन्यवाद!`;
 
     const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
@@ -1990,6 +1995,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       alert("विद्यार्थीको कुनै बाँकी शुल्क छैन, पूर्ण भुक्तानी भइसकेको छ।");
       return;
     }
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://examjk.com";
+    const billPdfUrl = `${origin}/bill/${encodeURIComponent(bill.billNumber || bill.id)}`;
+
     const cd = getPaymentCountdown(bill);
     let timeNotice = "";
     if (cd) {
@@ -2013,6 +2021,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     } else if (timeNotice) {
       msg += `⏰ *समय तालिका:* ${timeNotice}\n`;
     }
+
+    msg += `\n📥 *आफ्नो बिल विवरण र रसिद PDF हेर्न तलको लिङ्कमा क्लिक गर्नुहोस्:*\n🔗 ${billPdfUrl}\n`;
     msg += `\nकृपया तोकिएको मितिभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहुन हार्दिक अनुरोध गर्दछौं। यदि तपाईंले पहिले नै भुक्तानी गरिसक्नुभएको छ भने कृपया यस जानकारीलाई बेवास्ता गरिदिनुहोला।\n\nधन्यवाद!`;
 
     const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
