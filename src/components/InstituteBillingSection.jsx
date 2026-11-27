@@ -2359,12 +2359,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     const discAmt = Number(form.discountAmount) > 0 ? Number(form.discountAmount) : (gross * (discPct / 100));
     const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
+    // Keep user-entered paidAmount intact; do not auto-force to full total
     let nextPaid = form.paidAmount;
-    if (form.paymentSystem === "Full Payment") {
-      nextPaid = finalTotal;
-    } else if (Number(form.paidAmount) > finalTotal && finalTotal > 0) {
-      nextPaid = finalTotal;
-    }
 
     setForm(prev => ({
       ...prev,
@@ -2404,11 +2400,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
         const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
         let nextPaid = prev.paidAmount;
-        if (prev.paymentSystem === "Full Payment") {
-          nextPaid = finalTotal;
-        } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
-          nextPaid = finalTotal;
-        }
         return {
           ...prev,
           materials: updated,
@@ -2431,11 +2422,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
       const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
       let nextPaid = prev.paidAmount;
-      if (prev.paymentSystem === "Full Payment") {
-        nextPaid = finalTotal;
-      } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
-        nextPaid = finalTotal;
-      }
       return {
         ...prev,
         materials: updated,
@@ -2482,11 +2468,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
       const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
       let nextPaid = prev.paidAmount;
-      if (prev.paymentSystem === "Full Payment") {
-        nextPaid = finalTotal;
-      } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
-        nextPaid = finalTotal;
-      }
 
       return {
         ...prev,
@@ -2537,11 +2518,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       const materialsTotal = updated.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
       const finalTotal = Math.max(0, (gross - discAmt) + materialsTotal);
       let nextPaid = prev.paidAmount;
-      if (prev.paymentSystem === "Full Payment") {
-        nextPaid = finalTotal;
-      } else if (Number(prev.paidAmount) > finalTotal && finalTotal > 0) {
-        nextPaid = finalTotal;
-      }
 
       return {
         ...prev,
@@ -6047,261 +6023,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       </div>
                     )}
 
-                    {/* THE ONE ROW: [Course Fee (Gross)] -> [Discount in seted %] -> [Total Fee (Net)] -> [Enter Paid Amount *] */}
-                    <div style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1.15fr 1.25fr",
-                      gap: "10px",
-                      alignItems: "flex-end",
-                      marginBottom: "14px"
-                    }}>
-                      {/* 1. Course Gross Fee (Read-Only / Locked to Default Fee Structure) */}
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                          <label style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", textTransform: "uppercase" }}>
-                            Course Fee (Gross)
-                          </label>
-                        </div>
-                        <div style={{ position: "relative", display: "flex", alignItems: "center", cursor: "not-allowed" }}>
-                          <span style={{ position: "absolute", left: "10px", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="100"
-                            placeholder="0"
-                            readOnly
-                            disabled
-                            tabIndex={-1}
-                            value={form.grossFee == 0 ? '' : form.grossFee}
-                            style={{
-                              width: "100%",
-                              height: "44px",
-                              padding: "0 10px 0 34px",
-                              borderRadius: "6px",
-                              border: "1.5px solid #e2e8f0",
-                              backgroundColor: "#f8fafc",
-                              boxSizing: "border-box",
-                              fontWeight: "bold",
-                              fontSize: "14px",
-                              color: "#64748b",
-                              pointerEvents: "none",
-                              userSelect: "none"
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* 2. Discount with Toggle (% vs Rs.) (Always Editable) */}
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <label style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", textTransform: "uppercase" }}>
-                              Discount
-                            </label>
-                            {/* Mode Toggle: % vs Rs. */}
-                            <div style={{ display: "inline-flex", backgroundColor: "#e2e8f0", borderRadius: "4px", padding: "1px" }}>
-                              <button
-                                type="button"
-                                onClick={() => setDiscountMode("pct")}
-                                title="Set discount by percentage (%)"
-                                style={{
-                                  border: "none",
-                                  backgroundColor: discountMode === "pct" ? "#2563eb" : "transparent",
-                                  color: discountMode === "pct" ? "#ffffff" : "#475569",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  padding: "1px 6px",
-                                  borderRadius: "3px",
-                                  cursor: "pointer"
-                                }}
-                              >
-                                %
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setDiscountMode("amt")}
-                                title="Set discount by flat rupees amount (Rs.)"
-                                style={{
-                                  border: "none",
-                                  backgroundColor: discountMode === "amt" ? "#2563eb" : "transparent",
-                                  color: discountMode === "amt" ? "#ffffff" : "#475569",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  padding: "1px 6px",
-                                  borderRadius: "3px",
-                                  cursor: "pointer"
-                                }}
-                              >
-                                Rs.
-                              </button>
-                            </div>
-                          </div>
-
-                          {discountMode === "pct" ? (
-                            Number(form.discountAmount || 0) > 0 && (
-                              <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "bold" }}>
-                                - {formatCurrency(form.discountAmount)}
-                              </span>
-                            )
-                          ) : (
-                            Number(form.discountPercent || 0) > 0 && (
-                              <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "bold" }}>
-                                ({Number(form.discountPercent).toFixed(1).replace(/\.0$/, "")}% off)
-                              </span>
-                            )
-                          )}
-                        </div>
-
-                        <div style={{ position: "relative", display: "flex", alignItems: "center", cursor: "not-allowed" }}>
-                          <span style={{ position: "absolute", left: "10px", fontWeight: "900", fontSize: "14px", color: "#dc2626", pointerEvents: "none" }}>
-                            {discountMode === "amt" ? "- Rs." : "-"}
-                          </span>
-                          <input
-                            type="number"
-                            min="0"
-                            max={discountMode === "pct" ? "100" : (form.grossFee || "999999")}
-                            placeholder="0"
-                            readOnly
-                            disabled
-                            tabIndex={-1}
-                            value={
-                              discountMode === "amt"
-                                ? (form.discountAmount == 0 ? '' : form.discountAmount)
-                                : (form.discountPercent == 0 ? '' : form.discountPercent)
-                            }
-                            style={{
-                              width: "100%",
-                              height: "44px",
-                              padding: discountMode === "amt" ? "0 12px 0 48px" : "0 26px 0 22px",
-                              borderRadius: "6px",
-                              border: "1.5px solid #e2e8f0",
-                              backgroundColor: "#f8fafc",
-                              boxSizing: "border-box",
-                              fontWeight: "bold",
-                              fontSize: "14px",
-                              color: "#64748b",
-                              pointerEvents: "none",
-                              userSelect: "none"
-                            }}
-                          />
-                          {discountMode === "pct" && (
-                            <span style={{ position: "absolute", right: "10px", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>%</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 3. Total Fee (Kept BEFORE Paid Amount) */}
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                          <label style={{ fontSize: "11px", fontWeight: "900", color: "#1e3a8a", textTransform: "uppercase" }}>
-                            Total Fee (Net)
-                          </label>
-                        </div>
-                        <div style={{
-                          width: "100%",
-                          height: "44px",
-                          padding: "0 8px",
-                          borderRadius: "6px",
-                          border: "2px solid #2563eb",
-                          backgroundColor: "#eff6ff",
-                          boxSizing: "border-box",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: "900",
-                          fontSize: "15px",
-                          color: "#1e40af"
-                        }}>
-                          {formatCurrency(form.totalFee || 0)}
-                        </div>
-                      </div>
-
-                      {/* 4. Enter Paid Amount * (Simple Green Background) */}
-                      <div>
-                        {(() => {
-                          const maxAllowedPayment = (() => {
-                            if (form.isExistingStudent && !form.isEditingExistingBill) {
-                              const existing = bills.find(b => {
-                                if (!b.contactNumber) return false;
-                                return normalizeNepaliMobile(b.contactNumber) === normalizeNepaliMobile(form.contactNumber);
-                              });
-                              if (existing && Number(existing.dueAmount) > 0) {
-                                return Number(existing.dueAmount);
-                              }
-                            }
-                            const feeAfterDiscount = Number(form.totalFee || 0);
-                            const gross = Number(form.grossFee || 0);
-                            if (feeAfterDiscount > 0) return feeAfterDiscount;
-                            if (gross > 0) return gross;
-                            return 0;
-                          })();
-
-                          return (
-                            <>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                                <label style={{ fontSize: "11px", fontWeight: "900", color: "#15803d", letterSpacing: "0.2px", textTransform: "uppercase" }}>
-                                  Enter Paid Amount *
-                                </label>
-                                {(() => {
-                                  const due = Math.max(0, Number(form.totalFee || 0) - Number(form.paidAmount || 0));
-                                  return (
-                                    <span style={{ fontSize: "10px", fontWeight: "bold", color: due > 0 ? "#dc2626" : "#16a34a" }}>
-                                      {due > 0 ? `Due: ${formatCurrency(due)}` : "✓ Full"}
-                                    </span>
-                                  );
-                                })()}
-                              </div>
-                              <div style={{ position: "relative", width: "100%", height: "44px", backgroundColor: "#16a34a", borderRadius: "6px", boxSizing: "border-box", overflow: "hidden" }}>
-                                <input
-                                  type="number"
-                                  required
-                                  min="1"
-                                  max={maxAllowedPayment > 0 ? maxAllowedPayment : undefined}
-                                  placeholder="Paid Amount"
-                                  value={form.paidAmount}
-                                  className="paid-amount-green-input"
-                                  onWheel={(e) => e.target.blur()}
-                                  onChange={(e) => {
-                                    const rawVal = e.target.value;
-                                    if (rawVal === "") {
-                                      setForm(prev => ({ ...prev, paidAmount: "" }));
-                                      return;
-                                    }
-                                    const num = Number(rawVal);
-                                    if (maxAllowedPayment > 0 && num > maxAllowedPayment) {
-                                      setForm(prev => ({ ...prev, paidAmount: maxAllowedPayment }));
-                                    } else {
-                                      setForm(prev => ({ ...prev, paidAmount: rawVal }));
-                                    }
-                                  }}
-                                  style={{
-                                    width: "100%",
-                                    height: "44px",
-                                    minHeight: "44px",
-                                    maxHeight: "44px",
-                                    backgroundColor: "#16a34a",
-                                    color: "#ffffff",
-                                    border: "2px solid #15803d",
-                                    borderRadius: "6px",
-                                    fontWeight: "900",
-                                    fontSize: "17px",
-                                    textAlign: "center",
-                                    letterSpacing: "0.5px",
-                                    padding: "0 8px",
-                                    boxSizing: "border-box",
-                                    outline: "none",
-                                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.28)",
-                                    transition: "all 0.15s ease"
-                                  }}
-                                />
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* ADD ITEM WITH DROP DOWN ARROW ONLY (PLACED BELOW FEE & PAID AMOUNT ROW) */}
+                    {/* ADD ITEM WITH DROP DOWN ARROW ONLY (PLACED ABOVE FEE & PAID AMOUNT ROW) */}
                     <div style={{
                       backgroundColor: "#ffffff",
                       border: "1.5px solid #86efac",
@@ -6619,6 +6341,260 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                           ))}
                         </div>
                       )}
+                    </div>
+
+                    {/* THE ONE ROW: [Course Fee (Gross)] -> [Discount in seted %] -> [Total Fee (Net)] -> [Enter Paid Amount *] */}
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1.15fr 1.25fr",
+                      gap: "10px",
+                      alignItems: "flex-end",
+                      marginBottom: "14px"
+                    }}>
+                      {/* 1. Course Gross Fee (Read-Only / Locked to Default Fee Structure) */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <label style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", textTransform: "uppercase" }}>
+                            Course Fee (Gross)
+                          </label>
+                        </div>
+                        <div style={{ position: "relative", display: "flex", alignItems: "center", cursor: "not-allowed" }}>
+                          <span style={{ position: "absolute", left: "10px", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="100"
+                            placeholder="0"
+                            readOnly
+                            disabled
+                            tabIndex={-1}
+                            value={form.grossFee == 0 ? '' : form.grossFee}
+                            style={{
+                              width: "100%",
+                              height: "44px",
+                              padding: "0 10px 0 34px",
+                              borderRadius: "6px",
+                              border: "1.5px solid #e2e8f0",
+                              backgroundColor: "#f8fafc",
+                              boxSizing: "border-box",
+                              fontWeight: "bold",
+                              fontSize: "14px",
+                              color: "#64748b",
+                              pointerEvents: "none",
+                              userSelect: "none"
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* 2. Discount with Toggle (% vs Rs.) (Always Editable) */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <label style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", textTransform: "uppercase" }}>
+                              Discount
+                            </label>
+                            {/* Mode Toggle: % vs Rs. */}
+                            <div style={{ display: "inline-flex", backgroundColor: "#e2e8f0", borderRadius: "4px", padding: "1px" }}>
+                              <button
+                                type="button"
+                                onClick={() => setDiscountMode("pct")}
+                                title="Set discount by percentage (%)"
+                                style={{
+                                  border: "none",
+                                  backgroundColor: discountMode === "pct" ? "#2563eb" : "transparent",
+                                  color: discountMode === "pct" ? "#ffffff" : "#475569",
+                                  fontSize: "10px",
+                                  fontWeight: "bold",
+                                  padding: "1px 6px",
+                                  borderRadius: "3px",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                %
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDiscountMode("amt")}
+                                title="Set discount by flat rupees amount (Rs.)"
+                                style={{
+                                  border: "none",
+                                  backgroundColor: discountMode === "amt" ? "#2563eb" : "transparent",
+                                  color: discountMode === "amt" ? "#ffffff" : "#475569",
+                                  fontSize: "10px",
+                                  fontWeight: "bold",
+                                  padding: "1px 6px",
+                                  borderRadius: "3px",
+                                  cursor: "pointer"
+                                }}
+                              >
+                                Rs.
+                              </button>
+                            </div>
+                          </div>
+
+                          {discountMode === "pct" ? (
+                            Number(form.discountAmount || 0) > 0 && (
+                              <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "bold" }}>
+                                - {formatCurrency(form.discountAmount)}
+                              </span>
+                            )
+                          ) : (
+                            Number(form.discountPercent || 0) > 0 && (
+                              <span style={{ fontSize: "11px", color: "#dc2626", fontWeight: "bold" }}>
+                                ({Number(form.discountPercent).toFixed(1).replace(/\.0$/, "")}% off)
+                              </span>
+                            )
+                          )}
+                        </div>
+
+                        <div style={{ position: "relative", display: "flex", alignItems: "center", cursor: "not-allowed" }}>
+                          <span style={{ position: "absolute", left: "10px", fontWeight: "900", fontSize: "14px", color: "#dc2626", pointerEvents: "none" }}>
+                            {discountMode === "amt" ? "- Rs." : "-"}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            max={discountMode === "pct" ? "100" : (form.grossFee || "999999")}
+                            placeholder="0"
+                            readOnly
+                            disabled
+                            tabIndex={-1}
+                            value={
+                              discountMode === "amt"
+                                ? (form.discountAmount == 0 ? '' : form.discountAmount)
+                                : (form.discountPercent == 0 ? '' : form.discountPercent)
+                            }
+                            style={{
+                              width: "100%",
+                              height: "44px",
+                              padding: discountMode === "amt" ? "0 12px 0 48px" : "0 26px 0 22px",
+                              borderRadius: "6px",
+                              border: "1.5px solid #e2e8f0",
+                              backgroundColor: "#f8fafc",
+                              boxSizing: "border-box",
+                              fontWeight: "bold",
+                              fontSize: "14px",
+                              color: "#64748b",
+                              pointerEvents: "none",
+                              userSelect: "none"
+                            }}
+                          />
+                          {discountMode === "pct" && (
+                            <span style={{ position: "absolute", right: "10px", fontSize: "12px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>%</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 3. Total Fee (Kept BEFORE Paid Amount) */}
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <label style={{ fontSize: "11px", fontWeight: "900", color: "#1e3a8a", textTransform: "uppercase" }}>
+                            Total Fee (Net)
+                          </label>
+                        </div>
+                        <div style={{
+                          width: "100%",
+                          height: "44px",
+                          padding: "0 8px",
+                          borderRadius: "6px",
+                          border: "2px solid #2563eb",
+                          backgroundColor: "#eff6ff",
+                          boxSizing: "border-box",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: "900",
+                          fontSize: "15px",
+                          color: "#1e40af"
+                        }}>
+                          {formatCurrency(form.totalFee || 0)}
+                        </div>
+                      </div>
+
+                      {/* 4. Enter Paid Amount * (Simple Green Background) */}
+                      <div>
+                        {(() => {
+                          const maxAllowedPayment = (() => {
+                            if (form.isExistingStudent && !form.isEditingExistingBill) {
+                              const existing = bills.find(b => {
+                                if (!b.contactNumber) return false;
+                                return normalizeNepaliMobile(b.contactNumber) === normalizeNepaliMobile(form.contactNumber);
+                              });
+                              if (existing && Number(existing.dueAmount) > 0) {
+                                return Number(existing.dueAmount);
+                              }
+                            }
+                            const feeAfterDiscount = Number(form.totalFee || 0);
+                            const gross = Number(form.grossFee || 0);
+                            if (feeAfterDiscount > 0) return feeAfterDiscount;
+                            if (gross > 0) return gross;
+                            return 0;
+                          })();
+
+                          return (
+                            <>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                                <label style={{ fontSize: "11px", fontWeight: "900", color: "#15803d", letterSpacing: "0.2px", textTransform: "uppercase" }}>
+                                  Enter Paid Amount *
+                                </label>
+                                {(() => {
+                                  const due = Math.max(0, Number(form.totalFee || 0) - Number(form.paidAmount || 0));
+                                  return (
+                                    <span style={{ fontSize: "10px", fontWeight: "bold", color: due > 0 ? "#dc2626" : "#16a34a" }}>
+                                      {due > 0 ? `Due: ${formatCurrency(due)}` : "✓ Full"}
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+                              <div style={{ position: "relative", width: "100%", height: "44px", backgroundColor: "#16a34a", borderRadius: "6px", boxSizing: "border-box", overflow: "hidden" }}>
+                                <input
+                                  type="number"
+                                  required
+                                  min="1"
+                                  max={maxAllowedPayment > 0 ? maxAllowedPayment : undefined}
+                                  placeholder="Paid Amount"
+                                  value={form.paidAmount}
+                                  className="paid-amount-green-input"
+                                  onWheel={(e) => e.target.blur()}
+                                  onChange={(e) => {
+                                    const rawVal = e.target.value;
+                                    if (rawVal === "") {
+                                      setForm(prev => ({ ...prev, paidAmount: "" }));
+                                      return;
+                                    }
+                                    const num = Number(rawVal);
+                                    if (maxAllowedPayment > 0 && num > maxAllowedPayment) {
+                                      setForm(prev => ({ ...prev, paidAmount: maxAllowedPayment }));
+                                    } else {
+                                      setForm(prev => ({ ...prev, paidAmount: rawVal }));
+                                    }
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    height: "44px",
+                                    minHeight: "44px",
+                                    maxHeight: "44px",
+                                    backgroundColor: "#16a34a",
+                                    color: "#ffffff",
+                                    border: "2px solid #15803d",
+                                    borderRadius: "6px",
+                                    fontWeight: "900",
+                                    fontSize: "17px",
+                                    textAlign: "center",
+                                    letterSpacing: "0.5px",
+                                    padding: "0 8px",
+                                    boxSizing: "border-box",
+                                    outline: "none",
+                                    boxShadow: "0 2px 6px rgba(22, 163, 74, 0.28)",
+                                    transition: "all 0.15s ease"
+                                  }}
+                                />
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
 
                     {/* PAYMENT METHOD */}
