@@ -4007,30 +4007,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </div>
               </div>
 
-              {/* KPI Stat Cards: Total Fee (Net / After Discount Gross Fee), Total Paid Collections (Enter Paid Amount *), Cash, Online, and Due */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px", marginBottom: "14px" }}>
-                {/* 1. Total Fee (Net / After Discount Gross Fee) */}
-                <div style={{ backgroundColor: "#eff6ff", border: "1.5px solid #93c5fd", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#1e40af", marginBottom: "3px" }}>
-                    Total {adminTimeframe === "daily" ? "Daily" : adminTimeframe === "weekly" ? "Weekly" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Fee
-                  </div>
-                  <div style={{ fontSize: "22px", fontWeight: "900", color: "#1d4ed8" }}>
-                    {formatCurrency(activeStats.totalBilled)}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#1e40af", marginTop: "3px", fontWeight: "700" }}>
-                    Total Fee (Net)
-                  </div>
-                  <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
-                    After Discount Gross Fee {activeStats.totalGrossFee > activeStats.totalBilled && `(Gross: ${formatCurrency(activeStats.totalGrossFee)})`}
-                  </div>
-                </div>
-
-                {/* 2. Total Paid Collections (Enter Paid Amount *) */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              {/* KPI Stat Cards: Paid Amount Only (Total Paid, Paid in Cash, Paid Online by Bank/eSewa/Khalti) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px", marginBottom: "14px" }}>
+                {/* 1. Total Paid Collections (Actual Received Paid Fee) */}
+                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "14px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
-                    Total {adminTimeframe === "daily" ? "Daily" : adminTimeframe === "weekly" ? "Weekly" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Paid Collections
+                    Total {adminTimeframe === "daily" ? "Today's" : adminTimeframe === "weekly" ? "Weekly" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Paid Collections
                   </div>
-                  <div style={{ fontSize: "22px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "24px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.total)}
                   </div>
                   <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "700" }}>
@@ -4041,12 +4025,12 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   </div>
                 </div>
 
-                {/* 3. Paid in Cash (Cash in Hand) */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                {/* 2. Paid in Cash (Cash in Hand) */}
+                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "14px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
                     Paid in Cash (Cash in Hand)
                   </div>
-                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "22px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.cash)}
                   </div>
                   <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "600" }}>
@@ -4057,35 +4041,19 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   </div>
                 </div>
 
-                {/* 4. Paid Online (Digital Payments: Bank Acc, eSewa & Khalti) */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                {/* 3. Paid Online (Digital Payments: Bank Acc, eSewa & Khalti) */}
+                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "14px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
                     Paid Online (Digital Payments)
                   </div>
-                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "22px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.online)}
                   </div>
                   <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "600" }}>
                     Bank Acc, eSewa & Khalti
                   </div>
-                  <div style={{ fontSize: "10.5px", color: "#1e3a8a", marginTop: "2px", fontWeight: "600" }}>
+                  <div style={{ fontSize: "10.5px", color: "#1e3a8a", marginTop: "3px", fontWeight: "700" }}>
                     Bank: <strong>{formatCurrency(activeStats.breakdown["Online Bank Acc"])}</strong> • eSewa: <strong>{formatCurrency(activeStats.breakdown["Online Esewa"])}</strong> • Khalti: <strong>{formatCurrency(activeStats.breakdown["Online Khalti"])}</strong>
-                  </div>
-                </div>
-
-                {/* 5. Outstanding Balance (Due) */}
-                <div style={{ backgroundColor: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#9a3412", marginBottom: "3px" }}>
-                    Outstanding Balance (Due)
-                  </div>
-                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#c2410c" }}>
-                    {formatCurrency(activeStats.totalOutstanding)}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#9a3412", marginTop: "3px", fontWeight: "600" }}>
-                    Unpaid Pending Fees
-                  </div>
-                  <div style={{ fontSize: "10px", color: "#78350f", marginTop: "2px" }}>
-                    Total Fee ({formatCurrency(activeStats.totalBilled)}) - Paid ({formatCurrency(activeStats.total)})
                   </div>
                 </div>
               </div>
