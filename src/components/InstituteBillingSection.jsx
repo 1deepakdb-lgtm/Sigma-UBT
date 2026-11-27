@@ -4054,11 +4054,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "600" }}>
                     Physical Cash in Hand
                   </div>
-                  {activeStats.breakdown["Other"] > 0 && (
-                    <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
-                      Other: {formatCurrency(activeStats.breakdown["Other"])}
-                    </div>
-                  )}
+                  <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
+                    {activeStats.breakdown["Other"] > 0 ? `Cash: ${formatCurrency(activeStats.breakdown["Cash"])} • Other: ${formatCurrency(activeStats.breakdown["Other"])}` : 'Physical Cash Receipts Only'}
+                  </div>
                 </div>
 
                 {/* 4. Paid Online (Digital Payments: Bank Acc, eSewa & Khalti) */}
@@ -4072,8 +4070,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   <div style={{ fontSize: "11px", color: "#166534", marginTop: "3px", fontWeight: "600" }}>
                     Bank Acc, eSewa & Khalti
                   </div>
-                  <div style={{ fontSize: "10px", color: "#475569", marginTop: "2px" }}>
-                    Bank: {formatCurrency(activeStats.breakdown["Online Bank Acc"])} • eSewa: {formatCurrency(activeStats.breakdown["Online Esewa"])} • Khalti: {formatCurrency(activeStats.breakdown["Online Khalti"])}
+                  <div style={{ fontSize: "10.5px", color: "#1e3a8a", marginTop: "2px", fontWeight: "600" }}>
+                    Bank: <strong>{formatCurrency(activeStats.breakdown["Online Bank Acc"])}</strong> • eSewa: <strong>{formatCurrency(activeStats.breakdown["Online Esewa"])}</strong> • Khalti: <strong>{formatCurrency(activeStats.breakdown["Online Khalti"])}</strong>
                   </div>
                 </div>
 
