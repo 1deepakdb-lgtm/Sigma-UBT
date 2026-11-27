@@ -630,6 +630,19 @@ export async function PUT(req) {
         return NextResponse.json({ error: 'Unauthorized to edit this bill' }, { status: 403 });
       }
 
+      // Check if billing date is being modified
+      const requestedDate = body.date ? String(body.date).trim() : null;
+      const isDateChanged = requestedDate && requestedDate !== existing.date;
+      if (isDateChanged && session.role !== 'admin') {
+        return NextResponse.json({
+          error: 'Forbidden: Only the Main Admin has permission to edit the billing date of an institute bill.',
+          message: 'Permission denied. Only Main Admin can edit billing date.'
+        }, { status: 403 });
+      }
+
+      // If Main Admin changed the billing date, preserve actual payment dates!
+      const effectiveBillDate = (isDateChanged && session.role === 'admin') ? requestedDate : existing.date;
+
       const gross = Number(body.grossFee) >= 0 ? Number(body.grossFee) : (Number(existing.grossFee) || Number(existing.totalFee));
       const discPct = Number(body.discountPercent) >= 0 ? Number(body.discountPercent) : (Number(existing.discountPercent) || 0);
       const discAmt = gross * (discPct / 100);
@@ -656,7 +669,7 @@ export async function PUT(req) {
 
       const cleanStr = (val) => (typeof val === 'string' ? val.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim() : val);
 
-      // Parse and reconcile existing payments list so that historical transactions are preserved
+      // Parse and reconcile existing payments list so that historical transactions and PAYMENT DATES are strictly preserved
       let paymentsList = [];
       try {
         if (existing.paymentsJson) {
@@ -671,21 +684,22 @@ export async function PUT(req) {
           {
             installment: 1,
             amount: paid,
-            date: body.date || existing.date,
-            preparedBy: body.preparedBy || existing.preparedBy || '',
+            // Payment date preserves original payment date or original bill date - NOT the newly edited bill date
+            date: existing.firstPaymentDate || existing.date,
+            preparedBy: existing.preparedBy || body.preparedBy || '',
             paymentMethod: (body.paymentMethod && body.paymentMethod.trim()) ? body.paymentMethod.trim() : (existing.parentBillNumber || 'Cash')
           }
         ];
       } else if (body.paidAmount !== undefined && Number(body.paidAmount) !== Number(existing.paidAmount)) {
-        // Administrator intentionally adjusted the paid amount during bill edit:
-        // Adjust the last payment installment (or single installment) to match the new paid amount without destroying history
+        // Administrator adjusted the paid amount during bill edit:
+        // Adjust the last payment installment to match the new paid amount without destroying historical dates
         const sumPrevious = paymentsList.slice(0, -1).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
         const lastIndex = paymentsList.length - 1;
         const adjustedLastAmount = Math.max(0, paid - sumPrevious);
         paymentsList[lastIndex] = {
           ...paymentsList[lastIndex],
           amount: adjustedLastAmount,
-          date: body.date || paymentsList[lastIndex].date || existing.date,
+          date: paymentsList[lastIndex].date || existing.date, // Preserve actual payment transaction date
           paymentMethod: (body.paymentMethod && body.paymentMethod.trim()) ? body.paymentMethod.trim() : (paymentsList[lastIndex].paymentMethod || 'Cash')
         };
       }
@@ -696,7 +710,7 @@ export async function PUT(req) {
 
       let updatedBill;
       const baseEditData = {
-        date: body.date || existing.date,
+        date: effectiveBillDate, // Main Admin updated billing date or existing date
         studentName: body.studentName ? cleanStr(body.studentName) : existing.studentName,
         address: body.address !== undefined ? cleanStr(body.address) : existing.address,
         contactNumber: editContactNumber,
@@ -713,7 +727,7 @@ export async function PUT(req) {
         paidAmount: verifiedPaid,
         dueAmount: verifiedDue,
         firstInstallment: paymentsList[0] ? paymentsList[0].amount : (existing.firstInstallment || verifiedPaid),
-        firstPaymentDate: paymentsList[0] ? paymentsList[0].date : (existing.firstPaymentDate || existing.date),
+        firstPaymentDate: existing.firstPaymentDate || paymentsList[0]?.date || existing.date, // Payment date protected
         secondInstallment: paymentsList[1] ? paymentsList[1].amount : existing.secondInstallment,
         secondPaymentDate: paymentsList[1] ? paymentsList[1].date : existing.secondPaymentDate,
         thirdInstallment: paymentsList[2] ? paymentsList[2].amount : existing.thirdInstallment,

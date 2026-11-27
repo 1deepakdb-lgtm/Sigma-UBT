@@ -669,6 +669,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const [copiedScript, setCopiedScript] = useState(false);
   // Google Sheet & Drive Setup Configuration State
   const isSuperAdminUrlParam = typeof window !== "undefined" && window.location.search.includes("superadmin=true");
+  // Check if current user is Main Admin (Super Admin)
+  const isMainAdmin = userRole === "admin" || (typeof window !== "undefined" && localStorage.getItem("role") === "admin") || isSuperAdminUrlParam;
 
   // AUTOMATIC HIDE ONCE SUCCESSFULLY LINKED:
   // After successfully linked, this menu will be automatically hidden from here.
@@ -4003,55 +4005,57 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 </div>
               </div>
 
-              {/* KPI Stat Cards */}
+              {/* KPI Stat Cards (Paid Collections Strictly) */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "14px" }}>
-                {/* Total Billed Amount */}
-                <div style={{ backgroundColor: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#475569", marginBottom: "2px" }}>
-                    Total Billed ({activeStats.totalBillsIssued} Bills)
+                {/* Total Paid Collections */}
+                <div style={{ backgroundColor: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
+                    Total {adminTimeframe === "daily" ? "Today's" : adminTimeframe === "weekly" ? "Weekly" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Paid Collections
                   </div>
-                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#0f172a" }}>
-                    {formatCurrency(activeStats.totalBilled)}
-                  </div>
-                </div>
-
-                {/* Total Period Collection */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", marginBottom: "2px" }}>
-                    Total {adminTimeframe === "daily" ? "Today" : adminTimeframe === "weekly" ? "This Week" : adminTimeframe === "monthly" ? formatMonthName(selectedMonth) : "All-Time"} Collected
-                  </div>
-                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "22px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.total)}
                   </div>
-                </div>
-
-                {/* Outstanding Due Amount */}
-                <div style={{ backgroundColor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#9a3412", marginBottom: "2px" }}>
-                    Outstanding Balance (Due)
-                  </div>
-                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#c2410c" }}>
-                    {formatCurrency(activeStats.totalOutstanding)}
+                  <div style={{ fontSize: "10.5px", color: "#166534", marginTop: "2px", fontWeight: "600" }}>
+                    Actual Received Payments Only
                   </div>
                 </div>
 
                 {/* Total Cash Collection */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", marginBottom: "2px" }}>
-                    Cash in Hand
+                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
+                    Paid in Cash (Cash in Hand)
                   </div>
-                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.cash)}
+                  </div>
+                  <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }}>
+                    Physical Cash Collections
                   </div>
                 </div>
 
                 {/* Total Online Collection */}
-                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "10px 12px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "bold", color: "#166534", marginBottom: "2px" }}>
-                    Digital / Online Payments
+                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#166534", marginBottom: "3px" }}>
+                    Paid Online (Digital Payments)
                   </div>
-                  <div style={{ fontSize: "18px", fontWeight: "900", color: "#15803d" }}>
+                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#15803d" }}>
                     {formatCurrency(activeStats.online)}
+                  </div>
+                  <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }}>
+                    Bank Acc, eSewa & Khalti
+                  </div>
+                </div>
+
+                {/* Outstanding Due Amount */}
+                <div style={{ backgroundColor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: "8px", padding: "12px 14px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ fontSize: "12px", fontWeight: "bold", color: "#9a3412", marginBottom: "3px" }}>
+                    Outstanding Balance (Due)
+                  </div>
+                  <div style={{ fontSize: "20px", fontWeight: "900", color: "#c2410c" }}>
+                    {formatCurrency(activeStats.totalOutstanding)}
+                  </div>
+                  <div style={{ fontSize: "10.5px", color: "#9a3412", marginTop: "2px" }}>
+                    Unpaid Pending Fees
                   </div>
                 </div>
               </div>
@@ -5560,20 +5564,45 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             ? `Bill Number: ${form.existingBillNumber} (Keeps SAME Bill Number)`
                             : `Next Generated Bill Number: ${getNextBillNumber()}`}
                       </span>
-                      <span style={{
-                        fontSize: "11px",
-                        fontWeight: "700",
-                        color: "#0369a1",
-                        backgroundColor: "#e0f2fe",
-                        border: "1px solid #bae6fd",
-                        padding: "3px 10px",
-                        borderRadius: "12px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px"
-                      }}>
-                        Date: {form.date || new Date().toISOString().split('T')[0]} (Auto)
-                      </span>
+                      {/* Billing Date display / editable for Main Admin */}
+                      {form.isEditingExistingBill && isMainAdmin ? (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: "800", color: "#1e40af" }}>
+                            Billing Date (Main Admin Only):
+                          </span>
+                          <input
+                            type="date"
+                            value={form.date || ""}
+                            onChange={(e) => setForm({ ...form, date: e.target.value })}
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              border: "2px solid #2563eb",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                              color: "#1e3a8a",
+                              backgroundColor: "#ffffff",
+                              cursor: "pointer"
+                            }}
+                            title="Edit billing date (Main Admin permission)"
+                          />
+                        </div>
+                      ) : (
+                        <span style={{
+                          fontSize: "11px",
+                          fontWeight: "700",
+                          color: "#0369a1",
+                          backgroundColor: "#e0f2fe",
+                          border: "1px solid #bae6fd",
+                          padding: "3px 10px",
+                          borderRadius: "12px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px"
+                        }}>
+                          Date: {form.date || new Date().toISOString().split('T')[0]} {form.isEditingExistingBill ? "(Locked)" : "(Auto)"}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
