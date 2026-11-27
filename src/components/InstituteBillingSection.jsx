@@ -2872,7 +2872,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       setDiscountUserEdited(false);
 
       alert(data.message || `Bill ${returnedBill.billNumber} successfully generated!`);
-      setTimeout(() => window.print(), 200);
+      // Auto trigger print/PDF dialog and open WhatsApp send
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          handleSendWhatsAppReceipt(returnedBill);
+        }, 800);
+      }, 300);
     } catch (err) {
       console.error("Error submitting bill:", err);
       alert("Failed to submit bill. Please check your network.");
@@ -4521,18 +4527,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
               }}>
                 {/* LEFT SIDE: 3 File Outputs (PDF, CSV, Google Sheet Live) + Print & Create Bill */}
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                  {/* PRINT BUTTON */}
                   <button
-                    onClick={() => {
-                      handleDownloadPDF(selectedInvoice);
-                      setTimeout(() => {
-                        handleSendWhatsAppReceipt(selectedInvoice);
-                      }, 500);
-                    }}
-                    title="Download / Print PDF format of this bill and send on WhatsApp"
+                    onClick={() => window.print()}
                     style={{
                       backgroundColor: "#dc2626",
                       color: "#ffffff",
-                      border: "1px solid #b91c1c",
+                      border: "1px solid #3b0764",
                       padding: "9px 18px",
                       borderRadius: "6px",
                       cursor: "pointer",
@@ -4541,16 +4542,22 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)"
+                      boxShadow: "0 2px 6px rgba(88, 28, 135, 0.3)"
                     }}
                   >
-                    Download PDF
+                    Print
                   </button>
 
-                  {/* Send Bill on WhatsApp Button */}
+                  {/* WHATSAPP PDF SEND BUTTON (Directly beside Print) */}
                   <button
-                    onClick={() => handleSendWhatsAppReceipt(selectedInvoice)}
-                    title="Send fee payment receipt directly to student's WhatsApp"
+                    onClick={() => {
+                      // Trigger download/print dialog and open WhatsApp send
+                      handleDownloadPDF(selectedInvoice);
+                      setTimeout(() => {
+                        handleSendWhatsAppReceipt(selectedInvoice);
+                      }, 400);
+                    }}
+                    title="Print / Save PDF and send to student's WhatsApp"
                     style={{
                       backgroundColor: "#25D366",
                       color: "#ffffff",
@@ -4567,40 +4574,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     }}
                   >
                     <span style={{ fontSize: "16px" }}>💬</span>
-                    <span>Send WhatsApp Bill</span>
+                    <span>WhatsApp</span>
                   </button>
-
-                  {/* Send Next Payment Due Reminder (Prominently available when remaining balance exists) */}
-                  {Number(selectedInvoice.dueAmount) > 0 && (() => {
-                    const cd = getPaymentCountdown(selectedInvoice);
-                    const isUrgent = cd && (cd.daysRemaining <= 2 || cd.isOverdue || cd.isDueToday);
-                    return (
-                      <button
-                        onClick={() => handleSendWhatsAppReminder(selectedInvoice)}
-                        title={isUrgent ? `Urgent Reminder (${cd ? cd.statusText : 'Due Soon'}) - Send via WhatsApp` : "Send upcoming installment payment reminder via WhatsApp"}
-                        style={{
-                          backgroundColor: isUrgent ? "#ea580c" : "#f59e0b",
-                          color: "#ffffff",
-                          border: isUrgent ? "1px solid #c2410c" : "1px solid #d97706",
-                          padding: "9px 16px",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                          fontWeight: "bold",
-                          fontSize: "13px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          boxShadow: isUrgent ? "0 2px 8px rgba(234, 88, 12, 0.45)" : "0 2px 6px rgba(245, 158, 11, 0.35)",
-                          animation: isUrgent ? "pulse 2s infinite" : "none"
-                        }}
-                      >
-                        <span>⏰</span>
-                        <span>
-                          {isUrgent ? `Reminder: ${cd ? cd.statusText : 'Due Soon'} (WhatsApp)` : "WhatsApp Due Reminder"}
-                        </span>
-                      </button>
-                    );
-                  })()}
 
                   <button
                     onClick={() => handleDownloadSingleBillCSV(selectedInvoice)}
@@ -4621,27 +4596,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     }}
                   >
                     Download CSV
-                  </button>
-
-
-                  <button
-                    onClick={() => window.print()}
-                    style={{
-                      backgroundColor: "#dc2626",
-                      color: "#ffffff",
-                      border: "1px solid #3b0764",
-                      padding: "9px 18px",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                      fontSize: "13px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      boxShadow: "0 2px 6px rgba(88, 28, 135, 0.3)"
-                    }}
-                  >
-                    Print
                   </button>
 
                   {billingRole === "admin" && (
@@ -5289,7 +5243,35 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   Print
                 </button>
 
-                {/* CREATE NEW BILL RIGHT BESIDE PRINT */}
+                {/* WHATSAPP PDF BUTTON RIGHT BESIDE PRINT */}
+                <button
+                  onClick={() => {
+                    handleDownloadPDF(selectedInvoice);
+                    setTimeout(() => {
+                      handleSendWhatsAppReceipt(selectedInvoice);
+                    }, 400);
+                  }}
+                  title="Print / Save PDF and send to student's WhatsApp"
+                  style={{
+                    backgroundColor: "#25D366",
+                    color: "#ffffff",
+                    border: "1px solid #1ea952",
+                    padding: "10px 20px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 2px 6px rgba(37, 211, 102, 0.35)"
+                  }}
+                >
+                  <span style={{ fontSize: "17px" }}>💬</span>
+                  <span>WhatsApp</span>
+                </button>
+
+                {/* CREATE NEW BILL RIGHT BESIDE PRINT & WHATSAPP */}
                 <button
                   onClick={handleOpenCreateBill}
                   style={{
