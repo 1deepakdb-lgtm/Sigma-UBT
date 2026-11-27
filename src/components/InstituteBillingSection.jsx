@@ -1939,6 +1939,87 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     return digits.slice(0, 10);
   };
 
+  // Helper to send WhatsApp Bill Receipt / PDF notice
+  const handleSendWhatsAppReceipt = (bill = selectedInvoice) => {
+    if (!bill) return;
+    const phone = normalizeNepaliMobile(bill.contactNumber);
+    if (!phone || phone.length < 10) {
+      alert("Valid 10-digit mobile number not found for this student.");
+      return;
+    }
+    const instTitle = instituteName ? `${instituteName.trim()} - ` : "";
+    const dueAmt = Number(bill.dueAmount || 0);
+    const paidAmt = Number(bill.paidAmount || 0);
+    const totalAmt = Number(bill.totalFee || 0);
+
+    let msg = `*Fee Payment Receipt*\n`;
+    if (instituteName) msg += `🏢 *${instituteName.trim()}*\n`;
+    msg += `📄 *Bill No:* ${bill.billNumber || "N/A"}\n`;
+    msg += `👤 *Student:* ${bill.studentName || "Student"}\n`;
+    if (bill.coursePackage || bill.courseDetail) {
+      msg += `📚 *Course:* ${bill.coursePackage || bill.courseDetail}\n`;
+    }
+    msg += `📅 *Date:* ${bill.date || getLocalDateStr()}\n`;
+    msg += `💰 *Total Fee:* Rs. ${totalAmt.toLocaleString()}\n`;
+    msg += `✅ *Paid Amount:* Rs. ${paidAmt.toLocaleString()}\n`;
+    msg += `💳 *Payment Method:* ${bill.paymentMethod || "Cash"}\n`;
+
+    if (dueAmt > 0) {
+      msg += `⚠️ *Remaining Due Balance:* Rs. ${dueAmt.toLocaleString()}\n`;
+      if (bill.nextPaymentDate) {
+        msg += `⏰ *Next Payment Due Date:* ${bill.nextPaymentDate}\n`;
+      }
+    } else {
+      msg += `🎉 *Payment Status:* Paid in Full\n`;
+    }
+    msg += `\nThank you for your payment! Please keep this receipt for your records.`;
+
+    const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, "_blank");
+  };
+
+  // Helper to send WhatsApp Due Payment Reminder (especially for last 2 days or overdue)
+  const handleSendWhatsAppReminder = (bill = selectedInvoice) => {
+    if (!bill) return;
+    const phone = normalizeNepaliMobile(bill.contactNumber);
+    if (!phone || phone.length < 10) {
+      alert("Valid 10-digit mobile number not found for this student.");
+      return;
+    }
+    const dueAmt = Number(bill.dueAmount || 0);
+    if (dueAmt <= 0) {
+      alert("This student has already paid in full. No due balance remaining.");
+      return;
+    }
+    const cd = getPaymentCountdown(bill);
+    let timeNotice = "";
+    if (cd) {
+      if (cd.isOverdue) {
+        timeNotice = `(Overdue by ${cd.overdueDays || 1} day${cd.overdueDays > 1 ? 's' : ''})`;
+      } else if (cd.isDueToday) {
+        timeNotice = `(Due Today)`;
+      } else if (cd.daysRemaining !== null) {
+        timeNotice = `(${cd.daysRemaining} day${cd.daysRemaining > 1 ? 's' : ''} remaining)`;
+      }
+    }
+
+    let msg = `*Payment Reminder Notice*\n`;
+    if (instituteName) msg += `🏢 *${instituteName.trim()}*\n`;
+    msg += `Dear *${bill.studentName || "Student"}*,\n\n`;
+    msg += `This is a gentle reminder regarding your upcoming fee installment payment.\n\n`;
+    msg += `📄 *Bill No:* ${bill.billNumber || "N/A"}\n`;
+    msg += `💰 *Remaining Due Balance:* Rs. ${dueAmt.toLocaleString()}\n`;
+    if (bill.nextPaymentDate) {
+      msg += `📅 *Due Date:* ${bill.nextPaymentDate} ${timeNotice}\n`;
+    } else if (timeNotice) {
+      msg += `⏰ *Schedule:* ${timeNotice}\n`;
+    }
+    msg += `\nPlease kindly arrange to complete this payment before the due date. If you have already paid, please ignore this notice.\n\nThank you!`;
+
+    const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, "_blank");
+  };
+
   // Handle WhatsApp search or input in form
   const handleWhatsAppLookup = (whatsappNum) => {
     const cleanDigits = normalizeNepaliMobile(whatsappNum);
@@ -4432,8 +4513,13 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                 {/* LEFT SIDE: 3 File Outputs (PDF, CSV, Google Sheet Live) + Print & Create Bill */}
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                   <button
-                    onClick={() => handleDownloadPDF(selectedInvoice)}
-                    title="Download / Print PDF format of this bill"
+                    onClick={() => {
+                      handleDownloadPDF(selectedInvoice);
+                      setTimeout(() => {
+                        handleSendWhatsAppReceipt(selectedInvoice);
+                      }, 500);
+                    }}
+                    title="Download / Print PDF format of this bill and send on WhatsApp"
                     style={{
                       backgroundColor: "#dc2626",
                       color: "#ffffff",
@@ -4451,6 +4537,61 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   >
                     Download PDF
                   </button>
+
+                  {/* Send Bill on WhatsApp Button */}
+                  <button
+                    onClick={() => handleSendWhatsAppReceipt(selectedInvoice)}
+                    title="Send fee payment receipt directly to student's WhatsApp"
+                    style={{
+                      backgroundColor: "#25D366",
+                      color: "#ffffff",
+                      border: "1px solid #1ea952",
+                      padding: "9px 16px",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      fontSize: "13px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      boxShadow: "0 2px 6px rgba(37, 211, 102, 0.35)"
+                    }}
+                  >
+                    <span style={{ fontSize: "16px" }}>💬</span>
+                    <span>Send WhatsApp Bill</span>
+                  </button>
+
+                  {/* Send Next Payment Due Reminder (Prominently available when remaining balance exists) */}
+                  {Number(selectedInvoice.dueAmount) > 0 && (() => {
+                    const cd = getPaymentCountdown(selectedInvoice);
+                    const isUrgent = cd && (cd.daysRemaining <= 2 || cd.isOverdue || cd.isDueToday);
+                    return (
+                      <button
+                        onClick={() => handleSendWhatsAppReminder(selectedInvoice)}
+                        title={isUrgent ? `Urgent Reminder (${cd ? cd.statusText : 'Due Soon'}) - Send via WhatsApp` : "Send upcoming installment payment reminder via WhatsApp"}
+                        style={{
+                          backgroundColor: isUrgent ? "#ea580c" : "#f59e0b",
+                          color: "#ffffff",
+                          border: isUrgent ? "1px solid #c2410c" : "1px solid #d97706",
+                          padding: "9px 16px",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          fontSize: "13px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: isUrgent ? "0 2px 8px rgba(234, 88, 12, 0.45)" : "0 2px 6px rgba(245, 158, 11, 0.35)",
+                          animation: isUrgent ? "pulse 2s infinite" : "none"
+                        }}
+                      >
+                        <span>⏰</span>
+                        <span>
+                          {isUrgent ? `Reminder: ${cd ? cd.statusText : 'Due Soon'} (WhatsApp)` : "WhatsApp Due Reminder"}
+                        </span>
+                      </button>
+                    );
+                  })()}
 
                   <button
                     onClick={() => handleDownloadSingleBillCSV(selectedInvoice)}
@@ -5452,6 +5593,54 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                             >
                               Print
                             </button>
+
+                            {/* WhatsApp Receipt Quick Send Button */}
+                            <button
+                              onClick={() => handleSendWhatsAppReceipt(b)}
+                              title="Send Bill Receipt to student's WhatsApp"
+                              style={{
+                                backgroundColor: "#25D366",
+                                color: "#ffffff",
+                                border: "1px solid #1ea952",
+                                padding: "4px 7px",
+                                borderRadius: "4px",
+                                cursor: "pointer",
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "2px"
+                              }}
+                            >
+                              💬 WA
+                            </button>
+
+                            {/* WhatsApp Due Reminder (Shown prominently if due amount > 0 and <= 2 days or overdue) */}
+                            {Number(b.dueAmount) > 0 && (() => {
+                              const cd = getPaymentCountdown(b);
+                              const isUrgent = cd && (cd.daysRemaining <= 2 || cd.isOverdue || cd.isDueToday);
+                              return (
+                                <button
+                                  onClick={() => handleSendWhatsAppReminder(b)}
+                                  title={isUrgent ? `Urgent Payment Reminder (${cd ? cd.statusText : 'Due Soon'}) - Send via WhatsApp` : "Send payment reminder to student's WhatsApp"}
+                                  style={{
+                                    backgroundColor: isUrgent ? "#ea580c" : "#fef3c7",
+                                    color: isUrgent ? "#ffffff" : "#92400e",
+                                    border: isUrgent ? "1px solid #c2410c" : "1px solid #fde68a",
+                                    padding: "4px 7px",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                    fontSize: "11px",
+                                    fontWeight: "bold",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "2px"
+                                  }}
+                                >
+                                  ⏰ {isUrgent ? (cd ? cd.statusText : "Remind") : "Remind"}
+                                </button>
+                              );
+                            })()}
 
                             {/* Payment complete nahunjel next pay garne, otherwise NO next pay */}
                             {Number(b.dueAmount) > 0 ? (
