@@ -6002,6 +6002,327 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     </div>
                   </div>
 
+                  {/* ADD ITEM WITH DROP DOWN ARROW ONLY (PLACED AS ITS OWN SECTION ABOVE FEE BREAKDOWN) */}
+                  <div style={{
+                    gridColumn: "span 2",
+                    backgroundColor: "#ffffff",
+                    border: "1.5px solid #86efac",
+                    borderRadius: "8px",
+                    padding: "10px 14px",
+                    marginTop: "4px"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: "bold", color: "#166534" }}>
+                        Add Extra Material / Book (Optional)
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      {/* Free Button: Blue before select, fully Red when checked (sets for all items) */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAllFree(!isItemFree)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          cursor: "pointer",
+                          userSelect: "none",
+                          padding: "8px 14px",
+                          borderRadius: "5px",
+                          backgroundColor: isItemFree ? "#dc2626" : "#2563eb",
+                          color: "#ffffff",
+                          border: isItemFree ? "1.5px solid #b91c1c" : "1.5px solid #1d4ed8",
+                          fontWeight: "bold",
+                          fontSize: "13px",
+                          height: "36px",
+                          boxSizing: "border-box",
+                          transition: "all 0.15s ease",
+                          boxShadow: "none"
+                        }}
+                        title={isItemFree ? "Currently FREE for all items (click to uncheck)" : "Click to set FREE for all items"}
+                      >
+                        <span style={{
+                          display: "inline-block",
+                          width: "14px",
+                          height: "14px",
+                          borderRadius: "3px",
+                          border: "1.5px solid #ffffff",
+                          backgroundColor: isItemFree ? "#ffffff" : "transparent",
+                          position: "relative",
+                          verticalAlign: "middle"
+                        }}>
+                          {isItemFree && (
+                            <span style={{
+                              position: "absolute",
+                              left: "2px",
+                              top: "-3px",
+                              color: "#dc2626",
+                              fontSize: "12px",
+                              fontWeight: "900"
+                            }}>✓</span>
+                          )}
+                        </span>
+                        <span>Free</span>
+                      </button>
+
+                      {/* Drop down arrow select populated with products & available stock */}
+                      <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
+                        <select
+                          value={selectedItemToAdd}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val) return;
+                            if (val === "Other") {
+                              setSelectedItemToAdd("Other");
+                              return;
+                            }
+                            handleAddItemFromDropdown(val);
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "8px 10px",
+                            borderRadius: "5px",
+                            border: "1.5px solid #16a34a",
+                            backgroundColor: "#ffffff",
+                            color: "#166534",
+                            fontWeight: "bold",
+                            fontSize: "13px",
+                            cursor: "pointer"
+                          }}
+                        >
+                          <option value="">Choose item / book to add ▼</option>
+                          {products.map((p) => {
+                            const isOutOfStock = Number(p.stock) <= 0;
+                            return (
+                              <option
+                                key={p.id}
+                                value={p.name}
+                                disabled={isOutOfStock}
+                                style={{
+                                  color: isOutOfStock ? "#94a3b8" : "#166534",
+                                  fontWeight: isOutOfStock ? "normal" : "bold"
+                                }}
+                              >
+                                {p.name} — Stock: {p.stock} {p.unit || 'pcs'} {isOutOfStock ? '[OUT OF STOCK]' : `(Rs. ${p.price})`}
+                              </option>
+                            );
+                          })}
+                          <option value="Other">Type Custom Item Name...</option>
+                        </select>
+                      </div>
+
+                      {/* Quantity Selector for Product */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#166534" }}>Qty:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max={(() => {
+                            const matched = products.find(p => p.name === selectedItemToAdd);
+                            return matched ? Math.max(1, Number(matched.stock) || 1) : 999;
+                          })()}
+                          value={selectedItemQty}
+                          onChange={(e) => {
+                            const val = Math.max(1, parseInt(e.target.value) || 1);
+                            setSelectedItemQty(val);
+                          }}
+                          style={{
+                            width: "55px",
+                            padding: "8px 6px",
+                            borderRadius: "5px",
+                            border: "1.5px solid #16a34a",
+                            backgroundColor: "#ffffff",
+                            color: "#166534",
+                            fontWeight: "bold",
+                            fontSize: "13px",
+                            textAlign: "center",
+                            boxSizing: "border-box"
+                          }}
+                          title="Quantity to add (Available stock will auto-reduce)"
+                        />
+                      </div>
+
+                      {/* Exact Price Input (No Stepper Arrows - Direct Typing) */}
+                      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                        <span style={{ position: "absolute", left: "8px", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder={isItemFree ? "0" : "Unit Price"}
+                          value={newItemPrice}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9]/g, "");
+                            setNewItemPrice(val);
+                            if (Number(val) > 0) {
+                              setIsItemFree(false);
+                            } else if (val === "0") {
+                              setIsItemFree(true);
+                            }
+                          }}
+                          style={{
+                            width: "95px",
+                            padding: "8px 8px 8px 30px",
+                            borderRadius: "5px",
+                            border: isItemFree ? "1.5px solid #16a34a" : "1px solid #86efac",
+                            backgroundColor: isItemFree ? "#f0fdf4" : "#ffffff",
+                            fontWeight: "bold",
+                            fontSize: "13px",
+                            color: isItemFree ? "#15803d" : "#166534",
+                            boxSizing: "border-box"
+                          }}
+                          title={isItemFree ? "Item is marked as FREE (Rs. 0)" : "Type exact unit price"}
+                        />
+                      </div>
+
+                      {selectedItemToAdd === "Other" && (
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center", flex: 1, minWidth: "200px" }}>
+                          <input
+                            type="text"
+                            placeholder="Type Custom Item / Book Name..."
+                            value={customItemToAdd}
+                            autoFocus
+                            onChange={(e) => setCustomItemToAdd(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && customItemToAdd.trim()) {
+                                e.preventDefault();
+                                handleAddItemFromDropdown(customItemToAdd);
+                              }
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "8px 10px",
+                              borderRadius: "5px",
+                              border: "1.5px solid #16a34a",
+                              fontSize: "13px",
+                              boxSizing: "border-box"
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleAddItemFromDropdown(customItemToAdd)}
+                            style={{
+                              backgroundColor: "#16a34a",
+                              color: "white",
+                              border: "none",
+                              padding: "8px 12px",
+                              borderRadius: "5px",
+                              cursor: "pointer",
+                              fontWeight: "bold",
+                              fontSize: "13px"
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* ONLY SHOW ADDED ITEMS IF ANY HAVE BEEN ADDED */}
+                    {form.materials && form.materials.length > 0 && (
+                      <div style={{ marginTop: "8px", display: "grid", gap: "6px" }}>
+                        {form.materials.map((mat, idx) => (
+                          <div key={idx} style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            backgroundColor: "#ffffff",
+                            padding: "6px 10px",
+                            borderRadius: "5px",
+                            border: "1px solid #cbd5e1"
+                          }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                              <span style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a" }}>
+                                {mat.name}
+                              </span>
+                              {mat.qty && Number(mat.qty) > 1 && (
+                                <span style={{
+                                  backgroundColor: "#dcfce7",
+                                  color: "#166534",
+                                  padding: "2px 6px",
+                                  borderRadius: "4px",
+                                  fontSize: "11px",
+                                  fontWeight: "bold"
+                                }}>
+                                  Qty: {mat.qty} {mat.unit || ''}
+                                </span>
+                              )}
+                              {mat.unitPrice && Number(mat.qty) > 1 && !mat.isFree && Number(mat.amount) > 0 && (
+                                <span style={{ color: "#64748b", fontSize: "11px" }}>
+                                  (@ Rs. {mat.unitPrice})
+                                </span>
+                              )}
+                              {/* Interactive Free uncheck/check button for added item */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleMaterialFree(idx, !(mat.isFree || Number(mat.amount) === 0))}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  cursor: "pointer",
+                                  padding: "3px 8px",
+                                  borderRadius: "4px",
+                                  backgroundColor: (mat.isFree || Number(mat.amount) === 0) ? "#dc2626" : "#f1f5f9",
+                                  color: (mat.isFree || Number(mat.amount) === 0) ? "#ffffff" : "#475569",
+                                  border: (mat.isFree || Number(mat.amount) === 0) ? "1px solid #b91c1c" : "1px solid #cbd5e1",
+                                  fontSize: "11px",
+                                  fontWeight: "bold"
+                                }}
+                                title={(mat.isFree || Number(mat.amount) === 0) ? "Click to uncheck Free (restore item price)" : "Click to mark as Free"}
+                              >
+                                <span>{(mat.isFree || Number(mat.amount) === 0) ? "✓ Free" : "Set Free"}</span>
+                              </button>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                                <span style={{ position: "absolute", left: "7px", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={mat.amount ?? 0}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9]/g, "");
+                                    handleUpdateMaterial(idx, "amount", val === "" ? 0 : Number(val));
+                                  }}
+                                  style={{
+                                    width: "85px",
+                                    padding: "5px 6px 5px 26px",
+                                    borderRadius: "4px",
+                                    border: Number(mat.amount) > 0 ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                                    backgroundColor: Number(mat.amount) > 0 ? "#eff6ff" : "white",
+                                    color: Number(mat.amount) > 0 ? "#1e3a8a" : "#334155",
+                                    fontWeight: "bold",
+                                    fontSize: "13px"
+                                  }}
+                                  title="Total amount"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                title="Remove this item"
+                                onClick={() => handleRemoveMaterial(idx)}
+                                style={{
+                                  backgroundColor: "#fee2e2",
+                                  color: "#dc2626",
+                                  border: "1px solid #fecaca",
+                                  padding: "4px 8px",
+                                  borderRadius: "4px",
+                                  cursor: "pointer",
+                                  fontWeight: "bold",
+                                  fontSize: "12px"
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* PAYMENT BREAKDOWN SUMMARY & RECEIPT AMOUNT */}
                   <div style={{ gridColumn: "span 2", backgroundColor: "#f8fafc", padding: "16px", borderRadius: "8px", border: "2px solid #cbd5e1", marginTop: "4px" }}>
                     {feeSavedToast && (
@@ -6022,326 +6343,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                         <button type="button" onClick={() => setFeeSavedToast("")} style={{ background: "none", border: "none", color: "#14532d", cursor: "pointer", fontWeight: "bold" }}>x</button>
                       </div>
                     )}
-
-                    {/* ADD ITEM WITH DROP DOWN ARROW ONLY (PLACED ABOVE FEE & PAID AMOUNT ROW) */}
-                    <div style={{
-                      backgroundColor: "#ffffff",
-                      border: "1.5px solid #86efac",
-                      borderRadius: "8px",
-                      padding: "10px 14px",
-                      marginBottom: "14px"
-                    }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                        <span style={{ fontSize: "12px", fontWeight: "bold", color: "#166534" }}>
-                          Add Extra Material / Book (Optional)
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                        {/* Free Button: Blue before select, fully Red when checked (sets for all items) */}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleAllFree(!isItemFree)}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                            userSelect: "none",
-                            padding: "8px 14px",
-                            borderRadius: "5px",
-                            backgroundColor: isItemFree ? "#dc2626" : "#2563eb",
-                            color: "#ffffff",
-                            border: isItemFree ? "1.5px solid #b91c1c" : "1.5px solid #1d4ed8",
-                            fontWeight: "bold",
-                            fontSize: "13px",
-                            height: "36px",
-                            boxSizing: "border-box",
-                            transition: "all 0.15s ease",
-                            boxShadow: "none"
-                          }}
-                          title={isItemFree ? "Currently FREE for all items (click to uncheck)" : "Click to set FREE for all items"}
-                        >
-                          <span style={{
-                            display: "inline-block",
-                            width: "14px",
-                            height: "14px",
-                            borderRadius: "3px",
-                            border: "1.5px solid #ffffff",
-                            backgroundColor: isItemFree ? "#ffffff" : "transparent",
-                            position: "relative",
-                            verticalAlign: "middle"
-                          }}>
-                            {isItemFree && (
-                              <span style={{
-                                position: "absolute",
-                                left: "2px",
-                                top: "-3px",
-                                color: "#dc2626",
-                                fontSize: "12px",
-                                fontWeight: "900"
-                              }}>✓</span>
-                            )}
-                          </span>
-                          <span>Free</span>
-                        </button>
-
-                        {/* Drop down arrow select populated with products & available stock */}
-                        <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
-                          <select
-                            value={selectedItemToAdd}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (!val) return;
-                              if (val === "Other") {
-                                setSelectedItemToAdd("Other");
-                                return;
-                              }
-                              handleAddItemFromDropdown(val);
-                            }}
-                            style={{
-                              width: "100%",
-                              padding: "8px 10px",
-                              borderRadius: "5px",
-                              border: "1.5px solid #16a34a",
-                              backgroundColor: "#ffffff",
-                              color: "#166534",
-                              fontWeight: "bold",
-                              fontSize: "13px",
-                              cursor: "pointer"
-                            }}
-                          >
-                            <option value="">Choose item / book to add ▼</option>
-                            {products.map((p) => {
-                              const isOutOfStock = Number(p.stock) <= 0;
-                              return (
-                                <option
-                                  key={p.id}
-                                  value={p.name}
-                                  disabled={isOutOfStock}
-                                  style={{
-                                    color: isOutOfStock ? "#94a3b8" : "#166534",
-                                    fontWeight: isOutOfStock ? "normal" : "bold"
-                                  }}
-                                >
-                                  {p.name} — Stock: {p.stock} {p.unit || 'pcs'} {isOutOfStock ? '[OUT OF STOCK]' : `(Rs. ${p.price})`}
-                                </option>
-                              );
-                            })}
-                            <option value="Other">Type Custom Item Name...</option>
-                          </select>
-                        </div>
-
-                        {/* Quantity Selector for Product */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          <span style={{ fontSize: "11px", fontWeight: "bold", color: "#166534" }}>Qty:</span>
-                          <input
-                            type="number"
-                            min="1"
-                            max={(() => {
-                              const matched = products.find(p => p.name === selectedItemToAdd);
-                              return matched ? Math.max(1, Number(matched.stock) || 1) : 999;
-                            })()}
-                            value={selectedItemQty}
-                            onChange={(e) => {
-                              const val = Math.max(1, parseInt(e.target.value) || 1);
-                              setSelectedItemQty(val);
-                            }}
-                            style={{
-                              width: "55px",
-                              padding: "8px 6px",
-                              borderRadius: "5px",
-                              border: "1.5px solid #16a34a",
-                              backgroundColor: "#ffffff",
-                              color: "#166534",
-                              fontWeight: "bold",
-                              fontSize: "13px",
-                              textAlign: "center",
-                              boxSizing: "border-box"
-                            }}
-                            title="Quantity to add (Available stock will auto-reduce)"
-                          />
-                        </div>
-
-                        {/* Exact Price Input (No Stepper Arrows - Direct Typing) */}
-                        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                          <span style={{ position: "absolute", left: "8px", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            placeholder={isItemFree ? "0" : "Unit Price"}
-                            value={newItemPrice}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(/[^0-9]/g, "");
-                              setNewItemPrice(val);
-                              if (Number(val) > 0) {
-                                setIsItemFree(false);
-                              } else if (val === "0") {
-                                setIsItemFree(true);
-                              }
-                            }}
-                            style={{
-                              width: "95px",
-                              padding: "8px 8px 8px 30px",
-                              borderRadius: "5px",
-                              border: isItemFree ? "1.5px solid #16a34a" : "1px solid #86efac",
-                              backgroundColor: isItemFree ? "#f0fdf4" : "#ffffff",
-                              fontWeight: "bold",
-                              fontSize: "13px",
-                              color: isItemFree ? "#15803d" : "#166534",
-                              boxSizing: "border-box"
-                            }}
-                            title={isItemFree ? "Item is marked as FREE (Rs. 0)" : "Type exact unit price"}
-                          />
-                        </div>
-
-                        {selectedItemToAdd === "Other" && (
-                          <div style={{ display: "flex", gap: "6px", alignItems: "center", flex: 1, minWidth: "200px" }}>
-                            <input
-                              type="text"
-                              placeholder="Type Custom Item / Book Name..."
-                              value={customItemToAdd}
-                              autoFocus
-                              onChange={(e) => setCustomItemToAdd(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && customItemToAdd.trim()) {
-                                  e.preventDefault();
-                                  handleAddItemFromDropdown(customItemToAdd);
-                                }
-                              }}
-                              style={{
-                                flex: 1,
-                                padding: "8px 10px",
-                                borderRadius: "5px",
-                                border: "1.5px solid #16a34a",
-                                fontSize: "13px",
-                                boxSizing: "border-box"
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleAddItemFromDropdown(customItemToAdd)}
-                              style={{
-                                backgroundColor: "#16a34a",
-                                color: "white",
-                                border: "none",
-                                padding: "8px 12px",
-                                borderRadius: "5px",
-                                cursor: "pointer",
-                                fontWeight: "bold",
-                                fontSize: "13px"
-                              }}
-                            >
-                              +
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* ONLY SHOW ADDED ITEMS IF ANY HAVE BEEN ADDED */}
-                      {form.materials && form.materials.length > 0 && (
-                        <div style={{ marginTop: "8px", display: "grid", gap: "6px" }}>
-                          {form.materials.map((mat, idx) => (
-                            <div key={idx} style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              backgroundColor: "#ffffff",
-                              padding: "6px 10px",
-                              borderRadius: "5px",
-                              border: "1px solid #cbd5e1"
-                            }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                <span style={{ fontSize: "13px", fontWeight: "bold", color: "#1e3a8a" }}>
-                                  {mat.name}
-                                </span>
-                                {mat.qty && Number(mat.qty) > 1 && (
-                                  <span style={{
-                                    backgroundColor: "#dcfce7",
-                                    color: "#166534",
-                                    padding: "2px 6px",
-                                    borderRadius: "4px",
-                                    fontSize: "11px",
-                                    fontWeight: "bold"
-                                  }}>
-                                    Qty: {mat.qty} {mat.unit || ''}
-                                  </span>
-                                )}
-                                {mat.unitPrice && Number(mat.qty) > 1 && !mat.isFree && Number(mat.amount) > 0 && (
-                                  <span style={{ color: "#64748b", fontSize: "11px" }}>
-                                    (@ Rs. {mat.unitPrice})
-                                  </span>
-                                )}
-                                {/* Interactive Free uncheck/check button for added item */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleToggleMaterialFree(idx, !(mat.isFree || Number(mat.amount) === 0))}
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "4px",
-                                    cursor: "pointer",
-                                    padding: "3px 8px",
-                                    borderRadius: "4px",
-                                    backgroundColor: (mat.isFree || Number(mat.amount) === 0) ? "#dc2626" : "#f1f5f9",
-                                    color: (mat.isFree || Number(mat.amount) === 0) ? "#ffffff" : "#475569",
-                                    border: (mat.isFree || Number(mat.amount) === 0) ? "1px solid #b91c1c" : "1px solid #cbd5e1",
-                                    fontSize: "11px",
-                                    fontWeight: "bold"
-                                  }}
-                                  title={(mat.isFree || Number(mat.amount) === 0) ? "Click to uncheck Free (restore item price)" : "Click to mark as Free"}
-                                >
-                                  <span>{(mat.isFree || Number(mat.amount) === 0) ? "✓ Free" : "Set Free"}</span>
-                                </button>
-                              </div>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                                  <span style={{ position: "absolute", left: "7px", fontSize: "11px", fontWeight: "bold", color: "#64748b", pointerEvents: "none" }}>Rs.</span>
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={mat.amount ?? 0}
-                                    onChange={(e) => {
-                                      const val = e.target.value.replace(/[^0-9]/g, "");
-                                      handleUpdateMaterial(idx, "amount", val === "" ? 0 : Number(val));
-                                    }}
-                                    style={{
-                                      width: "85px",
-                                      padding: "5px 6px 5px 26px",
-                                      borderRadius: "4px",
-                                      border: Number(mat.amount) > 0 ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
-                                      backgroundColor: Number(mat.amount) > 0 ? "#eff6ff" : "white",
-                                      color: Number(mat.amount) > 0 ? "#1e3a8a" : "#334155",
-                                      fontWeight: "bold",
-                                      fontSize: "13px"
-                                    }}
-                                    title="Total amount"
-                                  />
-                                </div>
-                                <button
-                                  type="button"
-                                  title="Remove this item"
-                                  onClick={() => handleRemoveMaterial(idx)}
-                                  style={{
-                                    backgroundColor: "#fee2e2",
-                                    color: "#dc2626",
-                                    border: "1px solid #fecaca",
-                                    padding: "4px 8px",
-                                    borderRadius: "4px",
-                                    cursor: "pointer",
-                                    fontWeight: "bold",
-                                    fontSize: "12px"
-                                  }}
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
 
                     {/* THE ONE ROW: [Course Fee (Gross)] -> [Discount in seted %] -> [Total Fee (Net)] -> [Enter Paid Amount *] */}
                     <div style={{
