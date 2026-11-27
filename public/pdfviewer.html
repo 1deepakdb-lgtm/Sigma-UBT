@@ -203,8 +203,8 @@
 
 <div id="loading-view">
   <div class="spinner"></div>
-  <div class="loading-text" id="loading-progress">Opening Document...</div>
-  <div class="loading-badge" id="offline-badge">⚡ Stored Offline</div>
+  <div class="loading-text" id="loading-progress">Opening Document (0%)...</div>
+  <div class="loading-badge" id="offline-badge">⚡ Offline Ready</div>
 </div>
 
 <div id="error-view">
@@ -468,35 +468,32 @@
       } catch (e) {}
     }
 
-    async function downloadPdfWithProgress(url, onProgress) {
+    // COMPLETE DOCUMENT DOWNLOAD WITH LIVE PROGRESS INDICATOR
+    // Downloads all pages & 100% original binary data immediately in one request.
+    function downloadCompletePdf(url, onProgress) {
       var fetchUrl = toAbsoluteUrl(url);
 
-      try {
-        var resp = await fetch(fetchUrl);
-        if (resp.ok) {
-          if (onProgress) onProgress(100);
-          var buf = await resp.arrayBuffer();
-          if (buf && buf.byteLength > 1000) {
-            return buf;
-          }
-        }
-      } catch (fetchErr) {
-        console.warn('Fetch notice, trying XHR fallback:', fetchErr);
-      }
-
       return new Promise(function(resolve, reject) {
-        function tryFetchUrl(targetUrl, onFail) {
+        function executeDownload(targetUrl, onFail) {
           var xhr = new XMLHttpRequest();
           xhr.open('GET', targetUrl, true);
           xhr.responseType = 'arraybuffer';
+          xhr.timeout = 60000; // 60s network allowance
+
           xhr.onprogress = function(e) {
             if (e.lengthComputable && e.total > 0 && onProgress) {
-              var pct = Math.min(99, Math.round((e.loaded / e.total) * 100));
-              onProgress(pct);
+              var pct = Math.min(99, Math.max(1, Math.round((e.loaded / e.total) * 100)));
+              var mbLoaded = (e.loaded / (1024 * 1024)).toFixed(1);
+              var mbTotal = (e.total / (1024 * 1024)).toFixed(1);
+              onProgress(pct, mbLoaded, mbTotal);
+            } else if (onProgress && e.loaded > 0) {
+              var mb = (e.loaded / (1024 * 1024)).toFixed(1);
+              onProgress(null, mb, null);
             }
           };
+
           xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
+            if (xhr.status >= 200 && xhr.status < 300 && xhr.response && xhr.response.byteLength > 1000) {
               if (onProgress) onProgress(100);
               resolve(xhr.response);
             } else if (onFail) {
@@ -505,22 +502,26 @@
               reject(new Error('HTTP status ' + xhr.status));
             }
           };
+
           xhr.onerror = function() {
-            if (onFail) {
-              onFail();
-            } else {
-              reject(new Error('Network error fetching document.'));
-            }
+            if (onFail) onFail();
+            else reject(new Error('Network connection failed.'));
           };
+
+          xhr.ontimeout = function() {
+            if (onFail) onFail();
+            else reject(new Error('Download timed out.'));
+          };
+
           xhr.send();
         }
 
-        tryFetchUrl(fetchUrl, function() {
+        executeDownload(fetchUrl, function() {
           if (!fetchUrl.startsWith('https://examjk.com') && !url.startsWith('blob:') && !url.startsWith('data:')) {
             var directFallback = 'https://examjk.com' + (url.startsWith('/') ? url : '/' + url);
-            tryFetchUrl(directFallback, null);
+            executeDownload(directFallback, null);
           } else {
-            reject(new Error('Network error fetching document.'));
+            reject(new Error('Failed to download document from server.'));
           }
         });
       });
@@ -1330,11 +1331,7 @@
         standardFontDataUrl: baseOrigin + '/standard_fonts/',
         disableFontFace: false,
         isEvalSupported: true,
-        useSystemFonts: false,
-        disableRange: false,
-        disableStream: false,
-        disableAutoFetch: true,
-        rangeChunkSize: 262144
+        useSystemFonts: false
       };
 
       if (typeof pdfSource === 'string') {
@@ -1412,7 +1409,7 @@
 
       function pruneDistantPages(activePage) {
         if (!pdfDoc) return;
-        var maxKeep = 2; // Keep current and adjacent 2 pages for buttery smooth scrolling
+        var maxKeep = isLowResourceDevice ? 2 : 4; // Keep adjacent pages in memory for buttery smooth scrolling
         var toUnrender = [];
         renderedPages.forEach(function(p) {
           if (Math.abs(p - activePage) > maxKeep) {
@@ -1436,14 +1433,15 @@
               }
             } else {
               var activePage = getActivePageNum();
-              if (Math.abs(pageNum - activePage) > 2) {
+              var maxDistance = isLowResourceDevice ? 2 : 4;
+              if (Math.abs(pageNum - activePage) > maxDistance) {
                 unrenderPage(pageNum, entry.target);
               }
             }
           });
         }, {
           root: container,
-          rootMargin: '600px 0px 600px 0px'
+          rootMargin: isLowResourceDevice ? '600px 0px 600px 0px' : '1000px 0px 1000px 0px'
         });
 
         for (var k = 1; k <= totalPages; k++) {
@@ -1455,7 +1453,7 @@
       function checkVisiblePages() {
         var curPage = getActivePageNum();
         pruneDistantPages(curPage);
-        var margin = 600;
+        var margin = isLowResourceDevice ? 600 : 1000;
         for (var p = 1; p <= totalPages; p++) {
           if (!renderedPages.has(p)) {
             var el = document.getElementById('page-wrapper-' + p);
@@ -1497,13 +1495,13 @@
 
     async function initViewer() {
       var targetDocUrl = sanitizeUrl(cleanUrl);
-      var absUrl = toAbsoluteUrl(targetDocUrl);
 
-      // Fast Path 1: Check in-memory cache & persistent offline storage (0ms instant!)
+      // Strategy 1: Check in-memory RAM cache & persistent IndexedDB / CacheStorage (Instant 0ms opening!)
       try {
         var cachedBuffer = await loadCachedPdfBuffer(targetDocUrl);
         if (cachedBuffer && (cachedBuffer.byteLength > 1000 || (cachedBuffer.buffer && cachedBuffer.buffer.byteLength > 1000))) {
           if (offlineBadge) offlineBadge.style.display = 'inline-block';
+          if (loadingProgress) loadingProgress.textContent = 'Opening Document (Ready)...';
           await startRenderingDoc(cachedBuffer);
           return;
         }
@@ -1511,61 +1509,53 @@
         console.warn('Cache lookup notice:', cacheErr);
       }
 
-      // Fast Path 2: Direct URL Streaming with HTTP Range Requests (Opens Page 1 in milliseconds!)
+      // Strategy 2: Complete Document Download Immediately with Live Progress
+      // Downloads all pages and 100% original binary data in one complete download.
       try {
-        var streamingPromise = startRenderingDoc(absUrl);
-        var timeoutPromise = new Promise(function(_, reject) {
-          setTimeout(function() { reject(new Error('Streaming took too long, switching to direct download')); }, 30000);
-        });
-        await Promise.race([streamingPromise, timeoutPromise]);
-        // Once successfully opened via streaming, trigger background offline caching (non-blocking!)
-        setTimeout(function() {
-          downloadPdfWithProgress(targetDocUrl, null).then(async function(buffer) {
-            if (buffer && buffer.byteLength > 1000) {
-              var db = await openOfflineDb();
-              var pdfBlob = new Blob([buffer], { type: 'application/pdf' });
-              saveToDb(db, targetDocUrl, pdfBlob);
-              saveToCacheStorage(targetDocUrl, pdfBlob);
-              var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
-                ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
-              if (pCache) pCache.set(targetDocUrl, buffer);
+        var buffer = await downloadCompletePdf(targetDocUrl, function(pct, mbLoaded, mbTotal) {
+          if (loadingProgress) {
+            if (pct !== null && mbLoaded && mbTotal) {
+              loadingProgress.textContent = 'Downloading Complete PDF (' + pct + '% - ' + mbLoaded + 'MB / ' + mbTotal + 'MB)...';
+            } else if (pct !== null) {
+              loadingProgress.textContent = 'Downloading Complete PDF (' + pct + '%)...';
+            } else if (mbLoaded) {
+              loadingProgress.textContent = 'Downloading Complete PDF (' + mbLoaded + 'MB)...';
             }
-          }).catch(function() {});
-        }, 1500);
-        return;
-      } catch (streamErr) {
-        console.warn('Direct streaming notice, falling back to buffered download:', streamErr);
-      }
-
-      // Fast Path 3: Buffered download fallback if streaming failed
-      try {
-        var fallbackBuffer = await downloadPdfWithProgress(targetDocUrl, function(pct) {
-          if (loadingProgress) loadingProgress.textContent = 'Opening Document (' + pct + '%)...';
+          }
         });
-        if (fallbackBuffer && (fallbackBuffer.byteLength > 1000 || (fallbackBuffer.buffer && fallbackBuffer.buffer.byteLength > 1000))) {
-          await startRenderingDoc(fallbackBuffer);
 
-          // Save to IndexedDB & CacheStorage in background for lifetime 0ms offline access
+        if (buffer && (buffer.byteLength > 1000 || (buffer.buffer && buffer.buffer.byteLength > 1000))) {
+          if (loadingProgress) loadingProgress.textContent = 'Processing Document...';
+          await startRenderingDoc(buffer);
+
+          // Save to permanent local storage (IndexedDB + CacheStorage + RAM) for lifetime instant access & offline use
           try {
             var db = await openOfflineDb();
-            var pdfBlob = new Blob([fallbackBuffer], { type: 'application/pdf' });
-            saveToDb(db, targetDocUrl, pdfBlob);
-            saveToCacheStorage(targetDocUrl, pdfBlob);
+            var pdfBlob = new Blob([buffer], { type: 'application/pdf' });
+            await saveToDb(db, targetDocUrl, pdfBlob);
+            await saveToCacheStorage(targetDocUrl, pdfBlob);
+
             var pCache = (window.parent && window.parent !== window && window.parent.__SIGMA_BUFFER_CACHE__)
               ? window.parent.__SIGMA_BUFFER_CACHE__ : (window.__SIGMA_BUFFER_CACHE__ || null);
-            if (pCache) pCache.set(targetDocUrl, fallbackBuffer);
-          } catch (saveErr) {}
+            if (pCache) {
+              var variants = getUrlVariants(targetDocUrl);
+              variants.forEach(function(v) { pCache.set(v, buffer); });
+            }
+            if (offlineBadge) offlineBadge.style.display = 'inline-block';
+          } catch (storageErr) {
+            console.warn('Permanent cache save notice:', storageErr);
+          }
           return;
         }
       } catch (downloadErr) {
-        console.error('Final PDF rendering failure:', downloadErr);
-        var errMsg = 'Unable to load document.';
+        console.error('Complete PDF download failure:', downloadErr);
+        var errMsg = 'Unable to download document.';
         if (!navigator.onLine) {
           errMsg = 'Network is offline. Please check your internet connection.';
         } else if (downloadErr && downloadErr.message && downloadErr.message.includes('404')) {
           errMsg = 'Document file not found on server.';
         } else if (downloadErr && downloadErr.message) {
-          errMsg = 'Unable to open: ' + downloadErr.message;
+          errMsg = downloadErr.message;
         }
         showError(errMsg + ' Tap Retry to reload.');
       }

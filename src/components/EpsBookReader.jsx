@@ -2066,7 +2066,7 @@ export default function EpsBookReader({
     const fullUrl = (trimmed.startsWith('/') && typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin.startsWith('http') && !window.location.origin.includes('localhost'))
       ? `${window.location.origin}${trimmed}`
       : trimmed;
-    return `/pdfviewer.html?v=progressive_instant_v8&url=${encodeURIComponent(fullUrl)}`;
+    return `/pdfviewer.html?v=complete_download_v10&url=${encodeURIComponent(fullUrl)}`;
   };
 
   // Shared helper to enter edge-to-edge fullscreen & hide mobile status/nav bars on any PDF open
