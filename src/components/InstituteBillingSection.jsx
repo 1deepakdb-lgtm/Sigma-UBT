@@ -1021,9 +1021,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     }, 2000);
   };
 
-  // Generate real PDF file from printable bill pad using html2canvas & jsPDF, auto download and send to WhatsApp
+  // Generate real PDF file from printable bill pad using html2canvas & jsPDF, auto download (1-time) and send to WhatsApp
   const handleGenerateAndSendWhatsAppPDF = async (bill = selectedInvoice) => {
-    if (!bill) return;
+    if (!bill || isPdfGenerating) return;
     const phone = normalizeNepaliMobile(bill.contactNumber);
     if (!phone || phone.length < 10) {
       alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
@@ -2983,6 +2983,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
       // Open print/WhatsApp action dialog
       setShowBillSuccessModal(true);
+
+      // Automatically trigger 1-time PDF download & WhatsApp dispatch right after bill update/save
+      setTimeout(() => {
+        handleGenerateAndSendWhatsAppPDF(returnedBill);
+      }, 350);
     } catch (err) {
       console.error("Error submitting bill:", err);
       alert("Failed to submit bill. Please check your network.");
