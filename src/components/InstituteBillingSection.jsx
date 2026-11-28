@@ -1093,30 +1093,12 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     }
   };
 
-  // Generate real PDF file from printable bill pad using html2canvas & jsPDF, auto download (1-time only unless updated) and send to WhatsApp
-  const handleGenerateAndSendWhatsAppPDF = async (bill = selectedInvoice, forceDownload = false) => {
+  // Copy bill screenshot to clipboard and send clean message to WhatsApp (no PDF download file needed)
+  const handleGenerateAndSendWhatsAppPDF = async (bill = selectedInvoice) => {
     if (!bill || isPdfGenerating) return;
     const phone = normalizeNepaliMobile(bill.contactNumber);
     if (!phone || phone.length < 10) {
       alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
-      return;
-    }
-
-    // Check if this version of the bill has already been downloaded (1-time download check)
-    const billIdKey = bill.billNumber || bill.id || "temp";
-    const currentFingerprint = getBillFingerprint(bill);
-    let downloadedFingerprints = {};
-    try {
-      downloadedFingerprints = JSON.parse(localStorage.getItem(`downloadedBillFingerprints_${instKey}`) || "{}");
-    } catch (e) {
-      downloadedFingerprints = {};
-    }
-
-    const alreadyDownloaded = downloadedFingerprints[billIdKey] === currentFingerprint;
-
-    // If already downloaded and not modified/forced, skip downloading and open WhatsApp directly!
-    if (alreadyDownloaded && !forceDownload) {
-      openWhatsAppDirectMessage(bill);
       return;
     }
 
@@ -1128,7 +1110,6 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       const billElem = document.getElementById("printable-bill-pad");
       if (billElem) {
         const html2canvasModule = (await import("html2canvas")).default;
-        const { jsPDF } = await import("jspdf");
 
         const canvas = await html2canvasModule(billElem, {
           scale: 2,
@@ -1137,45 +1118,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           backgroundColor: "#ffffff"
         });
 
-        // 1. Silent Background Download of PDF (1-time only; saves quietly to Downloads)
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4"
-        });
-
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
-
-        const fileName = `Bill_${bill.billNumber || "receipt"}_${(bill.studentName || "student").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
-        
-        // Trigger silent download directly without opening preview
-        try {
-          const pdfBlob = pdf.output("blob");
-          const blobUrl = URL.createObjectURL(pdfBlob);
-          const dlLink = document.createElement("a");
-          dlLink.href = blobUrl;
-          dlLink.download = fileName;
-          dlLink.style.display = "none";
-          document.body.appendChild(dlLink);
-          dlLink.click();
-          setTimeout(() => {
-            document.body.removeChild(dlLink);
-            URL.revokeObjectURL(blobUrl);
-          }, 1000);
-        } catch (dlErr) {
-          pdf.save(fileName);
-        }
-
-        // Mark this bill fingerprint as downloaded in localStorage so it never re-downloads unless updated
-        try {
-          downloadedFingerprints[billIdKey] = currentFingerprint;
-          localStorage.setItem(`downloadedBillFingerprints_${instKey}`, JSON.stringify(downloadedFingerprints));
-        } catch (e) {}
-
-        // 2. Automatically Copy Bill Screenshot / Image to System Clipboard (Auto-copied for Instant Cmd+V / Ctrl+V)
+        // 1. Automatically Copy Bill Screenshot / Image to System Clipboard (Ready for Instant Ctrl+V / Cmd+V)
         let clipCopied = false;
         let imageBlob = null;
         try {
@@ -1190,10 +1133,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Clipboard write status:", clipErr);
         }
 
-        // 3. Construct Clean Polite Nepali Message
+        // 2. Construct Clean Polite Nepali Message
         const waMessage = buildWhatsAppNepaliBillMessage(bill);
 
-        // 4. Try Native Web Share with the Bill Image / PDF (Attaches image directly on supported mobile/browsers)
+        // 3. Try Native Web Share with the Bill Image (Attaches screenshot directly on supported mobile/browsers)
         let shareSuccess = false;
         try {
           if (navigator.canShare && imageBlob) {
@@ -1211,7 +1154,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Web share status:", shareErr);
         }
 
-        // 5. Open Direct WhatsApp in a brand new tab explicitly
+        // 4. Open Direct WhatsApp in a brand new tab explicitly
         if (!shareSuccess) {
           const encodedText = encodeURIComponent(waMessage);
           const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodedText}`;
@@ -1227,7 +1170,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         }
       }
     } catch (err) {
-      console.error("PDF generation error:", err);
+      console.error("Screenshot or WhatsApp error:", err);
       const waUrl = `https://api.whatsapp.com/send?phone=977${phone}`;
       window.open(waUrl, "_blank");
     } finally {
@@ -4724,11 +4667,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     Print
                   </button>
 
-                  {/* 2. DIRECT SEND PDF ON WHATSAPP BUTTON (Directly beside Print) */}
+                  {/* 2. DIRECT SEND ON WHATSAPP BUTTON (Directly beside Print) */}
                   <button
                     onClick={() => handleGenerateAndSendWhatsAppPDF(selectedInvoice)}
                     disabled={isPdfGenerating}
-                    title="Generate merged PDF of this bill, auto download, and send on WhatsApp"
+                    title="Copy bill screenshot to clipboard and send on WhatsApp"
                     style={{
                       backgroundColor: isPdfGenerating ? "#94a3b8" : "#25D366",
                       color: "#ffffff",
@@ -4745,7 +4688,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     }}
                   >
                     <span style={{ fontSize: "16px" }}>💬</span>
-                    <span>{isPdfGenerating ? "Generating PDF..." : "Send PDF on WhatsApp"}</span>
+                    <span>{isPdfGenerating ? "Copying..." : "Send on WhatsApp"}</span>
                   </button>
 
                   {/* 3. Send Next Payment Due Reminder (When remaining balance exists) */}
@@ -5446,11 +5389,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   Print
                 </button>
 
-                {/* DIRECT SEND PDF ON WHATSAPP BUTTON (Kept beside Print) */}
+                {/* DIRECT SEND ON WHATSAPP BUTTON (Kept beside Print) */}
                 <button
                   onClick={() => handleGenerateAndSendWhatsAppPDF(selectedInvoice)}
                   disabled={isPdfGenerating}
-                  title="Generate merged PDF of this bill, auto download, and send on WhatsApp"
+                  title="Copy bill screenshot to clipboard and send on WhatsApp"
                   style={{
                     backgroundColor: isPdfGenerating ? "#94a3b8" : "#25D366",
                     color: "#ffffff",
@@ -5467,7 +5410,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   }}
                 >
                   <span style={{ fontSize: "17px" }}>💬</span>
-                  <span>{isPdfGenerating ? "Generating PDF..." : "Send PDF on WhatsApp"}</span>
+                  <span>{isPdfGenerating ? "Copying..." : "Send on WhatsApp"}</span>
                 </button>
 
                 {/* CREATE NEW BILL RIGHT BESIDE PRINT & WHATSAPP */}
@@ -5612,7 +5555,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     <span>Print Bill</span>
                   </button>
 
-                  {/* WHATSAPP PDF SEND BUTTON */}
+                  {/* WHATSAPP SCREENSHOT SEND BUTTON */}
                   <button
                     type="button"
                     onClick={() => {
@@ -5639,7 +5582,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     }}
                   >
                     <span style={{ fontSize: "18px" }}>💬</span>
-                    <span>{isPdfGenerating ? "Merging PDF..." : "Send PDF on WhatsApp"}</span>
+                    <span>{isPdfGenerating ? "Copying..." : "Send on WhatsApp"}</span>
                   </button>
                 </div>
 
@@ -5937,10 +5880,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               Print
                             </button>
 
-                            {/* WhatsApp Receipt Quick Send Button - Downloads PDF, copies image, opens WhatsApp */}
+                            {/* WhatsApp Receipt Quick Send Button - Copies bill screenshot, opens WhatsApp */}
                             <button
                               onClick={() => handleGenerateAndSendWhatsAppPDF(b)}
-                              title="Download PDF, Copy Bill & Open WhatsApp"
+                              title="Copy Bill Screenshot & Open WhatsApp"
                               style={{
                                 backgroundColor: "#25D366",
                                 color: "#ffffff",
