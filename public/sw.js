@@ -1,9 +1,9 @@
 // ExamJK Advanced Progressive Web App & Offline Sync Service Worker
 // Automatically caches core assets, API data, PDF viewer, dictionary, and media for seamless offline usage
 
-const STATIC_CACHE = 'examjk-static-v76';
-const DATA_CACHE = 'examjk-data-v76';
-const MEDIA_CACHE = 'examjk-media-v65';
+const STATIC_CACHE = 'examjk-static-v77';
+const DATA_CACHE = 'examjk-data-v77';
+const MEDIA_CACHE = 'examjk-media-v66';
 
 const STATIC_ASSETS = [
   '/',

@@ -1021,12 +1021,97 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     }, 2000);
   };
 
-  // Generate real PDF file from printable bill pad using html2canvas & jsPDF, auto download (1-time) and send to WhatsApp
-  const handleGenerateAndSendWhatsAppPDF = async (bill = selectedInvoice) => {
+  // Helper to compute a distinct fingerprint for a bill's state (detects if updated)
+  const getBillFingerprint = (bill) => {
+    if (!bill) return "";
+    const bNo = bill.billNumber || bill.billNo || "";
+    const paid = bill.paidAmount ?? "";
+    const due = bill.dueAmount ?? "";
+    const disc = bill.discountAmount ?? "";
+    const course = bill.courseDetail || bill.coursePackage || "";
+    const upd = bill.updatedAt || bill.lastUpdated || "";
+    return `${bNo}_${paid}_${due}_${disc}_${course}_${upd}`;
+  };
+
+  // Helper to build clean polite Nepali WhatsApp message
+  const buildWhatsAppNepaliBillMessage = (bill) => {
+    const dueAmt = Number(bill.dueAmount || 0);
+    const paidAmt = Number(bill.paidAmount || 0);
+    const discAmt = Number(bill.discountAmount || 0);
+    const discPercent = Number(bill.discountPercent || 0);
+    const studentName = bill.studentName || "विद्यार्थी";
+    const courseTitle = bill.coursePackage || bill.courseDetail || "Full course";
+    const billNo = bill.billNumber || "N/A";
+
+    let waMessage = `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टरमा भर्ना गर्नुभएकोमा धन्यवाद।\n\n`;
+    waMessage += `विद्यार्थीको नाम: ${studentName}\n`;
+    waMessage += `भर्ना गरिएको कोर्स: ${courseTitle}\n`;
+    waMessage += `बिल नम्बर: ${billNo}\n`;
+
+    if (discAmt > 0 || discPercent > 0) {
+      waMessage += `तपाईंले प्राप्त गर्नुभएको छुट: रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
+    }
+
+    waMessage += `तपाईंले भुक्तानी गर्नुभएको रकम: रु. ${paidAmt.toLocaleString()}\n`;
+
+    if (dueAmt > 0) {
+      waMessage += `बाँकी रहेको रकम: रु. ${dueAmt.toLocaleString()}\n`;
+      if (bill.nextPaymentDate) {
+        waMessage += `बाँकी भुक्तानी गर्ने अन्तिम मिति: ${bill.nextPaymentDate}\n`;
+      }
+      waMessage += `\nतपाईंको रु. ${dueAmt.toLocaleString()} पेमेन्ट गर्न बाँकी रहेको हुनाले कृपया तोकिएको समयभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहोला।\n`;
+    } else {
+      waMessage += `भुक्तानी स्थिति: पूर्ण शुल्क भुक्तानी भइसकेको छ।\n`;
+    }
+
+    waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\nSIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902, +977-9806100148`;
+    return waMessage;
+  };
+
+  // Dispatch WhatsApp chat directly in a new tab without re-downloading PDF
+  const openWhatsAppDirectMessage = (bill) => {
+    const phone = normalizeNepaliMobile(bill.contactNumber);
+    if (!phone || phone.length < 10) {
+      alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
+      return;
+    }
+    const msg = buildWhatsAppNepaliBillMessage(bill);
+    const encodedText = encodeURIComponent(msg);
+    const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodedText}`;
+
+    const newTab = window.open("", "_blank");
+    if (newTab) {
+      newTab.opener = null;
+      newTab.location.href = waUrl;
+    } else {
+      window.open(waUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  // Generate real PDF file from printable bill pad using html2canvas & jsPDF, auto download (1-time only unless updated) and send to WhatsApp
+  const handleGenerateAndSendWhatsAppPDF = async (bill = selectedInvoice, forceDownload = false) => {
     if (!bill || isPdfGenerating) return;
     const phone = normalizeNepaliMobile(bill.contactNumber);
     if (!phone || phone.length < 10) {
       alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
+      return;
+    }
+
+    // Check if this version of the bill has already been downloaded (1-time download check)
+    const billIdKey = bill.billNumber || bill.id || "temp";
+    const currentFingerprint = getBillFingerprint(bill);
+    let downloadedFingerprints = {};
+    try {
+      downloadedFingerprints = JSON.parse(localStorage.getItem(`downloadedBillFingerprints_${instKey}`) || "{}");
+    } catch (e) {
+      downloadedFingerprints = {};
+    }
+
+    const alreadyDownloaded = downloadedFingerprints[billIdKey] === currentFingerprint;
+
+    // If already downloaded and not modified/forced, skip downloading and open WhatsApp directly!
+    if (alreadyDownloaded && !forceDownload) {
+      openWhatsAppDirectMessage(bill);
       return;
     }
 
@@ -1047,7 +1132,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           backgroundColor: "#ffffff"
         });
 
-        // 1. Silent Background Download of PDF (Does not open PDF viewer tab, saves quietly to Downloads)
+        // 1. Silent Background Download of PDF (1-time only; saves quietly to Downloads)
         const imgData = canvas.toDataURL("image/jpeg", 0.95);
         const pdf = new jsPDF({
           orientation: "portrait",
@@ -1079,6 +1164,12 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           pdf.save(fileName);
         }
 
+        // Mark this bill fingerprint as downloaded in localStorage so it never re-downloads unless updated
+        try {
+          downloadedFingerprints[billIdKey] = currentFingerprint;
+          localStorage.setItem(`downloadedBillFingerprints_${instKey}`, JSON.stringify(downloadedFingerprints));
+        } catch (e) {}
+
         // 2. Automatically Copy Bill Screenshot / Image to System Clipboard (Auto-copied for Instant Cmd+V / Ctrl+V)
         let clipCopied = false;
         let imageBlob = null;
@@ -1094,37 +1185,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Clipboard write status:", clipErr);
         }
 
-        // 3. Construct Clean Polite Nepali Message (Receipt Header & Link Removed)
-        const dueAmt = Number(bill.dueAmount || 0);
-        const paidAmt = Number(bill.paidAmount || 0);
-        const discAmt = Number(bill.discountAmount || 0);
-        const discPercent = Number(bill.discountPercent || 0);
-        const studentName = bill.studentName || "विद्यार्थी";
-        const courseTitle = bill.coursePackage || bill.courseDetail || "Full course";
-        const billNo = bill.billNumber || "N/A";
-
-        let waMessage = `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टरमा भर्ना गर्नुभएकोमा धन्यवाद।\n\n`;
-        waMessage += `विद्यार्थीको नाम: ${studentName}\n`;
-        waMessage += `भर्ना गरिएको कोर्स: ${courseTitle}\n`;
-        waMessage += `बिल नम्बर: ${billNo}\n`;
-
-        if (discAmt > 0 || discPercent > 0) {
-          waMessage += `तपाईंले प्राप्त गर्नुभएको छुट: रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
-        }
-
-        waMessage += `तपाईंले भुक्तानी गर्नुभएको रकम: रु. ${paidAmt.toLocaleString()}\n`;
-
-        if (dueAmt > 0) {
-          waMessage += `बाँकी रहेको रकम: रु. ${dueAmt.toLocaleString()}\n`;
-          if (bill.nextPaymentDate) {
-            waMessage += `बाँकी भुक्तानी गर्ने अन्तिम मिति: ${bill.nextPaymentDate}\n`;
-          }
-          waMessage += `\nतपाईंको रु. ${dueAmt.toLocaleString()} पेमेन्ट गर्न बाँकी रहेको हुनाले कृपया तोकिएको समयभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहोला।\n`;
-        } else {
-          waMessage += `भुक्तानी स्थिति: पूर्ण शुल्क भुक्तानी भइसकेको छ।\n`;
-        }
-
-        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\nSIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902, +977-9806100148`;
+        // 3. Construct Clean Polite Nepali Message
+        const waMessage = buildWhatsAppNepaliBillMessage(bill);
 
         // 4. Try Native Web Share with the Bill Image / PDF (Attaches image directly on supported mobile/browsers)
         let shareSuccess = false;
