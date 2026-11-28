@@ -315,6 +315,7 @@ export default function Navbar({
         <nav
           className="desktop-nav-menu"
           style={{
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
             gap: role === 'admin' ? '4px' : '6px',
@@ -876,6 +877,23 @@ export default function Navbar({
 
       {/* Global Responsive Styles for Navbar */}
       <style jsx>{`
+        @media (min-width: 1025px) {
+          :global(.desktop-nav-menu) {
+            display: flex !important;
+          }
+          :global(.desktop-divider) {
+            display: block !important;
+          }
+          :global(.desktop-logout-btn) {
+            display: inline-flex !important;
+          }
+          :global(.mobile-hamburger-btn) {
+            display: none !important;
+          }
+          :global(.navbar-bottom-nav) {
+            display: none !important;
+          }
+        }
         @media (max-width: 1024px) {
           :global(.desktop-nav-menu) {
             display: none !important;
