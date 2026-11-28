@@ -1,7 +1,7 @@
 'use client';
-import { playInstantAudio } from '@/lib/instantAudioEngine';
+import { playInstantAudio, prefetchBatch } from '@/lib/instantAudioEngine';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { koreanToNepaliRomanized } from '@/lib/dictionaryData';
 import HangeulAlphabetGuide from '@/components/HangeulAlphabetGuide';
 
@@ -746,21 +746,29 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Proactively prefetch core Basic Book words so every audio button responds in 0ms nano-seconds
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const coreWords = [
+      '가방', '고기', '김치', '길', '다리', '도시', '돈', '바보', '방', '밥',
+      '지도', '집', '아기', '안경', '어디', '바다', '구두', '갈비', '아버지', '모자',
+      '학교', '한국', '수박', '옷', '낮', '꽃', '부엌', '밑', '잎', '책',
+      '눈', '달', '밤', '산', '물', '문', '발', '손', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구', '십'
+    ];
+    prefetchBatch(coreWords, 'ko', 'female');
+  }, []);
+
   const onPlayClick = (audioUrl, audioId, spokenText, writtenText, gender = 'female') => {
     const textToSpeak = spokenText || writtenText;
-    if (handlePlayAudio) {
-      handlePlayAudio(audioUrl, audioId, textToSpeak, 'ko', gender);
-    } else {
-      playInstantAudio({
-        url: audioUrl,
-        text: textToSpeak,
-        lang: 'ko',
-        gender,
-        id: audioId,
-        voice: gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural',
-        model: gender === 'male' ? 'male-1' : 'female-1'
-      });
-    }
+    playInstantAudio({
+      url: audioUrl,
+      text: textToSpeak,
+      lang: 'ko',
+      gender,
+      id: audioId,
+      voice: gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural',
+      model: gender === 'male' ? 'male-1' : 'female-1'
+    });
   };
 
   const matchesSearch = (text) => {
@@ -1060,7 +1068,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
                     {filteredEx.map((ex, exIdx) => {
                       const textToSpeak = ex.spoken || ex.written;
-                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `gdbj-${rule.id}-${ex.written}`;
                       const isPlaying = playingAudioId === audioId;
 
@@ -1083,7 +1091,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
 
                           <button
                             type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                            onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                             title="उच्चारण सुन्नुहोस्"
                             className="batchim-audio-circle-btn"
                             style={{
@@ -1169,7 +1177,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
                     {filteredEx.map((ex, exIdx) => {
                       const textToSpeak = ex.spoken || ex.written;
-                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `single-${item.rep}-${ex.written}`;
                       const isPlaying = playingAudioId === audioId;
 
@@ -1192,7 +1200,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
 
                           <button
                             type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                            onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                             title="उच्चारण सुन्नुहोस्"
                             className="batchim-audio-circle-btn"
                             style={{
@@ -1291,7 +1299,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
                     {filteredEx.map((ex, exIdx) => {
                       const textToSpeak = ex.spoken || ex.written;
-                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `dual-${item.symbol}-${ex.written}`;
                       const isPlaying = playingAudioId === audioId;
 
@@ -1314,7 +1322,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
 
                           <button
                             type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                            onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                             title="उच्चारण सुन्नुहोस्"
                             className="batchim-audio-circle-btn"
                             style={{
@@ -1423,7 +1431,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
                     {filteredEx.map((ex, exIdx) => {
                       const textToSpeak = ex.spoken || ex.written;
-                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `rule-${rule.id}-${ex.written}`;
                       const isPlaying = playingAudioId === audioId;
 
@@ -1446,7 +1454,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
 
                           <button
                             type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                            onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                             title="उच्चारण सुन्नुहोस्"
                             className="batchim-audio-circle-btn"
                             style={{
@@ -1513,7 +1521,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             {/* Sino Digits Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "8px", marginBottom: "16px" }}>
               {KOREAN_NUMBERS_DATA.sino.digits.map((item, dIdx) => {
-                const audioUrl = `/api/tts?text=${encodeURIComponent(item.spoken)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                const audioUrl = `/api/tts?text=${encodeURIComponent(item.spoken)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `sino-${item.num}-${item.written}`;
                 const isPlaying = playingAudioId === audioId;
 
@@ -1525,7 +1533,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => onPlayClick(audioUrl, audioId, item.spoken, item.written)}
+                      onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, item.spoken, item.written)}
                       title="सुन्नुहोस्"
                       className="batchim-audio-circle-btn"
                       style={{ width: "28px", height: "28px", minWidth: "28px", fontSize: "11px" }}
@@ -1544,7 +1552,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
               {KOREAN_NUMBERS_DATA.sino.examples.map((ex, exIdx) => {
                 const textToSpeak = ex.spoken || ex.written;
-                const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `sino-ex-${ex.written}`;
                 const isPlaying = playingAudioId === audioId;
 
@@ -1559,7 +1567,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                      onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                       title="उच्चारण सुन्नुहोस्"
                       className="batchim-audio-circle-btn"
                     >
@@ -1596,7 +1604,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             {/* Native Digits Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "8px", marginBottom: "16px" }}>
               {KOREAN_NUMBERS_DATA.native.digits.map((item, dIdx) => {
-                const audioUrl = `/api/tts?text=${encodeURIComponent(item.spoken)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                const audioUrl = `/api/tts?text=${encodeURIComponent(item.spoken)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `native-${item.num}-${item.written}`;
                 const isPlaying = playingAudioId === audioId;
 
@@ -1608,7 +1616,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => onPlayClick(audioUrl, audioId, item.spoken, item.written)}
+                      onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, item.spoken, item.written)}
                       title="सुन्नुहोस्"
                       className="batchim-audio-circle-btn"
                       style={{ width: "28px", height: "28px", minWidth: "28px", fontSize: "11px" }}
@@ -1627,7 +1635,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
               {KOREAN_NUMBERS_DATA.native.examples.map((ex, exIdx) => {
                 const textToSpeak = ex.spoken || ex.written;
-                const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `native-ex-${ex.written}`;
                 const isPlaying = playingAudioId === audioId;
 
@@ -1642,7 +1650,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                      onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                       title="उच्चारण सुन्नुहोस्"
                       className="batchim-audio-circle-btn"
                     >
@@ -1701,7 +1709,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
               {GRAMMAR_VERBS_DATA.vst.examples.map((ex, exIdx) => {
                 const textToSpeak = ex.spoken || ex.written;
-                const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `vst-${ex.written}`;
                 const isPlaying = playingAudioId === audioId;
 
@@ -1716,7 +1724,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                      onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                       title="उच्चारण सुन्नुहोस्"
                       className="batchim-audio-circle-btn"
                     >
@@ -1758,7 +1766,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   <div style={{ display: "flex", flexDirection: "column", width: "100%", backgroundColor: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
                     {pt.examples.map((ex, exIdx) => {
                       const textToSpeak = ex.spoken || ex.written;
-                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `particle-${pIdx}-${ex.written}`;
                       const isPlaying = playingAudioId === audioId;
 
@@ -1773,7 +1781,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                           </div>
                           <button
                             type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                            onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                             title="उच्चारण सुन्नुहोस्"
                             className="batchim-audio-circle-btn"
                           >
@@ -1818,7 +1826,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                   <div style={{ display: "flex", flexDirection: "column", width: "100%", backgroundColor: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
                     {ts.examples.map((ex, exIdx) => {
                       const textToSpeak = ex.spoken || ex.written;
-                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=ko-female-1`;
+                      const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `tense-${tIdx}-${ex.written}`;
                       const isPlaying = playingAudioId === audioId;
 
@@ -1833,7 +1841,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                           </div>
                           <button
                             type="button"
-                            onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
+                            onMouseEnter={() => prefetchBatch([textToSpeak], "ko", "female")} onTouchStart={() => prefetchBatch([textToSpeak], "ko", "female")} onClick={() => onPlayClick(audioUrl, audioId, ex.spoken, ex.written)}
                             title="उच्चारण सुन्नुहोस्"
                             className="batchim-audio-circle-btn"
                           >
