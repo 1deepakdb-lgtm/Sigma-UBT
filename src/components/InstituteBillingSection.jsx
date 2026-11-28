@@ -1077,36 +1077,66 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Clipboard write status:", clipErr);
         }
 
-        // 3. Construct Clean Nepali Message with emojis ONLY on Location (📍) and Call (📞)
+        // 3. Construct Combined Nepali Message with Official Receipt Details, Polite Welcome & Live Digital PDF Bill Link
         const dueAmt = Number(bill.dueAmount || 0);
         const paidAmt = Number(bill.paidAmount || 0);
+        const totalAmt = Number(bill.totalFee || 0);
         const discAmt = Number(bill.discountAmount || 0);
         const discPercent = Number(bill.discountPercent || 0);
         const studentName = bill.studentName || "विद्यार्थी";
-        const courseTitle = bill.coursePackage || bill.courseDetail || "EPS-TOPIK कोरियन भाषा";
+        const courseTitle = bill.coursePackage || bill.courseDetail || "Full course";
+        const billNo = bill.billNumber || "N/A";
+        const paymentMethod = bill.paymentMethod || "Cash";
+        const billDate = bill.date || getLocalDateStr();
+        const origin = typeof window !== "undefined" ? window.location.origin : "https://examjk.com";
+        const billPdfUrl = `${origin}/bill/${encodeURIComponent(billNo)}`;
 
-        let waMessage = `नमस्ते ${studentName} ज्यू,\n\n`;
-        waMessage += `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टरमा भर्ना गर्नुभएकोमा धन्यवाद।\n\n`;
-        waMessage += `भर्ना गरिएको कोर्स: ${courseTitle}\n`;
-        waMessage += `बिल नम्बर: ${bill.billNumber || "N/A"}\n`;
-
+        let waMessage = `*शुल्क भुक्तानी आधिकारिक रसिद (Official Bill Receipt)*\n`;
+        waMessage += `🏢 *Sigma Education KBC*\n`;
+        waMessage += `📄 *बिल नं (Bill No):* ${billNo}\n`;
+        waMessage += `👤 *विद्यार्थीको नाम:* ${studentName}\n`;
+        waMessage += `📚 *कोर्स (Course):* ${courseTitle}\n`;
+        waMessage += `📅 *मिति (Date):* ${billDate}\n`;
+        waMessage += `💰 *जम्मा शुल्क:* रु. ${totalAmt.toLocaleString()}\n`;
         if (discAmt > 0 || discPercent > 0) {
-          waMessage += `तपाईंले प्राप्त गर्नुभएको छुट: रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
+          waMessage += `🎁 *प्राप्त छुट (Discount):* रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
         }
-
-        waMessage += `तपाईंले भुक्तानी गर्नुभएको रकम: रु. ${paidAmt.toLocaleString()}\n`;
+        waMessage += `✅ *भुक्तानी रकम:* रु. ${paidAmt.toLocaleString()}\n`;
+        waMessage += `💳 *भुक्तानी माध्यम:* ${paymentMethod}\n`;
 
         if (dueAmt > 0) {
-          waMessage += `बाँकी रहेको रकम: रु. ${dueAmt.toLocaleString()}\n`;
+          waMessage += `⚠️ *बाँकी रकम (Due):* रु. ${dueAmt.toLocaleString()}\n`;
           if (bill.nextPaymentDate) {
-            waMessage += `बाँकी भुक्तानी गर्ने अन्तिम मिति: ${bill.nextPaymentDate}\n`;
+            waMessage += `⏰ *अर्को किस्ता मिति:* ${bill.nextPaymentDate}\n`;
+          }
+        } else {
+          waMessage += `🎉 *भुक्तानी स्थिति:* पूर्ण शुल्क भुक्तानी भइसकेको (Paid in Full)\n`;
+        }
+
+        waMessage += `\n📥 *आफ्नो आधिकारिक छाप र हस्ताक्षर सहितको बिल PDF हेर्न वा डाउनलोड गर्न तलको लिङ्कमा क्लिक गर्नुहोस्:*\n🔗 ${billPdfUrl}\n\n`;
+
+        waMessage += `नमस्ते ${studentName} ज्यू,\n\n`;
+        waMessage += `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टरमा भर्ना गर्नुभएकोमा धन्यवाद।\n\n`;
+        waMessage += `📚 भर्ना गरिएको कोर्स: ${courseTitle}\n`;
+        waMessage += `📄 बिल नम्बर: ${billNo}\n`;
+
+        if (discAmt > 0 || discPercent > 0) {
+          waMessage += `🎁 तपाईंले प्राप्त गर्नुभएको छुट (Discount): रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
+        }
+
+        waMessage += `✅ तपाईंले भुक्तानी गर्नुभएको रकम: रु. ${paidAmt.toLocaleString()}\n`;
+
+        if (dueAmt > 0) {
+          waMessage += `⚠️ बाँकी रहेको रकम (Due Balance): रु. ${dueAmt.toLocaleString()}\n`;
+          if (bill.nextPaymentDate) {
+            waMessage += `📅 बाँकी भुक्तानी गर्ने अन्तिम मिति: ${bill.nextPaymentDate}\n`;
           }
           waMessage += `\nतपाईंको रु. ${dueAmt.toLocaleString()} पेमेन्ट गर्न बाँकी रहेको हुनाले कृपया तोकिएको समयभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहोला।\n`;
         } else {
-          waMessage += `भुक्तानी स्थिति: पूर्ण शुल्क भुक्तानी भइसकेको छ।\n`;
+          waMessage += `🎉 भुक्तानी स्थिति: पूर्ण शुल्क भुक्तानी भइसकेको छ।\n`;
         }
 
-        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\nSIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902`;
+        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\n🏢 SIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902`;
 
         // 4. Try Native Web Share with the Bill Image / PDF (Attaches image directly on supported mobile/browsers)
         let shareSuccess = false;
