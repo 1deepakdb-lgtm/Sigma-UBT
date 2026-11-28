@@ -1062,7 +1062,21 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         const fileName = `Bill_${bill.billNumber || "receipt"}_${(bill.studentName || "student").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
         pdf.save(fileName);
 
-        // 2. Try Web Share API (if supported with files, directly opens WhatsApp with attached PDF/Image)
+        // 2. Automatically Copy Bill to System Clipboard (Instant Cmd+V / Ctrl+V in WhatsApp Web!)
+        let clipCopied = false;
+        try {
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+          if (blob && navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([
+              new ClipboardItem({ "image/png": blob })
+            ]);
+            clipCopied = true;
+          }
+        } catch (clipErr) {
+          console.log("Clipboard write status:", clipErr);
+        }
+
+        // 3. Try Native Web Share (On Mobile / Supported Desktop browsers, directly opens WhatsApp with file attached)
         let shareSuccess = false;
         try {
           if (navigator.canShare) {
@@ -1078,26 +1092,22 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
             }
           }
         } catch (shareErr) {
-          console.log("Web share skipped/cancelled:", shareErr);
+          console.log("Web share status:", shareErr);
         }
 
-        // 3. Copy image to Clipboard so user can simply Cmd+V / Ctrl+V into WhatsApp chat directly!
-        try {
-          canvas.toBlob(async (blob) => {
-            if (blob && navigator.clipboard && window.ClipboardItem) {
-              await navigator.clipboard.write([
-                new ClipboardItem({ "image/png": blob })
-              ]);
-            }
-          }, "image/png");
-        } catch (clipErr) {
-          console.log("Clipboard copy notice:", clipErr);
-        }
-
-        // 4. Open WhatsApp directly to the student's number without requiring share if not shared
+        // 4. Open Direct Active WhatsApp (WhatsApp Web / WhatsApp App)
         if (!shareSuccess) {
-          const waUrl = `https://api.whatsapp.com/send?phone=977${phone}`;
-          window.open(waUrl, "_blank");
+          // Detect if desktop to direct to web.whatsapp.com directly for active session
+          const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+          const waUrl = isMobile
+            ? `whatsapp://send?phone=977${phone}`
+            : `https://web.whatsapp.com/send?phone=977${phone}`;
+
+          // Open directly in active tab/window
+          const opened = window.open(waUrl, "_blank");
+          if (!opened) {
+            window.location.href = waUrl;
+          }
         }
       }
     } catch (err) {
