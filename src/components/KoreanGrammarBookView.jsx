@@ -1,7 +1,7 @@
 'use client';
 import { playInstantAudio, prefetchBatch, stopAllAudio } from '@/lib/instantAudioEngine';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { BASIC_GRAMMAR, INTERMEDIATE_GRAMMAR, ADVANCED_GRAMMAR, GRAMMAR_COMPARISONS } from '@/lib/koreanGrammarData';
 import { CHAPTER_GRAMMAR_MAP } from '@/lib/koreanChapterGrammarData';
 import { renderRuleWithSymbols } from './KoreanMeaningBookView';
