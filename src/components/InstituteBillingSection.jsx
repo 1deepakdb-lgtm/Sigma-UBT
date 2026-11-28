@@ -721,6 +721,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showBillSuccessModal, setShowBillSuccessModal] = useState(false);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [syncStatus, setSyncStatus] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
@@ -1017,6 +1019,57 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     setTimeout(() => {
       document.title = originalTitle;
     }, 2000);
+  };
+
+  // Generate real PDF file from printable bill pad using html2canvas & jsPDF, auto download and send to WhatsApp
+  const handleGenerateAndSendWhatsAppPDF = async (bill = selectedInvoice) => {
+    if (!bill) return;
+    const phone = normalizeNepaliMobile(bill.contactNumber);
+    if (!phone || phone.length < 10) {
+      alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
+      return;
+    }
+
+    setIsPdfGenerating(true);
+    try {
+      // Ensure selectedInvoice is set to bill so printable-bill-pad has exact data
+      setSelectedInvoice(bill);
+      // Wait a moment for DOM to paint
+      await new Promise(r => setTimeout(r, 250));
+
+      const billElem = document.getElementById("printable-bill-pad");
+      if (billElem) {
+        const html2canvasModule = (await import("html2canvas")).default;
+        const { jsPDF } = await import("jspdf");
+
+        const canvas = await html2canvasModule(billElem, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff"
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4"
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+
+        const fileName = `Bill_${bill.billNumber || "receipt"}_${(bill.studentName || "student").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+        pdf.save(fileName);
+      }
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    } finally {
+      setIsPdfGenerating(false);
+      // Open WhatsApp to dispatch bill details, live PDF link, and notify user
+      handleSendWhatsAppReceipt(bill);
+    }
   };
 
 
@@ -2871,8 +2924,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       setForm(resetBillForm());
       setDiscountUserEdited(false);
 
-      alert(data.message || `Bill ${returnedBill.billNumber} successfully generated!`);
-      setTimeout(() => window.print(), 200);
+      // Open print/WhatsApp action dialog
+      setShowBillSuccessModal(true);
     } catch (err) {
       console.error("Error submitting bill:", err);
       alert("Failed to submit bill. Please check your network.");
@@ -4544,15 +4597,16 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
                   {/* 2. DIRECT SEND PDF ON WHATSAPP BUTTON (Directly beside Print) */}
                   <button
-                    onClick={() => handleSendWhatsAppReceipt(selectedInvoice)}
-                    title="Directly send bill PDF link and receipt to student on WhatsApp"
+                    onClick={() => handleGenerateAndSendWhatsAppPDF(selectedInvoice)}
+                    disabled={isPdfGenerating}
+                    title="Generate merged PDF of this bill, auto download, and send on WhatsApp"
                     style={{
-                      backgroundColor: "#25D366",
+                      backgroundColor: isPdfGenerating ? "#94a3b8" : "#25D366",
                       color: "#ffffff",
                       border: "1px solid #1ea952",
                       padding: "9px 18px",
                       borderRadius: "6px",
-                      cursor: "pointer",
+                      cursor: isPdfGenerating ? "wait" : "pointer",
                       fontWeight: "bold",
                       fontSize: "13px",
                       display: "flex",
@@ -4562,7 +4616,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                     }}
                   >
                     <span style={{ fontSize: "16px" }}>💬</span>
-                    <span>Send PDF on WhatsApp</span>
+                    <span>{isPdfGenerating ? "Generating PDF..." : "Send PDF on WhatsApp"}</span>
                   </button>
 
                   {/* 3. Send Next Payment Due Reminder (When remaining balance exists) */}
@@ -5265,15 +5319,16 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
                 {/* DIRECT SEND PDF ON WHATSAPP BUTTON (Kept beside Print) */}
                 <button
-                  onClick={() => handleSendWhatsAppReceipt(selectedInvoice)}
-                  title="Directly send bill PDF link and receipt to student on WhatsApp"
+                  onClick={() => handleGenerateAndSendWhatsAppPDF(selectedInvoice)}
+                  disabled={isPdfGenerating}
+                  title="Generate merged PDF of this bill, auto download, and send on WhatsApp"
                   style={{
-                    backgroundColor: "#25D366",
+                    backgroundColor: isPdfGenerating ? "#94a3b8" : "#25D366",
                     color: "#ffffff",
                     border: "1px solid #1ea952",
                     padding: "10px 20px",
                     borderRadius: "6px",
-                    cursor: "pointer",
+                    cursor: isPdfGenerating ? "wait" : "pointer",
                     fontWeight: "bold",
                     fontSize: "14px",
                     display: "flex",
@@ -5283,7 +5338,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   }}
                 >
                   <span style={{ fontSize: "17px" }}>💬</span>
-                  <span>Send PDF on WhatsApp</span>
+                  <span>{isPdfGenerating ? "Generating PDF..." : "Send PDF on WhatsApp"}</span>
                 </button>
 
                 {/* CREATE NEW BILL RIGHT BESIDE PRINT & WHATSAPP */}
@@ -5321,6 +5376,158 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                   }}
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* BILL GENERATION SUCCESS & PRINT/WHATSAPP ACTION DIALOG MODAL */}
+          {showBillSuccessModal && selectedInvoice && (
+            <div style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.75)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+              padding: "16px"
+            }}>
+              <div style={{
+                backgroundColor: "#ffffff",
+                borderRadius: "12px",
+                width: "100%",
+                maxWidth: "480px",
+                padding: "24px",
+                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3)",
+                textAlign: "center"
+              }}>
+                <div style={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "50%",
+                  backgroundColor: "#dcfce7",
+                  color: "#16a34a",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "30px",
+                  margin: "0 auto 14px auto"
+                }}>
+                  ✓
+                </div>
+
+                <h3 style={{ margin: "0 0 6px 0", color: "#1e3a8a", fontSize: "20px", fontWeight: "900" }}>
+                  Bill Generated Successfully!
+                </h3>
+                <p style={{ margin: "0 0 16px 0", color: "#64748b", fontSize: "13px" }}>
+                  Bill <strong>{selectedInvoice.billNumber}</strong> for <strong>{selectedInvoice.studentName}</strong> has been saved.
+                </p>
+
+                {/* Bill Summary Pill */}
+                <div style={{
+                  backgroundColor: "#f8fafc",
+                  border: "1.5px solid #e2e8f0",
+                  borderRadius: "8px",
+                  padding: "12px 16px",
+                  marginBottom: "20px",
+                  textAlign: "left",
+                  fontSize: "13px"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span style={{ color: "#64748b" }}>Paid Amount:</span>
+                    <strong style={{ color: "#16a34a", fontSize: "14px" }}>{formatCurrency(selectedInvoice.paidAmount)}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span style={{ color: "#64748b" }}>Due Amount:</span>
+                    <strong style={{ color: Number(selectedInvoice.dueAmount) > 0 ? "#dc2626" : "#16a34a" }}>
+                      {Number(selectedInvoice.dueAmount) > 0 ? formatCurrency(selectedInvoice.dueAmount) : "Paid in Full"}
+                    </strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#64748b" }}>WhatsApp Mobile:</span>
+                    <strong style={{ color: "#1e3a8a" }}>+977-{selectedInvoice.contactNumber}</strong>
+                  </div>
+                </div>
+
+                {/* Print and WhatsApp Buttons Together */}
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "12px", flexWrap: "wrap" }}>
+                  {/* PRINT BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.print();
+                    }}
+                    style={{
+                      flex: 1,
+                      minWidth: "140px",
+                      backgroundColor: "#dc2626",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "12px 18px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      boxShadow: "0 2px 6px rgba(220, 38, 38, 0.3)"
+                    }}
+                  >
+                    <span>🖨️</span>
+                    <span>Print Bill</span>
+                  </button>
+
+                  {/* WHATSAPP PDF SEND BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleGenerateAndSendWhatsAppPDF(selectedInvoice);
+                      setShowBillSuccessModal(false);
+                    }}
+                    disabled={isPdfGenerating}
+                    style={{
+                      flex: 1.3,
+                      minWidth: "180px",
+                      backgroundColor: isPdfGenerating ? "#94a3b8" : "#25D366",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "12px 18px",
+                      borderRadius: "8px",
+                      cursor: isPdfGenerating ? "wait" : "pointer",
+                      fontWeight: "bold",
+                      fontSize: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      boxShadow: "0 2px 6px rgba(37, 211, 102, 0.35)"
+                    }}
+                  >
+                    <span style={{ fontSize: "18px" }}>💬</span>
+                    <span>{isPdfGenerating ? "Merging PDF..." : "Send PDF on WhatsApp"}</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowBillSuccessModal(false)}
+                  style={{
+                    backgroundColor: "transparent",
+                    color: "#64748b",
+                    border: "none",
+                    padding: "8px",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    fontWeight: "600"
+                  }}
+                >
+                  Close & View Receipt Pad
                 </button>
               </div>
             </div>

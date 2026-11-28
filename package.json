@@ -30,12 +30,17 @@
       "public/**/*"
     ],
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "icon": "public/icon-512.png",
       "category": "public.app-category.education"
     },
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "public/icon-512.png"
     },
     "nsis": {
@@ -51,7 +56,9 @@
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "edge-tts-universal": "^1.4.0",
+    "html2canvas": "^1.4.1",
     "jose": "^5.9.6",
+    "jspdf": "^4.2.1",
     "mammoth": "^1.13.0",
     "mime-types": "^3.0.2",
     "next": "^14.2.15",
