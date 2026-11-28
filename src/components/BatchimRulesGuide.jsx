@@ -571,7 +571,7 @@ export const KOREAN_NUMBERS_DATA = {
     examples: [
       { written: "삼월 이십일", spoken: "사몰 이시빌", nepali: "मार्च २० तारिख (महिना र गते)" },
       { written: "십오 분", spoken: "시보 분", nepali: "१५ मिनेट (समयको मिनेट)" },
-      { written: "오천 원", spoken: "ओछन वन", nepali: "५,००० वन (पैसा/रकम)" },
+      { written: "오천 원", spoken: "오천 원", nepali: "५,००० वन (पैसा/रकम)" },
       { written: "삼 층", spoken: "삼 층", nepali: "तेस्रो तल्ला (तल्ला / Floor)" },
       { written: "공일공-일이삼사", spoken: "공일공-일이삼사", nepali: "०१०-१२३४ (फोन नम्बर)" },
       { written: "육십삼 번", spoken: "육십삼 번", nepali: "६३ नम्बर बस / रुट" }
@@ -1564,6 +1564,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             {/* Sino Digits Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "8px", marginBottom: "16px" }}>
               {KOREAN_NUMBERS_DATA.sino.digits.map((item, dIdx) => {
+                const textToSpeak = item.spoken || item.written;
                 const audioId = `sino-${item.num}-${item.written}`;
                 const isPlaying = isAudioPlaying(audioId);
 
@@ -1645,6 +1646,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
             {/* Native Digits Grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "8px", marginBottom: "16px" }}>
               {KOREAN_NUMBERS_DATA.native.digits.map((item, dIdx) => {
+                const textToSpeak = item.spoken || item.written;
                 const audioId = `native-${item.num}-${item.written}`;
                 const isPlaying = isAudioPlaying(audioId);
 
