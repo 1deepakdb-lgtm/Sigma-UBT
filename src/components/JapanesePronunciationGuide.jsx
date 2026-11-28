@@ -1,4 +1,5 @@
 'use client';
+import { playInstantAudio } from '@/lib/instantAudioEngine';
 
 import React, { useState } from 'react';
 
@@ -310,22 +311,19 @@ export default function JapanesePronunciationGuide({ handlePlayAudio, playingAud
   function playSample(text, id, gender = 'female') {
     const voice = gender === 'male' ? 'ja-JP-KeitaNeural' : 'ja-JP-NanamiNeural';
     const model = gender === 'male' ? 'ja-male-1' : 'ja-female-1';
-    const url = `/api/tts?text=${encodeURIComponent(text)}&lang=ja&gender=${gender}&voice=${voice}&model=${model}`;
+    const url = '/api/tts?text=' + encodeURIComponent(text) + '&lang=ja&gender=' + gender + '&voice=' + voice + '&model=' + model;
     if (handlePlayAudio) {
       handlePlayAudio(url, id, text, 'ja', gender);
-    } else if (typeof window !== 'undefined' && window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel();
-        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.lang = 'ja-JP';
-        if (gender === 'male') {
-          utt.pitch = 0.82;
-        } else {
-          utt.pitch = 1.15;
-        }
-        window.speechSynthesis.speak(utt);
-      } catch (e) {}
+    } else {
+      playInstantAudio({
+        url,
+        text,
+        lang: 'ja',
+        gender,
+        id,
+        voice,
+        model
+      });
     }
   }
 

@@ -1,4 +1,5 @@
 'use client';
+import { playInstantAudio } from '@/lib/instantAudioEngine';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 
@@ -727,9 +728,9 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
   // Studio-Quality Authentic Korean Pronunciation Engine
   const onPlay = (text, id = null) => {
-    if (!text || typeof window === "undefined") return;
+    if (!text || typeof window === 'undefined') return;
     const now = Date.now();
-    if (now - lastPlayTimeRef.current < 40) return; // Debounce rapid multi-touch
+    if (now - lastPlayTimeRef.current < 30) return;
     lastPlayTimeRef.current = now;
 
     let cleanText = String(text).trim();
@@ -737,96 +738,30 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
     cleanText = cleanText.replace(/\(으\)/g, '으').replace(/\//g, ', ').replace(/[#*`_~]/g, '');
     if (!cleanText) cleanText = text;
 
-    // Convert isolated vowel (ㅏ, ㅐ, ㅘ...) or consonant (ㄱ, ㄴ...) into complete spoken Korean block (아, 애, 와, 가, 나...)
     const spokenKorean = getSpokenKoreanText(cleanText);
-
     const playKey = id || text;
-    setLocalPlayingId(playKey);
 
-    // Stop currently playing audio immediately
-    if (activeAudioRef.current) {
-      try {
-        activeAudioRef.current.pause();
-        activeAudioRef.current.currentTime = 0;
-      } catch (e) {}
-    }
-    if ("speechSynthesis" in window) {
-      try { window.speechSynthesis.cancel(); } catch (e) {}
-    }
-
-    // 1. PRIMARY: High-Fidelity Pre-Rendered Native Human Korean Audio (SunHi Neural Studio Voice)
     let staticAudioUrl = null;
     if (spokenKorean.length === 1) {
       const code = spokenKorean.charCodeAt(0);
       if (code >= 0xAC00 && code <= 0xD7A3) {
         const hex = code.toString(16).toLowerCase();
-        staticAudioUrl = `/audio/hangeul/syl_${hex}.mp3`;
+        staticAudioUrl = '/audio/hangeul/syl_' + hex + '.mp3';
       }
     }
 
-    const audioUrl = staticAudioUrl || `/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&voice=ko-KR-SunHiNeural&rate=+0%`;
-
-    let audio = audioCacheRef.current.get(audioUrl);
-    if (!audio) {
-      audio = new Audio(audioUrl);
-      audioCacheRef.current.set(audioUrl, audio);
-    } else {
-      audio.currentTime = 0;
-    }
-
-    activeAudioRef.current = audio;
-
-    const clearActive = () => {
-      setLocalPlayingId(null);
-      if (activeAudioRef.current === audio) activeAudioRef.current = null;
-    };
-
-    audio.onended = clearActive;
-    audio.onerror = () => {
-      // If static file fails, try dynamic /api/tts, then fallback to SpeechSynthesis
-      if (staticAudioUrl) {
-        const fallbackAudio = new Audio(`/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&voice=ko-KR-SunHiNeural&rate=+0%`);
-        fallbackAudio.onended = clearActive;
-        fallbackAudio.onerror = () => {
-          if ("speechSynthesis" in window) {
-            try {
-              const utterance = new SpeechSynthesisUtterance(spokenKorean);
-              utterance.lang = "ko-KR";
-              utterance.rate = 0.9;
-              if (cachedKoVoiceRef.current) utterance.voice = cachedKoVoiceRef.current;
-              utterance.onend = clearActive;
-              utterance.onerror = clearActive;
-              window.speechSynthesis.speak(utterance);
-              return;
-            } catch (e) {}
-          }
-          clearActive();
-        };
-        fallbackAudio.play().catch(() => clearActive());
-        return;
-      }
-      clearActive();
-    };
-
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // Fallback to speech synthesis if autoplay was restricted
-        if ("speechSynthesis" in window) {
-          try {
-            const utterance = new SpeechSynthesisUtterance(spokenKorean);
-            utterance.lang = "ko-KR";
-            utterance.rate = 0.9;
-            if (cachedKoVoiceRef.current) utterance.voice = cachedKoVoiceRef.current;
-            utterance.onend = clearActive;
-            utterance.onerror = clearActive;
-            window.speechSynthesis.speak(utterance);
-            return;
-          } catch (e) {}
-        }
-        clearActive();
-      });
-    }
+    playInstantAudio({
+      url: staticAudioUrl,
+      text: spokenKorean,
+      lang: 'ko',
+      gender: 'female',
+      id: playKey,
+      voice: 'ko-KR-SunHiNeural',
+      model: 'female-1',
+      onStart: () => setLocalPlayingId(playKey),
+      onEnd: () => setLocalPlayingId(null),
+      onError: () => setLocalPlayingId(null)
+    });
   };
 
   const isAudioPlaying = (id) => (localPlayingId === id || playingAudioId === id);

@@ -1,4 +1,5 @@
 'use client';
+import { playInstantAudio, prefetchBatch, stopAllAudio } from '@/lib/instantAudioEngine';
 
 import React, { useState, useMemo, useRef } from 'react';
 import { BASIC_GRAMMAR, INTERMEDIATE_GRAMMAR, ADVANCED_GRAMMAR, GRAMMAR_COMPARISONS } from '@/lib/koreanGrammarData';
@@ -41,80 +42,29 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
     if (!cleanText) cleanText = text;
 
     const spokenKorean = getSpokenKoreanText ? getSpokenKoreanText(cleanText) : cleanText;
-
     const playKey = id || text;
-    setSpeakingText(playKey);
 
-    // Stop currently running playback
-    try {
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        audioPlayerRef.current = null;
+    let staticAudioUrl = null;
+    if (spokenKorean.length === 1) {
+      const code = spokenKorean.charCodeAt(0);
+      if (code >= 0xAC00 && code <= 0xD7A3) {
+        const hex = code.toString(16).toLowerCase();
+        staticAudioUrl = '/audio/hangeul/syl_' + hex + '.mp3';
       }
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-    } catch (e) {}
-
-    // 1. PRIMARY: High-Fidelity Studio Neural Voice (Crystal Clear Korean Native Teacher)
-    try {
-      let staticAudioUrl = null;
-      if (spokenKorean.length === 1) {
-        const code = spokenKorean.charCodeAt(0);
-        if (code >= 0xAC00 && code <= 0xD7A3) {
-          const hex = code.toString(16).toLowerCase();
-          staticAudioUrl = `/audio/hangeul/syl_${hex}.mp3`;
-        }
-      }
-
-      const voice = gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural';
-      const model = gender === 'male' ? 'male-1' : 'female-1';
-      const ttsUrl = staticAudioUrl || `/api/tts?text=${encodeURIComponent(spokenKorean)}&lang=ko&gender=${gender}&voice=${voice}&pitch=+0Hz&rate=-2%&model=${model}`;
-      const audio = new Audio(ttsUrl);
-      audioPlayerRef.current = audio;
-
-      audio.onended = () => {
-        setSpeakingText(null);
-        audioPlayerRef.current = null;
-      };
-
-      audio.onerror = () => {
-        // Fallback to Web Speech API if network is unavailable
-        if ('speechSynthesis' in window) {
-          try {
-            const utterance = new SpeechSynthesisUtterance(spokenKorean);
-            utterance.lang = 'ko-KR';
-            utterance.rate = 0.9;
-            utterance.pitch = 1.0;
-            utterance.onend = () => setSpeakingText(null);
-            utterance.onerror = () => setSpeakingText(null);
-            window.speechSynthesis.speak(utterance);
-            return;
-          } catch (e) {}
-        }
-        setSpeakingText(null);
-        audioPlayerRef.current = null;
-      };
-
-      audio.play().catch(() => {
-        if ('speechSynthesis' in window) {
-          try {
-            const utterance = new SpeechSynthesisUtterance(spokenKorean);
-            utterance.lang = 'ko-KR';
-            utterance.rate = 0.9;
-            utterance.onend = () => setSpeakingText(null);
-            utterance.onerror = () => setSpeakingText(null);
-            window.speechSynthesis.speak(utterance);
-            return;
-          } catch (e) {}
-        }
-        setSpeakingText(null);
-        audioPlayerRef.current = null;
-      });
-    } catch (e) {
-      setSpeakingText(null);
-      audioPlayerRef.current = null;
     }
+
+    playInstantAudio({
+      url: staticAudioUrl,
+      text: spokenKorean,
+      lang: 'ko',
+      gender,
+      id: playKey,
+      voice: gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural',
+      model: gender === 'male' ? 'male-1' : 'female-1',
+      onStart: () => setSpeakingText(playKey),
+      onEnd: () => setSpeakingText(null),
+      onError: () => setSpeakingText(null)
+    });
   };
 
   // Combine all general grammars

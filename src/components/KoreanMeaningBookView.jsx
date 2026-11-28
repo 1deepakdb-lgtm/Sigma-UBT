@@ -1,4 +1,5 @@
 'use client';
+import { playInstantAudio, prefetchBatch, stopAllAudio } from '@/lib/instantAudioEngine';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CHAPTER_MEANINGS_DATA } from '@/lib/koreanChapterMeaningData';
@@ -93,57 +94,17 @@ export default function KoreanMeaningBookView({
 
     const playKey = id || text;
 
-    try {
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        audioPlayerRef.current = null;
-      }
-
-      const voice = gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural';
-      const model = gender === 'male' ? 'male-1' : 'female-1';
-
-      // Exact dictionary neural model voice endpoint (Microsoft Neural Voice)
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ko&gender=${gender}&voice=${voice}&pitch=%2B0Hz&rate=-4%25&model=${model}`;
-      const audio = new Audio(ttsUrl);
-      audioPlayerRef.current = audio;
-      setSpeakingWordId(playKey);
-
-      audio.onended = () => {
-        setSpeakingWordId(null);
-        audioPlayerRef.current = null;
-      };
-
-      audio.onerror = () => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'ko-KR';
-          utterance.rate = 0.85;
-          utterance.onend = () => setSpeakingWordId(null);
-          utterance.onerror = () => setSpeakingWordId(null);
-          window.speechSynthesis.speak(utterance);
-        } else {
-          setSpeakingWordId(null);
-        }
-      };
-
-      audio.play().catch(() => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'ko-KR';
-          utterance.rate = 0.85;
-          utterance.onend = () => setSpeakingWordId(null);
-          utterance.onerror = () => setSpeakingWordId(null);
-          window.speechSynthesis.speak(utterance);
-        } else {
-          setSpeakingWordId(null);
-        }
-      });
-    } catch (e) {
-      console.warn("Speech error:", e);
-      setSpeakingWordId(null);
-    }
+    playInstantAudio({
+      text: cleanText,
+      lang: 'ko',
+      gender,
+      id: playKey,
+      voice: gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural',
+      model: gender === 'male' ? 'male-1' : 'female-1',
+      onStart: () => setSpeakingWordId(playKey),
+      onEnd: () => setSpeakingWordId(null),
+      onError: () => setSpeakingWordId(null)
+    });
   };
 
   // Combine server meaningChapters metadata with our rich vocabulary dataset

@@ -1,4 +1,5 @@
 'use client';
+import { playInstantAudio, stopAllAudio } from '@/lib/instantAudioEngine';
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -1083,7 +1084,7 @@ export default function EpsBookReader({
   const [japaneseR2Data, setJapaneseR2Data] = useState(null);
 
   const handlePlayJpAudio = (arg1, arg2, arg3) => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     let id = arg1;
     let text = arg2;
     if (typeof arg1 === 'string' && (arg1.startsWith('/api') || arg1.startsWith('http'))) {
@@ -1096,68 +1097,32 @@ export default function EpsBookReader({
         } catch (e) { }
       }
     }
+    if (!text && typeof arg1 === 'string') {
+      text = arg1;
+    }
     if (!text) return;
 
-    if (playingJpAudioId === id) {
-      if (jpAudioPlayerRef.current) {
-        jpAudioPlayerRef.current.pause();
-        jpAudioPlayerRef.current = null;
-      }
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    let cleanText = String(text).trim().replace(/[#*`_~]/g, '');
+    const isKorean = /[\uAC00-\uD7AF]/.test(cleanText);
+    const audioId = id || cleanText;
+
+    if (playingJpAudioId === audioId) {
+      stopAllAudio();
       setPlayingJpAudioId(null);
       return;
     }
 
-    if (jpAudioPlayerRef.current) {
-      jpAudioPlayerRef.current.pause();
-      jpAudioPlayerRef.current = null;
-    }
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-
-    let cleanText = String(text).trim().replace(/[#*`_~]/g, '');
-    setPlayingJpAudioId(id);
-
-    // Instant client-side speech synthesis (< 5ms response)
-    if ('speechSynthesis' in window) {
-      try {
-        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = /[\uAC00-\uD7AF]/.test(cleanText) ? 'ko-KR' : 'ja-JP';
-        utterance.rate = 0.95;
-        window.__activeJpUtt = utterance;
-        utterance.onend = () => {
-          window.__activeJpUtt = null;
-          setPlayingJpAudioId(null);
-        };
-        utterance.onerror = () => {
-          window.__activeJpUtt = null;
-          setPlayingJpAudioId(null);
-        };
-        window.speechSynthesis.speak(utterance);
-        return;
-      } catch (err) { }
-    }
-
-    try {
-      const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&lang=ja&voice=ja-JP-NanamiNeural&gender=female&model=ja-female-1`;
-      const audio = new Audio(ttsUrl);
-      jpAudioPlayerRef.current = audio;
-
-      audio.onended = () => {
-        setPlayingJpAudioId(null);
-        jpAudioPlayerRef.current = null;
-      };
-
-      audio.onerror = () => {
-        setPlayingJpAudioId(null);
-      };
-
-      audio.play().catch(() => {
-        setPlayingJpAudioId(null);
-      });
-    } catch (err) {
-      setPlayingJpAudioId(null);
-    }
+    playInstantAudio({
+      text: cleanText,
+      lang: isKorean ? 'ko' : 'ja',
+      gender: 'female',
+      id: audioId,
+      voice: isKorean ? 'ko-KR-SunHiNeural' : 'ja-JP-NanamiNeural',
+      model: isKorean ? 'female-1' : 'ja-female-1',
+      onStart: () => setPlayingJpAudioId(audioId),
+      onEnd: () => setPlayingJpAudioId(null),
+      onError: () => setPlayingJpAudioId(null)
+    });
   };
 
   const filteredMinnaLessons = useMemo(() => {

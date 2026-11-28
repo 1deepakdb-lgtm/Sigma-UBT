@@ -530,6 +530,12 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
       .then(blob => {
         const blobUrl = URL.createObjectURL(blob);
         audioBlobCacheRef.current.set(url, blobUrl);
+        // Pre-create Audio object in background so browser audio pipeline is hot
+        try {
+          const prewarmed = new Audio();
+          prewarmed.preload = 'auto';
+          prewarmed.src = blobUrl;
+        } catch (_) {}
       })
       .catch(() => {})
       .finally(() => {

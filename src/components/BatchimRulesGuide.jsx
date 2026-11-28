@@ -1,4 +1,5 @@
 'use client';
+import { playInstantAudio } from '@/lib/instantAudioEngine';
 
 import React, { useState, useMemo } from 'react';
 import { koreanToNepaliRomanized } from '@/lib/dictionaryData';
@@ -749,21 +750,16 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
     const textToSpeak = spokenText || writtenText;
     if (handlePlayAudio) {
       handlePlayAudio(audioUrl, audioId, textToSpeak, 'ko', gender);
-    } else if (typeof window !== 'undefined' && window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel();
-        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-        const utt = new SpeechSynthesisUtterance(textToSpeak);
-        utt.lang = 'ko-KR';
-        if (gender === 'male') {
-          utt.pitch = 0.82;
-          utt.rate = 0.95;
-        } else {
-          utt.pitch = 1.15;
-          utt.rate = 1.0;
-        }
-        window.speechSynthesis.speak(utt);
-      } catch (e) {}
+    } else {
+      playInstantAudio({
+        url: audioUrl,
+        text: textToSpeak,
+        lang: 'ko',
+        gender,
+        id: audioId,
+        voice: gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural',
+        model: gender === 'male' ? 'male-1' : 'female-1'
+      });
     }
   };
 
