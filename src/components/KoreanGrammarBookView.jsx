@@ -60,7 +60,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
       gender,
       id: playKey,
       voice: gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural',
-      model: gender === 'male' ? 'male-1' : 'female-1',
+      model: gender === 'male' ? 'ko-male-1' : 'ko-female-1',
       onStart: () => setSpeakingText(playKey),
       onEnd: () => setSpeakingText(null),
       onError: () => setSpeakingText(null)
@@ -75,6 +75,32 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
       ...ADVANCED_GRAMMAR.map(g => ({ ...g, levelBadge: "Advanced (उच्च)", levelColor: "#7c3aed", levelBg: "#f5f3ff" }))
     ];
   }, []);
+
+  // Proactive pre-warming for instant 0ms response in Basic & Advanced Grammar
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (activeTab === 'basic_advanced') {
+      const textsToPreload = [];
+      const visibleList = (filteredGrammars || []).slice(0, 15);
+      visibleList.forEach(g => {
+        if (g.examples) {
+          g.examples.forEach(ex => {
+            if (ex.ko) textsToPreload.push(ex.ko);
+          });
+        }
+      });
+      prefetchBatch(textsToPreload.slice(0, 40), 'ko', 'female');
+    }
+  }, [activeTab, levelFilter, categoryFilter, grammarSearch]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !expandedGrammarId) return;
+    const g = allGeneralGrammars.find(item => item.id === expandedGrammarId);
+    if (g && g.examples) {
+      const list = g.examples.map(ex => ex.ko).filter(Boolean);
+      prefetchBatch(list, 'ko', 'female');
+    }
+  }, [expandedGrammarId]);
 
   // Filtered General Grammars
   const filteredGrammars = useMemo(() => {
@@ -660,7 +686,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleSpeak(gp.pattern)}
+                        onMouseEnter={() => prefetchBatch([gp.pattern], "ko", "female")} onTouchStart={() => prefetchBatch([gp.pattern], "ko", "female")} onClick={() => handleSpeak(gp.pattern)}
                         style={{
                           backgroundColor: speakingText === gp.pattern ? "#dbeafe" : "#f1f5f9",
                           border: speakingText === gp.pattern ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
@@ -739,7 +765,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                                   <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", minWidth: 0 }}>
                                     <button
                                       type="button"
-                                      onClick={() => handleSpeak(koSpeech)}
+                                      onMouseEnter={() => prefetchBatch([koSpeech], "ko", "female")} onTouchStart={() => prefetchBatch([koSpeech], "ko", "female")} onClick={() => handleSpeak(koSpeech)}
                                       className="conjugation-audio-btn"
                                       style={{
                                         width: "28px",
@@ -1372,7 +1398,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={() => handleSpeak(ex.ko)}
+                                  onMouseEnter={() => prefetchBatch([ex.ko], "ko", "female")} onTouchStart={() => prefetchBatch([ex.ko], "ko", "female")} onClick={() => handleSpeak(ex.ko)}
                                   className="audio-circle-btn"
                                   style={{
                                     width: "30px",
@@ -1678,7 +1704,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleSpeak(c.koA)}
+                            onMouseEnter={() => prefetchBatch([c.koA], "ko", "female")} onTouchStart={() => prefetchBatch([c.koA], "ko", "female")} onClick={() => handleSpeak(c.koA)}
                             className="audio-circle-btn"
                             style={{
                               backgroundColor: speakingText === c.koA ? "#2563eb" : "#ffffff",
@@ -1720,7 +1746,7 @@ export default function KoreanGrammarBookView({ materials = [], isAdmin = false,
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleSpeak(c.koB)}
+                            onMouseEnter={() => prefetchBatch([c.koB], "ko", "female")} onTouchStart={() => prefetchBatch([c.koB], "ko", "female")} onClick={() => handleSpeak(c.koB)}
                             className="audio-circle-btn"
                             style={{
                               backgroundColor: speakingText === c.koB ? "#dc2626" : "#ffffff",

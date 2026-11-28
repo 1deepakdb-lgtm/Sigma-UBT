@@ -100,7 +100,7 @@ export default function KoreanMeaningBookView({
       gender,
       id: playKey,
       voice: gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural',
-      model: gender === 'male' ? 'male-1' : 'female-1',
+      model: gender === 'male' ? 'ko-male-1' : 'ko-female-1',
       onStart: () => setSpeakingWordId(playKey),
       onEnd: () => setSpeakingWordId(null),
       onError: () => setSpeakingWordId(null)
@@ -1181,7 +1181,7 @@ export default function KoreanMeaningBookView({
                       {/* Right: Round Audio Button (Right side of meaning) */}
                       <button
                         type="button"
-                        onClick={() => handleSpeak(w.korean, `tb_${idx}`)}
+                        onMouseEnter={() => prefetchBatch([w.korean], "ko", "female")} onTouchStart={() => prefetchBatch([w.korean], "ko", "female")} onClick={() => handleSpeak(w.korean, `tb_${idx}`)}
                         className="meaning-speak-btn"
                         style={{
                           width: "30px",
@@ -1262,7 +1262,7 @@ export default function KoreanMeaningBookView({
                       {/* Right: Round Audio Button (Right side of meaning) */}
                       <button
                         type="button"
-                        onClick={() => handleSpeak(exp.korean, `exp_${idx}`)}
+                        onMouseEnter={() => prefetchBatch([exp.korean], "ko", "female")} onTouchStart={() => prefetchBatch([exp.korean], "ko", "female")} onClick={() => handleSpeak(exp.korean, `exp_${idx}`)}
                         className="meaning-speak-btn"
                         style={{
                           width: "30px",
@@ -1769,7 +1769,7 @@ export default function KoreanMeaningBookView({
                       {/* Right: Round Audio Button */}
                       <button
                         type="button"
-                        onClick={() => handleSpeak(w.korean, w.id)}
+                        onMouseEnter={() => prefetchBatch([w.korean], "ko", "female")} onTouchStart={() => prefetchBatch([w.korean], "ko", "female")} onClick={() => handleSpeak(w.korean, w.id)}
                         className="meaning-speak-btn"
                         style={{
                           width: "30px",
