@@ -1,6 +1,7 @@
 'use client';
 import { playInstantAudio, prefetchBatch } from '@/lib/instantAudioEngine';
 import hangeulStaticAudioMap from '@/lib/hangeulAudioMap.json';
+import matrixPronMap from '@/lib/matrixPronMap.json';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 
@@ -1692,12 +1693,13 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     {currentMatrixVowels.map(v => {
                       const syl = composeHangul(con.char, v.v);
                       const isPlaying = isAudioPlaying(`matrix_${syl}`);
+                      const nePron = matrixPronMap[syl] || "";
                       return (
                         <td
                           key={v.v}
                           onMouseEnter={() => prefetchBatch([syl], 'ko', 'female')} onTouchStart={() => prefetchBatch([syl], 'ko', 'female')} onClick={() => onPlay(syl, `matrix_${syl}`)}
                           style={{
-                            padding: "8px 4px",
+                            padding: "6px 2px",
                             cursor: "pointer",
                             borderRight: "1px solid #f1f5f9",
                             backgroundColor: isPlaying ? "#dbeafe" : "transparent",
@@ -1706,18 +1708,30 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                             WebkitTapHighlightColor: "transparent",
                             transition: "background-color 0.08s ease"
                           }}
-                          title={`Click or touch to hear ${syl}`}
+                          title={`Click or touch to hear ${syl} (${nePron})`}
                         >
                           <div style={{
                             fontSize: "17px",
                             fontWeight: "900",
                             color: isPlaying ? "#2563eb" : "#0f172a",
                             transform: isPlaying ? "scale(1.18)" : "scale(1)",
-                            transition: "transform 0.08s ease"
+                            transition: "transform 0.08s ease",
+                            lineHeight: 1.1
                           }}>
                             {syl}
                           </div>
-                          <div style={{ fontSize: "10px", color: isPlaying ? "#2563eb" : "#64748b", marginTop: "1px" }}>
+                          {nePron && (
+                            <div style={{
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              color: isPlaying ? "#1d4ed8" : "#475569",
+                              marginTop: "2px",
+                              lineHeight: 1
+                            }}>
+                              {nePron}
+                            </div>
+                          )}
+                          <div style={{ fontSize: "10px", color: isPlaying ? "#2563eb" : "#94a3b8", marginTop: "2px" }}>
                             {isPlaying ? "🔊" : "🔈"}
                           </div>
                         </td>
