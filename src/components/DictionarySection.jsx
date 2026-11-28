@@ -1873,7 +1873,7 @@ export default function DictionarySection({ title = "", instituteLanguage: propI
         </div>
 
         {/* Row 2 (BELOW SEARCH BAR): Searchable Word Voice Controls & AI Studio */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", width: "100%", flexWrap: "wrap", margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "6px", width: "100%", flexWrap: "wrap", marginTop: "2px" }}>
           {/* 4. MY VOICE BUTTON FOR THIS SEARCHED WORD (If uploaded voice matches searched word) */}
         {matchingSearchedCustomVoice && (
           <div style={{ display: "inline-flex", borderRadius: "6px", overflow: "hidden", border: "1.5px solid #86efac", background: "#f0fdf4", boxShadow: "0 1px 3px rgba(16, 185, 129, 0.12)", flexShrink: 0 }}>
