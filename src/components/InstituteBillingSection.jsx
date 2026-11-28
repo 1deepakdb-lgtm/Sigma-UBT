@@ -1032,10 +1032,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
     setIsPdfGenerating(true);
     try {
-      // Ensure selectedInvoice is set to bill so printable-bill-pad has exact data
       setSelectedInvoice(bill);
-      // Wait a moment for DOM to paint
-      await new Promise(r => setTimeout(r, 250));
+      await new Promise(r => setTimeout(r, 200));
 
       const billElem = document.getElementById("printable-bill-pad");
       if (billElem) {
@@ -1049,6 +1047,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           backgroundColor: "#ffffff"
         });
 
+        // 1. Generate & Auto-Download PDF File directly
         const imgData = canvas.toDataURL("image/jpeg", 0.95);
         const pdf = new jsPDF({
           orientation: "portrait",
@@ -1062,13 +1061,51 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
         const fileName = `Bill_${bill.billNumber || "receipt"}_${(bill.studentName || "student").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
         pdf.save(fileName);
+
+        // 2. Try Web Share API (if supported with files, directly opens WhatsApp with attached PDF/Image)
+        let shareSuccess = false;
+        try {
+          if (navigator.canShare) {
+            const pdfBlob = pdf.output("blob");
+            const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: `Bill ${bill.billNumber}`,
+                text: `Fee Receipt for ${bill.studentName}`,
+                files: [file]
+              });
+              shareSuccess = true;
+            }
+          }
+        } catch (shareErr) {
+          console.log("Web share skipped/cancelled:", shareErr);
+        }
+
+        // 3. Copy image to Clipboard so user can simply Cmd+V / Ctrl+V into WhatsApp chat directly!
+        try {
+          canvas.toBlob(async (blob) => {
+            if (blob && navigator.clipboard && window.ClipboardItem) {
+              await navigator.clipboard.write([
+                new ClipboardItem({ "image/png": blob })
+              ]);
+            }
+          }, "image/png");
+        } catch (clipErr) {
+          console.log("Clipboard copy notice:", clipErr);
+        }
+
+        // 4. Open WhatsApp directly to the student's number without requiring share if not shared
+        if (!shareSuccess) {
+          const waUrl = `https://api.whatsapp.com/send?phone=977${phone}`;
+          window.open(waUrl, "_blank");
+        }
       }
     } catch (err) {
       console.error("PDF generation error:", err);
+      const waUrl = `https://api.whatsapp.com/send?phone=977${phone}`;
+      window.open(waUrl, "_blank");
     } finally {
       setIsPdfGenerating(false);
-      // Open WhatsApp to dispatch bill details, live PDF link, and notify user
-      handleSendWhatsAppReceipt(bill);
     }
   };
 
