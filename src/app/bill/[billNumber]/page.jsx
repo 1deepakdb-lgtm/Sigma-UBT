@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { formatCurrency, formatDateDisplay, getPaymentCountdown } from "@/components/InstituteBillingSection";
+import { formatCurrency, formatDateDisplay, formatDateMMDDYYYY, getPaymentCountdown } from "@/components/InstituteBillingSection";
 
 export default function PublicBillPage({ params }) {
   const [billNumber, setBillNumber] = useState("");
