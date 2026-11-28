@@ -1035,6 +1035,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
   // Helper to build clean polite Nepali WhatsApp message
   const buildWhatsAppNepaliBillMessage = (bill) => {
+    const grossAmt = Number(bill.grossFee || (Number(bill.totalFee || 0) + Number(bill.discountAmount || 0)) || 0);
     const dueAmt = Number(bill.dueAmount || 0);
     const paidAmt = Number(bill.paidAmount || 0);
     const discAmt = Number(bill.discountAmount || 0);
@@ -1047,6 +1048,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     waMessage += `विद्यार्थीको नाम: ${studentName}\n`;
     waMessage += `भर्ना गरिएको कोर्स: ${courseTitle}\n`;
     waMessage += `बिल नम्बर: ${billNo}\n`;
+
+    if (grossAmt > 0) {
+      waMessage += `जम्मा शुल्क (Gross Fee): रु. ${grossAmt.toLocaleString()}\n`;
+    }
 
     if (discAmt > 0 || discPercent > 0) {
       waMessage += `तपाईंले प्राप्त गर्नुभएको छुट: रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
