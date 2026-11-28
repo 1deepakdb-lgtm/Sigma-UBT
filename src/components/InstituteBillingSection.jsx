@@ -1086,8 +1086,8 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         const courseTitle = bill.coursePackage || bill.courseDetail || "Full course";
         const billNo = bill.billNumber || "N/A";
 
-        let waMessage = `नमस्ते ${studentName} ज्यू,\n\n`;
-        waMessage += `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टरमा भर्ना गर्नुभएकोमा धन्यवाद।\n\n`;
+        let waMessage = `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टरमा भर्ना गर्नुभएकोमा धन्यवाद।\n\n`;
+        waMessage += `विद्यार्थीको नाम: ${studentName}\n`;
         waMessage += `भर्ना गरिएको कोर्स: ${courseTitle}\n`;
         waMessage += `बिल नम्बर: ${billNo}\n`;
 
