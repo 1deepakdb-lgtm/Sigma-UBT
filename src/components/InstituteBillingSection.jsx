@@ -1047,7 +1047,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           backgroundColor: "#ffffff"
         });
 
-        // 1. Generate & Auto-Download PDF File directly
+        // 1. Silent Background Download of PDF (Does not open PDF viewer tab, saves quietly to Downloads)
         const imgData = canvas.toDataURL("image/jpeg", 0.95);
         const pdf = new jsPDF({
           orientation: "portrait",
@@ -1060,7 +1060,24 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
 
         const fileName = `Bill_${bill.billNumber || "receipt"}_${(bill.studentName || "student").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
-        pdf.save(fileName);
+        
+        // Trigger silent download directly without opening preview
+        try {
+          const pdfBlob = pdf.output("blob");
+          const blobUrl = URL.createObjectURL(pdfBlob);
+          const dlLink = document.createElement("a");
+          dlLink.href = blobUrl;
+          dlLink.download = fileName;
+          dlLink.style.display = "none";
+          document.body.appendChild(dlLink);
+          dlLink.click();
+          setTimeout(() => {
+            document.body.removeChild(dlLink);
+            URL.revokeObjectURL(blobUrl);
+          }, 1000);
+        } catch (dlErr) {
+          pdf.save(fileName);
+        }
 
         // 2. Automatically Copy Bill Screenshot / Image to System Clipboard (Auto-copied for Instant Cmd+V / Ctrl+V)
         let clipCopied = false;
