@@ -1,7 +1,9 @@
 'use client';
 import { playInstantAudio, prefetchBatch } from '@/lib/instantAudioEngine';
+import hangeulStaticAudioMap from '@/lib/hangeulAudioMap.json';
+import batchimWordsList from '@/lib/batchimWordsList.json';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { koreanToNepaliRomanized } from '@/lib/dictionaryData';
 import HangeulAlphabetGuide from '@/components/HangeulAlphabetGuide';
 
@@ -745,29 +747,59 @@ export const GRAMMAR_VERBS_DATA = {
 export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [localPlayingId, setLocalPlayingId] = useState(null);
+  const lastPlayTimeRef = useRef(0);
 
-  // Proactively prefetch core Basic Book words so every audio button responds in 0ms nano-seconds
+  // Proactively prefetch static audio and all words so every audio button responds in 0ms nano-seconds
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const coreWords = [
-      '가방', '고기', '김치', '길', '다리', '도시', '돈', '바보', '방', '밥',
-      '지도', '집', '아기', '안경', '어디', '바다', '구두', '갈비', '아버지', '모자',
-      '학교', '한국', '수박', '옷', '낮', '꽃', '부엌', '밑', '잎', '책',
-      '눈', '달', '밤', '산', '물', '문', '발', '손', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구', '십'
-    ];
-    prefetchBatch(coreWords, 'ko', 'female');
+    try {
+      // 1. Pre-warm static audio map (syllables + example words)
+      const staticUrls = Object.values(hangeulStaticAudioMap);
+      prefetchBatch(staticUrls, 'ko', 'female');
+
+      // 2. Pre-warm all 427 Batchim & Grammar guide words
+      prefetchBatch(batchimWordsList, 'ko', 'female');
+    } catch (_) {}
   }, []);
 
+  const isAudioPlaying = (id) => (localPlayingId === id || playingAudioId === id);
+
   const onPlayClick = (audioUrl, audioId, spokenText, writtenText, gender = 'female') => {
-    const textToSpeak = spokenText || writtenText;
+    if (typeof window === 'undefined') return;
+    const now = Date.now();
+    if (now - lastPlayTimeRef.current < 30) return;
+    lastPlayTimeRef.current = now;
+
+    const rawText = spokenText || writtenText || '';
+    let cleanText = String(rawText).trim();
+    cleanText = cleanText.replace(/^[~\-\s]+/, '').replace(/[~\-\s]+$/, '');
+    cleanText = cleanText.replace(/\(으\)/g, '으').replace(/\//g, ', ').replace(/[#*`_~]/g, '');
+    if (!cleanText) cleanText = rawText;
+
+    const playKey = audioId || cleanText;
+
+    // Fast static lookup: check if static audio exists
+    let finalUrl = audioUrl || hangeulStaticAudioMap[cleanText] || null;
+    if (!finalUrl && cleanText.length === 1) {
+      const code = cleanText.charCodeAt(0);
+      if (code >= 0xAC00 && code <= 0xD7A3) {
+        const hex = code.toString(16).toLowerCase();
+        finalUrl = '/audio/hangeul/syl_' + hex + '.mp3';
+      }
+    }
+
     playInstantAudio({
-      url: audioUrl,
-      text: textToSpeak,
+      url: finalUrl,
+      text: cleanText,
       lang: 'ko',
       gender,
-      id: audioId,
+      id: playKey,
       voice: gender === 'male' ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural',
-      model: gender === 'male' ? 'male-1' : 'female-1'
+      model: gender === 'male' ? 'male-1' : 'female-1',
+      onStart: () => setLocalPlayingId(playKey),
+      onEnd: () => setLocalPlayingId(null),
+      onError: () => setLocalPlayingId(null)
     });
   };
 
@@ -1070,7 +1102,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       const textToSpeak = ex.spoken || ex.written;
                       const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `gdbj-${rule.id}-${ex.written}`;
-                      const isPlaying = playingAudioId === audioId;
+                      const isPlaying = isAudioPlaying(audioId);
 
                       return (
                         <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc" }}>
@@ -1179,7 +1211,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       const textToSpeak = ex.spoken || ex.written;
                       const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `single-${item.rep}-${ex.written}`;
-                      const isPlaying = playingAudioId === audioId;
+                      const isPlaying = isAudioPlaying(audioId);
 
                       return (
                         <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc" }}>
@@ -1301,7 +1333,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       const textToSpeak = ex.spoken || ex.written;
                       const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `dual-${item.symbol}-${ex.written}`;
-                      const isPlaying = playingAudioId === audioId;
+                      const isPlaying = isAudioPlaying(audioId);
 
                       return (
                         <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc" }}>
@@ -1433,7 +1465,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       const textToSpeak = ex.spoken || ex.written;
                       const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `rule-${rule.id}-${ex.written}`;
-                      const isPlaying = playingAudioId === audioId;
+                      const isPlaying = isAudioPlaying(audioId);
 
                       return (
                         <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc" }}>
@@ -1523,7 +1555,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
               {KOREAN_NUMBERS_DATA.sino.digits.map((item, dIdx) => {
                 const audioUrl = `/api/tts?text=${encodeURIComponent(item.spoken)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `sino-${item.num}-${item.written}`;
-                const isPlaying = playingAudioId === audioId;
+                const isPlaying = isAudioPlaying(audioId);
 
                 return (
                   <div key={dIdx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
@@ -1554,7 +1586,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                 const textToSpeak = ex.spoken || ex.written;
                 const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `sino-ex-${ex.written}`;
-                const isPlaying = playingAudioId === audioId;
+                const isPlaying = isAudioPlaying(audioId);
 
                 return (
                   <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc" }}>
@@ -1606,7 +1638,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
               {KOREAN_NUMBERS_DATA.native.digits.map((item, dIdx) => {
                 const audioUrl = `/api/tts?text=${encodeURIComponent(item.spoken)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `native-${item.num}-${item.written}`;
-                const isPlaying = playingAudioId === audioId;
+                const isPlaying = isAudioPlaying(audioId);
 
                 return (
                   <div key={dIdx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0" }}>
@@ -1637,7 +1669,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                 const textToSpeak = ex.spoken || ex.written;
                 const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `native-ex-${ex.written}`;
-                const isPlaying = playingAudioId === audioId;
+                const isPlaying = isAudioPlaying(audioId);
 
                 return (
                   <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc" }}>
@@ -1711,7 +1743,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                 const textToSpeak = ex.spoken || ex.written;
                 const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                 const audioId = `vst-${ex.written}`;
-                const isPlaying = playingAudioId === audioId;
+                const isPlaying = isAudioPlaying(audioId);
 
                 return (
                   <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fcfcfc" }}>
@@ -1768,7 +1800,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       const textToSpeak = ex.spoken || ex.written;
                       const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `particle-${pIdx}-${ex.written}`;
-                      const isPlaying = playingAudioId === audioId;
+                      const isPlaying = isAudioPlaying(audioId);
 
                       return (
                         <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fafafa" }}>
@@ -1828,7 +1860,7 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
                       const textToSpeak = ex.spoken || ex.written;
                       const audioUrl = `/api/tts?text=${encodeURIComponent(textToSpeak)}&lang=ko&voice=ko-KR-SunHiNeural&model=female-1`;
                       const audioId = `tense-${tIdx}-${ex.written}`;
-                      const isPlaying = playingAudioId === audioId;
+                      const isPlaying = isAudioPlaying(audioId);
 
                       return (
                         <div key={exIdx} className="batchim-word-row" style={{ backgroundColor: exIdx % 2 === 0 ? "#ffffff" : "#fafafa" }}>
