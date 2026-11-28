@@ -2075,10 +2075,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       msg += `🎉 *भुक्तानी स्थिति:* पूर्ण भुक्तानी भइसकेको (Paid in Full)\n`;
     }
 
-    msg += `\n📥 *आफ्नो आधिकारिक छाप र हस्ताक्षर सहितको बिल PDF हेर्न वा डाउनलोड गर्न तलको लिङ्कमा क्लिक गर्नुहोस्:*\n🔗 ${billPdfUrl}\n`;
     msg += `\nभुक्तानी गर्नुभएकोमा धन्यवाद!`;
 
-    const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
+    const waUrl = `https://web.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
   };
 
@@ -2122,10 +2121,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       msg += `⏰ *समय तालिका:* ${timeNotice}\n`;
     }
 
-    msg += `\n📥 *आफ्नो बिल विवरण र रसिद PDF हेर्न तलको लिङ्कमा क्लिक गर्नुहोस्:*\n🔗 ${billPdfUrl}\n`;
     msg += `\nकृपया तोकिएको मितिभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहुन हार्दिक अनुरोध गर्दछौं। यदि तपाईंले पहिले नै भुक्तानी गरिसक्नुभएको छ भने कृपया यस जानकारीलाई बेवास्ता गरिदिनुहोला।\n\nधन्यवाद!`;
 
-    const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
+    const waUrl = `https://web.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
   };
 
@@ -5855,10 +5853,10 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                               Print
                             </button>
 
-                            {/* WhatsApp Receipt Quick Send Button */}
+                            {/* WhatsApp Receipt Quick Send Button - Downloads PDF, copies image, opens WhatsApp */}
                             <button
-                              onClick={() => handleSendWhatsAppReceipt(b)}
-                              title="Send Bill Receipt to student's WhatsApp"
+                              onClick={() => handleGenerateAndSendWhatsAppPDF(b)}
+                              title="Download PDF, Copy Bill & Open WhatsApp"
                               style={{
                                 backgroundColor: "#25D366",
                                 color: "#ffffff",
@@ -5874,7 +5872,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
                                 lineHeight: "1"
                               }}
                             >
-                              💬 WA
+                              💬 PDF
                             </button>
 
                             {/* WhatsApp Due Reminder (Shown prominently if due amount > 0 and <= 2 days or overdue) */}
