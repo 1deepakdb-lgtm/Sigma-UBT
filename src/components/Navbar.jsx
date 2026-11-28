@@ -237,7 +237,7 @@ export default function Navbar({
         boxSizing: 'border-box',
         borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
         flexShrink: 0,
-        overflowX: 'auto',
+        // overflowX: 'visible',
         WebkitOverflowScrolling: 'touch'
       }}
     >
@@ -319,7 +319,7 @@ export default function Navbar({
             alignItems: 'center',
             justifyContent: 'flex-end',
             gap: role === 'admin' ? '4px' : '6px',
-            flexShrink: 0,
+            flexWrap: 'wrap',
             whiteSpace: 'nowrap',
             padding: '2px 0'
           }}
@@ -877,7 +877,7 @@ export default function Navbar({
 
       {/* Global Responsive Styles for Navbar */}
       <style jsx>{`
-        @media (min-width: 1025px) {
+        @media (min-width: 860px) {
           :global(.desktop-nav-menu) {
             display: flex !important;
           }
@@ -894,7 +894,7 @@ export default function Navbar({
             display: none !important;
           }
         }
-        @media (max-width: 1024px) {
+        @media (max-width: 859px) {
           :global(.desktop-nav-menu) {
             display: none !important;
           }
@@ -914,7 +914,7 @@ export default function Navbar({
             padding-bottom: 68px !important;
           }
         }
-        @media (min-width: 1025px) {
+        @media (min-width: 860px) {
           :global(.navbar-bottom-nav) {
             display: none !important;
           }
