@@ -2039,46 +2039,9 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
     return digits.slice(0, 10);
   };
 
-  // Helper to send WhatsApp Bill Receipt / PDF notice (in Nepali)
+  // Helper to send WhatsApp Bill Receipt - Pure PDF / Image only (no text clutter)
   const handleSendWhatsAppReceipt = (bill = selectedInvoice) => {
-    if (!bill) return;
-    const phone = normalizeNepaliMobile(bill.contactNumber);
-    if (!phone || phone.length < 10) {
-      alert("विद्यार्थीको मान्य १०-अङ्कको मोबाइल नम्बर फेला परेन।");
-      return;
-    }
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://examjk.com";
-    const billPdfUrl = `${origin}/bill/${encodeURIComponent(bill.billNumber || bill.id)}`;
-
-    const dueAmt = Number(bill.dueAmount || 0);
-    const paidAmt = Number(bill.paidAmount || 0);
-    const totalAmt = Number(bill.totalFee || 0);
-
-    let msg = `*शुल्क भुक्तानी आधिकारिक रसिद (Official Bill Receipt)*\n`;
-    if (instituteName) msg += `🏢 *${instituteName.trim()}*\n`;
-    msg += `📄 *बिल नं (Bill No):* ${bill.billNumber || "N/A"}\n`;
-    msg += `👤 *विद्यार्थीको नाम:* ${bill.studentName || "Student"}\n`;
-    if (bill.coursePackage || bill.courseDetail) {
-      msg += `📚 *कोर्स (Course):* ${bill.coursePackage || bill.courseDetail}\n`;
-    }
-    msg += `📅 *मिति (Date):* ${bill.date || getLocalDateStr()}\n`;
-    msg += `💰 *जम्मा शुल्क:* रु. ${totalAmt.toLocaleString()}\n`;
-    msg += `✅ *भुक्तानी रकम:* रु. ${paidAmt.toLocaleString()}\n`;
-    msg += `💳 *भुक्तानी माध्यम:* ${bill.paymentMethod || "Cash"}\n`;
-
-    if (dueAmt > 0) {
-      msg += `⚠️ *बाँकी रकम (Due):* रु. ${dueAmt.toLocaleString()}\n`;
-      if (bill.nextPaymentDate) {
-        msg += `⏰ *अर्को किस्ता मिति:* ${bill.nextPaymentDate}\n`;
-      }
-    } else {
-      msg += `🎉 *भुक्तानी स्थिति:* पूर्ण भुक्तानी भइसकेको (Paid in Full)\n`;
-    }
-
-    msg += `\nभुक्तानी गर्नुभएकोमा धन्यवाद!`;
-
-    const waUrl = `https://web.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
-    window.open(waUrl, "_blank");
+    return handleGenerateAndSendWhatsAppPDF(bill);
   };
 
   // Helper to send WhatsApp Due Payment Reminder in Nepali
