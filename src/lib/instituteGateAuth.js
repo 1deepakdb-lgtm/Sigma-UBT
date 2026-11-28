@@ -199,9 +199,7 @@ export async function verifySharedGateCredentials(enteredUserId, enteredPassword
 
   return {
     ok: false,
-    error: isCustom
-      ? "Invalid User ID or Password. (Custom credentials active)"
-      : `Invalid User ID or Password. (Default: admin / ${password || "9999"})`
+    error: "Invalid User ID or Password. Please try again."
   };
 }
 
