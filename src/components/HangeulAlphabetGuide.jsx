@@ -713,16 +713,17 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
       }
     }
 
-    // 2. Pre-warm Neural Audio Cache for essential vowels & consonants for instant 0ms touch response
-    const coreWarmList = ["아", "야", "어", "여", "오", "요", "우", "유", "으", "이", "애", "얘", "에", "예", "와", "왜", "외", "워", "웨", "위", "의", "가", "나", "다", "라", "마", "바", "사", "자", "차", "카", "타", "파", "하"];
+    // 2. Pre-warm Neural Audio Cache using instantAudioEngine for 0ms touch response
+    const coreWarmList = [
+      "가", "나", "다", "라", "마", "바", "사", "아", "자", "차", "카", "타", "파", "하",
+      "까", "따", "빠", "싸", "짜",
+      "기역", "니은", "디귿", "리을", "미음", "비읍", "시옷", "이응", "지읒", "치읓", "키읔", "티읕", "피읖", "히읗",
+      "쌍기역", "쌍디귿", "쌍비읍", "쌍시옷", "쌍지읒",
+      "아", "야", "어", "여", "오", "요", "우", "유", "으", "이",
+      "애", "얘", "에", "예", "와", "왜", "외", "워", "웨", "위", "의"
+    ];
     try {
-      coreWarmList.forEach(item => {
-        const url = `/api/tts?text=${encodeURIComponent(item)}&lang=ko&voice=ko-KR-SunHiNeural&rate=+0%`;
-        const a = new Audio();
-        a.preload = "auto";
-        a.src = url;
-        audioCacheRef.current.set(url, a);
-      });
+      prefetchBatch(coreWarmList, "ko", "female");
     } catch (e) {}
   }, []);
 
@@ -1008,7 +1009,6 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
             <button
               type="button"
-              onPointerDown={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
               onMouseEnter={() => prefetchBatch([composedBuilderSyllable], 'ko', 'female')} onTouchStart={() => prefetchBatch([composedBuilderSyllable], 'ko', 'female')} onClick={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
               style={{
                 backgroundColor: isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "#1d4ed8" : "#2563eb",
@@ -1095,7 +1095,6 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
                     <button
                       type="button"
-                      onPointerDown={() => onPlay(c.nameKo, `single_c_${c.char}`)}
                       onMouseEnter={() => prefetchBatch([c.nameKo], 'ko', 'female')} onTouchStart={() => prefetchBatch([c.nameKo], 'ko', 'female')} onClick={() => onPlay(c.nameKo, `single_c_${c.char}`)}
                       title={`${c.nameKo} उच्चारण सुन्नुहोस्`}
                       style={{
@@ -1226,7 +1225,6 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
                     <button
                       type="button"
-                      onPointerDown={() => onPlay(c.nameKo, `dual_c_${c.char}`)}
                       onMouseEnter={() => prefetchBatch([c.nameKo], 'ko', 'female')} onTouchStart={() => prefetchBatch([c.nameKo], 'ko', 'female')} onClick={() => onPlay(c.nameKo, `dual_c_${c.char}`)}
                       title={`${c.nameKo} उच्चारण सुन्नुहोस्`}
                       style={{
@@ -1359,7 +1357,6 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
                 <button
                   type="button"
-                  onPointerDown={() => onPlay(v.spokenChar, `single_v_${v.char}`)}
                   onMouseEnter={() => prefetchBatch([v.spokenChar], 'ko', 'female')} onTouchStart={() => prefetchBatch([v.spokenChar], 'ko', 'female')} onClick={() => onPlay(v.spokenChar, `single_v_${v.char}`)}
                   title={`${v.spokenChar} उच्चारण सुन्नुहोस्`}
                   style={{
@@ -1450,7 +1447,6 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
 
                 <button
                   type="button"
-                  onPointerDown={() => onPlay(v.spokenChar, `dual_v_${v.char}`)}
                   onMouseEnter={() => prefetchBatch([v.spokenChar], 'ko', 'female')} onTouchStart={() => prefetchBatch([v.spokenChar], 'ko', 'female')} onClick={() => onPlay(v.spokenChar, `dual_v_${v.char}`)}
                   title={`${v.spokenChar} उच्चारण सुन्नुहोस्`}
                   style={{
@@ -1598,7 +1594,6 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     return (
                       <th
                         key={v.v}
-                        onPointerDown={() => onPlay(spokenVowel, `header_v_${v.v}`)}
                         onMouseEnter={() => prefetchBatch([spokenVowel], 'ko', 'female')} onTouchStart={() => prefetchBatch([spokenVowel], 'ko', 'female')} onClick={() => onPlay(spokenVowel, `header_v_${v.v}`)}
                         style={{
                           padding: "10px 4px",
@@ -1656,7 +1651,6 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                   >
                     {/* Consonant Header Cell */}
                     <td
-                      onPointerDown={() => onPlay(con.soundSample || con.char, `matrix_c_${con.char}`)}
                       onMouseEnter={() => prefetchBatch([con.soundSample || con.char], 'ko', 'female')} onTouchStart={() => prefetchBatch([con.soundSample || con.char], 'ko', 'female')} onClick={() => onPlay(con.soundSample || con.char, `matrix_c_${con.char}`)}
                       style={{
                         padding: "8px 10px",
@@ -1686,7 +1680,6 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                       return (
                         <td
                           key={v.v}
-                          onPointerDown={() => onPlay(syl, `matrix_${syl}`)}
                           onMouseEnter={() => prefetchBatch([syl], 'ko', 'female')} onTouchStart={() => prefetchBatch([syl], 'ko', 'female')} onClick={() => onPlay(syl, `matrix_${syl}`)}
                           style={{
                             padding: "8px 4px",
