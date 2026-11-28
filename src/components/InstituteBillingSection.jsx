@@ -1095,15 +1095,44 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Web share status:", shareErr);
         }
 
-        // 4. Open Direct Active WhatsApp (WhatsApp Web / WhatsApp App)
+        // 4. Construct Clean Nepali Message without any PDF Link
+        const dueAmt = Number(bill.dueAmount || 0);
+        const paidAmt = Number(bill.paidAmount || 0);
+        const discAmt = Number(bill.discountAmount || 0);
+        const discPercent = Number(bill.discountPercent || 0);
+        const studentName = bill.studentName || "विद्यार्थी";
+        const courseTitle = bill.coursePackage || bill.courseDetail || "EPS-TOPIK Korean Language";
+
+        let waMessage = `नमस्ते ${studentName} ज्यू,\n\n`;
+        waMessage += `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टर, सामाखुशी चोक, काठमाडौँमा भर्ना गर्नुभएकोमा हार्दिक धन्यवाद।\n\n`;
+        waMessage += `📚 *भर्ना गरिएको कोर्स:* ${courseTitle}\n`;
+        waMessage += `📄 *बिल नम्बर (Bill No):* ${bill.billNumber || "N/A"}\n`;
+
+        if (discAmt > 0 || discPercent > 0) {
+          waMessage += `🎁 *तपाईंले प्राप्त गर्नुभएको छुट (Discount):* रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
+        }
+
+        waMessage += `✅ *तपाईंले भुक्तानी गर्नुभएको रकम:* रु. ${paidAmt.toLocaleString()}\n`;
+
+        if (dueAmt > 0) {
+          waMessage += `⚠️ *बाँकी रहेको रकम (Due Balance):* रु. ${dueAmt.toLocaleString()}\n`;
+          if (bill.nextPaymentDate) {
+            waMessage += `📅 *बाँकी भुक्तानी गर्ने अन्तिम मिति:* ${bill.nextPaymentDate}\n`;
+          }
+          waMessage += `\nतपाईंको रु. ${dueAmt.toLocaleString()} पेमेन्ट गर्न बाँकी रहेको हुनाले कृपया तोकिएको समयभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहोला।\n`;
+        } else {
+          waMessage += `🎉 *भुक्तानी स्थिति:* तपाईंको पूर्ण शुल्क भुक्तानी भइसकेको छ (Paid in Full)।\n`;
+        }
+
+        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\n🏢 *SIGMA Education कोरियन भाषा सेन्टर*\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902`;
+
+        // 5. Open Direct Active WhatsApp (WhatsApp Web / WhatsApp App) with Message
         if (!shareSuccess) {
-          // Detect if desktop to direct to web.whatsapp.com directly for active session
           const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
           const waUrl = isMobile
-            ? `whatsapp://send?phone=977${phone}`
-            : `https://web.whatsapp.com/send?phone=977${phone}`;
+            ? `whatsapp://send?phone=977${phone}&text=${encodeURIComponent(waMessage)}`
+            : `https://web.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(waMessage)}`;
 
-          // Open directly in active tab/window
           const opened = window.open(waUrl, "_blank");
           if (!opened) {
             window.location.href = waUrl;
