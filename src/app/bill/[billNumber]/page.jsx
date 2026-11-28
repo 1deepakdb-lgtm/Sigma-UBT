@@ -524,22 +524,25 @@ export default function PublicBillPage({ params }) {
                                     </span>
                                   )}
                                 </td>
-                                <td style={{ padding: "1px 2px", textAlign: "center" }}>
+                                <td style={{ padding: "4px 2px", textAlign: "center", verticalAlign: "middle" }}>
                                   <span style={{
-                                    backgroundColor: method === "Cash" ? "#f0fdf4" : method === "Online Esewa" ? "#ecfdf5" : method === "Online Khalti" ? "#faf5ff" : "#eff6ff",
-                                    color: method === "Cash" ? "#15803d" : method === "Online Esewa" ? "#047857" : method === "Online Khalti" ? "#7e22ce" : "#1e40af",
-                                    border: "1px solid",
-                                    borderColor: method === "Cash" ? "#bbf7d0" : method === "Online Esewa" ? "#a7f3d0" : method === "Online Khalti" ? "#e9d5ff" : "#bfdbfe",
-                                    padding: "1px 5px",
-                                    borderRadius: "4px",
-                                    fontSize: "11px",
-                                    fontWeight: "bold",
+                                    backgroundColor: method === "Cash" ? "#f0fdf4" : method === "Online Esewa" ? "#f0fdf4" : method === "Online Khalti" ? "#faf5ff" : "#eff6ff",
+                                    color: method === "Cash" ? "#166534" : method === "Online Esewa" ? "#15803d" : method === "Online Khalti" ? "#7e22ce" : "#1e40af",
+                                    border: "1.5px solid",
+                                    borderColor: method === "Cash" ? "#86efac" : method === "Online Esewa" ? "#86efac" : method === "Online Khalti" ? "#d8b4fe" : "#93c5fd",
+                                    padding: "3px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "11.5px",
+                                    fontWeight: "800",
                                     display: "inline-flex",
                                     alignItems: "center",
-                                    gap: "4px"
+                                    justifyContent: "center",
+                                    gap: "5px",
+                                    lineHeight: "1.2",
+                                    boxSizing: "border-box"
                                   }}>
-                                    {getPaymentMethodIcon(method, 12)}
-                                    <span>{method === "Cash" ? "Cash" : method === "Online Esewa" ? "Online Esewa" : method === "Online Khalti" ? "Online Khalti" : method === "Online Bank Acc" ? "Bank Acc" : `${method}`}</span>
+                                    {getPaymentMethodIcon(method, 14)}
+                                    <span style={{ letterSpacing: "0.2px" }}>{method === "Cash" ? "Cash" : method === "Online Esewa" ? "eSewa" : method === "Online Khalti" ? "Khalti" : method === "Online Bank Acc" ? "Bank Acc" : `${method}`}</span>
                                   </span>
                                 </td>
                                 <td style={{ padding: "1px 2px", textAlign: "right", fontWeight: "bold", color: "#000000" }}>
