@@ -1,5 +1,6 @@
 'use client';
 import { playInstantAudio, prefetchBatch } from '@/lib/instantAudioEngine';
+import hangeulStaticAudioMap from '@/lib/hangeulAudioMap.json';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 
@@ -713,30 +714,23 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
       }
     }
 
-    // 2. Pre-warm Neural Audio Cache (using instantAudioEngine for 0ms touch response)
+    // 2. Pre-warm Static and Core Neural Audio Cache
     try {
-    const coreWarmList = [
-      "가", "나", "다", "라", "마", "바", "사", "아", "자", "차", "카", "타", "파", "하",
-      "까", "따", "빠", "싸", "짜",
-      "기역", "니은", "디귿", "리을", "미음", "비읍", "시옷", "이응", "지읒", "치읓", "키읔", "티읕", "피읖", "히읗",
-      "쌍기역", "쌍디귿", "쌍비읍", "쌍시옷", "쌍지읒",
-      "아", "야", "어", "여", "오", "요", "우", "유", "으", "이",
-      "애", "얘", "에", "예", "와", "왜", "외", "워", "웨", "위", "의",
-      // All 78 Real-Life Example Words (아이, 우유, 강, 지도, 낮, 모자, 가방, 고기...)
-      "아이", "우유", "강", "지도", "낮", "मो자", "모자", "차", "치마", "꽃",
-      "가방", "고기", "수박", "나무", "누나", "눈", "다리", "어디", "곧",
-      "라디오", "우리", "물", "어머니", "밤", "바보", "아버지", "밥",
-      "사과", "시간", "옷", "카메라", "코", "부엌", "타다", "토마토", "끝",
-      "파", "포도", "앞", "하늘", "하루", "좋다", "까치", "꼬리", "밖",
-      "딸기", "뜨겁다", "또", "빵", "뽀뽀", "빨리", "싸다", "쓰다", "있다",
-      "짜다", "찌개", "진짜", "야구", "여자", "오이", "요리", "유리", "음악",
-      "이마", "애기", "얘기", "에어컨", "예술", "와인", "왜", "외국", "월요일", "웨딩", "위치", "의사"
-    ];
-    prefetchBatch(coreWarmList, "ko", "female");
+      const staticUrls = Object.values(hangeulStaticAudioMap);
+      prefetchBatch(staticUrls, "ko", "female");
+      const coreWarmList = [
+        "가", "나", "다", "라", "마", "바", "사", "아", "자", "차", "카", "타", "파", "하",
+        "까", "따", "빠", "싸", "짜",
+        "기역", "니은", "디귿", "리을", "미음", "비읍", "시옷", "이응", "지읒", "치읓", "키읔", "티읕", "피읖", "히읗",
+        "쌍기역", "쌍디귿", "쌍비읍", "쌍시옷", "쌍지읒",
+        "아", "야", "어", "여", "오", "요", "우", "유", "으", "이",
+        "애", "얘", "에", "예", "와", "왜", "외", "워", "웨", "위", "의"
+      ];
+      prefetchBatch(coreWarmList, "ko", "female");
     } catch (e) {}
   }, []);
 
-  // Studio-Quality Authentic Korean Pronunciation Engine
+  // Studio-Quality Authentic Korean Pronunciation Engine (0ms Static MP3 + RAM AudioBuffer)
   const onPlay = (text, id = null) => {
     if (!text || typeof window === 'undefined') return;
     const now = Date.now();
@@ -751,8 +745,10 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
     const spokenKorean = getSpokenKoreanText(cleanText);
     const playKey = id || text;
 
-    let staticAudioUrl = null;
-    if (spokenKorean.length === 1) {
+    // Direct Instant Static Audio Lookup (0ms load time)
+    let staticAudioUrl = hangeulStaticAudioMap[cleanText] || hangeulStaticAudioMap[spokenKorean] || null;
+
+    if (!staticAudioUrl && spokenKorean.length === 1) {
       const code = spokenKorean.charCodeAt(0);
       if (code >= 0xAC00 && code <= 0xD7A3) {
         const hex = code.toString(16).toLowerCase();
@@ -1020,7 +1016,7 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
               type="button"
               onMouseEnter={() => prefetchBatch([composedBuilderSyllable], 'ko', 'female')} onTouchStart={() => prefetchBatch([composedBuilderSyllable], 'ko', 'female')} onClick={() => onPlay(composedBuilderSyllable, `builder_${composedBuilderSyllable}`)}
               style={{
-                backgroundColor: isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "#1d4ed8" : "#2563eb",
+                backgroundColor: isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "#16a34a" : "#2563eb",
                 color: "#ffffff",
                 border: "none",
                 padding: "12px 24px",
@@ -1031,12 +1027,13 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
-                boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
-                touchAction: "manipulation"
+                boxShadow: isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "0 0 0 3px rgba(34,197,94,0.4)" : "0 4px 12px rgba(37,99,235,0.3)",
+                touchAction: "manipulation",
+                transition: "all 0.15s ease"
               }}
             >
-              <span>🔊</span>
-              <span>उच्चारण सुन्नुहोस् (Listen Pronounce)</span>
+              <span>{isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "🔊" : "🔈"}</span>
+              <span>{isAudioPlaying(`builder_${composedBuilderSyllable}`) ? "सुन्दै हुनुहुन्छ..." : "उच्चारण सुन्नुहोस् (Listen Pronounce)"}</span>
             </button>
           </div>
         </div>
@@ -1141,30 +1138,34 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     उदाहरण शब्दहरू (Click to listen):
                   </div>
                   <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    {c.examples.map((ex, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onMouseEnter={() => prefetchBatch([ex.spoken], 'ko', 'female')} onTouchStart={() => prefetchBatch([ex.spoken], 'ko', 'female')} onClick={() => onPlay(ex.spoken, `ex_${c.char}_${idx}`)}
-                        style={{
-                          backgroundColor: isAudioPlaying("ex_" + c.char + "_" + idx) ? "#dbeafe" : "#f1f5f9",
-                          border: isAudioPlaying("ex_" + c.char + "_" + idx) ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
-                          borderRadius: "6px",
-                          padding: "4px 8px",
-                          fontSize: "11.5px",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          textAlign: "left",
-                          transition: "all 0.1s ease"
-                        }}
-                      >
-                        <strong style={{ color: "#1e40af" }}>{ex.ko}</strong>
-                        <span style={{ color: "#64748b" }}>({ex.ne})</span>
-                        <span style={{ fontSize: "10px" }}>🔊</span>
-                      </button>
-                    ))}
+                    {c.examples.map((ex, idx) => {
+                      const isExPlaying = isAudioPlaying("ex_" + c.char + "_" + idx);
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onMouseEnter={() => prefetchBatch([ex.spoken], 'ko', 'female')} onTouchStart={() => prefetchBatch([ex.spoken], 'ko', 'female')} onClick={() => onPlay(ex.spoken, `ex_${c.char}_${idx}`)}
+                          style={{
+                            backgroundColor: isExPlaying ? "#dbeafe" : "#f1f5f9",
+                            border: isExPlaying ? "1.5px solid #2563eb" : "1px solid #cbd5e1",
+                            borderRadius: "6px",
+                            padding: "4px 8px",
+                            fontSize: "11.5px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            textAlign: "left",
+                            boxShadow: isExPlaying ? "0 0 0 2px rgba(37,99,235,0.2)" : "none",
+                            transition: "all 0.1s ease"
+                          }}
+                        >
+                          <strong style={{ color: "#1e40af" }}>{ex.ko}</strong>
+                          <span style={{ color: "#64748b" }}>({ex.ne})</span>
+                          <span style={{ fontSize: "11px" }}>{isExPlaying ? "🔊" : "🔈"}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -1272,29 +1273,33 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                     उदाहरण शब्दहरू:
                   </div>
                   <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    {c.examples.map((ex, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onMouseEnter={() => prefetchBatch([ex.spoken], 'ko', 'female')} onTouchStart={() => prefetchBatch([ex.spoken], 'ko', 'female')} onClick={() => onPlay(ex.spoken, `ex_dual_${c.char}_${idx}`)}
-                        style={{
-                          backgroundColor: "#fef3c7",
-                          border: "1px solid #fde68a",
-                          borderRadius: "6px",
-                          padding: "4px 8px",
-                          fontSize: "11.5px",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          textAlign: "left"
-                        }}
-                      >
-                        <strong style={{ color: "#92400e" }}>{ex.ko}</strong>
-                        <span style={{ color: "#78350f" }}>({ex.ne})</span>
-                        <span style={{ fontSize: "10px" }}>🔊</span>
-                      </button>
-                    ))}
+                    {c.examples.map((ex, idx) => {
+                      const isExPlaying = isAudioPlaying("ex_dual_" + c.char + "_" + idx);
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onMouseEnter={() => prefetchBatch([ex.spoken], 'ko', 'female')} onTouchStart={() => prefetchBatch([ex.spoken], 'ko', 'female')} onClick={() => onPlay(ex.spoken, `ex_dual_${c.char}_${idx}`)}
+                          style={{
+                            backgroundColor: isExPlaying ? "#fde68a" : "#fef3c7",
+                            border: isExPlaying ? "1.5px solid #d97706" : "1px solid #fde68a",
+                            borderRadius: "6px",
+                            padding: "4px 8px",
+                            fontSize: "11.5px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            textAlign: "left",
+                            transition: "all 0.1s ease"
+                          }}
+                        >
+                          <strong style={{ color: "#92400e" }}>{ex.ko}</strong>
+                          <span style={{ color: "#78350f" }}>({ex.ne})</span>
+                          <span style={{ fontSize: "11px" }}>{isExPlaying ? "🔊" : "🔈"}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
