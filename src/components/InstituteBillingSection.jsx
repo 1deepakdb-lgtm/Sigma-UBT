@@ -1062,13 +1062,14 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
         const fileName = `Bill_${bill.billNumber || "receipt"}_${(bill.studentName || "student").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
         pdf.save(fileName);
 
-        // 2. Automatically Copy Bill to System Clipboard (Instant Cmd+V / Ctrl+V in WhatsApp Web!)
+        // 2. Automatically Copy Bill Screenshot / Image to System Clipboard (Auto-copied for Instant Cmd+V / Ctrl+V)
         let clipCopied = false;
+        let imageBlob = null;
         try {
-          const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
-          if (blob && navigator.clipboard && window.ClipboardItem) {
+          imageBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+          if (imageBlob && navigator.clipboard && window.ClipboardItem) {
             await navigator.clipboard.write([
-              new ClipboardItem({ "image/png": blob })
+              new ClipboardItem({ "image/png": imageBlob })
             ]);
             clipCopied = true;
           }
@@ -1076,17 +1077,47 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Clipboard write status:", clipErr);
         }
 
-        // 3. Try Native Web Share (On Mobile / Supported Desktop browsers, directly opens WhatsApp with file attached)
+        // 3. Construct 100% Nepali Message strictly matching user requirement (No English, No Links)
+        const dueAmt = Number(bill.dueAmount || 0);
+        const paidAmt = Number(bill.paidAmount || 0);
+        const discAmt = Number(bill.discountAmount || 0);
+        const discPercent = Number(bill.discountPercent || 0);
+        const studentName = bill.studentName || "विद्यार्थी";
+        const courseTitle = bill.coursePackage || bill.courseDetail || "EPS-TOPIK कोरियन भाषा";
+
+        let waMessage = `नमस्ते ${studentName} ज्यू,\n\n`;
+        waMessage += `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टरमा भर्ना गर्नुभएकोमा धन्यवाद।\n\n`;
+        waMessage += `📚 भर्ना गरिएको कोर्स: ${courseTitle}\n`;
+        waMessage += `📄 बिल नम्बर: ${bill.billNumber || "N/A"}\n`;
+
+        if (discAmt > 0 || discPercent > 0) {
+          waMessage += `🎁 तपाईंले प्राप्त गर्नुभएको छुट: रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
+        }
+
+        waMessage += `✅ तपाईंले भुक्तानी गर्नुभएको रकम: रु. ${paidAmt.toLocaleString()}\n`;
+
+        if (dueAmt > 0) {
+          waMessage += `⚠️ बाँकी रहेको रकम: रु. ${dueAmt.toLocaleString()}\n`;
+          if (bill.nextPaymentDate) {
+            waMessage += `📅 बाँकी भुक्तानी गर्ने अन्तिम मिति: ${bill.nextPaymentDate}\n`;
+          }
+          waMessage += `\nतपाईंको रु. ${dueAmt.toLocaleString()} पेमेन्ट गर्न बाँकी रहेको हुनाले कृपया तोकिएको समयभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहोला।\n`;
+        } else {
+          waMessage += `🎉 भुक्तानी स्थिति: पूर्ण शुल्क भुक्तानी भइसकेको छ।\n`;
+        }
+
+        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\n🏢 SIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902`;
+
+        // 4. Try Native Web Share with the Bill Image / PDF (Attaches image directly on supported mobile/browsers)
         let shareSuccess = false;
         try {
-          if (navigator.canShare) {
-            const pdfBlob = pdf.output("blob");
-            const file = new File([pdfBlob], fileName, { type: "application/pdf" });
-            if (navigator.canShare({ files: [file] })) {
+          if (navigator.canShare && imageBlob) {
+            const imgFile = new File([imageBlob], `Bill_${bill.billNumber || "receipt"}.png`, { type: "image/png" });
+            if (navigator.canShare({ files: [imgFile] })) {
               await navigator.share({
                 title: `Bill ${bill.billNumber}`,
-                text: `Fee Receipt for ${bill.studentName}`,
-                files: [file]
+                text: waMessage,
+                files: [imgFile]
               });
               shareSuccess = true;
             }
@@ -1095,38 +1126,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Web share status:", shareErr);
         }
 
-        // 4. Construct Clean Nepali Message without any PDF Link
-        const dueAmt = Number(bill.dueAmount || 0);
-        const paidAmt = Number(bill.paidAmount || 0);
-        const discAmt = Number(bill.discountAmount || 0);
-        const discPercent = Number(bill.discountPercent || 0);
-        const studentName = bill.studentName || "विद्यार्थी";
-        const courseTitle = bill.coursePackage || bill.courseDetail || "EPS-TOPIK Korean Language";
-
-        let waMessage = `नमस्ते ${studentName} ज्यू,\n\n`;
-        waMessage += `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टर, सामाखुशी चोक, काठमाडौँमा भर्ना गर्नुभएकोमा हार्दिक धन्यवाद।\n\n`;
-        waMessage += `📚 *भर्ना गरिएको कोर्स:* ${courseTitle}\n`;
-        waMessage += `📄 *बिल नम्बर (Bill No):* ${bill.billNumber || "N/A"}\n`;
-
-        if (discAmt > 0 || discPercent > 0) {
-          waMessage += `🎁 *तपाईंले प्राप्त गर्नुभएको छुट (Discount):* रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
-        }
-
-        waMessage += `✅ *तपाईंले भुक्तानी गर्नुभएको रकम:* रु. ${paidAmt.toLocaleString()}\n`;
-
-        if (dueAmt > 0) {
-          waMessage += `⚠️ *बाँकी रहेको रकम (Due Balance):* रु. ${dueAmt.toLocaleString()}\n`;
-          if (bill.nextPaymentDate) {
-            waMessage += `📅 *बाँकी भुक्तानी गर्ने अन्तिम मिति:* ${bill.nextPaymentDate}\n`;
-          }
-          waMessage += `\nतपाईंको रु. ${dueAmt.toLocaleString()} पेमेन्ट गर्न बाँकी रहेको हुनाले कृपया तोकिएको समयभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहोला।\n`;
-        } else {
-          waMessage += `🎉 *भुक्तानी स्थिति:* तपाईंको पूर्ण शुल्क भुक्तानी भइसकेको छ (Paid in Full)।\n`;
-        }
-
-        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\n🏢 *SIGMA Education कोरियन भाषा सेन्टर*\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902`;
-
-        // 5. Open Direct Active WhatsApp (WhatsApp Web / WhatsApp App) with Message
+        // 5. Open Direct Active WhatsApp Web / App with message loaded
         if (!shareSuccess) {
           const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
           const waUrl = isMobile
