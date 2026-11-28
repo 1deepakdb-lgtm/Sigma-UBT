@@ -2142,7 +2142,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
       msg += `⏰ *समय तालिका:* ${timeNotice}\n`;
     }
 
-    msg += `\nकृपया तोकिएको मितिभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहुन हार्दिक अनुरोध गर्दछौं। यदि तपाईंले पहिले नै भुक्तानी गरिसक्नुभएको छ भने कृपया यस जानकारीलाई बेवास्ता गरिदिनुहोला।\n\nधन्यवाद!`;
+    msg += `\nकृपया तोकिएको मितिभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहुन हार्दिक अनुरोध गर्दछौं।\n\nधन्यवाद!`;
 
     const waUrl = `https://web.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(msg)}`;
     window.open(waUrl, "_blank");
