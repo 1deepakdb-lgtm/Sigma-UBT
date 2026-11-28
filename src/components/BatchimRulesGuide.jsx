@@ -1,6 +1,7 @@
 'use client';
 import { playInstantAudio, prefetchBatch } from '@/lib/instantAudioEngine';
 import hangeulStaticAudioMap from '@/lib/hangeulAudioMap.json';
+import batchimAudioMap from '@/lib/batchimAudioMap.json';
 import batchimWordsList from '@/lib/batchimWordsList.json';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -754,11 +755,14 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      // 1. Pre-warm static audio map (syllables + example words)
-      const staticUrls = Object.values(hangeulStaticAudioMap);
+      // 1. Pre-warm batchim and hangeul static audio maps
+      const staticUrls = [
+        ...Object.values(batchimAudioMap || {}),
+        ...Object.values(hangeulStaticAudioMap || {})
+      ];
       prefetchBatch(staticUrls, 'ko', 'female');
 
-      // 2. Pre-warm all 427 Batchim & Grammar guide words
+      // 2. Pre-warm all batchim guide words
       prefetchBatch(batchimWordsList, 'ko', 'female');
     } catch (_) {}
   }, []);
@@ -777,10 +781,21 @@ export default function BatchimRulesGuide({ handlePlayAudio, playingAudioId }) {
     cleanText = cleanText.replace(/\(으\)/g, '으').replace(/\//g, ', ').replace(/[#*`_~]/g, '');
     if (!cleanText) cleanText = rawText;
 
+    const spokenClean = spokenText ? String(spokenText).trim().replace(/^[~\-\s]+/, '').replace(/[~\-\s]+$/, '') : '';
+    const writtenClean = writtenText ? String(writtenText).trim().replace(/^[~\-\s]+/, '').replace(/[~\-\s]+$/, '') : '';
+
     const playKey = audioId || cleanText;
 
-    // Fast static lookup: check if static audio exists
-    let finalUrl = audioUrl || hangeulStaticAudioMap[cleanText] || null;
+    // Fast static lookup: check batchimAudioMap and hangeulStaticAudioMap for 0ms nanosecond playback
+    let finalUrl = audioUrl || 
+                   batchimAudioMap[cleanText] || 
+                   (spokenClean && batchimAudioMap[spokenClean]) || 
+                   (writtenClean && batchimAudioMap[writtenClean]) || 
+                   hangeulStaticAudioMap[cleanText] || 
+                   (spokenClean && hangeulStaticAudioMap[spokenClean]) || 
+                   (writtenClean && hangeulStaticAudioMap[writtenClean]) || 
+                   null;
+
     if (!finalUrl && cleanText.length === 1) {
       const code = cleanText.charCodeAt(0);
       if (code >= 0xAC00 && code <= 0xD7A3) {
