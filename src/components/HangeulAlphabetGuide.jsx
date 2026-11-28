@@ -713,17 +713,26 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
       }
     }
 
-    // 2. Pre-warm Neural Audio Cache using instantAudioEngine for 0ms touch response
+    // 2. Pre-warm Neural Audio Cache (using instantAudioEngine for 0ms touch response)
+    try {
     const coreWarmList = [
       "가", "나", "다", "라", "마", "바", "사", "아", "자", "차", "카", "타", "파", "하",
       "까", "따", "빠", "싸", "짜",
       "기역", "니은", "디귿", "리을", "미음", "비읍", "시옷", "이응", "지읒", "치읓", "키읔", "티읕", "피읖", "히읗",
       "쌍기역", "쌍디귿", "쌍비읍", "쌍시옷", "쌍지읒",
       "아", "야", "어", "여", "오", "요", "우", "유", "으", "이",
-      "애", "얘", "에", "예", "와", "왜", "외", "워", "웨", "위", "의"
+      "애", "얘", "에", "예", "와", "왜", "외", "워", "웨", "위", "의",
+      // All 78 Real-Life Example Words (아이, 우유, 강, 지도, 낮, 모자, 가방, 고기...)
+      "아이", "우유", "강", "지도", "낮", "मो자", "모자", "차", "치마", "꽃",
+      "가방", "고기", "수박", "나무", "누나", "눈", "다리", "어디", "곧",
+      "라디오", "우리", "물", "어머니", "밤", "바보", "아버지", "밥",
+      "사과", "시간", "옷", "카메라", "코", "부엌", "타다", "토마토", "끝",
+      "파", "포도", "앞", "하늘", "하루", "좋다", "까치", "꼬리", "밖",
+      "딸기", "뜨겁다", "또", "빵", "뽀뽀", "빨리", "싸다", "쓰다", "있다",
+      "짜다", "찌개", "진짜", "야구", "여자", "오이", "요리", "유리", "음악",
+      "이마", "애기", "얘기", "에어컨", "예술", "와인", "왜", "외국", "월요일", "웨딩", "위치", "의사"
     ];
-    try {
-      prefetchBatch(coreWarmList, "ko", "female");
+    prefetchBatch(coreWarmList, "ko", "female");
     } catch (e) {}
   }, []);
 
@@ -1138,8 +1147,8 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                         type="button"
                         onMouseEnter={() => prefetchBatch([ex.spoken], 'ko', 'female')} onTouchStart={() => prefetchBatch([ex.spoken], 'ko', 'female')} onClick={() => onPlay(ex.spoken, `ex_${c.char}_${idx}`)}
                         style={{
-                          backgroundColor: "#f1f5f9",
-                          border: "1px solid #e2e8f0",
+                          backgroundColor: isAudioPlaying("ex_" + c.char + "_" + idx) ? "#dbeafe" : "#f1f5f9",
+                          border: isAudioPlaying("ex_" + c.char + "_" + idx) ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
                           borderRadius: "6px",
                           padding: "4px 8px",
                           fontSize: "11.5px",
@@ -1147,7 +1156,8 @@ export default function HangeulAlphabetGuide({ handlePlayAudio, playingAudioId }
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "4px",
-                          textAlign: "left"
+                          textAlign: "left",
+                          transition: "all 0.1s ease"
                         }}
                       >
                         <strong style={{ color: "#1e40af" }}>{ex.ko}</strong>

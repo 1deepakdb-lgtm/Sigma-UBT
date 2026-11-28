@@ -135,7 +135,7 @@ export async function prefetchAudio(url) {
 export function prefetchBatch(items = [], lang = 'ko', gender = 'female') {
   if (typeof window === 'undefined' || !Array.isArray(items)) return;
   const runner = () => {
-    items.slice(0, 30).forEach((item) => {
+    items.forEach((item) => {
       const url = typeof item === 'string' && item.startsWith('/')
         ? item
         : buildStandardTtsUrl(typeof item === 'string' ? item : (item.text || item.korean || item.japanese || item.word || ''), lang, gender);
