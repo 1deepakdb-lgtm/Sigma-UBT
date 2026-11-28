@@ -1124,7 +1124,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           waMessage += `भुक्तानी स्थिति: पूर्ण शुल्क भुक्तानी भइसकेको छ।\n`;
         }
 
-        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\nSIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902`;
+        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\nSIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902, +977-9806100148`;
 
         // 4. Try Native Web Share with the Bill Image / PDF (Attaches image directly on supported mobile/browsers)
         let shareSuccess = false;
@@ -1144,15 +1144,18 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Web share status:", shareErr);
         }
 
-        // 5. Open Direct WhatsApp with reliable Universal URL format for prefilled text
+        // 5. Open Direct WhatsApp in a brand new tab explicitly
         if (!shareSuccess) {
           const encodedText = encodeURIComponent(waMessage);
-          // api.whatsapp.com reliably prefills text on both WhatsApp Web and Desktop/Mobile app
           const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodedText}`;
 
-          const opened = window.open(waUrl, "_blank");
-          if (!opened) {
-            window.location.href = waUrl;
+          // Always ensure opening in a separate new tab
+          const newTab = window.open("", "_blank");
+          if (newTab) {
+            newTab.opener = null;
+            newTab.location.href = waUrl;
+          } else {
+            window.open(waUrl, "_blank", "noopener,noreferrer");
           }
         }
       }
