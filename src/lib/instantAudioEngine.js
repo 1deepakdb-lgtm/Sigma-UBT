@@ -80,7 +80,7 @@ export function buildStandardTtsUrl(text, lang = 'ko', gender = 'female', option
     : (isMale ? 'ko-KR-InJoonNeural' : 'ko-KR-SunHiNeural');
   const defaultModel = isJa
     ? (isMale ? 'ja-male-1' : 'ja-female-1')
-    : (isMale ? 'male-1' : 'female-1');
+    : (isMale ? 'ko-male-1' : 'ko-female-1');
 
   const voice = options.voice || defaultVoice;
   const model = options.model || defaultModel;

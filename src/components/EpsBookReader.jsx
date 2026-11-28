@@ -2499,10 +2499,6 @@ export default function EpsBookReader({
   // Play / Pause toggle with 100% reliable hardware synchronization
   const togglePlayPause = (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    // Prevent accidental auto-play when expanding the dialog from the floating audio button
-    if (Date.now() - playerOpenTimeRef.current < 500) {
-      return;
-    }
     setShowTrackDropdown(false);
     if (!audioRef.current) return;
 
@@ -3835,6 +3831,7 @@ export default function EpsBookReader({
         {activeTrack && (
           <audio
             ref={audioRef}
+            preload="auto"
             src={getPlayableAudioUrl(activeTrack)}
             onPlay={() => {
               setIsPlaying(true);
