@@ -1077,7 +1077,7 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Clipboard write status:", clipErr);
         }
 
-        // 3. Construct 100% Nepali Message strictly matching user requirement (No English, No Links)
+        // 3. Construct Clean Nepali Message with emojis ONLY on Location (📍) and Call (📞)
         const dueAmt = Number(bill.dueAmount || 0);
         const paidAmt = Number(bill.paidAmount || 0);
         const discAmt = Number(bill.discountAmount || 0);
@@ -1087,26 +1087,26 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
 
         let waMessage = `नमस्ते ${studentName} ज्यू,\n\n`;
         waMessage += `धन्यवाद, तपाईंले SIGMA Education कोरियन भाषा सेन्टरमा भर्ना गर्नुभएकोमा धन्यवाद।\n\n`;
-        waMessage += `📚 भर्ना गरिएको कोर्स: ${courseTitle}\n`;
-        waMessage += `📄 बिल नम्बर: ${bill.billNumber || "N/A"}\n`;
+        waMessage += `भर्ना गरिएको कोर्स: ${courseTitle}\n`;
+        waMessage += `बिल नम्बर: ${bill.billNumber || "N/A"}\n`;
 
         if (discAmt > 0 || discPercent > 0) {
-          waMessage += `🎁 तपाईंले प्राप्त गर्नुभएको छुट: रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
+          waMessage += `तपाईंले प्राप्त गर्नुभएको छुट: रु. ${discAmt.toLocaleString()} (${discPercent}%)\n`;
         }
 
-        waMessage += `✅ तपाईंले भुक्तानी गर्नुभएको रकम: रु. ${paidAmt.toLocaleString()}\n`;
+        waMessage += `तपाईंले भुक्तानी गर्नुभएको रकम: रु. ${paidAmt.toLocaleString()}\n`;
 
         if (dueAmt > 0) {
-          waMessage += `⚠️ बाँकी रहेको रकम: रु. ${dueAmt.toLocaleString()}\n`;
+          waMessage += `बाँकी रहेको रकम: रु. ${dueAmt.toLocaleString()}\n`;
           if (bill.nextPaymentDate) {
-            waMessage += `📅 बाँकी भुक्तानी गर्ने अन्तिम मिति: ${bill.nextPaymentDate}\n`;
+            waMessage += `बाँकी भुक्तानी गर्ने अन्तिम मिति: ${bill.nextPaymentDate}\n`;
           }
           waMessage += `\nतपाईंको रु. ${dueAmt.toLocaleString()} पेमेन्ट गर्न बाँकी रहेको हुनाले कृपया तोकिएको समयभित्र आफ्नो बाँकी शुल्क भुक्तानी गरिदिनुहोला।\n`;
         } else {
-          waMessage += `🎉 भुक्तानी स्थिति: पूर्ण शुल्क भुक्तानी भइसकेको छ।\n`;
+          waMessage += `भुक्तानी स्थिति: पूर्ण शुल्क भुक्तानी भइसकेको छ।\n`;
         }
 
-        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\n🏢 SIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902`;
+        waMessage += `\nहामीसँग जोडिनुभएकोमा धन्यवाद, तपाईंको कोरियन भाषा अध्ययन सफल रहोस्!\n\nSIGMA Education कोरियन भाषा सेन्टर\n📍 सामाखुशी चोक, काठमाडौँ\n📞 +977-9768444902`;
 
         // 4. Try Native Web Share with the Bill Image / PDF (Attaches image directly on supported mobile/browsers)
         let shareSuccess = false;
@@ -1126,12 +1126,11 @@ export default function InstituteBillingSection({ instituteName, userRole, instI
           console.log("Web share status:", shareErr);
         }
 
-        // 5. Open Direct Active WhatsApp Web / App with message loaded
+        // 5. Open Direct WhatsApp with reliable Universal URL format for prefilled text
         if (!shareSuccess) {
-          const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-          const waUrl = isMobile
-            ? `whatsapp://send?phone=977${phone}&text=${encodeURIComponent(waMessage)}`
-            : `https://web.whatsapp.com/send?phone=977${phone}&text=${encodeURIComponent(waMessage)}`;
+          const encodedText = encodeURIComponent(waMessage);
+          // api.whatsapp.com reliably prefills text on both WhatsApp Web and Desktop/Mobile app
+          const waUrl = `https://api.whatsapp.com/send?phone=977${phone}&text=${encodedText}`;
 
           const opened = window.open(waUrl, "_blank");
           if (!opened) {
